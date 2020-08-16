@@ -12,6 +12,11 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/chat.html');
 });
 
+app.get('/hrm', function(req, res){
+  res.sendFile(__dirname + '/public/hrm_client.html');
+});
+
+
 
 // Socket.io
 var io           = socket_io();
