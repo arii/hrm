@@ -1,5 +1,7 @@
 (function() {
   'use strict';
+  const socket = io( {transports:['websocket']});
+
 
   class HeartRateSensor {
     constructor() {
@@ -23,11 +25,22 @@
 	
 		
 		if(this.status_msg == "connected"){
-			if(this._characteristics.get("heart_rate_measurement") != null){
-				var result = this.parseHeartRate(this._characteristics.get("heart_rate_measurement").value);
+            var curr_hrm_measure = this._characteristics.get("heart_rate_measurement") ;
+
+			if(curr_hrm_measure != null){
+				var result = this.parseHeartRate(curr_hrm_measure.value);
+                if (result !=null){
 				if (!result.contactDetected){
 					this.status_msg += "-- bad contact";
-				}
+				}else{
+                    // data was good let's emit it!
+                    socket.emit('chat message', result.heartRate);
+                    
+                }
+
+
+                }
+
 				}
 			}
 		
@@ -74,22 +87,7 @@
 		return this.init()
 		
 		
-      /*return navigator.bluetooth.requestDevice({filters:[{services:[ 'heart_rate' ]}]})
-      .then(device => {
-        this.device = device;
-        return device.gatt.connect();
-      })
-      .then(server => {
-        this.server = server;
-        return Promise.all([
-          server.getPrimaryService('heart_rate').then(service => {
-            return Promise.all([
-              this._cacheCharacteristic(service, 'body_sensor_location'),
-              this._cacheCharacteristic(service, 'heart_rate_measurement'),
-            ])
-          })
-        ]);
-      })*/
+
     }
 
     /* Heart Rate Service */
@@ -118,7 +116,13 @@
     }
     parseHeartRate(value) {
       // In Chrome 50+, a DataView is returned instead of an ArrayBuffer.
-      value = value.buffer ? value : new DataView(value);
+      try{
+        value = value.buffer ? value : new DataView(value);
+      }catch(err){
+          console.log("result failed");
+          return null;
+      }
+
       let flags = value.getUint8(0);
       let rate16Bits = flags & 0x1;
       let result = {};
@@ -148,6 +152,8 @@
         }
         result.rrIntervals = rrIntervals;
       }
+
+      socket.emit('chat message', result.heartRate);
       return result;
     }
 

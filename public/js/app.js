@@ -9,12 +9,6 @@ statusText.addEventListener('click', function() {
   statusText.textContent = 'Breathe...';
   heartRates = [];
   initialClick();
-  
-  /*heartRateSensor.connect()
-  .then(() => heartRateSensor.startNotificationsHeartRateMeasurement().then(handleHeartRateMeasurement))
-  .catch(error => {
-    statusText.textContent = error;
-  });*/
 });
 
 function initialClick(){
@@ -78,6 +72,9 @@ function handleHeartRateMeasurement(heartRateMeasurement) {
 	
   heartRateMeasurement.addEventListener('characteristicvaluechanged', event => {
     var heartRateMeasurement = heartRateSensor.parseHeartRate(event.target.value);
+      if(heartRateMeasurement == null){
+          return;
+      }
     statusText.innerHTML = heartRateMeasurement.heartRate + ' &#x2764;';
     heartRates.push(heartRateMeasurement.heartRate);
     drawWaves();
