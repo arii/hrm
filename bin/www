@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('hrm-client:server');
 var http = require('http');
+var io = require('socket.io')(http);
 
 /**
  * Get port from environment and store in Express.
@@ -88,3 +89,11 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+
+
+var io     = app.io
+io.attach( server );
+//disable long polling
+io.set('transports', ['websocket']);
+
