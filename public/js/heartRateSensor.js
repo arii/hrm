@@ -1,6 +1,5 @@
 (function() {
   'use strict';
-  const socket = io( {transports:['websocket']});
 
 
   class HeartRateSensor {
@@ -9,6 +8,8 @@
       this.server = null;
       this._characteristics = new Map();
 	  this.status_msg = "Not initialized";
+      this.socket = io( {transports:['websocket']});
+
 	  window.setInterval(this.reportStatus.bind(this), 1000);
 
     }
@@ -34,7 +35,7 @@
 					this.status_msg += "-- bad contact";
 				}else{
                     // data was good let's emit it!
-                    socket.emit('chat message', result.heartRate);
+                    this.socket.emit('chat message', result.heartRate);
                     
                 }
 
@@ -153,7 +154,7 @@
         result.rrIntervals = rrIntervals;
       }
 
-      socket.emit('chat message', result.heartRate);
+      this.socket.emit('chat message', result.heartRate);
       return result;
     }
 
