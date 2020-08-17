@@ -29,7 +29,13 @@
         var rate = "--";
         var age = "0";
         var name = "unknown";
-        var device = this.device;
+        var device = null;
+        
+        if (this.device != null){
+            if (this.device.id != null){
+                device = this.device.id;
+            }
+        }
 
         if(this.server == null){
             status_msg = "not initialized";
@@ -63,8 +69,10 @@
             'device': device,
             }
         console.log(hr);
-
-    this.socket.emit('hrm', hr);
+    if(status_msg == "connected" && rate == "--"){
+        return;
+    }
+    this.socket.emit('hrm_client', hr);
     const event = new CustomEvent('hrUpdate',{detail: hr});
 	document.dispatchEvent(event);
 

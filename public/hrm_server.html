@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Rate Sensor Demo</title>
+    <meta name="description" content="Monitor a heart rate sensor with a Web Bluetooth app.">
+    <link rel="icon" sizes="192x192" href="../favicon.png">
+  </head>
+  <body>
+
+
+<div class="col-xs-12">
+    <h1> Heart Rate Server </h1>
+    <p> All heart rate readings will be displayed here in real-time
+    <a href="/hrm"> <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button>
+    </a> </p>
+</div>
+
+<div class="col-xs-12" style="height:10px;"></div>
+
+<div id="cards" class="card-columns">
+
+<div id="dummy_card" class="card text-center" style="width: 18rem;">
+  <div class="card-header">
+      <h1 id="HRCardHeader" > Heart Rate </h1>
+      <h5 id="HRCardHeaderAge" >  </h5>
+  </div>
+
+  <div class="card-body">
+      <h4 id="statusText" >
+        &#x2764;
+      </h4>
+        <h1 id="HR" class="display-1">
+        </h1>
+  </div>
+
+  <div class="card-footer" id="statusBarDiv">
+      <h5 id="statusBar">waiting for heart rate data</h5>
+  </div>
+</div>
+</div>
+
+
+<div class="col-xs-12" style="height:50px;"></div>
+
+
+<div class="col-xs-12">
+    <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reset </button>
+</div>
+
+
+
+
+   
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/static/js/heartRateServer.js"></script>
+  </body>
+</html>

@@ -36,7 +36,7 @@ io.on('connection', function(socket){
     io.emit('chat message', msg);
   });
   
-  socket.on('hrm', function(msg){
+  socket.on('hrm_client', function(msg){
       io.emit('hrm', msg);
   });
 
