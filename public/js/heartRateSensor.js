@@ -11,7 +11,7 @@
       this._characteristics = new Map();
 	  this.status_msg = "Not initialized";
       this.socket = io( {transports:['websocket']});
-
+      
 	  window.setInterval(this.reportStatus.bind(this), 1000);
 
     }
@@ -29,6 +29,7 @@
         var rate = "--";
         var age = "0";
         var name = "unknown";
+        var device = this.device;
 
         if(this.server == null){
             status_msg = "not initialized";
@@ -59,9 +60,11 @@
             'status_msg': status_msg,
             'status_color': status_color,
             'rate': rate,
+            'device': device,
             }
         console.log(hr);
 
+    this.socket.emit('hrm', hr);
     const event = new CustomEvent('hrUpdate',{detail: hr});
 	document.dispatchEvent(event);
 

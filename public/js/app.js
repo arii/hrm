@@ -116,8 +116,6 @@ function handleHeartRateMeasurement(heartRateMeasurement) {
       if(heartRateMeasurement == null){
           return;
       }
-    //updateStatus(heartRateMeasurement.heartRate, true);
-
     heartRates.push(heartRateMeasurement.heartRate);
   });
 }
