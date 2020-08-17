@@ -6,6 +6,8 @@
     constructor() {
       this.device = null;
       this.server = null;
+      this.name = null;
+      this.age = null;
       this._characteristics = new Map();
 	  this.status_msg = "Not initialized";
       this.socket = io( {transports:['websocket']});
@@ -13,9 +15,63 @@
 	  window.setInterval(this.reportStatus.bind(this), 1000);
 
     }
-	
+    updateNameAge(name, age){
+        this.name = name;
+        this.age = age;
+        console.log("name: " + name + " age: " + age);
+    }
+
+    // constructs a json object with all relevant data
+    // and sends it
+    sendHR(hrm){
+        var status_msg = "";
+        var status_color = "white";
+        var rate = "--";
+        var age = "0";
+        var name = "unknown";
+
+        if(this.server == null){
+            status_msg = "not initialized";
+            status_color = "white";
+        }else if(this.server.connected){
+            status_msg = "connected";
+            status_color="green" 
+        }else{
+            status_msg = "disconnected";
+            status_color = "red"
+        }
+
+        if (hrm == null){
+            rate = "--"
+        }else{
+            rate = hrm.heartRate;
+            if(!hrm.contactDetected){
+                status_msg += " -- bad contact";
+                status_color ="orange";
+                rate = hrm.heartRate;}
+            }
+
+        name=this.name;
+        age = this.age;
+        var hr = {
+            'name': name, 
+            'age': age,
+            'status_msg': status_msg,
+            'status_color': status_color,
+            'rate': rate,
+            }
+        console.log(hr);
+
+    const event = new CustomEvent('hrUpdate',{detail: hr});
+	document.dispatchEvent(event);
+
+    }
+        
+
 	reportStatus(){
 		// report status messages
+        var hr_sent = false;
+
 		if (this.server == null){
 			this.status_msg = "not initialized";
 		}else if (this.server.connected){
@@ -23,7 +79,6 @@
 		}else{
 			this.status_msg = "disconnected";
 		}
-	
 		
 		if(this.status_msg == "connected"){
             var curr_hrm_measure = this._characteristics.get("heart_rate_measurement") ;
@@ -31,20 +86,18 @@
 			if(curr_hrm_measure != null){
 				var result = this.parseHeartRate(curr_hrm_measure.value);
                 if (result !=null){
+                    hr_sent = true;
 				if (!result.contactDetected){
 					this.status_msg += "-- bad contact";
-				}else{
-                    // data was good let's emit it!
-                    this.socket.emit('chat message', result.heartRate);
-                    
-                }
-
-
-                }
-
 				}
+                }
+
 			}
-		
+        }
+		if(!hr_sent){
+            this.sendHR(null);
+        }
+
 		var status = this.status_msg;
 		console.log("status: " + status);
 		const event = new CustomEvent('status', { detail: status });
@@ -155,6 +208,7 @@
       }
 
       this.socket.emit('chat message', result.heartRate);
+      this.sendHR(result);
       return result;
     }
 

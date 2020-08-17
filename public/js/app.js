@@ -1,21 +1,55 @@
-var canvas = document.querySelector('canvas');
+//var canvas = document.querySelector('canvas');
 var statusText = document.querySelector('#statusText');
+var statusHR = document.querySelector('#HR');
 var statusBar = document.querySelector('#statusBar');
+var statusBarDiv = document.querySelector('#statusBarDiv');
+var nameAgeBtn = document.querySelector('#nameAgeBtn');
+var userName = document.querySelector('#userName');
+var userAge = document.querySelector('#userAge');
+var HRCardHeader = document.querySelector('#HRCardHeader');
+var HRCardHeaderAge = document.querySelector('#HRCardHeaderAge');
+var nameAgeInput = document.querySelector('#nameAgeInput');
+var reconnect = document.querySelector('#reconnect');
 var last_connect_time = null;
 var last_update = null;
 
+function updateStatus(text, isHR){
+    if(isHR){
+        statusHR.textContent=text;
+        statusText.textContent="";
+    }else{
+        statusText.textContent=text;
+        statusHR.textContent ="";
+    }
+}
 
-statusText.addEventListener('click', function() {
-  statusText.textContent = 'Breathe...';
-  heartRates = [];
+function updateStatusBar(text, color){
+	    statusBar.textContent = text;
+		statusBarDiv.style.backgroundColor = color;
+   }
+
+
+reconnect.addEventListener('click', function() {
   initialClick();
 });
 
+nameAgeBtn.addEventListener('click', function() {
+    initialClick();
+    HRCardHeader.textContent = userName.value;
+    HRCardHeaderAge.textContent = userAge.value;
+
+    heartRateSensor.updateNameAge(userName.value, userAge.value);
+    nameAgeInput.style.display = "none";
+    reconnect.style.display = "block";
+});
+
 function initialClick(){
+  updateStatus("Breathe...", false);
+  heartRates = [];
   heartRateSensor.init()
   .then(() => heartRateSensor.startNotificationsHeartRateMeasurement().then(handleHeartRateMeasurement))
   .catch(error => {
-    statusText.textContent = error;
+    updateStatus(error, false);
   });
 }
 
@@ -25,49 +59,56 @@ function connectHR(){
 	}else{
 		if( (Date.now() - last_connect_time) < 1500){
 			console.log("too soon to try to reconnect... waiting");
-			    statusText.innerHTML = "reconnecting";
-
+                updateStatus("Reconnecting", false);
 			return;
 		}
 		else{
 			console.log("attempting reconnect");
 			last_connect_time = Date.now();
-			statusText.innerHTML += ".";
-
+            updateStatus("Reconnecting...", false);
 		}
 	}
 	
 	heartRateSensor.connect_()
 	.then(() => heartRateSensor.startNotificationsHeartRateMeasurement().then(handleHeartRateMeasurement))
   .catch(error => {
-    statusText.textContent = error;
+      updateStatus(error, false);
   });
 	
 }
 
 document.addEventListener("status", function(e){
+    return;
 	console.log("I heard " + e.detail);
-	statusBar.textContent = e.detail;
+    color = "white";
 	if(e.detail == "disconnected"){
 		// trigger reconnect
 		connectHR();
-		statusBar.style.backgroundColor = "red";
-
+        color ="red";
 	}else if(e.detail == "connected-- bad contact"){
 		// orange
-		console.log("orange");
-		statusBar.style.backgroundColor = "orange";
-
+        color = "orange";
 	}else if(e.detail == "connected"){
-		console.log("green");
-		statusBar.style.backgroundColor = "green";
-
+        color = "green";
 	}
-	
+    updateStatusBar(e.detail, color);	
 	
 }, false);
 
-	
+
+document.addEventListener("hrUpdate", function(e){
+    hr = e.detail;
+    if(hr.status_msg == "not initialized"){
+        return;
+    }
+    updateStatusBar(hr.status_msg, hr.status_color);
+    updateStatus(hr.rate, true);
+    
+    HRCardHeader.textContent = hr.name;
+    HRCardHeaderAge.textContent = hr.age;
+}, false);
+
+
 function handleHeartRateMeasurement(heartRateMeasurement) {
 	
   heartRateMeasurement.addEventListener('characteristicvaluechanged', event => {
@@ -75,61 +116,14 @@ function handleHeartRateMeasurement(heartRateMeasurement) {
       if(heartRateMeasurement == null){
           return;
       }
-    statusText.innerHTML = heartRateMeasurement.heartRate + ' &#x2764;';
+    //updateStatus(heartRateMeasurement.heartRate, true);
+
     heartRates.push(heartRateMeasurement.heartRate);
-    drawWaves();
   });
 }
 
 var heartRates = [];
-var mode = 'bar';
 
-canvas.addEventListener('click', event => {
-  mode = mode === 'bar' ? 'line' : 'bar';
-  drawWaves();
-});
 
-function drawWaves() {
-  requestAnimationFrame(() => {
-    canvas.width = parseInt(getComputedStyle(canvas).width.slice(0, -2)) * devicePixelRatio;
-    canvas.height = parseInt(getComputedStyle(canvas).height.slice(0, -2)) * devicePixelRatio;
 
-    var context = canvas.getContext('2d');
-    var margin = 2;
-    var max = Math.max(0, Math.round(canvas.width / 11));
-    var offset = Math.max(0, heartRates.length - max);
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.strokeStyle = '#00796B';
-    if (mode === 'bar') {
-      for (var i = 0; i < Math.max(heartRates.length, max); i++) {
-        var barHeight = Math.round(heartRates[i + offset ] * canvas.height / 200);
-        context.rect(11 * i + margin, canvas.height - barHeight, margin, Math.max(0, barHeight - margin));
-        context.stroke();
-      }
-    } else if (mode === 'line') {
-      context.beginPath();
-      context.lineWidth = 6;
-      context.lineJoin = 'round';
-      context.shadowBlur = '1';
-      context.shadowColor = '#333';
-      context.shadowOffsetY = '1';
-      for (var i = 0; i < Math.max(heartRates.length, max); i++) {
-        var lineHeight = Math.round(heartRates[i + offset ] * canvas.height / 200);
-        if (i === 0) {
-          context.moveTo(11 * i, canvas.height - lineHeight);
-        } else {
-          context.lineTo(11 * i, canvas.height - lineHeight);
-        }
-        context.stroke();
-      }
-    }
-  });
-}
 
-window.onresize = drawWaves;
-
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    drawWaves();
-  }
-});

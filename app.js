@@ -8,6 +8,9 @@ var logger = require('morgan');
 
 var app = express();
 app.use('/static', express.static('public'))
+app.use('/js', express.static(__dirname + '/node_modules/bootstrap/dist/js')); // redirect bootstrap JS
+app.use('/js', express.static(__dirname + '/node_modules/jquery/dist')); // redirect JS jQuery
+app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css')); // redirect CSS bootstrap
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/chat.html');

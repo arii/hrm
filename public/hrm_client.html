@@ -6,14 +6,58 @@
     <title>Heart Rate Sensor Demo</title>
     <meta name="description" content="Monitor a heart rate sensor with a Web Bluetooth app.">
     <link rel="icon" sizes="192x192" href="../favicon.png">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <!--    <link rel="stylesheet" href="/static/css/styles.css">-->
   </head>
   <body>
-    <div id="container">
-	  <div id="statusBar">Status Info</div>
-      <div id="statusText">GET &#x2764;</div>
+
+
+<div id="container" class="card text-center" style="width: 18rem;">
+  <div class="card-header">
+      <h1 id="HRCardHeader" > Heart Rate </h1>
+      <h5 id="HRCardHeaderAge" >  </h5>
+  </div>
+
+  <div class="card-body">
+      <h4 id="statusText" >
+        &#x2764;
+      </h4>
+        <h1 id="HR" class="display-1">
+        </h1>
+  </div>
+
+  <div class="card-footer" id="statusBarDiv">
+      <h5 id="statusBar">click start to begin</h5>
+  </div>
+</div>
+<div class="col-xs-12" style="height:50px;"></div>
+
+<div id="nameAgeInput" class="input-group" style="width: 18rem;">
+  <div class="input-group-prepend">
+    <span class="input-group-text" id="">Name &  Age</span>
+  </div>
+  <input id="userName"  type="text" value="Ari" class="form-control">
+  <input id="userAge" type="text" value="29" class="form-control">
+  <div class="input-group-append">
+    <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Start</button>
+  </div>
+</div>
+
+<div class="col-xs-12">
+    <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reconnect </button>
+  </div>
+
+
+
+
+    <div id="oldcontainer">
+	  <!-- <div id="statusBar">Status Info</div>
+      <div id="statusText">GET &#x2764;</div> -->
       <canvas id="waves"></canvas>
     </div>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/static/js/heartRateSensor.js"></script>
