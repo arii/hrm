@@ -20,6 +20,10 @@ app.get('/hrm', function(req, res){
   res.sendFile(__dirname + '/public/hrm_client.html');
 });
 
+app.get('/hrm_mock', function(req, res){
+  res.sendFile(__dirname + '/public/hrm_mock.html');
+});
+
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/hrm_server.html');
 });
