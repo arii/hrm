@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Rate Sensor Demo</title>
+    <meta name="description" content="Monitor a heart rate sensor with a Web Bluetooth app.">
+    <link rel="icon" sizes="192x192" href="../favicon.png">
+  </head>
+  <body>
+
+
+<div id="container" class="card text-center" style="width: 18rem;">
+  <div class="card-header">
+      <h1 id="HRCardHeader" > Heart Rate </h1>
+      <h5 id="HRCardHeaderAge" >  </h5>
+  </div>
+
+  <div class="card-body">
+      <h4 id="statusText" >
+        &#x2764;
+      </h4>
+        <h1 id="HR" class="display-1">
+        </h1>
+  </div>
+
+  <div class="card-footer" id="statusBarDiv">
+      <h5 id="statusBar">click start to begin</h5>
+  </div>
+</div>
+<div class="col-xs-12" style="height:50px;"></div>
+<div style="width: 18rem">
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Name</span>
+  </div>
+  <input id="mockName" type="text" class="form-control" value="Karen">
+</div>
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Name</span>
+  </div>
+  <input id="mockAge" type="text" class="form-control" value="60">
+</div>
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">HeartRate</span>
+  </div>
+  <input id="mockRate" type="text" class="form-control" value="80">
+</div>
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Device ID</span>
+  </div>
+  <input id="mockID" type="text" class="form-control" value="1234">
+</div>
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Device Status</span>
+  </div>
+  <input id="mockStatus" type="text" class="form-control" value="connected">
+</div>
+
+<div class="input-group input-group-sm mb-3">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Status Color</span>
+  </div>
+  <input id="mockStatusColor" type="text" class="form-control" value="green">
+</div>
+
+
+
+<div class="input-group-append">
+    <button class="btn btn-outline-primary" type="button" id="sendMock" >Send Mock Data</button>
+  </div>
+</div>
+
+</div>
+
+<div class="col-xs-12">
+    <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reconnect </button>
+  </div>
+
+
+
+
+    <div id="oldcontainer">
+	  <!-- <div id="statusBar">Status Info</div>
+      <div id="statusText">GET &#x2764;</div> -->
+      <canvas id="waves"></canvas>
+    </div>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/static/js/heartRateMock.js"></script>
+  </body>
+</html>
