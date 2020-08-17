@@ -53,7 +53,7 @@ function addNewClient(msg){
     if ("dummy" in clients){
         id = 0;
     }else{
-        id = clients.keys(dictionary).length + 1;
+        id = Object.keys(clients).length + 1;
     }
     clients[msg.device] = id;
     //replaceAll not available 
