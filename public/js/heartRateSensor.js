@@ -42,10 +42,10 @@
             status_color = "white";
         }else if(this.server.connected){
             status_msg = "connected";
-            status_color="green" 
+            status_color="#f8f9fa" 
         }else{
             status_msg = "disconnected";
-            status_color = "red"
+            status_color = "#6c757d"
         }
 
         if (hrm == null){

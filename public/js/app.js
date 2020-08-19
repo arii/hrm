@@ -7,7 +7,8 @@ var nameAgeBtn = document.querySelector('#nameAgeBtn');
 var userName = document.querySelector('#userName');
 var userAge = document.querySelector('#userAge');
 var HRCardHeader = document.querySelector('#HRCardHeader');
-var HRCardHeaderAge = document.querySelector('#HRCardHeaderAge');
+var HRCardHeader = document.querySelector('#HRCardHeader');
+var HRCard = document.querySelector('.card-body');
 var nameAgeInput = document.querySelector('#nameAgeInput');
 var reconnect = document.querySelector('#reconnect');
 var last_connect_time = null;
@@ -21,6 +22,13 @@ function updateStatus(text, isHR){
         statusText.textContent=text;
         statusHR.textContent ="";
     }
+
+    background = computeZoneStyle(userAge.value, text);
+    console.log(background);
+    HRCard.style.backgroundColor =  background;
+
+
+    
 }
 
 function updateStatusBar(text, color){
