@@ -3,7 +3,7 @@ const socket = io( {
     transports:['websocket']
 });
 
-$("#sendMock").click( function() {
+$("#inputMockData").submit( function() {
     var name = $("#mockName").val();
     var age = $("#mockAge").val();
     var rate = $("#mockRate").val();

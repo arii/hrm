@@ -9,7 +9,7 @@ var userAge = document.querySelector('#userAge');
 var HRCardHeader = document.querySelector('#HRCardHeader');
 var HRCardHeader = document.querySelector('#HRCardHeader');
 var HRCard = document.querySelector('.card-body');
-var nameAgeInput = document.querySelector('#nameAgeInput');
+var nameAgeForm = document.querySelector('#nameAgeForm');
 var reconnect = document.querySelector('#reconnect');
 var last_connect_time = null;
 var last_update = null;
@@ -40,15 +40,15 @@ function updateStatusBar(text, color){
 reconnect.addEventListener('click', function() {
   initialClick();
 });
-
-nameAgeBtn.addEventListener('click', function() {
-    initialClick();
+$("#nameAgeForm").submit(function(event){
+    event.preventDefault();
     HRCardHeader.textContent = userName.value;
     HRCardHeaderAge.textContent = userAge.value;
 
     heartRateSensor.updateNameAge(userName.value, userAge.value);
-    nameAgeInput.style.display = "none";
+    nameAgeForm.style.display = "none";
     reconnect.style.display = "block";
+    initialClick();
 });
 
 function initialClick(){

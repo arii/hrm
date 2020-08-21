@@ -30,16 +30,35 @@
 </div>
 <div class="col-xs-12" style="height:50px;"></div>
 
-<div id="nameAgeInput" class="input-group" style="width: 18rem;">
-  <div class="input-group-prepend">
-    <span class="input-group-text" id="">Name &  Age</span>
+
+<form id="nameAgeForm">
+  <div class="form-row col-sm-2">
+      <label class="sr-only" for="inlineFormInputGroupUsername">Name</label>
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <div class="input-group-text">Name</div>
+        </div>
+        <input type="text" class="form-control" id="userName" value="Avi">
+      </div>
+    </div> 
+    </div>
+
+   <div class="col-sm-2 my-1">
+      <label class="sr-only" for="inlineFormInputGroupUsername">Age</label>
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <div class="input-group-text">Age</div>
+        </div>
+        <input type="text" class="form-control" id="userAge" placeholder="Username" value="59">
+      </div>
+    </div> 
+
+
+    <div class="col-auto">
+      <button id="nameAgeBtn" type="submit" class="btn btn-primary mb-2">Submit</button>
+    </div>
   </div>
-  <input id="userName"  type="text" value="Ari" class="form-control">
-  <input id="userAge" type="text" value="29" class="form-control">
-  <div class="input-group-append">
-    <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Start</button>
-  </div>
-</div>
+</form>
 
 <div class="col-xs-12">
     <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reconnect </button>
