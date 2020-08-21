@@ -28,6 +28,10 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/hrm_server.html');
 });
 
+app.get('/tabata', function(req, res){
+  res.sendFile(__dirname + '/public/tabata.html');
+});
+
 
 // Socket.io
 var io           = socket_io();
