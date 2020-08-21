@@ -86,8 +86,7 @@ function connectHR(){
 }
 
 document.addEventListener("status", function(e){
-    return;
-	console.log("I heard " + e.detail);
+	//console.log("I heard " + e.detail);
     color = "white";
 	if(e.detail == "disconnected"){
 		// trigger reconnect
@@ -99,7 +98,7 @@ document.addEventListener("status", function(e){
 	}else if(e.detail == "connected"){
         color = "green";
 	}
-    updateStatusBar(e.detail, color);	
+    //updateStatusBar(e.detail, color);	
 	
 }, false);
 
