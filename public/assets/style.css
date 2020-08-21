@@ -1,0 +1,158 @@
+@font-face {
+    font-family: "LED";
+    src: url("digital-7-mono.ttf");
+}
+
+body {
+    color: #ffffff;
+    background-color: black;
+    font-family: 'Helvetica Neue';
+}
+
+#controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-left: 30%;
+    margin-right: 10px;
+}
+
+
+
+#settingsUI {
+    color: #ffffff;
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    right: 0;
+    margin-left: 10px;
+    margin-right: 70%;
+
+
+}
+
+.hidden {
+    display: none;
+}
+
+#timerButtons {
+    position: absolute;
+    bottom: 0;
+    text-align: center;
+    width: 100%;
+    padding-bottom: 8px;
+}
+
+#muteToggleButton {
+    margin-right: 100px;
+    margin-left: -18px;
+}
+
+#intervalCount {
+    fill: #ffffff;
+    font-size: 10px;
+}
+
+#intervalHeader {
+    fill: #ffffff;
+    font-size: 3px;
+}
+
+#status_text{
+    fill: #ffffff;
+    font-size: 10px;
+}
+
+.lap {
+    fill: gray;
+    cursor: pointer;
+}
+
+.lapSelected {
+    fill: #00ff00;
+}
+
+#lapReset {
+    fill: gray;
+}
+
+#lapResetBorder {
+    stroke: gray;
+}
+
+#lapReset,
+#startStop,
+#emom,
+#thirtyfifteen,
+#twentyten{
+    cursor: pointer;
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Chrome/Safari/Opera */
+    -khtml-user-select: none;    /* Konqueror */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* Internet Explorer/Edge */
+    user-select: none;           /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+
+#startStop {
+    fill: #00ff00;
+}
+
+#startStopBorder {
+    stroke: #00ff00;
+}
+
+.time {
+    text-align: right;
+    color: red;
+    padding: 0;
+    margin: 0;
+    margin-bottom: -10px;
+    font-family: "LED";
+    font-size: 42vw;
+}
+
+
+#settingsUI p {
+    font-size: 30px;
+}
+
+#settingsUI label {
+    font-size: 20px;
+}
+
+#settingsUI .workTime label,
+#settingsUI .restTime label,
+#settingsUI .numSets label {
+    display: block;
+    padding-bottom: 4px;
+}
+
+#settingsUI input {
+    height: 34px;
+    font-size: 20px;
+    padding: 6px 12px;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    margin-bottom: 30px;
+    width: 100px;
+}
+
+#settingsUI .buttons {
+    margin-right: 8px;
+}
+
+#settingsUI button {
+    color: #ffffff;
+    background: #000000;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    font-size: 20px;
+    width: 100px;
+    height: 34px;
+}

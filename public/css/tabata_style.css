@@ -1,0 +1,111 @@
+@font-face {
+    font-family: "LED";
+    src: url("/static/assets/digital-7-mono.ttf");
+}
+
+body {
+    color: #ffffff;
+    background-color: gray;
+    font-family: 'Helvetica Neue';
+}
+
+
+
+.dot {
+  height: 15rem;
+  width: 15rem;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.hidden {
+    display: none;
+}
+
+#timerButtons {
+    /*position: absolute;
+    bottom: 0;*/
+    text-align: center;
+    /*width: 100%;*/
+    padding-bottom: 8px;
+}
+
+#muteToggleButton {
+    margin-right: 100px;
+    margin-left: -18px;
+}
+
+
+#status_text{
+    fill: #ffffff;
+    font-size: 10px;
+}
+
+.lap {
+    fill: gray;
+    cursor: pointer;
+}
+
+.lapSelected {
+    fill: #00ff00;
+}
+
+#lapReset {
+    fill: gray;
+}
+
+#lapResetBorder {
+    stroke: gray;
+}
+
+.noselect {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Chrome/Safari/Opera */
+    -khtml-user-select: none;    /* Konqueror */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* Internet Explorer/Edge */
+    user-select: none;           /* Non-prefixed version, currently
+                                  not supported by any browser */
+}
+
+.time {
+    text-align: center;
+    color: red;
+    padding: 0;
+    margin-top: -15vw;
+    font-family: "LED";
+    font-size: 38vw;
+}
+
+#status_text{
+    text-align: center;
+    color: blue;
+    padding: 0;
+    margin-top: -1vw;
+    font-size: 5vw;
+}
+
+form{
+    font-size: 3vw;
+    padding: 10px;
+}
+
+form input{font-size:4vw;
+}
+
+.row{
+    margin-top: -10vw;
+}
+#startStop {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 10vw;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  border-radius: 50%;
+}
