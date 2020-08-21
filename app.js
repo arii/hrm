@@ -24,11 +24,11 @@ app.get('/hrm_mock', function(req, res){
   res.sendFile(__dirname + '/public/hrm_mock.html');
 });
 
-app.get('/', function(req, res){
+app.get('/server_only', function(req, res){
   res.sendFile(__dirname + '/public/hrm_server.html');
 });
 
-app.get('/tabata', function(req, res){
+app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/tabata.html');
 });
 
