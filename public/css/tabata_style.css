@@ -3,21 +3,16 @@
     src: url("/static/assets/digital-7-mono.ttf");
 }
 
-body {
+/*body {
     color: #ffffff;
     background-color: gray;
     font-family: 'Helvetica Neue';
+}*/
+
+#tabata{
+    background-color: black;
 }
 
-
-
-.dot {
-  height: 15rem;
-  width: 15rem;
-  background-color: #bbb;
-  border-radius: 50%;
-  display: inline-block;
-}
 
 .hidden {
     display: none;
@@ -37,10 +32,6 @@ body {
 }
 
 
-#status_text{
-    fill: #ffffff;
-    font-size: 10px;
-}
 
 .lap {
     fill: gray;
@@ -73,39 +64,43 @@ body {
     text-align: center;
     color: red;
     padding: 0;
-    margin-top: -15vw;
+    margin-top: -12vw;
     font-family: "LED";
-    font-size: 38vw;
+    font-size: 25vw;
 }
 
 #status_text{
     text-align: center;
-    color: blue;
-    padding: 0;
-    margin-top: -1vw;
-    font-size: 5vw;
+    color: white;
+    font-size: 6vw;
 }
 
-form{
-    font-size: 3vw;
+#tabata form{
+    font-size: 2vw;
     padding: 10px;
+    margin-top:-10vw;
+    color:white;
 }
 
-form input{font-size:4vw;
+#tabata form input{font-size:2.5vw;
 }
 
-.row{
-    margin-top: -10vw;
+#tabata .row{
+    margin-top: -5vw;
+}
+#tabata{
+    margin-top:2vw;
 }
 #startStop {
   background-color: #4CAF50;
   border: none;
   color: white;
-  padding: 10vw;
+  padding: 5vw;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
   margin: 4px 2px;
   border-radius: 50%;
+  float:right;
 }

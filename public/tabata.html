@@ -12,32 +12,77 @@
 <audio id="longBeep" src="/static/assets/beep-01a.wav" autostart="false" ></audio>
 <audio id="shortBeep" src="/static/assets/beep-07.wav" autostart="false" ></audio>
 
+<div class="col-xs-12">
+    <h1> Heart Rate Server </h1>
+    <p> All heart rate readings will be displayed here in real-time
+    <a href="/hrm"> <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button>
+    </a> </p>
+</div>
+<div class="container">
+<div class="col-xs-12" style="height:10px;"></div>
 
-<div id="container-fluid">
-<div id="row">
+<div id="cards" class="card-deck">
+
+<div id="dummy_card" class="card text-center" style="max-width:'25%'">
+  <div class="card-header">
+      <h1 id="HRCardHeader" > Heart Rate </h1>
+      <h5 id="HRCardHeaderAge" >  </h5>
+  </div>
+
+  <div class="card-body">
+      <h4 id="statusText" >
+        &#x2764;
+      </h4>
+        <h1 id="HR" class="display-1">
+        </h1>
+  </div>
+
+  <div class="card-footer" id="statusBarDiv">
+      <h5 id="statusBar">waiting for heart rate data</h5>
+  </div>
+</div>
+</div>
+
+
+<div class="col-xs-12" style="height:50px;"></div>
+
+
+<div class="col-xs-12">
+    <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reset </button>
+</div>
+
+<div class="row">
+<div class="col-xs-12" style="height:6vw;"></div>
+</div>
+
+</div>
+<div id="tabata" class="container-fluid">
+<div class="row" id="tabatarow">
     <div id="timerUI" class="col-lg-12">
       <p class="time noselect">00:00</p>
-      <p id="status_text" class="noselect"></p>
     </div>
 </div>
         
-<div id="startrow" class="row justify-content-end">
-    <div class="col-4">
-        <button id="startStop" class="button "></button>
-    </div>
+<div class="row">
+<div class="col-xs-12" style="height:15vw;"></div>
 </div>
 
 
-<form>
-  <div class="row">
-    <div class ="col-sm-4">
-    <div class="col-sm-2">
+<form id="tabataForm">
+  <div class="row align-center">
+    <div class="col">
     <label>WORK</label>
-        <input id="workSec" type="number" placeholder="Work" min="0" value="20" />
+        <input  class="form-control " id="workSec" type="number" placeholder="Work" min="0" value="20" />
     </div>
-    <div class="col-sm-2">
+    <div class="col" >
         <label>REST</label>
-        <input id="restSec" type="number" placeholder="Rest" min="0" value="10"/>
+        <input id="restSec" class=" form-control" type="number" placeholder="Rest" min="0" value="10"/>
+    </div>
+    <div class="col-2">
+      <p id="status_text" class="noselect"></p>
+    </div>
+    <div id="startrow" class="col align-center">
+        <button id="startStop" class="button" type="submit"></button>
     </div>
     </div>
   </div>
@@ -45,7 +90,7 @@
 
 <div id="timerButtons" class="row justify-content-center" style="margin-top:0;">
          <a id="muteToggleButton">
-          <img src="/static/assets/speaker.png" width="60" height="48"/>
+          <img src="/static/assets/speaker.png" width="30" height="24"/>
         </a>
 </div>
 
@@ -97,6 +142,9 @@
     <script src="/static/js/tabata_timer.js"></script>
     <script src="/static/js/tabata_main.js"></script>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="/static/js/heartRateZones.js"></script>
+    <script   type="text/javascript"  src="/static/js/heartRateServer.js"></script>
 
 
   </body>

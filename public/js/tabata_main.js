@@ -157,11 +157,16 @@
         timer.lapResetTimer();
     });
     */
+    
+    $("#tabataForm").submit( function(event) {
 
-    byId('startStop').addEventListener('click', function() {
+    event.preventDefault();
+   
         updateValuesFromInputs();
         timer.toggleTimer();
         renderControls(timer);
+
+        $("#status_text").text("");
     });
 
    /* 
