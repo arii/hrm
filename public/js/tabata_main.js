@@ -119,7 +119,7 @@
             }
         
             if (isStartCountdown || timer.isCountdownTimer()) {
-                if (elapsed > 0 && elapsed <= 3000) {
+                if (elapsed > 0 && elapsed <= 5000) {
                     playShort();
                 }
             }
