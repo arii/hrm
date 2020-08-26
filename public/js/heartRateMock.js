@@ -37,8 +37,6 @@ function updateHR(){
     var hr = {
             'name': name, 
             'age': age,
-            'status_msg': status_msg,
-            'status_color': status_color,
             'rate': rate,
             'device': device,
             }

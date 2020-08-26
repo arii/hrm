@@ -1,5 +1,12 @@
  $(function () {
 var clients = {"dummy":null};
+var client_timers = {};
+var client_last_update = {};
+
+var stale_interval_time = 2000;
+var STALE_TIMEOUT= 30000;
+
+
 const socket = io( {
     transports:['websocket']
 });
@@ -22,12 +29,13 @@ function handleHRM(msg){
             removeClient("dummy");
         }
     }
+    console.log("updating date");
+    client_last_update[clients[msg.device]]= Date.now();
     updateHRM(msg);
 }
 
 function updateHRM(msg){
     id =clients[msg.device];
-
     $("#HRCardHeader_"+ id).text(msg.name);
     $("#HRCardHeaderAge_"+ id).text(msg.age);
     $("#HR_"+ id).text(msg.rate);
@@ -49,15 +57,39 @@ function updateHRM(msg){
 
 }
 
-function removeClient(id){
-    if (id == "dummy"){
+function checkDataIsRecent(msg){
+    id = clients[msg.device]
+    offset = Date.now() - client_last_update[id]
+    console.log("is id recent?", id, offset);
+    if(offset > STALE_TIMEOUT){
+        removeClient(msg.device);
+
+    } else if (offset > 2*stale_interval_time){
+        var hr = {
+            'name': msg.name,
+            'age': msg.age,
+            'rate': "--",
+            'device': msg.device,
+            }
+        updateHRM(hr);
+
+    }
+}
+
+function removeClient(device){
+    if (device == "dummy"){
         id = "dummy";
     }else{
-        id=clients[id];
+        id = clients[device]
+        clearInterval(client_timers[id]);
     }
+
+
     console.log("removing client " + id);
-    $("#" + id + "_card").remove();
-    delete clients[id];
+    $("#card_" + id).remove();
+    delete clients[device];
+    delete client_timers[id]
+    delete client_last_update[id]
 };
 
 function addNewClient(msg){
@@ -66,7 +98,10 @@ function addNewClient(msg){
     }else{
         id = Object.keys(clients).length + 1;
     }
+
     clients[msg.device] = id;
+    client_timers[id] =  setInterval(function() {checkDataIsRecent(msg)}, stale_interval_time);
+    client_last_update[id]= Date.now();
     //replaceAll not available 
     //new_card = empty_card.replaceAll("dummy", id);
     new_card = empty_card.split("dummy").join(id);
