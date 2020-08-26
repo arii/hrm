@@ -29,7 +29,6 @@ function handleHRM(msg){
             removeClient("dummy");
         }
     }
-    console.log("updating date");
     client_last_update[clients[msg.device]]= Date.now();
     updateHRM(msg);
 }
@@ -37,18 +36,21 @@ function handleHRM(msg){
 function updateHRM(msg){
     id =clients[msg.device];
     $("#HRCardHeader_"+ id).text(msg.name);
-    $("#HRCardHeaderAge_"+ id).text(msg.age);
+    //$("#HRCardHeaderAge_"+ id).text(msg.age);
     $("#HR_"+ id).text(msg.rate);
     //$("#statusBar_"+ id).text(msg.status_msg);
     //$("#statusBarDiv_"+ id).css("background-color", msg.status_color);
 
-
     zone = computeZone(msg.age, msg.rate);
-    console.log(computeZone(msg.age, msg.rate));
-    console.log(computeZonePercent(msg.age, msg.rate));
-    console.log(computeZoneAndPercent(msg.age, msg.rate));
+    percent = Math.floor(100*computeZonePercent(msg.age, msg.rate));
+    if (percent > 100){
+        percent = 100;
+    }
+    percent += "%"
     background = computeZoneStyle(msg.age, msg.rate);
-    console.log(background);
+
+    $("#HR_"+ id).text(percent);
+    $("#statusText_"+ id).text(msg.rate);
     $("#HR_"+id).parent().css("background-color", background);
 
 
@@ -111,23 +113,25 @@ function addNewClient(msg){
     // ADD HTML For new square
 }
 empty_card = `
-<div id="card_dummy" class="card text-center" style="width: 18rem;">
+<div id="card_dummy" class="card text-center">
   <div class="card-header">
-      <h1 id="HRCardHeader_dummy" > Heart Rate </h1>
+      <h5 id="HRCardHeader_dummy" > Heart Rate </h5>
       <h5 id="HRCardHeaderAge_dummy" >  </h5>
   </div>
 
   <div class="card-body">
-      <h4 id="statusText_dummy">
+        <h2 id="HR_dummy" > 
+        </h2>
+      <h3 id="statusText_dummy">
         &#x2764;
-      </h4>
-        <h1 id="HR_dummy" class="display-1">
-        </h1>
+      </h3>
+
   </div>
-`;
-/*  <div class="card-footer" id="statusBarDiv_dummy">
+  `;
+ /*<div class="card-footer" id="statusBarDiv_dummy">
       <p id="statusBar_dummy">waiting for heart rate data</p>
-  </div> */
+  </div> 
+  */
 
 });
 

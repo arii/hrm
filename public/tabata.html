@@ -12,18 +12,19 @@
 <audio id="longBeep" src="/static/assets/beep-01a.wav" autostart="false" ></audio>
 <audio id="shortBeep" src="/static/assets/beep-07.wav" autostart="false" ></audio>
 
-<div class="col-xs-12">
-    <h1> Heart Rate Server </h1>
-    <p> All heart rate readings will be displayed here in real-time
-    <a href="/hrm"> <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button>
-    </a> </p>
+<div class="row">
+    <div class="col">
+        <h2> Heart Rate Server</h2>
+    </div>
+    <div class="col">
+        <a href="/hrm"> <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button></a> 
+    </div>
 </div>
 <div class="container">
-<div class="col-xs-12" style="height:10px;"></div>
 
-<div id="cards" class="card-deck">
+<div id="cards" class="card-group">
 
-<div id="card_dummy" class="card text-center" style="max-width:'25%'">
+<div id="card_dummy" class="card text-center" style="max-width:'25%' margin-left:0; margin-right:0;">
   <div class="card-header">
       <h1 id="HRCardHeader" > Heart Rate </h1>
       <h5 id="HRCardHeaderAge" >  </h5>
