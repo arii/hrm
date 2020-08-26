@@ -31,8 +31,8 @@ function updateHRM(msg){
     $("#HRCardHeader_"+ id).text(msg.name);
     $("#HRCardHeaderAge_"+ id).text(msg.age);
     $("#HR_"+ id).text(msg.rate);
-    $("#statusBar_"+ id).text(msg.status_msg);
-    $("#statusBarDiv_"+ id).css("background-color", msg.status_color);
+    //$("#statusBar_"+ id).text(msg.status_msg);
+    //$("#statusBarDiv_"+ id).css("background-color", msg.status_color);
 
 
     zone = computeZone(msg.age, msg.rate);
@@ -89,11 +89,10 @@ empty_card = `
         <h1 id="HR_dummy" class="display-1">
         </h1>
   </div>
-
-  <div class="card-footer" id="statusBarDiv_dummy">
-      <p id="statusBar_dummy">waiting for heart rate data</p>
-  </div>
 `;
+/*  <div class="card-footer" id="statusBarDiv_dummy">
+      <p id="statusBar_dummy">waiting for heart rate data</p>
+  </div> */
 
 });
 
