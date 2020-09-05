@@ -52,7 +52,7 @@ __For more detailed information:__
 
 __Thanks__
 
-I would love to work with other people on improving this app. Ideally more personal trainers can continue providing guidance for improved fitness during the pandemic. I am releasing everything under a BSD license. 
+I would love to work with other people on improving this app. Ideally more personal trainers can continue providing guidance for improved fitness during the pandemic. I am releasing everything under an Apache 2.0 license. 
 
 Shout out to:
 
