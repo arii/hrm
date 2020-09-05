@@ -1,9 +1,11 @@
 {
-  "name": "hrm-client",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@onasafari/hrm",
+  "version": "0.0.1",
+  "description": "Heartrate monitor server client and other fitness tools",
+  "main": "bin/www",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "bootstrap": "^4.5.2",
@@ -19,5 +21,25 @@
     "popper": "^1.0.1",
     "popper.js": "^1.16.1",
     "socket.io": "^2.3.0"
-  }
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arii/hrm.git"
+  },
+  "keywords": [
+    "heartrate",
+    "bluetooth",
+    "fitness",
+    "tabata",
+    "ble"
+  ],
+  "author": "arii",
+  "license": "SEE LICENSE IN license.md",
+  "bugs": {
+    "url": "https://github.com/arii/hrm/issues"
+  },
+  "homepage": "https://github.com/arii/hrm#readme"
 }
