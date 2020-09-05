@@ -115,3 +115,11 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+# dont save the super secret stuff
+server.cert
+server.key
+
+# vim4lyfe
+*.swp
