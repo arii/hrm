@@ -13,7 +13,7 @@ I tried a few different things to transmit heart rate in real time:
  
  * https://github.com/arii/hrm_cam
 
-[cv2hrm](https://github.com/arii/hrm/raw/leader/docs/figs/evolve1.png "CV2 HRM")
+![cv2hrm](https://github.com/arii/hrm/raw/leader/docs/figs/evolve1.png "CV2 HRM")
 
 * Use a simple web bluetooth app to access realtime heart rate information on windows and linux.  Then use open broadcast studio (OBS) to add the window for heart rate information to the video stream (OBS has a virtualcam plugin).  This worked more consistently on windows, but sometimes the screens would resize or if the usb camera was disconnected and reconnected.  My mom (on windows) had difficulty getting to start up every single time and sometimes zoom would aggressively take permission over the video camera and it was hard for her to disable zoom's camera, renable on obs, and resize the windows.  For the linux side... well I updated my kernel and lost bluetooth capablities all together so I decided a web server would be much better.  Also the data gets mirrored over zoom which looks odd.
   
