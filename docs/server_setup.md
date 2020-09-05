@@ -56,8 +56,8 @@ sudo crontab -e
     I'm using nginx to host my website on port 80.  It automatically maps service onto
     port 443 to use https.  The nginx configuration file in `/etc/nginx/sites-available/default` gets updated using letsencrypt's certbot.  I recommend the following website tutorials: 
 
-   * [tutorial1](https://dev.to/guimg/how-to-serve-nodejs-applications-with-nginx-on-a-raspberry-jld) 
-    * [tutorial2](https://medium.com/@utkarsh_verma/configure-nginx-as-a-web-server-and-reverse-proxy-for-nodejs-application-on-aws-ubuntu-16-04-server-872922e21d38) 
+* [tutorial1](https://dev.to/guimg/how-to-serve-nodejs-applications-with-nginx-on-a-raspberry-jld) 
+* [tutorial2](https://medium.com/@utkarsh_verma/configure-nginx-as-a-web-server-and-reverse-proxy-for-nodejs-application-on-aws-ubuntu-16-04-server-872922e21d38) 
 
 The only gotcha I found was nginx configuration for location needs updating after using certbot
 
