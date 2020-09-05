@@ -23,7 +23,7 @@ heartrate.   This is only available in HTTPS and a set of supporting browsers.
 ![Web browser compatability table](https://github.com/arii/hrm/raw/leader/docs/figs/browser_capability.png "Web Browser Compatablity")
 [Web Browser Compatability Information ](https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#Browser_compatibility) 
 
-##### TLDR (as of August 2020):
+##### TLDR (as of September 2020):
 
 * It works in chrome for android.  No support for iOS.
 * Most modern computers with chrome are supported.  If you're in ubuntu, you 
