@@ -10,18 +10,21 @@ Due to the pandemic, Tim's gym, like many other closed.  However, we started doi
 I tried a few different things to transmit heart rate in real time:
 
 * python program to capture heart rate data.  Use opencv cv2.putText to write the data on top of the image and use a videoloopback driver to create a fake video device that has the added information.  This works, but I didn't want to attempt to replicate my results in linux on windows after reading about directshow
-  * https://github.com/arii/hrm_cam
-  ![cv2hrm](/home/ari/hrm/docs/figs/evolve1.png  "CV2 HRM")
+ 
+ * https://github.com/arii/hrm_cam
+
+![cv2hrm](https://github.com/arii/hrm/raw/leader/docs/figs/evolve1.png "CV2 HRM")
 
 * Use a simple web bluetooth app to access realtime heart rate information on windows and linux.  Then use open broadcast studio (OBS) to add the window for heart rate information to the video stream (OBS has a virtualcam plugin).  This worked more consistently on windows, but sometimes the screens would resize or if the usb camera was disconnected and reconnected.  My mom (on windows) had difficulty getting to start up every single time and sometimes zoom would aggressively take permission over the video camera and it was hard for her to disable zoom's camera, renable on obs, and resize the windows.  For the linux side... well I updated my kernel and lost bluetooth capablities all together so I decided a web server would be much better.  Also the data gets mirrored over zoom which looks odd.
-  * https://github.com/arii/demos
   
-    ![OBS + Web Client ](/home/ari/hrm/docs/figs/evolve2.png  "OBS + Web Client")
+* https://github.com/arii/demos
+  
+![OBS + Web Client ](https://github.com/arii/hrm/raw/leader/docs/figs/evolve2.png  "OBS + Web Client")
 
 
 Eventually I came to this solution which uses the web heartrate camera and server.  Tim has a computer setup with OBS studio to share its screen as a camera.  He uses it to write the exercises down, run a Tabata timer, and display everyone's current heartrate information
-  
-    ![OBS + Web App](/home/ari/hrm/docs/figs/evolve3.png  "OBS + Web App")
+
+![OBS + Web App](https://github.com/arii/hrm/raw/leader/docs/figs/evolve3.png  "OBS + Web App")
 
 
 

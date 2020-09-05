@@ -1,8 +1,12 @@
 # HRM
 
+![OBS + Web App](https://github.com/arii/hrm/raw/leader/docs/figs/evolve3.png  "OBS + Web App")
+
+
 ### Heart Rate Monitor Client and Server for Interactive Virtual Fitness
 
 HRM was built for my mom, myself, and her trainer, Tim, to continue personal workouts during the pandemic. HRM provides a web client + server solution to see real-time heart rate data from anywhere with a bluetooth, supported browser, and internet connection.  TODO: add more security
+
 
 __How does it work?__
 * Web bluetooth is an unstable, but really cool recent development that makes it easy to write websites that can send and receive bluetooth data.  Standardized Bluetooth 4.0/Ant+ heart rate monitors are relatively cheap 25-60$ and you can start tracking realtime heartrate data with a supported chrome browser. 
@@ -41,11 +45,12 @@ Currently has a 5 second countdown and then will loop through work and rest peri
 
 ![HRM Tabata](https://github.com/arii/hrm/raw/leader/docs/figs/hrm_tabata.gif "HRM tabata")
 
+
 __For more detailed information:__
 
-[server bringup](docs/server_setup.md) : how to host the server with a static ip and not just on local host
-[client bringup](docs/client_setup.md) : supported browsers and hardware information
-[detailed running notes](docs/running.md) : heart rate mocking and client zones
+* [server bringup](docs/server_setup.md) : how to host the server with a static ip and not just on local host
+* [client bringup](docs/client_setup.md) : supported browsers and hardware information
+* [detailed running notes](docs/running.md) : heart rate mocking and client zones
 
 
 
@@ -61,7 +66,7 @@ Shout out to:
 * [dogebot](https://www.linkedin.com/in/dogebot-wow-a71b79) for web UI information
 * [ilia](https://github.com/ilebedev) for helping me with web server stuff
 
-I tried a few different things before I got to this solution. Also, I have some more details here that I wrote on an exciting friday night during the pandemic: [origins story] (docs/evolution.md).
+I tried a few different things before I got to this solution. Also, I have some more details here that I wrote on an exciting friday night during the pandemic: [origins story](docs/evolution.md).
 
 
 
