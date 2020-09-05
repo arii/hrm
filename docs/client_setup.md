@@ -1,4 +1,5 @@
 # bluetooth client setup
+@author(arii)
 
 Individual bluetooth clients use [web bluetooth](https://webbluetoothcg.github.io/web-bluetooth/  ) to log
 heartrate.   
