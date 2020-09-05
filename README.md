@@ -43,9 +43,9 @@ Currently has a 5 second countdown and then will loop through work and rest peri
 
 __For more detailed information:__
 
-[server bringup](docs/server_setup.md) : how to host the server with a static ip and not just on local host
-[client bringup](docs/client_setup.md) : supported browsers and hardware information
-[detailed running notes](docs/running.md) : heart rate mocking and client zones
+* [server bringup](docs/server_setup.md) : how to host the server with a static ip and not just on local host
+* [client bringup](docs/client_setup.md) : supported browsers and hardware information
+* [detailed running notes](docs/running.md) : heart rate mocking and client zones
 
 
 
