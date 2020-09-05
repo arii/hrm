@@ -1,6 +1,7 @@
 {
   "name": "@onasafari/hrm",
   "version": "0.0.2",
+  "private": false,
   "description": "Heartrate monitor server client and other fitness tools",
   "main": "bin/www",
   "scripts": {
@@ -39,5 +40,6 @@
   "bugs": {
     "url": "https://github.com/arii/hrm/issues"
   },
-  "homepage": "https://github.com/arii/hrm#readme"
+  "homepage": "https://github.com/arii/hrm#readme",
+  "devDependencies": {}
 }
