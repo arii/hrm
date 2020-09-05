@@ -1,7 +1,7 @@
 # bluetooth client setup
 
-Individual bluetooth clients use web bluetooth to log
-heartrate.   https://webbluetoothcg.github.io/web-bluetooth/  
+Individual bluetooth clients use [web bluetooth](https://webbluetoothcg.github.io/web-bluetooth/  ) to log
+heartrate.   
 This is a standardized Generic Attribute Profile (GATT) for Bluetooth 4 wireless devices and generally works on chrome (see below).  
 
 
@@ -16,12 +16,11 @@ Perhaps the better BLE sensors sample at a faster rate.  Sometimes I see classic
 
 #### Phone/computer compatiblity 
 
-Individual bluetooth clients use web bluetooth to log
-heartrate.   https://webbluetoothcg.github.io/web-bluetooth/
+IIndividual bluetooth clients use [web bluetooth](https://webbluetoothcg.github.io/web-bluetooth/  ) to log
+heartrate.   This is only available in HTTPS and a set of supporting browsers. 
 
-This is only available in HTTPS and a set of supporting browsers. 
-
-https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#Browser_compatibility
+![Web browser compatability table](https://github.com/arii/hrm/raw/leader/docs/figs/browser_capability.png "Web Browser Compatablity")
+[Web Browser Compatability Information ](https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#Browser_compatibility) 
 
 ##### TLDR (as of August 2020):
 
@@ -30,7 +29,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth/requestDevice#Browser
 will need to enable experimental features.
 
 open chrome browser and in the url go to
-chrome://flags/#enable-experimental-web-platform-features
+[chrome://flags/#enable-experimental-web-platform-features](chrome://flags/#enable-experimental-web-platform-features) 
 and select "enable bluetooth" option.
 
 
