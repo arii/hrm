@@ -18,15 +18,34 @@ __Running__
 ```
 npm install
 npm start
-# go to localhost:3000 to see aggregate heart rate data and use a tabata timer
-# go to localhost:3000/hrm to log individual bluetooth heartrates
-# go to localhost:3000/hrm_mock to send fake heartrate data 
+#1- go to localhost:3000 to see aggregate heart rate data and use a tabata timer
+#2- go to localhost:3000/hrm to log individual bluetooth heartrates
+#3- go to localhost:3000/hrm_mock to send fake heartrate data 
 ```
 
-For more detailed information:
-[server bringup](docs/server_setup.md)
-[client bringup](docs/client_setup.md)
-[detailed running notes](docs/running.md)
+###### Starting tabata server and client
+After runing `npm start`, open browser to [localhost:3000](localhost:3000). Click the button to start logging a client heart rate.  Open an additional browser to [localhost:3000](localhost:3000) to view the client heartrate data in realtime.
+
+![HRM bringup](https://github.com/arii/hrm/raw/leader/docs/figs/hrm_start.gif "HRM bringup")
+
+
+###### Starting tabata server and client
+Test multiple clients using the mock client utility [localhost:3000/hrm_mock](localhost:3000/hrm_mock) or connect multiple bluetooth interfaces if you have them. 
+
+![HRM Mock](https://github.com/arii/hrm/raw/leader/docs/figs/hrm_mock.gif "HRM mock")
+
+
+
+##### Using the tabata/fitness timer
+Currently has a 5 second countdown and then will loop through work and rest periods indefinitely. Makes beeping noises.  
+
+![HRM Tabata](https://github.com/arii/hrm/raw/leader/docs/figs/hrm_tabata.gif "HRM tabata")
+
+__For more detailed information:__
+
+[server bringup](docs/server_setup.md) : how to host the server with a static ip and not just on local host
+[client bringup](docs/client_setup.md) : supported browsers and hardware information
+[detailed running notes](docs/running.md) : heart rate mocking and client zones
 
 
 
