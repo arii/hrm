@@ -61,7 +61,7 @@ Shout out to:
 * [dogebot](https://www.linkedin.com/in/dogebot-wow-a71b79) for web UI information
 * [ilia](https://github.com/ilebedev) for helping me with web server stuff
 
-I tried a few different things before I got to this solution. Also, I have some more details here that I wrote on an exciting friday night during the pandemic: [origins story] (docs/evolution.md).
+I tried a few different things before I got to this solution. Also, I have some more details here that I wrote on an exciting friday night during the pandemic: [origins story](docs/evolution.md).
 
 
 
