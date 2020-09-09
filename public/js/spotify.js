@@ -55,8 +55,8 @@ if (access_token && (state == null || state !== storedState)) {
         },
         success: function(response) {
           $('#login').hide();
-          $('#loggedin').show();
-            window.history.pushState({}, document.title, "/" + "spotify");
+          $('.loggedin').show();
+            window.history.pushState({}, document.title, "/" );
         }
 
     });

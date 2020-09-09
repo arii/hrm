@@ -95,13 +95,34 @@
         </a>
 </div>
 
-
 </div> 
 
       <audio id="longBeep" src="/static/assets/beep-01a.wav" autostart="false" ></audio>
       <audio id="shortBeep" src="/static/assets/beep-07.wav" autostart="false" ></audio>
     </div>
 
+<!-- hidden things -->
+
+<div class="row">
+    <div class="col">
+        <h6> Spotify controls: <h6>
+    </div>
+
+    <div id="login" class="col">
+        <button id="login-button" class="btn btn-primary">Log in with Spotify</button>
+    </div>
+    
+
+        <div class="col loggedin" style="display:none">
+            <button id="Next">Next</button>
+        </div>
+
+        <div class="col loggedin" style="display:none">
+            <button id="Pause">Pause</button>
+        </div>
+</div>
+
+</div>
 <input id="countdownMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
 <input id="countdownSec" type="number" placeholder="sec" min="0" class = "hidden"/>
 <input id="workMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
@@ -110,31 +131,7 @@
 <button id="done" class="hidden">Done</button>
 
 
-<!--
-    <div id="settingsUI" >
-      <p class="hidden">COUNTDOWN</p>
-      <input id="countdownMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-      <input id="countdownSec" type="number" placeholder="sec" min="0" class = "hidden"/>
-      <p>Tabata</p>
-      <div class="workTime">
-        <label>WORK TIME</label>
-        <input id="workMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-        <input id="workSec" type="number" placeholder="sec" min="0" value="20" />
-      </div>
-      <div class="restTime">
-        <label>REST TIME</label>
-        <input id="restMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-        <input id="restSec" type="number" placeholder="sec" min="0" value="10"/>
-      </div>
-      <div class="numSets">
-        <label># INTERVALS</label>
-        <input id="setsCount" type="number" placeholder="0" min="0" max="99" value="8"/>
-      </div>
-      <div class="buttons hidden">
-        <button id="done">Done</button>
-      </div>
-    </div>
-    -->
+
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <script src="/js/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
@@ -143,6 +140,7 @@
     <script src="/static/js/tabata_timer.js"></script>
     <script src="/static/js/tabata_main.js"></script>
 
+    <script src="/static/js/spotify.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/static/js/heartRateZones.js"></script>
     <script   type="text/javascript"  src="/static/js/heartRateServer.js"></script>
