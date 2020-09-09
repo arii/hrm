@@ -98,7 +98,7 @@ function addNewClient(msg){
     if ("dummy" in clients){
         id = 0;
     }else{
-        id = Object.keys(clients).length + 1;
+        id = Object.keys(clients).length;
     }
 
     clients[msg.device] = id;
