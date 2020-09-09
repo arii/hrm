@@ -10,32 +10,36 @@
   <body>
 
 <form id="nameAgeForm">
-  <div class="form-row col-sm-2">
+  <div class="form-row ">
+    <div class="col-md-4">
       <label class="sr-only" for="inlineFormInputGroupUsername">Name</label>
       <div class="input-group">
         <div class="input-group-prepend">
           <div class="input-group-text">Name</div>
         </div>
-        <input type="text" class="form-control" id="userName" value="Avi">
+        <input type="text" class="form-control" id="userName" placeholder="Name">
       </div>
     </div> 
-    </div>
 
-   <div class="col-sm-2 my-1">
+   <div class="col-md-4">
       <label class="sr-only" for="inlineFormInputGroupUsername">Age</label>
       <div class="input-group">
         <div class="input-group-prepend">
           <div class="input-group-text">Age</div>
         </div>
-        <input type="text" class="form-control" id="userAge" placeholder="Username" value="59">
+        <input type="text" class="form-control" id="userAge" placeholder="Age" >
       </div>
     </div> 
 
 
-    <div class="col-auto">
+    <div class="col">
       <button id="nameAgeBtn" type="submit" class="btn btn-primary mb-2">Submit</button>
     </div>
   </div>
+  
+  </div>
+
+
 </form>
 
 
@@ -64,6 +68,14 @@
     <button class="btn btn-outline-primary" style="display:none" type="button" id="reconnect" >Reconnect </button>
   </div>
 
+<div clas="col-md-2" id="information">
+    <p>
+    Hitting submit will send your realtime heart-rate data to our
+    live server.  Your name, age, and heart rate will not be recorded.  
+    Currently there is no restriction on who can view real-time heart rate data.
+    </p>
+
+</div>
 
 
 
