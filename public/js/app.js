@@ -32,6 +32,8 @@ function updateStatus(text, isHR){
 }
 
 function updateStatusBar(text, color){
+    return;
+    /* disabling status bar update */
 	    statusBar.textContent = text;
 		statusBarDiv.style.backgroundColor = color;
    }
@@ -47,6 +49,7 @@ $("#nameAgeForm").submit(function(event){
 
     heartRateSensor.updateNameAge(userName.value, userAge.value);
     nameAgeForm.style.display = "none";
+    statusBarDiv.style.display = "none";
     reconnect.style.display = "block";
     initialClick();
 });
