@@ -32,6 +32,11 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/public/tabata.html');
 });
 
+app.get('/spotify', function(req, res){
+  res.sendFile(__dirname + '/public/spotify.html');
+});
+
+
 
 // Socket.io
 var io           = socket_io();
