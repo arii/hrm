@@ -64,7 +64,7 @@
     text-align: center;
     color: red;
     padding: 0;
-    margin-top: -12vw;
+    padding-top: 0vw;
     font-family: "LED";
     font-size: 25vw;
 }
@@ -78,7 +78,7 @@
 #tabata form{
     font-size: 2vw;
     padding: 10px;
-    margin-top:-10vw;
+    margin-top:-5vw;
     color:white;
 }
 
@@ -89,7 +89,7 @@
     margin-top: -5vw;
 }
 #tabata{
-    margin-top:2vw;
+    margin-top:0vw;
 }
 #startStop {
   background-color: #4CAF50;
