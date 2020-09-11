@@ -120,6 +120,14 @@
         <div class="col-md-3 loggedin" style="display:none">
             <button id="Pause">Pause</button>
         </div>
+
+        <div class="col-md-3 loggedin" style="display:none">
+        <input type="checkbox" id="auto_spotify" name="auto_spotify"
+         checked>
+        <label for="auto_spotify">Auto start/stop</label>
+        </div>
+
+
 </div>
 
 </div>
@@ -136,11 +144,11 @@
     <script src="/js/jquery.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
 
+    <script src="/static/js/spotify.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/css/tabata_style.css">
     <script src="/static/js/tabata_timer.js"></script>
     <script src="/static/js/tabata_main.js"></script>
 
-    <script src="/static/js/spotify.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/static/js/heartRateZones.js"></script>
     <script   type="text/javascript"  src="/static/js/heartRateServer.js"></script>

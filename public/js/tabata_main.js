@@ -54,8 +54,20 @@
     var renderControls = function(timer) {
         if (!timer.isRunning()) {
             $("#startStop").css("background-color", "#00ff00");
+            
+            if($("#auto_spotify").prop("checked") == true){
+                spotify_pause();
+                console.log("pause");
+            }
+
         }else{
             $("#startStop").css("background-color", "#ff0000");
+            
+            if($("#auto_spotify").prop("checked") == true){
+                spotify_next();
+                console.log("next");
+            }
+
         }
     };
 
@@ -119,7 +131,7 @@
             }
         
             if (isStartCountdown || timer.isCountdownTimer()) {
-                if (elapsed > 0 && elapsed <= 5000) {
+                if (elapsed > 0 && elapsed <= 3000) {
                     playShort();
                 }
             }
@@ -277,7 +289,7 @@
          //   byId('intervalUI').classList.add('hidden');
         }
 
-        renderControls(timer);
+        //renderControls(timer);
         renderIntervals(timer);
         renderTime(minSecToMS(countdownMin, countdownSec));
 

@@ -1,4 +1,4 @@
-$(function() {
+//$(function() {
 /* spotify.js
  * @author(arii)
  * Expands web-api-auth implicit grant example
@@ -67,6 +67,16 @@ if (access_token && (state == null || state !== storedState)) {
 }
 
 $("#Next").click(function(){
+    spotify_next()
+});
+
+$("#Pause").click(function(){
+    spotify_pause()
+});
+
+
+
+function spotify_next(){
 $.ajax({
     url: "https://api.spotify.com/v1/me/player/next",
     type: 'POST',
@@ -77,9 +87,9 @@ $.ajax({
      console.log(data);
     },
 });
-});
+}
 
-$("#Pause").click(function(){
+function spotify_pause(){
 $.ajax({
     url: "https://api.spotify.com/v1/me/player/pause",
     type: 'PUT',
@@ -90,8 +100,7 @@ $.ajax({
      console.log(data);
     },
 });
-
-});
+}
 
 $("#login-button").click(function(){
     var client_id = 'e3f3c31112ab4172b1a248e9de99518a'; //TODO load from fs
@@ -111,5 +120,5 @@ $("#login-button").click(function(){
 
     window.location = url;
   });
-});
+//});
 
