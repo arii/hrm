@@ -53,6 +53,12 @@ io.on('connection', function(socket){
       io.emit('hrm', msg);
   });
 
+  
+ socket.on('click_client', function(msg){
+      io.emit('click', msg);
+  });
+
+
 });
 
 io.on('connection', (socket) => {

@@ -1,7 +1,3 @@
-'use strict';
-
-(function() {
-
     function byId(id) {
         return document.getElementById(id);
     }
@@ -170,16 +166,21 @@
     });
     */
     
-    $("#tabataForm").submit( function(event) {
+   /* $("#tabataForm").submit( function(event) {
+    // moved to server_client_clicks.js
+        event.preventDefault();
+        tabataFormClicked();
+    });*/
 
-    event.preventDefault();
-   
+    function tabataFormClicked(){
         updateValuesFromInputs();
         timer.toggleTimer();
         renderControls(timer);
 
         $("#status_text").text("");
-    });
+    };
+
+
 
    /* 
     byId('emom').addEventListener('click', function() {
@@ -296,5 +297,3 @@
        // byId('settingsUI').classList.add('hidden');
        // byId('timerUI').classList.remove('hidden');
     }
-    //);
-})();

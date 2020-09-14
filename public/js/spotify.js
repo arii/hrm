@@ -66,17 +66,18 @@ if (access_token && (state == null || state !== storedState)) {
   }
 }
 
-$("#Next").click(function(){
+/*moved to server_client_clicks
+ * $("#Next").click(function(){
     spotify_next()
 });
 
 $("#Pause").click(function(){
     spotify_pause()
 });
+*/
 
-
-
-function spotify_next(){
+// renamed from spotify_next
+function do_spotify_next(){
 $.ajax({
     url: "https://api.spotify.com/v1/me/player/next",
     type: 'POST',
@@ -89,7 +90,8 @@ $.ajax({
 });
 }
 
-function spotify_pause(){
+//renamed from spotify_pause
+function do_spotify_pause(){
 $.ajax({
     url: "https://api.spotify.com/v1/me/player/pause",
     type: 'PUT',
