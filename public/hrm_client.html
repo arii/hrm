@@ -3,11 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heart Rate Sensor Demo</title>
+    <meta name="google-signin-client_id" content="170857720131-rje3b3dlgfsq5bkfh633ithtm1euii1g.apps.googleusercontent.com">
+    <title>Heart Rate Tracker </title>
     <meta name="description" content="Monitor a heart rate sensor with a Web Bluetooth app.">
     <link rel="icon" sizes="192x192" href="../favicon.ico">
   </head>
   <body>
+<script>
+
+    document.cookie = 'cookie2=value2; SameSite=None; Secure';
+</script>
 
 <form id="nameAgeForm">
   <div class="form-row ">
@@ -71,9 +76,19 @@
 <div clas="col-md-2" id="information">
     <p>
     Hitting submit will send your realtime heart-rate data to our
-    live server.  Your name, age, and heart rate will not be recorded.  
+    live server.  
     Currently there is no restriction on who can view real-time heart rate data.
     </p>
+
+    <div style="display:none">
+        See <a href="/privacy"> privacy</a> for details.  This beta version of google fit integration
+        will send your heart rate activity to your Google Fit profile. 
+
+
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <a href="#" onclick="signOut();">Sign out</a>
+    </div>
+
 
 </div>
 
@@ -104,6 +119,10 @@
       <div id="statusText">GET &#x2764;</div> -->
       <canvas id="waves"></canvas>
     </div>
+   
+    <script src="/static/js/google_fit.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <script src="/js/jquery.min.js"></script>

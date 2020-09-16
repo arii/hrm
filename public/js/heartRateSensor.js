@@ -18,7 +18,7 @@
     updateNameAge(name, age){
         this.name = name;
         this.age = age;
-        console.log("name: " + name + " age: " + age);
+        //console.log("name: " + name + " age: " + age);
     }
 
     // constructs a json object with all relevant data
@@ -68,7 +68,7 @@
             'rate': rate,
             'device': device,
             }
-        console.log(hr);
+        //console.log(hr);
     if(status_msg == "connected" && rate == "--"){
         return;
     }
@@ -110,7 +110,7 @@
         }
 
 		var status = this.status_msg;
-		console.log("status: " + status);
+		//console.log("status: " + status);
 		const event = new CustomEvent('status', { detail: status });
 		document.dispatchEvent(event);
 	}
