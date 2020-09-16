@@ -92,24 +92,26 @@
       <audio id="shortBeep" src="/static/assets/beep-07.wav" autostart="false" ></audio>
     </div>
 
-<div class="row" style="height:50px;">
+<div class="row" >
+    <div id="login" class="col-md-3">
+        <button id="login-button" class="btn btn-primary">Log in with Spotify</button>
+    </div>
+</div>
+
+    <div class="row">
     <div class="col-md-3">
         <h6> Spotify controls: <h6>
     </div>
 
-    <div id="login" class="col-md-3">
-        <button id="login-button" class="btn btn-primary">Log in with Spotify</button>
-    </div>
-
-    <div class="col-md-3 loggedin" style="display:none">
+    <div class="col-md-3 loggedin">
         <button id="Next">Next</button>
     </div>
 
-    <div class="col-md-3 loggedin" style="display:none">
+    <div class="col-md-3 loggedin">
         <button id="Pause">Pause</button>
     </div>
 
-    <div class="col-md-3 loggedin" style="display:none">
+    <div class="col-md-3 loggedin">
         <input type="checkbox" id="auto_spotify" name="auto_spotify"
                                                  checked>
         <label for="auto_spotify">Auto start/stop</label>

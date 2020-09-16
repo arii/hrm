@@ -62,7 +62,7 @@ if (access_token && (state == null || state !== storedState)) {
     });
   } else {
       $('#login').show();
-      $('#loggedin').hide();
+    //  $('#loggedin').hide();
   }
 }
 
