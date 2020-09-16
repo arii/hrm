@@ -6,6 +6,13 @@ var client_last_update = {};
 var stale_interval_time = 2000;
 var STALE_TIMEOUT= 30000;
 
+var last_uuid = 0;
+
+function get_uuid(){
+    last_uuid += 1;
+    return last_uuid;
+}
+
 
 const socket = io( {
     transports:['websocket']
@@ -95,11 +102,13 @@ function removeClient(device){
 };
 
 function addNewClient(msg){
+    id = get_uuid();
+    /*
     if ("dummy" in clients){
         id = 0;
     }else{
         id = Object.keys(clients).length;
-    }
+    }*/
 
     clients[msg.device] = id;
     client_timers[id] =  setInterval(function() {checkDataIsRecent(msg)}, stale_interval_time);
