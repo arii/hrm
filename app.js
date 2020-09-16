@@ -36,6 +36,11 @@ app.get('/spotify', function(req, res){
   res.sendFile(__dirname + '/public/spotify.html');
 });
 
+app.get('/privacy', function(req, res){
+  res.sendFile(__dirname + '/public/privacy.html');
+});
+
+
 
 
 // Socket.io
