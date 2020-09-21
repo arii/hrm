@@ -41,6 +41,11 @@ app.get('/privacy', function(req, res){
   res.sendFile(__dirname + '/public/privacy.html');
 });
 
+app.get('/phone', function(req, res){
+  res.sendFile(__dirname + '/public/phone.html');
+});
+
+
 
 
 
