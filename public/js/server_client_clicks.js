@@ -48,21 +48,31 @@ function emitClick(next, pause, workout_time, rest_time){
     socket.emit("click_client", ds);
 }
 
-
+function spotifyOK(){
+    return typeof do_spotify_pause === "function";
+}
 /* handle clicked events from socket emit */
 
 function handle_spotify_pause(){
-    do_spotify_pause();
+    if (spotifyOK()){
+        do_spotify_pause();
+    }
 }
 
 function handle_spotify_next(){
-    do_spotify_next();
+    if (spotifyOK()){
+        do_spotify_next();
+    }
 }
 
 function handle_tabata_timing(data){
     $("#workSec").val(data.workout_time);
     $("#restSec").val(data.rest_time);
-    tabataFormClicked();
+    
+    if(typeof tabataFormClicked === "function"){
+
+        tabataFormClicked();
+    }
 };
 
 
