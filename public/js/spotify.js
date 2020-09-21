@@ -76,6 +76,15 @@ $("#Pause").click(function(){
 });
 */
 
+const $valueSpan = $('.valueSpan');
+  const $value = $('#slider11');
+  $valueSpan.html($value.val());
+  $value.on('input change', () => {
+
+    $valueSpan.html($value.val());
+      do_spotify_volume($value.val());
+  });
+
 // renamed from spotify_next
 function do_spotify_next(){
 $.ajax({
@@ -103,6 +112,35 @@ $.ajax({
     },
 });
 }
+
+//renamed from spotify_pause
+function do_spotify_volume(volume_percent){
+ url_= "https://api.spotify.com/v1/me/player/volume?volume_percent=";
+ url_+=volume_percent;
+
+$.ajax({
+    url: url_,
+    type: 'PUT',
+    headers: {
+        'Authorization' : 'Bearer ' + access_token
+},
+    success: function(data) {
+     console.log(data);
+    },
+});
+}
+
+
+$("#vol50").click(function(){
+    do_spotify_volume(50);
+});
+$("#vol0").click(function(){
+    do_spotify_volume(0);
+});
+$("#vol100").click(function(){
+    do_spotify_volume(100);
+});
+
 
 $("#login-button").click(function(){
     var client_id = 'e3f3c31112ab4172b1a248e9de99518a'; //TODO load from fs
