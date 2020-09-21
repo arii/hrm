@@ -21,6 +21,8 @@ function handleClick(msg){
         handle_spotify_pause();
     }else if(msg.next){
         handle_spotify_next();
+    }else if(msg.volume_percent!=null){
+        handle_volume_percent(msg);
     }else{
         if(msg.workout_time==null){
             console.log("cannot format tabata timing");
@@ -32,16 +34,18 @@ function handleClick(msg){
     }
 }
 
-function emitClick(next, pause, workout_time, rest_time){
+function emitClick(next, pause, volume_percent, workout_time, rest_time){
     
     var ds_next = next || false;
     var ds_pause = pause || false;
+    var ds_volume_percent = volume_percent ||null;
     var ds_workout_time = workout_time || null;
     var ds_rest_time = rest_time || null;
 
     var ds = {
         'next': ds_next,
         'pause': ds_pause,
+        'volume_percent': ds_volume_percent,
         'workout_time': ds_workout_time,
         'rest_time': ds_rest_time
         };
@@ -65,6 +69,11 @@ function handle_spotify_next(){
     }
 }
 
+function handle_volume_percent(msg){
+    if(spotifyOK()){
+        do_spotify_volume(msg.volume_percent);
+    }
+}
 function handle_tabata_timing(data){
     $("#workSec").val(data.workout_time);
     $("#restSec").val(data.rest_time);
@@ -88,10 +97,14 @@ function spotify_pause(){
     emitClick(false, true);
 }
 
+function spotify_volume(percent){
+    emitClick(false, false, percent); 
+}
+
 function tabata_timing(data){
     workSec = $('#workSec').val();
     restSec = $('#restSec').val();
-    emitClick(false, false, workSec, restSec);
+    emitClick(false, false, null, workSec, restSec);
 };
 
 $("#tabataForm").submit( function(event) {
@@ -105,6 +118,16 @@ $("#Next").click(function(){
 
 $("#Pause").click(function(){
     spotify_pause()
+});
+
+
+const $spotifySpan = $('#spotifyValSpan');
+const $spotifyvalue = $('#spotifyVolume');
+  $spotifySpan.html($spotifyvalue.val());
+  $spotifyvalue.on('input change', () => {
+
+    $spotifySpan.html($spotifyvalue.val());
+      spotify_volume($spotifyvalue.val());
 });
 
 

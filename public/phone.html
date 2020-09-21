@@ -30,9 +30,23 @@
         <label for="auto_spotify">Auto start/stop</label>
         </div>
        -->
-
-
     </div>
+<div class="row m-3">
+    
+    <div class="col">
+            <p> Volume</p>
+    </div>
+
+    <div class="col">
+        <form class="range-field w-100">
+            <input id="spotifyVolume" class="border-0" type="range" min="0" max="100" step="10" />
+        </form>
+    </div>
+    <div class="col">
+        <span id="spotifyValSpan" class="font-weight-bold text-primary ml-2 mt-1 valueSpan"></span>
+    </div>
+</div>
+
 
 <form id="tabataFormPhone">
     <div class="row">
@@ -55,7 +69,7 @@
    
     <div class="row mb-2 mt-2">
         <div class="col mx-auto text-center">
-            <button class="btn-lg btn-outline-primary" type="submit" id="startStop" >Start Timer</button>
+            <button style="background-color:#00ff00" class="btn-lg btn-outline-primary" type="submit" id="startStop" >Start Timer</button>
         </div>
     </div>
     

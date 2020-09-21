@@ -19,9 +19,12 @@ $("#tabataFormPhone").submit( function(event) {
         // set timer off
         timer_on = false;
         $("#startStop").text("Start Timer");
+        $("#startStop").css("background-color", "#00ff00");
     }else{
         timer_on = true;
-        $("#startStop").text("Start Timer");
+        $("#startStop").text("Stop Timer");
+
+        $("#startStop").css("background-color", "#ff0000");
     }
     tabata_timing();
 });
