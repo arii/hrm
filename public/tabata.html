@@ -27,63 +27,55 @@
         <button id="login-button" class="btn btn-primary">Log in with spotify</button>
     </div>
 
-
 </div>
-<div class="container">
-
-<div id="cards" class="card-group">
-
-<div id="card_dummy" class="card text-center" style="max-width:'25%' margin-left:0; margin-right:0;">
-  <div class="card-header">
-      <h1 id="HRCardHeader" > Heart Rate </h1>
-      <h5 id="HRCardHeaderAge" >  </h5>
-  </div>
-
-  <div class="card-body">
-      <h4 id="statusText" >
-        &#x2764;
-      </h4>
-        <h1 id="HR" class="display-1">
-        </h1>
-  </div>
-
-  <div class="card-footer" id="statusBarDiv">
-      <h5 id="statusBar">waiting for heart rate data</h5>
-  </div>
-</div>
-</div>
-
-</div>
-
 
 <div id="tabata" class="container-fluid">
     <div class="row" id="tabatarow">
-        <div id="maintime" class="col-lg-12">
-            <p class="time noselect">00:00</p>
+        <div id="maintime" class="col-lg-9">
+            <p class="time display-1">00:00</p>
+        </div>
+
+    <div id="tabatatime"  class="col-lg-3 align-middle text-center ">
+        <div class="row">
+            <div class="col"> <p>Work Time:</p> </div>
+            <div class="col"> <p id="workSec">20</p> </div>
+        </div>
+        <div class="row">
+            <div class="col"> <p>Rest Time:</p> </div>
+            <div class="col"> <p id="restSec">10</p> </div>
         </div>
     </div>
-
-    <div class="row">
-        <div id="timerButtons" class="col-2 justify-content-center">
-        <a id="muteToggleButton">
-          <img src="/static/assets/speaker.png" width="30" height="24"/>
-        </a>
-    </div>
-
-    <div class="row">
-        <p id="status_text"></p>
-    </div>
-
 </div>
-
-<div class="row p-2 align-middle text-center ">
-    <div class="col"> <p>Work Time:</p> </div>
-    <div class="col"> <p id="workSec">20</p> </div>
-    <div class="col"> <p>Rest Time:</p> </div>
-    <div class="col"> <p id="restSec">10</p> </div>
 </div>
         
+
+
+<div class="container-fluid">
+    <div id="cards" class="card-columns">
+    <div id="card_dummy" class="card text-center" style="max-width:'25%' margin-left:0; margin-right:0;">
+        <div class="card-header">
+            <h1 id="HRCardHeader" > Heart Rate </h1>
+            <h5 id="HRCardHeaderAge" >  </h5>
+        </div>
+
+        <div class="card-body">
+            <h4 id="statusText" >
+                &#x2764;
+            </h4>
+            <h1 id="HR" class="display-1">
+            </h1>
+        </div>
+
+        <div class="card-footer" id="statusBarDiv">
+            <h5 id="statusBar">waiting for heart rate data</h5>
+        </div>
+    </div>
 </div>
+
+</div>
+
+
+        
 <!-- hidden things -->
 
 </div>

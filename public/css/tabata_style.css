@@ -6,12 +6,16 @@
 #tabata{
     background-color: black;
 }
-
+#tabatatime{
+    color:white
+}
 .hidden {
     display: none;
 }
 
-
+.card-columns {
+    column-count: 2;
+  }
 .noselect {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none;   /* Chrome/Safari/Opera */
@@ -26,7 +30,6 @@
     text-align: center;
     color: red;
     font-family: "LED";
-    font-size: 25vw;
 }
 
 #status_text{
