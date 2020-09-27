@@ -18,8 +18,16 @@
         <h2> Heart Rate Server</h2>
     </div>
     <div class="col">
-        <a href="/hrm"> <button class="btn btn-outline-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button></a> 
+        <a href="/hrm"> <button class="btn btn-primary" type="button" id="nameAgeBtn" >Log Your HeartRate</button></a> 
     </div>
+    <div class="col">
+        <a href="/phone"> <button class="btn btn-primary" type="button" id="phoneui" >Phone controls</button></a> 
+    </div>
+     <div id="login" class="col">
+        <button id="login-button" class="btn btn-primary">Log in with spotify</button>
+    </div>
+
+
 </div>
 <div class="container">
 
@@ -50,15 +58,24 @@
 
 <div id="tabata" class="container-fluid">
     <div class="row" id="tabatarow">
-        <div id="timerUI" class="col-lg-12">
-        <p class="time noselect">00:00</p>
+        <div id="maintime" class="col-lg-12">
+            <p class="time noselect">00:00</p>
         </div>
     </div>
+
+    <div class="row">
+        <div id="timerButtons" class="col-2 justify-content-center">
+        <a id="muteToggleButton">
+          <img src="/static/assets/speaker.png" width="30" height="24"/>
+        </a>
+    </div>
+
+    <div class="row">
+        <p id="status_text"></p>
+    </div>
+
 </div>
 
-<div class="row">
-    <p id="status_text"></p>
-</div>
 <div class="row p-2 align-middle text-center ">
     <div class="col"> <p>Work Time:</p> </div>
     <div class="col"> <p id="workSec">20</p> </div>
@@ -66,39 +83,11 @@
     <div class="col"> <p id="restSec">10</p> </div>
 </div>
         
-<div class="row">
-    <div id="timerButtons" class="row justify-content-center" style="margin-top:0;">
-        <a id="muteToggleButton">
-          <img src="/static/assets/speaker.png" width="30" height="24"/>
-        </a>
-    </div>
-</div> 
-
-</div>
-
-<div class="row" >
-    <div id="login" class="col-md-3">
-        <button id="login-button" class="btn btn-primary">Log in with Spotify</button>
-    </div>
 </div>
 <!-- hidden things -->
 
 </div>
   <input class="hidden" type="checkbox" id="auto_spotify" name="auto_spotify" checked>
-<!--
-<button id="startStop" class="hidden" type="submit"></button>
--->
-<!-- <input  class="hidden " id="workSec" type="number" placeholder="Work" min="0" value="20" />
-<input id="restSec" class="hidden" type="number" placeholder="Rest" min="0" value="10"/>
-
-<input id="countdownMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-<input id="countdownSec" type="number" placeholder="sec" min="0" class = "hidden"/>
-<input id="workMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-<input id="restMin" type="number" placeholder="min" min="0" max="99" class="hidden"/>
-<input id="setsCount" type="number" placeholder="0" min="0" max="99" value="100" class="hidden"/>
-<button id="done" class="hidden">Done</button>
--->
-
 
 
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -106,7 +95,7 @@
     <script src="/js/bootstrap.min.js"></script>
 
     <script src="/static/js/spotify.js"></script>
-    <link rel="stylesheet" type="text/css" href="/static/css/tabata_style.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/tabata_style.css"> 
     <script src="/static/js/tabata_timer.js"></script>
     <script src="/static/js/tabata_main.js"></script>
 

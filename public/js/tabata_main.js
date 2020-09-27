@@ -141,7 +141,7 @@
 
             if (starting || (timer.isCountdownTimer() && elapsed <= 0)) {
                 playLong();
-                renderStatus("Workout time elapsed");
+                //renderStatus("Workout time elapsed");
 
             }
             renderTime(elapsed, format);
@@ -236,9 +236,9 @@
 
         var src = '';
         if (isMuted) {
-            src = 'speaker-muted.png';
+            src = '/static/assets/speaker-muted.png';
         } else {
-            src = 'speaker.png';
+            src = '/static/assets/speaker.png';
             loadAudio();
         }
         document.querySelector('#muteToggleButton img').src = src;
