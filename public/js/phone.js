@@ -11,6 +11,8 @@ function updateHotkeys(work, rest){
 /* update default timing settings */
     $('#workSec').val(work);
     $('#restSec').val(rest);
+    $("#tabataFormPhone").submit();
+
 }
 
 $("#tabataFormPhone").submit( function(event) {
@@ -39,5 +41,8 @@ $("#thirtyfifteen").click(function(){
 });
 $("#emom").click(function(){
     updateHotkeys("60","60");
+});
+$("#runningclock").click(function(){
+    updateHotkeys("0","0");
 });
 

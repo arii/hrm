@@ -78,8 +78,8 @@ function handle_volume_percent(msg){
     }
 }
 function handle_tabata_timing(data){
-    $("#workSec").val(data.workout_time);
-    $("#restSec").val(data.rest_time);
+    $("#workSec").text(data.workout_time);
+    $("#restSec").text(data.rest_time);
     
     if(typeof tabataFormClicked === "function"){
 
