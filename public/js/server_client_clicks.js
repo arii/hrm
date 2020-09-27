@@ -53,7 +53,7 @@ function emitClick(next, pause, volume_percent, workout_time, rest_time){
 }
 
 function spotifyOK(){
-    return access_token && typeof do_spotify_pause === "function";
+    return (typeof(access_token) !== "undefined")  && (typeof do_spotify_pause === "function");
 }
 /* handle clicked events from socket emit */
 
