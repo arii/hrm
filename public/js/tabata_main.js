@@ -141,6 +141,7 @@
 
             if (starting || (timer.isCountdownTimer() && elapsed <= 0)) {
                 playLong();
+                renderStatus("Workout time elapsed");
 
             }
             renderTime(elapsed, format);
@@ -256,6 +257,7 @@
 
     function updateValuesFromInputs(){
         function getVal(value) {
+            console.log(value);
             var val = parseInt(value, 10);
             if (isNaN(val)) {
                 val = 0;
@@ -268,11 +270,11 @@
         countdownSec = getVal(byId('countdownSec').value);
 
         var workMin, workSec, numSets, restMin, restSec;
-        workMin = getVal(byId('workMin').value);
-        workSec = getVal(byId('workSec').value);
-        restMin = getVal(byId('restMin').value);
-        restSec = getVal(byId('restSec').value);
-        numSets = getVal(byId('setsCount').value);
+        workMin = 0;
+        workSec = getVal(byId('workSec').innerText);
+        restMin = 0;
+        restSec = getVal(byId('restSec').innerText);
+        numSets = 1000; // basically infinity 
 
         if (countdownMin > 0 || countdownSec > 0) {
             //This is a countdown timer
