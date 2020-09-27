@@ -266,8 +266,8 @@
         }
 
         var countdownMin, countdownSec;
-        countdownMin = getVal(byId('countdownMin').value);
-        countdownSec = getVal(byId('countdownSec').value);
+        countdownMin = 0;
+        countdownSec = 0; 
 
         var workMin, workSec, numSets, restMin, restSec;
         workMin = 0;
