@@ -88,6 +88,13 @@
         }
     }
 
+    function setTimerVolume(volume_percent){
+        longBeep.volume = volume_percent/100.0;
+        shortBeep.volume = volume_percent/100.0;
+    }
+
+
+
     function playShort() {
         if (isMuted) {
             return;

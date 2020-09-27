@@ -53,7 +53,7 @@ function emitClick(next, pause, volume_percent, workout_time, rest_time){
 }
 
 function spotifyOK(){
-    return typeof do_spotify_pause === "function";
+    return access_token && typeof do_spotify_pause === "function";
 }
 /* handle clicked events from socket emit */
 
@@ -72,6 +72,9 @@ function handle_spotify_next(){
 function handle_volume_percent(msg){
     if(spotifyOK()){
         do_spotify_volume(msg.volume_percent);
+    }
+    if(typeof setTimerVolume == "function"){
+        setTimerVolume(msg.volume_percent);
     }
 }
 function handle_tabata_timing(data){
