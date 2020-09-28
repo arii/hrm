@@ -231,7 +231,7 @@
     });
     */
 
-    byId('muteToggleButton').addEventListener('click', function(evt) {
+   /* byId('muteToggleButton').addEventListener('click', function(evt) {
         isMuted = !isMuted;
 
         var src = '';
@@ -243,7 +243,7 @@
         }
         document.querySelector('#muteToggleButton img').src = src;
     });
-
+*/
    /* byId('settingsButton').addEventListener('click', function(evt) {
         byId('timerUI').classList.add('hidden');
         byId('settingsUI').classList.remove('hidden');

@@ -14,7 +14,7 @@
 }
 
 .card-columns {
-    column-count: 2;
+    column-count: 3;
   }
 .noselect {
     -webkit-touch-callout: none; /* iOS Safari */
