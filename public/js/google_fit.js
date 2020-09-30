@@ -14,6 +14,19 @@ document.cookie = 'SameSite=None';
 //document.cookie = 'cookie2=value2; SameSite=Strict; Secure';
 //response.setHeader("Set-Cookie", HttpOnly;Secure;SameSite=Strict");
 
+
+var data =[]
+
+function addHR(pulse){
+    if (pulse == '--'){
+        return;
+    }
+
+
+    console.log(pulse);
+
+}
+
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
   console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
@@ -28,5 +41,4 @@ function signOut() {
       console.log('User signed out.');
     });
   }
-
 

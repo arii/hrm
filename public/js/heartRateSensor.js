@@ -76,6 +76,7 @@
     const event = new CustomEvent('hrUpdate',{detail: hr});
 	document.dispatchEvent(event);
 
+        addHR(rate);
     }
         
 
@@ -113,6 +114,7 @@
 		//console.log("status: " + status);
 		const event = new CustomEvent('status', { detail: status });
 		document.dispatchEvent(event);
+
 	}
 	
 	init(){
