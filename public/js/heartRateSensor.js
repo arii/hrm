@@ -116,13 +116,24 @@
 	}
 	
 	init(){
+    if (typeof(navigator.bluetooth) == 'undefined'){
+        console.log("unsupported browser");
+        alert("This browser is not supported browser for web bluetooth.");
+        throw("Unsupported browser");
+    }
 	return navigator.bluetooth.requestDevice({filters:[{services:[ 'heart_rate' ]}]})
       .then(device => {
         this.device = device;
 		console.log("initialized device:" + this.device.name);
 		this.device.addEventListener('gattserverdisconnected', this.onDisconnected.bind(this));
 		return this.connect_();
-	})}
+	})
+    .catch(error => {
+        alert("cannot connect to bluetooth");
+        console.log(error);
+    })
+
+    }
 	
 	onDisconnected(){
 		console.log("disconnected");

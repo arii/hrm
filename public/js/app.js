@@ -14,6 +14,18 @@ var reconnect = document.querySelector('#reconnect');
 var last_connect_time = null;
 var last_update = null;
 
+function updateFromCookies(){
+    name = cookies.get("userName");
+    age = cookies.get("userAge");
+    if (name != null && age != null){
+        userName.value = name;
+        userAge.value = age;
+    }
+}
+
+updateFromCookies();
+
+
 function updateStatus(text, isHR){
     if(isHR){
         statusHR.textContent=text;
@@ -47,6 +59,14 @@ $("#nameAgeForm").submit(function(event){
     HRCardHeader.textContent = userName.value;
     HRCardHeaderAge.textContent = userAge.value;
 
+    cookies.set('userName', userName.value);
+    cookies.set('userAge', userAge.value);
+
+    if (userName.value.length==0 || userAge.value.length==0){
+        alert("Please submit your name and age");
+        return;
+    }
+
     heartRateSensor.updateNameAge(userName.value, userAge.value);
     nameAgeForm.style.display = "none";
     statusBarDiv.style.display = "none";
@@ -55,13 +75,17 @@ $("#nameAgeForm").submit(function(event){
 });
 
 function initialClick(){
-  updateStatus("Breathe...", false);
+  updateStatus("Connecting...", false);
   heartRates = [];
-  heartRateSensor.init()
-  .then(() => heartRateSensor.startNotificationsHeartRateMeasurement().then(handleHeartRateMeasurement))
-  .catch(error => {
-    updateStatus(error, false);
-  });
+    try{
+    heartRateSensor.init()
+    .then(() => heartRateSensor.startNotificationsHeartRateMeasurement().then(handleHeartRateMeasurement))
+    .catch(error => {
+        updateStatus(error, false);
+    });
+    }catch(error){
+        updateStatus(error, false);
+    }
 }
 
 function connectHR(){
