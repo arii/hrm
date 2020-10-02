@@ -30,12 +30,31 @@
                                   not supported by any browser */
 }
 
+#tabatatime  p{
+    display:inline;
+    font-size: 2rem;
+    font-weight:100;
+    line-height:1.2;
+
+}
 .time {
     text-align: center;
     color: red;
     font-family: "LED";
+    font-size: 15vw;
+    #margin-top:-3vw;
+    line-height:80%;
+
+    @include media-breakpoint-only {
+        font-size: 6rem;
+        margin-top:0;
+    }
 }
 
+.navbuttons{
+    display:inline;
+    width:30%;
+}
 #status_text{
     text-align: center;
     color: white;
