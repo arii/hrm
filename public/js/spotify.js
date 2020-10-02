@@ -38,6 +38,7 @@ function generateRandomString(length) {
 
 
 var params = getHashParams();
+var spotify_current = null;
 
 var access_token = params.access_token,
     state = params.state,
@@ -130,6 +131,37 @@ $.ajax({
 });
 }
 
+//renamed from spotify_pause
+function do_spotify_current(){
+url =  "https://api.spotify.com/v1/me/player/currently-playing";
+
+$.ajax({
+    url: url,
+    type: 'GET',
+    headers: {
+        'Authorization' : 'Bearer ' + access_token
+},
+    success: function(data) {
+     console.log(data);
+        spotify_current = data;
+        update_spotify_current(data);
+    },
+});
+}
+
+
+function update_spotify_current(spotify_current){
+    if ( typeof(spotify_current) === "undefined" || spotify_current == null)
+        return;
+
+    artist = spotify_current.item.artists[0].name;
+    title =  spotify_current.item.name;
+    $("#spotify_title").text(title);
+    $("#spotify_artist").text(artist);
+
+
+    console.log("artist" + artist + " title " + title);
+}
 
 $("#vol50").click(function(){
     do_spotify_volume(50);
@@ -149,7 +181,7 @@ $("#login-button").click(function(){
     var state = generateRandomString(16);
 
     localStorage.setItem(stateKey, state);
-    var scope = 'user-read-private user-read-email user-modify-playback-state ';
+    var scope = 'user-read-private user-read-currently-playing user-read-playback-state user-read-email user-modify-playback-state ';
 
     var url = 'https://accounts.spotify.com/authorize';
     url += '?response_type=token';

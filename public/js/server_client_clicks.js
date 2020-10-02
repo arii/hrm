@@ -52,8 +52,15 @@ function emitClick(next, pause, volume_percent, workout_time, rest_time){
     socket.emit("click_client", ds);
 }
 
+
 function spotifyOK(){
-    return (typeof(access_token) !== "undefined")  && (typeof do_spotify_pause === "function");
+    ok = (typeof(access_token) !== "undefined")  && (typeof do_spotify_pause === "function");
+    if (ok){
+      setTimeout( function(){
+          do_spotify_current();
+      }, 1500);
+    }
+    return ok;
 }
 /* handle clicked events from socket emit */
 

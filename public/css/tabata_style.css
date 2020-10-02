@@ -30,13 +30,33 @@
                                   not supported by any browser */
 }
 
-#tabatatime  p{
+#tabatatime p {
     display:inline;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight:100;
     line-height:1.2;
 
 }
+
+#spotifyinfo p{
+    display:inline;
+    font-size: 2rem;
+    font-weight:100;
+    line-height:1.2;
+    color:white;
+
+    @include media-breakpoint-only {
+        font-size:1rem;
+    }
+}
+#spotify_artist{
+    font-style:italic;
+}
+#spotify_title{
+    font-style:bold;
+}
+
+
 .time {
     text-align: center;
     color: red;
