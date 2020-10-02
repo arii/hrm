@@ -14,6 +14,10 @@
 }
 
 .card-columns {
+      @include media-breakpoint-only {
+          column-count: 2;
+      }
+
     column-count: 3;
   }
 .noselect {
