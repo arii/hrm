@@ -81,7 +81,7 @@ function handle_volume_percent(msg){
         do_spotify_volume(msg.volume_percent);
     }
     if(typeof setTimerVolume == "function"){
-        setTimerVolume(msg.volume_percent);
+        setTimerVolume(0.5*msg.volume_percent);
     }
 }
 function handle_tabata_timing(data){
@@ -137,7 +137,7 @@ const $spotifyvalue = $('#spotifyVolume');
   $spotifyvalue.on('input change', () => {
 
     $spotifySpan.html($spotifyvalue.val());
-      spotify_volume($spotifyvalue.val());
+      spotify_volume(0.8*$spotifyvalue.val());
 });
 
 
