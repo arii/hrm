@@ -110,6 +110,13 @@
     <script   type="text/javascript"  src="/static/js/heartRateServer.js"></script>
     <script   type="text/javascript"  src="/static/js/server_client_clicks.js"></script>
 
-
+    <script>
+    if (typeof(access_token) == "undefined"){ 
+        $(document).ready(function() {
+            $('#login-button').click();
+        });  
+    }
+    </script>
+    
   </body>
 </html>
