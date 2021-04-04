@@ -58,6 +58,9 @@ if (access_token && (state == null || state !== storedState)) {
           $('#login').hide();
           $('.loggedin').show();
             window.history.pushState({}, document.title, "/" );
+            //update spotify playback every 5 seconds
+            update_current_playback = setInterval(do_spotify_current, 5000);
+                
         }
 
     });
@@ -99,6 +102,21 @@ $.ajax({
     },
 });
 }
+
+//bring back play
+function do_spotify_play(){
+$.ajax({
+    url: "https://api.spotify.com/v1/me/player/play",
+    type: 'PUT',
+    headers: {
+        'Authorization' : 'Bearer ' + access_token
+},
+    success: function(data) {
+     console.log(data);
+    },
+});
+}
+
 
 //renamed from spotify_pause
 function do_spotify_pause(){
