@@ -100,6 +100,21 @@ $.ajax({
 });
 }
 
+//bring back play
+function do_spotify_play(){
+$.ajax({
+    url: "https://api.spotify.com/v1/me/player/play",
+    type: 'PUT',
+    headers: {
+        'Authorization' : 'Bearer ' + access_token
+},
+    success: function(data) {
+     console.log(data);
+    },
+});
+}
+
+
 //renamed from spotify_pause
 function do_spotify_pause(){
 $.ajax({

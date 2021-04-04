@@ -19,6 +19,8 @@ socket.on('click', function(msg){
 function handleClick(msg){
     if (msg.pause){
         handle_spotify_pause();
+    }else if(msg.play){
+        handle_spotify_play();
     }else if(msg.next){
         handle_spotify_next();
     }else if(msg.volume_percent!=null){
@@ -34,8 +36,9 @@ function handleClick(msg){
     }
 }
 
-function emitClick(next, pause, volume_percent, workout_time, rest_time){
+function emitClick(play, next, pause, volume_percent, workout_time, rest_time){
     
+    var ds_play = play || false;
     var ds_next = next || false;
     var ds_pause = pause || false;
     var ds_volume_percent = volume_percent ||null;
@@ -43,6 +46,7 @@ function emitClick(next, pause, volume_percent, workout_time, rest_time){
     var ds_rest_time = rest_time || null;
 
     var ds = {
+        'play': ds_play,
         'next': ds_next,
         'pause': ds_pause,
         'volume_percent': ds_volume_percent,
@@ -72,9 +76,17 @@ function handle_spotify_pause(){
 
 function handle_spotify_next(){
     if (spotifyOK()){
+        do_spotify_play();
         do_spotify_next();
     }
 }
+
+function handle_spotify_play(){
+    if (spotifyOK()){
+        do_spotify_play();
+    }
+}
+
 
 function handle_volume_percent(msg){
     if(spotifyOK()){
@@ -99,22 +111,27 @@ function handle_tabata_timing(data){
 
 function spotify_next(){
     //do_spotify_next();
-    emitClick(true); 
+    emitClick(false,true); 
 }
 
 function spotify_pause(){
     //do_spotify_pause();
-    emitClick(false, true);
+    emitClick(false, false, true);
+}
+
+function spotify_play(){
+    //do_spotify_pause();
+    emitClick(true);
 }
 
 function spotify_volume(percent){
-    emitClick(false, false, percent); 
+    emitClick(false, false, false, percent); 
 }
 
 function tabata_timing(data){
     workSec = $('#workSec').val();
     restSec = $('#restSec').val();
-    emitClick(false, false, null, workSec, restSec);
+    emitClick(false, false, false, null, workSec, restSec);
 };
 
 $("#tabataForm").submit( function(event) {
@@ -128,6 +145,10 @@ $("#Next").click(function(){
 
 $("#Pause").click(function(){
     spotify_pause()
+});
+
+$("#Play").click(function(){
+    spotify_play()
 });
 
 
