@@ -132,8 +132,8 @@ empty_card = `
 
   </div>
 
-  <div class="card-body pb-0">
-        <h2 class="display-3" id="HR_dummy" > 
+  <div class="card-body ">
+        <h2 class=" pb-0 text-nowrap hr" id="HR_dummy" > 
         </h2>
       
   </div>

@@ -3,7 +3,7 @@
     src: url("/static/assets/digital-7-mono.ttf");
 }
 
-#tabata{
+#tabatacard{
     background-color: black;
 }
 #tabatatime{
@@ -37,10 +37,13 @@
     line-height:1.2;
 
 }
-
+.hr{
+    font-size:12vw;
+}
+/*
 #spotifyinfo p{
     display:inline;
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight:100;
     line-height:1.2;
     color:white;
@@ -48,7 +51,7 @@
     @include media-breakpoint-only {
         font-size:1rem;
     }
-}
+}*/
 #spotify_artist{
     font-style:italic;
 }
@@ -61,6 +64,10 @@
     text-align: center;
     color: red;
     font-family: "LED";
+    font-size:10vw;
+    margin-top:-1vw;
+    line-height:80%;
+    /*
     font-size: 15vw;
     #margin-top:-3vw;
     line-height:80%;
@@ -68,7 +75,7 @@
     @include media-breakpoint-only {
         font-size: 6rem;
         margin-top:0;
-    }
+    }*/
 }
 
 .navbuttons{
