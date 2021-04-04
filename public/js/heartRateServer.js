@@ -123,18 +123,19 @@ function addNewClient(msg){
 }
 empty_card = `
 <div id="card_dummy" class="card text-center">
-  <div class="card-header">
-      <h5  class="display-4" id="HRCardHeader_dummy" > Heart Rate </h5>
-      <h5  class="display-4" id="HRCardHeaderAge_dummy" >  </h5>
-  </div>
-
-  <div class="card-body">
-        <h2 class="display-3" id="HR_dummy" > 
-        </h2>
+  <div class="card-header pb-0 d-flex justify-content-between">
+      <h3 id="HRCardHeader_dummy" > Heart Rate </h3>
+      <h3 id="HRCardHeaderAge_dummy" >  </h3>
       <h3 id="statusText_dummy">
         &#x2764;
       </h3>
 
+  </div>
+
+  <div class="card-body pb-0">
+        <h2 class="display-3" id="HR_dummy" > 
+        </h2>
+      
   </div>
   `;
  /*<div class="card-footer" id="statusBarDiv_dummy">
