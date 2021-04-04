@@ -13,23 +13,7 @@
 <audio id="longBeep" src="/static/assets/beep-01a.wav" autostart="false" ></audio>
 <audio id="shortBeep" src="/static/assets/beep-07.wav" autostart="false" ></audio>
 
-<div class="row">
-    <div class="col">
-        <h5> Heart Rate Server</h2>
-    </div>
-    <div class="col">
-        <a href="/hrm"> <button class="btn btn-primary" type="button" id="nameAgeBtn" >Stream HR</button></a> 
-    </div>
-    <div class="col">
-        <a href="/phone"> <button class="btn btn-primary" type="button" id="phoneui" >Phone controls</button></a> 
-    </div>
-     <div id="login" class="col">
-        <button id="login-button" class="btn btn-primary">Spotify</button>
-    </div>
-
-</div>
-
-<div id="tabata" class="container-fluid">
+<!--<div id="tabata" class="container-fluid">
     <div class="row" id="tabatarow">
         <div id="maintime" class="col-sm-9">
             <p class="time display-1">00:00</p>
@@ -57,13 +41,43 @@
     </div>
 
 </div>
+
 </div>
+-->
         
 
 
 <div class="container-fluid">
-    <div id="cards" class="card-columns">
-    <div id="card_dummy" class="card text-center" style="max-width:'25%' margin-left:0; margin-right:0;">
+    <div id="cards" class="card-deck">
+
+        <div  id="tabatacard" class="card">
+            <div id="tabatatime" class="card-header row d-flex py-0">
+                    <div class="py-0 d-flex">
+                        <p>Work:</p> 
+                        <p id="workSec">20</p> 
+                    </div>
+                    <div class="d-flex  ml-auto py-0">
+                        <p>Rest:</p> 
+                        <p id="restSec">10</p>
+                    </div>
+
+            </div>
+            <div id="tabata" class="card-body">
+                <p class="time display-1 text-nowrap">00:00</p>
+            </div>
+            <div class="card-footer" id="tabatatime">
+             <div id="spotifyinfo"  class="row d-flex ">
+                <p id="spotify_title">.</p> 
+                <p class="ml-auto" id="spotify_artist">.</p> 
+             </div>
+            </div>
+    </div>
+
+
+    </div>
+
+ 
+    <div id="card_dummy" class="card text-center">
         <div class="card-header pb-0">
             <h1  id="HRCardHeader" > Heart Rate </h1>
             <h5  id="HRCardHeaderAge" >  </h5>
@@ -85,10 +99,27 @@
 
 </div>
 <div class="container-fluid pb-0">
-    <div class="embed-responsive embed-responsive-1by1 border-1">
+    <div class="embed-responsive embed-responsive-1by1 border-1" style="max-height:35vw">
         <iframe id="googledoc" class="embed-responsive-item" src="https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true"></iframe>
     </div>
 </div>
+
+<div class="row">
+    <div class="col">
+        <h5> Heart Rate Server</h2>
+    </div>
+    <div class="col">
+        <a href="/hrm"> <button class="btn btn-primary" type="button" id="nameAgeBtn" >Stream HR</button></a> 
+    </div>
+    <div class="col">
+        <a href="/phone"> <button class="btn btn-primary" type="button" id="phoneui" >Phone controls</button></a> 
+    </div>
+     <div id="login" class="col">
+        <button id="login-button" class="btn btn-primary">Spotify</button>
+    </div>
+
+</div>
+
 
 <!-- hidden things -->
 
@@ -113,7 +144,7 @@
     <script>
     if (typeof(access_token) == "undefined"){ 
         $(document).ready(function() {
-            $('#login-button').click();
+           $('#login-button').click();
         });  
     }
     </script>
