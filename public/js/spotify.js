@@ -58,6 +58,9 @@ if (access_token && (state == null || state !== storedState)) {
           $('#login').hide();
           $('.loggedin').show();
             window.history.pushState({}, document.title, "/" );
+            //update spotify playback every 5 seconds
+            update_current_playback = setInterval(do_spotify_current, 5000);
+                
         }
 
     });
