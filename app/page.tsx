@@ -6,7 +6,7 @@
 'use client';
 import React, { useMemo } from 'react';
 import { Container, Grid, Card, CardContent, Typography, Box, LinearProgress, Paper } from '@mui/material';
-import { BarChart, HeartBroken, Watch, MusicNote } from '@mui/icons-material';
+import { BarChart, Favorite, Watch, MusicNote } from '@mui/icons-material';
 import useWebSocket from '../hooks/useWebSocket';
 import GoogleDocViewer from '../components/GoogleDocViewer';
 import { getHrZoneProps, getTimerProps } from '../utils/visualization';
@@ -17,14 +17,17 @@ const DOC_URL = "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6z
 
 // Component to display the current connection status
 const StatusIndicator = ({ status }: { status: string }) => {
-    let color = 'bg-gray-400';
-    if (status === 'Connected') color = 'bg-green-500';
-    if (status === 'Connecting...') color = 'bg-yellow-500';
+    const color = useMemo(() => {
+        if (status === 'Connected') return 'success.main';
+        if (status === 'Connecting...') return 'warning.main';
+        return 'grey.400';
+    }, [status]);
 
     return (
-        <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium ${color} text-white`}>
-            <span className="mr-2 text-xs">●</span> {status}
-        </span>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 2, py: 0.5, borderRadius: '9999px', backgroundColor: color, color: 'white' }}>
+            <Box component="span" sx={{ mr: 1, fontSize: '0.75rem' }}>●</Box>
+            <Typography variant="caption" sx={{ fontWeight: 'medium' }}>{status}</Typography>
+        </Box>
     );
 };
 
@@ -41,9 +44,9 @@ const Dashboard: React.FC = () => {
 
 
     return (
-        <Container maxWidth="xl" className="py-6 min-h-screen bg-gray-50">
-            <Box className="flex justify-between items-center mb-6">
-                <Typography variant="h4" component="h1" className="font-bold text-gray-800">
+        <Container maxWidth="xl" sx={{ py: 6, minHeight: '100vh', backgroundColor: 'grey.50' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
+                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'grey.800' }}>
                     Real-Time Virtual Fitness Dashboard
                 </Typography>
                 <StatusIndicator status={connectionStatus} />
@@ -57,48 +60,46 @@ const Dashboard: React.FC = () => {
                     const hrZoneProps = getHrZoneProps(user.value, user.maxHr || MAX_HR_DEFAULT);
                     return (
                         <Grid item xs={12} md={6} lg={4} key={user.clientId}>
-                            <Card className="shadow-xl h-full flex flex-col">
-                                <CardContent className="flex-grow">
-                                    <Box className="flex items-center justify-between">
-                                        <Typography variant="subtitle1" color="textSecondary" className="flex items-center">
-                                            <HeartBroken className="mr-1" color="error" /> {user.name || 'LIVE HEART RATE'}
+                            <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                <CardContent sx={{ flexGrow: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Typography variant="subtitle1" color="textSecondary" sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Favorite sx={{ mr: 1, color: 'error.main' }} /> {user.name || 'LIVE HEART RATE'}
                                         </Typography>
-                                        <Typography variant="caption" className="font-mono text-gray-500">
+                                        <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'grey.500' }}>
                                             Max HR: {user.maxHr || MAX_HR_DEFAULT} BPM
                                         </Typography>
                                     </Box>
 
-                                    <Box className="mt-4 text-center">
+                                    <Box sx={{ mt: 4, textAlign: 'center' }}>
                                         {/* BPM Number */}
                                         <Typography 
                                             variant="h1" 
                                             component="div" 
-                                            className="font-extrabold"
-                                            style={{ color: hrZoneProps.progressColor, fontSize: '5rem' }}
+                                            sx={{ fontWeight: 'extrabold', color: hrZoneProps.progressColor, fontSize: '5rem' }}
                                         >
                                             {user.value}
                                         </Typography>
                                         {/* Zone Name */}
                                         <Box 
-                                            className="inline-block px-3 py-1 rounded-full mt-2"
-                                            style={{ backgroundColor: hrZoneProps.progressColor }}
+                                            sx={{ display: 'inline-block', px: 1.5, py: 0.5, borderRadius: '9999px', mt: 2, backgroundColor: hrZoneProps.progressColor }}
                                         >
-                                            <Typography variant="subtitle1" className="font-bold text-white">
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'white' }}>
                                                 {hrZoneProps.zone} ZONE
                                             </Typography>
                                         </Box>
                                         
                                         {/* Progress Bar (Percentage of Max) */}
-                                        <Typography variant="caption" display="block" className="mt-4 text-gray-600">
+                                        <Typography variant="caption" display="block" sx={{ mt: 4, color: 'grey.600' }}>
                                             {hrZoneProps.percentage}% of Max HR
                                         </Typography>
                                         <LinearProgress 
                                             variant="determinate" 
                                             value={hrZoneProps.percentage} 
-                                            className="mt-2 h-2 rounded-full"
                                             sx={{ 
+                                                mt: 2, height: 8, borderRadius: '9999px',
                                                 '& .MuiLinearProgress-bar': { backgroundColor: hrZoneProps.progressColor },
-                                                backgroundColor: '#e5e7eb',
+                                                backgroundColor: 'grey.200',
                                             }} 
                                         />
                                     </Box>
@@ -110,9 +111,9 @@ const Dashboard: React.FC = () => {
 
                 {/* 2. TABATA TIMER */}
                 <Grid item xs={12} md={6} lg={4}>
-                    <Card className={`shadow-xl h-full flex flex-col ${timerProps.backgroundColor}`}>
-                        <CardContent className="flex-grow text-center">
-                            <Typography variant="subtitle1" color="textSecondary" className="flex items-center justify-center mb-4">
+                    <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: timerProps.backgroundColor }}>
+                        <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
+                            <Typography variant="subtitle1" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
                                 <Watch className="mr-1" color={timerProps.color} /> TABATA INTERVAL
                             </Typography>
                             
@@ -142,20 +143,20 @@ const Dashboard: React.FC = () => {
                                     }}
                                 >
                                     <Typography variant="h2" component="div" className="font-extrabold" style={{ color: timerProps.progressColor }}>
-                                        {timerData.currentPhase}
+                                        {timerData.timeRemaining}s
                                     </Typography>
                                 </Box>
                             </Box>
                             
                             {/* Phase Status */}
-                            <Typography variant="h5" className="font-bold mt-3" style={{ color: timerProps.progressColor }}>
+                            <Typography variant="h5" sx={{ fontWeight: 'bold', mt: 3, color: timerProps.progressColor }}>
                                 {timerData.timeRemaining}s
                             </Typography>
                             <Typography variant="subtitle2" color="textSecondary">
                                 Cycle {timerData.cycle} of {timerData.totalCycles}
                             </Typography>
 
-                            <Typography variant="caption" className="mt-4 block">
+                            <Typography variant="caption" sx={{ mt: 4, display: 'block' }}>
                                 Control the timer via the /client/control page.
                             </Typography>
                         </CardContent>
@@ -164,25 +165,25 @@ const Dashboard: React.FC = () => {
 
                 {/* 3. SPOTIFY MUSIC STATUS */}
                 <Grid item xs={12} md={12} lg={4}>
-                    <Card className="shadow-xl h-full flex flex-col bg-gray-800 text-white">
-                        <CardContent className="flex-grow flex flex-col justify-between">
+                    <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'grey.800', color: 'white' }}>
+                        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <Box>
-                                <Typography variant="subtitle1" className="flex items-center mb-4 text-gray-400">
-                                    <MusicNote className="mr-1" /> NOW PLAYING
+                                <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', mb: 4, color: 'grey.400' }}>
+                                    <MusicNote sx={{ mr: 1 }} /> NOW PLAYING
                                 </Typography>
-                                <Typography variant="h5" component="p" className="font-bold mb-1">
+                                <Typography variant="h5" component="p" sx={{ fontWeight: 'bold', mb: 1 }}>
                                     {spotifyData.trackName}
                                 </Typography>
-                                <Typography variant="subtitle1" color="textSecondary" className="text-gray-400">
+                                <Typography variant="subtitle1" color="textSecondary" sx={{ color: 'grey.400' }}>
                                     {spotifyData.artist}
                                 </Typography>
                             </Box>
                             
-                            <Box className="mt-6">
-                                <Typography variant="body2" className="text-gray-500">
-                                    Playback Status: {spotifyData.isPlaying ? '▶️ Playing' : '⏸️ Paused'}
+                            <Box sx={{ mt: 6 }}>
+                                <Typography variant="body2" sx={{ color: 'grey.500' }}>
+                                    Playback Status: {spotifyData.isPlaying ? 'Playing' : 'Paused'}
                                 </Typography>
-                                <Typography variant="caption" className="mt-1 block text-gray-600">
+                                <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'grey.600' }}>
                                     Login required via the /client/control page to enable live updates.
                                 </Typography>
                             </Box>
@@ -193,11 +194,11 @@ const Dashboard: React.FC = () => {
                 {/* --------------------- BOTTOM ROW: DOCUMENTATION --------------------- */}
 
                 <Grid item xs={12}>
-                    <Box className="mt-4 mb-4">
-                        <Typography variant="h5" component="h2" className="font-bold text-gray-800">
+                    <Box sx={{ mt: 4, mb: 4 }}>
+                        <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', color: 'grey.800' }}>
                             Workout Plan & Resources
                         </Typography>
-                        <Typography variant="body1" color="textSecondary" className="mt-1">
+                        <Typography variant="body1" color="textSecondary" sx={{ mt: 1 }}>
                             Review the current workout plan and reference materials provided by your trainer.
                         </Typography>
                     </Box>
@@ -214,7 +215,7 @@ const Dashboard: React.FC = () => {
 
             </Grid>
 
-            <Box className="mt-8 text-center text-gray-500 text-sm">
+            <Box sx={{ mt: 8, textAlign: 'center', color: 'grey.500', fontSize: '0.875rem' }}>
                 Dashboard served from unified server at 127.0.0.1:3000.
             </Box>
         </Container>
