@@ -11,7 +11,7 @@ import next from "next";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
-import type { UnifiedStateMessage } from "./types/websocket";
+import type { BroadcastData } from "./types/websocket";
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from "./services/spotifyPolling";
@@ -40,7 +40,7 @@ app
     const wss = new WebSocketServer({ noServer: true });
 
     // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
+    const broadcastState = (data: BroadcastData): void => {
       // Use the socket manager to handle the actual broadcast
       if (wss.clients.size > 0) {
         wss.clients.forEach((client: WebSocket) => {
@@ -109,11 +109,11 @@ app
     // --- Start Server ---
 
     // Handle server errors (e.g., port already in use)
-    server.on('error', (err: Error) => {
+    server.on("error", (err: Error) => {
       console.error("Server error:", err);
       process.exit(1);
     });
-    
+
     // Begin listening
     server.listen(port, hostname, () => {
       // This callback only runs on successful listening
