@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS=\"--import ts-node/esm\" ts-node -P tsconfig.json server.ts",
+    "dev": "NODE_OPTIONS=\"--import ts-node/esm\" ./node_modules/.bin/pm2 start server.ts --interpreter ./node_modules/.bin/ts-node --interpreter-args \"-P tsconfig.json\" --watch",
     "dev:server": "NODE_OPTIONS=\"--import ts-node/esm\" ./node_modules/.bin/pm2 start server.ts --interpreter ./node_modules/.bin/ts-node --interpreter-args \"-P tsconfig.json\" --watch",
     "dev:clean": "HOST=127.0.0.1 NODE_ENV=development NODE_OPTIONS=\"--import ts-node/esm\" ./node_modules/.bin/pm2 start server.ts --interpreter ./node_modules/.bin/ts-node --interpreter-args \"-P tsconfig.json\" --watch",
     "build": "next build",
