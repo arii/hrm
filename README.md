@@ -6,18 +6,13 @@ Important: this project uses a custom server entry (`server.ts`) that runs the N
 
 ## Getting started (development)
 
-We provide PM2-based development scripts that start the server (with `ts-node`) and keep the process in the foreground so you can see logs while developing.
+To start the development server, run:
 
 ```bash
-# Run the development server (pm2 in foreground, watch files)
 npm run dev
-
-# Force IPv4 loopback binding (127.0.0.1) and run in dev mode
-npm run dev:clean
-
-# Alternate: run via the VS Code launch configuration (recommended)
-# Open the Run panel (Ctrl+Shift+D) and run "Launch HRM Server (pm2)"
 ```
+
+This will start the server in the foreground and you will see logs in your terminal. Note that this does not use `pm2` and does not have file watching capabilities. If you need file watching, you will need to set up a tool like `nodemon`.
 
 ## Build and production
 
@@ -60,7 +55,6 @@ Follow the project's coding conventions (TypeScript, MUI for UI, server-side sta
 
 ```bash
 npm run lint
-npm run format
 ```
 
 ## Questions or issues
@@ -78,8 +72,3 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

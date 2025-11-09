@@ -1,3 +1,5 @@
+**Note: This is a historical log of debugging sessions. For the most up-to-date information on running the project, please consult the [README.md](README.md) file.**
+
 # Running Notes - Refactoring and Debugging Session
 
 This document tracks the progress and issues encountered while refactoring the HRM application.
@@ -31,7 +33,7 @@ This document tracks the progress and issues encountered while refactoring the H
 
     - **Action**: Changed `module` to `"CommonJS"` to ensure `ts-node` transpiles to a format Node.js understands in a CommonJS project.
 
-5.  **`utils/socketManager.ts` fix**: A `TS2304: Cannot find name 'p'` error was caused by a typo at the end of the file.
+5.  **`utils/socketManager.ts` fix**: A `TS2304: Cannot find name 'p'.` error was caused by a typo at the end of the file.
 
     - **Action**: Removed the extraneous `p` character.
 
@@ -72,14 +74,12 @@ Use https://github.com/ChromeDevTools/chrome-devtools-mcp/?tab=readme-ov-file#ch
 
 Make sure we have instructions for MCP setup in .github/copilot-instructions.md:
 
-```
 ## Use the mui-mcp server to answer any MUI questions --
 
 - 1. call the "useMuiDocs" tool to fetch the docs of the package relevant in the question
 - 2. call the "fetchDocs" tool to fetch any additional docs if needed using ONLY the URLs present in the returned content.
 - 3. repeat steps 1-2 until you have fetched all relevant docs for the given question
 - 4. use the fetched content to answer the question
-```
 
 gemini extensions install https://github.com/gemini-cli-extensions/jules --auto-update
 
@@ -166,10 +166,6 @@ code --add-mcp '{"name":"chrome-devtools","command":"npx","args":["chrome-devtoo
 example commands
 
 Update google doc to be:
-
-```
-https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub
-```
 
 ---
 
@@ -267,44 +263,6 @@ These techniques allow the script to verify that the MUI components are applying
 
 We need to confirm that when a high HR is sent, the MUI components correctly display the **Peak Zone Red** color (`#ef4444`).
 
-```javascript
-// 1. Send High HR from the test script (simulating the client/mock page)
-await page.goto("http://127.0.0.1:3000/client/mock");
-await page.fill('input[name="bpm"]', "180");
-await page.click('button:text("START Continuous Stream")');
-
-// 2. Go to Dashboard and Inspect the MUI LinearProgress element
-await page.goto("http://127.0.0.1:3000");
-
-// Use DevTools Protocol equivalent to target the dynamically styled element
-const progressBarColor = await page.evaluate(() => {
-  // Look up the computed style of the dynamically colored progress bar part
-  const bar = document.querySelector(".MuiLinearProgress-bar");
-  return bar ? getComputedStyle(bar).backgroundColor : null;
-});
-
-// Assert that the computed color matches the expected Peak Zone Red
-expect(progressBarColor).toBe("rgb(239, 68, 68)");
-```
-
-### Verify Font Size Consistency
-
-The original video shows large, legible numbers for BPM and the Timer. This check ensures your responsive MUI typography choices (`h1`, `h3`) are consistent.
-
-```javascript
-// Target the BPM display element on the dashboard
-const bpmFontSize = await page.evaluate(() => {
-  const bpmElement = document.querySelector("h1.MuiTypography-root");
-  // Read the actual computed pixel value
-  return bpmElement ? getComputedStyle(bpmElement).fontSize : null;
-});
-
-// Assert the size is large enough (e.g., 5rem is approximately 80px)
-expect(parseInt(bpmFontSize)).toBeGreaterThan(75);
-```
-
----
-
 ## 3\. Automation for Spotify Login Flow
 
 This is critical because the NextAuth flow involves multiple redirects and external API calls.
@@ -327,7 +285,7 @@ Component Generation (using mui-mcp-server)
 
 "Add a responsive AppBar to the playground with a Drawer for mobile."
 
-Iteration & Styling (using mui-mcp-server)
+Iteration & Styling (using m-mcp-server)
 "Take the UserProfileCard and wrap it in a <Paper> with elevation={3}."
 
 "Change the LoginModal 'Submit' button to variant="contained" and add a loading spinner."
