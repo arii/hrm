@@ -3,7 +3,10 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-import fetch from "node-fetch";
+let fetch: typeof import("node-fetch").default;
+(async () => {
+  fetch = (await import("node-fetch")).default;
+})();
 import { SpotifyData, UnifiedStateMessage } from "../types/websocket";
 import { SpotifyTokenManager } from "./spotifyTokenManager";
 
@@ -75,6 +78,8 @@ export class SpotifyPolling {
       return;
     }
 
+    const { default: fetch } = await import("node-fetch");
+
     // Generate Base64 string for Authorization header
     const authString = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
@@ -133,6 +138,8 @@ export class SpotifyPolling {
 
   private getCurrentlyPlaying = async () => {
     if (!this.accessToken) return;
+
+    const { default: fetch } = await import("node-fetch");
 
     const maskedAccessToken = this.accessToken.substring(0, 5) + "...";
     console.log("Fetching currently playing track with access token:", maskedAccessToken);
@@ -203,6 +210,8 @@ export class SpotifyPolling {
       return;
     }
 
+    const { default: fetch } = await import("node-fetch");
+
     try {
       const response = await fetch(`${BASE_URL}/me/player/${endpoint}`, {
         method,
@@ -257,6 +266,8 @@ export class SpotifyPolling {
       throw new Error("No valid Spotify access token available");
     }
 
+    const { default: fetch } = await import("node-fetch");
+
     const response = await fetch("https://api.spotify.com/v1/me/player", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -279,6 +290,8 @@ export class SpotifyPolling {
   ): Promise<boolean> {
     const accessToken = await this.tokenManager.getValidAccessToken();
     if (!accessToken) return false;
+
+    const { default: fetch } = await import("node-fetch");
 
     const endpoint = {
       play: "/play",

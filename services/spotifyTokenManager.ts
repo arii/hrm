@@ -1,5 +1,8 @@
 import fs from "fs";
-import fetch from "node-fetch";
+let fetch: typeof import("node-fetch").default;
+(async () => {
+  fetch = (await import("node-fetch")).default;
+})();
 import * as path from "path";
 
 export interface SpotifyTokenPayload {
@@ -48,6 +51,8 @@ export class SpotifyTokenManager {
 
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false;
+
+    const { default: fetch } = await import("node-fetch");
 
     try {
       const basic = Buffer.from(

@@ -19,6 +19,7 @@ import {
 import React, { useCallback, useState } from "react";
 import useWebSocket from "../../../hooks/useWebSocket";
 import { HrmInputMessage } from "../../../types/websocket";
+import { ZONE_COLORS } from "../../../utils/visualization";
 
 const MockClient: React.FC = () => {
   const { sendData, connectionStatus } = useWebSocket();
@@ -52,9 +53,7 @@ const MockClient: React.FC = () => {
     if (isStreaming || connectionStatus !== "Connected") return;
     sendHrPacket(hrValue);
     const id = setInterval(() => {
-      const noiseAmount = addNoise
-        ? Math.floor(Math.random() * 11) - 5
-        : 0; // -5 to +5 if noise enabled
+      const noiseAmount = addNoise ? Math.floor(Math.random() * 11) - 5 : 0; // -5 to +5 if noise enabled
       const fluctuatedHr = Math.max(70, hrValue + noiseAmount);
       setHrValue(fluctuatedHr);
       sendHrPacket(fluctuatedHr);
@@ -173,7 +172,7 @@ const MockClient: React.FC = () => {
             <Button
               fullWidth
               variant="contained"
-              style={{ backgroundColor: "#9E9E9E" }}
+              style={{ backgroundColor: ZONE_COLORS.grey }}
               onClick={() => setHrByZone("grey")}
             >
               Zone 1
@@ -183,7 +182,7 @@ const MockClient: React.FC = () => {
             <Button
               fullWidth
               variant="contained"
-              style={{ backgroundColor: "#2196F3" }}
+              style={{ backgroundColor: ZONE_COLORS.blue }}
               onClick={() => setHrByZone("blue")}
             >
               Zone 2
@@ -193,7 +192,7 @@ const MockClient: React.FC = () => {
             <Button
               fullWidth
               variant="contained"
-              style={{ backgroundColor: "#4CAF50" }}
+              style={{ backgroundColor: ZONE_COLORS.green }}
               onClick={() => setHrByZone("green")}
             >
               Zone 3
@@ -203,7 +202,7 @@ const MockClient: React.FC = () => {
             <Button
               fullWidth
               variant="contained"
-              style={{ backgroundColor: "#FFEB3B", color: "black" }}
+              style={{ backgroundColor: ZONE_COLORS.yellow, color: "black" }}
               onClick={() => setHrByZone("yellow")}
             >
               Zone 4
@@ -213,7 +212,7 @@ const MockClient: React.FC = () => {
             <Button
               fullWidth
               variant="contained"
-              style={{ backgroundColor: "#F44336" }}
+              style={{ backgroundColor: ZONE_COLORS.red }}
               onClick={() => setHrByZone("red")}
             >
               Zone 5

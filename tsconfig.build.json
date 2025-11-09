@@ -3,7 +3,9 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "./dist",
-    "module": "commonjs"
+    "module": "esnext",
+    "moduleResolution": "node",
+    "target": "es2022"
   },
   "include": [
     "server.ts",
