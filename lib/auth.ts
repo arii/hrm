@@ -16,7 +16,7 @@ export const authOptions = {
         SpotifyProvider({
             clientId: process.env.SPOTIFY_CLIENT_ID as string,
             clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
-            authorization: `https://accounts.spotify.com/authorize?scope=${SPOTIFY_SCOPES}`,
+            scope: SPOTIFY_SCOPES,
         }),
     ],
     callbacks: {
