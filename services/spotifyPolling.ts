@@ -129,8 +129,26 @@ export class SpotifyPolling {
       process.env.SPOTIFY_CLIENT_SECRET || ""
     );
 
+    // Load existing token from file if available
+    this.loadTokenFromManager();
+
     // Start token refresh check loop (Every 55 mins)
     setInterval(() => this.refreshAccessToken(), 1000 * 60 * 55);
+  }
+
+  private async loadTokenFromManager() {
+    const token = await this.tokenManager.getValidAccessToken();
+    if (token) {
+      this.accessToken = token;
+      const refreshToken = this.tokenManager.getCurrentRefreshToken();
+      if (refreshToken) {
+        this.refreshToken = refreshToken;
+        console.log(
+          "Loaded existing Spotify tokens from file. Starting polling."
+        );
+        this.startPolling();
+      }
+    }
   }
 
   public getState(): SpotifyData {
@@ -258,8 +276,8 @@ export class SpotifyPolling {
         return;
       }
 
-      const responseBody = await response.text();
       if (!response.ok) {
+        const responseBody = await response.text();
         console.error(
           "Error fetching currently playing track. Status:",
           response.status,

@@ -41,14 +41,26 @@ export const authOptions: AuthOptions = {
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
           try {
-            // This POSTs the long-lived refresh token to the Express middleware
-            // running in the persistent server.js process.
+            // This POSTs the full account/token data to the token delivery endpoint
+            // so it can be persisted to logs/spotify_tokens.json for the server to use.
+            const tokenPayload = {
+              provider: account.provider,
+              sub: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_in: account.expires_at
+                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
+                : 3600,
+              scope: account.scope || "",
+              obtainedAt: Date.now(),
+            };
+
             const response = await fetch(
-              "http://127.0.0.1:3000/internal/token-delivery",
+              "http://127.0.0.1:3000/api/internal/token-delivery",
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken: account.refresh_token }),
+                body: JSON.stringify(tokenPayload),
               }
             );
             const responseBody = await response.text();

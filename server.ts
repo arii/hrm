@@ -101,31 +101,11 @@ app
 
     // --- Express Routing ---
 
-    // Internal Token Delivery Endpoint (Handles NextAuth callback)
-    // NOTE: This must be placed BEFORE expressApp.all('*', ...)
-    expressApp.post(
-      "/internal/token-delivery",
-      express.json(),
-      (req: Request, res: Response) => {
-        const { refreshToken } = req.body;
-        if (refreshToken) {
-          // Pass the long-lived token to the persistent service instance
-          spotifyService.setRefreshToken(refreshToken);
-          res.status(200).send({ success: true });
-        } else {
-          res
-            .status(400)
-            .send({ success: false, message: "No refresh token provided." });
-        }
-      }
-    );
-
-    // Handle all other Next.js routing (pages, API routes, etc.)
+    // Handle all Next.js routing (pages, API routes, etc.)
+    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use((req: Request, res: Response) => {
       return handle(req, res);
-    });
-
-    // --- HTTP/WS Upgrade Handling ---
+    }); // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
@@ -139,8 +119,10 @@ app
             wss.emit("connection", ws, req);
           });
         } else {
-          // Destroy socket for unauthorized/non-websocket paths (security)
-          socket.destroy();
+          // If not our WebSocket path, let Next.js handle it
+          // This is crucial for Next.js's HMR WebSocket to work
+          // The 'upgrade' event will be re-emitted on the server
+          server.emit("upgrade", req, socket, head);
         }
       }
     );

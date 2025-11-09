@@ -1,102 +1,81 @@
-**Note: This is a historical log of debugging sessions. For the most up-to-date information on running the project, please consult the [README.md](README.md) file.**
+# Running Notes - HRM Development
 
-# Running Notes - Refactoring and Debugging Session
-
-This document tracks the progress and issues encountered while refactoring the HRM application.
+This document tracks development progress and contains historical debugging information.
 
 ## Quick Links
 
 - **[README.md](README.md)** - Complete setup and usage guide
-- **[SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)** - ⚠️ Fix "Invalid Client" errors
 - **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details and status
 - **[plan.md](plan.md)** - Original project plan and architecture
 
-## Common Issues
+---
 
-### Spotify "Invalid Client" Error
+## Recent Fixes (November 2025)
 
-If you see "Invalid client" when trying to login with Spotify, see the comprehensive troubleshooting guide:
+### ✅ Automated Spotify Verification Script
 
-📖 **[SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)**
+**Added**: `scripts/verify-spotify.sh` - Automated health check script for Spotify integration
 
-**Quick fix checklist:**
+**Usage**:
 
-- Verify Client ID and Secret in `.env.local` match Spotify dashboard exactly
-- Ensure redirect URI is `http://127.0.0.1:3000/api/auth/callback/spotify`
-- Restart server after changing `.env.local`
-- Check debug endpoint: `curl http://127.0.0.1:3000/api/debug/auth-check`
+```bash
+npm run verify:spotify
+```
+
+**Features**:
+
+- Checks server status
+- Validates OAuth configuration (NextAuth, Spotify client ID/secret)
+- Verifies token presence (both in-memory and file-based)
+- Reports session status
+- Color-coded output (✓ green, ⚠ yellow, ✗ red)
+- Smart detection of tokens in file vs. session state
+
+**Exit codes**:
+
+- `0` - All checks passed or config valid
+- `1` - Configuration errors detected
+
+**Documentation**: See [scripts/README.md](scripts/README.md)
+
+### ✅ Spotify Integration Fully Working
+
+**Status**: Complete and operational with PKCE OAuth flow. All TypeScript compilation, module resolution, and dependency compatibility issues have been resolved.
+
+**Current behavior:**
+
+- OAuth login works with correct redirect URI.
+- Tokens persist across server restarts.
+- Polling starts automatically when tokens are available.
+- Token refresh happens every 55 minutes automatically.
+- "Now Playing" displays immediately after login.
+- Playback controls (Play/Pause/Next/Previous) work correctly.
+
+**Verification:**
+
+```bash
+# Automated check (recommended)
+npm run verify:spotify
+
+# Manual checks
+curl http://127.0.0.1:3000/api/debug/auth-check | jq
+curl http://127.0.0.1:3000/api/debug/spotify-token-status | jq
+cat logs/spotify_tokens.json
+```
 
 ---
 
-## Session 1: Getting the Server to Run
+## Development Workflow
 
-**Objective**: To get the development server running correctly using the custom `server.ts` entry point.
+### Starting the Server
 
-**Initial State**:
+To start the development server, use the `dev` script. This script now includes the server build step.
 
-- The `dev` script in `package.json` was intended to run `node server.js`, but the application was failing to start with compilation errors.
-- The initial error was in `utils/visualization.ts` ("defined multiple times").
+```bash
+npm run dev
+```
 
-**Debugging Steps and Resolutions**:
-
-1.  **`utils/visualization.ts` fix**: The "defined multiple times" error was resolved by changing the exports to be direct `export const ...` at the declaration site.
-
-2.  **`server.js` to `server.ts`**: The `server.js` file was attempting to `require()` TypeScript files (`.ts`), which is not supported by Node.js directly.
-
-    - **Action**: Installed `ts-node` as a dev dependency.
-    - **Action**: Renamed `server.js` to `server.ts`.
-    - **Action**: Updated the `dev` script in `package.json` to `ts-node server.ts`.
-
-3.  **TypeScript Errors in `server.ts`**: The new `server.ts` file had numerous TypeScript errors due to the `strict` setting in `tsconfig.json`.
-
-    - **Action**: Added explicit type annotations for all function parameters that were implicitly `any` (e.g., `req: Request`, `res: Response`, `ws: WebSocket`).
-    - **Action**: Resolved issues with importing `Server` from the `ws` library by using `const { Server } = require('ws');`.
-    - **Action**: A persistent `TS2769` error on `server.listen` was bypassed using `@ts-ignore` to unblock development. This is a temporary workaround.
-
-4.  **`tsconfig.json` `module` fix**: A `TypeError: Unknown file extension ".ts"` occurred because `tsconfig.json` had `module: "bundler"`.
-
-    - **Action**: Changed `module` to `"CommonJS"` to ensure `ts-node` transpiles to a format Node.js understands in a CommonJS project.
-
-5.  **`utils/socketManager.ts` fix**: A `TS2304: Cannot find name 'p'.` error was caused by a typo at the end of the file.
-
-    - **Action**: Removed the extraneous `p` character.
-
-6.  **Express Routing Fix**: A runtime error `TypeError: Missing parameter name at index 1: *` was caused by `expressApp.all('*', ...)`.
-    - **Action**: Changed to `expressApp.use(...)` to correctly handle the catch-all route for the Next.js request handler.
-
-**Current Status**:
-
-- The custom server setup is now correctly configured to use `ts-node` to run `server.ts`.
-- All known TypeScript compilation errors have been resolved.
-- The server is now able to start, but the user has been cancelling the `npm run dev` command.
-
-**Next Steps**:
-
-1.  Run `npm run dev` and let it complete to confirm the server starts successfully.
-2.  If the server starts, test the application's functionality to ensure the refactoring has not introduced any regressions.
-3.  Investigate the root cause of the `TS2769` error on `server.listen` to remove the `@ts-ignore`.
-
----
-
-# Help Guide: Using VS Code for Fast Frontend and Backend Development on HRM
-
-Create a document that helps explain how to use the recent vscode extensions(like snippets) and the current settings (launch.json/task.json etc) to jumpstart fast front end and backend development for hrm. Document the common workflows, commands, and configurations that developers should be aware of when working on this project in VS Code.
-
-Provide recommendsations for any other tool, extensions or vscode settings I should be using.
-
----
-
-Add MCP servers for faster development:
-https://mui.com/material-ui/getting-started/mcp/
-gemini mcp add mui-mcp -- npx -y @mui/mcp@latest
-
-Next.js MCP Server: Next.js 16+ includes built-in support for MCP, allowing the creation of MCP servers within Next.js applications. Tools like next-devtools-mcp enhance this by providing development tools and utilities for coding agents, such as runtime diagnostics, live state access, and development automation features.
-
-gemini mcp add chrome-devtools npx chrome-devtools-mcp@latest
-
-Use https://github.com/ChromeDevTools/chrome-devtools-mcp/?tab=readme-ov-file#chrome-devtools-mcp to make sure @copilot-instructions.md has up to date information on how to best leverage the chrome-devtools-mcp extension for debugging and inspecting the Next.js frontend and backend code. Note we should make sure it works with our launch.json and task.json configurations.
-
-Make sure we have instructions for MCP setup in .github/copilot-instructions.md:
+If you need to clean the build and then run, use `npm run dev:clean`.
 
 ## Use the mui-mcp server to answer any MUI questions --
 

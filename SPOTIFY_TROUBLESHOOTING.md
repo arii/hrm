@@ -1,87 +1,83 @@
-# Spotify Integration Troubleshooting Guide
+# Spotify Integration Guide
 
-This guide addresses the recurring "Invalid Client" error and other Spotify integration issues.
+Quick setup and troubleshooting for Spotify OAuth integration.
 
-## Quick Fix Checklist
+## Quick Reference
 
-If you're seeing "Invalid Client" errors, work through this checklist:
+| Command                                           | Purpose                                             |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `npm run verify:spotify`                          | Run automated health check (recommended first step) |
+| `npm run dev:clean`                               | Start dev server with Spotify integration           |
+| `curl http://127.0.0.1:3000/api/debug/auth-check` | Check OAuth configuration                           |
+| `cat logs/spotify_tokens.json`                    | View persisted tokens                               |
 
-- [ ] Spotify app exists at https://developer.spotify.com/dashboard
-- [ ] Client ID and Secret are copied correctly to `.env.local`
-- [ ] Redirect URI is exactly: `http://127.0.0.1:3000/api/auth/callback/spotify`
-- [ ] No trailing slashes in redirect URI
-- [ ] `.env.local` file is in project root directory
-- [ ] Server restarted after changing `.env.local`
-- [ ] Auth check endpoint returns valid configuration
+**Common Actions:**
 
-## Step-by-Step Verification
+- First time setup → Follow [Quick Setup](#quick-setup) below
+- Configuration issues → Run `npm run verify:spotify` to diagnose
+- After server restart → Tokens load automatically from `logs/spotify_tokens.json`
+- Token expired → Automatic refresh every 55 minutes
 
-### 1. Verify Spotify Dashboard Configuration
+## Quick Setup
 
-Visit: https://developer.spotify.com/dashboard
+### 1. Create Spotify App
 
-**Check your app settings:**
+1. Go to https://developer.spotify.com/dashboard
+2. Create a new app
+3. In app settings, add redirect URI: `http://127.0.0.1:3000/api/auth/callback/spotify`
+4. Copy Client ID and Client Secret
 
-```
-App Name: HRM Dashboard (or whatever you named it)
-Redirect URIs:
-  ✅ http://127.0.0.1:3000/api/auth/callback/spotify
-  ✅ http://localhost:3000/api/auth/callback/spotify (optional)
+### 2. Configure Environment
 
-Settings > Basic Information:
-  Client ID: e3f3c31112ab4172b1a248e9de99518a (example)
-  Show Client Secret: [Click to reveal]
-```
-
-**Common mistakes in Spotify dashboard:**
-
-- ❌ Missing `/spotify` suffix: `http://127.0.0.1:3000/api/auth/callback`
-- ❌ Wrong protocol: `https://127.0.0.1:3000/api/auth/callback/spotify`
-- ❌ Trailing slash: `http://127.0.0.1:3000/api/auth/callback/spotify/`
-- ❌ Wrong port: `http://127.0.0.1:3001/api/auth/callback/spotify`
-
-### 2. Verify .env.local File
-
-**Location:** Project root (`/home/ari/hrm/.env.local`)
+Create/update `.env.local` in project root:
 
 ```bash
-# Check file exists
-ls -la .env.local
-
-# View contents (be careful not to commit this!)
-cat .env.local
-```
-
-**Required format:**
-
-```bash
-SPOTIFY_CLIENT_ID=your_client_id_without_quotes
-SPOTIFY_CLIENT_SECRET=your_client_secret_without_quotes
+SPOTIFY_CLIENT_ID=your_32_character_client_id
+SPOTIFY_CLIENT_SECRET=your_32_character_client_secret
 NEXTAUTH_URL=http://127.0.0.1:3000
-NEXTAUTH_SECRET=random_base64_string
+NEXTAUTH_SECRET=generate_with_openssl_rand_base64_32
 ```
 
-**Common mistakes in .env.local:**
-
-- ❌ Quotes around values: `SPOTIFY_CLIENT_ID="abc123"`
-- ❌ Spaces around `=`: `SPOTIFY_CLIENT_ID = abc123`
-- ❌ Wrong variable names: `SPOTIFY_ID` instead of `SPOTIFY_CLIENT_ID`
-- ❌ File in wrong location: `app/.env.local` instead of root
-- ❌ Line breaks or special characters in values
-
-### 3. Verify Server Loaded Configuration
-
-Start the server and check the debug endpoint:
+Generate NEXTAUTH_SECRET:
 
 ```bash
-# Terminal 1: Start server
-npm run dev:clean
+openssl rand -base64 32
+```
 
-# Terminal 2: Check auth configuration
+### 3. Start Server & Login
+
+```bash
+npm run dev:clean
+```
+
+Open http://127.0.0.1:3000/client/control and click "Login with Spotify"
+
+## Verification
+
+### Automated Health Check (Recommended)
+
+Run the automated verification script to check all components:
+
+```bash
+npm run verify:spotify
+```
+
+This script checks:
+
+- Server is running
+- NextAuth and Spotify configuration loaded
+- Token file exists and contains valid tokens
+- Session status
+
+### Manual Verification
+
+Check configuration is loaded:
+
+```bash
 curl http://127.0.0.1:3000/api/debug/auth-check | jq
 ```
 
-**Expected output:**
+Expected:
 
 ```json
 {
@@ -93,327 +89,129 @@ curl http://127.0.0.1:3000/api/debug/auth-check | jq
 }
 ```
 
-**If spotifyConfigured is false:**
-
-- Server didn't load the environment variables
-- Check `.env.local` is in correct location
-- Restart server: `npm run pm2:stop && npm run dev:clean`
-
-**If clientId is undefined or wrong:**
-
-- Copy-paste error from Spotify dashboard
-- Extra whitespace or characters
-- File encoding issues (should be UTF-8)
-
-### 4. Test OAuth Flow
-
-**Manual test:**
-
-1. Open browser: http://127.0.0.1:3000/client/control
-2. Click "Login with Spotify" button
-3. Browser should redirect to Spotify authorization page
-4. URL should be: `https://accounts.spotify.com/authorize?...`
-5. After approving, you should redirect back to control panel
-6. Control panel should show "Now Playing" instead of login button
-
-**If redirect fails:**
-
-Check browser console for errors:
-
-```
-F12 > Console tab
-Look for errors containing "callback" or "spotify"
-```
-
-Check server logs:
+Check token status after login:
 
 ```bash
-npm run pm2:logs | grep -i spotify
+curl http://127.0.0.1:3000/api/debug/spotify-token-status | jq
 ```
 
-### 5. Verify Token Delivery
-
-After successful login, tokens should be delivered to the server:
+Check token file directly:
 
 ```bash
-# Check token manager status
+cat logs/spotify_tokens.json | jq
+```
+
+## Common Issues
+
+**💡 Tip:** Run `npm run verify:spotify` after any configuration changes or troubleshooting steps to confirm everything is working.
+
+### "Invalid Client" Error
+
+**Cause:** Spotify doesn't recognize your credentials
+
+**Fix:**
+
+1. Verify Client ID and Secret in `.env.local` match Spotify dashboard exactly (no quotes, no spaces)
+2. Regenerate Client Secret in Spotify dashboard if needed
+3. Restart server: `npm run pm2:stop && npm run dev:clean`
+
+### "Redirect URI Mismatch" Error
+
+**Cause:** Redirect URI in Spotify dashboard doesn't match NextAuth
+
+**Fix:**
+
+1. Go to Spotify Dashboard > Your App > Edit Settings
+2. Add exact URI: `http://127.0.0.1:3000/api/auth/callback/spotify`
+3. Save and wait 1-2 minutes for changes to propagate
+
+### Token Not Persisting
+
+**Symptoms:** Must login every server restart
+
+**Fix:**
+
+- Check `logs/spotify_tokens.json` exists after login
+- Verify `logs/` directory is writable
+- Check server logs: `npm run pm2:logs | grep token`
+
+### Controls Not Working
+
+**Symptoms:** Buttons don't control Spotify playback
+
+**Fix:**
+
+1. Ensure Spotify is playing on an active device
+2. Check browser console for WebSocket errors
+3. Verify tokens are valid: `cat logs/spotify_tokens.json`
+
+## Architecture
+
+### OAuth Flow
+
+1. User clicks "Login with Spotify" → redirects to Spotify
+2. Spotify redirects back to NextAuth callback
+3. NextAuth JWT callback posts tokens to `/api/internal/token-delivery`
+4. Token delivery route saves to `logs/spotify_tokens.json`
+5. Server loads tokens on startup from file via `SpotifyTokenManager`
+
+### Key Files
+
+- `lib/auth.ts` - NextAuth config + JWT callback for token delivery
+- `app/api/internal/token-delivery/route.ts` - Saves tokens to file
+- `services/spotifyTokenManager.ts` - Token refresh every 55 minutes
+- `services/spotifyPolling.ts` - API polling every 3 seconds, loads tokens on startup
+- `logs/spotify_tokens.json` - Persisted tokens (not in git)
+
+### Token Lifecycle
+
+```
+Login → JWT Callback → POST /api/internal/token-delivery → Save to logs/spotify_tokens.json
+                                                                          ↓
+Server Restart → SpotifyPolling constructor → loadTokenFromManager() → Load from file → Start polling
+                                                                          ↓
+                                      55 min → SpotifyTokenManager refresh → Update file
+```
+
+## Debug Endpoints
+
+### Auth Configuration
+
+```bash
+curl http://127.0.0.1:3000/api/debug/auth-check
+```
+
+Returns: nextAuthConfigured, spotifyConfigured, clientId, hasClientSecret, redirectUri
+
+### Session Status
+
+```bash
+curl http://127.0.0.1:3000/api/debug/session
+```
+
+Returns current NextAuth session including accessToken
+
+### Token Status
+
+```bash
 curl http://127.0.0.1:3000/api/debug/spotify-token-status
-
-# Expected output:
-{
-  "hasRefreshToken": true,
-  "hasAccessToken": true,
-  "tokenAge": "123 seconds",
-  "willExpireIn": "3477 seconds"
-}
 ```
 
-**Check token file:**
+Returns: hasAccessToken, hasRefreshToken, userId, tokenAge, willExpireIn
+
+### Token File
 
 ```bash
 cat logs/spotify_tokens.json
 ```
 
-Should contain:
+Shows persisted tokens including refresh_token, access_token, expires_in
 
-```json
-{
-  "refresh_token": "AQD...",
-  "access_token": "BQC...",
-  "expires_at": 1699534567890
-}
-```
+## PKCE Compliance
 
-**If tokens not saved:**
+NextAuth 4.x automatically implements PKCE (Proof Key for Code Exchange) for all OAuth providers including Spotify. No additional configuration required.
 
-- Check `/api/internal/token-delivery` endpoint logs
-- Verify `logs/` directory exists and is writable
-- Check NextAuth callback in `lib/auth.ts` is calling token delivery
+Verification:
 
-## Common Error Messages & Solutions
-
-### Error: "Invalid client"
-
-**Cause:** Spotify doesn't recognize your Client ID or Secret.
-
-**Solutions:**
-
-1. Regenerate Client Secret in Spotify dashboard
-2. Copy-paste credentials again (no manual typing)
-3. Check for invisible characters (use `cat -A .env.local`)
-4. Verify Client ID length (should be 32 characters)
-
-**Verification command:**
-
-```bash
-# Test with curl (replace with your credentials)
-curl -X POST "https://accounts.spotify.com/api/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -u "CLIENT_ID:CLIENT_SECRET" \
-  -d "grant_type=client_credentials"
-
-# Should return: {"access_token":"BQC...","token_type":"Bearer","expires_in":3600}
-# If error: {"error":"invalid_client","error_description":"Invalid client"}
-```
-
-### Error: "Redirect URI mismatch"
-
-**Cause:** The redirect URI in NextAuth doesn't match Spotify app settings.
-
-**Solution:**
-
-1. Go to Spotify Dashboard > Your App > Settings
-2. Click "Edit Settings"
-3. Under "Redirect URIs", add: `http://127.0.0.1:3000/api/auth/callback/spotify`
-4. Click "Add"
-5. Click "Save" at bottom of form
-6. Wait 1-2 minutes for changes to propagate
-7. Try login again
-
-### Error: "CSRF token mismatch"
-
-**Cause:** NextAuth session cookie issues or multiple browser tabs.
-
-**Solution:**
-
-1. Clear browser cookies for localhost
-2. Close all tabs with the app
-3. Restart server
-4. Open fresh browser tab
-5. Try login again
-
-### Error: "Access token expired"
-
-**Cause:** Token wasn't refreshed properly.
-
-**Solution:**
-
-Check token refresh mechanism:
-
-```bash
-# View token manager logs
-npm run pm2:logs | grep "refreshToken"
-
-# Check refresh token exists
-curl http://127.0.0.1:3000/api/debug/spotify-token-status
-```
-
-The token should auto-refresh every 55 minutes. If not:
-
-1. Check `services/spotifyTokenManager.ts` is loaded
-2. Verify refresh token in `logs/spotify_tokens.json`
-3. Check Spotify API isn't rate-limiting
-
-## Testing Spotify Integration
-
-### Manual Test Procedure
-
-1. **Start fresh:**
-
-   ```bash
-   # Clear session
-   rm -rf .next/cache
-   npm run pm2:stop
-   npm run dev:clean
-   ```
-
-2. **Test authentication:**
-
-   ```bash
-   # Should return valid config
-   curl http://127.0.0.1:3000/api/debug/auth-check
-   ```
-
-3. **Test OAuth flow:**
-
-   - Open http://127.0.0.1:3000/client/control
-   - Click "Login with Spotify"
-   - Approve on Spotify page
-   - Should redirect back successfully
-
-4. **Test token delivery:**
-
-   ```bash
-   # Should show tokens after login
-   curl http://127.0.0.1:3000/api/debug/spotify-token-status
-   ```
-
-5. **Test playback control:**
-
-   - Start playing music in Spotify (desktop or mobile)
-   - Control panel should show "Now Playing"
-   - Click Next/Previous/Play/Pause
-   - Spotify should respond to commands
-
-6. **Test token refresh:**
-   ```bash
-   # Wait 1 hour or manually expire token
-   # Check logs for refresh activity
-   npm run pm2:logs | grep "Token refreshed"
-   ```
-
-## Debug Endpoints Reference
-
-All debug endpoints (only for development):
-
-```bash
-# Health check - verify server is running
-curl http://127.0.0.1:3000/api/debug/ping
-
-# Auth configuration - check credentials loaded
-curl http://127.0.0.1:3000/api/debug/auth-check
-
-# Session - check current NextAuth session
-curl http://127.0.0.1:3000/api/debug/session
-
-# Spotify token status - server-side token manager state
-curl http://127.0.0.1:3000/api/debug/spotify-token-status
-
-# Spotify token - current access token (requires login)
-curl -H "Cookie: $(cat cookies.txt)" \
-  http://127.0.0.1:3000/api/debug/spotify-token
-```
-
-## Environment Variable Template
-
-Copy this to `.env.local` and fill in your values:
-
-```bash
-# =================================================================
-# Spotify OAuth Configuration
-# =================================================================
-# Get these from: https://developer.spotify.com/dashboard
-# 1. Create an app
-# 2. Copy Client ID and Client Secret
-# 3. Add redirect URI: http://127.0.0.1:3000/api/auth/callback/spotify
-# =================================================================
-
-SPOTIFY_CLIENT_ID=your_32_character_client_id
-SPOTIFY_CLIENT_SECRET=your_32_character_client_secret
-
-# =================================================================
-# NextAuth Configuration
-# =================================================================
-# NEXTAUTH_URL must match the host you're accessing the app from
-# Generate NEXTAUTH_SECRET with: openssl rand -base64 32
-# =================================================================
-
-NEXTAUTH_URL=http://127.0.0.1:3000
-NEXTAUTH_SECRET=generate_with_openssl_rand_base64_32
-
-# =================================================================
-# Optional Configuration
-# =================================================================
-
-# Host binding (default: 127.0.0.1)
-HOST=127.0.0.1
-
-# Node environment (default: development)
-NODE_ENV=development
-```
-
-## Still Having Issues?
-
-If you've followed all steps and still see errors:
-
-1. **Check Spotify API Status**
-
-   - Visit: https://developer.spotify.com/status
-   - Verify all services are operational
-
-2. **Verify Spotify Account**
-
-   - Ensure your Spotify account is active
-   - Premium accounts work best for playback control
-   - Free accounts can view "Now Playing" but may have limited control
-
-3. **Test with Spotify's OAuth Examples**
-
-   - Try Spotify's official OAuth example: https://github.com/spotify/web-api-examples
-   - If that works but HRM doesn't, compare configurations
-
-4. **Check Server Logs**
-
-   ```bash
-   # View all recent logs
-   npm run pm2:logs
-
-   # View specific log files
-   tail -f logs/server-out.log
-   tail -f logs/server-error.log
-   ```
-
-5. **Enable Verbose Logging**
-   Add to `.env.local`:
-
-   ```bash
-   DEBUG=true
-   NEXTAUTH_DEBUG=true
-   ```
-
-6. **Create Fresh Spotify App**
-   - Sometimes app settings get corrupted
-   - Create a completely new app in Spotify dashboard
-   - Use the new credentials
-
-## Success Indicators
-
-You'll know Spotify integration is working when:
-
-- ✅ Debug endpoint shows `spotifyConfigured: true`
-- ✅ Login redirects to Spotify successfully
-- ✅ After approval, redirects back to control panel
-- ✅ Control panel displays current track name and artist
-- ✅ Play/Pause button state matches Spotify playback
-- ✅ Next/Previous buttons control Spotify
-- ✅ Dashboard shows "Now Playing" updates every 5 seconds
-- ✅ Token auto-refreshes without user intervention
-- ✅ No "Invalid client" errors in logs
-
-## Related Documentation
-
-- [README.md](README.md) - Main project documentation
-- [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Implementation details
-- [lib/auth.ts](lib/auth.ts) - NextAuth configuration
-- [services/spotifyTokenManager.ts](services/spotifyTokenManager.ts) - Token refresh logic
-- [services/spotifyPolling.ts](services/spotifyPolling.ts) - API polling service
+- Check NextAuth logs during OAuth flow for code_verifier and code_challenge
+- Spotify API validates PKCE automatically

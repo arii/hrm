@@ -145,4 +145,8 @@ export class SpotifyTokenManager {
   getUserId(): string | null {
     return this.currentToken?.payload.sub ?? null;
   }
+
+  getCurrentRefreshToken(): string | null {
+    return this.currentToken?.payload.refresh_token ?? null;
+  }
 }

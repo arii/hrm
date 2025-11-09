@@ -21,8 +21,8 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 # Install dependencies
 npm install
 
-# Start development server (runs on http://127.0.0.1:3000)
-npm run dev:clean
+# Build the server and start the development server (runs on http://127.0.0.1:3000)
+npm run dev
 ```
 
 The server will start with:
@@ -82,9 +82,9 @@ npm run pm2:logs
 ### Development
 
 ```bash
-npm run dev              # Start dev server with PM2 (foreground)
-npm run dev:clean        # Start dev server on 127.0.0.1:3000
-npm run dev:server       # Alias for dev:clean
+npm run dev              # Build server and start dev server (foreground)
+npm run dev:clean        # Alias for npm run dev
+npm run dev:server       # Alias for npm run dev
 ```
 
 ### Building
@@ -108,6 +108,7 @@ npm run test:visual:update  # Update baseline screenshots
 ### Debugging
 
 ```bash
+npm run verify:spotify   # Automated Spotify integration health check
 npm run pm2:logs         # View PM2 logs
 npm run pm2:stop         # Stop PM2 processes
 npm run pm2:delete       # Delete PM2 processes
