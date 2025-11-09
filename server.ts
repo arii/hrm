@@ -81,7 +81,19 @@ app
     };
 
     // 2. Initialize Persistent Services
-    const spotifyService = new SpotifyPolling(broadcastState);
+    let spotifyService: SpotifyPolling;
+    try {
+      spotifyService = new SpotifyPolling(broadcastState);
+    } catch (e) {
+      console.error("SpotifyPolling initialization failed:", e);
+      // Fallback stub to avoid crashing entire server if Spotify setup fails
+      spotifyService = {
+        handleCommand: () => {},
+        stopPolling: () => {},
+        startPolling: () => {},
+        setRefreshToken: () => {},
+      } as unknown as SpotifyPolling;
+    }
     const tabataService = new TabataTimer(broadcastState);
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)

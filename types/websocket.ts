@@ -60,6 +60,10 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: "TIMER_COMMAND";
   command: "START" | "PAUSE" | "STOP";
+  // Optional configuration for START command
+  workDuration?: number;
+  restDuration?: number;
+  totalCycles?: number;
 }
 export interface SpotifyCommandMessage {
   type: "SPOTIFY_COMMAND";

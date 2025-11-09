@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --project tsconfig.json server.ts",
     "build:server": "tsc -p tsconfig.build.json",
-  "dev:server": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --project tsconfig.json server.ts",
-  "dev:clean": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --project tsconfig.json server.ts",
+    "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
+    "dev:server": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
+    "dev:clean": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
     "build": "next build",
     "start": "./node_modules/.bin/pm2 start ecosystem.config.js --env production",
     "pm2:prod": "./node_modules/.bin/pm2 start ecosystem.config.js --env production",
@@ -31,6 +31,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.0",
     "@types/node-fetch": "^2.6.13",
@@ -38,8 +39,9 @@
     "@types/react-dom": "^18.2.0",
     "@types/ws": "^8.18.1",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "8.57.0",
-    "eslint-config-next": "14.2.3",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.1",
     "pm2": "^5.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

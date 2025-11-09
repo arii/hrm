@@ -94,12 +94,13 @@ export class SpotifyPolling {
       });
 
       if (!response.ok) {
-        throw new Error(`Token refresh failed: ${response.statusText}`);
+        const errorBody = await response.text();
+        throw new Error(`Token refresh failed: ${response.status} - ${errorBody}`);
       }
 
       const data: any = await response.json();
       this.accessToken = data.access_token;
-      console.log("Spotify Access Token refreshed successfully.");
+      console.log("Spotify Access Token refreshed successfully. Status:", response.status, "Body:", data);
 
       // Start polling if not already running
       if (!this.pollInterval) {
@@ -133,6 +134,9 @@ export class SpotifyPolling {
   private getCurrentlyPlaying = async () => {
     if (!this.accessToken) return;
 
+    const maskedAccessToken = this.accessToken.substring(0, 5) + "...";
+    console.log("Fetching currently playing track with access token:", maskedAccessToken);
+
     try {
       const response = await fetch(`${BASE_URL}/me/player/currently-playing`, {
         headers: {
@@ -141,6 +145,7 @@ export class SpotifyPolling {
       });
 
       if (response.status === 204) {
+        console.log("Currently playing: No content (204).");
         // 204 No Content - nothing is playing on the user's account
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false;
@@ -154,7 +159,9 @@ export class SpotifyPolling {
         return;
       }
 
+      const responseBody = await response.text();
       if (!response.ok) {
+        console.error("Error fetching currently playing track. Status:", response.status, "Body:", responseBody);
         if (response.status === 401) {
           console.warn(
             "Spotify token expired or invalid. Attempting refresh..."
@@ -164,7 +171,8 @@ export class SpotifyPolling {
         return;
       }
 
-      const data = (await response.json()) as any;
+      const data = JSON.parse(responseBody) as any;
+      console.log("Successfully fetched currently playing track. Data:", data);
 
       // Only broadcast if track ID or playback state has changed
       if (
