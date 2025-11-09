@@ -461,6 +461,7 @@ const frames = await page.evaluate(async () => {
   const start = performance.now();
   return await new Promise((resolve) => {
     function step() {
+      
       count++;
       if (performance.now() - start > 1000) resolve(count);
       else requestAnimationFrame(step);

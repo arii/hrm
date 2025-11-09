@@ -1,41 +1,44 @@
 # Code Review Assessment
 
-This document outlines the findings of the code review and provides actionable steps for improvement.
-
-## Summary of Findings
-
-The project utilizes a Next.js frontend with a custom Node.js/Express server and a WebSocket server for real-time data. It integrates Spotify for music control and Web Bluetooth for Heart Rate Monitor (HRM) data.
-
-**Key Components:**
-- `server.ts`: Custom HTTP server, hosts Next.js, WebSocket server, initializes `SpotifyPolling` and `TabataTimer`.
-- `app/layout.tsx`: Root Next.js layout, sets up fonts and `Providers`.
-- `app/page.tsx`: Main dashboard, displays real-time HRM, Tabata timer, Spotify status, and Google Doc viewer.
-- `lib/auth.ts`: NextAuth configuration for Spotify, delivers refresh tokens to an internal API.
-- `services/spotifyTokenManager.ts`: Manages Spotify access/refresh tokens, including persistence.
-- `utils/socketManager.ts`: Manages WebSocket connections, client commands, and state broadcasting.
-- `hooks/useBluetoothHRM.ts`: React hook for Web Bluetooth HRM data streaming.
+This document outlines actionable steps for improving the dashboard's visual appearance.
 
 ## Actionable Steps
 
-1.  **Centralize `UnifiedStateMessage` definition:**
-    *   **What will change:** The `HrmData`, `TimerData`, and `SpotifyData` interfaces, currently duplicated in `server.ts`, will be removed from `server.ts`. The `UnifiedStateMessage` interface and its dependent interfaces will be imported from `types/websocket.ts` into both `server.ts` and `utils/socketManager.ts`. `types/websocket.ts` already contains the canonical definitions for these interfaces.
-
-2.  **Improve Spotify Token Delivery Reliability:**
-    *   **What will change:** The `fetch` call in `lib/auth.ts` will be updated to use `process.env.INTERNAL_API_URL` as the base URL for the token delivery endpoint, with a fallback to the current hardcoded `http://127.0.0.1:3000` if the environment variable is not set. The `console.error` statement within the `else` block (when `response.ok` is false) will be enhanced to explicitly log the `response.status` and `responseBody` to provide more detailed context on why the token delivery failed.
-
-3.  **Enhance Web Bluetooth Error Feedback:**
-    *   **What will change:** The `catch` block in `hooks/useBluetoothHRM.ts` will be modified to inspect the `error` object more thoroughly. It will check for specific `DOMException` names (e.g., `NotFoundError` for device not found, `SecurityError` for permissions issues, `NetworkError` for connection problems) and set the `deviceStatus` state with more user-friendly and informative messages based on the type of error encountered.
-
-4.  **Refine SpotifyPolling Fallback:**
-    *   **What will change:** In `server.ts`, if the `SpotifyPolling` service fails to initialize (e.g., due to missing environment variables or API issues), a boolean flag (e.g., `spotifyServiceInitialized`) will be set to `false`. The `broadcastState` function will then include this status in the `UnifiedStateMessage`. On the frontend (`app/page.tsx`), the Spotify UI component will check this status and display a clear "Spotify service unavailable" message or a similar indicator, instead of showing potentially empty or misleading data.
-
-5.  **Address Type Assertions:**
-    *   **What will change:**
-        *   In `hooks/useBluetoothHRM.ts`, for the `characteristic.addEventListener` callback, a runtime check will be added to ensure `event.target` is indeed a `BluetoothRemoteGATTCharacteristic` before asserting its type, or a more specific event type will be investigated if available in the Web Bluetooth API.
-        *   In `utils/socketManager.ts`, before asserting `JSON.parse(messageString)` as `ClientCommandMessage`, a schema validation library (e.g., Zod, Yup) will be integrated to parse and validate the incoming WebSocket message. This will provide robust runtime type checking and clearer error handling for malformed messages.
-
-6.  **Centralize Constants:**
-    *   **What will change:** The `MAX_HR_DEFAULT` constant, currently defined in both `app/page.tsx` and `hooks/useBluetoothHRM.ts`, will be moved to a new dedicated file, `utils/constants.ts`. Both `app/page.tsx` and `hooks/useBluetoothHRM.ts` will then import `MAX_HR_DEFAULT` from this new centralized location.
+1.  **Enhance Dashboard Visual Parity:**
+    *   **Objective:** To visually align the current dashboard (`app/page.tsx`) with the legacy design, focusing on key elements like the HR Tile, Tabata Timer, and Workout Columns, as depicted in `screenshots/original_site_screenshots/image-176267969980.png` and described in `running_notes.md`.
+    *   **Key Areas for Improvement:**
+        *   **HR Tile (`components/HrTile.tsx` and `app/page.tsx`):**
+            *   **Dynamic Background Colors:** Implement background colors for the HR percentage tile based on HR zones. Utilize `utils/visualization.ts` to map HR values to specific colors (e.g., Grey, Blue, Green, Yellow, Red, Purple). The current image shows a plain white background, which needs to be replaced with the appropriate zone color.
+            *   **Typography and Layout:** Ensure the HR percentage is displayed prominently with a "huge percent font" (>= 9rem on medium screens). Integrate the raw BPM and potentially the user's name ("Ari" from the current image) in a clear, readable manner, consistent with the legacy design.
+            *   **Styling:** Apply minimal shadow, square edges, and ensure white text over colored tiles has sufficient contrast (> 4.5:1).
+        *   **Tabata Timer (`components/TimerDisplay.tsx` and `app/page.tsx`):**
+            *   **7-Segment Style Digits:** The current timer already uses a large red digital display. Verify that it matches the "large 7-segment style digits in a black card" requirement. If a true 7-segment font isn't available, ensure the CSS alternative provides a similar aesthetic.
+            *   **Phase Labels and Tints:** Ensure "Work:20" and "Rest:10" labels, along with other phase labels (WORK/REST/COOLDOWN/IDLE), match the typography and background tints of the legacy styling. Refer to the `running_notes.md` for specific color codes (e.g., WORK: `#ef4444`, REST: `#22c55e`).
+        *   **Workout Columns (`components/WorkoutColumns.tsx` and `app/page.tsx`):**
+            *   **MUI Grid Layout:** Refactor the layout of workout exercises to use MUI Grid components for proper alignment and responsiveness. The current image shows basic text in simple boxes, which needs to be structured into "five columns with large font."
+            *   **Typography and Scrolling:** Apply larger, more readable fonts for the exercise descriptions. Implement vertical scrolling for individual columns if the content exceeds the visible area, consistent with the legacy design.
+        *   **Overall Layout and Spacing (`app/page.tsx`):**
+            *   **Proportions:** Adjust the grid and spacing of the main components (Timer, HR Tile, Workout Columns, Spotify Card) to achieve the desired visual hierarchy and proportions seen in the original site screenshots. The goal is to match the "Grid similar to legacy proportions: Timer left, 2-3 tiles across, secondary row with details + Spotify."
+    *   **Implementation Strategy:**
+        *   **Step 1: Analyze Original Screenshot:** Carefully compare the current dashboard with `screenshots/original_site_screenshots/image-176267969980.png` to identify precise visual discrepancies in layout, typography, colors, and component sizing.
+        *   **Step 2: HR Tile Refinement:**
+            *   Modify `components/HrTile.tsx` to accept HR zone data and apply corresponding background colors.
+            *   Update `app/page.tsx` to pass HR zone information to `HrTile` using `utils/visualization.ts`.
+            *   Adjust CSS/MUI styling for font size, weight, and layout of percentage, BPM, and name.
+        *   **Step 3: Tabata Timer Review:**
+            *   Verify `components/TimerDisplay.tsx` styling against legacy design for 7-segment font and phase tints.
+            *   Ensure `app/page.tsx` correctly passes timer state for phase labels and colors.
+        *   **Step 4: Workout Columns Implementation:**
+            *   Create or update `components/WorkoutColumns.tsx` to use MUI Grid.
+            *   Apply appropriate typography styles and implement scrollable containers for content overflow.
+            *   Integrate `WorkoutColumns` into `app/page.tsx`.
+        *   **Step 5: Global Layout Adjustments:**
+            *   Modify the main layout in `app/page.tsx` to arrange `TimerDisplay`, `HrTile`, `WorkoutColumns`, and the Spotify component according to the desired grid proportions and spacing.
+    *   **Verification:**
+        *   **Visual Inspection:** Manually compare the updated dashboard with the original site screenshot.
+        *   **Playwright Visual Tests:** Update existing or create new Playwright visual tests (`npm run test:visual`) to capture screenshots of the refined dashboard and compare them against approved baselines.
+        *   **Computed Styles:** Use Chrome DevTools MCP or Playwright to verify computed styles (e.g., `backgroundColor`, `fontSize`) of key elements against the specified color palette and typography requirements.
+        *   **Accessibility:** Conduct a quick Lighthouse audit to ensure contrast ratios are met.
 
 ## Guidelines for Applying Actionable Steps
 
@@ -50,9 +53,4 @@ To prevent errors during the implementation of these actionable steps, please ad
 
 ## Completion Checklist
 
-- [x] 1. Centralize `UnifiedStateMessage` definition
-- [x] 2. Improve Spotify Token Delivery Reliability
-- [x] 3. Enhance Web Bluetooth Error Feedback
-- [x] 4. Refine SpotifyPolling Fallback
-- [x] 5. Address Type Assertions
-- [x] 6. Centralize Constants
+- [ ] 1. Enhance Dashboard Visual Parity
