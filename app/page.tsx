@@ -13,7 +13,7 @@ import { getHrZoneProps, getTimerProps } from '../utils/visualization';
 import CircularProgress from '@mui/material/CircularProgress';
 
 const MAX_HR_DEFAULT = 185;
-const DOC_URL = "https://docs.google.com/document/d/e/2PACX-1vT1lA3-6r4q1gHqK2q9J2sJ4D8X1K6o5B3cQ8Yt5x4bW7X0yJ0z7w9V6mR/pub?embedded=true"; // Example URL
+const DOC_URL = "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub"; // Example URL
 
 // Component to display the current connection status
 const StatusIndicator = ({ status }: { status: string }) => {
@@ -32,7 +32,6 @@ const Dashboard: React.FC = () => {
     const { hrmData, timerData, spotifyData, connectionStatus } = useWebSocket();
     
     // Visualization logic separation
-    const hrZoneProps = useMemo(() => getHrZoneProps(hrmData.value, hrmData.maxHr || MAX_HR_DEFAULT), [hrmData]);
     const timerProps = useMemo(() => getTimerProps(timerData.currentPhase), [timerData]);
     const timerProgressValue = useMemo(() => {
         if (timerData.timeRemaining === 0 || timerData.currentPhase === 'IDLE') return 0;
@@ -53,56 +52,61 @@ const Dashboard: React.FC = () => {
             <Grid container spacing={3}>
                 {/* --------------------- TOP ROW: KEY METRICS --------------------- */}
                 
-                {/* 1. HEART RATE MONITOR (HRM) */}
-                <Grid item xs={12} md={6} lg={4}>
-                    <Card className="shadow-xl h-full flex flex-col">
-                        <CardContent className="flex-grow">
-                            <Box className="flex items-center justify-between">
-                                <Typography variant="subtitle1" color="textSecondary" className="flex items-center">
-                                    <HeartBroken className="mr-1" color="error" /> LIVE HEART RATE
-                                </Typography>
-                                <Typography variant="caption" className="font-mono text-gray-500">
-                                    Max HR: {hrmData.maxHr || MAX_HR_DEFAULT} BPM
-                                </Typography>
-                            </Box>
+                {/* 1. HEART RATE MONITORS (HRM) */}
+                {hrmData.map(user => {
+                    const hrZoneProps = getHrZoneProps(user.value, user.maxHr || MAX_HR_DEFAULT);
+                    return (
+                        <Grid item xs={12} md={6} lg={4} key={user.clientId}>
+                            <Card className="shadow-xl h-full flex flex-col">
+                                <CardContent className="flex-grow">
+                                    <Box className="flex items-center justify-between">
+                                        <Typography variant="subtitle1" color="textSecondary" className="flex items-center">
+                                            <HeartBroken className="mr-1" color="error" /> {user.name || 'LIVE HEART RATE'}
+                                        </Typography>
+                                        <Typography variant="caption" className="font-mono text-gray-500">
+                                            Max HR: {user.maxHr || MAX_HR_DEFAULT} BPM
+                                        </Typography>
+                                    </Box>
 
-                            <Box className="mt-4 text-center">
-                                {/* BPM Number */}
-                                <Typography 
-                                    variant="h1" 
-                                    component="div" 
-                                    className="font-extrabold"
-                                    style={{ color: hrZoneProps.progressColor, fontSize: '5rem' }}
-                                >
-                                    {hrmData.value}
-                                </Typography>
-                                {/* Zone Name */}
-                                <Box 
-                                    className="inline-block px-3 py-1 rounded-full mt-2"
-                                    style={{ backgroundColor: hrZoneProps.progressColor }}
-                                >
-                                    <Typography variant="subtitle1" className="font-bold text-white">
-                                        {hrZoneProps.zone} ZONE
-                                    </Typography>
-                                </Box>
-                                
-                                {/* Progress Bar (Percentage of Max) */}
-                                <Typography variant="caption" display="block" className="mt-4 text-gray-600">
-                                    {hrZoneProps.percentage}% of Max HR
-                                </Typography>
-                                <LinearProgress 
-                                    variant="determinate" 
-                                    value={hrZoneProps.percentage} 
-                                    className="mt-2 h-2 rounded-full"
-                                    sx={{ 
-                                        '& .MuiLinearProgress-bar': { backgroundColor: hrZoneProps.progressColor },
-                                        backgroundColor: '#e5e7eb',
-                                    }} 
-                                />
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
+                                    <Box className="mt-4 text-center">
+                                        {/* BPM Number */}
+                                        <Typography 
+                                            variant="h1" 
+                                            component="div" 
+                                            className="font-extrabold"
+                                            style={{ color: hrZoneProps.progressColor, fontSize: '5rem' }}
+                                        >
+                                            {user.value}
+                                        </Typography>
+                                        {/* Zone Name */}
+                                        <Box 
+                                            className="inline-block px-3 py-1 rounded-full mt-2"
+                                            style={{ backgroundColor: hrZoneProps.progressColor }}
+                                        >
+                                            <Typography variant="subtitle1" className="font-bold text-white">
+                                                {hrZoneProps.zone} ZONE
+                                            </Typography>
+                                        </Box>
+                                        
+                                        {/* Progress Bar (Percentage of Max) */}
+                                        <Typography variant="caption" display="block" className="mt-4 text-gray-600">
+                                            {hrZoneProps.percentage}% of Max HR
+                                        </Typography>
+                                        <LinearProgress 
+                                            variant="determinate" 
+                                            value={hrZoneProps.percentage} 
+                                            className="mt-2 h-2 rounded-full"
+                                            sx={{ 
+                                                '& .MuiLinearProgress-bar': { backgroundColor: hrZoneProps.progressColor },
+                                                backgroundColor: '#e5e7eb',
+                                            }} 
+                                        />
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    );
+                })}
 
                 {/* 2. TABATA TIMER */}
                 <Grid item xs={12} md={6} lg={4}>
@@ -135,21 +139,17 @@ const Dashboard: React.FC = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        flexDirection: 'column',
                                     }}
                                 >
-                                    <Typography variant="h3" component="div" className="font-bold" color="textPrimary">
-                                        {timerData.timeRemaining}
-                                    </Typography>
-                                    <Typography variant="caption" color="textSecondary" className="font-medium">
-                                        SECONDS
+                                    <Typography variant="h2" component="div" className="font-extrabold" style={{ color: timerProps.progressColor }}>
+                                        {timerData.currentPhase}
                                     </Typography>
                                 </Box>
                             </Box>
                             
                             {/* Phase Status */}
-                            <Typography variant="h5" className="font-extrabold mt-3" style={{ color: timerProps.progressColor }}>
-                                {timerData.currentPhase}
+                            <Typography variant="h5" className="font-bold mt-3" style={{ color: timerProps.progressColor }}>
+                                {timerData.timeRemaining}s
                             </Typography>
                             <Typography variant="subtitle2" color="textSecondary">
                                 Cycle {timerData.cycle} of {timerData.totalCycles}

@@ -8,6 +8,7 @@ import React from 'react';
 import { Container, Card, Typography, Button, Box } from '@mui/material';
 import { Bluetooth, HeartBroken, LinkOff } from '@mui/icons-material';
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM';
+import HeartRateZones from '../../../components/HeartRateZones';
 
 const BluetoothClient: React.FC = () => {
     // Hook returns operations and status (names taken from current hook usage in repo)
@@ -56,6 +57,8 @@ const BluetoothClient: React.FC = () => {
                     </Typography>
                 </Box>
                 
+                {isConnected && MAX_HR && <HeartRateZones maxHr={MAX_HR} />}
+
                 <Typography variant="caption" className="mt-4 block text-gray-500">
                     Your data will be streamed to the unified server at 127.0.0.1:3000.
                 </Typography>

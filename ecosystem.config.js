@@ -8,8 +8,10 @@ module.exports = {
     {
       name: "hrm-server",
       script: "server.ts",
+      // Use ts-node in transpile-only mode so runtime type-checking doesn't
+      // cause the PM2 process to exit on development type errors.
       interpreter: "./node_modules/.bin/ts-node",
-      // interpreterArgs: '--transpile-only',
+      interpreter_args: "--transpile-only",
       watch: ["server.ts", "services", "utils", "app"],
       instances: 1,
       autorestart: true,

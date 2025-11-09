@@ -16,14 +16,14 @@ import {
 const DEFAULT_SERVER_URL = 'ws://127.0.0.1:3000/ws';
 
 interface AppState {
-    hrmData: HrmData;
+    hrmData: HrmData[];
     timerData: TimerData;
     spotifyData: SpotifyData;
 }
 
 // Initial state, conforming to the interfaces
 const INITIAL_STATE: AppState = {
-    hrmData: { value: 0, maxHr: 185 },
+    hrmData: [],
     timerData: { isRunning: false, currentPhase: 'IDLE', timeRemaining: 0, cycle: 0, totalCycles: 8 },
     spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
 };

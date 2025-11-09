@@ -1,123 +1,111 @@
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initSocketManager = void 0;
 // File: utils/socketManager.ts (WebSocket Manager - Typed)
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
-import { WebSocket, Server as WebSocketServer } from 'ws';
-import { 
-    UnifiedStateMessage, ClientCommandMessage, HrmData 
-} from '../types/websocket'; 
-import { default as SpotifyPolling } from '../services/spotifyPolling';
-import { default as TabataTimer } from '../services/tabataTimer';
-
+var ws_1 = require("ws");
 // Define service instances to be managed
-let wssInstance: WebSocketServer;
-let tabataServiceInstance: TabataTimer;
-let spotifyServiceInstance: SpotifyPolling;
-
-const clientData = new Map<string, HrmData>();
-
-interface Services {
-    tabataService: TabataTimer;
-    spotifyService: SpotifyPolling;
-}
-
+var wssInstance;
+var tabataServiceInstance;
+var spotifyServiceInstance;
+var clientData = new Map();
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-export const initSocketManager = (wss: WebSocketServer, services: Services) => {
+var initSocketManager = function (wss, services) {
     wssInstance = wss;
     tabataServiceInstance = services.tabataService;
     spotifyServiceInstance = services.spotifyService;
-
-    wssInstance.on('connection', (ws: WebSocket) => {
-        const clientId = `user-${Math.random().toString(36).substring(2, 9)}`;
-        console.log(`WebSocket Client connected: ${clientId}`);
-
-        const newClient: HrmData = {
-            clientId,
+    wssInstance.on('connection', function (ws) {
+        var clientId = "user-".concat(Math.random().toString(36).substring(2, 9));
+        console.log("WebSocket Client connected: ".concat(clientId));
+        var newClient = {
+            clientId: clientId,
             value: 0,
             maxHr: 185,
             name: 'New User',
             age: 30,
         };
         clientData.set(clientId, newClient);
-        
         // Send initial state upon connection
         ws.send(JSON.stringify({
             type: 'STATE_UPDATE',
             hrmData: Array.from(clientData.values()),
             timerData: tabataServiceInstance.getState(),
             spotifyData: spotifyServiceInstance.getState(),
-        } as UnifiedStateMessage));
-
-        ws.on('message', (message) => {
+        }));
+        ws.on('message', function (message) {
             handleIncomingMessage(ws, message.toString(), clientId);
         });
-
-        ws.on('close', () => {
-            console.log(`WebSocket Client disconnected: ${clientId}`);
+        ws.on('close', function () {
+            console.log("WebSocket Client disconnected: ".concat(clientId));
             clientData.delete(clientId);
             broadcastState();
         });
     });
 };
-
-const broadcastState = () => {
-    const message: UnifiedStateMessage = {
+exports.initSocketManager = initSocketManager;
+var broadcastState = function () {
+    var message = {
         type: 'STATE_UPDATE',
         hrmData: Array.from(clientData.values()),
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
     };
-    wssInstance.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
+    wssInstance.clients.forEach(function (client) {
+        if (client.readyState === ws_1.WebSocket.OPEN) {
             client.send(JSON.stringify(message));
         }
     });
 };
-
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (ws: WebSocket, messageString: string, clientId: string) => {
+var handleIncomingMessage = function (ws, messageString, clientId) {
     try {
         // Parse and assert message type for type-safe routing
-        const message: ClientCommandMessage = JSON.parse(messageString) as ClientCommandMessage;
-        
+        var message = JSON.parse(messageString);
         switch (message.type) {
             case 'HRM_INPUT':
                 // Check if message structure matches the interface before processing
                 if (message.data && typeof message.data.value === 'number') {
-                    const existingData = clientData.get(clientId);
+                    var existingData = clientData.get(clientId);
                     if (existingData) {
-                        clientData.set(clientId, {
-                            ...existingData,
-                            ...message.data,
-                        });
+                        clientData.set(clientId, __assign(__assign({}, existingData), message.data));
                     }
                     broadcastState();
                 }
                 break;
-
             case 'TIMER_COMMAND':
                 if (tabataServiceInstance) {
                     // Command is guaranteed to be typed as START|PAUSE|STOP
                     tabataServiceInstance.handleCommand(message.command);
                 }
                 break;
-
             case 'SPOTIFY_COMMAND':
                 if (spotifyServiceInstance) {
                     spotifyServiceInstance.handleCommand(message.command);
                 }
                 break;
-
             default:
-                console.warn('Unknown message type received:', (message as any).type);
+                console.warn('Unknown message type received:', message.type);
         }
-    } catch (e) {
+    }
+    catch (e) {
         console.error('Error processing incoming message:', e);
     }
 };
-
-module.exports = { initSocketManager };
+module.exports = { initSocketManager: exports.initSocketManager };

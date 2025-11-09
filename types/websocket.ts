@@ -7,6 +7,7 @@
 // --- Server Broadcast State Interfaces ---
 
 export interface HrmData {
+    clientId: string;
     value: number;
     maxHr: number;
     name?: string;
@@ -31,7 +32,7 @@ export interface SpotifyData {
  */
 export interface UnifiedStateMessage {
     type: 'STATE_UPDATE';
-    hrmData: HrmData;
+    hrmData: HrmData[];
     timerData: TimerData;
     spotifyData: SpotifyData;
 }
@@ -39,9 +40,11 @@ export interface UnifiedStateMessage {
 
 // --- Client Input Command Interfaces ---
 
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>;
+
 export interface HrmInputMessage {
     type: 'HRM_INPUT';
-    data: HrmData;
+    data: HrmInputData;
 }
 export interface TimerCommandMessage {
     type: 'TIMER_COMMAND';
