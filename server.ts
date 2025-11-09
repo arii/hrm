@@ -97,12 +97,9 @@ app
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit("connection", ws, req);
           });
-        } else {
-          // If not our WebSocket path, let Next.js handle it
-          // This is crucial for Next.js's HMR WebSocket to work
-          // The 'upgrade' event will be re-emitted on the server
-          server.emit("upgrade", req, socket, head);
         }
+        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
+        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     );
 
