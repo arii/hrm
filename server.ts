@@ -11,7 +11,34 @@ import next from "next";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
-import type { BroadcastData } from "./types/websocket";
+
+// Define the UnifiedStateMessage interface directly in server.ts
+export interface HrmData {
+  clientId: string;
+  value: number;
+  maxHr: number;
+  name?: string;
+  age?: number;
+}
+export interface TimerData {
+  isRunning: boolean;
+  currentPhase: "WORK" | "REST" | "IDLE" | "COOLDOWN";
+  timeRemaining: number;
+  cycle: number;
+  totalCycles: number;
+  soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
+}
+export interface SpotifyData {
+  trackName: string;
+  artist: string;
+  isPlaying: boolean;
+}
+export interface UnifiedStateMessage {
+  type: "STATE_UPDATE";
+  hrmData: HrmData[];
+  timerData: TimerData;
+  spotifyData: SpotifyData;
+}
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from "./services/spotifyPolling";
@@ -40,7 +67,7 @@ app
     const wss = new WebSocketServer({ noServer: true });
 
     // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = (data: BroadcastData): void => {
+    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
       // Use the socket manager to handle the actual broadcast
       if (wss.clients.size > 0) {
         wss.clients.forEach((client: WebSocket) => {
