@@ -246,7 +246,7 @@ These commands are run in a persistent test script environment (like Playwright)
 The original site had several components, and stability is key. CLS measures how much the page layout shifts unexpectedly during loading, which ruins user experience.
 
 | Goal            | MCP/Playwright Strategy                                                                                                                                                              | Why It's Better Than Basic Testing                                                                                                                   |
-| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Measure CLS** | **`await page.goto('http://127.0.0.1:3000');`** **`const metrics = await page.evaluate(() => performance.getEntriesByType('layout-shift'));`** **`expect(metrics.length).toBe(0);`** | Directly queries the **Performance API** within the browser context to catch subtle visual jumps caused by font loading or slow component rendering. |
 
 ### Ensure Real-Time Updates Are Fast
@@ -371,3 +371,46 @@ Here is the plan to integrate the sounds:
     - If it does, it will immediately call `playSound(timerData.soundToPlay)` to play the correct beep.
 
 This approach keeps all the logic self-contained, is very performant, and perfectly mimics the original site's functionality.
+
+## Current Status (updated)
+
+- Custom server entry is [`server.ts`](server.ts) and is started in development using PM2 via `npm run dev` / `npm run dev:clean`.
+- PM2 logs show a non-fatal startup message `TypeError: Unknown file extension ".ts"` in `server-error.log` but `server-out.log` shows:
+  - "Ready on http://127.0.0.1:3000"
+  - "WebSocket Server listening on ws://127.0.0.1:3000/ws"
+- Server process is reported as `online` by PM2.
+
+Services and wiring:
+- Tabata timer: implemented in [`services/tabataTimer.ts`](services/tabataTimer.ts) and broadcasting via [`utils/socketManager.ts`](utils/socketManager.ts).
+- WebSocket entry and routing: [`initSocketManager`](utils/socketManager.ts).
+- Client hook: [`useWebSocket`](hooks/useWebSocket.ts) receives unified state and should trigger client-side audio/visual updates.
+- Dashboard and Control UI: [`app/page.tsx`](app/page.tsx), [`app/client/control/page.tsx`](app/client/control/page.tsx), [`app/client/mock/page.tsx`](app/client/mock/page.tsx).
+
+Screenshots
+- The repository contains screenshots showing the original site layout and large numeric tiles. These images were used to drive the replication plan.
+
+Next Steps (actionable checklist)
+1. Start the dev server and let it run:
+   - Run `npm run dev` (or use VS Code launch task `Launch HRM Server (pm2)`).
+   - Confirm the server reports "Ready on http://127.0.0.1:3000" in `logs/server-out.log` or via `npm run pm2:logs`.
+2. Verify real-time streaming:
+   - Open the dashboard (`/`) and the mock client (`/client/mock`).
+   - Use the mock client to stream HR packets and confirm the dashboard updates (use [`useWebSocket`](hooks/useWebSocket.ts)).
+3. Restore Tabata beeps:
+   - Implement client-side `useTabataSounds` (Web Audio API) and wire it to `useWebSocket` to play `timerData.soundToPlay` events broadcast by [`TabataTimer`](services/tabataTimer.ts).
+4. Visual parity tests:
+   - Create Playwright visual tests that compare the new UI to reference screenshots (mobile and desktop).
+   - Test color zones using computed styles for `.MuiLinearProgress-bar` and other MUI elements.
+5. Investigate TS2769 on server.listen:
+   - Remove `@ts-ignore` in [`server.ts`](server.ts) by resolving the typing mismatch.
+6. Document MCP usage:
+   - Add MCP instructions and example commands (see `.github/copilot-instructions.md`) to run Chrome DevTools MCP and capture traces.
+
+Reference files:
+- [`server.ts`](server.ts)
+- [`services/tabataTimer.ts`](services/tabataTimer.ts)
+- [`utils/socketManager.ts`](utils/socketManager.ts)
+- [`hooks/useWebSocket.ts`](hooks/useWebSocket.ts)
+- [`app/page.tsx`](app/page.tsx)
+- [`app/client/control/page.tsx`](app/client/control/page.tsx)
+- [`app/client/mock/page.tsx`](app/client/mock/page.tsx)

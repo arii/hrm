@@ -851,3 +851,68 @@ This section documents the current state of the refactoring process and key impl
 2.  Use `npm run pm2:logs` to monitor the server logs.
 3.  Verify that the application is running and that the interactive development workflow is improved.
 4.  Continue with the implementation of the remaining features as outlined in this plan.
+
+## 6. Replication Plan: Old HRM Site Visuals & Behaviors (priority)
+
+Goal: reproduce the original HRM UI behavior visible in the provided screenshots:
+- Large digital Tabata timer (big red digits)
+- Big numeric % tiles (HR % of max) with green/red backgrounds per zone
+- Workout columns with large font and vertical scroll
+- Phone control UI (compact buttons)
+- Real-time streaming from mobile mock/BT client
+
+6.1 Desktop & Mobile visual requirements
+- Tabata timer: large 7-segment style digits in a black card. Provide CSS alternative if a true 7-seg font isn't available.
+- HR tiles: huge numeric display (approx 6rem+), show name, raw BPM, and percent of max with zone color (`#ef4444` for peak).
+- Workout columns: five columns with large font (use MUI Grid), scroll horizontally/vertically to match screenshots.
+
+6.2 Implementation steps (code anchors)
+1. Server-side timer sound events
+   - Ensure [`TabataTimer`](services/tabataTimer.ts) sets `soundToPlay` at:
+     - Phase transitions (e.g., `WORK` start -> `WORK_BEEP`)
+     - Final 3 seconds of any interval -> `COUNTDOWN`
+   - Broadcast full timer state (`timerData`) via [`initSocketManager`](utils/socketManager.ts).
+   - Files: [`services/tabataTimer.ts`](services/tabataTimer.ts), [`utils/socketManager.ts`](utils/socketManager.ts)
+
+2. Client-side audio (Web Audio API)
+   - Add `hooks/useTabataSounds.ts`:
+     - Export `initAudio()` and `playSound(type: 'WORK'|'REST'|'COUNTDOWN')`.
+     - Use `OscillatorNode` to synthesize short beeps with different frequencies for work/rest/countdown.
+   - Wire into [`useWebSocket`](hooks/useWebSocket.ts) so that when a received `UnifiedStateMessage.timerData.soundToPlay` exists, `playSound` is called immediately.
+
+3. Visuals & styling
+   - Add UI elements to [`app/page.tsx`](app/page.tsx) to match large tiles and workout columns.
+   - Use [`getTimerProps`](utils/visualization.ts) and [`getHrZoneProps`](utils/visualization.ts) to obtain `progressColor` and MUI colors.
+   - Ensure the control panel [`app/client/control/page.tsx`](app/client/control/page.tsx) matches the phone UI.
+
+4. Mock client and Bluetooth client
+   - Ensure [`app/client/mock/page.tsx`](app/client/mock/page.tsx) streams messages with `HrmInputMessage` shape (already implemented).
+   - Ensure [`hooks/useBluetoothHRM.ts`](hooks/useBluetoothHRM.ts) parsing matches messages used by server.
+
+5. Visual regression & automated tests
+   - Add Playwright tests for:
+     - Responsive control panel screenshot (mobile viewport)
+     - HR zone color validation (inspect computed style of progress bar)
+     - Tabata timer transition & countdown beeps (assert state changes + optionally capture audio event via devtools)
+   - Use Chrome DevTools MCP to record traces and to run deterministic visual comparisons.
+   - Scripts: add Playwright commands and use existing `npm run mcp:chrome-devtools` when needing DevTools MCP sessions.
+
+6.3 Test matrix & acceptance criteria
+- When the mock client sends HR=180, dashboard HR tile shows ~74% or color `#ef4444` (Peak).
+- When timer starts from control panel, dashboard shows `WORK` and the large red timer; last 3 seconds trigger `COUNTDOWN` beeps.
+- Playwright screenshot diffs should be within acceptable thresholds for layout changes.
+
+6.4 Tasks & priorities
+- P0: Wire `soundToPlay` in [`services/tabataTimer.ts`](services/tabataTimer.ts) and implement `hooks/useTabataSounds.ts`.
+- P1: Implement minor CSS/Font adjustments to match large numeric tiles and workout columns (`app/page.tsx`).
+- P2: Add Playwright visual tests and MCP instructions in `.github/copilot-instructions.md`.
+- P3: Remove `@ts-ignore` on `server.listen` by fixing type mismatch in [`server.ts`](server.ts).
+
+Reference files:
+- [`services/tabataTimer.ts`](services/tabataTimer.ts)
+- [`utils/visualization.ts`](utils/visualization.ts)
+- [`utils/socketManager.ts`](utils/socketManager.ts)
+- [`hooks/useWebSocket.ts`](hooks/useWebSocket.ts)
+- [`app/page.tsx`](app/page.tsx)
+- [`app/client/control/page.tsx`](app/client/control/page.tsx)
+- [`app/client/mock/page.tsx`](app/client/mock/page.tsx)

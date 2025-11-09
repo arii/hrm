@@ -8,7 +8,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 // Assuming your authOptions are in 'app/api/auth/[...nextauth]/route.ts'
 // Adjust the path if you've placed it in 'lib/auth' as your comment suggests
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
