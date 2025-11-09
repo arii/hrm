@@ -50,39 +50,39 @@ const ControlPanel: React.FC = () => {
     }, [timerData.soundToPlay, playSound]);
 
     return (
-        <Container maxWidth="xs" className="py-8 min-h-screen bg-gray-100">
-            <Typography variant="h5" component="h1" className="font-bold text-center mb-6 text-gray-800">
+        <Container maxWidth="xs" sx={{ py: 8, minHeight: '100vh', backgroundColor: 'grey.100' }}>
+            <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', textAlign: 'center', mb: 6, color: 'grey.800' }}>
                 Workout Control Center
             </Typography>
 
             {/* Status Indicator */}
-            <Box className="text-center mb-6">
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
                 <Typography variant="caption">Server Status:</Typography>
-                <span className={`inline-flex items-center ml-2 px-3 py-0.5 rounded-full text-sm font-medium ${connectionStatus === 'Connected' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', ml: 2, px: 1.5, py: 0.5, borderRadius: '9999px', fontSize: '0.875rem', fontWeight: 'medium', backgroundColor: connectionStatus === 'Connected' ? 'success.main' : 'error.main', color: 'white' }}>
                     {connectionStatus}
-                </span>
+                </Box>
             </Box>
 
             {/* 1. Tabata Timer Controls */}
-            <Card className={`shadow-lg p-4 mb-6 ${timerProps.backgroundColor}`}>
-                <Typography variant="h6" className="flex items-center font-semibold mb-3 text-gray-700">
-                    <Timer className="mr-2" /> Tabata Timer
+            <Card sx={{ boxShadow: 3, p: 2, mb: 3, backgroundColor: timerProps.backgroundColor }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', mb: 1.5, color: 'grey.700' }}>
+                    <Timer sx={{ mr: 1 }} /> Tabata Timer
                 </Typography>
-                <Box className="text-center mb-3">
-                    <Typography variant="h4" className="font-extrabold" style={{ color: timerProps.progressColor }}>
+                <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 'extrabold', color: timerProps.progressColor }}>
                         {timerData.timeRemaining}s
                     </Typography>
                     <Typography variant="subtitle1" color="textSecondary">
                         {timerData.currentPhase} ({timerData.cycle}/{timerData.totalCycles})
                     </Typography>
                 </Box>
-                <Stack direction="row" spacing={2} justifyContent="center" className="mt-4">
+                <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
                     <IconButton 
                         size="large" 
                         color="success" 
                         onClick={() => sendTimerCommand('START')} 
                         disabled={timerData.isRunning || connectionStatus !== 'Connected'}
-                        className="bg-green-100 hover:bg-green-200"
+                        sx={{ backgroundColor: 'success.light', '&:hover': { backgroundColor: 'success.main' } }}
                     >
                         <PlayArrow fontSize="inherit" />
                     </IconButton>
@@ -91,7 +91,7 @@ const ControlPanel: React.FC = () => {
                         color="warning" 
                         onClick={() => sendTimerCommand('PAUSE')} 
                         disabled={!timerData.isRunning || connectionStatus !== 'Connected'}
-                        className="bg-yellow-100 hover:bg-yellow-200"
+                        sx={{ backgroundColor: 'warning.light', '&:hover': { backgroundColor: 'warning.main' } }}
                     >
                         <Pause fontSize="inherit" />
                     </IconButton>
@@ -100,7 +100,7 @@ const ControlPanel: React.FC = () => {
                         color="error" 
                         onClick={() => sendTimerCommand('STOP')} 
                         disabled={timerData.currentPhase === 'IDLE' || connectionStatus !== 'Connected'}
-                        className="bg-red-100 hover:bg-red-200"
+                        sx={{ backgroundColor: 'error.light', '&:hover': { backgroundColor: 'error.main' } }}
                     >
                         <Stop fontSize="inherit" />
                     </IconButton>
@@ -108,24 +108,24 @@ const ControlPanel: React.FC = () => {
             </Card>
 
             {/* 2. Spotify Controls */}
-            <Card className="shadow-lg p-4 mb-6 bg-gray-800 text-white">
-                <Typography variant="h6" className="flex items-center font-semibold mb-3 text-gray-200">
-                    <MusicNote className="mr-2" /> Spotify Player
+            <Card sx={{ boxShadow: 3, p: 2, mb: 3, backgroundColor: 'grey.800', color: 'white' }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', fontWeight: 'semibold', mb: 1.5, color: 'grey.200' }}>
+                    <MusicNote sx={{ mr: 1 }} /> Spotify Player
                 </Typography>
 
                 {spotifyLoggedIn ? (
-                    <CardContent className="p-0">
-                        <Typography variant="subtitle1" className="font-medium">
+                    <CardContent sx={{ p: 0 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
                             {spotifyData.trackName}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary" className="text-gray-400 mb-4">
+                        <Typography variant="body2" color="textSecondary" sx={{ color: 'grey.400', mb: 3 }}>
                             by {spotifyData.artist}
                         </Typography>
                         
                         <Stack direction="row" spacing={3} justifyContent="center">
                             <IconButton 
                                 size="large" 
-                                className="text-white hover:bg-gray-700"
+                                sx={{ color: 'white', '&:hover': { backgroundColor: 'grey.700' } }}
                                 onClick={() => sendSpotifyCommand('PREVIOUS')}
                                 disabled={connectionStatus !== 'Connected'}
                             >
@@ -134,7 +134,7 @@ const ControlPanel: React.FC = () => {
                             <IconButton 
                                 size="large" 
                                 color="success" 
-                                className="bg-green-500 hover:bg-green-600 text-white"
+                                sx={{ backgroundColor: 'success.main', '&:hover': { backgroundColor: 'success.dark' }, color: 'white' }}
                                 onClick={() => sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')}
                                 disabled={connectionStatus !== 'Connected'}
                             >
@@ -142,7 +142,7 @@ const ControlPanel: React.FC = () => {
                             </IconButton>
                             <IconButton 
                                 size="large" 
-                                className="text-white hover:bg-gray-700"
+                                sx={{ color: 'white', '&:hover': { backgroundColor: 'grey.700' } }}
                                 onClick={() => sendSpotifyCommand('NEXT')}
                                 disabled={connectionStatus !== 'Connected'}
                             >
@@ -155,7 +155,7 @@ const ControlPanel: React.FC = () => {
                         variant="contained" 
                         color="success" 
                         onClick={handleSpotifyLogin}
-                        className="w-full mt-2"
+                        sx={{ width: '100%', mt: 2 }}
                     >
                         Login with Spotify
                     </Button>
