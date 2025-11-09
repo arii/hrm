@@ -16,7 +16,7 @@ const MAX_HR_DEFAULT = 185;
 const DOC_URL = "https://docs.google.com/document/d/e/2PACX-1vT1lA3-6r4q1gHqK2q9J2sJ4D8X1K6o5B3cQ8Yt5x4bW7X0yJ0z7w9V6mR/pub?embedded=true"; // Example URL
 
 // Component to display the current connection status
-const StatusIndicator = ({ status }) => {
+const StatusIndicator = ({ status }: { status: string }) => {
     let color = 'bg-gray-400';
     if (status === 'Connected') color = 'bg-green-500';
     if (status === 'Connecting...') color = 'bg-yellow-500';

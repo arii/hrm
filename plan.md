@@ -1,22 +1,22 @@
 Here is the comprehensive plan (v4) converted to plain markdown for you to copy and paste.
 
------
+---
 
 # Project Plan: Next.js HRM Dashboard Refactor
 
 **Objective:** To refactor the existing HRM application into a modern, robust, and scalable Next.js application. This new version will integrate Material-UI (MUI) for the component library, WebSockets for real-time data transmission, Bluetooth heart rate monitoring, and Spotify integration.
 
------
+---
 
 ## 1\. Core Technologies
 
-  * **Frontend:** Next.js (with App Router)
-  * **UI Library:** Material-UI (MUI)
-  * **Real-time Communication:** WebSockets (using `ws` or `Socket.io`)
-  * **Bluetooth:** Web Bluetooth API (for browser-side connection)
-  * **Music Integration:** Spotify Web API
+- **Frontend:** Next.js (with App Router)
+- **UI Library:** Material-UI (MUI)
+- **Real-time Communication:** WebSockets (using `ws` or `Socket.io`)
+- **Bluetooth:** Web Bluetooth API (for browser-side connection)
+- **Music Integration:** Spotify Web API
 
------
+---
 
 ## 2\. System Architecture
 
@@ -24,19 +24,19 @@ The system will be composed of several key services. While these can be run from
 
 ### Component Overview
 
-  * **Next.js Frontend Server:**
-      * Serves the main React application, including all pages and components.
-      * Handles Server-Side Rendering (SSR) and API routes.
-  * **WebSocket Server:**
-      * Manages real-time connections from all clients.
-      * Broadcasts heart rate data received from the HRM client to all dashboard clients.
-  * **Spotify Service:**
-      * Handles OAuth 2.0 authentication with the Spotify API.
-      * Provides API endpoints (via Next.js API routes) to fetch user playback state, control music, and display "now playing" information.
-  * **Bluetooth Client (Phone UI):**
-      * A specific page in the Next.js app (`/phone`) designed to run on a mobile device.
-      * Uses the Web Bluetooth API to connect to the heart rate monitor.
-      * Sends heart rate data to the WebSocket server.
+- **Next.js Frontend Server:**
+  - Serves the main React application, including all pages and components.
+  - Handles Server-Side Rendering (SSR) and API routes.
+- **WebSocket Server:**
+  - Manages real-time connections from all clients.
+  - Broadcasts heart rate data received from the HRM client to all dashboard clients.
+- **Spotify Service:**
+  - Handles OAuth 2.0 authentication with the Spotify API.
+  - Provides API endpoints (via Next.js API routes) to fetch user playback state, control music, and display "now playing" information.
+- **Bluetooth Client (Phone UI):**
+  - A specific page in the Next.js app (`/phone`) designed to run on a mobile device.
+  - Uses the Web Bluetooth API to connect to the heart rate monitor.
+  - Sends heart rate data to the WebSocket server.
 
 ### Single Server Architecture (Monorepo Approach)
 
@@ -46,7 +46,7 @@ For simplicity and ease of deployment, we can run all services from the single N
 2.  **WebSocket Server:** Integrated into the Next.js custom server (if using Node.js server) or run as a separate process managed by the same deployment (e.g., using `concurrently` in development).
 3.  **API Routes:** All backend logic, including Spotify authentication and proxying, will be handled within Next.js API Routes (e.g., `/api/spotify/auth`, `/api/spotify/now-playing`).
 
------
+---
 
 ## 3\. Application Structure (Next.js App Router)
 
@@ -98,7 +98,40 @@ For simplicity and ease of deployment, we can run all services from the single N
 |-- package.json
 ```
 
------
+---
+
+## Dev environment updates (applied during refactor)
+
+During the recent refactor we updated the development and deployment workflow to use PM2 and added VS Code integration to speed iteration.
+
+- The canonical server entry is `server.ts` (TypeScript). It runs Next.js, the persistent WebSocket server on `/ws`, and long-running services (Tabata timer, Spotify polling).
+- Development and production process management is now centralized via `ecosystem.config.js` and PM2. Development scripts run PM2 in the foreground (no-daemon) with `ts-node` so logs are visible and code is reloaded on changes.
+- Recommended commands:
+
+```bash
+# Development (foreground, watch)
+npm run dev
+
+# Force IPv4 loopback binding for dev
+npm run dev:clean
+
+# Production (pm2-managed)
+npm run start
+
+# Stream PM2 logs
+npm run pm2:logs
+```
+
+- VS Code workspace files added: `.vscode/settings.json`, `.vscode/launch.json`, `.vscode/tasks.json`. These provide:
+  - Auto-format & ESLint fix-on-save
+  - A launch config to start the PM2 dev script and attach the debugger
+  - Tasks to run dev scripts and attach the debugger
+
+Notes / follow-ups:
+
+- Investigate and remove the temporary `@ts-ignore` around `server.listen` (TS2769) used to unblock development.
+- Consider adding `pm2-logrotate` in production to manage log growth.
+- For containerized deployments prefer `pm2-runtime` and configure `ecosystem.config.js` appropriately.
 
 ## 4\. Key Features & Implementation Snippets
 
@@ -107,11 +140,11 @@ For simplicity and ease of deployment, we can run all services from the single N
 **`useBluetoothHRM` Hook:**
 
 ```javascript
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 // Web Bluetooth Service and Characteristic UUIDs
-const HRM_SERVICE_UUID = 'heart_rate';
-const HRM_CHARACTERISTIC_UUID = 'heart_rate_measurement';
+const HRM_SERVICE_UUID = "heart_rate";
+const HRM_CHARACTERISTIC_UUID = "heart_rate_measurement";
 
 /**
  * Custom hook to manage Web Bluetooth connection to a Heart Rate Monitor.
@@ -119,8 +152,8 @@ const HRM_CHARACTERISTIC_UUID = 'heart_rate_measurement';
  */
 export const useBluetoothHRM = (onHeartRateChanged) => {
   const [device, setDevice] = useState(null);
-  const [status, setStatus] = useState('disconnected'); // disconnected, connecting, connected, error
-  const [errorMessage, setErrorMessage] = useState('');
+  const [status, setStatus] = useState("disconnected"); // disconnected, connecting, connected, error
+  const [errorMessage, setErrorMessage] = useState("");
   const [heartRate, setHeartRate] = useState(0);
 
   // Function to parse heart rate data from the device
@@ -148,11 +181,11 @@ export const useBluetoothHRM = (onHeartRateChanged) => {
 
   // Connect function
   const connect = useCallback(async () => {
-    setStatus('connecting');
-    setErrorMessage('');
+    setStatus("connecting");
+    setErrorMessage("");
     try {
       if (!navigator.bluetooth) {
-        throw new Error('Web Bluetooth API is not available in this browser.');
+        throw new Error("Web Bluetooth API is not available in this browser.");
       }
 
       const btDevice = await navigator.bluetooth.requestDevice({
@@ -163,15 +196,20 @@ export const useBluetoothHRM = (onHeartRateChanged) => {
       setDevice(btDevice);
       const server = await btDevice.gatt.connect();
       const service = await server.getPrimaryService(HRM_SERVICE_UUID);
-      const characteristic = await service.getCharacteristic(HRM_CHARACTERISTIC_UUID);
+      const characteristic = await service.getCharacteristic(
+        HRM_CHARACTERISTIC_UUID
+      );
 
       await characteristic.startNotifications();
-      characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
+      characteristic.addEventListener(
+        "characteristicvaluechanged",
+        handleCharacteristicValueChanged
+      );
 
-      setStatus('connected');
+      setStatus("connected");
     } catch (error) {
-      console.error('Bluetooth connection error:', error);
-      setStatus('error');
+      console.error("Bluetooth connection error:", error);
+      setStatus("error");
       setErrorMessage(error.message);
     }
   }, [onHeartRateChanged]);
@@ -181,7 +219,7 @@ export const useBluetoothHRM = (onHeartRateChanged) => {
     if (device && device.gatt.connected) {
       device.gatt.disconnect();
     }
-    setStatus('disconnected');
+    setStatus("disconnected");
     setDevice(null);
     setHeartRate(0);
   };
@@ -195,9 +233,16 @@ export const useBluetoothHRM = (onHeartRateChanged) => {
 **`HeartRateDisplay` Component (MUI):**
 
 ```jsx
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Button, CircularProgress, Box } from '@mui/material';
-import { Favorite, MonitorHeart } from '@mui/icons-material';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  CircularProgress,
+  Box,
+} from "@mui/material";
+import { Favorite, MonitorHeart } from "@mui/icons-material";
 // Assume useWebSocket is a custom hook: const { lastMessage, readyState } = useWebSocket(WS_URL);
 
 export const HeartRateDisplay = ({ lastMessage, readyState }) => {
@@ -207,21 +252,23 @@ export const HeartRateDisplay = ({ lastMessage, readyState }) => {
     if (lastMessage && lastMessage.data) {
       try {
         const data = JSON.parse(lastMessage.data);
-        if (data.type === 'heart_rate' && data.value) {
+        if (data.type === "heart_rate" && data.value) {
           setHeartRate(data.value);
         }
       } catch (e) {
-        console.error('Failed to parse WebSocket message', e);
+        console.error("Failed to parse WebSocket message", e);
       }
     }
   }, [lastMessage]);
 
   const getConnectionStatus = () => {
-    if (readyState === 0) return { text: 'Connecting...', color: 'text.secondary' };
-    if (readyState === 1) return { text: 'Connected', color: 'success.main' };
-    if (readyState === 2) return { text: 'Disconnecting...', color: 'text.secondary' };
-    if (readyState === 3) return { text: 'Disconnected', color: 'error.main' };
-    return { text: 'Offline', color: 'error.main' };
+    if (readyState === 0)
+      return { text: "Connecting...", color: "text.secondary" };
+    if (readyState === 1) return { text: "Connected", color: "success.main" };
+    if (readyState === 2)
+      return { text: "Disconnecting...", color: "text.secondary" };
+    if (readyState === 3) return { text: "Disconnected", color: "error.main" };
+    return { text: "Offline", color: "error.main" };
   };
 
   const status = getConnectionStatus();
@@ -238,11 +285,15 @@ export const HeartRateDisplay = ({ lastMessage, readyState }) => {
         <Box display="flex" alignItems="center" justifyContent="center" my={2}>
           {readyState === 1 ? (
             <>
-              <Favorite sx={{ color: 'red', fontSize: 60, marginRight: 2 }} />
+              <Favorite sx={{ color: "red", fontSize: 60, marginRight: 2 }} />
               <Typography variant="h2" component="div" fontWeight="bold">
                 {heartRate}
               </Typography>
-              <Typography variant="h5" color="text.secondary" sx={{ alignSelf: 'flex-end', pb: 1, ml: 1 }}>
+              <Typography
+                variant="h5"
+                color="text.secondary"
+                sx={{ alignSelf: "flex-end", pb: 1, ml: 1 }}
+              >
                 BPM
               </Typography>
             </>
@@ -264,7 +315,7 @@ export const HeartRateDisplay = ({ lastMessage, readyState }) => {
 **`useTabataTimer` Hook:**
 
 ```javascript
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 export const useTabataTimer = (initialSettings) => {
   const {
@@ -278,7 +329,7 @@ export const useTabataTimer = (initialSettings) => {
   const [currentRound, setCurrentRound] = useState(1);
   const [isActive, setIsActive] = useState(false);
   // States: 'prepare', 'work', 'rest', 'finished'
-  const [currentState, setCurrentState] = useState('prepare');
+  const [currentState, setCurrentState] = useState("prepare");
 
   const intervalRef = useRef(null);
 
@@ -296,20 +347,20 @@ export const useTabataTimer = (initialSettings) => {
 
   useEffect(() => {
     if (timer === 0) {
-      if (currentState === 'prepare') {
-        setCurrentState('work');
+      if (currentState === "prepare") {
+        setCurrentState("work");
         setTimer(workTime);
-      } else if (currentState === 'work') {
-        setCurrentState('rest');
+      } else if (currentState === "work") {
+        setCurrentState("rest");
         setTimer(restTime);
-      } else if (currentState === 'rest') {
+      } else if (currentState === "rest") {
         if (currentRound < rounds) {
           setCurrentRound((prevRound) => prevRound + 1);
-          setCurrentState('work');
+          setCurrentState("work");
           setTimer(workTime);
         } else {
           // Finished
-          setCurrentState('finished');
+          setCurrentState("finished");
           setIsActive(false);
           clearInterval(intervalRef.current);
         }
@@ -318,7 +369,7 @@ export const useTabataTimer = (initialSettings) => {
   }, [timer, currentState, workTime, restTime, rounds, currentRound]);
 
   const startTimer = () => {
-    if (currentState === 'finished') {
+    if (currentState === "finished") {
       resetTimer();
     }
     setIsActive(true);
@@ -330,15 +381,22 @@ export const useTabataTimer = (initialSettings) => {
 
   const resetTimer = () => {
     setIsActive(false);
-    setCurrentState('prepare');
+    setCurrentState("prepare");
     setCurrentRound(1);
     setTimer(prepareTime);
   };
 
   const totalTime = prepareTime + (workTime + restTime) * rounds - restTime;
-  const elapsed = totalTime - (rounds - currentRound) * (workTime + restTime) - timer; // Simplified, needs refinement
-  const progress = (timer / (currentState === 'work' ? workTime : (currentState === 'rest' ? restTime : prepareTime))) * 100;
-
+  const elapsed =
+    totalTime - (rounds - currentRound) * (workTime + restTime) - timer; // Simplified, needs refinement
+  const progress =
+    (timer /
+      (currentState === "work"
+        ? workTime
+        : currentState === "rest"
+        ? restTime
+        : prepareTime)) *
+    100;
 
   return {
     timer,
@@ -356,16 +414,23 @@ export const useTabataTimer = (initialSettings) => {
 **`TabataTimer` Component (MUI):**
 
 ```jsx
-import React from 'react';
-import { Card, CardContent, Typography, Button, Box, LinearProgress } from '@mui/material';
-import { PlayArrow, Pause, Replay } from '@mui/icons-material';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  LinearProgress,
+} from "@mui/material";
+import { PlayArrow, Pause, Replay } from "@mui/icons-material";
 // import { useTabataTimer } from '../hooks/useTabataTimer';
 
 const stateColors = {
-  prepare: 'info.main',
-  work: 'error.main',
-  rest: 'success.main',
-  finished: 'text.secondary',
+  prepare: "info.main",
+  work: "error.main",
+  rest: "success.main",
+  finished: "text.secondary",
 };
 
 export const TabataTimer = () => {
@@ -388,19 +453,42 @@ export const TabataTimer = () => {
         <Typography sx={{ fontSize: 16 }} color="text.secondary" gutterBottom>
           Tabata Timer
         </Typography>
-        <Typography variant="h2" component="div" fontWeight="bold" align="center" sx={{ color: stateColor, my: 2 }}>
+        <Typography
+          variant="h2"
+          component="div"
+          fontWeight="bold"
+          align="center"
+          sx={{ color: stateColor, my: 2 }}
+        >
           {timer}
         </Typography>
-        <Box sx={{ width: '100%', mb: 2 }}>
-          <LinearProgress variant="determinate" value={progress} color={currentState === 'work' ? 'error' : (currentState === 'rest' ? 'success' : 'info')} />
+        <Box sx={{ width: "100%", mb: 2 }}>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            color={
+              currentState === "work"
+                ? "error"
+                : currentState === "rest"
+                ? "success"
+                : "info"
+            }
+          />
         </Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" textTransform="uppercase" sx={{ color: stateColor }}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography
+            variant="h6"
+            textTransform="uppercase"
+            sx={{ color: stateColor }}
+          >
             {currentState}
           </Typography>
-          <Typography variant="h6">
-            Round: {currentRound} / 8
-          </Typography>
+          <Typography variant="h6">Round: {currentRound} / 8</Typography>
         </Box>
         <Box display="flex" justifyContent="center" gap={2}>
           {!isActive ? (
@@ -409,7 +497,7 @@ export const TabataTimer = () => {
               color="primary"
               startIcon={<PlayArrow />}
               onClick={startTimer}
-              disabled={currentState === 'finished'}
+              disabled={currentState === "finished"}
             >
               Start
             </Button>
@@ -458,15 +546,15 @@ This route constructs the Spotify authorization URL and redirects the user to it
 
 ```javascript
 // app/api/spotify/login/route.js
-import { NextResponse } from 'next/server';
-import querystring from 'querystring';
+import { NextResponse } from "next/server";
+import querystring from "querystring";
 
 export async function GET() {
   const scope =
-    'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+    "user-read-playback-state user-modify-playback-state user-read-currently-playing";
 
   const params = querystring.stringify({
-    response_type: 'code',
+    response_type: "code",
     client_id: process.env.SPOTIFY_CLIENT_ID,
     scope: scope,
     redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
@@ -484,32 +572,34 @@ Spotify redirects here after the user logs in. This route exchanges the `code` f
 
 ```javascript
 // app/api/spotify/callback/route.js
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
-  const error = searchParams.get('error');
+  const code = searchParams.get("code");
+  const error = searchParams.get("error");
 
   if (error) {
-    console.error('Spotify Auth Error:', error);
-    return NextResponse.redirect(new URL('/?error=spotify_login_failed', request.url));
+    console.error("Spotify Auth Error:", error);
+    return NextResponse.redirect(
+      new URL("/?error=spotify_login_failed", request.url)
+    );
   }
 
   try {
     const authHeader = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64');
+    ).toString("base64");
 
-    const response = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
+    const response = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${authHeader}`,
       },
       body: new URLSearchParams({
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         code: code,
         redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
       }),
@@ -518,28 +608,30 @@ export async function GET(request) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error_description || 'Failed to fetch token');
+      throw new Error(data.error_description || "Failed to fetch token");
     }
 
     // Set tokens in secure httpOnly cookies
-    cookies().set('spotify_access_token', data.access_token, {
+    cookies().set("spotify_access_token", data.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === "production",
       maxAge: data.expires_in, // (e.g., 3600 seconds)
-      path: '/',
+      path: "/",
     });
 
-    cookies().set('spotify_refresh_token', data.refresh_token, {
+    cookies().set("spotify_refresh_token", data.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
     });
 
     // Redirect to the main dashboard
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   } catch (e) {
-    console.error('Callback Error:', e);
-    return NextResponse.redirect(new URL('/?error=spotify_callback_failed', request.url));
+    console.error("Callback Error:", e);
+    return NextResponse.redirect(
+      new URL("/?error=spotify_callback_failed", request.url)
+    );
   }
 }
 ```
@@ -550,38 +642,38 @@ The frontend polls this route. It securely fetches the `access_token` from cooki
 
 ```javascript
 // app/api/spotify/now-playing/route.js
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 // Helper function to get a new access token
 async function getNewAccessToken(refreshToken) {
   const authHeader = Buffer.from(
     `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-  ).toString('base64');
+  ).toString("base64");
 
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${authHeader}`,
     },
     body: new URLSearchParams({
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       refresh_token: refreshToken,
     }),
   });
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error('Failed to refresh token');
+    throw new Error("Failed to refresh token");
   }
 
   // Set the new token
-  cookies().set('spotify_access_token', data.access_token, {
+  cookies().set("spotify_access_token", data.access_token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
     maxAge: data.expires_in,
-    path: '/',
+    path: "/",
   });
 
   return data.access_token;
@@ -590,15 +682,15 @@ async function getNewAccessToken(refreshToken) {
 // Main GET handler
 export async function GET() {
   const cookieStore = cookies();
-  let accessToken = cookieStore.get('spotify_access_token')?.value;
-  const refreshToken = cookieStore.get('spotify_refresh_token')?.value;
+  let accessToken = cookieStore.get("spotify_access_token")?.value;
+  const refreshToken = cookieStore.get("spotify_refresh_token")?.value;
 
   if (!refreshToken) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
   const fetchNowPlaying = async (token) => {
-    return fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+    return fetch("https://api.spotify.com/v1/me/player/currently-playing", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -614,7 +706,10 @@ export async function GET() {
       spotifyResponse = await fetchNowPlaying(newAccessToken);
     } catch (e) {
       // Refresh failed, user needs to log in again
-      return NextResponse.json({ error: 'Token refresh failed' }, { status: 401 });
+      return NextResponse.json(
+        { error: "Token refresh failed" },
+        { status: 401 }
+      );
     }
   }
 
@@ -624,15 +719,15 @@ export async function GET() {
   }
 
   const song = await spotifyResponse.json();
-  
+
   if (!song.item) {
-     return NextResponse.json({ isPlaying: false }, { status: 200 });
+    return NextResponse.json({ isPlaying: false }, { status: 200 });
   }
 
   const data = {
     isPlaying: song.is_playing,
     title: song.item.name,
-    artist: song.item.artists.map((_artist) => _artist.name).join(', '),
+    artist: song.item.artists.map((_artist) => _artist.name).join(", "),
     album: song.item.album.name,
     albumImageUrl: song.item.album.images[0]?.url,
   };
@@ -734,21 +829,24 @@ export const SpotifyPlayer = () => {
 };
 ```
 
------
+---
 
 ## 5\. Current Status and Implementation Notes
 
 This section documents the current state of the refactoring process and key implementation details that have been updated from the original plan.
 
 **Server Configuration**:
-*   The custom server entry point has been converted from `server.js` to `server.ts` to allow for full TypeScript support in the server environment.
-*   The project now uses `pm2` to run `server.ts` in development, with `ts-node` as the interpreter. The `dev` script in `package.json` is configured to start the server as a background process.
-*   The `tsconfig.json` has been updated with `module: "CommonJS"` to ensure compatibility with `ts-node` and Node.js's module system.
+
+- The custom server entry point has been converted from `server.js` to `server.ts` to allow for full TypeScript support in the server environment.
+- The project now uses `pm2` to run `server.ts` in development, with `ts-node` as the interpreter. The `dev` script in `package.json` is configured to start the server as a background process.
+- The `tsconfig.json` has been updated with `module: "CommonJS"` to ensure compatibility with `ts-node` and Node.js's module system.
 
 **Known Issues**:
-*   A persistent TypeScript error (`TS2769`) occurs on the `server.listen` line in `server.ts`. This is currently bypassed with `@ts-ignore` to allow the development server to run. This should be investigated further to find a proper solution.
+
+- A persistent TypeScript error (`TS2769`) occurs on the `server.listen` line in `server.ts`. This is currently bypassed with `@ts-ignore` to allow the development server to run. This should be investigated further to find a proper solution.
 
 **Next Steps**:
+
 1.  Run `npm run dev` to start the server in the background using `pm2`.
 2.  Use `npm run pm2:logs` to monitor the server logs.
 3.  Verify that the application is running and that the interactive development workflow is improved.

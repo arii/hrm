@@ -59,7 +59,7 @@ const useBluetoothHRM = () => {
             await characteristic.startNotifications();
             
             characteristic.addEventListener('characteristicvaluechanged', (event) => {
-                const target = event.target as BluetoothRemoteGATTCharacteristic;
+                const target = event.target as unknown as BluetoothRemoteGATTCharacteristic;
                 const heartRate = parseHeartRate(target.value!);
                 
                 // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---

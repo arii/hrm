@@ -9,14 +9,16 @@
 export interface HrmData {
     value: number;
     maxHr: number;
+    name?: string;
+    age?: number;
 }
 export interface TimerData {
     isRunning: boolean;
-
     currentPhase: 'WORK' | 'REST' | 'IDLE' | 'COOLDOWN';
     timeRemaining: number;
     cycle: number;
     totalCycles: number;
+    soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN';
 }
 export interface SpotifyData {
     trackName: string;

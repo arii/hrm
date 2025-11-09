@@ -4,36 +4,84 @@
  * This route serves as a secure REST endpoint for external control or testing
  * but the primary control commands are sent via WebSocket.
  */
-import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route"; // Import NextAuth options
+import { NextRequest, NextResponse } from "next/server";
+// Assuming your authOptions are in 'app/api/auth/[...nextauth]/route.ts'
+// Adjust the path if you've placed it in 'lib/auth' as your comment suggests
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: NextRequest) {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    if (!session || !session.accessToken) {
-        return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
+  if (!session || !session.accessToken) {
+    return NextResponse.json(
+      { error: "Authorization required" },
+      { status: 401 }
+    );
+  }
+
+  const { command } = await req.json();
+
+  if (!["PLAY", "PAUSE", "NEXT", "PREVIOUS"].includes(command)) {
+    return NextResponse.json({ error: "Invalid command" }, { status: 400 });
+  }
+
+  try {
+    const SPOTIFY_API_BASE = "https://api.spotify.com/v1/me/player";
+    let endpoint = "";
+    let method = "";
+
+    // Map the simple command to the correct Spotify API endpoint and method
+    switch (command) {
+      case "PLAY":
+        endpoint = "play";
+        method = "PUT"; // Resumes playback
+        break;
+      case "PAUSE":
+        endpoint = "pause";
+        method = "PUT"; // Pauses playback
+        break;
+      case "NEXT":
+        endpoint = "next";
+        method = "POST"; // Skips to next
+        break;
+      case "PREVIOUS":
+        endpoint = "previous";
+        method = "POST"; // Skips to previous
+        break;
     }
 
-    // This route should ideally only handle complex commands or be an admin route.
-    // For simplicity, we acknowledge the REST request here.
-    const { command } = await req.json();
+    // Make the actual call to the Spotify API
+    const response = await fetch(`${SPOTIFY_API_BASE}/${endpoint}`, {
+      method: method,
+      headers: {
+        // Use the user's access token from the session
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    });
 
-    if (!['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS'].includes(command)) {
-        return NextResponse.json({ error: 'Invalid command' }, { status: 400 });
+    // Spotify returns 204 No Content on a successful player command
+    if (response.status === 204) {
+      return NextResponse.json({
+        success: true,
+        message: `Command '${command}' executed.`,
+      });
     }
 
-    try {
-        console.log(`Received REST command: ${command}. NOTE: This is the fallback route.`);
-
-        // In a true implementation, this route would execute the Spotify REST API call directly:
-        // const response = await fetch('https://api.spotify.com/v1/me/player/pause', { ... });
-        // Since primary control is WS, we simply acknowledge the REST request here.
-
-        return NextResponse.json({ success: true, message: `Command '${command}' received via REST fallback.` });
-
-    } catch (error) {
-        console.error('REST control failed:', error);
-        return NextResponse.json({ error: 'Internal server error processing command.' }, { status: 500 });
-    }
+    // If it's not 204, something went wrong (e.g., no active device, premium required)
+    const errorData = await response.json();
+    return NextResponse.json(
+      {
+        error: "Spotify API error",
+        details: errorData.error?.message || "Unknown Spotify error",
+      },
+      { status: response.status }
+    );
+  } catch (error) {
+    console.error("REST control failed:", error);
+    return NextResponse.json(
+      { error: "Internal server error processing command." },
+      { status: 500 }
+    );
+  }
 }

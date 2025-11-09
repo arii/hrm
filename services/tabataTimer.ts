@@ -45,6 +45,11 @@ class TabataTimer {
         }
 
         // Broadcast the entire timer state on every tick
+        if (this.state.timeRemaining <= 3 && this.state.timeRemaining > 0) {
+            this.state.soundToPlay = 'COUNTDOWN';
+        } else {
+            this.state.soundToPlay = undefined;
+        }
         this.broadcastState({ timerData: this.getState() });
     }
 
@@ -89,11 +94,13 @@ class TabataTimer {
     }
 
     private transitionPhase() {
+        this.state.soundToPlay = undefined; // Reset sound on phase transition
         switch (this.state.currentPhase) {
             case 'WORK':
                 if (this.state.cycle < this.state.totalCycles) {
                     this.state.currentPhase = 'REST';
                     this.state.timeRemaining = REST_DURATION;
+                    this.state.soundToPlay = 'REST';
                     console.log(`Transition to REST for cycle ${this.state.cycle}`);
                 } else {
                     this.state.currentPhase = 'COOLDOWN';
@@ -106,6 +113,7 @@ class TabataTimer {
                 this.state.cycle += 1;
                 this.state.currentPhase = 'WORK';
                 this.state.timeRemaining = WORK_DURATION;
+                this.state.soundToPlay = 'WORK';
                 console.log(`Transition to WORK for cycle ${this.state.cycle}`);
                 break;
             case 'IDLE':

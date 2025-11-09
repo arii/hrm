@@ -4,21 +4,26 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Container, Card, CardContent, Typography, Button, Box, IconButton, Stack } from '@mui/material';
 import { PlayArrow, Pause, Stop, SkipNext, SkipPrevious, MusicNote, Timer } from '@mui/icons-material';
 import useWebSocket from '../../../hooks/useWebSocket';
+import { useAudioPlayer } from '../../../hooks/useAudioPlayer';
 import { signIn } from 'next-auth/react';
 import { getTimerProps } from '../../../utils/visualization';
 import { TimerCommandMessage, SpotifyCommandMessage } from '../../../types/websocket';
 
 const ControlPanel: React.FC = () => {
     const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
+    const { initAudio, playSound } = useAudioPlayer();
 
     const timerProps = getTimerProps(timerData.currentPhase);
     
     // --- Timer Commands ---
     const sendTimerCommand = (command: 'START' | 'PAUSE' | 'STOP') => {
+        if (command === 'START') {
+            initAudio(); // Initialize audio on user interaction
+        }
         const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command };
         sendData(message); // sendData now accepts the typed object
     };
@@ -36,6 +41,13 @@ const ControlPanel: React.FC = () => {
 
     // Check if we have received a non-default song title
     const spotifyLoggedIn = spotifyData.trackName !== 'Awaiting Login...';
+
+    // Handle incoming sound commands from the server
+    useEffect(() => {
+        if (timerData.soundToPlay) {
+            playSound(timerData.soundToPlay);
+        }
+    }, [timerData.soundToPlay, playSound]);
 
     return (
         <Container maxWidth="xs" className="py-8 min-h-screen bg-gray-100">

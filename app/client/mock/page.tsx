@@ -5,52 +5,45 @@
  */
 'use client';
 import React, { useState, useCallback } from 'react';
-import { Container, Card, CardContent, Typography, Button, TextField, Box } from '@mui/material';
+import { Container, Card, Typography, Button, TextField, Box, Grid } from '@mui/material';
 import { Science, HeartBroken } from '@mui/icons-material';
 import useWebSocket from '../../../hooks/useWebSocket';
 import { HrmInputMessage } from '../../../types/websocket';
 
 const MockClient: React.FC = () => {
-    // Note: sendData accepts the typed object
     const { sendData, connectionStatus } = useWebSocket(); 
     const [hrValue, setHrValue] = useState(100);
+    const [name, setName] = useState('Mock User');
+    const [age, setAge] = useState(30);
     const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
     const isStreaming = intervalId !== null;
-    const MAX_HR_DEFAULT = 185;
+    const MAX_HR_DEFAULT = 220 - age; // Use age to calculate max HR
 
-    // Function to send a single HR data packet
     const sendHrPacket = useCallback((hr: number) => {
         const message: HrmInputMessage = {
             type: 'HRM_INPUT',
             data: {
                 value: hr,
                 maxHr: MAX_HR_DEFAULT,
+                name: name,
+                age: age,
             }
         };
-        // sendData is called with the typed object, which is stringified inside the hook
         sendData(message); 
-    }, [sendData]);
+    }, [sendData, name, age, MAX_HR_DEFAULT]);
 
-    // Function to start streaming data
     const startStreaming = () => {
         if (isStreaming || connectionStatus !== 'Connected') return;
-
-        // Immediately send the current value
         sendHrPacket(hrValue);
-
-        // Set up interval for continuous streaming (e.g., every 2 seconds)
         const id = setInterval(() => {
-            // Simulate minor fluctuation (+/- 2 BPM)
             const fluctuatedHr = Math.max(70, hrValue + Math.floor(Math.random() * 5) - 2);
             setHrValue(fluctuatedHr);
             sendHrPacket(fluctuatedHr);
         }, 2000);
-
         setIntervalId(id);
     };
 
-    // Function to stop streaming
     const stopStreaming = () => {
         if (intervalId) {
             clearInterval(intervalId);
@@ -62,9 +55,24 @@ const MockClient: React.FC = () => {
         const value = parseInt(e.target.value, 10);
         setHrValue(isNaN(value) ? 0 : value);
         if (!isStreaming) {
-            sendHrPacket(value); // Send manual update immediately
+            sendHrPacket(value);
         }
     };
+    
+    const setHrByZone = (zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red') => {
+        const zones = {
+            grey: 95,
+            blue: 115,
+            green: 135,
+            yellow: 155,
+            red: 175,
+        };
+        const newHr = zones[zone];
+        setHrValue(newHr);
+        if (!isStreaming) {
+            sendHrPacket(newHr);
+        }
+    }
 
     return (
         <Container maxWidth="sm" className="py-12 min-h-screen flex items-center justify-center bg-gray-50">
@@ -74,8 +82,17 @@ const MockClient: React.FC = () => {
                     HRM Mock Streamer
                 </Typography>
                 <Typography variant="body1" color="textSecondary" className="mb-6">
-                    Simulate heart rate data streaming to the dashboard for testing.
+                    Simulate heart rate data for testing.
                 </Typography>
+
+                <Grid container spacing={2} className="mb-4">
+                    <Grid item xs={8} component="div">
+                        <TextField label="User Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
+                    </Grid>
+                    <Grid item xs={4} component="div">
+                        <TextField label="Age" type="number" value={age} onChange={(e) => setAge(parseInt(e.target.value,10))} fullWidth />
+                    </Grid>
+                </Grid>
 
                 <TextField
                     label="Current BPM"
@@ -84,14 +101,21 @@ const MockClient: React.FC = () => {
                     onChange={handleValueChange}
                     variant="outlined"
                     fullWidth
-                    size="large"
+                    size="medium"
                     disabled={isStreaming}
                     className="mb-4"
                 />
 
                 <Typography variant="caption" display="block" color="textSecondary" className="mb-4">
-                    Streaming Rate: Every 2 seconds (with slight fluctuation)
+                    Select a zone to set HR:
                 </Typography>
+                <Grid container spacing={1} className="mb-4">
+                    <Grid item xs component="div"><Button fullWidth variant="contained" style={{backgroundColor: '#9E9E9E'}} onClick={() => setHrByZone('grey')}>Zone 1</Button></Grid>
+                    <Grid item xs component="div"><Button fullWidth variant="contained" style={{backgroundColor: '#2196F3'}} onClick={() => setHrByZone('blue')}>Zone 2</Button></Grid>
+                    <Grid item xs component="div"><Button fullWidth variant="contained" style={{backgroundColor: '#4CAF50'}} onClick={() => setHrByZone('green')}>Zone 3</Button></Grid>
+                    <Grid item xs component="div"><Button fullWidth variant="contained" style={{backgroundColor: '#FFEB3B', color: 'black'}} onClick={() => setHrByZone('yellow')}>Zone 4</Button></Grid>
+                    <Grid item xs component="div"><Button fullWidth variant="contained" style={{backgroundColor: '#F44336'}} onClick={() => setHrByZone('red')}>Zone 5</Button></Grid>
+                </Grid>
 
                 <Button
                     variant="contained"
