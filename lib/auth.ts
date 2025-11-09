@@ -1,6 +1,14 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth from "next-auth";
+import NextAuth, { Account, AuthOptions, Session } from "next-auth";
+import { JWT } from "next-auth/jwt";
 import SpotifyProvider from "next-auth/providers/spotify";
+
+// Extend the Session type to include accessToken
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+  }
+}
 
 // Define scopes required: user-read-playback-state to poll the current track,
 // user-modify-playback-state to control playback (play/pause/skip).
@@ -11,7 +19,7 @@ const SPOTIFY_SCOPES = [
   "user-read-currently-playing",
 ].join(",");
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID as string,
@@ -24,7 +32,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account }: { token: any; account: any }) {
+    async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // Initial sign in
       if (account) {
         token.accessToken = account.access_token;
@@ -67,9 +75,11 @@ export const authOptions = {
       // Future logic for token refresh handled internally by spotifyPolling.ts
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       // Expose a minimal token structure to the client session
-      session.accessToken = token.accessToken;
+      if (token.accessToken && typeof token.accessToken === "string") {
+        session.accessToken = token.accessToken;
+      }
       return session;
     },
   },

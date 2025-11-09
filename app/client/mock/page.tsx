@@ -21,7 +21,7 @@ import useWebSocket from "../../../hooks/useWebSocket";
 import { HrmInputMessage } from "../../../types/websocket";
 import { ZONE_COLORS } from "../../../utils/visualization";
 
-const MockClient: React.FC = () => {
+const MockClient = () => {
   const { sendData, connectionStatus } = useWebSocket();
   const [hrValue, setHrValue] = useState(100);
   const [name, setName] = useState("Mock User");
@@ -110,7 +110,9 @@ const MockClient: React.FC = () => {
             <TextField
               label="User Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e: {
+                target: { value: React.SetStateAction<string> };
+              }) => setName(e.target.value)}
               fullWidth
             />
           </Grid>
@@ -119,16 +121,22 @@ const MockClient: React.FC = () => {
               label="Age"
               type="number"
               value={age}
-              onChange={(e) => setAge(parseInt(e.target.value, 10))}
+              onChange={(e: { target: { value: string } }) =>
+                setAge(parseInt(e.target.value, 10))
+              }
               fullWidth
             />
           </Grid>
         </Grid>
 
+        {/* Removed misplaced interface declarations */}
+
         <TextField
           label="Device ID"
           value={deviceId}
-          onChange={(e) => setDeviceId(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setDeviceId(e.target.value)
+          }
           variant="outlined"
           fullWidth
           size="medium"
@@ -139,7 +147,9 @@ const MockClient: React.FC = () => {
           control={
             <Checkbox
               checked={addNoise}
-              onChange={(e) => setAddNoise(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setAddNoise(e.target.checked)
+              }
               disabled={isStreaming}
             />
           }

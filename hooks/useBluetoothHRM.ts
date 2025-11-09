@@ -78,9 +78,13 @@ const useBluetoothHRM = () => {
                 setDeviceStatus('Disconnected (Server Lost)');
             });
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Bluetooth connection failed:', error);
-            setDeviceStatus(`Failed: ${error.name || error.message}`);
+            let errorMessage = "An unknown error occurred.";
+            if (error instanceof Error) {
+              errorMessage = error.name || error.message;
+            }
+            setDeviceStatus(`Failed: ${errorMessage}`);
         }
     }, [deviceStatus, connectionStatus, sendData]);
 

@@ -37,10 +37,14 @@ export async function GET() {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in spotify-token-status API:", error);
+    let errorMessage = "An unknown error occurred.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return NextResponse.json(
-      { status: "error", message: error.message },
+      { status: "error", message: errorMessage },
       { status: 500 }
     );
   }

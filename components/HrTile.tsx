@@ -1,7 +1,6 @@
 // File: components/HrTile.tsx
 "use client";
 import { Paper, Typography } from "@mui/material";
-import React from "react";
 
 export interface HrTileProps {
   name: string;
@@ -10,12 +9,7 @@ export interface HrTileProps {
   background: string; // hex color
 }
 
-const HrTile: React.FC<HrTileProps> = ({
-  name,
-  bpm,
-  percentMax,
-  background,
-}) => {
+const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   return (
     <Paper
       elevation={0}

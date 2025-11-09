@@ -6,14 +6,14 @@
 "use client";
 import { MusicNote, Watch } from "@mui/icons-material";
 import { Box, Container, Grid, Paper, Typography } from "@mui/material";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import GoogleDocViewer from "../components/GoogleDocViewer";
+import HrTile from "../components/HrTile";
+import TimerDisplay from "../components/TimerDisplay";
+import WorkoutColumns from "../components/WorkoutColumns";
 import useTabataSounds from "../hooks/useTabataSounds";
 import useWebSocket from "../hooks/useWebSocket";
-import { getHrZoneProps, getTimerProps } from "../utils/visualization";
-import TimerDisplay from "../components/TimerDisplay";
-import HrTile from "../components/HrTile";
-import WorkoutColumns from "../components/WorkoutColumns";
+import { getHrZoneProps } from "../utils/visualization";
 
 const MAX_HR_DEFAULT = 185;
 const DOC_URL =
@@ -49,22 +49,10 @@ const StatusIndicator = ({ status }: { status: string }) => {
   );
 };
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const { hrmData, timerData, spotifyData, connectionStatus } = useWebSocket();
   // Play server-driven Tabata sounds
   useTabataSounds(timerData.soundToPlay);
-
-  // Visualization logic separation
-  const timerProps = useMemo(
-    () => getTimerProps(timerData.currentPhase),
-    [timerData]
-  );
-  const timerProgressValue = useMemo(() => {
-    if (timerData.timeRemaining === 0 || timerData.currentPhase === "IDLE")
-      return 0;
-    const totalDuration = timerData.currentPhase === "WORK" ? 30 : 10;
-    return (timerData.timeRemaining / totalDuration) * 100;
-  }, [timerData]);
 
   return (
     <Container
@@ -216,7 +204,10 @@ const Dashboard: React.FC = () => {
           <WorkoutColumns
             columns={[
               { title: "Warm-up", items: [{ title: "5 min easy spin" }] },
-              { title: "Main Set", items: [{ title: "8x (30s on / 10s off)" }] },
+              {
+                title: "Main Set",
+                items: [{ title: "8x (30s on / 10s off)" }],
+              },
               { title: "Cool Down", items: [{ title: "3 min light" }] },
             ]}
           />

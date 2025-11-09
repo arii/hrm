@@ -1,7 +1,6 @@
 // File: components/TimerDisplay.tsx
 "use client";
 import { Paper, Typography } from "@mui/material";
-import React from "react";
 
 export interface TimerDisplayProps {
   phase: "WORK" | "REST" | "IDLE" | "COOLDOWN";
@@ -12,12 +11,12 @@ export interface TimerDisplayProps {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-const TimerDisplay: React.FC<TimerDisplayProps> = ({
+const TimerDisplay = ({
   phase,
   timeRemaining,
   cycle,
   totalCycles,
-}) => {
+}: TimerDisplayProps) => {
   const mm = Math.floor(timeRemaining / 60);
   const ss = timeRemaining % 60;
   return (

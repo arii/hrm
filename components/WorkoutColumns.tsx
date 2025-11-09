@@ -1,7 +1,6 @@
 // File: components/WorkoutColumns.tsx
 "use client";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import React from "react";
 
 export interface WorkoutItem {
   title: string;
@@ -12,7 +11,7 @@ export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>;
 }
 
-const WorkoutColumns: React.FC<WorkoutColumnsProps> = ({ columns }) => {
+const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
   return (
     <Grid container spacing={2}>
       {columns.map((col, idx) => (

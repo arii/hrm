@@ -1,9 +1,7 @@
 import fs from "fs";
-let fetch: typeof import("node-fetch").default;
-(async () => {
-  fetch = (await import("node-fetch")).default;
-})();
+import fetch from "node-fetch";
 import * as path from "path";
+import { SpotifyTokenResponse } from "./spotifyPolling";
 
 export interface SpotifyTokenPayload {
   provider: string;
@@ -52,8 +50,6 @@ export class SpotifyTokenManager {
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false;
 
-    const { default: fetch } = await import("node-fetch");
-
     try {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
@@ -76,8 +72,13 @@ export class SpotifyTokenManager {
         throw new Error(`HTTP ${response.status}: ${errorBody}`);
       }
 
-      const data: any = await response.json();
-      console.log("Spotify token refresh successful. Status:", response.status, "Body:", data);
+      const data = (await response.json()) as SpotifyTokenResponse;
+      console.log(
+        "Spotify token refresh successful. Status:",
+        response.status,
+        "Body:",
+        data
+      );
 
       // Update current token with new values
       this.currentToken = {
@@ -119,7 +120,9 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000;
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log("Spotify access token is expiring soon, initiating refresh...");
+      console.log(
+        "Spotify access token is expiring soon, initiating refresh..."
+      );
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {

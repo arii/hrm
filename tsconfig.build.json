@@ -4,8 +4,7 @@
     "noEmit": false,
     "outDir": "./dist",
     "module": "esnext",
-    "moduleResolution": "node",
-    "target": "es2022"
+    "moduleResolution": "bundler"
   },
   "include": [
     "server.ts",

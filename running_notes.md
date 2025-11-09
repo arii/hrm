@@ -4,6 +4,30 @@
 
 This document tracks the progress and issues encountered while refactoring the HRM application.
 
+## Quick Links
+
+- **[README.md](README.md)** - Complete setup and usage guide
+- **[SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)** - ⚠️ Fix "Invalid Client" errors
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details and status
+- **[plan.md](plan.md)** - Original project plan and architecture
+
+## Common Issues
+
+### Spotify "Invalid Client" Error
+
+If you see "Invalid client" when trying to login with Spotify, see the comprehensive troubleshooting guide:
+
+📖 **[SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)**
+
+**Quick fix checklist:**
+
+- Verify Client ID and Secret in `.env.local` match Spotify dashboard exactly
+- Ensure redirect URI is `http://127.0.0.1:3000/api/auth/callback/spotify`
+- Restart server after changing `.env.local`
+- Check debug endpoint: `curl http://127.0.0.1:3000/api/debug/auth-check`
+
+---
+
 ## Session 1: Getting the Server to Run
 
 **Objective**: To get the development server running correctly using the custom `server.ts` entry point.
@@ -242,7 +266,7 @@ These commands are run in a persistent test script environment (like Playwright)
 The original site had several components, and stability is key. CLS measures how much the page layout shifts unexpectedly during loading, which ruins user experience.
 
 | Goal            | MCP/Playwright Strategy                                                                                                                                                              | Why It's Better Than Basic Testing                                                                                                                   |
-| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Measure CLS** | **`await page.goto('http://127.0.0.1:3000');`** **`const metrics = await page.evaluate(() => performance.getEntriesByType('layout-shift'));`** **`expect(metrics.length).toBe(0);`** | Directly queries the **Performance API** within the browser context to catch subtle visual jumps caused by font loading or slow component rendering. |
 
 ### Ensure Real-Time Updates Are Fast
@@ -330,45 +354,52 @@ Here is the plan to integrate the sounds:
 
 This approach keeps all the logic self-contained, is very performant, and perfectly mimics the original site's functionality.
 
-## Current Status (updated)
+## Current Status (updated November 9, 2025)
 
-- Custom server entry is [`server.ts`](server.ts) and is started in development using PM2 via `npm run dev` / `npm run dev:clean`.
-- PM2 logs show a non-fatal startup message `TypeError: Unknown file extension ".ts"` in `server-error.log` but `server-out.log` shows:
-  - "Ready on http://127.0.0.1:3000"
-  - "WebSocket Server listening on ws://127.0.0.1:3000/ws"
-- Server process is reported as `online` by PM2.
+**✅ All Major Todos Completed:**
 
-Services and wiring:
-- Tabata timer: implemented in [`services/tabataTimer.ts`](services/tabataTimer.ts) and broadcasting via [`utils/socketManager.ts`](utils/socketManager.ts).
-- WebSocket entry and routing: [`initSocketManager`](utils/socketManager.ts).
-- Client hook: [`useWebSocket`](hooks/useWebSocket.ts) receives unified state and should trigger client-side audio/visual updates.
-- Dashboard and Control UI: [`app/page.tsx`](app/page.tsx), [`app/client/control/page.tsx`](app/client/control/page.tsx), [`app/client/mock/page.tsx`](app/client/mock/page.tsx).
+1. **Timer Configuration Wiring** - Work/rest/cycles now configurable from control panel; presets functional
+2. **Visual Regression Tests** - Playwright suite created with 8 comprehensive tests
+3. **Module System Stabilized** - Production build working; `.js` artifacts removed
+4. **Zone Colors Centralized** - `ZONE_COLORS` in `utils/visualization.ts`
+5. **ESLint Verified** - v8.57.0 running correctly, `npm run lint` passes without errors
+6. **Audio Feedback** - `useTabataSounds` hook implemented using Web Audio API
 
-Screenshots
-- The repository contains screenshots showing the original site layout and large numeric tiles. These images were used to drive the replication plan.
+**Server Status:**
 
-Next Steps (actionable checklist)
-1. Start the dev server and let it run:
-   - Run `npm run dev` (or use VS Code launch task `Launch HRM Server (pm2)`).
-   - Confirm the server reports "Ready on http://127.0.0.1:3000" in `logs/server-out.log` or via `npm run pm2:logs`.
-2. Verify real-time streaming:
-   - Open the dashboard (`/`) and the mock client (`/client/mock`).
-   - Use the mock client to stream HR packets and confirm the dashboard updates (use [`useWebSocket`](hooks/useWebSocket.ts)).
-3. Restore Tabata beeps:
-   - Implement client-side `useTabataSounds` (Web Audio API) and wire it to `useWebSocket` to play `timerData.soundToPlay` events broadcast by [`TabataTimer`](services/tabataTimer.ts).
-4. Visual parity tests:
-   - Create Playwright visual tests that compare the new UI to reference screenshots (mobile and desktop).
-   - Test color zones using computed styles for `.MuiLinearProgress-bar` and other MUI elements.
-5. Investigate TS2769 on server.listen:
-   - Remove `@ts-ignore` in [`server.ts`](server.ts) by resolving the typing mismatch.
-6. Document MCP usage:
-   - Add MCP instructions and example commands (see `.github/copilot-instructions.md`) to run Chrome DevTools MCP and capture traces.
+- Custom server entry: [`server.ts`](server.ts)
+- Start command: `npm run dev:clean` or `npm run dev`
+- Server responds on: http://127.0.0.1:3000
+- WebSocket endpoint: ws://127.0.0.1:3000/ws
 
-Reference files:
+**Services and Wiring:**
+
+- Tabata timer: [`services/tabataTimer.ts`](services/tabataTimer.ts) with configurable work/rest/cycles
+- Spotify polling: [`services/spotifyPolling.ts`](services/spotifyPolling.ts) with token management
+- WebSocket routing: [`utils/socketManager.ts`](utils/socketManager.ts)
+- Client hooks: [`useWebSocket.ts`](hooks/useWebSocket.ts), [`useTabataSounds.ts`](hooks/useTabataSounds.ts)
+- Dashboard: [`app/page.tsx`](app/page.tsx) with HrTile, TimerDisplay, WorkoutColumns components
+
+**Build & Test:**
+
+- `npm run build` - Compiles TypeScript and builds Next.js (working ✅)
+- `npm run test:visual` - Runs Playwright visual tests
+- `npm run lint` - ESLint passes without errors ✅
+- `npx tsc --noEmit` - TypeScript compilation succeeds ✅
+
+**Optional Next Steps:**
+
+1. Run visual tests to generate baseline screenshots: `npm run test:visual:update`
+2. Wire volume slider to Spotify API (currently UI only)
+3. Add localStorage persistence for timer config
+4. Deploy to production using PM2: `npm run start`
+
+**Reference Files:**
+
 - [`server.ts`](server.ts)
-- [`services/tabataTimer.ts`](services/tabataTimer.ts)
-- [`utils/socketManager.ts`](utils/socketManager.ts)
-- [`hooks/useWebSocket.ts`](hooks/useWebSocket.ts)
-- [`app/page.tsx`](app/page.tsx)
-- [`app/client/control/page.tsx`](app/client/control/page.tsx)
-- [`app/client/mock/page.tsx`](app/client/mock/page.tsx)
+- [`services/tabataTimer.ts`](services/tabataTimer.ts), [`services/spotifyPolling.ts`](services/spotifyPolling.ts)
+- [`utils/socketManager.ts`](utils/socketManager.ts), [`utils/visualization.ts`](utils/visualization.ts)
+- [`hooks/useWebSocket.ts`](hooks/useWebSocket.ts), [`hooks/useTabataSounds.ts`](hooks/useTabataSounds.ts)
+- [`components/HrTile.tsx`](components/HrTile.tsx), [`components/TimerDisplay.tsx`](components/TimerDisplay.tsx)
+- [`app/page.tsx`](app/page.tsx), [`app/client/control/page.tsx`](app/client/control/page.tsx), [`app/client/mock/page.tsx`](app/client/mock/page.tsx)
+- [`tests/playwright/visual-regression.spec.ts`](tests/playwright/visual-regression.spec.ts)

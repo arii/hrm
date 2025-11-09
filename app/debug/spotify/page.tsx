@@ -2,11 +2,24 @@
 
 import { Box, Button, Paper, Typography } from "@mui/material";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 
+interface ServerTokenStatus {
+  status: string;
+  userId?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  obtainedAt?: string;
+  expiresAt?: string;
+  isExpired?: boolean;
+  willExpireSoon?: boolean;
+}
+
 export default function SpotifyDebugPage() {
-  const { data: session } = useSession();
-  const [serverToken, setServerToken] = useState<any>(null);
+  const { data: session } = useSession() as { data: Session | null };
+  const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null);
 
   const fetchServerToken = async () => {
     const res = await fetch("/api/debug/spotify-token");

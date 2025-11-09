@@ -31,8 +31,8 @@ interface BluetoothDevice {
     name?: string;
     gatt?: BluetoothRemoteGATTServer;
     forget(): Promise<void>;
-    addEventListener(type: "gattserverdisconnected", listener: (event: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    removeEventListener(type: "gattserverdisconnected", listener: (event: Event) => any, options?: boolean | EventListenerOptions): void;
+    addEventListener(type: "gattserverdisconnected", listener: (event: Event) => void, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener(type: "gattserverdisconnected", listener: (event: Event) => void, options?: boolean | EventListenerOptions): void;
     // Add other properties and methods as needed
 }
 
@@ -53,7 +53,7 @@ interface BluetoothRemoteGATTCharacteristic {
     value?: DataView; // Add this line
     startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
     stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
-    addEventListener(type: "characteristicvaluechanged", listener: (event: Event) => any, options?: boolean | AddEventListenerOptions): void;
-    removeEventListener(type: "characteristicvaluechanged", listener: (event: Event) => any, options?: boolean | EventListenerOptions): void;
+    addEventListener(type: "characteristicvaluechanged", listener: (event: Event) => void, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener(type: "characteristicvaluechanged", listener: (event: Event) => void, options?: boolean | EventListenerOptions): void;
     // Add other properties and methods as needed
 }

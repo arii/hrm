@@ -29,7 +29,7 @@ import {
   Typography,
 } from "@mui/material";
 import { signIn } from "next-auth/react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAudioPlayer } from "../../../hooks/useAudioPlayer";
 import useWebSocket from "../../../hooks/useWebSocket";
 import {
@@ -38,7 +38,7 @@ import {
 } from "../../../types/websocket";
 import { getTimerProps } from "../../../utils/visualization";
 
-const ControlPanel: React.FC = () => {
+const ControlPanel = () => {
   const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
   const { initAudio, playSound } = useAudioPlayer();
 
@@ -178,7 +178,9 @@ const ControlPanel: React.FC = () => {
               label="WORK TIME"
               type="number"
               value={workTime}
-              onChange={(e) => setWorkTime(parseInt(e.target.value, 10) || 0)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setWorkTime(parseInt(e.target.value, 10) || 0)
+              }
               fullWidth
               size="small"
               inputProps={{ min: 5, max: 120 }}
@@ -189,7 +191,9 @@ const ControlPanel: React.FC = () => {
               label="REST TIME"
               type="number"
               value={restTime}
-              onChange={(e) => setRestTime(parseInt(e.target.value, 10) || 0)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setRestTime(parseInt(e.target.value, 10) || 0)
+              }
               fullWidth
               size="small"
               inputProps={{ min: 0, max: 120 }}

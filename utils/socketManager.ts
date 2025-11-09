@@ -3,8 +3,8 @@
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
 import { WebSocket, Server as WebSocketServer } from "ws";
-import { default as SpotifyPolling } from "../services/spotifyPolling";
-import { default as TabataTimer } from "../services/tabataTimer";
+import { SpotifyPolling } from "../services/spotifyPolling";
+import TabataTimer from "../services/tabataTimer";
 import {
   ClientCommandMessage,
   HrmData,
@@ -128,7 +128,7 @@ const handleIncomingMessage = (
         break;
 
       default:
-        console.warn("Unknown message type received:", (message as any).type);
+        console.warn("Unknown message type received:", (message as { type: unknown }).type);
     }
   } catch (e) {
     console.error("Error processing incoming message:", e);

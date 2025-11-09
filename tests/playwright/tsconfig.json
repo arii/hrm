@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "outDir": "../../dist/playwright",
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["./**/*.ts", "../../playwright.config.ts"]
+}

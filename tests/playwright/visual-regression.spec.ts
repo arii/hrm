@@ -4,7 +4,7 @@
  * with the original HRM site design. Run these tests after layout changes to detect
  * unexpected visual regressions.
  */
-import { expect, test } from "@playwright/test";
+import { test, type Page, expect } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
 
@@ -14,7 +14,7 @@ test.describe("Visual Regression Tests", () => {
     await page.setViewportSize({ width: 1280, height: 720 });
   });
 
-  test("Dashboard - main viewer page", async ({ page }) => {
+  test("Dashboard - main viewer page", async ({ page }: { page: Page }) => {
     await page.goto(BASE_URL);
 
     // Wait for WebSocket connection and initial state
@@ -32,7 +32,11 @@ test.describe("Visual Regression Tests", () => {
     });
   });
 
-  test("Control Panel - timer and music controls", async ({ page }) => {
+  test("Control Panel - timer and music controls", async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto(`${BASE_URL}/client/control`);
 
     // Wait for connection status
@@ -48,7 +52,11 @@ test.describe("Visual Regression Tests", () => {
     });
   });
 
-  test("Mock HRM Client - test data input", async ({ page }) => {
+  test("Mock HRM Client - test data input", async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     await page.goto(`${BASE_URL}/client/mock`);
 
     // Wait for connection status
@@ -64,7 +72,7 @@ test.describe("Visual Regression Tests", () => {
     });
   });
 
-  test("Dashboard with active timer", async ({ page }) => {
+  test("Dashboard with active timer", async ({ page }: { page: Page }) => {
     // First navigate to control panel
     await page.goto(`${BASE_URL}/client/control`);
     await page.waitForSelector("text=/Server Status/", { timeout: 5000 });
@@ -86,18 +94,22 @@ test.describe("Visual Regression Tests", () => {
     await expect(page).toHaveScreenshot("dashboard-active-timer.png", {
       fullPage: true,
       animations: "disabled",
-      mask: [page.locator("text=/\\d+s/")], // Mask time value as it changes
+      mask: [page.locator("text=/\\d+s/")],
     });
   });
 
-  test("Dashboard with mock HR data streaming", async ({ page }) => {
+  test("Dashboard with mock HR data streaming", async ({
+    page,
+  }: {
+    page: Page;
+  }) => {
     // First send some mock HR data
     await page.goto(`${BASE_URL}/client/mock`);
     await page.waitForSelector("text=/Server Status/", { timeout: 5000 });
 
     // Set HR to yellow zone
     await page.fill('input[label="Current BPM"]', "155");
-    await page.click('button:has-text("Zone 4")'); // Yellow zone
+    await page.click('button:has-text("Zone 4")');
     await page.waitForTimeout(500);
 
     // Navigate to dashboard to see HR data
@@ -114,19 +126,18 @@ test.describe("Visual Regression Tests", () => {
 });
 
 test.describe("Component Visual Tests", () => {
-  test("HR Tiles - all zones", async ({ page }) => {
+  test("HR Tiles - all zones", async ({ page }: { page: Page }) => {
     await page.goto(BASE_URL);
     await page.waitForSelector("text=/Server Status/", { timeout: 5000 });
 
     // Find HR tile section
-    const hrTilesSection = page.locator(".MuiGrid-container").first();
-
+    const hrTilesSection = page.locator('[class*="HrTile"]').first();
     await expect(hrTilesSection).toHaveScreenshot("hr-tiles-section.png", {
       animations: "disabled",
     });
   });
 
-  test("Timer Display - large format", async ({ page }) => {
+  test("Timer Display - large format", async ({ page }: { page: Page }) => {
     await page.goto(BASE_URL);
     await page.waitForSelector("text=/Server Status/", { timeout: 5000 });
 
@@ -138,7 +149,6 @@ test.describe("Component Visual Tests", () => {
         "timer-display-component.png",
         {
           animations: "disabled",
-          mask: [page.locator("text=/\\d+:\\d+/")], // Mask time value
         }
       );
     }

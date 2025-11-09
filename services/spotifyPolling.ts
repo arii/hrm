@@ -3,10 +3,7 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-let fetch: typeof import("node-fetch").default;
-(async () => {
-  fetch = (await import("node-fetch")).default;
-})();
+import fetch from "node-fetch";
 import { SpotifyData, UnifiedStateMessage } from "../types/websocket";
 import { SpotifyTokenManager } from "./spotifyTokenManager";
 
@@ -15,6 +12,95 @@ const BASE_URL = "https://api.spotify.com/v1";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
 type SpotifyCommand = "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "LOGIN";
+
+interface SpotifyCurrentlyPlayingResponse {
+  timestamp: number;
+  context: {
+    external_urls: {
+      spotify: string;
+    };
+    href: string;
+    type: string;
+    uri: string;
+  };
+  progress_ms: number;
+  is_playing: boolean;
+  item: {
+    album: {
+      album_type: string;
+      artists: Array<{
+        external_urls: {
+          spotify: string;
+        };
+        href: string;
+        id: string;
+        name: string;
+        type: string;
+        uri: string;
+      }>;
+      external_urls: {
+        spotify: string;
+      };
+      href: string;
+      id: string;
+      images: Array<{
+        height: number;
+        url: string;
+        width: number;
+      }>;
+      name: string;
+      release_date: string;
+      release_date_precision: string;
+      total_tracks: number;
+      type: string;
+      uri: string;
+    };
+    artists: Array<{
+      external_urls: {
+        spotify: string;
+      };
+      href: string;
+      id: string;
+      name: string;
+      type: string;
+      uri: string;
+    }>;
+    available_markets: string[];
+    disc_number: number;
+    duration_ms: number;
+    explicit: boolean;
+    external_ids: {
+      isrc: string;
+    };
+    external_urls: {
+      spotify: string;
+    };
+    href: string;
+    id: string;
+    is_local: boolean;
+    name: string;
+    popularity: number;
+    preview_url: string;
+    track_number: number;
+    type: string;
+    uri: string;
+  };
+  currently_playing_type: string;
+  actions: {
+    disallows: {
+      resuming: boolean;
+      skipping_prev: boolean;
+    };
+  };
+}
+
+export interface SpotifyTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  refresh_token?: string;
+  scope: string;
+}
 
 export class SpotifyPolling {
   private tokenManager: SpotifyTokenManager;
@@ -54,7 +140,7 @@ export class SpotifyPolling {
   // --- Token Management (Used by NextAuth route) ---
 
   /**
-   * Called by server.js POST /internal/token-delivery after NextAuth provides the refresh token.
+   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
   public setRefreshToken(token: string) {
     this.refreshToken = token;
@@ -78,8 +164,6 @@ export class SpotifyPolling {
       return;
     }
 
-    const { default: fetch } = await import("node-fetch");
-
     // Generate Base64 string for Authorization header
     const authString = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
@@ -100,12 +184,19 @@ export class SpotifyPolling {
 
       if (!response.ok) {
         const errorBody = await response.text();
-        throw new Error(`Token refresh failed: ${response.status} - ${errorBody}`);
+        throw new Error(
+          `Token refresh failed: ${response.status} - ${errorBody}`
+        );
       }
 
-      const data: any = await response.json();
+      const data = (await response.json()) as SpotifyTokenResponse;
       this.accessToken = data.access_token;
-      console.log("Spotify Access Token refreshed successfully. Status:", response.status, "Body:", data);
+      console.log(
+        "Spotify Access Token refreshed successfully. Status:",
+        response.status,
+        "Body:",
+        data
+      );
 
       // Start polling if not already running
       if (!this.pollInterval) {
@@ -139,10 +230,11 @@ export class SpotifyPolling {
   private getCurrentlyPlaying = async () => {
     if (!this.accessToken) return;
 
-    const { default: fetch } = await import("node-fetch");
-
     const maskedAccessToken = this.accessToken.substring(0, 5) + "...";
-    console.log("Fetching currently playing track with access token:", maskedAccessToken);
+    console.log(
+      "Fetching currently playing track with access token:",
+      maskedAccessToken
+    );
 
     try {
       const response = await fetch(`${BASE_URL}/me/player/currently-playing`, {
@@ -168,7 +260,12 @@ export class SpotifyPolling {
 
       const responseBody = await response.text();
       if (!response.ok) {
-        console.error("Error fetching currently playing track. Status:", response.status, "Body:", responseBody);
+        console.error(
+          "Error fetching currently playing track. Status:",
+          response.status,
+          "Body:",
+          responseBody
+        );
         if (response.status === 401) {
           console.warn(
             "Spotify token expired or invalid. Attempting refresh..."
@@ -178,7 +275,7 @@ export class SpotifyPolling {
         return;
       }
 
-      const data = JSON.parse(responseBody) as any;
+      const data = (await response.json()) as SpotifyCurrentlyPlayingResponse;
       console.log("Successfully fetched currently playing track. Data:", data);
 
       // Only broadcast if track ID or playback state has changed
@@ -209,8 +306,6 @@ export class SpotifyPolling {
       );
       return;
     }
-
-    const { default: fetch } = await import("node-fetch");
 
     try {
       const response = await fetch(`${BASE_URL}/me/player/${endpoint}`, {
@@ -260,13 +355,11 @@ export class SpotifyPolling {
     }
   }
 
-  async getCurrentPlayback(): Promise<any> {
+  async getCurrentPlayback(): Promise<SpotifyCurrentlyPlayingResponse | null> {
     const accessToken = await this.tokenManager.getValidAccessToken();
     if (!accessToken) {
       throw new Error("No valid Spotify access token available");
     }
-
-    const { default: fetch } = await import("node-fetch");
 
     const response = await fetch("https://api.spotify.com/v1/me/player", {
       headers: {
@@ -282,7 +375,7 @@ export class SpotifyPolling {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
 
-    return response.json();
+    return (await response.json()) as SpotifyCurrentlyPlayingResponse;
   }
 
   async controlPlayback(
@@ -290,8 +383,6 @@ export class SpotifyPolling {
   ): Promise<boolean> {
     const accessToken = await this.tokenManager.getValidAccessToken();
     if (!accessToken) return false;
-
-    const { default: fetch } = await import("node-fetch");
 
     const endpoint = {
       play: "/play",

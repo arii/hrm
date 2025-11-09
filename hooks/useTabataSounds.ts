@@ -17,7 +17,7 @@ interface BeepSpec {
 
 const playBeepSequence = (audioCtx: AudioContext, sequence: BeepSpec[]) => {
   const now = audioCtx.currentTime;
-  sequence.forEach((beep, index) => {
+  sequence.forEach((beep, _index) => {
     const startAt = now + (beep.delay || 0) / 1000;
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -64,8 +64,13 @@ const useTabataSounds = (soundToPlay?: "WORK" | "REST" | "COUNTDOWN") => {
     // Lazy init AudioContext (iOS requires user gesture; on desktop it's fine)
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        type WindowWithWebkitAudioContext = Window & { webkitAudioContext?: { new (contextOptions?: AudioContextOptions): AudioContext } };
+        const AudioContextConstructor = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
+        if (AudioContextConstructor) {
+          audioCtxRef.current = new AudioContextConstructor();
+        } else {
+          throw new Error("AudioContext not supported");
+        }
       } catch (e) {
         console.warn("AudioContext initialization failed:", e);
         return;
