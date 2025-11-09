@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.gemini/*
+.github/copilot-instructions.md
+.gemini/settings.json
+.vscode/*
+
+npm_run_dev.log
