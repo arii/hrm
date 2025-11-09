@@ -37,6 +37,7 @@ export default defineConfig([
     'node_modules/',
     'dist/**', // Exclude compiled output
     'server.js', // Exclude server.js
+    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
   ]),
 
   // Configuration for TypeScript files

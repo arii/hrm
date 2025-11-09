@@ -33,7 +33,8 @@
     "node-fetch": "^3.3.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

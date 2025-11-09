@@ -19,6 +19,7 @@ interface AppState {
     hrmData: HrmData[];
     timerData: TimerData;
     spotifyData: SpotifyData;
+    spotifyServiceInitialized?: boolean;
 }
 
 // Initial state, conforming to the interfaces
@@ -26,6 +27,7 @@ const INITIAL_STATE: AppState = {
     hrmData: [],
     timerData: { isRunning: false, currentPhase: 'IDLE', timeRemaining: 0, cycle: 0, totalCycles: 8 },
     spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
+    spotifyServiceInitialized: true,
 };
 
 const useWebSocket = (serverUrl = DEFAULT_SERVER_URL) => {
@@ -61,6 +63,7 @@ const useWebSocket = (serverUrl = DEFAULT_SERVER_URL) => {
               hrmData: message.hrmData || prev.hrmData,
               timerData: message.timerData || prev.timerData,
               spotifyData: message.spotifyData || prev.spotifyData,
+              spotifyServiceInitialized: message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
           }));
         }
       } catch (e) {

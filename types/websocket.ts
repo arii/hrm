@@ -35,6 +35,7 @@ export interface UnifiedStateMessage {
   hrmData: HrmData[];
   timerData: TimerData;
   spotifyData: SpotifyData;
+  spotifyServiceInitialized?: boolean;
 }
 
 /**
@@ -77,3 +78,38 @@ export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
   | SpotifyCommandMessage;
+
+import { z } from 'zod';
+
+// --- Zod Schemas for Client Input Command Interfaces ---
+
+export const HrmInputDataSchema = z.object({
+  value: z.number().optional(),
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+});
+
+export const HrmInputMessageSchema = z.object({
+  type: z.literal("HRM_INPUT"),
+  data: HrmInputDataSchema,
+});
+
+export const TimerCommandMessageSchema = z.object({
+  type: z.literal("TIMER_COMMAND"),
+  command: z.union([z.literal("START"), z.literal("PAUSE"), z.literal("STOP")]),
+  workDuration: z.number().optional(),
+  restDuration: z.number().optional(),
+  totalCycles: z.number().optional(),
+});
+
+export const SpotifyCommandMessageSchema = z.object({
+  type: z.literal("SPOTIFY_COMMAND"),
+  command: z.union([z.literal("PLAY"), z.literal("PAUSE"), z.literal("NEXT"), z.literal("PREVIOUS")]),
+});
+
+export const ClientCommandMessageSchema = z.union([
+  HrmInputMessageSchema,
+  TimerCommandMessageSchema,
+  SpotifyCommandMessageSchema,
+]);

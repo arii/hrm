@@ -6,11 +6,11 @@
 import { useState, useCallback } from 'react';
 import useWebSocket from './useWebSocket';
 import { HrmInputMessage } from '../types/websocket';
+import { MAX_HR_DEFAULT } from "../utils/constants";
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate';
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement';
-const MAX_HR_DEFAULT = 185; // Default max HR for zone calculations
 
 /**
  * Parses the raw DataView received from the HR Measurement characteristic.
@@ -80,11 +80,33 @@ const useBluetoothHRM = () => {
 
         } catch (error: unknown) {
             console.error('Bluetooth connection failed:', error);
-            let errorMessage = "An unknown error occurred.";
-            if (error instanceof Error) {
-              errorMessage = error.name || error.message;
+            let userFriendlyMessage = "An unknown error occurred during Bluetooth connection.";
+
+            if (error instanceof DOMException) {
+                switch (error.name) {
+                    case "NotFoundError":
+                        userFriendlyMessage = "No Bluetooth device found. Make sure your device is discoverable.";
+                        break;
+                    case "SecurityError":
+                        userFriendlyMessage = "Bluetooth permission denied or an insecure origin. Ensure HTTPS and permissions are granted.";
+                        break;
+                    case "NetworkError":
+                        userFriendlyMessage = "Bluetooth connection lost or failed due to network issues.";
+                        break;
+                    case "NotSupportedError":
+                        userFriendlyMessage = "Web Bluetooth is not supported on this browser or device.";
+                        break;
+                    case "AbortError":
+                        userFriendlyMessage = "Bluetooth connection attempt was aborted.";
+                        break;
+                    default:
+                        userFriendlyMessage = `Bluetooth error: ${error.name} - ${error.message}`;
+                }
+            } else if (error instanceof Error) {
+                userFriendlyMessage = `General error: ${error.message}`;
             }
-            setDeviceStatus(`Failed: ${errorMessage}`);
+            
+            setDeviceStatus(`Failed: ${userFriendlyMessage}`);
         }
     }, [deviceStatus, connectionStatus, sendData]);
 

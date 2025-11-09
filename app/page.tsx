@@ -14,8 +14,8 @@ import WorkoutColumns from "../components/WorkoutColumns";
 import useTabataSounds from "../hooks/useTabataSounds";
 import useWebSocket from "../hooks/useWebSocket";
 import { getHrZoneProps } from "../utils/visualization";
+import { MAX_HR_DEFAULT } from "../utils/constants";
 
-const MAX_HR_DEFAULT = 185;
 const DOC_URL =
   "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub"; // Example URL
 
@@ -50,7 +50,7 @@ const StatusIndicator = ({ status }: { status: string }) => {
 };
 
 const Dashboard = () => {
-  const { hrmData, timerData, spotifyData, connectionStatus } = useWebSocket();
+  const { hrmData, timerData, spotifyData, connectionStatus, spotifyServiceInitialized } = useWebSocket();
   // Play server-driven Tabata sounds
   useTabataSounds(timerData.soundToPlay);
 
@@ -153,22 +153,30 @@ const Dashboard = () => {
             >
               <MusicNote sx={{ mr: 1 }} /> NOW PLAYING
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-              {spotifyData.trackName}
-            </Typography>
-            <Typography variant="body1" sx={{ color: "grey.400", mb: 2 }}>
-              {spotifyData.artist}
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500" }}>
-              Playback Status: {spotifyData.isPlaying ? "Playing" : "Paused"}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ mt: 1, display: "block", color: "grey.600" }}
-            >
-              Login required via the /client/control page to enable live
-              updates.
-            </Typography>
+            {spotifyServiceInitialized === false ? (
+              <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                Spotify service unavailable.
+              </Typography>
+            ) : (
+              <>
+                <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                  {spotifyData.trackName}
+                </Typography>
+                <Typography variant="body1" sx={{ color: "grey.400", mb: 2 }}>
+                  {spotifyData.artist}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  Playback Status: {spotifyData.isPlaying ? "Playing" : "Paused"}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 1, display: "block", color: "grey.600" }}
+                >
+                  Login required via the /client/control page to enable live
+                  updates.
+                </Typography>
+              </>
+            )}
           </Paper>
         </Grid>
 

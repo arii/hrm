@@ -11,34 +11,9 @@ import next from "next";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
+import { UnifiedStateMessage } from "./types/websocket";
 
-// Define the UnifiedStateMessage interface directly in server.ts
-export interface HrmData {
-  clientId: string;
-  value: number;
-  maxHr: number;
-  name?: string;
-  age?: number;
-}
-export interface TimerData {
-  isRunning: boolean;
-  currentPhase: "WORK" | "REST" | "IDLE" | "COOLDOWN";
-  timeRemaining: number;
-  cycle: number;
-  totalCycles: number;
-  soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
-}
-export interface SpotifyData {
-  trackName: string;
-  artist: string;
-  isPlaying: boolean;
-}
-export interface UnifiedStateMessage {
-  type: "STATE_UPDATE";
-  hrmData: HrmData[];
-  timerData: TimerData;
-  spotifyData: SpotifyData;
-}
+
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from "./services/spotifyPolling";
@@ -66,6 +41,9 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true });
 
+    // Declare spotifyServiceInitialized here
+    let spotifyServiceInitialized: boolean = true;
+
     // Function to safely broadcast state from services (Used by Tabata and Spotify services)
     const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
       // Use the socket manager to handle the actual broadcast
@@ -74,7 +52,7 @@ app
           if (client.readyState === 1) {
             // 1 means OPEN
             // Note: We use the STATE_UPDATE type defined in types/websocket.ts
-            client.send(JSON.stringify({ type: "STATE_UPDATE", ...data }));
+            client.send(JSON.stringify({ type: "STATE_UPDATE", spotifyServiceInitialized, ...data })); // Include spotifyServiceInitialized
           }
         });
       }
@@ -86,6 +64,7 @@ app
       spotifyService = new SpotifyPolling(broadcastState);
     } catch (e) {
       console.error("SpotifyPolling initialization failed:", e);
+      spotifyServiceInitialized = false; // Set to false on failure
       // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},

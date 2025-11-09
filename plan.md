@@ -1,3 +1,54 @@
+# HRM Dashboard - Implementation Status
+
+**Last Updated:** November 2025
+
+## ✅ Implementation Complete
+
+This document contains the original implementation plan. The project has been successfully implemented with all core features operational.
+
+### Current Status
+
+**Fully Implemented:**
+- ✅ Custom Express + Next.js server architecture
+- ✅ WebSocket server for real-time communication
+- ✅ Tabata Timer with state machine and audio feedback
+- ✅ Spotify integration with OAuth (NextAuth), token persistence, and auto-refresh
+- ✅ Heart rate monitoring (Bluetooth HRM + Mock client)
+- ✅ HR zone visualization with large percentage tiles
+- ✅ Control panel for timer and music controls
+- ✅ Automated verification tools (`npm run verify:spotify`)
+- ✅ Visual regression tests with Playwright
+- ✅ PM2 for production deployment
+- ✅ VS Code debug configurations
+
+### Quick Reference
+
+- **Architecture:** See [README.md](README.md#architecture)
+- **Getting Started:** See [README.md](README.md#quick-start)
+- **Current Status:** See [running_notes.md](running_notes.md)
+- **Troubleshooting:** See [BRINGUP_TROUBLESHOOTING.md](BRINGUP_TROUBLESHOOTING.md) and [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)
+
+### Deployment Notes
+
+**Development:**
+```bash
+npm run dev  # Runs ts-node with server.ts
+```
+
+**Production:**
+```bash
+npm run build  # Compiles TypeScript and builds Next.js
+npm run start  # Starts with PM2
+```
+
+**Critical:** This app requires a stateful server and is NOT compatible with serverless platforms (Vercel, Netlify, AWS Lambda).
+
+---
+
+# Original Implementation Plan
+
+Below is the original project plan document for historical reference.
+
 Here is the comprehensive plan (v4) converted to plain markdown for you to copy and paste.
 
 ---
