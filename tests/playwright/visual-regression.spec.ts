@@ -6,7 +6,7 @@
  */
 import { test, type Page, expect } from "@playwright/test";
 
-const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
+const BASE_URL = process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000";
 
 test.describe("Visual Regression Tests", () => {
   test.beforeEach(async ({ page }) => {

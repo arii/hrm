@@ -25,7 +25,7 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL: process.env.BASE_URL || "http://127.0.0.1:3000",
+    baseURL: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
 
     // Screenshot settings
     screenshot: "only-on-failure",
@@ -51,7 +51,7 @@ export default defineConfig({
   // Web server configuration (start dev server before tests)
   webServer: {
     command: "npm run dev:clean",
-    url: "http://127.0.0.1:3000",
+    url: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     stdout: "pipe",

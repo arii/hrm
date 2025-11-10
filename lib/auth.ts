@@ -2,6 +2,7 @@
 import NextAuth, { Account, AuthOptions, Session } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import SpotifyProvider from "next-auth/providers/spotify";
+import { getAPIURL } from '../utils/urls';
 
 // Extend the Session type to include accessToken
 declare module "next-auth" {
@@ -60,9 +61,7 @@ export const authOptions: AuthOptions = {
             };
 
             const response = await fetch(
-              `${
-                process.env.NEXTAUTH_URL || "http://127.0.0.1:3000"
-              }/api/internal/token-delivery`,
+              getAPIURL('internal/token-delivery'),
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

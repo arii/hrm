@@ -12,8 +12,7 @@ import {
   UnifiedStateMessage,
 } from "../types/websocket";
 
-// Use explicit 127.0.0.1 for consistency with the server binding
-const DEFAULT_SERVER_URL = "ws://127.0.0.1:3000/ws";
+import { getWebSocketURL } from '../utils/urls';
 
 interface AppState {
   hrmData: HrmData[];
@@ -41,7 +40,8 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 };
 
-const useWebSocket = (serverUrl = DEFAULT_SERVER_URL) => {
+const useWebSocket = (serverUrl?: string) => {
+  const wsUrl = serverUrl || getWebSocketURL();
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
 
   // Unified State Object
@@ -53,7 +53,7 @@ const useWebSocket = (serverUrl = DEFAULT_SERVER_URL) => {
     // Ensure this runs only client-side
     if (typeof window === "undefined") return;
 
-    const ws = new WebSocket(serverUrl);
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => setConnectionStatus("Connected");
@@ -93,7 +93,7 @@ const useWebSocket = (serverUrl = DEFAULT_SERVER_URL) => {
         wsRef.current.close();
       }
     };
-  }, [serverUrl]);
+  }, [wsUrl]);
 
   /**
    * Sends a JSON payload (ClientCommandMessage) to the WebSocket server.
