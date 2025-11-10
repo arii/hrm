@@ -8,16 +8,23 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 **✅ Fully Operational** - All core features implemented and tested
 
-**Active Development Focus**: UI/UX improvements, mobile optimization, and accessibility enhancements. See [UI_UX_IMPROVEMENTS.md](UI_UX_IMPROVEMENTS.md) for the roadmap.
+**Recent Updates**: 
+- ✅ Integrated original HRM audio system with proper beep sounds
+- ✅ Improved timer display with rotated side labels and consistent layout
+- ✅ Added volume synchronization between dashboard and control panel
+- ✅ Fixed navigation labels and improved mobile UI consistency
+- ✅ Enhanced production deployment configuration
 
 ## Features
 
 - **Real-time Heart Rate Monitoring** - WebSocket streaming from Bluetooth HRM devices or mock client
-- **Tabata Timer** - Configurable work/rest intervals with countdown beeps and phase transitions
-- **HR Zone Visualization** - Large percentage tiles with color-coded zones (Grey/Blue/Green/Yellow/Red/Purple)
-- **Spotify Integration** - Auto-play music on timer start, sync pause/resume, display now playing
+- **Dual-Mode Timer** - Tabata (work/rest intervals) and Stopwatch (count-up) modes with 5-second prepare countdown
+- **Audio Feedback** - Original HRM beep sounds for countdown (3-2-1) and phase transitions
+- **HR Zone Visualization** - Large percentage tiles with color-coded zones and user names/ages
+- **Spotify Integration** - Full playback control, device selection, volume control, and now-playing display
 - **Mock HRM Client** - Test interface with zone buttons, device ID, and noise simulation
-- **Control Panel** - Mobile-friendly UI for timer and music controls
+- **Control Panel** - Mobile-optimized UI with timer controls, Spotify controls, and configuration steppers
+- **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API
 - **Visual Regression Tests** - Playwright screenshot-based testing
 
 ## Quick Start
@@ -55,13 +62,18 @@ npm run pm2:logs
 ## Project Structure
 
 - **`server.ts`**: Custom Express + Next.js + WebSocket entry point
-- **`app/page.tsx`**: Main dashboard (viewer)
-- **`app/client/control/page.tsx`**: Timer & music controls (mobile UI)
-- **`app/client/mock/page.tsx`**: Mock HRM data sender
-- **`app/client/connect/page.tsx`**: Bluetooth HRM connector
-- **`services/tabataTimer.ts`**: Tabata timer state machine
-- **`services/spotifyPolling.ts`**: Spotify API polling service
+- **`app/page.tsx`**: Main dashboard with timer, HR tiles, Spotify controls, and Google Doc viewer
+- **`app/client/control/page.tsx`**: Mobile control panel with timer/Spotify controls and Tabata configuration
+- **`app/client/mock/page.tsx`**: Mock HRM data sender for testing
+- **`app/client/connect/page.tsx`**: Bluetooth HRM connector with user name/age input
+- **`services/tabataTimer.ts`**: Dual-mode timer service (Tabata/Stopwatch) with audio cues
+- **`services/spotifyPolling.ts`**: Spotify API polling and playback control service
+- **`utils/audioManager.ts`**: Audio system for timer beep sounds
 - **`hooks/useWebSocket.ts`**: Client-side WebSocket connection hook
+- **`hooks/useAudio.ts`**: Audio playback hook with volume control
+- **`hooks/useVolumePreference.ts`**: Synchronized volume preference across tabs
+- **`components/TimerDisplay.tsx`**: Large timer display with rotated side labels
+- **`components/HrTile.tsx`**: Reusable heart rate percentage tile component
 - **`utils/socketManager.ts`**: Server-side WebSocket message router
 - **`tests/playwright/visual-regression.spec.ts`**: Screenshot-based tests
 
@@ -73,9 +85,17 @@ npm run pm2:logs
 npm run dev              # Start dev server (Next.js + WebSocket + services)
 npm run build            # Build for production
 npm run start            # Start production server with PM2
+npm run deploy           # Full deployment script (build + PM2 start)
 npm run lint             # Run ESLint
 npm run test:visual      # Run Playwright visual regression tests
 ```
+
+### Navigation Shortcuts
+
+The app includes URL redirects for easier navigation:
+- `/phone` → `/client/control` (Phone Controls)
+- `/connect` → `/client/connect` (Stream HR)
+- `/mock` → `/client/mock` (Mock HRM)
 
 ### Debugging & Verification
 
@@ -83,6 +103,7 @@ npm run test:visual      # Run Playwright visual regression tests
 npm run verify:spotify   # Automated Spotify integration health check
 npm run pm2:logs         # View PM2 logs
 npm run pm2:stop         # Stop all PM2 processes
+npm run deploy           # Deploy to production with PM2
 npm run mcp:chrome-devtools  # Start Chrome DevTools MCP for debugging
 ```
 
@@ -124,11 +145,21 @@ NEXTAUTH_SECRET=your_random_secret_here
 
 **For detailed setup instructions, see [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).**
 
+### Audio System
+
+The app includes the original HRM audio feedback system:
+- **Countdown beeps**: Short beeps during the last 3 seconds of any countdown phase
+- **Transition beeps**: Long beeps when phases change (prepare→work, work→rest, rest→work)
+- **Volume control**: Synchronized with Spotify volume controls
+- **Audio files**: Located in `public/assets/` (beep-01a.wav, beep-07.wav)
+
 ## Troubleshooting
 
 - **Server Startup Issues**: See [BRINGUP_TROUBLESHOOTING.md](BRINGUP_TROUBLESHOOTING.md).
 - **Spotify Authentication/API Errors**: Run `npm run verify:spotify` or consult [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).
 - **WebSocket Connection Errors**: Check the browser console and server logs for connection refused or handshake errors. Ensure the server is running and accessible.
+- **Audio Not Playing**: Click anywhere on the dashboard to initialize audio (browser security requirement). Check volume controls on both dashboard and control panel.
+- **Production Deployment**: See [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for complete deployment instructions.
 
 ## Architecture Overview
 
@@ -164,8 +195,30 @@ This ensures a single source of truth for application state, keeping all viewers
 3. **UI Components**: Use Material-UI (MUI) for all components.
 4. **Code Quality**: Run `npm run lint` before committing changes.
 5. **Visual Testing**: Update visual regression tests (`npm run test:visual:update`) after making intentional UI changes.
+6. **Audio Testing**: Test timer sounds on both dashboard and control panel. Audio only plays on dashboard, not control panel.
+7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
 
 For more detailed guidelines, especially for AI agents, see [.github/copilot-instructions.md](.github/copilot-instructions.md).
+
+## Recent Architecture Improvements
+
+### Audio System Integration
+- Copied original HRM audio files from product_hrm
+- Implemented AudioManager class for centralized sound control
+- Added useAudio hook for React components
+- Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
+
+### UI/UX Enhancements
+- Consistent layout proportions (no dynamic resizing)
+- Rotated side labels on timer display for better space utilization
+- Volume synchronization between dashboard and control panel
+- Improved mobile navigation with proper labels
+
+### Production Readiness
+- Complete deployment scripts and documentation
+- PM2 configuration with proper environment handling
+- Nginx configuration template
+- Pre-deployment validation checks
 
 ## License
 

@@ -19,10 +19,11 @@ cp .env.local .env.production
 2. **Update environment variables in `.env.production`:**
 
 ```env
-NEXTAUTH_URL=https://YOUR_DOMAIN.com
-NEXTAUTH_SECRET=your-production-secret-here
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=https://onasafari.ddns.net/api/auth/callback
+NEXTAUTH_URL=https://onasafari.ddns.net
+NEXTAUTH_SECRET=your_production_secret_here
 ```
 
 3. **Generate NextAuth secret:**
@@ -36,29 +37,44 @@ openssl rand -base64 32
 ### 1. Build and Deploy
 
 ```bash
+# Make deploy script executable (if not already)
 chmod +x deploy.sh
+
+# Run the deployment script
 ./deploy.sh
 ```
 
-### 2. Configure Nginx
+The deployment script will:
+- Create logs directory
+- Check for .env.production file
+- Validate nginx configuration
+- Build the Next.js application
+- Stop existing PM2 processes
+- Start production server with PM2
+- Save PM2 configuration
+
+### 2. Nginx Configuration
+
+**Note**: Since you already have nginx configured at `onasafari.ddns.net` with SSL certificates and WebSocket support for port 3000, no nginx changes are needed.
+
+If you need to update nginx configuration:
 
 ```bash
-# Copy nginx configuration
-sudo cp nginx.conf.template /etc/nginx/sites-available/hrm
-# Update YOUR_DOMAIN.com in the file
-sudo nano /etc/nginx/sites-available/hrm
-# Enable site
-sudo ln -s /etc/nginx/sites-available/hrm /etc/nginx/sites-enabled/
+# The nginx.conf.template is available for reference
+# Your existing configuration should already proxy to port 3000
 # Test configuration
 sudo nginx -t
-# Reload nginx
+# Reload if needed
 sudo systemctl reload nginx
 ```
 
-### 3. Setup SSL with Let's Encrypt
+### 3. SSL Configuration
 
+**Note**: SSL certificates are already configured for `onasafari.ddns.net`. No action needed.
+
+To renew certificates if needed:
 ```bash
-sudo certbot --nginx -d YOUR_DOMAIN.com
+sudo certbot renew
 ```
 
 ### 4. Configure PM2 to start on boot
@@ -69,53 +85,51 @@ pm2 startup
 pm2 save
 ```
 
-## DDNS Setup (No-IP Example)
+## DDNS Configuration
 
-1. **Install No-IP client:**
+**Note**: DDNS is already configured for `onasafari.ddns.net`. No action needed.
 
-```bash
-cd /usr/local/src/
-sudo wget http://www.noip.com/client/linux/noip-duc-linux.tar.gz
-sudo tar xf noip-duc-linux.tar.gz
-cd noip-2.1.9-1/
-sudo make install
-```
-
-2. **Configure No-IP:**
-
-```bash
-sudo /usr/local/bin/noip2 -C
-```
-
-3. **Start on boot:**
-
-```bash
-sudo crontab -e
-# Add this line:
-@reboot /usr/local/bin/noip2
-```
+The domain should automatically update with your current IP address.
 
 ## Port Forwarding
 
-Configure your router to forward these ports to your server:
+**Note**: Port forwarding is already configured for `onasafari.ddns.net`:
 
-- **Port 80** (HTTP) → Server IP:80
-- **Port 443** (HTTPS) → Server IP:443
+- **Port 80** (HTTP) → Server IP:80 ✅
+- **Port 443** (HTTPS) → Server IP:443 ✅
+- **Port 3000** → Server IP:3000 (for WebSocket) ✅
 
 ## Monitoring
 
 - **Check PM2 status:** `pm2 status`
-- **View logs:** `pm2 logs hrm-server`
+- **View logs:** `pm2 logs hrm-server` or `npm run pm2:logs`
 - **Monitor resources:** `pm2 monit`
 - **Restart if needed:** `pm2 restart hrm-server`
+- **Stop server:** `npm run pm2:stop`
+
+## Quick Deployment Commands
+
+```bash
+# Full deployment
+npm run deploy
+
+# Or step by step:
+npm run build
+npm run start
+
+# Check status
+npm run pm2:logs
+```
 
 ## Troubleshooting
 
 ### WebSocket Issues
 
-- Ensure nginx proxy_pass includes WebSocket headers
-- Check firewall allows connections on port 3000
+- Ensure nginx proxy_pass includes WebSocket headers ✅ (already configured)
+- Check firewall allows connections on port 3000 ✅ (already configured)
 - Verify PM2 process is running: `pm2 list`
+- Check WebSocket connection in browser console
+- Verify server is accessible at `https://onasafari.ddns.net`
 
 ### SSL Issues
 
@@ -126,3 +140,6 @@ Configure your router to forward these ports to your server:
 
 - Monitor memory usage: `pm2 monit`
 - Check nginx logs: `sudo tail -f /var/log/nginx/error.log`
+- Check application logs: `pm2 logs hrm-server`
+- Monitor audio system performance (beep sounds)
+- Test volume synchronization between dashboard and control panel

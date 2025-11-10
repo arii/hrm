@@ -151,8 +151,8 @@ const TimerDisplay = ({
         alignItems: "center",
         justifyContent: "center",
       }}>
-        {/* Phase Label */}
-        {phase !== "IDLE" && (
+        {/* Phase Label - only show for Tabata phases, not RUNNING */}
+        {phase !== "IDLE" && phase !== "RUNNING" && (
           <Typography
             variant="h6"
             sx={{
@@ -164,32 +164,6 @@ const TimerDisplay = ({
           >
             {phaseLabel}
           </Typography>
-        )}
-
-        {/* Minimal phase indicator - visual dot */}
-        {phase !== "IDLE" && (
-          <Box sx={{ mb: 2 }}>
-            <Box
-              component="span"
-              sx={{
-                width: 20,
-                height: 20,
-                borderRadius: "50%",
-                backgroundColor: phaseColor,
-                animation: "pulse 2s ease-in-out infinite",
-                display: "inline-block",
-                boxShadow: `0 0 10px ${phaseColor}99`,
-                "@media (prefers-reduced-motion)": {
-                  animation: "none",
-                },
-                "@keyframes pulse": {
-                  "0%, 100%": { opacity: 1 },
-                  "50%": { opacity: 0.5 },
-                },
-              }}
-              aria-hidden
-            />
-          </Box>
         )}
 
         {/* Giant Timer Display */}
