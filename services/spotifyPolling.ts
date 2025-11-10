@@ -11,7 +11,14 @@ import { SpotifyTokenManager } from "./spotifyTokenManager";
 const BASE_URL = "https://api.spotify.com/v1";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-type SpotifyCommand = "PLAY" | "NEXT" | "PREVIOUS" | "LOGIN" | "TRANSFER_PLAYBACK";
+type SpotifyCommand =
+  | "PLAY"
+  | "NEXT"
+  | "PREVIOUS"
+  | "LOGIN"
+  | "TRANSFER_PLAYBACK"
+  | "SET_VOLUME"
+  | "PAUSE";
 
 interface SpotifyCurrentlyPlayingResponse {
   timestamp: number;
@@ -383,6 +390,37 @@ export class SpotifyPolling {
     }
   }
 
+  public async setVolume(volume: number): Promise<boolean> {
+    if (!this.accessToken) {
+      console.warn("Cannot set volume: Access token is missing.");
+      return false;
+    }
+    try {
+      const response = await fetch(
+        `${BASE_URL}/me/player/volume?volume_percent=${volume}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }
+      );
+      if (response.status === 204) {
+        console.log(`Volume set to: ${volume}%`);
+        return true;
+      } else {
+        console.error(
+          `Failed to set volume: HTTP ${response.status}`,
+          await response.text()
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error("Error setting volume:", error);
+      return false;
+    }
+  }
+
   public async transferPlayback(deviceId: string): Promise<boolean> {
     if (!this.accessToken) {
       console.warn("Cannot transfer playback: Access token is missing.");
@@ -406,7 +444,9 @@ export class SpotifyPolling {
         return true;
       } else {
         console.error(
-          `Failed to transfer playback (${response.status}): ${await response.text()}`
+          `Failed to transfer playback (${
+            response.status
+          }): ${await response.text()}`
         );
         return false;
       }
@@ -416,10 +456,17 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(command: SpotifyCommand, deviceId?: string) {
+  public handleCommand(
+    command: SpotifyCommand,
+    deviceId?: string,
+    volume?: number
+  ) {
     switch (command) {
       case "PLAY":
         this.executePlayerCommand("play", "PUT");
+        break;
+      case "PAUSE":
+        this.executePlayerCommand("pause", "PUT");
         break;
       case "NEXT":
         this.executePlayerCommand("next", "POST");
@@ -432,6 +479,13 @@ export class SpotifyPolling {
           this.transferPlayback(deviceId);
         } else {
           console.warn("TRANSFER_PLAYBACK command requires a deviceId.");
+        }
+        break;
+      case "SET_VOLUME":
+        if (volume !== undefined && volume >= 0 && volume <= 100) {
+          this.setVolume(volume);
+        } else {
+          console.warn("SET_VOLUME command requires a valid volume (0-100).");
         }
         break;
       case "LOGIN":

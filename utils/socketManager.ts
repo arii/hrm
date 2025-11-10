@@ -137,21 +137,37 @@ const handleIncomingMessage = (
 
       case "TIMER_COMMAND": {
         if (tabataServiceInstance) {
-          // Extract optional config from message
-          const config = {
+          tabataServiceInstance.handleCommand(message.command);
+        }
+        break;
+      }
+
+      case "SET_MODE": {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.setMode(message.mode);
+        }
+        break;
+      }
+
+      case "TIMER_CONFIG": {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
             totalCycles: message.totalCycles,
-          };
-          tabataServiceInstance.handleCommand(message.command, config);
+          });
         }
         break;
       }
 
       case "SPOTIFY_COMMAND": {
         if (spotifyServiceInstance) {
-          // message.command is already typed as SpotifyCommand, which now includes deviceId
-          spotifyServiceInstance.handleCommand(message.command, message.deviceId);
+          // message.command is already typed as SpotifyCommand, which now includes deviceId and volume
+          spotifyServiceInstance.handleCommand(
+            message.command,
+            message.deviceId,
+            message.volume
+          );
         }
         break;
       }

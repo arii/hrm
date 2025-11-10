@@ -6,31 +6,34 @@
 "use client";
 import { Bluetooth, LinkOff } from "@mui/icons-material";
 import {
+  Alert,
   Button,
   Card,
+  CircularProgress,
   Container,
   Typography,
-  Alert,
-  CircularProgress,
 } from "@mui/material";
-import React from "react";
 import Link from "next/link";
+import React from "react";
 import useBluetoothHRM from "../../../hooks/useBluetoothHRM";
 import useWebSocket from "../../../hooks/useWebSocket";
+import { getHrZoneProps } from "../../../utils/visualization";
 
 const BluetoothClient: React.FC = () => {
   // Hook returns operations and status (names taken from current hook usage in repo)
   const { connectAndStream, deviceStatus, MAX_HR } = useBluetoothHRM();
-  useWebSocket();
+  const { hrmData } = useWebSocket();
 
   const isConnected =
     typeof deviceStatus === "string" && deviceStatus.startsWith("Connected");
   const isConnecting = deviceStatus === "Connecting";
 
-  // Find the Bluetooth device's HR data (first connected device that's not the mock)
-
-
-
+  // Get the current user's heart rate data from the most recent active connection
+  const myHrmData = hrmData.find((data) => data.value > 0) || hrmData[0];
+  const currentBpm = myHrmData?.value || 0;
+  const maxHr = myHrmData?.maxHr || MAX_HR;
+  const hrZone = getHrZoneProps(currentBpm, maxHr);
+  const percentMax = hrZone.percentage;
 
   return (
     <Container
@@ -38,7 +41,11 @@ const BluetoothClient: React.FC = () => {
       className="py-12 min-h-screen flex items-center justify-center bg-gray-50"
     >
       <Card className="shadow-2xl w-full p-6 text-center">
-        <Bluetooth color="primary" sx={{ fontSize: 60, mb: 2 }} aria-hidden="true" />
+        <Bluetooth
+          color="primary"
+          sx={{ fontSize: 60, mb: 2 }}
+          aria-hidden="true"
+        />
         <Typography variant="h5" component="h1" className="font-bold mb-2">
           HRM Device Connector
         </Typography>
@@ -71,37 +78,57 @@ const BluetoothClient: React.FC = () => {
             : "Connect HRM via Bluetooth"}
         </Button>
 
-        {isConnected && (
-          <Button
-            variant="contained"
-            size="large"
-            color="success"
-            component={Link}
-            href="/"
-            className="mt-4 w-full"
+        {/* Heart Rate Display - shows when connected and streaming */}
+        {isConnected && currentBpm > 0 && (
+          <Card
+            sx={{
+              mt: 3,
+              mb: 2,
+              p: 3,
+              backgroundColor: hrZone.backgroundColor,
+              color: "white",
+              textAlign: "center",
+            }}
           >
-            Start My Workout Dashboard
-          </Button>
+            <Typography
+              variant="h3"
+              component="div"
+              sx={{ fontWeight: "bold", mb: 1 }}
+            >
+              {currentBpm} BPM
+            </Typography>
+            <Typography variant="h5" component="div" sx={{ mb: 1 }}>
+              {percentMax}%
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              {hrZone.zone}
+            </Typography>
+          </Card>
         )}
+
+
 
         {/* Connection Status Alert */}
         <Alert
-          severity={isConnected ? "success" : "error"}
+          severity={isConnected ? "success" : "info"}
           sx={{ mt: 2, mb: 2 }}
         >
           <Typography variant="subtitle1" className="font-semibold">
             Status: {deviceStatus}
           </Typography>
-          <Typography variant="caption" display="block">
-            Ensure Bluetooth is enabled and the device is nearby.
-          </Typography>
+          {isConnected && currentBpm > 0 && (
+            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              ✅ Streaming live data to dashboard
+            </Typography>
+          )}
+          {!isConnected && (
+            <Typography variant="caption" display="block">
+              Ensure Bluetooth is enabled and the device is nearby.
+            </Typography>
+          )}
           {deviceStatus.includes("Failed") &&
             deviceStatus.includes("chrome://flags") && (
-              <Typography
-                variant="caption"
-                display="block"
-                sx={{ mt: 1 }}
-              >
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                 💡 Tip: Click{" "}
                 <a
                   href="chrome://flags"
@@ -120,19 +147,13 @@ const BluetoothClient: React.FC = () => {
                 restart the browser.
               </Typography>
             )}
-          <Typography
-            variant="caption"
-            display="block"
-            sx={{ mt: 1 }}
-          >
-            Max HR (reported / configured): {MAX_HR ?? "—"}
+          <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+            Max HR: {maxHr} BPM
           </Typography>
         </Alert>
 
-
-
         <Typography variant="caption" className="mt-4 block text-gray-500">
-          Your data will be streamed to the unified server at 127.0.0.1:3000.
+          Keep this page open to stream data to the dashboard.
         </Typography>
       </Card>
     </Container>

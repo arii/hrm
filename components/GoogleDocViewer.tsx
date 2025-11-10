@@ -31,7 +31,7 @@ const GoogleDocViewer = ({
     ? embedUrl
     : `${embedUrl}?embedded=true`;
 
-  const dynamicHeight = isShrunk ? 100 : height; // Use a smaller height when shrunk
+  const dynamicHeight = isShrunk ? 200 : height; // Use a smaller height when shrunk
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
@@ -42,22 +42,40 @@ const GoogleDocViewer = ({
   }, []);
 
   return (
-    <Card elevation={6} className="h-full flex flex-col">
-      <CardContent className="flex-grow flex flex-col" sx={{ p: 1 }}>
+    <Card elevation={6} sx={{ position: "relative" }}>
+      <CardContent sx={{ p: 1 }}>
         <Box
-          className="flex-grow w-full rounded-lg border border-gray-300"
-          style={{ height: `${dynamicHeight}px`, overflow: "hidden" }} // Set explicit height for the container
+          sx={{
+            width: "100%",
+            height: `${dynamicHeight}px`,
+            overflow: "hidden",
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: "grey.300",
+            position: "relative"
+          }}
         >
           {iframeLoading && (
-            <Skeleton variant="rectangular" width="100%" height="100%" />
+            <Skeleton 
+              variant="rectangular" 
+              width="100%" 
+              height="100%" 
+              sx={{ position: "absolute", top: 0, left: 0 }}
+            />
           )}
           <Box
             component="iframe"
             src={finalEmbedUrl}
             title={title}
             width="100%"
-            height="100%" // iframe will fill the parent Box's explicit height
-            sx={{ border: "none", display: iframeLoading ? "none" : "block" }}
+            height="100%"
+            sx={{ 
+              border: "none", 
+              display: iframeLoading ? "none" : "block",
+              position: "absolute",
+              top: 0,
+              left: 0
+            }}
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
@@ -66,12 +84,13 @@ const GoogleDocViewer = ({
             onClick={onToggleShrink}
             sx={{
               position: "absolute",
-              bottom: 8,
-              right: 8,
-              backgroundColor: "rgba(255,255,255,0.8)",
+              bottom: 16,
+              right: 16,
+              backgroundColor: "rgba(255,255,255,0.9)",
               "&:hover": {
                 backgroundColor: "rgba(255,255,255,1)",
               },
+              zIndex: 10
             }}
             aria-label={isShrunk ? "Expand document" : "Collapse document"}
           >

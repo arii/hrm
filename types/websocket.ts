@@ -13,20 +13,27 @@ export interface HrmData {
   name?: string;
   age?: number;
 }
+
+export type TimerMode = "STOPWATCH" | "TABATA";
+export type TimerPhase =
+  | "IDLE"
+  | "PREPARE"
+  | "WORK"
+  | "REST"
+  | "COOLDOWN"
+  | "RUNNING";
+
 export interface TimerData {
   isRunning: boolean;
-  currentPhase:
-    | "WORK"
-    | "REST"
-    | "IDLE"
-    | "COOLDOWN"
-    | "PREPARE"
-    | "RUNNING_CLOCK";
-  timeRemaining: number;
+  currentPhase: TimerPhase;
+  timeRemaining: number; // Used for countdowns (Tabata, Prepare)
+  timeElapsed: number; // Used for count-ups (Stopwatch)
   cycle: number;
-  totalCycles: number | null;
+  totalCycles: number;
+  mode: TimerMode;
+  workDuration: number; // seconds for Tabata work interval
+  restDuration: number; // seconds for Tabata rest interval
   soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
-  isCountingUp?: boolean;
 }
 export interface SpotifyData {
   trackName: string;
@@ -65,19 +72,35 @@ export interface HrmInputMessage {
   type: "HRM_INPUT";
   data: HrmInputData;
 }
+
 export interface TimerCommandMessage {
   type: "TIMER_COMMAND";
   command: "START" | "PAUSE" | "STOP";
-  // Optional configuration for START command
-  workDuration?: number;
-  restDuration?: number;
-  totalCycles?: number | null;
-  isCountingUp?: boolean;
 }
+
+export interface TimerModeCommandMessage {
+  type: "SET_MODE";
+  mode: TimerMode;
+}
+
+export interface TimerConfigMessage {
+  type: "TIMER_CONFIG";
+  workDuration: number; // seconds
+  restDuration: number; // seconds
+  totalCycles?: number; // optional, defaults to 8
+}
+
 export interface SpotifyCommandMessage {
   type: "SPOTIFY_COMMAND";
-  command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK";
+  command:
+    | "PLAY"
+    | "PAUSE"
+    | "NEXT"
+    | "PREVIOUS"
+    | "TRANSFER_PLAYBACK"
+    | "SET_VOLUME";
   deviceId?: string; // Optional: for TRANSFER_PLAYBACK command
+  volume?: number; // Optional: for SET_VOLUME command (0-100)
 }
 
 /**
@@ -86,6 +109,8 @@ export interface SpotifyCommandMessage {
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
+  | TimerModeCommandMessage
+  | TimerConfigMessage
   | SpotifyCommandMessage;
 
 import { z } from "zod";
@@ -106,26 +131,39 @@ export const HrmInputMessageSchema = z.object({
 
 export const TimerCommandMessageSchema = z.object({
   type: z.literal("TIMER_COMMAND"),
-  command: z.union([z.literal("START"), z.literal("STOP")]),
-  workDuration: z.number().optional(),
-  restDuration: z.number().optional(),
-  totalCycles: z.number().nullable().optional(),
-  isCountingUp: z.boolean().optional(),
+  command: z.union([z.literal("START"), z.literal("PAUSE"), z.literal("STOP")]),
+});
+
+export const TimerModeCommandMessageSchema = z.object({
+  type: z.literal("SET_MODE"),
+  mode: z.union([z.literal("STOPWATCH"), z.literal("TABATA")]),
+});
+
+export const TimerConfigMessageSchema = z.object({
+  type: z.literal("TIMER_CONFIG"),
+  workDuration: z.number().min(1),
+  restDuration: z.number().min(0),
+  totalCycles: z.number().min(1).optional(),
 });
 
 export const SpotifyCommandMessageSchema = z.object({
   type: z.literal("SPOTIFY_COMMAND"),
   command: z.union([
     z.literal("PLAY"),
+    z.literal("PAUSE"),
     z.literal("NEXT"),
     z.literal("PREVIOUS"),
     z.literal("TRANSFER_PLAYBACK"),
+    z.literal("SET_VOLUME"),
   ]),
   deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
+  volume: z.number().min(0).max(100).optional(), // Optional: for SET_VOLUME command (0-100)
 });
 
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
+  TimerModeCommandMessageSchema,
+  TimerConfigMessageSchema,
   SpotifyCommandMessageSchema,
 ]);

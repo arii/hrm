@@ -5,14 +5,16 @@
  */
 "use client";
 import {
-  Add, // New import for stepper
+  Add,
+  FitnessCenter,
   MusicNote,
   Pause,
   PlayArrow,
   Remove, // New import for stepper
   SkipNext,
   SkipPrevious,
-  Stop, // New import for stop button
+  Stop,
+  Timer,
   VolumeUp,
 } from "@mui/icons-material";
 import {
@@ -28,13 +30,16 @@ import {
   Select,
   Slider,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket from "../../../hooks/useWebSocket";
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
+  TimerConfigMessage,
+  TimerModeCommandMessage,
 } from "../../../types/websocket";
 
 // Define SpotifyDevice interface for client-side use
@@ -51,14 +56,16 @@ interface SpotifyDevice {
 const ControlPanel = () => {
   const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
 
-  // Timer configuration state
-  const [workTime, setWorkTime] = useState(20);
-  const [restTime, setRestTime] = useState(10);
+  // Timer configuration state (only used for Tabata mode UI - not sent to server anymore)
+  const [workTime, setWorkTime] = useState(() => timerData.workDuration || 20);
+  const [restTime, setRestTime] = useState(() => timerData.restDuration || 10);
   const [volume, setVolume] = useState(50);
 
   // Input validation states
-  const [isValidWorkTime, _setIsValidWorkTime] = useState(true);
-  const [isValidRestTime, _setIsValidRestTime] = useState(true);
+  const lastConfigRef = useRef({
+    workDuration: timerData.workDuration,
+    restDuration: timerData.restDuration,
+  });
 
   // Spotify device management states
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
@@ -120,25 +127,84 @@ const ControlPanel = () => {
     }
   }, [hasSpotifyData, selectedDeviceId]);
 
-  // --- Timer Commands ---
-  const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
-    // Only send command if inputs are valid
-    if (!isValidWorkTime || !isValidRestTime) {
-      console.warn("Cannot start timer with invalid work/rest durations.");
-      return;
+  useEffect(() => {
+    if (
+      typeof timerData.workDuration === "number" &&
+      timerData.workDuration > 0
+    ) {
+      setWorkTime((prev) =>
+        prev === timerData.workDuration ? prev : timerData.workDuration
+      );
+      lastConfigRef.current.workDuration = timerData.workDuration;
     }
+  }, [timerData.workDuration]);
 
+  useEffect(() => {
+    if (
+      typeof timerData.restDuration === "number" &&
+      timerData.restDuration >= 0
+    ) {
+      setRestTime((prev) =>
+        prev === timerData.restDuration ? prev : timerData.restDuration
+      );
+      lastConfigRef.current.restDuration = timerData.restDuration;
+    }
+  }, [timerData.restDuration]);
+
+  // --- Timer Commands ---
+  // --- Timer Commands ---
+  const sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
     const message: TimerCommandMessage = {
       type: "TIMER_COMMAND",
       command,
-      ...(command === "START" && {
-        workDuration: workTime,
-        restDuration: restTime,
-        totalCycles: 8,
-      }),
     };
     sendData(message);
+    console.log("[Control Panel] Sent timer command:", message);
   };
+
+  // --- Mode Switching ---
+  const sendModeCommand = (mode: "TABATA" | "STOPWATCH") => {
+    const message: TimerModeCommandMessage = {
+      type: "SET_MODE",
+      mode,
+    };
+    sendData(message);
+    console.log("[Control Panel] Sent mode command:", message);
+  };
+
+  const sendConfigMessage = useCallback(
+    (config: { workDuration: number; restDuration: number }) => {
+      const message: TimerConfigMessage = {
+        type: "TIMER_CONFIG",
+        workDuration: config.workDuration,
+        restDuration: config.restDuration,
+      };
+      sendData(message);
+      console.log("[Control Panel] Sent timer config:", message);
+    },
+    [sendData]
+  );
+
+  useEffect(() => {
+    if (connectionStatus !== "Connected") {
+      return;
+    }
+
+    const normalized = {
+      workDuration: workTime,
+      restDuration: restTime,
+    };
+
+    if (
+      lastConfigRef.current.workDuration === normalized.workDuration &&
+      lastConfigRef.current.restDuration === normalized.restDuration
+    ) {
+      return;
+    }
+
+    lastConfigRef.current = normalized;
+    sendConfigMessage(normalized);
+  }, [connectionStatus, workTime, restTime, sendConfigMessage]);
 
   // --- Spotify Commands ---
   const sendSpotifyCommand = (
@@ -193,146 +259,240 @@ const ControlPanel = () => {
         }}
       >
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          {/* Timer Display */}
-          <Box
-            sx={{ textAlign: "center", mb: 3 }}
-            role="timer"
-            aria-live="polite"
-          >
+          {/* Timer Mode Selector */}
+          <Box sx={{ mb: 3 }}>
             <Typography
-              variant="h2"
-              component="div"
               sx={{
-                fontFamily: "monospace",
-                fontWeight: 700,
-                color: "#EF4444",
-                fontSize: { xs: "4.5rem", sm: "5.5rem" },
-                textShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                color: "white",
+                fontWeight: "medium",
+                mb: 1.5,
+                textAlign: "center",
               }}
             >
-              {timerData.timeRemaining}
+              Timer Mode
             </Typography>
-            <Typography variant="body1" sx={{ color: "white", mt: 1 }}>
-              {timerData.currentPhase || "IDLE"} • Cycle {timerData.cycle}/
-              {timerData.totalCycles}
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button
+                variant={timerData.mode === "TABATA" ? "contained" : "outlined"}
+                onClick={() => sendModeCommand("TABATA")}
+                disabled={timerData.isRunning}
+                startIcon={<FitnessCenter />}
+                sx={{
+                  flex: 1,
+                  color: timerData.mode === "TABATA" ? "white" : "#EF4444",
+                  backgroundColor:
+                    timerData.mode === "TABATA" ? "#EF4444" : "transparent",
+                  borderColor: "#EF4444",
+                  "&:hover": {
+                    backgroundColor:
+                      timerData.mode === "TABATA"
+                        ? "#DC2626"
+                        : "rgba(239, 68, 68, 0.1)",
+                    borderColor: "#DC2626",
+                  },
+                }}
+              >
+                Tabata
+              </Button>
+              <Button
+                variant={
+                  timerData.mode === "STOPWATCH" ? "contained" : "outlined"
+                }
+                onClick={() => sendModeCommand("STOPWATCH")}
+                disabled={timerData.isRunning}
+                startIcon={<Timer />}
+                sx={{
+                  flex: 1,
+                  color: timerData.mode === "STOPWATCH" ? "white" : "#EF4444",
+                  backgroundColor:
+                    timerData.mode === "STOPWATCH" ? "#EF4444" : "transparent",
+                  borderColor: "#EF4444",
+                  "&:hover": {
+                    backgroundColor:
+                      timerData.mode === "STOPWATCH"
+                        ? "#DC2626"
+                        : "rgba(239, 68, 68, 0.1)",
+                    borderColor: "#DC2626",
+                  },
+                }}
+              >
+                Stopwatch
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Timer Status */}
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Typography variant="h6" sx={{ color: "white", mb: 1 }}>
+              {timerData.isRunning ? "Timer Running" : "Timer Stopped"}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#EF4444" }}>
+              {timerData.currentPhase} {timerData.mode === "TABATA" && timerData.cycle > 0 && `• Cycle ${timerData.cycle}/${timerData.totalCycles}`}
             </Typography>
           </Box>
 
-          {/* Timer Configuration Controls */}
-          <Stack spacing={4} sx={{ mb: 4 }}>
-            {" "}
-            {/* Increased spacing */}
-            {/* Work Duration Stepper */}
-            <Box>
-              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}>
-                {" "}
-                {/* Increased mb */}
-                Work Duration (seconds)
-              </Typography>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="center"
-                spacing={3}
-              >
-                {" "}
-                {/* Increased spacing */}
-                <IconButton
-                  color="primary"
-                  onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
-                  aria-label="Decrease work duration"
-                  sx={{
-                    backgroundColor: "grey.700",
-                    color: "white",
-                    "&:hover": { backgroundColor: "grey.600" },
-                    p: 2,
-                  }} // Increased padding
-                >
-                  <Remove fontSize="large" />
-                </IconButton>
+          {/* Timer Configuration Controls - Only show for Tabata */}
+          {timerData.mode === "TABATA" && (
+            <Stack spacing={4} sx={{ mb: 4 }}>
+              {/* Work Duration Stepper */}
+              <Box>
                 <Typography
-                  variant="h4"
-                  sx={{
-                    color: "red",
-                    fontWeight: "bold",
-                    fontSize: "3rem", // Further increased font size
-                    minWidth: "100px", // Increased minWidth
-                    textAlign: "center",
-                  }}
+                  sx={{ color: "white", fontWeight: "medium", mb: 2 }}
                 >
-                  {workTime}
+                  {" "}
+                  {/* Increased mb */}
+                  Work Duration (seconds)
                 </Typography>
-                <IconButton
-                  color="primary"
-                  onClick={() => setWorkTime((prev) => prev + 5)}
-                  aria-label="Increase work duration"
-                  sx={{
-                    backgroundColor: "grey.700",
-                    color: "white",
-                    "&:hover": { backgroundColor: "grey.600" },
-                    p: 2,
-                  }} // Increased padding
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={3}
                 >
-                  <Add fontSize="large" />
-                </IconButton>
-              </Stack>
-            </Box>
-            {/* Rest Duration Stepper */}
-            <Box>
-              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}>
-                {" "}
-                {/* Increased mb */}
-                Rest Duration (seconds)
-              </Typography>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="center"
-                spacing={3}
-              >
-                {" "}
-                {/* Increased spacing */}
-                <IconButton
-                  color="primary"
-                  onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
-                  aria-label="Decrease rest duration"
-                  sx={{
-                    backgroundColor: "grey.700",
-                    color: "white",
-                    "&:hover": { backgroundColor: "grey.600" },
-                    p: 2,
-                  }} // Increased padding
-                >
-                  <Remove fontSize="large" />
-                </IconButton>
+                  {" "}
+                  {/* Increased spacing */}
+                  <IconButton
+                    color="primary"
+                    onClick={() => setWorkTime((prev) => Math.max(5, prev - 5))}
+                    aria-label="Decrease work duration"
+                    sx={{
+                      backgroundColor: "grey.700",
+                      color: "white",
+                      "&:hover": { backgroundColor: "grey.600" },
+                      p: 2,
+                    }} // Increased padding
+                  >
+                    <Remove fontSize="large" />
+                  </IconButton>
+                  <TextField
+                    type="number"
+                    value={workTime}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setWorkTime(Math.max(5, val));
+                    }}
+                    inputProps={{
+                      min: 0,
+                      step: 5,
+                      style: { textAlign: "center" },
+                    }}
+                    sx={{
+                      width: "120px",
+                      "& .MuiInputBase-input": {
+                        color: "#EF4444",
+                        fontWeight: "bold",
+                        fontSize: "3rem",
+                        textAlign: "center",
+                        padding: "8px",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#EF4444",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#DC2626",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#EF4444",
+                        },
+                      },
+                    }}
+                    aria-label="Work duration in seconds"
+                  />
+                  <IconButton
+                    color="primary"
+                    onClick={() => setWorkTime((prev) => prev + 5)}
+                    aria-label="Increase work duration"
+                    sx={{
+                      backgroundColor: "grey.700",
+                      color: "white",
+                      "&:hover": { backgroundColor: "grey.600" },
+                      p: 2,
+                    }} // Increased padding
+                  >
+                    <Add fontSize="large" />
+                  </IconButton>
+                </Stack>
+              </Box>
+
+              {/* Rest Duration Stepper */}
+              <Box>
                 <Typography
-                  variant="h4"
-                  sx={{
-                    color: "red",
-                    fontWeight: "bold",
-                    fontSize: "3rem", // Further increased font size
-                    minWidth: "100px", // Increased minWidth
-                    textAlign: "center",
-                  }}
+                  sx={{ color: "white", fontWeight: "medium", mb: 2 }}
                 >
-                  {restTime}
+                  Rest Duration (seconds)
                 </Typography>
-                <IconButton
-                  color="primary"
-                  onClick={() => setRestTime((prev) => prev + 5)}
-                  aria-label="Increase rest duration"
-                  sx={{
-                    backgroundColor: "grey.700",
-                    color: "white",
-                    "&:hover": { backgroundColor: "grey.600" },
-                    p: 2,
-                  }} // Increased padding
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={3}
                 >
-                  <Add fontSize="large" />
-                </IconButton>
-              </Stack>
-            </Box>
-          </Stack>
+                  <IconButton
+                    color="primary"
+                    onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                    aria-label="Decrease rest duration"
+                    sx={{
+                      backgroundColor: "grey.700",
+                      color: "white",
+                      "&:hover": { backgroundColor: "grey.600" },
+                      p: 2,
+                    }}
+                  >
+                    <Remove fontSize="large" />
+                  </IconButton>
+                  <TextField
+                    type="number"
+                    value={restTime}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setRestTime(Math.max(0, val));
+                    }}
+                    inputProps={{
+                      min: 0,
+                      step: 5,
+                      style: { textAlign: "center" },
+                    }}
+                    sx={{
+                      width: "120px",
+                      "& .MuiInputBase-input": {
+                        color: "#22C55E",
+                        fontWeight: "bold",
+                        fontSize: "3rem",
+                        textAlign: "center",
+                        padding: "8px",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: "#22C55E",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: "#16A34A",
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#22C55E",
+                        },
+                      },
+                    }}
+                    aria-label="Rest duration in seconds"
+                  />
+                  <IconButton
+                    color="primary"
+                    onClick={() => setRestTime((prev) => prev + 5)}
+                    aria-label="Increase rest duration"
+                    sx={{
+                      backgroundColor: "grey.700",
+                      color: "white",
+                      "&:hover": { backgroundColor: "grey.600" },
+                      p: 2,
+                    }}
+                  >
+                    <Add fontSize="large" />
+                  </IconButton>
+                </Stack>
+              </Box>
+            </Stack>
+          )}
 
           {/* Timer Control Buttons */}
           <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
@@ -341,7 +501,7 @@ const ControlPanel = () => {
             <Button
               variant="contained"
               color="success"
-              onClick={() => _sendTimerCommand("START")}
+              onClick={() => sendTimerCommand("START")}
               disabled={connectionStatus !== "Connected"}
               sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
               startIcon={<PlayArrow fontSize="large" />}
@@ -351,7 +511,7 @@ const ControlPanel = () => {
             <Button
               variant="contained"
               color="error"
-              onClick={() => _sendTimerCommand("STOP")}
+              onClick={() => sendTimerCommand("STOP")}
               disabled={connectionStatus !== "Connected"}
               sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
               startIcon={<Stop fontSize="large" />}
@@ -363,259 +523,113 @@ const ControlPanel = () => {
       </Card>
 
       {/* 2. Spotify Controls */}
-      <Card
-        sx={{
-          boxShadow: 3,
-          p: 2,
-          mb: 3,
-          backgroundColor: "grey.800",
-          color: "white",
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            fontWeight: "semibold",
-            mb: 1.5,
-            color: "grey.200",
-          }}
-        >
-          <MusicNote sx={{ mr: 1 }} aria-hidden="true" /> Spotify Player
-        </Typography>
-
-        {hasSpotifyData ? (
-          <CardContent sx={{ p: 0 }}>
-            {/* Show device/playback status message */}
-            {!hasActivePlayback && availableDevices.length === 0 && (
-              <Box
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  backgroundColor: "warning.dark",
-                  borderRadius: 1,
-                  mx: 2,
-                  mt: 2,
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: "medium", mb: 1 }}
-                >
-                  ⚠️ No Active Spotify Devices
+      <Card sx={{ boxShadow: 3, mb: 3, backgroundColor: "grey.800", color: "white" }}>
+        <CardContent sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: "#1DB954", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <MusicNote sx={{ mr: 1 }} /> Spotify
+          </Typography>
+          
+          {hasSpotifyData ? (
+            <>
+              <Box sx={{ textAlign: "center", mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                  {spotifyData.trackName}
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.9 }}
-                >
-                  To control playback:
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ display: "block", opacity: 0.9, ml: 2 }}
-                >
-                  • Open Spotify on any device
-                  <br />
-                  • Start playing a song
-                  <br />• Controls will appear here
+                <Typography variant="body2" sx={{ color: "grey.400" }}>
+                  {spotifyData.artist}
                 </Typography>
               </Box>
-            )}
+              
+              {/* Playback Controls */}
+              <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
+                <IconButton
+                  onClick={() => sendSpotifyCommand("PREVIOUS")}
+                  disabled={connectionStatus !== "Connected"}
+                  sx={{ color: "white", "&:hover": { backgroundColor: "grey.700" } }}
+                >
+                  <SkipPrevious />
+                </IconButton>
+                <IconButton
+                  onClick={() => sendSpotifyCommand(spotifyData.isPlaying ? "PAUSE" : "PLAY")}
+                  disabled={connectionStatus !== "Connected"}
+                  sx={{ 
+                    color: "white", 
+                    backgroundColor: "#1DB954",
+                    "&:hover": { backgroundColor: "#169944" }
+                  }}
+                >
+                  {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                </IconButton>
+                <IconButton
+                  onClick={() => sendSpotifyCommand("NEXT")}
+                  disabled={connectionStatus !== "Connected"}
+                  sx={{ color: "white", "&:hover": { backgroundColor: "grey.700" } }}
+                >
+                  <SkipNext />
+                </IconButton>
+              </Stack>
 
-            <Box sx={{ p: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
-                {spotifyData.trackName}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ color: "grey.400", mb: 3 }}
-              >
-                by {spotifyData.artist}
-              </Typography>
-            </Box>
+              {/* Device Selection - Compact */}
+              {availableDevices.length > 0 && (
+                <FormControl size="small" fullWidth sx={{ mb: 2 }}>
+                  <Select
+                    value={selectedDeviceId}
+                    onChange={(e) => {
+                      const deviceId = e.target.value as string;
+                      setSelectedDeviceId(deviceId);
+                      if (deviceId) sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
+                    }}
+                    displayEmpty
+                    sx={{
+                      color: "white",
+                      "& .MuiOutlinedInput-notchedOutline": { borderColor: "grey.600" },
+                      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "grey.400" },
+                      "& .MuiSvgIcon-root": { color: "grey.400" }
+                    }}
+                  >
+                    <MenuItem value="" disabled>Select Device</MenuItem>
+                    {availableDevices.map((device) => (
+                      <MenuItem key={device.id} value={device.id}>
+                        {device.name} {device.is_active && "✓"}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
 
-            {/* Spotify Device Selection */}
-            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
-              <InputLabel
-                id="spotify-device-select-label"
-                sx={{ color: "grey.400" }}
-              >
-                Active Device
-              </InputLabel>
-              <Select
-                labelId="spotify-device-select-label"
-                value={selectedDeviceId}
-                onChange={(e) => {
-                  const newDeviceId = e.target.value as string;
-                  console.log("[Control Panel] Device selected:", newDeviceId);
-                  setSelectedDeviceId(newDeviceId);
-                  if (newDeviceId) {
-                    console.log(
-                      "[Control Panel] Transferring playback to:",
-                      newDeviceId
-                    );
-                    sendSpotifyCommand("TRANSFER_PLAYBACK", newDeviceId);
-                  }
-                }}
-                label="Active Device"
-                sx={{
-                  color: "white",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "grey.600",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "grey.400",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "white",
-                  },
-                  "& .MuiSvgIcon-root": { color: "grey.400" }, // Dropdown arrow color
-                }}
-                disabled={devicesLoading || availableDevices.length === 0}
-              >
-                {devicesLoading && (
-                  <MenuItem value="" disabled>
-                    Loading devices...
-                  </MenuItem>
-                )}
-                {devicesError && (
-                  <MenuItem value="" disabled>
-                    Error: {devicesError}
-                  </MenuItem>
-                )}
-                {availableDevices.length === 0 &&
-                  !devicesLoading &&
-                  !devicesError && (
-                    <MenuItem value="" disabled>
-                      No devices found
-                    </MenuItem>
-                  )}
-                {availableDevices.map((device) => (
-                  <MenuItem key={device.id} value={device.id}>
-                    {device.name} ({device.type}){" "}
-                    {device.is_active ? "(Active)" : ""}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Stack
-              direction="row"
-              spacing={3}
-              justifyContent="center"
-              sx={{ mb: 3 }}
-            >
-              <IconButton
-                size="large"
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "grey.700" },
-                  "&:active": {
-                    backgroundColor: "grey.600",
-                    transform: "scale(0.95)",
-                  },
-                  transition: "all 0.1s",
-                }}
-                onClick={() => {
-                  console.log("[Control Panel] Previous track clicked");
-                  sendSpotifyCommand("PREVIOUS");
-                }}
-                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
-                aria-label="Previous track"
-              >
-                <SkipPrevious fontSize="large" />
-              </IconButton>
-              <IconButton
-                size="large"
-                color="success"
-                sx={{
-                  backgroundColor: "success.main",
-                  "&:hover": { backgroundColor: "success.dark" },
-                  "&:active": {
-                    backgroundColor: "success.darker",
-                    transform: "scale(0.95)",
-                  },
-                  color: "white",
-                  transition: "all 0.1s",
-                }}
-                onClick={() => {
-                  const command = spotifyData.isPlaying ? "PAUSE" : "PLAY";
-                  console.log("[Control Panel] Play/Pause clicked:", command);
-                  sendSpotifyCommand(command);
-                }}
-                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
-                aria-label={spotifyData.isPlaying ? "Pause" : "Play"}
-              >
-                {spotifyData.isPlaying ? (
-                  <Pause fontSize="large" />
-                ) : (
-                  <PlayArrow fontSize="large" />
-                )}
-              </IconButton>
-              <IconButton
-                size="large"
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "grey.700" },
-                  "&:active": {
-                    backgroundColor: "grey.600",
-                    transform: "scale(0.95)",
-                  },
-                  transition: "all 0.1s",
-                }}
-                onClick={() => {
-                  console.log("[Control Panel] Next track clicked");
-                  sendSpotifyCommand("NEXT");
-                }}
-                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
-                aria-label="Next track"
-              >
-                <SkipNext fontSize="large" />
-              </IconButton>
-            </Stack>
-
-            {/* Volume Control */}
-            <Box sx={{ px: 2 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <VolumeUp sx={{ color: "grey.400" }} aria-hidden="true" />
+              {/* Volume Control - Compact */}
+              <Stack direction="row" spacing={1} alignItems="center">
+                <VolumeUp sx={{ color: "grey.400", fontSize: 20 }} />
                 <Slider
-                  aria-label="Volume"
                   value={volume}
-                  onChange={(_: Event, newValue: number | number[]) =>
-                    setVolume(newValue as number)
-                  }
+                  onChange={(_, val) => setVolume(val as number)}
+                  onChangeCommitted={(_, val) => {
+                    const message: SpotifyCommandMessage = {
+                      type: "SPOTIFY_COMMAND",
+                      command: "SET_VOLUME",
+                      volume: val as number,
+                    };
+                    sendData(message);
+                  }}
                   min={0}
                   max={100}
-                  valueLabelDisplay="auto"
-                  getAriaValueText={(value) => `Volume: ${value}%`}
+                  size="small"
                   sx={{
-                    color: "grey.400",
-                    "& .MuiSlider-thumb": {
-                      backgroundColor: "white",
-                    },
+                    color: "#1DB954",
+                    "& .MuiSlider-thumb": { backgroundColor: "white" }
                   }}
                 />
-                <Typography
-                  variant="body2"
-                  sx={{ color: "grey.400", minWidth: "3ch" }}
-                >
+                <Typography variant="caption" sx={{ color: "grey.400", minWidth: "3ch" }}>
                   {volume}
                 </Typography>
               </Stack>
-            </Box>
-          </CardContent>
-        ) : (
-          <CardContent sx={{ p: 2 }}>
-            <Typography
-              variant="body2"
-              sx={{ color: "grey.400", mb: 2, textAlign: "center" }}
-            >
-              Login to Spotify on the main dashboard to control playback
+            </>
+          ) : (
+            <Typography variant="body2" sx={{ color: "grey.400", textAlign: "center" }}>
+              Login to Spotify on the main dashboard
             </Typography>
-          </CardContent>
-        )}
+          )}
+        </CardContent>
       </Card>
     </Container>
   );

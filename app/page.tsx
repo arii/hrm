@@ -4,27 +4,48 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 "use client";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SkipNextIcon from "@mui/icons-material/SkipNext";
+import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
+import SpeakerIcon from "@mui/icons-material/Speaker";
+import { VolumeUp } from "@mui/icons-material";
 import {
   Box,
   Button,
   Container,
   Grid,
+  IconButton,
+  Menu,
+  MenuItem,
   Skeleton,
+  Slider,
   Typography,
 } from "@mui/material";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GoogleDocViewer from "../components/GoogleDocViewer";
 import HrTile from "../components/HrTile";
 import TimerDisplay from "../components/TimerDisplay";
 import useSpotifyWebPlayback from "../hooks/useSpotifyWebPlayback";
 import useTabataSounds from "../hooks/useTabataSounds";
 import useWebSocket from "../hooks/useWebSocket";
+import { SpotifyCommandMessage } from "../types/websocket";
 import { MAX_HR_DEFAULT } from "../utils/constants";
 import { getHrZoneProps } from "../utils/visualization";
 
 const DOC_URL =
   "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true"; // Ensure embedded view for full-screen content
+
+interface SpotifyDevice {
+  id: string;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string;
+  volume_percent: number;
+}
 
 const Dashboard = () => {
   const {
@@ -32,7 +53,7 @@ const Dashboard = () => {
     timerData,
     connectionStatus: _connectionStatus,
     spotifyData,
-    sendData: _sendData,
+    sendData,
   } = useWebSocket();
 
   const { data: session } = useSession();
@@ -51,9 +72,64 @@ const Dashboard = () => {
 
   const isTimerActive = timerData.currentPhase !== "IDLE";
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false);
+  const [volume, setVolume] = useState(50);
+
+  // Spotify device management
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const deviceMenuOpen = Boolean(deviceMenuAnchor);
 
   // Check if user is logged in
   const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated;
+
+  // Fetch available Spotify devices
+  useEffect(() => {
+    if (spotifyLoggedIn && spotifyData.trackName) {
+      const fetchDevices = async () => {
+        try {
+          const response = await fetch("/api/spotify/devices");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const devices = await response.json();
+          console.log("[Dashboard] Fetched devices:", devices);
+          setAvailableDevices(Array.isArray(devices) ? devices : []);
+        } catch (error) {
+          console.error("[Dashboard] Failed to fetch Spotify devices:", error);
+        }
+      };
+      fetchDevices();
+    } else {
+      setAvailableDevices([]);
+    }
+  }, [spotifyLoggedIn, spotifyData.trackName]);
+
+  // Spotify command handler
+  const sendSpotifyCommand = (
+    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
+    targetDeviceId?: string
+  ) => {
+    const message: SpotifyCommandMessage = {
+      type: "SPOTIFY_COMMAND",
+      command,
+      ...(targetDeviceId && { deviceId: targetDeviceId }),
+    };
+    sendData(message);
+    console.log("[Dashboard] Sent Spotify command:", message);
+  };
+
+  const handlePlayPauseToggle = () => {
+    const command = spotifyData.isPlaying ? "PAUSE" : "PLAY";
+    sendSpotifyCommand(command);
+  };
+
+  const handleDeviceSelect = (deviceId: string) => {
+    console.log("[Dashboard] Transferring playback to device:", deviceId);
+    sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
+    setDeviceMenuAnchor(null);
+  };
 
   const handleSpotifyLogin = () => {
     signIn("spotify", { callbackUrl: "/" });
@@ -80,8 +156,10 @@ const Dashboard = () => {
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
+            timeElapsed={timerData.timeElapsed}
             cycle={timerData.cycle}
             totalCycles={timerData.totalCycles}
+            mode={timerData.mode}
           />
         </Grid>
 
@@ -168,10 +246,17 @@ const Dashboard = () => {
                   mb: 0, // Remove bottom margin as it's fixed
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {/* Left side: Track info and status */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flex: 1,
+                  }}
+                >
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {spotifyData.isPlaying ? "▶" : "⏸"} {spotifyData.trackName}{" "}
-                    — {spotifyData.artist}
+                    {spotifyData.trackName} — {spotifyData.artist}
                   </Typography>
                   {/* Web Playback SDK Status Indicator */}
                   {spotifyAuthenticated && !isReady && !webPlaybackError && (
@@ -220,10 +305,112 @@ const Dashboard = () => {
                     </Typography>
                   )}
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Spotify
-                  </Typography>
+
+                {/* Center: Playback controls */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => sendSpotifyCommand("PREVIOUS")}
+                    sx={{
+                      color: "common.white",
+                      "&:hover": { backgroundColor: "grey.800" },
+                    }}
+                    aria-label="Previous track"
+                  >
+                    <SkipPreviousIcon />
+                  </IconButton>
+                  <IconButton
+                    size="medium"
+                    onClick={handlePlayPauseToggle}
+                    sx={{
+                      color: "common.white",
+                      backgroundColor: "grey.700",
+                      "&:hover": { backgroundColor: "grey.600" },
+                    }}
+                    aria-label={spotifyData.isPlaying ? "Pause" : "Play"}
+                  >
+                    {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => sendSpotifyCommand("NEXT")}
+                    sx={{
+                      color: "common.white",
+                      "&:hover": { backgroundColor: "grey.800" },
+                    }}
+                    aria-label="Next track"
+                  >
+                    <SkipNextIcon />
+                  </IconButton>
+                </Box>
+
+                {/* Right side: Volume, Device selector and logout */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {/* Volume Control */}
+                  <VolumeUp sx={{ color: "grey.400", fontSize: 18 }} />
+                  <Slider
+                    value={volume}
+                    onChange={(_, val) => setVolume(val as number)}
+                    onChangeCommitted={(_, val) => {
+                      const message: SpotifyCommandMessage = {
+                        type: "SPOTIFY_COMMAND",
+                        command: "SET_VOLUME",
+                        volume: val as number,
+                      };
+                      sendData(message);
+                    }}
+                    min={0}
+                    max={100}
+                    size="small"
+                    sx={{
+                      width: 80,
+                      color: "#1DB954",
+                      "& .MuiSlider-thumb": { backgroundColor: "white", width: 12, height: 12 },
+                      "& .MuiSlider-track": { height: 3 },
+                      "& .MuiSlider-rail": { height: 3 }
+                    }}
+                  />
+                  
+                  {/* Device Selector */}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
+                    sx={{
+                      color: "common.white",
+                      "&:hover": { backgroundColor: "grey.800" },
+                    }}
+                    aria-label="Select playback device"
+                  >
+                    <SpeakerIcon fontSize="small" />
+                  </IconButton>
+                  <Menu
+                    anchorEl={deviceMenuAnchor}
+                    open={deviceMenuOpen}
+                    onClose={() => setDeviceMenuAnchor(null)}
+                    anchorOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    transformOrigin={{
+                      vertical: "bottom",
+                      horizontal: "right",
+                    }}
+                  >
+                    {availableDevices.length > 0 ? (
+                      availableDevices.map((device) => (
+                        <MenuItem
+                          key={device.id}
+                          onClick={() => handleDeviceSelect(device.id)}
+                          selected={device.is_active}
+                        >
+                          {device.name} {device.is_active && "✓"}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No devices available</MenuItem>
+                    )}
+                  </Menu>
+
                   <Button
                     variant="outlined"
                     size="small"
@@ -236,7 +423,8 @@ const Dashboard = () => {
                         backgroundColor: "grey.800",
                       },
                       minWidth: "auto",
-                      px: 2,
+                      px: 1.5,
+                      fontSize: "0.75rem"
                     }}
                   >
                     Logout
@@ -287,8 +475,8 @@ const Dashboard = () => {
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
-            height={900}
-            isShrunk={isTimerActive || docIsManuallyShrunk}
+            height={hrmData.length > 0 && hrmData.some(d => d.value > 0) ? 600 : 900}
+            isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
         </Grid>

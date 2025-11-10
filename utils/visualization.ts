@@ -122,6 +122,13 @@ export const getTimerProps = (
   currentPhase: TimerData["currentPhase"]
 ): TimerProps => {
   switch (currentPhase) {
+    case "PREPARE":
+      return {
+        text: "GET READY",
+        color: "warning", // MUI color for yellow/warning
+        backgroundColor: "bg-yellow-500/10",
+        progressColor: "#f59e0b",
+      };
     case "WORK":
       return {
         text: "WORK",
@@ -135,6 +142,13 @@ export const getTimerProps = (
         color: "success", // MUI color for green
         backgroundColor: "bg-green-500/10",
         progressColor: "#22c55e",
+      };
+    case "RUNNING":
+      return {
+        text: "RUNNING",
+        color: "primary", // MUI color for blue/primary
+        backgroundColor: "bg-blue-500/10",
+        progressColor: "#2563eb",
       };
     case "COOLDOWN":
       return {
