@@ -22,6 +22,11 @@ const nextConfig = {
         destination: '/client/mock',
         permanent: true,
       },
+      {
+        source: '/hrm',
+        destination: '/client/connect',
+        permanent: true,
+      },
     ];
   },
 };

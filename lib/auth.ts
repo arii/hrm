@@ -61,7 +61,7 @@ export const authOptions: AuthOptions = {
 
             const response = await fetch(
               `${
-                process.env.INTERNAL_API_URL || "http://127.0.0.1:3000"
+                process.env.NEXTAUTH_URL || "http://127.0.0.1:3000"
               }/api/internal/token-delivery`,
               {
                 method: "POST",
