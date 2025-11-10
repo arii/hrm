@@ -4,17 +4,15 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 "use client";
-import { MusicNote, Watch } from "@mui/icons-material";
-import { Box, Container, Grid, Paper, Typography } from "@mui/material";
+import { Box, Container, Grid, Typography } from "@mui/material";
 import { useMemo } from "react";
 import GoogleDocViewer from "../components/GoogleDocViewer";
 import HrTile from "../components/HrTile";
 import TimerDisplay from "../components/TimerDisplay";
-import WorkoutColumns from "../components/WorkoutColumns";
 import useTabataSounds from "../hooks/useTabataSounds";
 import useWebSocket from "../hooks/useWebSocket";
-import { getHrZoneProps } from "../utils/visualization";
 import { MAX_HR_DEFAULT } from "../utils/constants";
+import { getHrZoneProps } from "../utils/visualization";
 
 const DOC_URL =
   "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub"; // Example URL
@@ -50,7 +48,7 @@ const StatusIndicator = ({ status }: { status: string }) => {
 };
 
 const Dashboard = () => {
-  const { hrmData, timerData, spotifyData, connectionStatus, spotifyServiceInitialized } = useWebSocket();
+  const { hrmData, timerData, connectionStatus, spotifyData } = useWebSocket();
   // Play server-driven Tabata sounds
   useTabataSounds(timerData.soundToPlay);
 
@@ -81,7 +79,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={7}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -91,112 +89,58 @@ const Dashboard = () => {
         </Grid>
 
         {/* 2. HEART RATE PERCENTAGE TILES - Huge Numbers */}
-        {hrmData.map((user) => {
-          const hrZoneProps = getHrZoneProps(
-            user.value,
-            user.maxHr || MAX_HR_DEFAULT
-          );
-          return (
-            <Grid item xs={12} md={4} key={user.clientId}>
-              <HrTile
-                name={user.name || "User"}
-                bpm={user.value}
-                percentMax={hrZoneProps.percentage}
-                background={hrZoneProps.progressColor}
-              />
-            </Grid>
-          );
-        })}
+        {hrmData.length > 0 &&
+          hrmData.map((user) => {
+            const hrZoneProps = getHrZoneProps(
+              user.value,
+              user.maxHr || MAX_HR_DEFAULT
+            );
+            return (
+              <Grid item xs={12} md={5} key={user.clientId}>
+                <HrTile
+                  name={user.name || "User"}
+                  bpm={user.value}
+                  percentMax={hrZoneProps.percentage}
+                  background={hrZoneProps.progressColor}
+                />
+              </Grid>
+            );
+          })}
 
-        {/* --------------------- SECOND ROW: TABATA INFO + SPOTIFY --------------------- */}
-
-        {/* Tabata Status Info */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, textAlign: "center" }}>
-            <Typography
-              variant="h6"
-              color="textSecondary"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mb: 2,
-              }}
-            >
-              <Watch sx={{ mr: 1 }} /> TABATA INTERVAL
+        {/* --------------------- SPOTIFY DISPLAY --------------------- */}
+        <Grid item xs={12}>
+          <Box
+            sx={{
+              backgroundColor: "primary.dark",
+              color: "white",
+              p: 3,
+              borderRadius: 3,
+              textAlign: "center",
+              mb: 4,
+            }}
+          >
+            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+              NOW PLAYING
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", fontSize: "1.5rem" }}
-            >
-              {timerData.timeRemaining}s
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Cycle {timerData.cycle} of {timerData.totalCycles}
-            </Typography>
-            <Typography variant="caption" sx={{ mt: 2, display: "block" }}>
-              Control the timer via the /client/control page.
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* 3. SPOTIFY MUSIC STATUS */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, backgroundColor: "grey.800", color: "white" }}>
-            <Typography
-              variant="h6"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 2,
-              }}
-            >
-              <MusicNote sx={{ mr: 1 }} /> NOW PLAYING
-            </Typography>
-            {spotifyServiceInitialized === false ? (
-              <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-                Spotify service unavailable.
-              </Typography>
-            ) : (
+            {spotifyData.trackName ? (
               <>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                   {spotifyData.trackName}
                 </Typography>
-                <Typography variant="body1" sx={{ color: "grey.400", mb: 2 }}>
+                <Typography variant="h5" sx={{ mb: 1 }}>
                   {spotifyData.artist}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  Playback Status: {spotifyData.isPlaying ? "Playing" : "Paused"}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ mt: 1, display: "block", color: "grey.600" }}
-                >
-                  Login required via the /client/control page to enable live
-                  updates.
+                <Typography variant="subtitle1">
+                  Status: {spotifyData.isPlaying ? "Playing" : "Paused"}
                 </Typography>
               </>
+            ) : (
+              <Typography variant="h5">Awaiting Spotify Data...</Typography>
             )}
-          </Paper>
+          </Box>
         </Grid>
 
         {/* --------------------- BOTTOM ROW: DOCUMENTATION --------------------- */}
-
-        <Grid item xs={12}>
-          <Box sx={{ mt: 4, mb: 4 }}>
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{ fontWeight: "bold", color: "grey.800" }}
-            >
-              Workout Plan & Resources
-            </Typography>
-            <Typography variant="body1" color="textSecondary" sx={{ mt: 1 }}>
-              Review the current workout plan and reference materials provided
-              by your trainer.
-            </Typography>
-          </Box>
-        </Grid>
 
         <Grid item xs={12}>
           {/* The Google Doc Viewer component */}
@@ -204,20 +148,6 @@ const Dashboard = () => {
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
             height={400}
-          />
-        </Grid>
-
-        {/* Multi-column workout scaffold */}
-        <Grid item xs={12}>
-          <WorkoutColumns
-            columns={[
-              { title: "Warm-up", items: [{ title: "5 min easy spin" }] },
-              {
-                title: "Main Set",
-                items: [{ title: "8x (30s on / 10s off)" }],
-              },
-              { title: "Cool Down", items: [{ title: "3 min light" }] },
-            ]}
           />
         </Grid>
       </Grid>

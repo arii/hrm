@@ -15,7 +15,7 @@ export interface HrmData {
 }
 export interface TimerData {
   isRunning: boolean;
-  currentPhase: "WORK" | "REST" | "IDLE" | "COOLDOWN";
+  currentPhase: "WORK" | "REST" | "IDLE" | "COOLDOWN" | "PREPARE";
   timeRemaining: number;
   cycle: number;
   totalCycles: number;

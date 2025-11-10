@@ -22,23 +22,25 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
           sm={6}
           md={Math.max(12 / columns.length, 3)}
         >
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+          <Paper sx={{ p: 3 }}> {/* Increased padding */}
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}> {/* Larger font, increased margin */}
               {col.title}
             </Typography>
-            <Box component="ul" sx={{ m: 0, pl: 2 }}>
-              {col.items.map((it, i) => (
-                <Box key={i} component="li" sx={{ mb: 0.5 }}>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {it.title}
-                  </Typography>
-                  {it.details && (
-                    <Typography variant="body2" color="text.secondary">
-                      {it.details}
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}> {/* Added max height and scroll */}
+              <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                {col.items.map((it, i) => (
+                  <Box key={i} component="li" sx={{ mb: 1 }}> {/* Increased margin bottom */}
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}> {/* Larger font */}
+                      {it.title}
                     </Typography>
-                  )}
-                </Box>
-              ))}
+                    {it.details && (
+                      <Typography variant="body2" color="text.secondary">
+                        {it.details}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
             </Box>
           </Paper>
         </Grid>

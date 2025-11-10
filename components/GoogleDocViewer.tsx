@@ -15,7 +15,7 @@ interface GoogleDocViewerProps {
 const GoogleDocViewer = ({
   title,
   embedUrl,
-  height = 500,
+  height = 700,
 }: GoogleDocViewerProps) => {
   return (
     <Card className="shadow-lg h-full flex flex-col">
@@ -28,8 +28,8 @@ const GoogleDocViewer = ({
           {title}
         </Typography>
         <Box
-          className="flex-grow w-full overflow-hidden rounded-lg border border-gray-300"
-          style={{ minHeight: `${height}px` }}
+          className="flex-grow w-full overflow-y-auto rounded-lg border border-gray-300"
+          style={{ minHeight: `${height}px`, maxHeight: "80vh" }}
         >
           {/* Use <iframe> for embedding Google Docs; ensure embedUrl ends with `?embedded=true` */}
           <Box

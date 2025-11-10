@@ -3,15 +3,14 @@
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
 import { WebSocket, Server as WebSocketServer } from "ws";
-import {
-  HrmData,
-  UnifiedStateMessage,
-  ClientCommandMessageSchema, // Import the schema
-} from "../types/websocket";
+import { z } from "zod"; // Import z from zod
 import { SpotifyPolling } from "../services/spotifyPolling";
 import TabataTimer from "../services/tabataTimer";
-import { z } from 'zod'; // Import z from zod
-
+import {
+  ClientCommandMessageSchema,
+  HrmData,
+  UnifiedStateMessage,
+} from "../types/websocket";
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer;
@@ -75,6 +74,10 @@ const broadcastState = () => {
     timerData: tabataServiceInstance.getState(),
     spotifyData: spotifyServiceInstance.getState(),
   };
+  console.log(
+    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
+    message.hrmData
+  );
   wssInstance.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
@@ -90,20 +93,42 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
+  console.log(
+    `[socketManager] INCOMING MESSAGE from ${clientId}:`,
+    messageString
+  );
   try {
     // Parse and validate message type for type-safe routing
-    const message = ClientCommandMessageSchema.parse(JSON.parse(messageString)); // Use Zod for parsing and validation
+    const parsedJson = JSON.parse(messageString);
+    console.log(`[socketManager] PARSED JSON:`, parsedJson);
+
+    const message = ClientCommandMessageSchema.parse(parsedJson); // Use Zod for parsing and validation
+
+    console.log(
+      `[socketManager] Received message from ${clientId}:`,
+      message.type
+    );
 
     switch (message.type) {
       case "HRM_INPUT": {
         // No need for manual check if message.data and typeof message.data.value === "number"
         // as Zod schema already validates it.
         const existingData = clientData.get(clientId);
+        console.log(
+          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
+          existingData,
+          "newValue:",
+          message.data.value
+        );
         if (existingData) {
           clientData.set(clientId, {
             ...existingData,
             ...message.data,
           });
+          console.log(
+            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
+            clientData.get(clientId)
+          );
         }
         broadcastState();
         break;
@@ -131,13 +156,16 @@ const handleIncomingMessage = (
 
       default:
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
-        console.warn("Unknown message type received:", (message as { type: unknown }).type);
+        console.warn(
+          "Unknown message type received:",
+          (message as { type: unknown }).type
+        );
     }
   } catch (e) {
     console.error("Error processing incoming message:", e);
     // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
-        console.error("WebSocket message validation failed:", e.issues);
+      console.error("WebSocket message validation failed:", e.issues);
     }
   }
 };

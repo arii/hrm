@@ -50,4 +50,5 @@ npm_run_dev.log
 # Ignore generated server JS (keep TypeScript source canonical)
 server.js
 /dist
-logs/*
+logs/*add
+~/.config

@@ -10,8 +10,6 @@ import {
   PlayArrow,
   SkipNext,
   SkipPrevious,
-  Stop,
-  Timer,
   VolumeUp,
 } from "@mui/icons-material";
 import {
@@ -19,13 +17,10 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Container,
-  Grid,
   IconButton,
   Slider,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { signIn } from "next-auth/react";
@@ -36,7 +31,6 @@ import {
   SpotifyCommandMessage,
   TimerCommandMessage,
 } from "../../../types/websocket";
-import { getTimerProps } from "../../../utils/visualization";
 
 const ControlPanel = () => {
   const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
@@ -47,10 +41,8 @@ const ControlPanel = () => {
   const [restTime, setRestTime] = useState(10);
   const [volume, setVolume] = useState(50);
 
-  const timerProps = getTimerProps(timerData.currentPhase);
-
   // --- Timer Commands ---
-  const sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
+  const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
     if (command === "START") {
       initAudio(); // Initialize audio on user interaction
       // Send config with START command
@@ -82,7 +74,7 @@ const ControlPanel = () => {
   };
 
   // Timer preset configurations
-  const applyPreset = (
+  const _applyPreset = (
     preset: "EMOM_20_10" | "EMOM_30_15" | "RUNNING_CLOCK"
   ) => {
     if (preset === "EMOM_20_10") {
@@ -155,144 +147,152 @@ const ControlPanel = () => {
           boxShadow: 3,
           p: 2,
           mb: 3,
-          backgroundColor: timerProps.backgroundColor,
+          backgroundColor: "black",
+          color: "red",
         }}
       >
-        <Typography
-          variant="h6"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            fontWeight: "semibold",
-            mb: 1.5,
-            color: "grey.700",
-          }}
-        >
-          <Timer sx={{ mr: 1 }} /> Tabata Timer
-        </Typography>
+        <CardContent sx={{ p: 0 }}>
+          {/* Timer Display */}
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Typography
+              variant="h2"
+              component="div"
+              sx={{
+                fontFamily: "monospace",
+                fontWeight: 700,
+                color: "red",
+                fontSize: { xs: "3.5rem", sm: "5rem", md: "6rem" },
+              }}
+            >
+              {timerData.timeRemaining}
+            </Typography>
+            <Typography sx={{ color: "white", mt: 1 }}>
+              Phase: {timerData.currentPhase || "IDLE"}
+            </Typography>
+          </Box>
 
-        {/* Timer Configuration Inputs */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          <Grid item xs={6}>
-            <TextField
-              label="WORK TIME"
-              type="number"
-              value={workTime}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setWorkTime(parseInt(e.target.value, 10) || 0)
-              }
-              fullWidth
-              size="small"
-              inputProps={{ min: 5, max: 120 }}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="REST TIME"
-              type="number"
-              value={restTime}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setRestTime(parseInt(e.target.value, 10) || 0)
-              }
-              fullWidth
-              size="small"
-              inputProps={{ min: 0, max: 120 }}
-            />
-          </Grid>
-        </Grid>
+          {/* Timer Configuration Controls */}
+          <Stack spacing={3} sx={{ mb: 3 }}>
+            {/* Work Duration Slider */}
+            <Box>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
+                <Typography sx={{ color: "white", fontWeight: "medium" }}>
+                  Work Duration
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "red",
+                    fontWeight: "bold",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  {workTime}s
+                </Typography>
+              </Stack>
+              <Slider
+                value={workTime}
+                onChange={(_: Event, newValue: number | number[]) =>
+                  setWorkTime(newValue as number)
+                }
+                min={10}
+                max={60}
+                step={5}
+                marks={[
+                  { value: 10, label: "10s" },
+                  { value: 30, label: "30s" },
+                  { value: 60, label: "60s" },
+                ]}
+                valueLabelDisplay="auto"
+                sx={{
+                  color: "red",
+                  "& .MuiSlider-thumb": { backgroundColor: "red" },
+                  "& .MuiSlider-track": { backgroundColor: "red" },
+                  "& .MuiSlider-rail": { backgroundColor: "grey.600" },
+                }}
+              />
+            </Box>
 
-        {/* Timer Presets */}
-        <Typography
-          variant="caption"
-          sx={{ display: "block", mb: 1, color: "grey.600" }}
-        >
-          Timer Presets:
-        </Typography>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}
-        >
-          <Chip
-            label="EMOM 20/10"
-            onClick={() => applyPreset("EMOM_20_10")}
-            color="primary"
-            variant="outlined"
-            size="small"
-          />
-          <Chip
-            label="30/15"
-            onClick={() => applyPreset("EMOM_30_15")}
-            color="primary"
-            variant="outlined"
-            size="small"
-          />
-          <Chip
-            label="Running Clock"
-            onClick={() => applyPreset("RUNNING_CLOCK")}
-            color="primary"
-            variant="outlined"
-            size="small"
-          />
-        </Stack>
+            {/* Rest Duration Slider */}
+            <Box>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 1 }}
+              >
+                <Typography sx={{ color: "white", fontWeight: "medium" }}>
+                  Rest Duration
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "red",
+                    fontWeight: "bold",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  {restTime}s
+                </Typography>
+              </Stack>
+              <Slider
+                value={restTime}
+                onChange={(_: Event, newValue: number | number[]) =>
+                  setRestTime(newValue as number)
+                }
+                min={5}
+                max={30}
+                step={5}
+                marks={[
+                  { value: 5, label: "5s" },
+                  { value: 10, label: "10s" },
+                  { value: 30, label: "30s" },
+                ]}
+                valueLabelDisplay="auto"
+                sx={{
+                  color: "red",
+                  "& .MuiSlider-thumb": { backgroundColor: "red" },
+                  "& .MuiSlider-track": { backgroundColor: "red" },
+                  "& .MuiSlider-rail": { backgroundColor: "grey.600" },
+                }}
+              />
+            </Box>
+          </Stack>
 
-        <Box sx={{ textAlign: "center", mb: 1.5 }}>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: "extrabold", color: timerProps.progressColor }}
-          >
-            {timerData.timeRemaining}s
-          </Typography>
-          <Typography variant="subtitle1" color="textSecondary">
-            {timerData.currentPhase} ({timerData.cycle}/{timerData.totalCycles})
-          </Typography>
-        </Box>
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="center"
-          sx={{ mt: 2 }}
-        >
-          <IconButton
-            size="large"
-            color="success"
-            onClick={() => sendTimerCommand("START")}
-            disabled={timerData.isRunning || connectionStatus !== "Connected"}
-            sx={{
-              backgroundColor: "success.light",
-              "&:hover": { backgroundColor: "success.main" },
-            }}
-          >
-            <PlayArrow fontSize="inherit" />
-          </IconButton>
-          <IconButton
-            size="large"
-            color="warning"
-            onClick={() => sendTimerCommand("PAUSE")}
-            disabled={!timerData.isRunning || connectionStatus !== "Connected"}
-            sx={{
-              backgroundColor: "warning.light",
-              "&:hover": { backgroundColor: "warning.main" },
-            }}
-          >
-            <Pause fontSize="inherit" />
-          </IconButton>
-          <IconButton
-            size="large"
-            color="error"
-            onClick={() => sendTimerCommand("STOP")}
-            disabled={
-              timerData.currentPhase === "IDLE" ||
-              connectionStatus !== "Connected"
-            }
-            sx={{
-              backgroundColor: "error.light",
-              "&:hover": { backgroundColor: "error.main" },
-            }}
-          >
-            <Stop fontSize="inherit" />
-          </IconButton>
-        </Stack>
+          {/* Timer Control Buttons */}
+          <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => _sendTimerCommand("START")}
+              disabled={connectionStatus !== "Connected"}
+              sx={{ flex: 1, fontWeight: "bold" }}
+            >
+              START
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => _sendTimerCommand("PAUSE")}
+              disabled={connectionStatus !== "Connected"}
+              sx={{ flex: 1, fontWeight: "bold" }}
+            >
+              PAUSE
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => _sendTimerCommand("STOP")}
+              disabled={connectionStatus !== "Connected"}
+              sx={{ flex: 1, fontWeight: "bold" }}
+            >
+              STOP
+            </Button>
+          </Stack>
+        </CardContent>
       </Card>
 
       {/* 2. Spotify Controls */}

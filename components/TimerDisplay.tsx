@@ -1,9 +1,9 @@
 // File: components/TimerDisplay.tsx
 "use client";
-import { Paper, Typography } from "@mui/material";
+import { Card, CardContent, Typography } from "@mui/material";
 
 export interface TimerDisplayProps {
-  phase: "WORK" | "REST" | "IDLE" | "COOLDOWN";
+  phase: "WORK" | "REST" | "IDLE" | "COOLDOWN" | "PREPARE"; // Added PREPARE phase
   timeRemaining: number; // seconds
   cycle: number;
   totalCycles: number;
@@ -20,33 +20,39 @@ const TimerDisplay = ({
   const mm = Math.floor(timeRemaining / 60);
   const ss = timeRemaining % 60;
   return (
-    <Paper
+    <Card
       sx={{
-        backgroundColor: "#000",
-        color: "#ff0000",
-        p: 3,
-        textAlign: "center",
-        minHeight: 200,
+        backgroundColor: "black",
+        color: "red",
+        height: "100%", // Make it fill the grid item
         display: "flex",
         flexDirection: "column",
+        alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Typography variant="caption" sx={{ color: "#999", mb: 1 }}>
-        {phase} • Cycle {cycle}/{totalCycles}
-      </Typography>
-      <Typography
-        sx={{
-          fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-          fontSize: { xs: "3.5rem", sm: "5rem" },
-          fontWeight: "bold",
-          letterSpacing: "0.4rem",
-          lineHeight: 1,
-        }}
-      >
-        {pad(mm)}:{pad(ss)}
-      </Typography>
-    </Paper>
+      <CardContent sx={{ p: 3, textAlign: "center" }}>
+        {/* Phase indicator - only show if not IDLE */}
+        {phase !== "IDLE" && (
+          <Typography variant="body2" sx={{ color: "#fff", mb: 2 }}>
+            {phase} • Cycle {cycle}/{totalCycles}
+          </Typography>
+        )}
+        <Typography
+          variant="h1"
+          sx={{
+            fontFamily: "monospace",
+            fontSize: { xs: "5rem", sm: "7rem", md: "9rem" },
+            fontWeight: "bold",
+            letterSpacing: "0.4rem",
+            lineHeight: 1,
+            color: "red",
+          }}
+        >
+          {pad(mm)}:{pad(ss)}
+        </Typography>
+      </CardContent>
+    </Card>
   );
 };
 
