@@ -9,6 +9,7 @@ import express, { Request, Response } from "express";
 import { createServer, IncomingMessage } from "http";
 import { Socket } from "net";
 import next from "next";
+import path from "path";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
@@ -50,6 +51,23 @@ app
   .prepare()
   .then(() => {
     const server = createServer(expressApp);
+
+    // --- Static Asset Serving (Production Only) ---
+    // In production, serve the Next.js static assets directly from the .next/static folder.
+    // This is more efficient than letting the Next.js handler do it.
+    if (!dev) {
+      const staticPath = path.join(process.cwd(), ".next/static");
+      console.log(`Serving static files from: ${staticPath}`);
+
+      expressApp.use(
+        "/_next/static",
+        express.static(staticPath, {
+          // All files in _next/static have content hashes, so they can be cached indefinitely.
+          immutable: true,
+          maxAge: "365d",
+        })
+      );
+    }
 
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true });
