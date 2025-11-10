@@ -4,7 +4,7 @@
  * attaches the persistent WebSocket server, and manages service initialization
  * and internal data endpoints (like NextAuth token delivery).
  */
-import { config } from 'dotenv';
+
 import express, { Request, Response } from "express";
 import { createServer, IncomingMessage } from "http";
 import { Socket } from "net";
@@ -15,12 +15,7 @@ import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
 import { UnifiedStateMessage } from "./types/websocket";
 
-// Load environment variables
-if (process.env.NODE_ENV === 'production') {
-  config({ path: '.env.production' });
-} else {
-  config({ path: '.env.local' });
-}
+
 
 
 

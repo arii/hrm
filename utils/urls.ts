@@ -28,6 +28,12 @@ export const getWebSocketURL = (): string => {
 };
 
 export const getAPIURL = (endpoint: string): string => {
+  if (typeof window !== 'undefined') {
+    // Client-side: use current origin (allows localhost access in production)
+    return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`;
+  }
+  
+  // Server-side: use environment variable for internal API calls
   const baseUrl = getBaseURL();
   return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`;
 };

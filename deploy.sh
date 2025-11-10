@@ -45,7 +45,7 @@ pm2 delete hrm-server || true
 
 # Start with production environment
 echo "▶️ Starting HRM server with PM2..."
-pm2 start ecosystem.config.js --env production
+pm2 start ecosystem.config.cjs --env production
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."

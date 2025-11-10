@@ -172,7 +172,7 @@ const useBluetoothHRM = () => {
 
       setDeviceStatus(`Failed: ${fullMessage}`);
     }
-  }, [deviceStatus, connectionStatus, sendData, userName, userAge]);
+  }, [deviceStatus, connectionStatus, sendData]);
 
   return {
     connectAndStream,
