@@ -68,7 +68,8 @@ export interface TimerCommandMessage {
 }
 export interface SpotifyCommandMessage {
   type: "SPOTIFY_COMMAND";
-  command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS";
+  command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK";
+  deviceId?: string; // Optional: for TRANSFER_PLAYBACK command
 }
 
 /**
@@ -105,7 +106,8 @@ export const TimerCommandMessageSchema = z.object({
 
 export const SpotifyCommandMessageSchema = z.object({
   type: z.literal("SPOTIFY_COMMAND"),
-  command: z.union([z.literal("PLAY"), z.literal("PAUSE"), z.literal("NEXT"), z.literal("PREVIOUS")]),
+  command: z.union([z.literal("PLAY"), z.literal("PAUSE"), z.literal("NEXT"), z.literal("PREVIOUS"), z.literal("TRANSFER_PLAYBACK")]),
+  deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
 });
 
 export const ClientCommandMessageSchema = z.union([

@@ -80,6 +80,20 @@ app
 
     // --- Express Routing ---
 
+    // API endpoint to get available Spotify devices
+    expressApp.get("/api/spotify/devices", async (req: Request, res: Response) => {
+      if (!spotifyServiceInitialized || !spotifyService) {
+        return res.status(503).json({ error: "Spotify service not initialized." });
+      }
+      try {
+        const devices = await spotifyService.getAvailableDevices();
+        return res.json(devices);
+      } catch (error) {
+        console.error("Error fetching Spotify devices via API:", error);
+        return res.status(500).json({ error: "Failed to fetch Spotify devices." });
+      }
+    });
+
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use((req: Request, res: Response) => {

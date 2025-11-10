@@ -11,7 +11,7 @@ import { SpotifyTokenManager } from "./spotifyTokenManager";
 const BASE_URL = "https://api.spotify.com/v1";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-type SpotifyCommand = "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "LOGIN";
+type SpotifyCommand = "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "LOGIN" | "TRANSFER_PLAYBACK";
 
 interface SpotifyCurrentlyPlayingResponse {
   timestamp: number;
@@ -100,6 +100,16 @@ export interface SpotifyTokenResponse {
   expires_in: number;
   refresh_token?: string;
   scope: string;
+}
+
+export interface SpotifyDevice {
+  id: string;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string;
+  volume_percent: number;
 }
 
 export class SpotifyPolling {
@@ -347,7 +357,62 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(command: SpotifyCommand) {
+  public async getAvailableDevices(): Promise<SpotifyDevice[]> {
+    if (!this.accessToken) {
+      console.warn("Cannot get devices: Access token is missing.");
+      return [];
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/me/player/devices`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch devices: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.devices as SpotifyDevice[];
+    } catch (error) {
+      console.error("Error fetching Spotify devices:", error);
+      return [];
+    }
+  }
+
+  public async transferPlayback(deviceId: string): Promise<boolean> {
+    if (!this.accessToken) {
+      console.warn("Cannot transfer playback: Access token is missing.");
+      return false;
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/me/player`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          device_ids: [deviceId],
+          play: true, // Start playback on the new device
+        }),
+      });
+      if (response.status === 204) {
+        console.log(`Playback transferred to device: ${deviceId}`);
+        setTimeout(this.getCurrentlyPlaying, 500); // Refresh state
+        return true;
+      } else {
+        console.error(
+          `Failed to transfer playback (${response.status}): ${await response.text()}`
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error("Error transferring Spotify playback:", error);
+      return false;
+    }
+  }
+
+  public handleCommand(command: SpotifyCommand, deviceId?: string) {
     switch (command) {
       case "PAUSE":
         this.executePlayerCommand("pause", "PUT");
@@ -360,6 +425,13 @@ export class SpotifyPolling {
         break;
       case "PREVIOUS":
         this.executePlayerCommand("previous", "POST");
+        break;
+      case "TRANSFER_PLAYBACK":
+        if (deviceId) {
+          this.transferPlayback(deviceId);
+        } else {
+          console.warn("TRANSFER_PLAYBACK command requires a deviceId.");
+        }
         break;
       case "LOGIN":
         // Note: The actual login is handled by the client redirecting to NextAuth.

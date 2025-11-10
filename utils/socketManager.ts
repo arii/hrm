@@ -36,11 +36,12 @@ export const initSocketManager = (wss: WebSocketServer, services: Services) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`;
     console.log(`WebSocket Client connected: ${clientId}`);
 
+    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const newClient: HrmData = {
       clientId,
       value: 0,
       maxHr: 185,
-      name: "New User",
+      // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     };
     clientData.set(clientId, newClient);
@@ -149,7 +150,8 @@ const handleIncomingMessage = (
 
       case "SPOTIFY_COMMAND": {
         if (spotifyServiceInstance) {
-          spotifyServiceInstance.handleCommand(message.command);
+          // message.command is already typed as SpotifyCommand, which now includes deviceId
+          spotifyServiceInstance.handleCommand(message.command, message.deviceId);
         }
         break;
       }

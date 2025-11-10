@@ -27,7 +27,9 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
         borderRadius: 3,
       }}
     >
-      <CardContent sx={{ p: 0 }}> {/* Removed default padding */}
+      <CardContent sx={{ p: 0 }}>
+        {" "}
+        {/* Removed default padding */}
         {/* Giant Percentage - should dominate the tile */}
         <Typography
           sx={{
@@ -50,17 +52,19 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
         >
           {bpm} BPM
         </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            fontWeight: 700,
-            fontSize: { xs: "1rem", sm: "1.1rem" },
-            letterSpacing: "0.05em",
-            mt: 1, // Add some margin top to separate from BPM
-          }}
-        >
-          {name}
-        </Typography>
+        {name && !/^(user|new user)$/i.test(name) && (
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 700,
+              fontSize: { xs: "1rem", sm: "1.1rem" },
+              letterSpacing: "0.05em",
+              mt: 1, // Add some margin top to separate from BPM
+            }}
+          >
+            {name}
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );

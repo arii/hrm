@@ -5,11 +5,14 @@
  */
 "use client";
 import {
+  Add, // New import for stepper
   MusicNote,
   Pause,
   PlayArrow,
+  Remove, // New import for stepper
   SkipNext,
   SkipPrevious,
+  Stop, // New import for stop button
   VolumeUp,
 } from "@mui/icons-material";
 import {
@@ -18,10 +21,15 @@ import {
   Card,
   CardContent,
   Container,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
   Slider,
   Stack,
+  TextField,
   Typography,
+  Select,
 } from "@mui/material";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -32,6 +40,17 @@ import {
   TimerCommandMessage,
 } from "../../../types/websocket";
 
+// Define SpotifyDevice interface for client-side use
+interface SpotifyDevice {
+  id: string;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string;
+  volume_percent: number;
+}
+
 const ControlPanel = () => {
   const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
   const { initAudio, playSound } = useAudioPlayer();
@@ -41,8 +60,24 @@ const ControlPanel = () => {
   const [restTime, setRestTime] = useState(10);
   const [volume, setVolume] = useState(50);
 
+  // Input validation states
+  const [isValidWorkTime, setIsValidWorkTime] = useState(true);
+  const [isValidRestTime, setIsValidRestTime] = useState(true);
+
+  // Spotify device management states
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [devicesError, setDevicesError] = useState<string | null>(null);
+
   // --- Timer Commands ---
   const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
+    // Only send command if inputs are valid
+    if (!isValidWorkTime || !isValidRestTime) {
+      console.warn("Cannot start timer with invalid work/rest durations.");
+      return;
+    }
+
     if (command === "START") {
       initAudio(); // Initialize audio on user interaction
       // Send config with START command
@@ -62,9 +97,10 @@ const ControlPanel = () => {
 
   // --- Spotify Commands ---
   const sendSpotifyCommand = (
-    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS"
+    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
+    deviceId?: string
   ) => {
-    const message: SpotifyCommandMessage = { type: "SPOTIFY_COMMAND", command };
+    const message: SpotifyCommandMessage = { type: "SPOTIFY_COMMAND", command, deviceId };
     sendData(message); // sendData now accepts the typed object
   };
 
@@ -72,6 +108,41 @@ const ControlPanel = () => {
     // Trigger the NextAuth login flow
     signIn("spotify", { callbackUrl: "/client/control" });
   };
+
+  // Fetch available Spotify devices
+  useEffect(() => {
+    if (spotifyLoggedIn) {
+      const fetchDevices = async () => {
+        setDevicesLoading(true);
+        setDevicesError(null);
+        try {
+          const response = await fetch("/api/spotify/devices");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const devices: SpotifyDevice[] = await response.json();
+          setAvailableDevices(devices);
+          // Automatically select the active device if one exists
+          const activeDevice = devices.find((d) => d.is_active);
+          if (activeDevice) {
+            setSelectedDeviceId(activeDevice.id);
+          } else if (devices.length > 0) {
+            // Otherwise, select the first available device
+            setSelectedDeviceId(devices[0].id);
+          }
+        } catch (error: any) {
+          console.error("Failed to fetch Spotify devices:", error);
+          setDevicesError(error.message || "Failed to load devices.");
+        } finally {
+          setDevicesLoading(false);
+        }
+      };
+      fetchDevices();
+    } else {
+      setAvailableDevices([]);
+      setSelectedDeviceId("");
+    }
+  }, [spotifyLoggedIn]);
 
   // Timer preset configurations
   const _applyPreset = (
@@ -153,7 +224,7 @@ const ControlPanel = () => {
       >
         <CardContent sx={{ p: 0 }}>
           {/* Timer Display */}
-          <Box sx={{ textAlign: "center", mb: 4 }}>
+          <Box sx={{ textAlign: "center", mb: 4 }} role="timer" aria-live="polite">
             <Typography
               variant="h2"
               component="div"
@@ -161,133 +232,115 @@ const ControlPanel = () => {
                 fontFamily: "monospace",
                 fontWeight: 700,
                 color: "red",
-                fontSize: { xs: "3.5rem", sm: "5rem", md: "6rem" },
+                fontSize: { xs: "4rem", sm: "6rem", md: "7rem" }, // Slightly increased from 3.5/5/6
               }}
             >
               {timerData.timeRemaining}
             </Typography>
-            <Typography sx={{ color: "white", mt: 1 }}>
+            <Typography variant="h6" sx={{ color: "white", mt: 1 }}>
               Phase: {timerData.currentPhase || "IDLE"}
+            </Typography>
+            <Typography variant="h6" sx={{ color: "white", mt: 0.5 }}>
+              Cycle: {timerData.cycle} of {timerData.totalCycles}
             </Typography>
           </Box>
 
           {/* Timer Configuration Controls */}
-          <Stack spacing={3} sx={{ mb: 3 }}>
-            {/* Work Duration Slider */}
+          <Stack spacing={4} sx={{ mb: 4 }}> {/* Increased spacing */}
+            {/* Work Duration Stepper */}
             <Box>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ mb: 1 }}
-              >
-                <Typography sx={{ color: "white", fontWeight: "medium" }}>
-                  Work Duration
-                </Typography>
+              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}> {/* Increased mb */}
+                Work Duration (seconds)
+              </Typography>
+              <Stack direction="row" alignItems="center" justifyContent="center" spacing={3}> {/* Increased spacing */}
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
+                  aria-label="Decrease work duration"
+                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
                 <Typography
+                  variant="h4"
                   sx={{
                     color: "red",
                     fontWeight: "bold",
-                    fontSize: "1.1rem",
+                    fontSize: "3rem", // Further increased font size
+                    minWidth: "100px", // Increased minWidth
+                    textAlign: "center",
                   }}
                 >
-                  {workTime}s
+                  {workTime}
                 </Typography>
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => prev + 5)}
+                  aria-label="Increase work duration"
+                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                >
+                  <Add fontSize="large" />
+                </IconButton>
               </Stack>
-              <Slider
-                value={workTime}
-                onChange={(_: Event, newValue: number | number[]) =>
-                  setWorkTime(newValue as number)
-                }
-                min={10}
-                max={60}
-                step={5}
-                marks={[
-                  { value: 10, label: "10s" },
-                  { value: 30, label: "30s" },
-                  { value: 60, label: "60s" },
-                ]}
-                valueLabelDisplay="auto"
-                sx={{
-                  color: "red",
-                  "& .MuiSlider-thumb": { backgroundColor: "red" },
-                  "& .MuiSlider-track": { backgroundColor: "red" },
-                  "& .MuiSlider-rail": { backgroundColor: "grey.600" },
-                }}
-              />
             </Box>
 
-            {/* Rest Duration Slider */}
+            {/* Rest Duration Stepper */}
             <Box>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ mb: 1 }}
-              >
-                <Typography sx={{ color: "white", fontWeight: "medium" }}>
-                  Rest Duration
-                </Typography>
+              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}> {/* Increased mb */}
+                Rest Duration (seconds)
+              </Typography>
+              <Stack direction="row" alignItems="center" justifyContent="center" spacing={3}> {/* Increased spacing */}
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                  aria-label="Decrease rest duration"
+                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
                 <Typography
+                  variant="h4"
                   sx={{
                     color: "red",
                     fontWeight: "bold",
-                    fontSize: "1.1rem",
+                    fontSize: "3rem", // Further increased font size
+                    minWidth: "100px", // Increased minWidth
+                    textAlign: "center",
                   }}
                 >
-                  {restTime}s
+                  {restTime}
                 </Typography>
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => prev + 5)}
+                  aria-label="Increase rest duration"
+                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                >
+                  <Add fontSize="large" />
+                </IconButton>
               </Stack>
-              <Slider
-                value={restTime}
-                onChange={(_: Event, newValue: number | number[]) =>
-                  setRestTime(newValue as number)
-                }
-                min={5}
-                max={30}
-                step={5}
-                marks={[
-                  { value: 5, label: "5s" },
-                  { value: 10, label: "10s" },
-                  { value: 30, label: "30s" },
-                ]}
-                valueLabelDisplay="auto"
-                sx={{
-                  color: "red",
-                  "& .MuiSlider-thumb": { backgroundColor: "red" },
-                  "& .MuiSlider-track": { backgroundColor: "red" },
-                  "& .MuiSlider-rail": { backgroundColor: "grey.600" },
-                }}
-              />
             </Box>
           </Stack>
 
           {/* Timer Control Buttons */}
-          <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+          <Stack direction="row" spacing={3} sx={{ mt: 4 }}> {/* Increased spacing and mt */}
             <Button
               variant="contained"
               color="success"
               onClick={() => _sendTimerCommand("START")}
               disabled={connectionStatus !== "Connected"}
-              sx={{ flex: 1, fontWeight: "bold" }}
+              sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
+              startIcon={<PlayArrow fontSize="large" />}
             >
               START
-            </Button>
-            <Button
-              variant="contained"
-              color="warning"
-              onClick={() => _sendTimerCommand("PAUSE")}
-              disabled={connectionStatus !== "Connected"}
-              sx={{ flex: 1, fontWeight: "bold" }}
-            >
-              PAUSE
             </Button>
             <Button
               variant="contained"
               color="error"
               onClick={() => _sendTimerCommand("STOP")}
               disabled={connectionStatus !== "Connected"}
-              sx={{ flex: 1, fontWeight: "bold" }}
+              sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
+              startIcon={<Stop fontSize="large" />}
             >
               STOP
             </Button>
@@ -315,7 +368,7 @@ const ControlPanel = () => {
             color: "grey.200",
           }}
         >
-          <MusicNote sx={{ mr: 1 }} /> Spotify Player
+          <MusicNote sx={{ mr: 1 }} aria-hidden="true" /> Spotify Player
         </Typography>
 
         {spotifyLoggedIn ? (
@@ -331,6 +384,58 @@ const ControlPanel = () => {
               by {spotifyData.artist}
             </Typography>
 
+            {/* Spotify Device Selection */}
+            <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
+              <InputLabel id="spotify-device-select-label" sx={{ color: "grey.400" }}>
+                Active Device
+              </InputLabel>
+              <Select
+                labelId="spotify-device-select-label"
+                value={selectedDeviceId}
+                onChange={(e) => {
+                  const newDeviceId = e.target.value as string;
+                  setSelectedDeviceId(newDeviceId);
+                  sendSpotifyCommand("TRANSFER_PLAYBACK", newDeviceId);
+                }}
+                label="Active Device"
+                sx={{
+                  color: "white",
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "grey.600",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "grey.400",
+                  },
+                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "white",
+                  },
+                  "& .MuiSvgIcon-root": { color: "grey.400" }, // Dropdown arrow color
+                }}
+                disabled={devicesLoading || availableDevices.length === 0}
+              >
+                {devicesLoading && (
+                  <MenuItem value="" disabled>
+                    Loading devices...
+                  </MenuItem>
+                )}
+                {devicesError && (
+                  <MenuItem value="" disabled>
+                    Error: {devicesError}
+                  </MenuItem>
+                )}
+                {availableDevices.length === 0 && !devicesLoading && !devicesError && (
+                  <MenuItem value="" disabled>
+                    No devices found
+                  </MenuItem>
+                )}
+                {availableDevices.map((device) => (
+                  <MenuItem key={device.id} value={device.id}>
+                    {device.name} ({device.type}) {device.is_active ? "(Active)" : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <Stack
               direction="row"
               spacing={3}
@@ -345,6 +450,7 @@ const ControlPanel = () => {
                 }}
                 onClick={() => sendSpotifyCommand("PREVIOUS")}
                 disabled={connectionStatus !== "Connected"}
+                aria-label="Previous track"
               >
                 <SkipPrevious fontSize="large" />
               </IconButton>
@@ -360,6 +466,7 @@ const ControlPanel = () => {
                   sendSpotifyCommand(spotifyData.isPlaying ? "PAUSE" : "PLAY")
                 }
                 disabled={connectionStatus !== "Connected"}
+                aria-label={spotifyData.isPlaying ? "Pause" : "Play"}
               >
                 {spotifyData.isPlaying ? (
                   <Pause fontSize="large" />
@@ -375,6 +482,7 @@ const ControlPanel = () => {
                 }}
                 onClick={() => sendSpotifyCommand("NEXT")}
                 disabled={connectionStatus !== "Connected"}
+                aria-label="Next track"
               >
                 <SkipNext fontSize="large" />
               </IconButton>
@@ -383,8 +491,9 @@ const ControlPanel = () => {
             {/* Volume Control */}
             <Box sx={{ px: 2 }}>
               <Stack direction="row" spacing={2} alignItems="center">
-                <VolumeUp sx={{ color: "grey.400" }} />
+                <VolumeUp sx={{ color: "grey.400" }} aria-hidden="true" />
                 <Slider
+                  aria-label="Volume"
                   value={volume}
                   onChange={(_: Event, newValue: number | number[]) =>
                     setVolume(newValue as number)
@@ -392,6 +501,7 @@ const ControlPanel = () => {
                   min={0}
                   max={100}
                   valueLabelDisplay="auto"
+                  getAriaValueText={(value) => `Volume: ${value}%`}
                   sx={{
                     color: "grey.400",
                     "& .MuiSlider-thumb": {

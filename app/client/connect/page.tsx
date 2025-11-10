@@ -43,7 +43,7 @@ const BluetoothClient: React.FC = () => {
       className="py-12 min-h-screen flex items-center justify-center bg-gray-50"
     >
       <Card className="shadow-2xl w-full p-6 text-center">
-        <Bluetooth color="primary" sx={{ fontSize: 60, mb: 2 }} />
+        <Bluetooth color="primary" sx={{ fontSize: 60, mb: 2 }} aria-hidden="true" />
         <Typography variant="h5" component="h1" className="font-bold mb-2">
           HRM Device Connector
         </Typography>
@@ -58,7 +58,7 @@ const BluetoothClient: React.FC = () => {
           color={isConnected ? "error" : "primary"}
           onClick={connectAndStream}
           disabled={isConnecting}
-          startIcon={isConnected ? <LinkOff /> : <HeartBroken />}
+          startIcon={isConnected ? <LinkOff aria-hidden="true" /> : <HeartBroken aria-hidden="true" />}
           className="mb-4 w-full"
         >
           {isConnecting
@@ -69,6 +69,8 @@ const BluetoothClient: React.FC = () => {
         </Button>
 
         <Box
+          role="status"
+          aria-live="polite"
           className={`p-4 rounded-lg mt-4 ${
             isConnected ? "bg-green-50" : "bg-red-50"
           }`}
@@ -96,6 +98,7 @@ const BluetoothClient: React.FC = () => {
                   href="chrome://flags"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open Chrome Flags in new tab"
                   style={{
                     color: "#0ea5e9",
                     textDecoration: "underline",
@@ -121,9 +124,10 @@ const BluetoothClient: React.FC = () => {
         {/* Live Heart Rate Display */}
         {isConnected && currentHr > 0 && (
           <Card
+            aria-label={`Live Heart Rate: ${currentHr} BPM, Zone ${zoneInfo.zone} at ${Math.round(zoneInfo.percentage)}%`}
             sx={{
               my: 3,
-              background: `linear-gradient(135deg, ${zoneInfo.progressColor} 0%, ${zoneInfo.progressColor}dd 100%)`,
+              background: `linear-gradient(135deg, ${zoneInfo.progressColor}B0 0%, ${zoneInfo.progressColor} 100%)`, // Added transparency to start color
               color: "white",
               textAlign: "center",
             }}
@@ -136,16 +140,16 @@ const BluetoothClient: React.FC = () => {
               <Typography
                 variant="h1"
                 sx={{
-                  fontSize: "4rem",
+                  fontSize: { xs: "7rem", sm: "9rem", md: "11rem" },
                   fontWeight: "bold",
                   lineHeight: 1,
                   my: 1,
                 }}
               >
-                {currentHr}
+                {currentHr} BPM
               </Typography>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                {currentHr} BPM
+                {/* Removed redundant BPM display */}
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                 {zoneInfo.zone} • {Math.round(zoneInfo.percentage)}%

@@ -3,7 +3,7 @@
  * Google Doc Viewer Component: Embeds a Google Doc/Sheet/Presentation using an iframe.
  * Uses Material UI for responsive card structure.
  */
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent } from "@mui/material";
 
 interface GoogleDocViewerProps {
   title: string;
@@ -17,27 +17,25 @@ const GoogleDocViewer = ({
   embedUrl,
   height = 700,
 }: GoogleDocViewerProps) => {
+  // Ensure embedUrl always includes ?embedded=true
+  const finalEmbedUrl = embedUrl.includes("?embedded=true")
+    ? embedUrl
+    : `${embedUrl}?embedded=true`;
+
   return (
     <Card className="shadow-lg h-full flex flex-col">
-      <CardContent className="flex-grow flex flex-col p-4">
-        <Typography
-          variant="h6"
-          component="h3"
-          className="mb-2 font-semibold text-gray-800"
-        >
-          {title}
-        </Typography>
+      <CardContent className="flex-grow flex flex-col" sx={{ p: 1 }}>
         <Box
-          className="flex-grow w-full overflow-y-auto rounded-lg border border-gray-300"
-          style={{ minHeight: `${height}px`, maxHeight: "80vh" }}
+          className="flex-grow w-full rounded-lg border border-gray-300"
+          style={{ height: `${height}px` }} // Set explicit height for the container
         >
-          {/* Use <iframe> for embedding Google Docs; ensure embedUrl ends with `?embedded=true` */}
+          {/* Use <iframe> for embedding Google Docs */}
           <Box
             component="iframe"
-            src={embedUrl}
+            src={finalEmbedUrl}
             title={title}
             width="100%"
-            height="100%"
+            height="100%" // iframe will fill the parent Box's explicit height
             sx={{ border: "none" }}
             loading="lazy"
           />

@@ -1,175 +1,86 @@
 # Running Notes - HRM Development
 
-Ephemeral scratchpad for **ACTIVE** work items only. Completed tasks are pruned. Durable guidance lives in `.github/copilot-instructions.md`, `README.md`, or `SELECTOR_INSTRUMENTATION.md`.
+Ephemeral scratchpad for **ACTIVE** work items only. Completed tasks are pruned. Durable guidance lives in `.github/copilot-instructions.md`, `README.md`, or `UI_UX_IMPROVEMENTS.md`.
 
-**Current Focus**: Screenshot capture & documentation. Live HR display feedback on mock/connect pages.
+**Current Focus**: UI/UX improvements, mobile optimization, accessibility
 
-**Status**: Phase 2 complete (11/12); All local and production screenshots captured. Live HR display implemented.
-
----
-
-## Architecture & Features
-
-### ✅ Tabata Timer with Spotify Integration (Documented Feature)
-
-**Status**: FULLY OPERATIONAL  
-**Implementation**: `services/tabataTimer.ts` + `services/spotifyPolling.ts`
-
-**Timer State Machine:**
-
-- **IDLE** → START → **PREPARE** (5-second countdown) → **WORK** (30s) → **REST** (10s) → cycle repeats 8x
-- **Countdown Audio**: Beeps sound when 3 seconds or less remain
-- **Auto-transition**: Phases change automatically; timer auto-pauses after final cooldown
-- **Configuration**: Cycles, work duration, rest duration all configurable per workout
-
-**Spotify Integration:**
-
-- **Auto-Play**: When timer START pressed, automatically plays next song on Spotify
-- **Sync Controls**: PAUSE/RESUME timer also pauses/resumes music
-- **Song Control**: NEXT/PREVIOUS buttons available on control panel
-- **Real-time Status**: Current song name, artist, progress shown on dashboard
-- **Auth**: Requires Spotify OAuth login; tokens auto-refresh every 55 minutes
-
-**Message Flow:**
-
-```
-User presses START → Control Panel sends TIMER_COMMAND
-  ↓
-socketManager receives command
-  ↓
-tabataTimer.start() sets phase to WORK, broadcasts STATE_UPDATE
-  ↓
-spotifyPolling.handleCommand("PLAY") calls Spotify API
-  ↓
-Music starts playing, timer ticks down
-  ↓
-Every tick broadcasts updated time to all clients via WebSocket
-```
-
-**Performance:**
-
-- Timer resolution: 1 second tick rate
-- WebSocket broadcast: ~11.44ms latency (avg)
-- Spotify API: < 1 second response time
-
-**Code References:**
-
-- Timer state machine: `services/tabataTimer.ts:transitionPhase()`
-- Spotify commands: `services/spotifyPolling.ts:handleCommand()`
-- WebSocket routing: `utils/socketManager.ts:TIMER_COMMAND` and `SPOTIFY_COMMAND`
+**Status**: Phase 3 - UI Polish & Accessibility
 
 ---
 
-## Active Issues & Work Items
+## Current Sprint: Mobile-First UI Improvements
 
-### ✅ RESOLVED: Mock HR Streaming Bug
+**Primary Goal**: Make control panel truly mobile-friendly and improve dashboard visual hierarchy
 
-- **Status**: FIXED (November 9, 2025)
-- **Issue**: Mock page sends HRM_INPUT via WebSocket - **WAS WORKING** (server-side confirmed working)
-- **Root Cause**: System design is correct - each WebSocket client has its own HR data entry. Mock page client updates its own data, dashboard client sees its own entry + mock page's entry
-- **Verification**: Mock page streaming HR value 100 displays as 53% on dashboard (mock user tile) ✅
-- **Key Finding**: Server correctly receives, validates (Zod), stores, and broadcasts HRM_INPUT messages. No bug in socketManager.ts - it's functioning as designed for multi-client monitoring
-- **Next**: Use mock page data in actual testing and latency measurements
+**Reference**: See `UI_UX_IMPROVEMENTS.md` for comprehensive roadmap
 
-### ✅ COMPLETED: UI Improvements to Mock HR Streamer Page
+### Active Tasks
 
-- **Status**: IMPLEMENTED (November 9, 2025)
-- **Changes Made**:
-  1. **Layout & Spacing**: Wrapped form in MUI `<Paper elevation={3}>` with proper padding and centering using `<Container maxWidth="sm">`
-  2. **Typography**: Clear visual hierarchy with avatar header, title, and subtitle
-  3. **Form Inputs**:
-     - Replaced HTML inputs with `<TextField>` components
-     - Organized fields into logical sections: User Information, Device ID, BPM
-     - Used `<Grid>` for responsive layout
-  4. **Zone Buttons**: Replaced individual buttons with `<ButtonGroup>` for cleaner UI
-  5. **Controls**:
-     - Changed checkbox to `<Switch>` component with descriptive label
-     - Improved primary button with icon and clear states
-  6. **Status Indicator**: Replaced text with `<Chip>` component (Connected/Disconnected)
-  7. **Connection Notice**: Added helpful message when server is not connected
-- **Visual Impact**: Professional card-based design with better visual hierarchy and spacing
-- **Functionality**: All features still working correctly (streaming, zone selection, noise toggle)
+#### 🔄 IN PROGRESS: Mobile Control Panel Optimization
 
-### ✅ COMPLETED: WebSocket Latency Measurement
+- Remove title/status clutter to free screen space
+- Increase touch targets to 48px minimum
+- Improve button grouping and visual hierarchy
+- Test on iPhone SE (smallest common viewport)
 
-- **Status**: MEASURED (November 9, 2025)
-- **Target**: <120ms round-trip
-- **Results**:
-  - **Average**: 11.44ms ✅
-  - **Min**: 1.80ms
-  - **Max**: 54.20ms
-- **Finding**: All measurements well below target. System meets real-time requirements.
+#### 📋 NEXT: Accessibility Foundations
 
-### ✅ COMPLETED: Lighthouse Performance Audit (Dashboard)
+- Add ARIA labels to all interactive elements
+- Implement keyboard navigation shortcuts
+- Improve focus indicators
+- Test with screen readers
 
-- **Status**: BASELINE ESTABLISHED (November 9, 2025)
-- **Page Tested**: http://127.0.0.1:3000/ (Dashboard)
-- **Core Web Vitals Baseline**:
-  | Metric | Value | Status | Target |
-  |--------|-------|--------|--------|
-  | **LCP** (Largest Contentful Paint) | 880ms | ⚠️ Acceptable | <2.5s |
-  | **INP** (Interaction to Next Paint) | 5ms | ✅ Excellent | <200ms |
-  | **CLS** (Cumulative Layout Shift) | 0.00 | ✅ Perfect | <0.1 |
+#### 📋 BACKLOG: Dashboard Visual Polish
 
-- **LCP Breakdown Analysis**:
+- Dynamic layout based on timer state (IDLE vs ACTIVE)
+- Better responsive grid breakpoints
+- Add subtle animations and transitions
+- Improve Google Doc viewer (expand/collapse)
 
-  - Time to First Byte (TTFB): 91ms (10.4%)
-  - Element Render Delay: 788ms (89.6%) ← **Primary bottleneck**
-  - **Root Cause**: Render-blocking resources & font loading delays
-  - **Estimated Savings**: None (inherent to current stack - Next.js initial page load)
+---
 
-- **Performance Insights Identified**:
+## Architecture Quick Reference
 
-  1. **FontDisplay Issue** ⚠️ 20ms FCP savings available
-     - Current: `font-display: auto` (GoogleSans18pt, Roboto)
-     - Recommendation: Use `font-display: swap` to show fallback text faster
-     - Expected Impact: FCP reduction of ~20ms
-  2. **RenderBlocking Requests**: Detected but not critical at current scale
-  3. **Forced Reflow**: Analysis available if needed for deep optimization
+### Timer + Spotify Integration
 
-- **Conclusion**: Dashboard meets performance targets for production. Render delay (788ms) is typical for Next.js SSR. Font optimization could save 20ms FCP. No critical issues.
+**Files**: `services/tabataTimer.ts` + `services/spotifyPolling.ts`
 
-### ✅ COMPLETED: Dashboard UI Refinements
+**State Flow**: IDLE → PREPARE (5s) → WORK (30s) → REST (10s) → repeat 8x → COOLDOWN
+**WebSocket Latency**: ~11ms average
+**Features**: Auto-play music on START, sync pause/resume, countdown beeps
 
-- **Status**: IMPLEMENTED (November 9, 2025)
-- **Changes Made**:
-  1. **Removed Stepper (Warm-up → Main Set → Cool Down)**: Removed phase tracker as it won't be used for tracking at this time
-  2. **Fixed Google Doc Display**: Reduced height from 600px to 400px for proper full visibility without cutoff
-  3. **Improved Timer Number Sizes**:
-     - Mobile (xs): 4.5rem (was 3.5rem) ↑29%
-     - Tablet (sm): 7rem (was 5rem) ↑40%
-     - Desktop (md): 8rem (was 5rem) ↑60%
-     - Now clearly dominant and readable from distance
-- **Result**: Cleaner dashboard with improved visual hierarchy and better Google Doc integration
+### Key Files
 
-### ✅ COMPLETED: Bluetooth Connection Error Handling Improvements
+- **Server Entry**: `server.ts` (Express + Next.js + WebSocket)
+- **WebSocket Router**: `utils/socketManager.ts`
+- **Client Hook**: `hooks/useWebSocket.ts`
+- **UI Pages**:
+  - Dashboard: `app/page.tsx` (viewer display)
+  - Control: `app/client/control/page.tsx` (phone UI)
+  - Mock: `app/client/mock/page.tsx` (test HR streaming)
+  - Connect: `app/client/connect/page.tsx` (Bluetooth HRM)
 
-- **Status**: ENHANCED (November 9, 2025)
-- **Changes Made**:
-  1. **Enhanced Error Messages in Hook** (`hooks/useBluetoothHRM.ts`):
-     - Added context-specific recommendations for each error type
-     - Detects when Web Bluetooth is unavailable or disabled
-     - Includes `chrome://flags` recommendation in error messages
-     - All errors now surface actionable next steps
-  2. **UI Hint on Connect Page** (`app/client/connect/page.tsx`):
-     - When a connection fails with chrome://flags mentioned, shows a helpful tip
-     - Displays clickable link to `chrome://flags` with instructions
-     - Shows: "search 'Web Bluetooth', then restart the browser"
-- **User Experience Impact**:
-  - ✅ Users get clear, actionable error messages
-  - ✅ One-click link to Chrome flags page
-  - ✅ Step-by-step instructions for enabling Web Bluetooth
-  - ✅ Better guidance for unsupported browsers/devices
-- **Error Types Covered**:
-  - NotFoundError: No device found → enable Bluetooth
-  - SecurityError: Permission denied → enable Web Bluetooth at chrome://flags
-  - NotSupportedError: Not supported → enable at chrome://flags
-  - NetworkError: Connection lost → check device proximity
-  - AbortError: Connection cancelled → provide retry instructions
+---
 
-### ✅ COMPLETED: Bluetooth connection error handling improvements
+## Completed Recently
 
-- **Status**: ENHANCED (November 9, 2025)
+✅ Screenshot documentation consolidated  
+✅ Live HR display implemented  
+✅ Timer controls restored  
+✅ WebSocket latency validated (<120ms)  
+✅ Lighthouse baseline established  
+✅ Dashboard UI cleanup (removed clutter)
+
+---
+
+## Documentation Structure
+
+- **Setup Guide**: `README.md`
+- **Development Workflow**: `.github/copilot-instructions.md`
+- **UI/UX Roadmap**: `UI_UX_IMPROVEMENTS.md` ⭐ NEW
+- **Troubleshooting**: `BRINGUP_TROUBLESHOOTING.md`, `SPOTIFY_TROUBLESHOOTING.md`
+- **Feature Docs**: `FEATURE_TIMER_SPOTIFY.md`, `IMPLEMENTATION_SUMMARY.md`
+
 - **Changes Made**:
   1. **Enhanced Error Messages in Hook** (`hooks/useBluetoothHRM.ts`):
      - Added context-specific recommendations for each error type

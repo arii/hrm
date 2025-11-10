@@ -1,9 +1,9 @@
 // File: components/TimerDisplay.tsx
 "use client";
-import { Card, CardContent, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 
 export interface TimerDisplayProps {
-  phase: "WORK" | "REST" | "IDLE" | "COOLDOWN" | "PREPARE"; // Added PREPARE phase
+  phase: "WORK" | "REST" | "IDLE" | "COOLDOWN" | "PREPARE";
   timeRemaining: number; // seconds
   cycle: number;
   totalCycles: number;
@@ -14,39 +14,53 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const TimerDisplay = ({
   phase,
   timeRemaining,
-  cycle,
-  totalCycles,
+  cycle: _cycle,
+  totalCycles: _totalCycles,
 }: TimerDisplayProps) => {
   const mm = Math.floor(timeRemaining / 60);
   const ss = timeRemaining % 60;
+
   return (
     <Card
       sx={{
-        backgroundColor: "black",
-        color: "red",
-        height: "100%", // Make it fill the grid item
+        backgroundColor: "primary.main",
+        color: "common.white",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        boxShadow: 3,
+        borderRadius: 2,
       }}
     >
-      <CardContent sx={{ p: 3, textAlign: "center" }}>
-        {/* Phase indicator - only show if not IDLE */}
+      <CardContent sx={{ p: 2, textAlign: "center" }}>
+        {/* Minimal phase indicator - visual only (no text) */}
         {phase !== "IDLE" && (
-          <Typography variant="body2" sx={{ color: "#fff", mb: 2 }}>
-            {phase} • Cycle {cycle}/{totalCycles}
-          </Typography>
+          <Box sx={{ mb: 1 }}>
+            <Box
+              component="span"
+              sx={{
+                display: "inline-block",
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                backgroundColor:
+                  phase === "WORK" ? "error.main" : "success.main",
+              }}
+              aria-hidden
+            />
+          </Box>
         )}
         <Typography
-          variant="h1"
+          component="div"
           sx={{
-            fontFamily: "monospace",
-            fontSize: { xs: "5rem", sm: "7rem", md: "9rem" },
-            fontWeight: "bold",
-            letterSpacing: "0.4rem",
+            fontFamily: "var(--font-roboto-mono), monospace",
+            fontSize: { xs: "6rem", sm: "8rem", md: "11rem" },
+            fontWeight: 800,
+            letterSpacing: "0.12rem",
             lineHeight: 1,
-            color: "red",
+            color: "common.white",
           }}
         >
           {pad(mm)}:{pad(ss)}
