@@ -5,17 +5,17 @@
  */
 import { TimerData, UnifiedStateMessage } from "../types/websocket";
 
-const DEFAULT_CYCLES = 8;
 const WORK_DURATION = 30; // seconds
 const REST_DURATION = 10; // seconds
 const COOLDOWN_DURATION = 5; // seconds
 
-type TimerCommand = "START" | "PAUSE" | "STOP";
+type TimerCommand = "START" | "STOP";
 
 interface TimerConfig {
   workDuration?: number;
   restDuration?: number;
-  totalCycles?: number;
+  totalCycles?: number | null;
+  isCountingUp?: boolean;
 }
 
 class TabataTimer {
@@ -26,13 +26,13 @@ class TabataTimer {
   // Current timer configuration (can be updated on START)
   private workDuration: number = WORK_DURATION;
   private restDuration: number = REST_DURATION;
-
   private state: TimerData = {
     isRunning: false,
     currentPhase: "IDLE",
     timeRemaining: 0,
     cycle: 0,
-    totalCycles: DEFAULT_CYCLES,
+    totalCycles: null,
+    isCountingUp: false,
   };
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
@@ -49,7 +49,7 @@ class TabataTimer {
   private tick = () => {
     if (!this.state.isRunning) return;
 
-    this.state.timeRemaining -= 1;
+    this.state.timeRemaining += this.state.isCountingUp ? 1 : -1;
 
     if (this.state.timeRemaining <= 0) {
       this.transitionPhase();
@@ -78,9 +78,16 @@ class TabataTimer {
       if (config.totalCycles !== undefined) {
         this.state.totalCycles = config.totalCycles;
       }
+      if (config.isCountingUp !== undefined) {
+        this.state.isCountingUp = config.isCountingUp;
+      }
     }
 
-    if (this.state.currentPhase === "IDLE") {
+    if (this.state.isCountingUp) {
+      this.state.currentPhase = "RUNNING_CLOCK";
+      this.state.timeRemaining = 0; // Start counting from 0
+      this.state.cycle = 1; // Running clock still has a cycle concept
+    } else if (this.state.currentPhase === "IDLE") {
       this.state.cycle = 1;
       this.state.currentPhase = "WORK";
       this.state.timeRemaining = this.workDuration;
@@ -94,15 +101,6 @@ class TabataTimer {
     this.broadcastState({ timerData: this.getState() });
   }
 
-  private pauseTimer() {
-    if (!this.state.isRunning) return;
-    this.state.isRunning = false;
-    if (this.interval) clearInterval(this.interval);
-    this.interval = null;
-    console.log("Timer paused.");
-    this.broadcastState({ timerData: this.getState() });
-  }
-
   private stopTimer() {
     this.state.isRunning = false;
     if (this.interval) clearInterval(this.interval);
@@ -113,17 +111,22 @@ class TabataTimer {
       currentPhase: "IDLE",
       timeRemaining: 0,
       cycle: 0,
-      totalCycles: DEFAULT_CYCLES,
+      totalCycles: null,
+      isCountingUp: false,
     };
     console.log("Timer stopped and reset.");
     this.broadcastState({ timerData: this.getState() });
   }
 
   private transitionPhase() {
+    if (this.state.isCountingUp) {
+      return; // Running clock doesn't transition phases automatically
+    }
+
     this.state.soundToPlay = undefined; // Reset sound on phase transition
     switch (this.state.currentPhase) {
       case "WORK":
-        if (this.state.cycle < this.state.totalCycles) {
+        if (this.state.totalCycles === null || this.state.cycle < this.state.totalCycles) {
           this.state.currentPhase = "REST";
           this.state.timeRemaining = this.restDuration;
           this.state.soundToPlay = "REST";
@@ -131,7 +134,6 @@ class TabataTimer {
         } else {
           this.state.currentPhase = "COOLDOWN";
           this.state.timeRemaining = COOLDOWN_DURATION;
-          this.pauseTimer(); // Auto-pause after last cycle
           console.log("Tabata finished. Transition to COOLDOWN.");
         }
         break;
@@ -154,9 +156,6 @@ class TabataTimer {
     switch (command) {
       case "START":
         this.startTimer(config);
-        break;
-      case "PAUSE":
-        this.pauseTimer();
         break;
       case "STOP":
         this.stopTimer();

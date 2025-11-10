@@ -11,7 +11,7 @@ import { SpotifyTokenManager } from "./spotifyTokenManager";
 const BASE_URL = "https://api.spotify.com/v1";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-type SpotifyCommand = "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "LOGIN" | "TRANSFER_PLAYBACK";
+type SpotifyCommand = "PLAY" | "NEXT" | "PREVIOUS" | "LOGIN" | "TRANSFER_PLAYBACK";
 
 interface SpotifyCurrentlyPlayingResponse {
   timestamp: number;
@@ -110,6 +110,10 @@ export interface SpotifyDevice {
   name: string;
   type: string;
   volume_percent: number;
+}
+
+interface SpotifyDevicesResponse {
+  devices: SpotifyDevice[];
 }
 
 export class SpotifyPolling {
@@ -371,7 +375,7 @@ export class SpotifyPolling {
       if (!response.ok) {
         throw new Error(`Failed to fetch devices: ${response.status}`);
       }
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyDevicesResponse;
       return data.devices as SpotifyDevice[];
     } catch (error) {
       console.error("Error fetching Spotify devices:", error);
@@ -414,9 +418,6 @@ export class SpotifyPolling {
 
   public handleCommand(command: SpotifyCommand, deviceId?: string) {
     switch (command) {
-      case "PAUSE":
-        this.executePlayerCommand("pause", "PUT");
-        break;
       case "PLAY":
         this.executePlayerCommand("play", "PUT");
         break;

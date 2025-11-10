@@ -15,11 +15,18 @@ export interface HrmData {
 }
 export interface TimerData {
   isRunning: boolean;
-  currentPhase: "WORK" | "REST" | "IDLE" | "COOLDOWN" | "PREPARE";
+  currentPhase:
+    | "WORK"
+    | "REST"
+    | "IDLE"
+    | "COOLDOWN"
+    | "PREPARE"
+    | "RUNNING_CLOCK";
   timeRemaining: number;
   cycle: number;
-  totalCycles: number;
+  totalCycles: number | null;
   soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
+  isCountingUp?: boolean;
 }
 export interface SpotifyData {
   trackName: string;
@@ -64,7 +71,8 @@ export interface TimerCommandMessage {
   // Optional configuration for START command
   workDuration?: number;
   restDuration?: number;
-  totalCycles?: number;
+  totalCycles?: number | null;
+  isCountingUp?: boolean;
 }
 export interface SpotifyCommandMessage {
   type: "SPOTIFY_COMMAND";
@@ -80,7 +88,7 @@ export type ClientCommandMessage =
   | TimerCommandMessage
   | SpotifyCommandMessage;
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -98,15 +106,21 @@ export const HrmInputMessageSchema = z.object({
 
 export const TimerCommandMessageSchema = z.object({
   type: z.literal("TIMER_COMMAND"),
-  command: z.union([z.literal("START"), z.literal("PAUSE"), z.literal("STOP")]),
+  command: z.union([z.literal("START"), z.literal("STOP")]),
   workDuration: z.number().optional(),
   restDuration: z.number().optional(),
-  totalCycles: z.number().optional(),
+  totalCycles: z.number().nullable().optional(),
+  isCountingUp: z.boolean().optional(),
 });
 
 export const SpotifyCommandMessageSchema = z.object({
   type: z.literal("SPOTIFY_COMMAND"),
-  command: z.union([z.literal("PLAY"), z.literal("PAUSE"), z.literal("NEXT"), z.literal("PREVIOUS"), z.literal("TRANSFER_PLAYBACK")]),
+  command: z.union([
+    z.literal("PLAY"),
+    z.literal("NEXT"),
+    z.literal("PREVIOUS"),
+    z.literal("TRANSFER_PLAYBACK"),
+  ]),
   deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
 });
 

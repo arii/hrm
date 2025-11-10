@@ -25,11 +25,10 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
+  Select,
   Slider,
   Stack,
-  TextField,
   Typography,
-  Select,
 } from "@mui/material";
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -61,14 +60,17 @@ const ControlPanel = () => {
   const [volume, setVolume] = useState(50);
 
   // Input validation states
-  const [isValidWorkTime, setIsValidWorkTime] = useState(true);
-  const [isValidRestTime, setIsValidRestTime] = useState(true);
+  const [isValidWorkTime, _setIsValidWorkTime] = useState(true);
+  const [isValidRestTime, _setIsValidRestTime] = useState(true);
 
   // Spotify device management states
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [devicesError, setDevicesError] = useState<string | null>(null);
+
+  // Check if we have received a non-default song title
+  const spotifyLoggedIn = spotifyData.trackName !== "Awaiting Login...";
 
   // --- Timer Commands ---
   const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
@@ -100,7 +102,11 @@ const ControlPanel = () => {
     command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
     deviceId?: string
   ) => {
-    const message: SpotifyCommandMessage = { type: "SPOTIFY_COMMAND", command, deviceId };
+    const message: SpotifyCommandMessage = {
+      type: "SPOTIFY_COMMAND",
+      command,
+      deviceId,
+    };
     sendData(message); // sendData now accepts the typed object
   };
 
@@ -120,19 +126,13 @@ const ControlPanel = () => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          const devices: SpotifyDevice[] = await response.json();
-          setAvailableDevices(devices);
-          // Automatically select the active device if one exists
-          const activeDevice = devices.find((d) => d.is_active);
-          if (activeDevice) {
-            setSelectedDeviceId(activeDevice.id);
-          } else if (devices.length > 0) {
-            // Otherwise, select the first available device
-            setSelectedDeviceId(devices[0].id);
-          }
-        } catch (error: any) {
+          const data = await response.json();
+          setAvailableDevices(data.devices || []);
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to load devices.";
           console.error("Failed to fetch Spotify devices:", error);
-          setDevicesError(error.message || "Failed to load devices.");
+          setDevicesError(errorMessage);
         } finally {
           setDevicesLoading(false);
         }
@@ -161,9 +161,6 @@ const ControlPanel = () => {
     }
   };
 
-  // Check if we have received a non-default song title
-  const spotifyLoggedIn = spotifyData.trackName !== "Awaiting Login...";
-
   // Handle incoming sound commands from the server
   useEffect(() => {
     if (timerData.soundToPlay) {
@@ -174,90 +171,80 @@ const ControlPanel = () => {
   return (
     <Container
       maxWidth="xs"
-      sx={{ py: 8, minHeight: "100vh", backgroundColor: "grey.100" }}
+      sx={{
+        py: { xs: 2, sm: 3 },
+        px: { xs: 2, sm: 3 },
+        minHeight: "100vh",
+        backgroundColor: "background.default",
+      }}
     >
-      <Typography
-        variant="h5"
-        component="h1"
-        sx={{
-          fontWeight: "bold",
-          textAlign: "center",
-          mb: 6,
-          color: "grey.800",
-        }}
-      >
-        Workout Control Center
-      </Typography>
-
-      {/* Status Indicator */}
-      <Box sx={{ textAlign: "center", mb: 6 }}>
-        <Typography variant="caption">Server Status:</Typography>
-        <Box
-          component="span"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            ml: 2,
-            px: 1.5,
-            py: 0.5,
-            borderRadius: "9999px",
-            fontSize: "0.875rem",
-            fontWeight: "medium",
-            backgroundColor:
-              connectionStatus === "Connected" ? "success.main" : "error.main",
-            color: "white",
-          }}
-        >
-          {connectionStatus}
-        </Box>
-      </Box>
-
       {/* 1. Tabata Timer Controls */}
       <Card
         sx={{
-          boxShadow: 3,
-          p: 2,
+          boxShadow: 6,
           mb: 3,
-          backgroundColor: "black",
-          color: "red",
+          backgroundColor: "#000000",
+          color: "#EF4444",
+          position: "sticky",
+          top: 16,
+          zIndex: 1000,
         }}
       >
-        <CardContent sx={{ p: 0 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           {/* Timer Display */}
-          <Box sx={{ textAlign: "center", mb: 4 }} role="timer" aria-live="polite">
+          <Box
+            sx={{ textAlign: "center", mb: 3 }}
+            role="timer"
+            aria-live="polite"
+          >
             <Typography
               variant="h2"
               component="div"
               sx={{
                 fontFamily: "monospace",
                 fontWeight: 700,
-                color: "red",
-                fontSize: { xs: "4rem", sm: "6rem", md: "7rem" }, // Slightly increased from 3.5/5/6
+                color: "#EF4444",
+                fontSize: { xs: "4.5rem", sm: "5.5rem" },
+                textShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
               }}
             >
               {timerData.timeRemaining}
             </Typography>
-            <Typography variant="h6" sx={{ color: "white", mt: 1 }}>
-              Phase: {timerData.currentPhase || "IDLE"}
-            </Typography>
-            <Typography variant="h6" sx={{ color: "white", mt: 0.5 }}>
-              Cycle: {timerData.cycle} of {timerData.totalCycles}
+            <Typography variant="body1" sx={{ color: "white", mt: 1 }}>
+              {timerData.currentPhase || "IDLE"} • Cycle {timerData.cycle}/
+              {timerData.totalCycles}
             </Typography>
           </Box>
 
           {/* Timer Configuration Controls */}
-          <Stack spacing={4} sx={{ mb: 4 }}> {/* Increased spacing */}
+          <Stack spacing={4} sx={{ mb: 4 }}>
+            {" "}
+            {/* Increased spacing */}
             {/* Work Duration Stepper */}
             <Box>
-              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}> {/* Increased mb */}
+              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}>
+                {" "}
+                {/* Increased mb */}
                 Work Duration (seconds)
               </Typography>
-              <Stack direction="row" alignItems="center" justifyContent="center" spacing={3}> {/* Increased spacing */}
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={3}
+              >
+                {" "}
+                {/* Increased spacing */}
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease work duration"
-                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                  sx={{
+                    backgroundColor: "grey.700",
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.600" },
+                    p: 2,
+                  }} // Increased padding
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -277,24 +264,42 @@ const ControlPanel = () => {
                   color="primary"
                   onClick={() => setWorkTime((prev) => prev + 5)}
                   aria-label="Increase work duration"
-                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                  sx={{
+                    backgroundColor: "grey.700",
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.600" },
+                    p: 2,
+                  }} // Increased padding
                 >
                   <Add fontSize="large" />
                 </IconButton>
               </Stack>
             </Box>
-
             {/* Rest Duration Stepper */}
             <Box>
-              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}> {/* Increased mb */}
+              <Typography sx={{ color: "white", fontWeight: "medium", mb: 2 }}>
+                {" "}
+                {/* Increased mb */}
                 Rest Duration (seconds)
               </Typography>
-              <Stack direction="row" alignItems="center" justifyContent="center" spacing={3}> {/* Increased spacing */}
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={3}
+              >
+                {" "}
+                {/* Increased spacing */}
                 <IconButton
                   color="primary"
                   onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease rest duration"
-                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                  sx={{
+                    backgroundColor: "grey.700",
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.600" },
+                    p: 2,
+                  }} // Increased padding
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -314,7 +319,12 @@ const ControlPanel = () => {
                   color="primary"
                   onClick={() => setRestTime((prev) => prev + 5)}
                   aria-label="Increase rest duration"
-                  sx={{ backgroundColor: "grey.700", color: "white", "&:hover": { backgroundColor: "grey.600" }, p: 2 }} // Increased padding
+                  sx={{
+                    backgroundColor: "grey.700",
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.600" },
+                    p: 2,
+                  }} // Increased padding
                 >
                   <Add fontSize="large" />
                 </IconButton>
@@ -323,7 +333,9 @@ const ControlPanel = () => {
           </Stack>
 
           {/* Timer Control Buttons */}
-          <Stack direction="row" spacing={3} sx={{ mt: 4 }}> {/* Increased spacing and mt */}
+          <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
+            {" "}
+            {/* Increased spacing and mt */}
             <Button
               variant="contained"
               color="success"
@@ -386,7 +398,10 @@ const ControlPanel = () => {
 
             {/* Spotify Device Selection */}
             <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
-              <InputLabel id="spotify-device-select-label" sx={{ color: "grey.400" }}>
+              <InputLabel
+                id="spotify-device-select-label"
+                sx={{ color: "grey.400" }}
+              >
                 Active Device
               </InputLabel>
               <Select
@@ -423,14 +438,17 @@ const ControlPanel = () => {
                     Error: {devicesError}
                   </MenuItem>
                 )}
-                {availableDevices.length === 0 && !devicesLoading && !devicesError && (
-                  <MenuItem value="" disabled>
-                    No devices found
-                  </MenuItem>
-                )}
+                {availableDevices.length === 0 &&
+                  !devicesLoading &&
+                  !devicesError && (
+                    <MenuItem value="" disabled>
+                      No devices found
+                    </MenuItem>
+                  )}
                 {availableDevices.map((device) => (
                   <MenuItem key={device.id} value={device.id}>
-                    {device.name} ({device.type}) {device.is_active ? "(Active)" : ""}
+                    {device.name} ({device.type}){" "}
+                    {device.is_active ? "(Active)" : ""}
                   </MenuItem>
                 ))}
               </Select>

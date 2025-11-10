@@ -11,12 +11,16 @@ declare module "next-auth" {
 }
 
 // Define scopes required: user-read-playback-state to poll the current track,
-// user-modify-playback-state to control playback (play/pause/skip).
+// user-modify-playback-state to control playback (play/pause/skip),
+// streaming for Web Playback SDK (play music in browser).
 const SPOTIFY_SCOPES = [
+  "user-read-private",
+  "user-top-read",
   "user-read-email",
   "user-read-playback-state",
   "user-modify-playback-state",
   "user-read-currently-playing",
+  "streaming", // Required for Web Playback SDK
 ].join(",");
 
 export const authOptions: AuthOptions = {
@@ -56,7 +60,9 @@ export const authOptions: AuthOptions = {
             };
 
             const response = await fetch(
-              `${process.env.INTERNAL_API_URL || "http://127.0.0.1:3000"}/api/internal/token-delivery`,
+              `${
+                process.env.INTERNAL_API_URL || "http://127.0.0.1:3000"
+              }/api/internal/token-delivery`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

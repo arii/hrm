@@ -2,16 +2,23 @@
 
 A real-time heart rate monitoring dashboard built with Next.js, Material-UI, WebSockets, and Spotify integration. Features a custom Express server for stateful WebSocket connections, Tabata timer with audio feedback, and live HR zone visualization.
 
-**⚠️ Important:** This project uses a custom server entry (`server.ts`) that runs Next.js, a persistent WebSocket server, and background services (Tabata timer, Spotify polling). The server is stateful and is not compatible with serverless platforms like Vercel.
+**⚠️ Important:** This project uses a custom server entry (`server.ts`) that runs Next.js, a persistent WebSocket server, and background services. The server is stateful and **cannot be deployed on serverless platforms** like Vercel.
+
+## Current Status
+
+**✅ Fully Operational** - All core features implemented and tested
+
+**Active Development Focus**: UI/UX improvements, mobile optimization, and accessibility enhancements. See [UI_UX_IMPROVEMENTS.md](UI_UX_IMPROVEMENTS.md) for the roadmap.
 
 ## Features
 
-- **Real-time Heart Rate Monitoring** - WebSocket-based streaming from Bluetooth HRM devices
-- **Tabata Timer** - Configurable work/rest intervals with audio beeps and visual feedback
-- **HR Zone Visualization** - Large percentage tiles with color-coded zones
-- **Spotify Integration** - Now playing display with OAuth authentication
-- **Mock HRM Client** - Test interface with device ID and noise simulation
+- **Real-time Heart Rate Monitoring** - WebSocket streaming from Bluetooth HRM devices or mock client
+- **Tabata Timer** - Configurable work/rest intervals with countdown beeps and phase transitions
+- **HR Zone Visualization** - Large percentage tiles with color-coded zones (Grey/Blue/Green/Yellow/Red/Purple)
+- **Spotify Integration** - Auto-play music on timer start, sync pause/resume, display now playing
+- **Mock HRM Client** - Test interface with zone buttons, device ID, and noise simulation
 - **Control Panel** - Mobile-friendly UI for timer and music controls
+- **Visual Regression Tests** - Playwright screenshot-based testing
 
 ## Quick Start
 
@@ -47,202 +54,118 @@ npm run pm2:logs
 
 ## Project Structure
 
-```
-/home/ari/hrm/
-├── server.ts                    # Custom Express + Next.js + WebSocket entry point
-├── app/
-│   ├── page.tsx                 # Main dashboard (viewer)
-│   ├── client/
-│   │   ├── control/page.tsx     # Timer & music controls
-│   │   ├── mock/page.tsx        # Mock HRM data sender
-│   │   └── connect/page.tsx     # Bluetooth HRM connector
-│   └── api/
-│       ├── auth/[...nextauth]/  # NextAuth Spotify OAuth
-│       └── debug/               # Debug endpoints
-├── services/
-│   ├── tabataTimer.ts           # Tabata timer state machine
-│   ├── spotifyPolling.ts        # Spotify API polling
-│   └── spotifyTokenManager.ts   # Token refresh management
-├── components/
-│   ├── HrTile.tsx               # Large HR percentage display
-│   ├── TimerDisplay.tsx         # Digital timer component
-│   └── WorkoutColumns.tsx       # Exercise column display
-├── hooks/
-│   ├── useWebSocket.ts          # WebSocket connection hook
-│   └── useTabataSounds.ts       # Audio feedback (Web Audio API)
-├── utils/
-│   ├── socketManager.ts         # WebSocket message router
-│   └── visualization.ts         # HR zone colors & props
-└── tests/playwright/
-    └── visual-regression.spec.ts # Screenshot-based tests
-```
+- **`server.ts`**: Custom Express + Next.js + WebSocket entry point
+- **`app/page.tsx`**: Main dashboard (viewer)
+- **`app/client/control/page.tsx`**: Timer & music controls (mobile UI)
+- **`app/client/mock/page.tsx`**: Mock HRM data sender
+- **`app/client/connect/page.tsx`**: Bluetooth HRM connector
+- **`services/tabataTimer.ts`**: Tabata timer state machine
+- **`services/spotifyPolling.ts`**: Spotify API polling service
+- **`hooks/useWebSocket.ts`**: Client-side WebSocket connection hook
+- **`utils/socketManager.ts`**: Server-side WebSocket message router
+- **`tests/playwright/visual-regression.spec.ts`**: Screenshot-based tests
 
 ## Available Commands
 
-### Development
+### Primary Scripts
 
 ```bash
-npm run dev              # Build server and start dev server (foreground)
-npm run dev:clean        # Alias for npm run dev
-npm run dev:server       # Alias for npm run dev
-```
-
-### Building
-
-```bash
-npm run build:server     # Compile TypeScript to dist/
-npm run build            # Build server + Next.js
-npm run start:node       # Run compiled server (node dist/server.js)
-npm run start            # PM2 production mode
-```
-
-### Testing
-
-```bash
+npm run dev              # Start dev server (Next.js + WebSocket + services)
+npm run build            # Build for production
+npm run start            # Start production server with PM2
 npm run lint             # Run ESLint
-npm run test:visual      # Run Playwright visual tests
-npm run test:visual:ui   # Interactive test UI
-npm run test:visual:update  # Update baseline screenshots
+npm run test:visual      # Run Playwright visual regression tests
 ```
 
-### Debugging
+### Debugging & Verification
 
 ```bash
 npm run verify:spotify   # Automated Spotify integration health check
 npm run pm2:logs         # View PM2 logs
-npm run pm2:stop         # Stop PM2 processes
-npm run pm2:delete       # Delete PM2 processes
-npm run mcp:chrome-devtools  # Start Chrome DevTools MCP
+npm run pm2:stop         # Stop all PM2 processes
+npm run mcp:chrome-devtools  # Start Chrome DevTools MCP for debugging
 ```
 
 ## VS Code Integration
 
-The workspace includes VS Code configuration for streamlined development:
+This workspace is pre-configured for a seamless development experience with VS Code.
 
-- **`.vscode/settings.json`** - Prettier formatting, ESLint fix-on-save, Emmet for TSX
-- **`.vscode/launch.json`** - Launch configs to start server and attach debugger
-- **`.vscode/tasks.json`** - Helper tasks for dev scripts and Chrome DevTools MCP
+- **`.vscode/settings.json`**: Enables format-on-save (Prettier) and ESLint auto-fix.
+- **`.vscode/launch.json`**: Provides launch configurations to start the server and attach the debugger with one click.
+- **`.vscode/tasks.json`**: Defines helper tasks for running dev scripts and the Chrome DevTools MCP.
 
-### Recommended Extensions
+**Recommended Extensions**:
 
-- ESLint
-- Prettier
-- TypeScript and JavaScript Language Features
-- Playwright Test for VS Code
+- ESLint (`dbaeumer.vscode-eslint`)
+- Prettier - Code formatter (`esbenp.prettier-vscode`)
+- Playwright Test for VSCode (`ms-playwright.playwright`)
 
 ## Environment Variables
 
-Create a `.env.local` file with required secrets:
+Create a `.env.local` file in the root directory for secrets:
 
-```bash
-# Spotify OAuth (get from https://developer.spotify.com/dashboard)
+```env
+# Spotify OAuth credentials (from developer.spotify.com/dashboard)
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 
-# NextAuth
+# NextAuth.js configuration
 NEXTAUTH_URL=http://127.0.0.1:3000
 NEXTAUTH_SECRET=your_random_secret_here
-
+```
 
 ### Spotify Setup
 
-1. Create app at https://developer.spotify.com/dashboard
-2. Add redirect URI: `http://127.0.0.1:3000/api/auth/callback/spotify`
-3. Copy Client ID and Secret to `.env.local`
-4. Generate NEXTAUTH_SECRET: `openssl rand -base64 32`
-5. Restart server and test: `npm run verify:spotify`
+1. Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
+3. Copy the Client ID and Client Secret into your `.env.local` file.
+4. Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
+5. Restart the server and run `npm run verify:spotify` to test the connection.
 
-**Detailed setup:** See [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)
+**For detailed setup instructions, see [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).**
 
 ## Troubleshooting
 
-- **Server won't start:** See [BRINGUP_TROUBLESHOOTING.md](BRINGUP_TROUBLESHOOTING.md)
-- **Spotify issues:** Run `npm run verify:spotify` or see [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md)
-- **WebSocket errors:** Check browser console and server logs for connection issues
+- **Server Startup Issues**: See [BRINGUP_TROUBLESHOOTING.md](BRINGUP_TROUBLESHOOTING.md).
+- **Spotify Authentication/API Errors**: Run `npm run verify:spotify` or consult [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).
+- **WebSocket Connection Errors**: Check the browser console and server logs for connection refused or handshake errors. Ensure the server is running and accessible.
 
-## Architecture
+## Architecture Overview
 
-### Custom Server
+### Custom Stateful Server
 
-This app uses a custom Express server (`server.ts`) that:
-- Hosts the Next.js application
-- Runs a persistent WebSocket server on `/ws`
-- Manages background services (Tabata Timer, Spotify Polling)
+This application uses a custom Express server (`server.ts`) that is **stateful**. It manages:
 
-**Critical:** Do NOT deploy to serverless platforms (Vercel, Netlify). Use a traditional Node.js host or VPS.
+1. Hosting the Next.js application.
+2. A persistent WebSocket server on the `/ws` endpoint.
+3. Long-running background services like the Tabata Timer and Spotify Polling.
 
-### Real-time Communication
+**CRITICAL**: This architecture is incompatible with serverless deployment platforms like Vercel or Netlify. It must be deployed on a traditional Node.js host (e.g., VPS, Docker container, or a dedicated server).
 
-All state updates flow through WebSocket:
+### Real-time Data Flow
 
-```
-Client → WebSocket → socketManager → Services (Tabata/Spotify)
-Services → broadcastState → WebSocket → All Connected Clients
-```
+All real-time state updates are managed by the server and pushed to clients via WebSocket.
 
-Message types:
-- `STATE_UPDATE` - Server → Client (HR data, timer state, Spotify status)
-- `COMMAND` - Client → Server (timer controls, music controls)
-- `HR_DATA` - Client → Server (from HRM devices or mock client)
+- **Client → Server**: Send commands (e.g., `TIMER_COMMAND`, `SPOTIFY_COMMAND`) or data (`HRM_INPUT`).
+- **Server → Clients**: Broadcasts `STATE_UPDATE` messages containing the latest HR data, timer status, and Spotify track information to all connected clients.
 
-### Services Architecture
+This ensures a single source of truth for application state, keeping all viewers and control panels perfectly in sync.
 
-**TabataTimer (`services/tabataTimer.ts`)**
-- State machine with WORK/REST/IDLE/COOLDOWN phases
-- Broadcasts `timerData` with time remaining, phase, cycle count
-- Emits `soundToPlay` for audio feedback
+### Key Services
 
-**SpotifyPolling (`services/spotifyPolling.ts`)**
-- Polls Spotify API every 3 seconds for "Now Playing"
-- Loads tokens from `logs/spotify_tokens.json` on startup
-- Broadcasts `spotifyData` with track name, artist, play state
-- Handles playback commands (play/pause/next/previous)
+- **`tabataTimer.ts`**: A state machine managing WORK/REST/IDLE phases. It broadcasts `timerData` and emits `soundToPlay` events for audio feedback.
+- **`spotifyPolling.ts`**: Polls the Spotify API every 3 seconds for the "Now Playing" status and handles playback commands. It loads tokens from `logs/spotify_tokens.json` for persistence.
+- **`spotifyTokenManager.ts`**: Automatically refreshes the Spotify access token every 55 minutes and saves it to the file system, ensuring the server can survive restarts without requiring re-authentication.
 
-**SpotifyTokenManager (`services/spotifyTokenManager.ts`)**
-- Auto-refreshes access token every 55 minutes
-- Persists tokens to file system for server restart persistence
-- Used by SpotifyPolling for token management
+## Development Guidelines
 
-### Pages
+1. **Run the custom server**: Always use `npm run dev` for development to ensure all background services are running.
+2. **State Management**: All global state is owned by the server. Client-side state should be ephemeral.
+3. **UI Components**: Use Material-UI (MUI) for all components.
+4. **Code Quality**: Run `npm run lint` before committing changes.
+5. **Visual Testing**: Update visual regression tests (`npm run test:visual:update`) after making intentional UI changes.
 
-- **`/`** - Main dashboard (passive viewer, receives WebSocket updates)
-- **`/client/control`** - Control panel (sends commands, shows Spotify controls)
-- **`/client/mock`** - Mock HRM client (sends fake HR data for testing)
-- **`/client/connect`** - Web Bluetooth HRM connector
-
-### Deployment
-
-**Development:**
-```bash
-npm run dev
-```
-
-**Production:**
-```bash
-npm run build
-npm run start  # Uses PM2
-```
-
-**Requirements:**
-- Node.js 18+
-- Port 3000 available
-- Traditional server (VPS, dedicated host, Docker)
-- NOT compatible with: Vercel, Netlify, AWS Lambda, Cloudflare Workers
-
-## Contributing
-
-This is a personal project for heart rate monitoring during workouts. PRs welcome for bug fixes or feature enhancements.
-
-### Development Guidelines
-
-1. Use `ts-node` for development (don't run compiled `dist/` files)
-2. All real-time features must use WebSocket (no polling from client)
-3. Use MUI for all components (no Tailwind or CSS Modules)
-4. Run `npm run lint` before committing
-5. Update visual regression tests if UI changes
-6. Run `npm run verify:spotify` after Spotify-related changes
-
-See [.github/copilot-instructions.md](.github/copilot-instructions.md) for AI agent guidelines.
+For more detailed guidelines, especially for AI agents, see [.github/copilot-instructions.md](.github/copilot-instructions.md).
 
 ## License
 

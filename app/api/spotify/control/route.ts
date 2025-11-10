@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const { command } = await req.json();
 
-  if (!["PLAY", "PAUSE", "NEXT", "PREVIOUS"].includes(command)) {
+  if (!["PLAY", "NEXT", "PREVIOUS"].includes(command)) {
     return NextResponse.json({ error: "Invalid command" }, { status: 400 });
   }
 
@@ -36,10 +36,6 @@ export async function POST(req: NextRequest) {
       case "PLAY":
         endpoint = "play";
         method = "PUT"; // Resumes playback
-        break;
-      case "PAUSE":
-        endpoint = "pause";
-        method = "PUT"; // Pauses playback
         break;
       case "NEXT":
         endpoint = "next";

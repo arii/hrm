@@ -4,38 +4,33 @@
  * to connect the physical heart rate device and begin streaming data.
  */
 "use client";
-import { Bluetooth, HeartBroken, LinkOff } from "@mui/icons-material";
+import { Bluetooth, LinkOff } from "@mui/icons-material";
 import {
-  Box,
   Button,
   Card,
-  CardContent,
   Container,
   Typography,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import React from "react";
-import HeartRateZones from "../../../components/HeartRateZones";
+import Link from "next/link";
 import useBluetoothHRM from "../../../hooks/useBluetoothHRM";
 import useWebSocket from "../../../hooks/useWebSocket";
-import { getHrZoneProps } from "../../../utils/visualization";
 
 const BluetoothClient: React.FC = () => {
   // Hook returns operations and status (names taken from current hook usage in repo)
   const { connectAndStream, deviceStatus, MAX_HR } = useBluetoothHRM();
-  const { hrmData } = useWebSocket();
+  useWebSocket();
 
   const isConnected =
     typeof deviceStatus === "string" && deviceStatus.startsWith("Connected");
   const isConnecting = deviceStatus === "Connecting";
 
   // Find the Bluetooth device's HR data (first connected device that's not the mock)
-  const bluetoothHrData =
-    hrmData.find(
-      (user) =>
-        user.name && user.name !== "Mock User" && user.name !== "New User"
-    ) || hrmData[0]; // Fallback to first user if no specific match
-  const currentHr = bluetoothHrData?.value || 0;
-  const zoneInfo = getHrZoneProps(currentHr, MAX_HR || 190);
+
+
+
 
   return (
     <Container
@@ -58,7 +53,15 @@ const BluetoothClient: React.FC = () => {
           color={isConnected ? "error" : "primary"}
           onClick={connectAndStream}
           disabled={isConnecting}
-          startIcon={isConnected ? <LinkOff aria-hidden="true" /> : <HeartBroken aria-hidden="true" />}
+          startIcon={
+            isConnecting ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : isConnected ? (
+              <LinkOff aria-hidden="true" />
+            ) : (
+              <Bluetooth aria-hidden="true" />
+            )
+          }
           className="mb-4 w-full"
         >
           {isConnecting
@@ -68,21 +71,28 @@ const BluetoothClient: React.FC = () => {
             : "Connect HRM via Bluetooth"}
         </Button>
 
-        <Box
-          role="status"
-          aria-live="polite"
-          className={`p-4 rounded-lg mt-4 ${
-            isConnected ? "bg-green-50" : "bg-red-50"
-          }`}
-        >
-          <Typography
-            variant="subtitle1"
-            className="font-semibold"
-            style={{ color: isConnected ? "#10b981" : "#f87171" }}
+        {isConnected && (
+          <Button
+            variant="contained"
+            size="large"
+            color="success"
+            component={Link}
+            href="/"
+            className="mt-4 w-full"
           >
+            Start My Workout Dashboard
+          </Button>
+        )}
+
+        {/* Connection Status Alert */}
+        <Alert
+          severity={isConnected ? "success" : "error"}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          <Typography variant="subtitle1" className="font-semibold">
             Status: {deviceStatus}
           </Typography>
-          <Typography variant="caption" display="block" color="textSecondary">
+          <Typography variant="caption" display="block">
             Ensure Bluetooth is enabled and the device is nearby.
           </Typography>
           {deviceStatus.includes("Failed") &&
@@ -90,8 +100,7 @@ const BluetoothClient: React.FC = () => {
               <Typography
                 variant="caption"
                 display="block"
-                className="mt-2"
-                style={{ color: "#dc2626" }}
+                sx={{ mt: 1 }}
               >
                 💡 Tip: Click{" "}
                 <a
@@ -114,51 +123,13 @@ const BluetoothClient: React.FC = () => {
           <Typography
             variant="caption"
             display="block"
-            color="textSecondary"
-            className="mt-2"
+            sx={{ mt: 1 }}
           >
             Max HR (reported / configured): {MAX_HR ?? "—"}
           </Typography>
-        </Box>
+        </Alert>
 
-        {/* Live Heart Rate Display */}
-        {isConnected && currentHr > 0 && (
-          <Card
-            aria-label={`Live Heart Rate: ${currentHr} BPM, Zone ${zoneInfo.zone} at ${Math.round(zoneInfo.percentage)}%`}
-            sx={{
-              my: 3,
-              background: `linear-gradient(135deg, ${zoneInfo.progressColor}B0 0%, ${zoneInfo.progressColor} 100%)`, // Added transparency to start color
-              color: "white",
-              textAlign: "center",
-            }}
-            elevation={4}
-          >
-            <CardContent sx={{ py: 3 }}>
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                Heart Rate
-              </Typography>
-              <Typography
-                variant="h1"
-                sx={{
-                  fontSize: { xs: "7rem", sm: "9rem", md: "11rem" },
-                  fontWeight: "bold",
-                  lineHeight: 1,
-                  my: 1,
-                }}
-              >
-                {currentHr} BPM
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                {/* Removed redundant BPM display */}
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                {zoneInfo.zone} • {Math.round(zoneInfo.percentage)}%
-              </Typography>
-            </CardContent>
-          </Card>
-        )}
 
-        {isConnected && MAX_HR && <HeartRateZones maxHr={MAX_HR} />}
 
         <Typography variant="caption" className="mt-4 block text-gray-500">
           Your data will be streamed to the unified server at 127.0.0.1:3000.

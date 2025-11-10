@@ -21,8 +21,8 @@ export const HR_ZONES = [
     name: "Warm-up",
     min: 0.5,
     color: "text-blue-400",
-    progressColor: "#60a5fa",
-    bgColor: "#2196F3",
+    progressColor: "#3b82f6", // Darker blue
+    bgColor: "#3b82f6", // Darker blue
   },
   {
     name: "Fat Burn",
@@ -35,8 +35,8 @@ export const HR_ZONES = [
     name: "Cardio",
     min: 0.7,
     color: "text-yellow-500",
-    progressColor: "#f59e0b",
-    bgColor: "#FFEB3B",
+    progressColor: "#d97706", // Darker orange/yellow
+    bgColor: "#d97706", // Darker orange/yellow
   },
   {
     name: "Peak",

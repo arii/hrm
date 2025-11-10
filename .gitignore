@@ -52,3 +52,4 @@ server.js
 /dist
 logs/*add
 ~/.config
+running_notes.md.backup
