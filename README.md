@@ -147,7 +147,7 @@ NEXTAUTH_SECRET=your_random_secret_here
 4. Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
 5. Restart the server and run `npm run verify:spotify` to test the connection.
 
-**For detailed setup instructions, see [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).**
+**For detailed setup instructions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).**
 
 ### Audio System
 
@@ -157,13 +157,12 @@ The app includes the original HRM audio feedback system:
 - **Volume control**: Synchronized with Spotify volume controls
 - **Audio files**: Located in `public/assets/` (beep-01a.wav, beep-07.wav)
 
-## Troubleshooting
+## Documentation
 
-- **Server Startup Issues**: See [BRINGUP_TROUBLESHOOTING.md](BRINGUP_TROUBLESHOOTING.md).
-- **Spotify Authentication/API Errors**: Run `npm run verify:spotify` or consult [SPOTIFY_TROUBLESHOOTING.md](SPOTIFY_TROUBLESHOOTING.md).
-- **WebSocket Connection Errors**: Check the browser console and server logs for connection refused or handshake errors. Ensure the server is running and accessible.
-- **Audio Not Playing**: Click anywhere on the dashboard to initialize audio (browser security requirement). Check volume controls on both dashboard and control panel.
-- **Production Deployment**: See [PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) for complete deployment instructions.
+- **[Design Guidelines](DESIGN_GUIDELINES.md)**: The design system, UI/UX improvements, and overall visual philosophy of the HRM application.
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)**: Solutions for common issues encountered during development and production.
+- **[Features](FEATURES.md)**: Plans for new features and improvements.
+- **[Development Notes](DEVELOPMENT.md)**: Notes and action items related to the ongoing development.
 
 ## Architecture Overview
 

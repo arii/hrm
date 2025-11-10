@@ -679,70 +679,6 @@ const ControlPanel = () => {
                   </IconButton>
                 </Stack>
 
-                {/* Device Selection - Compact */}
-                {availableDevices.length > 0 && (
-                  <FormControl size="small" fullWidth sx={{ mb: 2 }}>
-                    <Select
-                      value={selectedDeviceId}
-                      onChange={(e) => {
-                        const deviceId = e.target.value as string;
-                        setSelectedDeviceId(deviceId);
-                        if (deviceId)
-                          sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
-                      }}
-                      displayEmpty
-                      disabled={devicesLoading}
-                      sx={{
-                        color: "white",
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "grey.600",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "grey.400",
-                        },
-                        "& .MuiSvgIcon-root": { color: "grey.400" },
-                      }}
-                    >
-                      <MenuItem value="" disabled>
-                        Select Device
-                      </MenuItem>
-                      {availableDevices.map((device) => (
-                        <MenuItem key={device.id} value={device.id}>
-                          {device.name} {device.is_active && "✓"}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-
-                {devicesLoading && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "grey.400",
-                      display: "block",
-                      textAlign: "center",
-                      mb: 1,
-                    }}
-                  >
-                    Scanning devices...
-                  </Typography>
-                )}
-
-                {devicesError && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "#f87171",
-                      display: "block",
-                      textAlign: "center",
-                      mb: 1,
-                    }}
-                  >
-                    Error: {devicesError}
-                  </Typography>
-                )}
-
                 {/* Volume Control - Compact */}
                 <Stack direction="row" spacing={1} alignItems="center">
                   <VolumeUp sx={{ color: "grey.400", fontSize: 20 }} />
@@ -767,6 +703,17 @@ const ControlPanel = () => {
                     {volume}
                   </Typography>
                 </Stack>
+                <Box sx={{ textAlign: 'center', mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href="/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open Dashboard to Select Device
+                  </Button>
+                </Box>
               </>
             ) : (
               <Typography

@@ -39,7 +39,7 @@ export default function ConnectPage() {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
-  } = useBluetoothHRM(userName, userAge);
+  } = useBluetoothHRM();
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function ConnectPage() {
     
     // Auto-connect if we have saved device info and WebSocket is connected
     if (savedName && savedAge && savedDeviceId && connectionStatus === 'Connected') {
-      connectAndStream();
+      connectAndStream(savedName, savedAge);
     }
   }, [connectionStatus, connectAndStream]);
 
@@ -71,7 +71,7 @@ export default function ConnectPage() {
     // Save to cookies
     setCookie('hrm_user_name', userName.trim());
     setCookie('hrm_user_age', userAge.trim());
-    await connectAndStream();
+    await connectAndStream(userName, userAge);
   };
 
   // Find current user's heart rate data from WebSocket
