@@ -86,7 +86,6 @@ const Dashboard = () => {
     isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback();
 
-  const isTimerActive = timerData.currentPhase !== "IDLE";
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);

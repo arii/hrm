@@ -83,33 +83,35 @@ const TimerDisplay = ({
       }}
     >
       {/* Mode Indicator - Rotated on left side */}
-      <Box
-        sx={{
-          position: "absolute",
-          left: 16,
-          top: "50%",
-          transform: "translateY(-50%) rotate(-90deg)",
-          transformOrigin: "center",
-          zIndex: 1,
-        }}
-      >
-        <Typography
-          variant="body2"
+      {phase !== "IDLE" && (
+        <Box
           sx={{
-            color: "#fff",
-            fontWeight: 700,
-            letterSpacing: 2,
-            whiteSpace: "nowrap",
-            fontSize: "0.9rem",
-            backgroundColor: "rgba(255,255,255,0.1)",
-            px: 1,
-            py: 0.5,
-            borderRadius: 1,
+            position: "absolute",
+            left: 16,
+            top: "50%",
+            transform: "translateY(-50%) rotate(-90deg)",
+            transformOrigin: "center",
+            zIndex: 1,
           }}
         >
-          {mode === "STOPWATCH" ? "STOPWATCH" : "TABATA"}
-        </Typography>
-      </Box>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#fff",
+              fontWeight: 700,
+              letterSpacing: 2,
+              whiteSpace: "nowrap",
+              fontSize: "0.9rem",
+              backgroundColor: "rgba(255,255,255,0.1)",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            {mode === "STOPWATCH" ? "STOPWATCH" : "TABATA"}
+          </Typography>
+        </Box>
+      )}
 
       {/* Tabata Durations - Rotated on right side */}
       {mode === "TABATA" && (
@@ -142,15 +144,17 @@ const TimerDisplay = ({
         </Box>
       )}
 
-      <CardContent sx={{ 
-        p: { xs: 2, md: 3 }, 
-        textAlign: "center",
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
+      <CardContent
+        sx={{
+          p: { xs: 2, md: 3 },
+          textAlign: "center",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== "IDLE" && phase !== "RUNNING" && (
           <Typography

@@ -31,10 +31,27 @@ const parseHeartRate = (value: DataView): number => {
   return heartRate;
 };
 
+// Cookie helpers for device persistence
+const setCookie = (name: string, value: string, days = 365) => {
+  if (typeof document !== 'undefined') {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+  }
+};
+
+const getCookie = (name: string): string => {
+  if (typeof document === 'undefined') return '';
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=');
+    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+  }, '');
+};
+
 const useBluetoothHRM = (userName?: string, userAge?: string) => {
   // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket();
   const [deviceStatus, setDeviceStatus] = useState("Disconnected");
+  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null);
 
   const connectAndStream = useCallback(async () => {
     if (deviceStatus.startsWith("Connected")) return;
@@ -47,10 +64,27 @@ const useBluetoothHRM = (userName?: string, userAge?: string) => {
     try {
       setDeviceStatus("Connecting");
 
-      // 1. Request the device with the Heart Rate Service filter
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [HR_SERVICE_UUID] }],
-      });
+      // 1. Try to reconnect to saved device first, otherwise request new device
+      let device = savedDevice;
+      if (!device) {
+        const savedDeviceId = getCookie('hrm_device_id');
+        if (savedDeviceId && navigator.bluetooth.getDevices) {
+          // Try to get previously paired device
+          const devices = await navigator.bluetooth.getDevices();
+          device = devices.find(d => d.id === savedDeviceId) || null;
+        }
+        
+        if (!device) {
+          // Request new device
+          device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [HR_SERVICE_UUID] }],
+          });
+          // Save device info
+          setCookie('hrm_device_id', device.id);
+          setSavedDevice(device);
+        }
+      }
+      
       setDeviceStatus(`Connected to: ${device.name}`);
 
       // 2. Connect to GATT server
@@ -90,6 +124,7 @@ const useBluetoothHRM = (userName?: string, userAge?: string) => {
       // Handle disconnection gracefully
       device.addEventListener("gattserverdisconnected", () => {
         setDeviceStatus("Disconnected (Server Lost)");
+        setSavedDevice(null);
       });
     } catch (error: unknown) {
       console.error("Bluetooth connection failed:", error);

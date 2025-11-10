@@ -14,6 +14,10 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - ✅ Added volume synchronization between dashboard and control panel
 - ✅ Fixed navigation labels and improved mobile UI consistency
 - ✅ Enhanced production deployment configuration
+- ✅ Removed RUNNING phase display from timer (shows in horizontal panel)
+- ✅ Added proper page titles for all client pages
+- ✅ Integrated original favicon from production server
+- ✅ Secured secrets by removing from source code
 
 ## Features
 

@@ -14,7 +14,7 @@ import {
 
 // --- Tabata Constants ---
 const DEFAULT_CYCLES = 8;
-const DEFAULT_WORK_DURATION = 30; // seconds
+const DEFAULT_WORK_DURATION = 20; // seconds
 const DEFAULT_REST_DURATION = 10; // seconds
 const COOLDOWN_DURATION = 5; // seconds
 const START_COUNTDOWN_DURATION = 5; // seconds (5-second countdown before WORK or RUNNING)
