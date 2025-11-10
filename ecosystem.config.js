@@ -1,39 +1,18 @@
-/**
- * PM2 ecosystem file for HRM
- * - Defines development and production process configs.
- * - Uses the local ts-node interpreter so TypeScript files can be run directly.
- */
-const config = {
+module.exports = {
   apps: [
     {
-      name: "hrm-server",
-      script: "dist/server.js",
-      interpreter: "node",
-      interpreter_args: "",
-      watch: false,
+      name: 'hrm-server',
+      script: 'dist/server.js',
       instances: 1,
       autorestart: true,
-      max_restarts: 10,
-      restart_delay: 3000,
-      // Log files (relative to repository root)
-      error_file: "./logs/err.log",
-      out_file: "./logs/out.log",
-      log_file: "./logs/combined.log",
-      merge_logs: true,
-      time: true,
+      watch: false,
+      max_memory_restart: '1G',
       env: {
-        NODE_ENV: "development",
-        HOST: "127.0.0.1",
-        PORT: 3000,
+        NODE_ENV: 'development',
       },
       env_production: {
-        NODE_ENV: "production",
-        HOST: "0.0.0.0",
-        PORT: 3000,
+        NODE_ENV: 'production',
       },
-      env_file: ".env.production",
     },
   ],
 };
-
-export default config;
