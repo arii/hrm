@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ['onasafari.ddns.net'],
   async redirects() {
     return [
       {

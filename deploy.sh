@@ -45,7 +45,7 @@ pm2 delete hrm-server || true
 
 # Start with production environment
 echo "▶️ Starting HRM server with PM2..."
-pm2 start dist/server.js --name hrm-server --env production
+NODE_ENV=production pm2 start dist/server.js --name hrm-server
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."

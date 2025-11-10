@@ -22,7 +22,7 @@ import { initSocketManager } from "./utils/socketManager.js";
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000; // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname = process.env.HOST || "127.0.0.1"; // CRITICAL: Bind explicitly to localhost IP for consistency
+const hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.env.HOST || "127.0.0.1"); // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev, hostname, port });
