@@ -33,6 +33,7 @@ interface DualModeTimerState {
   workDuration: number; // Configurable work duration
   restDuration: number; // Configurable rest duration
   soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
+  soundEventId: number;
 }
 
 class TabataTimer {
@@ -52,11 +53,48 @@ class TabataTimer {
     totalCycles: DEFAULT_CYCLES,
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
+    soundEventId: 0,
   };
+
+  private countdownMarker: string | null = null;
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState;
     console.log("Dual-Mode Timer Service Initialized.");
+  }
+
+  private queueSound(sound: "WORK" | "REST" | "COUNTDOWN") {
+    this.state.soundToPlay = sound;
+    this.state.soundEventId += 1;
+    console.log(
+      `[TabataTimer] Queued sound cue: ${sound} (#${this.state.soundEventId})`
+    );
+    // Broadcast immediately so clients can play sound
+    this.broadcastState({ timerData: this.getState() });
+  }
+
+  private resetCountdownMarker() {
+    this.countdownMarker = null;
+  }
+
+  private handleCountdownCue() {
+    const phase = this.state.currentPhase;
+    if (phase === "IDLE" || phase === "RUNNING" || phase === "COOLDOWN") {
+      return;
+    }
+
+    const remaining = this.state.timeRemaining;
+    if (remaining <= 0) {
+      return;
+    }
+
+    // Build marker per phase + cycle + second to avoid replaying countdown in same second
+    const marker = `${phase}-${this.state.cycle}-${remaining}`;
+    // Play short beep for countdown during PREPARE, WORK, and REST phases when 1-3 seconds remain
+    if (remaining >= 1 && remaining <= 3 && this.countdownMarker !== marker) {
+      this.queueSound("COUNTDOWN");
+      this.countdownMarker = marker;
+    }
   }
 
   // Adapt getState to return the expected TimerData structure for the front-end
@@ -72,6 +110,7 @@ class TabataTimer {
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,
       soundToPlay: this.state.soundToPlay,
+      soundEventId: this.state.soundEventId,
     };
   }
 
@@ -91,17 +130,13 @@ class TabataTimer {
 
     // This applies to TABATA and PREPARE modes (which count down)
     if (this.state.mode === "TABATA" || this.state.currentPhase === "PREPARE") {
-      this.state.timeRemaining -= 1;
+      const nextRemaining = Math.max(0, this.state.timeRemaining - 1);
+      this.state.timeRemaining = nextRemaining;
 
-      if (this.state.timeRemaining <= 0) {
+      if (nextRemaining <= 0) {
         this.transitionPhase();
-      }
-
-      // Sound cues for countdown
-      if (this.state.timeRemaining <= 3 && this.state.timeRemaining > 0) {
-        this.state.soundToPlay = "COUNTDOWN";
       } else {
-        this.state.soundToPlay = undefined;
+        this.handleCountdownCue();
       }
     }
 
@@ -120,6 +155,7 @@ class TabataTimer {
       this.state.currentPhase = "PREPARE";
       this.state.timeRemaining = START_COUNTDOWN_DURATION;
       this.state.cycle = 0; // Pre-start
+      this.resetCountdownMarker();
       console.log(
         `Starting universal PREPARE countdown for ${this.state.mode} mode.`
       );
@@ -162,7 +198,9 @@ class TabataTimer {
       timeElapsed: 0,
       timeRemaining: this.state.mode === "TABATA" ? this.state.workDuration : 0,
       cycle: 0,
+      soundToPlay: undefined,
     };
+    this.resetCountdownMarker();
     this.runningTotal = 0;
     this.startTime = null;
     this.interval = null;
@@ -208,10 +246,10 @@ class TabataTimer {
   // --- Universal Transition Logic ---
 
   private transitionPhase() {
-    this.state.soundToPlay = undefined; // Reset sound on phase transition
-
+    this.resetCountdownMarker();
     switch (this.state.currentPhase) {
       case "PREPARE": // Transition from 5s countdown
+        this.queueSound("WORK"); // Long beep when starting
         if (this.state.mode === "STOPWATCH") {
           // Start Stopwatch counting up
           this.state.currentPhase = "RUNNING";
@@ -224,16 +262,15 @@ class TabataTimer {
           this.state.cycle = 1;
           this.state.currentPhase = "WORK";
           this.state.timeRemaining = this.state.workDuration;
-          this.state.soundToPlay = "WORK";
           console.log("Transition from PREPARE to TABATA WORK (Cycle 1).");
         }
         break;
 
       case "WORK":
+        this.queueSound("REST"); // Long beep when transitioning to rest
         if (this.state.cycle < this.state.totalCycles) {
           this.state.currentPhase = "REST";
           this.state.timeRemaining = this.state.restDuration;
-          this.state.soundToPlay = "REST";
           console.log(`Transition to REST for cycle ${this.state.cycle}`);
         } else {
           this.state.currentPhase = "COOLDOWN";
@@ -244,10 +281,10 @@ class TabataTimer {
         break;
 
       case "REST":
+        this.queueSound("WORK"); // Long beep when transitioning to work
         this.state.cycle += 1;
         this.state.currentPhase = "WORK";
         this.state.timeRemaining = this.state.workDuration;
-        this.state.soundToPlay = "WORK";
         console.log(`Transition to WORK for cycle ${this.state.cycle}`);
         break;
 
@@ -285,6 +322,8 @@ class TabataTimer {
     this.state.timeRemaining = mode === "TABATA" ? this.state.workDuration : 0;
     this.state.timeElapsed = 0;
     this.state.cycle = 0;
+    this.state.soundToPlay = undefined;
+    this.resetCountdownMarker();
     this.broadcastState({ timerData: this.getState() });
     console.log(`Mode set to ${mode}.`);
   }

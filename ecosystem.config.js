@@ -32,7 +32,12 @@ module.exports = {
         NODE_ENV: "production",
         HOST: "0.0.0.0",
         PORT: 3000,
+        script: "dist/server.js",
+        interpreter: "node",
+        interpreter_args: "",
+        watch: false,
       },
+      env_file: ".env.production",
     },
   ],
 };

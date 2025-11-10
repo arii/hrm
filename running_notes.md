@@ -1007,3 +1007,7 @@ export type ClientCommandMessage =
     | SpotifyCommandMessage;
 
 ```
+Note the card is shown but hard to see /home/ari/.config/Code/User/workspaceStorage/vscode-chat-images/image-1762758971592.png"
+
+
+I also want you re-use the sounds from the original hrm code.  I made a copy of the code for easy access here: /home/ari/product_hrm and the specific audio files are  located in /home/ari/product_hrm/public/assets

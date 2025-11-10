@@ -1,0 +1,52 @@
+#!/bin/bash
+# Production deployment script for HRM Next.js app
+
+set -e
+
+echo "🚀 Starting HRM production deployment..."
+
+# Check for .env.production
+if [ ! -f ".env.production" ]; then
+    echo "❌ Error: .env.production file not found!"
+    echo "Please create .env.production with:"
+    echo "  NEXTAUTH_URL=https://onasafari.ddns.net"
+    echo "  NEXTAUTH_SECRET=your-secret-here"
+    echo "  SPOTIFY_CLIENT_ID=your-client-id"
+    echo "  SPOTIFY_CLIENT_SECRET=your-client-secret"
+    exit 1
+fi
+
+# Check if nginx is configured
+if ! command -v nginx &> /dev/null; then
+    echo "⚠️  Warning: nginx not found. Make sure it's installed and configured."
+else
+    if ! nginx -t &> /dev/null; then
+        echo "❌ Error: nginx configuration test failed!"
+        echo "Please check your nginx configuration."
+        exit 1
+    fi
+fi
+
+# Create logs directory
+echo "📁 Creating logs directory..."
+mkdir -p logs
+
+# Build the application
+echo "📦 Building Next.js application..."
+npm run build
+
+# Stop and delete existing PM2 processes
+echo "🛑 Stopping existing PM2 processes..."
+pm2 delete hrm-server || true
+
+# Start with production environment
+echo "▶️ Starting HRM server with PM2..."
+pm2 start ecosystem.config.js --env production
+
+# Save PM2 configuration
+echo "💾 Saving PM2 configuration..."
+pm2 save
+
+echo "✅ Deployment complete!"
+echo "📊 Check status with: pm2 status"
+echo "📝 View logs with: pm2 logs hrm-server"

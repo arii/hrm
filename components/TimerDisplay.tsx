@@ -10,6 +10,8 @@ export interface TimerDisplayProps {
   cycle: number;
   totalCycles: number;
   mode: TimerMode;
+  workDuration?: number;
+  restDuration?: number;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -21,6 +23,8 @@ const TimerDisplay = ({
   cycle,
   totalCycles,
   mode,
+  workDuration = 20,
+  restDuration = 10,
 }: TimerDisplayProps) => {
   // Determine what to display based on mode and phase
   let displayTime: string;
@@ -73,14 +77,80 @@ const TimerDisplay = ({
         color: phaseColor, // Dynamic color based on phase
         height: "100%",
         display: "flex",
+        borderRadius: 2,
+        border: "2px solid #1a1a1a", // Subtle border for definition
+        position: "relative",
+      }}
+    >
+      {/* Mode Indicator - Rotated on left side */}
+      <Box
+        sx={{
+          position: "absolute",
+          left: 16,
+          top: "50%",
+          transform: "translateY(-50%) rotate(-90deg)",
+          transformOrigin: "center",
+          zIndex: 1,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{
+            color: "#fff",
+            fontWeight: 700,
+            letterSpacing: 2,
+            whiteSpace: "nowrap",
+            fontSize: "0.9rem",
+            backgroundColor: "rgba(255,255,255,0.1)",
+            px: 1,
+            py: 0.5,
+            borderRadius: 1,
+          }}
+        >
+          {mode === "STOPWATCH" ? "STOPWATCH" : "TABATA"}
+        </Typography>
+      </Box>
+
+      {/* Tabata Durations - Rotated on right side */}
+      {mode === "TABATA" && (
+        <Box
+          sx={{
+            position: "absolute",
+            right: 16,
+            top: "50%",
+            transform: "translateY(-50%) rotate(90deg)",
+            transformOrigin: "center",
+            zIndex: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#fff",
+              fontWeight: 700,
+              letterSpacing: 1,
+              whiteSpace: "nowrap",
+              fontSize: "0.8rem",
+              backgroundColor: "rgba(255,255,255,0.1)",
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            WORK:{workDuration}s REST:{restDuration}s
+          </Typography>
+        </Box>
+      )}
+
+      <CardContent sx={{ 
+        p: { xs: 2, md: 3 }, 
+        textAlign: "center",
+        flex: 1,
+        display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 2,
-        border: "2px solid #1a1a1a", // Subtle border for definition
-      }}
-    >
-      <CardContent sx={{ p: { xs: 2, md: 3 }, textAlign: "center" }}>
+      }}>
         {/* Phase Label */}
         {phase !== "IDLE" && (
           <Typography
@@ -95,18 +165,6 @@ const TimerDisplay = ({
             {phaseLabel}
           </Typography>
         )}
-
-        {/* Mode Indicator (small text) */}
-        <Typography
-          variant="caption"
-          sx={{
-            mb: 2,
-            color: "#666",
-            display: "block",
-          }}
-        >
-          {mode === "STOPWATCH" ? "Stopwatch Mode" : "Tabata Mode"}
-        </Typography>
 
         {/* Minimal phase indicator - visual dot */}
         {phase !== "IDLE" && (
@@ -142,7 +200,7 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: "var(--font-roboto-mono), monospace",
-            fontSize: { xs: "6rem", sm: "8rem", md: "11rem" },
+            fontSize: { xs: "8rem", sm: "12rem", md: "16rem" },
             fontWeight: 800,
             letterSpacing: "0.12rem",
             lineHeight: 1,

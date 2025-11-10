@@ -25,7 +25,6 @@ import {
   Container,
   FormControl,
   IconButton,
-  InputLabel,
   MenuItem,
   Select,
   Slider,
@@ -34,6 +33,9 @@ import {
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useVolumePreference, {
+  clampVolume,
+} from "../../../hooks/useVolumePreference";
 import useWebSocket from "../../../hooks/useWebSocket";
 import {
   SpotifyCommandMessage,
@@ -59,7 +61,8 @@ const ControlPanel = () => {
   // Timer configuration state (only used for Tabata mode UI - not sent to server anymore)
   const [workTime, setWorkTime] = useState(() => timerData.workDuration || 20);
   const [restTime, setRestTime] = useState(() => timerData.restDuration || 10);
-  const [volume, setVolume] = useState(50);
+  const { volume, setVolume } = useVolumePreference(70);
+  const lastSentVolumeRef = useRef<string | null>(null);
 
   // Input validation states
   const lastConfigRef = useRef({
@@ -79,12 +82,6 @@ const ControlPanel = () => {
     spotifyData.trackName !== "" &&
     spotifyData.trackName !== "No Track Playing";
 
-  // Check if we have active playback
-  const hasActivePlayback =
-    spotifyData.trackName !== "Awaiting Login..." &&
-    spotifyData.trackName !== "No Track Playing" &&
-    spotifyData.trackName !== "";
-
   // Fetch available Spotify devices
   useEffect(() => {
     if (hasSpotifyData) {
@@ -99,18 +96,6 @@ const ControlPanel = () => {
           const devices = await response.json();
           console.log("[Control Panel] Fetched devices:", devices);
           setAvailableDevices(Array.isArray(devices) ? devices : []);
-
-          // Auto-select the active device if one exists
-          const activeDevice =
-            Array.isArray(devices) &&
-            devices.find((d: SpotifyDevice) => d.is_active);
-          if (activeDevice && !selectedDeviceId) {
-            setSelectedDeviceId(activeDevice.id);
-            console.log(
-              "[Control Panel] Auto-selected active device:",
-              activeDevice.name
-            );
-          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to load devices.";
@@ -124,8 +109,33 @@ const ControlPanel = () => {
     } else {
       setAvailableDevices([]);
       setSelectedDeviceId("");
+      setDevicesLoading(false);
+      setDevicesError(null);
     }
-  }, [hasSpotifyData, selectedDeviceId]);
+  }, [hasSpotifyData]);
+
+  useEffect(() => {
+    if (availableDevices.length === 0) {
+      if (selectedDeviceId !== "") {
+        setSelectedDeviceId("");
+      }
+      return;
+    }
+
+    const activeDevice = availableDevices.find((device) => device.is_active);
+
+    if (!selectedDeviceId && activeDevice) {
+      setSelectedDeviceId(activeDevice.id);
+      return;
+    }
+
+    if (
+      selectedDeviceId &&
+      !availableDevices.some((device) => device.id === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(activeDevice?.id ?? "");
+    }
+  }, [availableDevices, selectedDeviceId]);
 
   useEffect(() => {
     if (
@@ -151,16 +161,62 @@ const ControlPanel = () => {
     }
   }, [timerData.restDuration]);
 
+  const resolveTargetDeviceId = useCallback(() => {
+    if (selectedDeviceId) {
+      return selectedDeviceId;
+    }
+    const activeDevice = availableDevices.find((device) => device.is_active);
+    return activeDevice?.id;
+  }, [availableDevices, selectedDeviceId]);
+
+  const sendSpotifyCommand = useCallback(
+    (
+      command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
+      overriddenDeviceId?: string
+    ) => {
+      const targetDeviceId =
+        overriddenDeviceId !== undefined
+          ? overriddenDeviceId
+          : resolveTargetDeviceId();
+      const message: SpotifyCommandMessage = {
+        type: "SPOTIFY_COMMAND",
+        command,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      };
+      sendData(message);
+    },
+    [resolveTargetDeviceId, sendData]
+  );
+
   // --- Timer Commands ---
-  // --- Timer Commands ---
-  const sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
-    const message: TimerCommandMessage = {
-      type: "TIMER_COMMAND",
-      command,
-    };
-    sendData(message);
-    console.log("[Control Panel] Sent timer command:", message);
-  };
+  const sendTimerCommand = useCallback(
+    (command: "START" | "PAUSE" | "STOP") => {
+      const message: TimerCommandMessage = {
+        type: "TIMER_COMMAND",
+        command,
+      };
+      sendData(message);
+      console.log("[Control Panel] Sent timer command:", message);
+
+      if (timerData.mode === "TABATA" || timerData.mode === "STOPWATCH") {
+        if (command === "START") {
+          const targetDeviceId = resolveTargetDeviceId();
+          if (targetDeviceId) {
+            sendSpotifyCommand("TRANSFER_PLAYBACK", targetDeviceId);
+            // Give Spotify a moment to switch devices before issuing play
+            window.setTimeout(() => {
+              sendSpotifyCommand("PLAY", targetDeviceId);
+            }, 500);
+          } else {
+            sendSpotifyCommand("PLAY");
+          }
+        } else if (command === "PAUSE" || command === "STOP") {
+          sendSpotifyCommand("PAUSE");
+        }
+      }
+    },
+    [resolveTargetDeviceId, sendData, sendSpotifyCommand, timerData.mode]
+  );
 
   // --- Mode Switching ---
   const sendModeCommand = (mode: "TABATA" | "STOPWATCH") => {
@@ -206,18 +262,34 @@ const ControlPanel = () => {
     sendConfigMessage(normalized);
   }, [connectionStatus, workTime, restTime, sendConfigMessage]);
 
-  // --- Spotify Commands ---
-  const sendSpotifyCommand = (
-    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
-    deviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: "SPOTIFY_COMMAND",
-      command,
-      deviceId,
-    };
-    sendData(message);
-  };
+  const sendVolumeCommand = useCallback(
+    (value: number) => {
+      if (connectionStatus !== "Connected") return;
+      const sanitized = clampVolume(value);
+      const targetDeviceId = resolveTargetDeviceId();
+      const messageKey = `${targetDeviceId ?? "default"}:${sanitized}`;
+      if (lastSentVolumeRef.current === messageKey) return;
+      const message: SpotifyCommandMessage = {
+        type: "SPOTIFY_COMMAND",
+        command: "SET_VOLUME",
+        volume: sanitized,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      };
+      sendData(message);
+      lastSentVolumeRef.current = messageKey;
+    },
+    [connectionStatus, resolveTargetDeviceId, sendData]
+  );
+
+  useEffect(() => {
+    sendVolumeCommand(volume);
+  }, [volume, sendVolumeCommand]);
+
+  useEffect(() => {
+    if (connectionStatus !== "Connected") {
+      lastSentVolumeRef.current = null;
+    }
+  }, [connectionStatus]);
 
   // Timer preset configurations
   const _applyPreset = (
@@ -327,7 +399,10 @@ const ControlPanel = () => {
               {timerData.isRunning ? "Timer Running" : "Timer Stopped"}
             </Typography>
             <Typography variant="body2" sx={{ color: "#EF4444" }}>
-              {timerData.currentPhase} {timerData.mode === "TABATA" && timerData.cycle > 0 && `• Cycle ${timerData.cycle}/${timerData.totalCycles}`}
+              {timerData.currentPhase}{" "}
+              {timerData.mode === "TABATA" &&
+                timerData.cycle > 0 &&
+                `• Cycle ${timerData.cycle}/${timerData.totalCycles}`}
             </Typography>
           </Box>
 
@@ -523,12 +598,28 @@ const ControlPanel = () => {
       </Card>
 
       {/* 2. Spotify Controls */}
-      <Card sx={{ boxShadow: 3, mb: 3, backgroundColor: "grey.800", color: "white" }}>
+      <Card
+        sx={{
+          boxShadow: 3,
+          mb: 3,
+          backgroundColor: "grey.800",
+          color: "white",
+        }}
+      >
         <CardContent sx={{ p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: "#1DB954", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 2,
+              color: "#1DB954",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <MusicNote sx={{ mr: 1 }} /> Spotify
           </Typography>
-          
+
           {hasSpotifyData ? (
             <>
               <Box sx={{ textAlign: "center", mb: 2 }}>
@@ -539,23 +630,33 @@ const ControlPanel = () => {
                   {spotifyData.artist}
                 </Typography>
               </Box>
-              
+
               {/* Playback Controls */}
-              <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="center"
+                sx={{ mb: 2 }}
+              >
                 <IconButton
                   onClick={() => sendSpotifyCommand("PREVIOUS")}
                   disabled={connectionStatus !== "Connected"}
-                  sx={{ color: "white", "&:hover": { backgroundColor: "grey.700" } }}
+                  sx={{
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.700" },
+                  }}
                 >
                   <SkipPrevious />
                 </IconButton>
                 <IconButton
-                  onClick={() => sendSpotifyCommand(spotifyData.isPlaying ? "PAUSE" : "PLAY")}
+                  onClick={() =>
+                    sendSpotifyCommand(spotifyData.isPlaying ? "PAUSE" : "PLAY")
+                  }
                   disabled={connectionStatus !== "Connected"}
-                  sx={{ 
-                    color: "white", 
+                  sx={{
+                    color: "white",
                     backgroundColor: "#1DB954",
-                    "&:hover": { backgroundColor: "#169944" }
+                    "&:hover": { backgroundColor: "#169944" },
                   }}
                 >
                   {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
@@ -563,7 +664,10 @@ const ControlPanel = () => {
                 <IconButton
                   onClick={() => sendSpotifyCommand("NEXT")}
                   disabled={connectionStatus !== "Connected"}
-                  sx={{ color: "white", "&:hover": { backgroundColor: "grey.700" } }}
+                  sx={{
+                    color: "white",
+                    "&:hover": { backgroundColor: "grey.700" },
+                  }}
                 >
                   <SkipNext />
                 </IconButton>
@@ -577,17 +681,25 @@ const ControlPanel = () => {
                     onChange={(e) => {
                       const deviceId = e.target.value as string;
                       setSelectedDeviceId(deviceId);
-                      if (deviceId) sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
+                      if (deviceId)
+                        sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
                     }}
                     displayEmpty
+                    disabled={devicesLoading}
                     sx={{
                       color: "white",
-                      "& .MuiOutlinedInput-notchedOutline": { borderColor: "grey.600" },
-                      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "grey.400" },
-                      "& .MuiSvgIcon-root": { color: "grey.400" }
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "grey.600",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "grey.400",
+                      },
+                      "& .MuiSvgIcon-root": { color: "grey.400" },
                     }}
                   >
-                    <MenuItem value="" disabled>Select Device</MenuItem>
+                    <MenuItem value="" disabled>
+                      Select Device
+                    </MenuItem>
                     {availableDevices.map((device) => (
                       <MenuItem key={device.id} value={device.id}>
                         {device.name} {device.is_active && "✓"}
@@ -597,35 +709,64 @@ const ControlPanel = () => {
                 </FormControl>
               )}
 
+              {devicesLoading && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "grey.400",
+                    display: "block",
+                    textAlign: "center",
+                    mb: 1,
+                  }}
+                >
+                  Scanning devices...
+                </Typography>
+              )}
+
+              {devicesError && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "#f87171",
+                    display: "block",
+                    textAlign: "center",
+                    mb: 1,
+                  }}
+                >
+                  Error: {devicesError}
+                </Typography>
+              )}
+
               {/* Volume Control - Compact */}
               <Stack direction="row" spacing={1} alignItems="center">
                 <VolumeUp sx={{ color: "grey.400", fontSize: 20 }} />
                 <Slider
                   value={volume}
                   onChange={(_, val) => setVolume(val as number)}
-                  onChangeCommitted={(_, val) => {
-                    const message: SpotifyCommandMessage = {
-                      type: "SPOTIFY_COMMAND",
-                      command: "SET_VOLUME",
-                      volume: val as number,
-                    };
-                    sendData(message);
-                  }}
+                  onChangeCommitted={(_, val) =>
+                    sendVolumeCommand(val as number)
+                  }
                   min={0}
                   max={100}
                   size="small"
                   sx={{
                     color: "#1DB954",
-                    "& .MuiSlider-thumb": { backgroundColor: "white" }
+                    "& .MuiSlider-thumb": { backgroundColor: "white" },
                   }}
                 />
-                <Typography variant="caption" sx={{ color: "grey.400", minWidth: "3ch" }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "grey.400", minWidth: "3ch" }}
+                >
                   {volume}
                 </Typography>
               </Stack>
             </>
           ) : (
-            <Typography variant="body2" sx={{ color: "grey.400", textAlign: "center" }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "grey.400", textAlign: "center" }}
+            >
               Login to Spotify on the main dashboard
             </Typography>
           )}

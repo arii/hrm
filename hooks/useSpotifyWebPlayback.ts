@@ -16,6 +16,7 @@ interface SpotifyErrorEvent {
 interface SpotifyPlayer {
   connect: () => Promise<boolean>;
   disconnect: () => void;
+  setVolume: (volume: number) => Promise<void>;
   addListener(
     event: "ready" | "not_ready",
     callback: (data: SpotifyDeviceEvent) => void

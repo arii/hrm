@@ -7,33 +7,48 @@
 import { Bluetooth, LinkOff } from "@mui/icons-material";
 import {
   Alert,
+  Box,
   Button,
   Card,
   CircularProgress,
   Container,
+  TextField,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
-import React from "react";
+
+import React, { useState } from "react";
 import useBluetoothHRM from "../../../hooks/useBluetoothHRM";
 import useWebSocket from "../../../hooks/useWebSocket";
 import { getHrZoneProps } from "../../../utils/visualization";
+import HrTile from "../../../components/HrTile";
 
 const BluetoothClient: React.FC = () => {
+  // User info state
+  const [userName, setUserName] = useState("");
+  const [userAge, setUserAge] = useState("");
+  
   // Hook returns operations and status (names taken from current hook usage in repo)
-  const { connectAndStream, deviceStatus, MAX_HR } = useBluetoothHRM();
-  const { hrmData } = useWebSocket();
+  const { connectAndStream, deviceStatus, MAX_HR } = useBluetoothHRM(userName, userAge);
+  const { hrmData, connectionStatus, sendData: _sendData } = useWebSocket();
+  
+
 
   const isConnected =
     typeof deviceStatus === "string" && deviceStatus.startsWith("Connected");
   const isConnecting = deviceStatus === "Connecting";
 
-  // Get the current user's heart rate data from the most recent active connection
-  const myHrmData = hrmData.find((data) => data.value > 0) || hrmData[0];
+  // Get the current user's heart rate data from any active source
+  const activeHrmData = hrmData.filter(data => data.value > 0);
+  const myHrmData = activeHrmData.length > 0 ? activeHrmData[0] : hrmData[0];
   const currentBpm = myHrmData?.value || 0;
-  const maxHr = myHrmData?.maxHr || MAX_HR;
+  // Calculate max HR based on user's age if available, otherwise use default
+  const ageNumber = parseInt(userAge) || myHrmData?.age || 30;
+  const calculatedMaxHr = ageNumber ? 220 - ageNumber : MAX_HR;
+  const maxHr = myHrmData?.maxHr || calculatedMaxHr;
   const hrZone = getHrZoneProps(currentBpm, maxHr);
   const percentMax = hrZone.percentage;
+  
+
 
   return (
     <Container
@@ -53,6 +68,28 @@ const BluetoothClient: React.FC = () => {
           Connect your Bluetooth Heart Rate Monitor to start streaming live data
           to the dashboard.
         </Typography>
+
+        {/* User Info Inputs */}
+        <Box sx={{ mb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          <TextField
+            label="Your Name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            variant="outlined"
+            size="small"
+            placeholder="Enter your name"
+          />
+          <TextField
+            label="Age"
+            type="number"
+            value={userAge}
+            onChange={(e) => setUserAge(e.target.value)}
+            variant="outlined"
+            size="small"
+            placeholder="Enter your age"
+            inputProps={{ min: 1, max: 120 }}
+          />
+        </Box>
 
         <Button
           variant="contained"
@@ -78,32 +115,16 @@ const BluetoothClient: React.FC = () => {
             : "Connect HRM via Bluetooth"}
         </Button>
 
-        {/* Heart Rate Display - shows when connected and streaming */}
-        {isConnected && currentBpm > 0 && (
-          <Card
-            sx={{
-              mt: 3,
-              mb: 2,
-              p: 3,
-              backgroundColor: hrZone.backgroundColor,
-              color: "white",
-              textAlign: "center",
-            }}
-          >
-            <Typography
-              variant="h3"
-              component="div"
-              sx={{ fontWeight: "bold", mb: 1 }}
-            >
-              {currentBpm} BPM
-            </Typography>
-            <Typography variant="h5" component="div" sx={{ mb: 1 }}>
-              {percentMax}%
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              {hrZone.zone}
-            </Typography>
-          </Card>
+        {/* Heart Rate Display - shows when there's data */}
+        {currentBpm > 0 && (
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <HrTile
+              name={userName || myHrmData?.name || "Heart Rate Monitor"}
+              bpm={currentBpm}
+              percentMax={percentMax}
+              background={hrZone.backgroundColor}
+            />
+          </Box>
         )}
 
 
@@ -155,6 +176,13 @@ const BluetoothClient: React.FC = () => {
         <Typography variant="caption" className="mt-4 block text-gray-500">
           Keep this page open to stream data to the dashboard.
         </Typography>
+        <Typography variant="caption" display="block" sx={{ mt: 1, textAlign: "center" }}>
+          WebSocket: {connectionStatus}
+        </Typography>
+        
+
+        
+
       </Card>
     </Container>
   );

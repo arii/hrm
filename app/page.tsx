@@ -4,12 +4,12 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 "use client";
+import { VolumeUp } from "@mui/icons-material";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
 import SpeakerIcon from "@mui/icons-material/Speaker";
-import { VolumeUp } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -23,12 +23,13 @@ import {
   Typography,
 } from "@mui/material";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import GoogleDocViewer from "../components/GoogleDocViewer";
 import HrTile from "../components/HrTile";
 import TimerDisplay from "../components/TimerDisplay";
+import { useAudio } from "../hooks/useAudio";
 import useSpotifyWebPlayback from "../hooks/useSpotifyWebPlayback";
-import useTabataSounds from "../hooks/useTabataSounds";
+import useVolumePreference, { clampVolume } from "../hooks/useVolumePreference";
 import useWebSocket from "../hooks/useWebSocket";
 import { SpotifyCommandMessage } from "../types/websocket";
 import { MAX_HR_DEFAULT } from "../utils/constants";
@@ -48,22 +49,37 @@ interface SpotifyDevice {
 }
 
 const Dashboard = () => {
-  const {
-    hrmData,
-    timerData,
-    connectionStatus: _connectionStatus,
-    spotifyData,
-    sendData,
-  } = useWebSocket();
+  const { hrmData, timerData, connectionStatus, spotifyData, sendData } =
+    useWebSocket();
 
   const { data: session } = useSession();
 
+  const { volume, setVolume } = useVolumePreference(70);
+  const lastSentVolumeRef = useRef<string | null>(null);
+
   // Play server-driven Tabata sounds ON THE DASHBOARD (not control panel)
-  useTabataSounds(timerData.soundToPlay);
+  const { initializeAudio } = useAudio(timerData, volume);
+
+  // Initialize audio on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      initializeAudio();
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+
+    document.addEventListener("click", handleFirstInteraction);
+    document.addEventListener("keydown", handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, [initializeAudio]);
 
   // Initialize Spotify Web Playback SDK on the dashboard
   const {
-    player: _player,
+    player,
     isReady,
     deviceId,
     error: webPlaybackError,
@@ -72,14 +88,55 @@ const Dashboard = () => {
 
   const isTimerActive = timerData.currentPhase !== "IDLE";
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false);
-  const [volume, setVolume] = useState(50);
-
-  // Spotify device management
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   );
   const deviceMenuOpen = Boolean(deviceMenuAnchor);
+
+  const sendVolumeCommand = useCallback(
+    (value: number) => {
+      if (connectionStatus !== "Connected") return;
+      const sanitized = clampVolume(value);
+      const targetDeviceId =
+        selectedDeviceId ||
+        availableDevices.find((device) => device.is_active)?.id;
+      const messageKey = `${targetDeviceId ?? "default"}:${sanitized}`;
+      if (lastSentVolumeRef.current === messageKey) return;
+      const message: SpotifyCommandMessage = {
+        type: "SPOTIFY_COMMAND",
+        command: "SET_VOLUME",
+        volume: sanitized,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      };
+      sendData(message);
+      lastSentVolumeRef.current = messageKey;
+    },
+    [availableDevices, connectionStatus, selectedDeviceId, sendData]
+  );
+
+  useEffect(() => {
+    sendVolumeCommand(volume);
+  }, [volume, sendVolumeCommand]);
+
+  useEffect(() => {
+    if (connectionStatus !== "Connected") {
+      lastSentVolumeRef.current = null;
+    }
+  }, [connectionStatus]);
+
+  useEffect(() => {
+    if (!player || typeof player.setVolume !== "function") return;
+    const scalar = Math.min(Math.max(volume / 100, 0), 1);
+    player
+      .setVolume(scalar)
+      .catch((err) =>
+        console.warn("[Dashboard] Failed to adjust local Spotify volume:", err)
+      );
+  }, [player, volume]);
+
+  // Spotify device management
 
   // Check if user is logged in
   const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated;
@@ -95,7 +152,8 @@ const Dashboard = () => {
           }
           const devices = await response.json();
           console.log("[Dashboard] Fetched devices:", devices);
-          setAvailableDevices(Array.isArray(devices) ? devices : []);
+          const deviceArray = Array.isArray(devices) ? devices : [];
+          setAvailableDevices(deviceArray);
         } catch (error) {
           console.error("[Dashboard] Failed to fetch Spotify devices:", error);
         }
@@ -103,8 +161,32 @@ const Dashboard = () => {
       fetchDevices();
     } else {
       setAvailableDevices([]);
+      setSelectedDeviceId("");
     }
   }, [spotifyLoggedIn, spotifyData.trackName]);
+
+  useEffect(() => {
+    if (availableDevices.length === 0) {
+      if (selectedDeviceId !== "") {
+        setSelectedDeviceId("");
+      }
+      return;
+    }
+
+    const activeDevice = availableDevices.find((device) => device.is_active);
+
+    if (!selectedDeviceId && activeDevice) {
+      setSelectedDeviceId(activeDevice.id);
+      return;
+    }
+
+    if (
+      selectedDeviceId &&
+      !availableDevices.some((device) => device.id === selectedDeviceId)
+    ) {
+      setSelectedDeviceId(activeDevice?.id ?? "");
+    }
+  }, [availableDevices, selectedDeviceId]);
 
   // Spotify command handler
   const sendSpotifyCommand = (
@@ -127,6 +209,7 @@ const Dashboard = () => {
 
   const handleDeviceSelect = (deviceId: string) => {
     console.log("[Dashboard] Transferring playback to device:", deviceId);
+    setSelectedDeviceId(deviceId);
     sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
     setDeviceMenuAnchor(null);
   };
@@ -152,7 +235,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={isTimerActive ? 12 : 6}>
+        <Grid item xs={12} lg={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -160,6 +243,8 @@ const Dashboard = () => {
             cycle={timerData.cycle}
             totalCycles={timerData.totalCycles}
             mode={timerData.mode}
+            workDuration={timerData.workDuration}
+            restDuration={timerData.restDuration}
           />
         </Grid>
 
@@ -181,13 +266,7 @@ const Dashboard = () => {
                 user.maxHr || MAX_HR_DEFAULT
               );
               return (
-                <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                  lg={isTimerActive ? 6 : 3}
-                  key={user.clientId}
-                >
+                <Grid item xs={12} sm={6} lg={3} key={user.clientId}>
                   <HrTile
                     name={user.name || ""}
                     bpm={user.value}
@@ -200,14 +279,14 @@ const Dashboard = () => {
         ) : (
           // Render skeleton loaders when no HR data
           <>
-            <Grid item xs={12} sm={6} lg={isTimerActive ? 6 : 3}>
+            <Grid item xs={12} sm={6} lg={3}>
               <Skeleton
                 variant="rectangular"
                 height={250}
                 sx={{ borderRadius: 3 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} lg={isTimerActive ? 6 : 3}>
+            <Grid item xs={12} sm={6} lg={3}>
               <Skeleton
                 variant="rectangular"
                 height={250}
@@ -351,26 +430,25 @@ const Dashboard = () => {
                   <Slider
                     value={volume}
                     onChange={(_, val) => setVolume(val as number)}
-                    onChangeCommitted={(_, val) => {
-                      const message: SpotifyCommandMessage = {
-                        type: "SPOTIFY_COMMAND",
-                        command: "SET_VOLUME",
-                        volume: val as number,
-                      };
-                      sendData(message);
-                    }}
+                    onChangeCommitted={(_, val) =>
+                      sendVolumeCommand(val as number)
+                    }
                     min={0}
                     max={100}
                     size="small"
                     sx={{
                       width: 80,
                       color: "#1DB954",
-                      "& .MuiSlider-thumb": { backgroundColor: "white", width: 12, height: 12 },
+                      "& .MuiSlider-thumb": {
+                        backgroundColor: "white",
+                        width: 12,
+                        height: 12,
+                      },
                       "& .MuiSlider-track": { height: 3 },
-                      "& .MuiSlider-rail": { height: 3 }
+                      "& .MuiSlider-rail": { height: 3 },
                     }}
                   />
-                  
+
                   {/* Device Selector */}
                   <IconButton
                     size="small"
@@ -424,7 +502,7 @@ const Dashboard = () => {
                       },
                       minWidth: "auto",
                       px: 1.5,
-                      fontSize: "0.75rem"
+                      fontSize: "0.75rem",
                     }}
                   >
                     Logout
@@ -475,7 +553,7 @@ const Dashboard = () => {
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
-            height={hrmData.length > 0 && hrmData.some(d => d.value > 0) ? 600 : 900}
+            height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />

@@ -1,0 +1,12 @@
+{
+  "receivedAt": 1762765714417,
+  "payload": {
+    "provider": "spotify",
+    "sub": "1282365133",
+    "access_token": "BQAuEVZGPZf5eWbWbsHzw9QJlLv9qCxJsTmAHE9aiUfPWwJp6CiZtLYM715fOMsHnl_Kr5MjXVvVWonhF9z-0Q2kE5ARIlTljSlmR62w9qFIjyNPut77p_DsxjDLOfyJF_7EqJl2bDUxHRZJFqW87ihqqaDSPoS0HXZfnNcMLNI0zClpYMLBzv1voMRa-HZmMXFF_sg48AiI9IIhnDnD9h91CvrUh7wefVdaSDpzgwRZlAehyR_ejiOkHfsl",
+    "refresh_token": "AQBqrpltI9mJtC6FnbnqBMinFRrVq-Vm9FX74I1qGNAoJlsO-pruKGIOrY_zW5AtrIEFnrXEWl-BiAKnwYuaS3NhVGZ-Iyu7bpHG-jILqbVZ9ra69d-3Tx_3Ji-ghQGYth4",
+    "expires_in": 3599,
+    "scope": "streaming user-modify-playback-state user-read-playback-state user-read-currently-playing user-read-email user-read-private user-top-read",
+    "obtainedAt": 1762765712987
+  }
+}

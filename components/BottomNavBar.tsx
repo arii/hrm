@@ -1,8 +1,8 @@
 "use client";
 
-import BluetoothIcon from "@mui/icons-material/Bluetooth";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import SportsGymnasticsIcon from "@mui/icons-material/SportsGymnastics";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,14 +43,14 @@ export default function BottomNavBar() {
         href="/"
       />
       <BottomNavigationAction
-        label="Control"
-        icon={<SportsGymnasticsIcon />}
+        label="Phone Controls"
+        icon={<SettingsIcon />}
         component={Link}
         href="/client/control"
       />
       <BottomNavigationAction
-        label="Connect"
-        icon={<BluetoothIcon />}
+        label="Stream HR"
+        icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
       />

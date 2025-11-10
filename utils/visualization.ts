@@ -69,6 +69,7 @@ interface HrZoneProps {
   percentage: number;
   color: string; // Tailwind text color class
   progressColor: string; // Hex color for MUI components
+  backgroundColor: string; // Hex color for background
   bpm: number;
 }
 
@@ -85,6 +86,7 @@ export const getHrZoneProps = (
       percentage: 0,
       color: "text-gray-400",
       progressColor: "#9ca3af",
+      backgroundColor: "#9ca3af",
       bpm: 0,
     };
   }
@@ -104,6 +106,7 @@ export const getHrZoneProps = (
     percentage: percentageOfMax,
     color: zone.color,
     progressColor: zone.progressColor,
+    backgroundColor: zone.bgColor,
     bpm: currentHr,
   };
 };

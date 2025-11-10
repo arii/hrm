@@ -35,6 +35,7 @@ const INITIAL_STATE: AppState = {
     mode: "TABATA",
     workDuration: 30,
     restDuration: 10,
+    soundEventId: 0,
   },
   spotifyData: { trackName: "Awaiting Login...", artist: "", isPlaying: false },
   spotifyServiceInitialized: true,

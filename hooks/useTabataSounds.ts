@@ -1,125 +1,120 @@
 // File: hooks/useTabataSounds.ts
-// Plays short audio cues when the Tabata timer broadcasts soundToPlay transitions.
-// Uses Web Audio API to synthesize simple beeps so we avoid bundling audio assets.
-// Patterns:
-//   WORK: 2 quick high beeps
-//   REST: 1 medium beep
-//   COUNTDOWN: rapid low ticks (e.g., last 3 seconds)
+// Plays Tabata cues by reusing the original HRM audio assets. The cues still
+// respect the shared volume preference and we debounce duplicate events.
 
 import { useEffect, useRef } from "react";
+import { volumeToScalar } from "./useVolumePreference";
 
-interface BeepSpec {
-  frequency: number; // Hz
-  duration: number; // ms
-  gain: number; // 0..1
-  delay?: number; // ms after previous
+type TabataCue = "WORK" | "REST" | "COUNTDOWN";
+type AudioKey = "LONG" | "SHORT";
+
+const TABATA_AUDIO_SOURCES: Record<AudioKey, string> = {
+  LONG: "/assets/beep-01a.wav",
+  SHORT: "/assets/beep-07.wav",
+};
+
+interface TimedCue {
+  audio: AudioKey;
+  delay: number; // ms from sequence start
 }
 
-const playBeepSequence = (audioCtx: AudioContext, sequence: BeepSpec[]) => {
-  const now = audioCtx.currentTime;
-  sequence.forEach((beep, _index) => {
-    const startAt = now + (beep.delay || 0) / 1000;
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.frequency.value = beep.frequency;
-    osc.type = "sine";
-    gainNode.gain.setValueAtTime(beep.gain, startAt);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.0001,
-      startAt + beep.duration / 1000
-    );
-    osc.connect(gainNode).connect(audioCtx.destination);
-    osc.start(startAt);
-    osc.stop(startAt + beep.duration / 1000);
-  });
-};
-
-// Predefined sequences
-const sequences: Record<string, BeepSpec[]> = {
+const TIMELINES: Record<TabataCue, TimedCue[]> = {
   WORK: [
-    { frequency: 880, duration: 120, gain: 0.3 },
-    { frequency: 1040, duration: 120, gain: 0.3, delay: 180 },
+    { audio: "SHORT", delay: 0 },
+    { audio: "SHORT", delay: 220 },
   ],
-  REST: [{ frequency: 660, duration: 220, gain: 0.25 }],
+  REST: [{ audio: "LONG", delay: 0 }],
   COUNTDOWN: [
-    { frequency: 440, duration: 80, gain: 0.2 },
-    { frequency: 440, duration: 80, gain: 0.2, delay: 120 },
-    { frequency: 440, duration: 80, gain: 0.2, delay: 240 },
+    { audio: "SHORT", delay: 0 },
+    { audio: "SHORT", delay: 180 },
+    { audio: "SHORT", delay: 360 },
   ],
 };
 
-/**
- * Hook to play Tabata sound cues when the server broadcasts timerData.soundToPlay.
- * It debounces repeated identical cues by tracking lastPlayed in a ref.
- */
-const useTabataSounds = (soundToPlay?: "WORK" | "REST" | "COUNTDOWN") => {
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const lastPlayedRef = useRef<string | undefined>(undefined);
+const createAudioElement = (src: string): HTMLAudioElement => {
+  const audio = new Audio(src);
+  audio.preload = "auto";
+  audio.crossOrigin = "anonymous";
+  return audio;
+};
+
+const useTabataSounds = (
+  soundToPlay?: TabataCue,
+  soundEventId?: number,
+  volumePercent: number = 100
+) => {
+  const lastPlayedIdRef = useRef<number | null>(null);
+  const timeoutsRef = useRef<number[]>([]);
+  const audioPoolRef = useRef<Record<AudioKey, HTMLAudioElement[]>>({
+    LONG: [createAudioElement(TABATA_AUDIO_SOURCES.LONG)],
+    SHORT: [createAudioElement(TABATA_AUDIO_SOURCES.SHORT)],
+  });
 
   useEffect(() => {
-    if (!soundToPlay) return;
-    // Avoid repeating same cue if state update duplicates
-    if (lastPlayedRef.current === soundToPlay) return;
+    return () => {
+      timeoutsRef.current.forEach((timeoutId) =>
+        window.clearTimeout(timeoutId)
+      );
+      timeoutsRef.current = [];
+    };
+  }, []);
 
-    // Lazy init AudioContext (iOS requires user gesture; on desktop it's fine)
-    if (!audioCtxRef.current) {
-      try {
-        type WindowWithWebkitAudioContext = Window & {
-          webkitAudioContext?: {
-            new (contextOptions?: AudioContextOptions): AudioContext;
-          };
-        };
-        const AudioContextConstructor =
-          window.AudioContext ||
-          (window as WindowWithWebkitAudioContext).webkitAudioContext;
-        if (AudioContextConstructor) {
-          audioCtxRef.current = new AudioContextConstructor();
-          console.log(
-            "[useTabataSounds] AudioContext created, state:",
-            audioCtxRef.current.state
-          );
-        } else {
-          throw new Error("AudioContext not supported");
+  useEffect(() => {
+    if (!soundToPlay || !soundEventId) {
+      return;
+    }
+    if (lastPlayedIdRef.current === soundEventId) {
+      return;
+    }
+
+    const timeline = TIMELINES[soundToPlay];
+    const masterScalar = volumeToScalar(volumePercent);
+
+    // Always record the event so we do not retry the same cue endlessly.
+    lastPlayedIdRef.current = soundEventId;
+
+    if (!timeline || masterScalar <= 0) {
+      return;
+    }
+
+    const pool = audioPoolRef.current;
+
+    const getAudio = (key: AudioKey): HTMLAudioElement | null => {
+      const entries = pool[key];
+      if (!entries) {
+        return null;
+      }
+      const idle = entries.find((audio) => audio.paused);
+      if (idle) {
+        idle.currentTime = 0;
+        return idle;
+      }
+      const fresh = createAudioElement(TABATA_AUDIO_SOURCES[key]);
+      entries.push(fresh);
+      return fresh;
+    };
+
+    timeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    timeoutsRef.current = [];
+
+    timeline.forEach(({ audio, delay }) => {
+      const timeoutId = window.setTimeout(() => {
+        const element = getAudio(audio);
+        if (!element) {
+          return;
         }
-      } catch (e) {
-        console.warn(
-          "[useTabataSounds] AudioContext initialization failed:",
-          e
-        );
-        return;
-      }
-    }
-
-    const seq = sequences[soundToPlay];
-    if (seq && audioCtxRef.current) {
-      const ctx = audioCtxRef.current;
-
-      // Resume context if suspended (common on first load without user interaction)
-      if (ctx.state === "suspended") {
-        console.log("[useTabataSounds] Resuming suspended AudioContext...");
-        ctx
-          .resume()
-          .then(() => {
-            console.log(
-              "[useTabataSounds] AudioContext resumed, playing:",
-              soundToPlay
-            );
-            playBeepSequence(ctx, seq);
-            lastPlayedRef.current = soundToPlay;
-          })
-          .catch((err) => {
-            console.error(
-              "[useTabataSounds] Failed to resume AudioContext:",
-              err
-            );
+        element.volume = masterScalar;
+        element.currentTime = 0;
+        const playPromise = element.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch((error) => {
+            console.warn("[useTabataSounds] Failed to play audio:", error);
           });
-      } else {
-        console.log("[useTabataSounds] Playing sound:", soundToPlay);
-        playBeepSequence(ctx, seq);
-        lastPlayedRef.current = soundToPlay;
-      }
-    }
-  }, [soundToPlay]);
+        }
+      }, Math.max(0, delay));
+      timeoutsRef.current.push(timeoutId);
+    });
+  }, [soundToPlay, soundEventId, volumePercent]);
 };
 
 export default useTabataSounds;

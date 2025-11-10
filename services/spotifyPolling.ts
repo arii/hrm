@@ -338,7 +338,11 @@ export class SpotifyPolling {
 
   // --- Command Handling (Used by socketManager) ---
 
-  private async executePlayerCommand(endpoint: string, method: "POST" | "PUT") {
+  private async executePlayerCommand(
+    endpoint: string,
+    method: "POST" | "PUT",
+    deviceId?: string
+  ) {
     if (!this.accessToken) {
       console.warn(
         "Cannot execute command: Access token is missing. Requires login."
@@ -347,7 +351,12 @@ export class SpotifyPolling {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/me/player/${endpoint}`, {
+      const url = new URL(`${BASE_URL}/me/player/${endpoint}`);
+      if (deviceId) {
+        url.searchParams.set("device_id", deviceId);
+      }
+
+      const response = await fetch(url.toString(), {
         method,
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
@@ -390,23 +399,31 @@ export class SpotifyPolling {
     }
   }
 
-  public async setVolume(volume: number): Promise<boolean> {
+  public async setVolume(volume: number, deviceId?: string): Promise<boolean> {
     if (!this.accessToken) {
       console.warn("Cannot set volume: Access token is missing.");
       return false;
     }
     try {
-      const response = await fetch(
-        `${BASE_URL}/me/player/volume?volume_percent=${volume}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${this.accessToken}`,
-          },
-        }
-      );
+      const safeVolume = Math.max(0, Math.min(100, Math.round(volume)));
+      const volumeUrl = new URL(`${BASE_URL}/me/player/volume`);
+      volumeUrl.searchParams.set("volume_percent", String(safeVolume));
+      if (deviceId) {
+        volumeUrl.searchParams.set("device_id", deviceId);
+      }
+
+      const response = await fetch(volumeUrl.toString(), {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
       if (response.status === 204) {
-        console.log(`Volume set to: ${volume}%`);
+        console.log(
+          `Volume set to: ${safeVolume}%${
+            deviceId ? ` (device ${deviceId})` : ""
+          }`
+        );
         return true;
       } else {
         console.error(
@@ -463,16 +480,16 @@ export class SpotifyPolling {
   ) {
     switch (command) {
       case "PLAY":
-        this.executePlayerCommand("play", "PUT");
+        this.executePlayerCommand("play", "PUT", deviceId);
         break;
       case "PAUSE":
-        this.executePlayerCommand("pause", "PUT");
+        this.executePlayerCommand("pause", "PUT", deviceId);
         break;
       case "NEXT":
-        this.executePlayerCommand("next", "POST");
+        this.executePlayerCommand("next", "POST", deviceId);
         break;
       case "PREVIOUS":
-        this.executePlayerCommand("previous", "POST");
+        this.executePlayerCommand("previous", "POST", deviceId);
         break;
       case "TRANSFER_PLAYBACK":
         if (deviceId) {
@@ -483,7 +500,7 @@ export class SpotifyPolling {
         break;
       case "SET_VOLUME":
         if (volume !== undefined && volume >= 0 && volume <= 100) {
-          this.setVolume(volume);
+          this.setVolume(volume, deviceId);
         } else {
           console.warn("SET_VOLUME command requires a valid volume (0-100).");
         }

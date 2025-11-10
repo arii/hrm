@@ -31,17 +31,18 @@ const parseHeartRate = (value: DataView): number => {
   return heartRate;
 };
 
-const useBluetoothHRM = () => {
+const useBluetoothHRM = (userName?: string, userAge?: string) => {
   // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket();
   const [deviceStatus, setDeviceStatus] = useState("Disconnected");
 
   const connectAndStream = useCallback(async () => {
-    if (
-      deviceStatus.startsWith("Connected") ||
-      connectionStatus !== "Connected"
-    )
+    if (deviceStatus.startsWith("Connected")) return;
+    
+    if (connectionStatus !== "Connected") {
+      setDeviceStatus("Waiting for WebSocket connection...");
       return;
+    }
 
     try {
       setDeviceStatus("Connecting");
@@ -69,14 +70,20 @@ const useBluetoothHRM = () => {
           event.target as unknown as BluetoothRemoteGATTCharacteristic;
         const heartRate = parseHeartRate(target.value!);
 
+        console.log('[Bluetooth HRM] Heart rate received:', heartRate);
+
         // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---
+        const calculatedMaxHr = userAge ? 220 - parseInt(userAge) : MAX_HR_DEFAULT;
         const message: HrmInputMessage = {
           type: "HRM_INPUT",
           data: {
             value: heartRate,
-            maxHr: MAX_HR_DEFAULT,
+            maxHr: calculatedMaxHr,
+            name: userName || `Bluetooth HRM (${device.name || 'Unknown'})`,
+            age: userAge ? parseInt(userAge) : undefined,
           },
         };
+        console.log('[Bluetooth HRM] Sending message:', message);
         sendData(message);
       });
 
@@ -130,7 +137,7 @@ const useBluetoothHRM = () => {
 
       setDeviceStatus(`Failed: ${fullMessage}`);
     }
-  }, [deviceStatus, connectionStatus, sendData]);
+  }, [deviceStatus, connectionStatus, sendData, userName, userAge]);
 
   return {
     connectAndStream,
