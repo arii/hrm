@@ -2,6 +2,7 @@
   "name": "hrm",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build:server": "tsc -p tsconfig.build.json",
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",

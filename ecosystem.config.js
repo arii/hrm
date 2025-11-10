@@ -3,16 +3,14 @@
  * - Defines development and production process configs.
  * - Uses the local ts-node interpreter so TypeScript files can be run directly.
  */
-module.exports = {
+const config = {
   apps: [
     {
       name: "hrm-server",
-      script: "server.ts",
-      // Use ts-node in transpile-only mode so runtime type-checking doesn't
-      // cause the PM2 process to exit on development type errors.
-      interpreter: "./node_modules/.bin/ts-node",
-      interpreter_args: "--transpile-only",
-      watch: ["server.ts", "services", "utils", "app"],
+      script: "dist/server.js",
+      interpreter: "node",
+      interpreter_args: "",
+      watch: false,
       instances: 1,
       autorestart: true,
       max_restarts: 10,
@@ -32,12 +30,10 @@ module.exports = {
         NODE_ENV: "production",
         HOST: "0.0.0.0",
         PORT: 3000,
-        script: "dist/server.js",
-        interpreter: "node",
-        interpreter_args: "",
-        watch: false,
       },
       env_file: ".env.production",
     },
   ],
 };
+
+export default config;

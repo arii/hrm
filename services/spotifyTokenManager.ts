@@ -1,7 +1,7 @@
 import fs from "fs";
 import fetch from "node-fetch";
 import * as path from "path";
-import { SpotifyTokenResponse } from "./spotifyPolling";
+import { SpotifyTokenResponse } from "./spotifyPolling.js";
 
 export interface SpotifyTokenPayload {
   provider: string;

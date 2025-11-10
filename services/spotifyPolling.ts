@@ -5,7 +5,7 @@
  */
 import fetch from "node-fetch";
 import { SpotifyData, UnifiedStateMessage } from "../types/websocket";
-import { SpotifyTokenManager } from "./spotifyTokenManager";
+import { SpotifyTokenManager } from "./spotifyTokenManager.js";
 
 // API endpoint constants
 const BASE_URL = "https://api.spotify.com/v1";

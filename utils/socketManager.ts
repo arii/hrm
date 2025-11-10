@@ -4,13 +4,13 @@
  */
 import { WebSocket, Server as WebSocketServer } from "ws";
 import { z } from "zod"; // Import z from zod
-import { SpotifyPolling } from "../services/spotifyPolling";
-import TabataTimer from "../services/tabataTimer";
+import { SpotifyPolling } from "../services/spotifyPolling.js";
+import TabataTimer from "../services/tabataTimer.js";
 import {
   ClientCommandMessageSchema,
   HrmData,
   UnifiedStateMessage,
-} from "../types/websocket";
+} from "../types/websocket.js";
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer;
@@ -27,7 +27,7 @@ interface Services {
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-export const initSocketManager = (wss: WebSocketServer, services: Services) => {
+const initSocketManager = (wss: WebSocketServer, services: Services) => {
   wssInstance = wss;
   tabataServiceInstance = services.tabataService;
   spotifyServiceInstance = services.spotifyService;
@@ -188,4 +188,4 @@ const handleIncomingMessage = (
   }
 };
 
-module.exports = { initSocketManager };
+export { initSocketManager };

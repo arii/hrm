@@ -4,7 +4,9 @@
     "noEmit": false,
     "outDir": "./dist",
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": [
     "server.ts",

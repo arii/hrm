@@ -16,14 +16,18 @@ if [ ! -f ".env.production" ]; then
     exit 1
 fi
 
-# Check if nginx is configured
+# Check if nginx is configured (skip if no sudo access)
 if ! command -v nginx &> /dev/null; then
     echo "⚠️  Warning: nginx not found. Make sure it's installed and configured."
 else
-    if ! nginx -t &> /dev/null; then
-        echo "❌ Error: nginx configuration test failed!"
-        echo "Please check your nginx configuration."
-        exit 1
+    if sudo -n true 2>/dev/null; then
+        if ! sudo nginx -t &> /dev/null; then
+            echo "❌ Error: nginx configuration test failed!"
+            echo "Please check your nginx configuration."
+            exit 1
+        fi
+    else
+        echo "⚠️  Warning: Cannot test nginx configuration (no sudo access). Proceeding..."
     fi
 fi
 
