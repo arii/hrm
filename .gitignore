@@ -42,7 +42,6 @@ logs/spotify_tokens.json
 next-env.d.ts
 
 .gemini/*
-.github/copilot-instructions.md
 .gemini/settings.json
 .vscode/*
 
