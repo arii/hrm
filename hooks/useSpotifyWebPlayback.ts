@@ -52,7 +52,7 @@ declare global {
  *
  * This hook handles:
  * - Dynamically loading the Spotify Player SDK script.
- * - Initializing the player.
+ * - Initializing the player when user is authenticated.
  * - Fetching the OAuth token securely from our backend.
  * - Managing player state (ready, device ID, errors).
  * - Exposing the player instance and its state to components.
@@ -62,6 +62,7 @@ const useSpotifyWebPlayback = () => {
   const [isReady, setIsReady] = useState(false);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   /**
    * Fetches the Spotify OAuth token from our secure backend API.
@@ -73,6 +74,11 @@ const useSpotifyWebPlayback = () => {
       const response = await fetch("/api/spotify/access-token");
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(
+          "[Spotify Web Playback] Token fetch failed:",
+          response.status,
+          errorText
+        );
         throw new Error(
           `Failed to fetch Spotify access token: ${response.status} ${errorText}`
         );
@@ -81,30 +87,61 @@ const useSpotifyWebPlayback = () => {
       if (!accessToken) {
         throw new Error("Access token was not found in the response.");
       }
+      console.log("[Spotify Web Playback] Access token retrieved successfully");
+      setIsAuthenticated(true);
       cb(accessToken);
     } catch (e) {
       const message =
         e instanceof Error ? e.message : "An unknown error occurred.";
       setError(`Authentication failed: ${message}`);
+      setIsAuthenticated(false);
       console.error(`[Spotify Web Playback] getOAuthToken error: ${message}`);
     }
   }, []);
 
   // Effect to load the Spotify SDK script and initialize the player
   useEffect(() => {
-    // Prevent re-initialization
-    if (player || window.Spotify) {
+    console.log(
+      "[Spotify Web Playback] Hook initialized, checking prerequisites..."
+    );
+
+    // Prevent re-initialization if player already exists and is ready
+    if (player && isReady) {
+      console.log(
+        "[Spotify Web Playback] Player already initialized and ready"
+      );
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    script.async = true;
-
-    document.body.appendChild(script);
+    // Load the SDK script if not already loaded
+    if (!window.Spotify) {
+      console.log("[Spotify Web Playback] Loading Spotify SDK script...");
+      const script = document.createElement("script");
+      script.src = "https://sdk.scdn.co/spotify-player.js";
+      script.async = true;
+      document.body.appendChild(script);
+    } else {
+      console.log("[Spotify Web Playback] Spotify SDK already loaded");
+      // SDK already loaded, initialize immediately
+      initializePlayer();
+    }
 
     // This function is called by the Spotify SDK once it's loaded.
     window.onSpotifyWebPlaybackSDKReady = () => {
+      console.log("[Spotify Web Playback] SDK ready callback triggered");
+      initializePlayer();
+    };
+
+    function initializePlayer() {
+      // Don't initialize if we already have a player
+      if (player) {
+        console.log(
+          "[Spotify Web Playback] Player already exists, skipping initialization"
+        );
+        return;
+      }
+
+      console.log("[Spotify Web Playback] Initializing player...");
       const spotifyPlayer = new window.Spotify.Player({
         name: "HRM Web Player",
         getOAuthToken,
@@ -152,23 +189,25 @@ const useSpotifyWebPlayback = () => {
           console.log(
             "[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!"
           );
+        } else {
+          console.error("[Spotify Web Playback] Connection failed");
+          setError("Failed to connect player");
         }
       });
-    };
+    }
 
     // Cleanup function to disconnect the player when component unmounts
     return () => {
-      // @ts-expect-error - player is guaranteed to be SpotifyPlayer when set
       if (player && typeof player.disconnect === "function") {
-        // @ts-expect-error - disconnect exists on SpotifyPlayer
+        console.log("[Spotify Web Playback] Disconnecting player on cleanup");
         player.disconnect();
       }
     };
-    // We intentionally omit 'player' from deps to prevent re-initialization
+    // We intentionally include player and isReady to control re-initialization
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getOAuthToken]);
 
-  return { player, isReady, deviceId, error };
+  return { player, isReady, deviceId, error, isAuthenticated };
 };
 
 export default useSpotifyWebPlayback;

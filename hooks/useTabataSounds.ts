@@ -64,23 +64,60 @@ const useTabataSounds = (soundToPlay?: "WORK" | "REST" | "COUNTDOWN") => {
     // Lazy init AudioContext (iOS requires user gesture; on desktop it's fine)
     if (!audioCtxRef.current) {
       try {
-        type WindowWithWebkitAudioContext = Window & { webkitAudioContext?: { new (contextOptions?: AudioContextOptions): AudioContext } };
-        const AudioContextConstructor = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
+        type WindowWithWebkitAudioContext = Window & {
+          webkitAudioContext?: {
+            new (contextOptions?: AudioContextOptions): AudioContext;
+          };
+        };
+        const AudioContextConstructor =
+          window.AudioContext ||
+          (window as WindowWithWebkitAudioContext).webkitAudioContext;
         if (AudioContextConstructor) {
           audioCtxRef.current = new AudioContextConstructor();
+          console.log(
+            "[useTabataSounds] AudioContext created, state:",
+            audioCtxRef.current.state
+          );
         } else {
           throw new Error("AudioContext not supported");
         }
       } catch (e) {
-        console.warn("AudioContext initialization failed:", e);
+        console.warn(
+          "[useTabataSounds] AudioContext initialization failed:",
+          e
+        );
         return;
       }
     }
 
     const seq = sequences[soundToPlay];
     if (seq && audioCtxRef.current) {
-      playBeepSequence(audioCtxRef.current, seq);
-      lastPlayedRef.current = soundToPlay;
+      const ctx = audioCtxRef.current;
+
+      // Resume context if suspended (common on first load without user interaction)
+      if (ctx.state === "suspended") {
+        console.log("[useTabataSounds] Resuming suspended AudioContext...");
+        ctx
+          .resume()
+          .then(() => {
+            console.log(
+              "[useTabataSounds] AudioContext resumed, playing:",
+              soundToPlay
+            );
+            playBeepSequence(ctx, seq);
+            lastPlayedRef.current = soundToPlay;
+          })
+          .catch((err) => {
+            console.error(
+              "[useTabataSounds] Failed to resume AudioContext:",
+              err
+            );
+          });
+      } else {
+        console.log("[useTabataSounds] Playing sound:", soundToPlay);
+        playBeepSequence(ctx, seq);
+        lastPlayedRef.current = soundToPlay;
+      }
     }
   }, [soundToPlay]);
 };

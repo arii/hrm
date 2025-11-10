@@ -12,7 +12,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { signOut } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import GoogleDocViewer from "../components/GoogleDocViewer";
 import HrTile from "../components/HrTile";
@@ -34,7 +34,10 @@ const Dashboard = () => {
     spotifyData,
     sendData: _sendData,
   } = useWebSocket();
-  // Play server-driven Tabata sounds
+
+  const { data: session } = useSession();
+
+  // Play server-driven Tabata sounds ON THE DASHBOARD (not control panel)
   useTabataSounds(timerData.soundToPlay);
 
   // Initialize Spotify Web Playback SDK on the dashboard
@@ -43,13 +46,21 @@ const Dashboard = () => {
     isReady,
     deviceId,
     error: webPlaybackError,
+    isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback();
 
   const isTimerActive = timerData.currentPhase !== "IDLE";
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false);
 
+  // Check if user is logged in
+  const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated;
+
+  const handleSpotifyLogin = () => {
+    signIn("spotify", { callbackUrl: "/" });
+  };
+
   const handleSpotifyLogout = () => {
-    signOut({ callbackUrl: "/" }); // Redirect back to dashboard after logout
+    signOut({ callbackUrl: "/" });
   };
 
   return (
@@ -65,7 +76,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={isTimerActive ? 12 : 7}>
+        <Grid item xs={12} lg={isTimerActive ? 12 : 6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -96,7 +107,7 @@ const Dashboard = () => {
                   item
                   xs={12}
                   sm={6}
-                  lg={isTimerActive ? 12 : 5}
+                  lg={isTimerActive ? 6 : 3}
                   key={user.clientId}
                 >
                   <HrTile
@@ -111,14 +122,14 @@ const Dashboard = () => {
         ) : (
           // Render skeleton loaders when no HR data
           <>
-            <Grid item xs={12} sm={6} lg={isTimerActive ? 12 : 5}>
+            <Grid item xs={12} sm={6} lg={isTimerActive ? 6 : 3}>
               <Skeleton
                 variant="rectangular"
                 height={250}
                 sx={{ borderRadius: 3 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} lg={isTimerActive ? 12 : 5}>
+            <Grid item xs={12} sm={6} lg={isTimerActive ? 6 : 3}>
               <Skeleton
                 variant="rectangular"
                 height={250}
@@ -129,7 +140,8 @@ const Dashboard = () => {
         )}
 
         {/* --------------------- SPOTIFY DISPLAY (COMPACT BAR) --------------------- */}
-        {spotifyData.trackName &&
+        {spotifyLoggedIn &&
+          spotifyData.trackName &&
           spotifyData.trackName !== "Awaiting Login..." && (
             <Grid item xs={12}>
               <Box
@@ -148,10 +160,10 @@ const Dashboard = () => {
                   alignItems: "center",
                   justifyContent: "space-between",
                   position: "fixed", // Make it a floating bar
-                  bottom: 0, // Stick to the bottom
+                  bottom: 56, // Height of BottomNavBar + small gap
                   left: 0,
                   right: 0,
-                  zIndex: 1000, // Ensure it stays on top
+                  zIndex: 1100, // Higher than BottomNavBar (1000)
                   boxShadow: 3, // Use theme shadow
                   mb: 0, // Remove bottom margin as it's fixed
                 }}
@@ -162,6 +174,21 @@ const Dashboard = () => {
                     — {spotifyData.artist}
                   </Typography>
                   {/* Web Playback SDK Status Indicator */}
+                  {spotifyAuthenticated && !isReady && !webPlaybackError && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        opacity: 0.8,
+                        backgroundColor: "info.main",
+                        color: "common.white",
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                      }}
+                    >
+                      🔄 Connecting Player...
+                    </Typography>
+                  )}
                   {isReady && deviceId && (
                     <Typography
                       variant="caption"
@@ -218,6 +245,40 @@ const Dashboard = () => {
               </Box>
             </Grid>
           )}
+
+        {/* Spotify Login Button (when not logged in) */}
+        {!spotifyLoggedIn && (
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                backgroundColor: "grey.900",
+                color: "common.white",
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "fixed",
+                bottom: 56, // Height of BottomNavBar + small gap
+                left: 0,
+                right: 0,
+                zIndex: 1100, // Higher than BottomNavBar (1000)
+                boxShadow: 3,
+                mb: 0,
+              }}
+            >
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleSpotifyLogin}
+                sx={{ px: 4, py: 1 }}
+              >
+                🎵 Login with Spotify
+              </Button>
+            </Box>
+          </Grid>
+        )}
 
         {/* --------------------- BOTTOM ROW: DOCUMENTATION --------------------- */}
 

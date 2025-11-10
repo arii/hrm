@@ -30,9 +30,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { useAudioPlayer } from "../../../hooks/useAudioPlayer";
 import useWebSocket from "../../../hooks/useWebSocket";
 import {
   SpotifyCommandMessage,
@@ -52,7 +50,6 @@ interface SpotifyDevice {
 
 const ControlPanel = () => {
   const { timerData, spotifyData, connectionStatus, sendData } = useWebSocket();
-  const { initAudio, playSound } = useAudioPlayer();
 
   // Timer configuration state
   const [workTime, setWorkTime] = useState(20);
@@ -69,55 +66,21 @@ const ControlPanel = () => {
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [devicesError, setDevicesError] = useState<string | null>(null);
 
-  // Check if we have received a non-default song title
-  const spotifyLoggedIn = spotifyData.trackName !== "Awaiting Login...";
+  // Simple check: if we have real track data, Spotify is working
+  const hasSpotifyData =
+    spotifyData.trackName !== "Awaiting Login..." &&
+    spotifyData.trackName !== "" &&
+    spotifyData.trackName !== "No Track Playing";
 
-  // --- Timer Commands ---
-  const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
-    // Only send command if inputs are valid
-    if (!isValidWorkTime || !isValidRestTime) {
-      console.warn("Cannot start timer with invalid work/rest durations.");
-      return;
-    }
-
-    if (command === "START") {
-      initAudio(); // Initialize audio on user interaction
-      // Send config with START command
-      const message: TimerCommandMessage = {
-        type: "TIMER_COMMAND",
-        command,
-        workDuration: workTime,
-        restDuration: restTime,
-        totalCycles: 8, // Default, could be made configurable
-      };
-      sendData(message);
-    } else {
-      const message: TimerCommandMessage = { type: "TIMER_COMMAND", command };
-      sendData(message);
-    }
-  };
-
-  // --- Spotify Commands ---
-  const sendSpotifyCommand = (
-    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
-    deviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: "SPOTIFY_COMMAND",
-      command,
-      deviceId,
-    };
-    sendData(message); // sendData now accepts the typed object
-  };
-
-  const handleSpotifyLogin = () => {
-    // Trigger the NextAuth login flow
-    signIn("spotify", { callbackUrl: "/client/control" });
-  };
+  // Check if we have active playback
+  const hasActivePlayback =
+    spotifyData.trackName !== "Awaiting Login..." &&
+    spotifyData.trackName !== "No Track Playing" &&
+    spotifyData.trackName !== "";
 
   // Fetch available Spotify devices
   useEffect(() => {
-    if (spotifyLoggedIn) {
+    if (hasSpotifyData) {
       const fetchDevices = async () => {
         setDevicesLoading(true);
         setDevicesError(null);
@@ -126,8 +89,21 @@ const ControlPanel = () => {
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          const data = await response.json();
-          setAvailableDevices(data.devices || []);
+          const devices = await response.json();
+          console.log("[Control Panel] Fetched devices:", devices);
+          setAvailableDevices(Array.isArray(devices) ? devices : []);
+
+          // Auto-select the active device if one exists
+          const activeDevice =
+            Array.isArray(devices) &&
+            devices.find((d: SpotifyDevice) => d.is_active);
+          if (activeDevice && !selectedDeviceId) {
+            setSelectedDeviceId(activeDevice.id);
+            console.log(
+              "[Control Panel] Auto-selected active device:",
+              activeDevice.name
+            );
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Failed to load devices.";
@@ -142,7 +118,40 @@ const ControlPanel = () => {
       setAvailableDevices([]);
       setSelectedDeviceId("");
     }
-  }, [spotifyLoggedIn]);
+  }, [hasSpotifyData, selectedDeviceId]);
+
+  // --- Timer Commands ---
+  const _sendTimerCommand = (command: "START" | "PAUSE" | "STOP") => {
+    // Only send command if inputs are valid
+    if (!isValidWorkTime || !isValidRestTime) {
+      console.warn("Cannot start timer with invalid work/rest durations.");
+      return;
+    }
+
+    const message: TimerCommandMessage = {
+      type: "TIMER_COMMAND",
+      command,
+      ...(command === "START" && {
+        workDuration: workTime,
+        restDuration: restTime,
+        totalCycles: 8,
+      }),
+    };
+    sendData(message);
+  };
+
+  // --- Spotify Commands ---
+  const sendSpotifyCommand = (
+    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
+    deviceId?: string
+  ) => {
+    const message: SpotifyCommandMessage = {
+      type: "SPOTIFY_COMMAND",
+      command,
+      deviceId,
+    };
+    sendData(message);
+  };
 
   // Timer preset configurations
   const _applyPreset = (
@@ -160,13 +169,6 @@ const ControlPanel = () => {
       setRestTime(0);
     }
   };
-
-  // Handle incoming sound commands from the server
-  useEffect(() => {
-    if (timerData.soundToPlay) {
-      playSound(timerData.soundToPlay);
-    }
-  }, [timerData.soundToPlay, playSound]);
 
   return (
     <Container
@@ -383,18 +385,56 @@ const ControlPanel = () => {
           <MusicNote sx={{ mr: 1 }} aria-hidden="true" /> Spotify Player
         </Typography>
 
-        {spotifyLoggedIn ? (
+        {hasSpotifyData ? (
           <CardContent sx={{ p: 0 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
-              {spotifyData.trackName}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ color: "grey.400", mb: 3 }}
-            >
-              by {spotifyData.artist}
-            </Typography>
+            {/* Show device/playback status message */}
+            {!hasActivePlayback && availableDevices.length === 0 && (
+              <Box
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  backgroundColor: "warning.dark",
+                  borderRadius: 1,
+                  mx: 2,
+                  mt: 2,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: "medium", mb: 1 }}
+                >
+                  ⚠️ No Active Spotify Devices
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.9 }}
+                >
+                  To control playback:
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ display: "block", opacity: 0.9, ml: 2 }}
+                >
+                  • Open Spotify on any device
+                  <br />
+                  • Start playing a song
+                  <br />• Controls will appear here
+                </Typography>
+              </Box>
+            )}
+
+            <Box sx={{ p: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                {spotifyData.trackName}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{ color: "grey.400", mb: 3 }}
+              >
+                by {spotifyData.artist}
+              </Typography>
+            </Box>
 
             {/* Spotify Device Selection */}
             <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
@@ -409,8 +449,15 @@ const ControlPanel = () => {
                 value={selectedDeviceId}
                 onChange={(e) => {
                   const newDeviceId = e.target.value as string;
+                  console.log("[Control Panel] Device selected:", newDeviceId);
                   setSelectedDeviceId(newDeviceId);
-                  sendSpotifyCommand("TRANSFER_PLAYBACK", newDeviceId);
+                  if (newDeviceId) {
+                    console.log(
+                      "[Control Panel] Transferring playback to:",
+                      newDeviceId
+                    );
+                    sendSpotifyCommand("TRANSFER_PLAYBACK", newDeviceId);
+                  }
                 }}
                 label="Active Device"
                 sx={{
@@ -465,9 +512,17 @@ const ControlPanel = () => {
                 sx={{
                   color: "white",
                   "&:hover": { backgroundColor: "grey.700" },
+                  "&:active": {
+                    backgroundColor: "grey.600",
+                    transform: "scale(0.95)",
+                  },
+                  transition: "all 0.1s",
                 }}
-                onClick={() => sendSpotifyCommand("PREVIOUS")}
-                disabled={connectionStatus !== "Connected"}
+                onClick={() => {
+                  console.log("[Control Panel] Previous track clicked");
+                  sendSpotifyCommand("PREVIOUS");
+                }}
+                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
                 aria-label="Previous track"
               >
                 <SkipPrevious fontSize="large" />
@@ -478,12 +533,19 @@ const ControlPanel = () => {
                 sx={{
                   backgroundColor: "success.main",
                   "&:hover": { backgroundColor: "success.dark" },
+                  "&:active": {
+                    backgroundColor: "success.darker",
+                    transform: "scale(0.95)",
+                  },
                   color: "white",
+                  transition: "all 0.1s",
                 }}
-                onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? "PAUSE" : "PLAY")
-                }
-                disabled={connectionStatus !== "Connected"}
+                onClick={() => {
+                  const command = spotifyData.isPlaying ? "PAUSE" : "PLAY";
+                  console.log("[Control Panel] Play/Pause clicked:", command);
+                  sendSpotifyCommand(command);
+                }}
+                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
                 aria-label={spotifyData.isPlaying ? "Pause" : "Play"}
               >
                 {spotifyData.isPlaying ? (
@@ -497,9 +559,17 @@ const ControlPanel = () => {
                 sx={{
                   color: "white",
                   "&:hover": { backgroundColor: "grey.700" },
+                  "&:active": {
+                    backgroundColor: "grey.600",
+                    transform: "scale(0.95)",
+                  },
+                  transition: "all 0.1s",
                 }}
-                onClick={() => sendSpotifyCommand("NEXT")}
-                disabled={connectionStatus !== "Connected"}
+                onClick={() => {
+                  console.log("[Control Panel] Next track clicked");
+                  sendSpotifyCommand("NEXT");
+                }}
+                disabled={connectionStatus !== "Connected" || !hasSpotifyData}
                 aria-label="Next track"
               >
                 <SkipNext fontSize="large" />
@@ -537,14 +607,14 @@ const ControlPanel = () => {
             </Box>
           </CardContent>
         ) : (
-          <Button
-            variant="contained"
-            color="success"
-            onClick={handleSpotifyLogin}
-            sx={{ width: "100%", mt: 2 }}
-          >
-            Login with Spotify
-          </Button>
+          <CardContent sx={{ p: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "grey.400", mb: 2, textAlign: "center" }}
+            >
+              Login to Spotify on the main dashboard to control playback
+            </Typography>
+          </CardContent>
         )}
       </Card>
     </Container>
