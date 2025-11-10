@@ -4,6 +4,7 @@
  * attaches the persistent WebSocket server, and manages service initialization
  * and internal data endpoints (like NextAuth token delivery).
  */
+import { config } from 'dotenv';
 import express, { Request, Response } from "express";
 import { createServer, IncomingMessage } from "http";
 import { Socket } from "net";
@@ -12,6 +13,13 @@ import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
 import { UnifiedStateMessage } from "./types/websocket";
+
+// Load environment variables
+if (process.env.NODE_ENV === 'production') {
+  config({ path: '.env.production' });
+} else {
+  config({ path: '.env.local' });
+}
 
 
 
@@ -26,6 +34,11 @@ const hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.en
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev, hostname, port });
+
+console.log(`Starting server in ${dev ? 'development' : 'production'} mode`);
+console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`);
+console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
+console.log(`Hostname: ${hostname}, Port: ${port}`);
 const handle = app.getRequestHandler();
 
 // Create Express app for routing and middleware
