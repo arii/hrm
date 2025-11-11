@@ -3,14 +3,18 @@
  * Shared Test Helpers: Reusable functions for consistent test setup
  */
 
-const BASE_URL = process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL =
+  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
 
 // Helper function to wait for page ready signal
 export const waitForPageReady = async (page) => {
   try {
-    await page.waitForFunction(() => {
-      return window.__TEST_READY__ === true
-    }, { timeout: 10000 })
+    await page.waitForFunction(
+      () => {
+        return window.__TEST_READY__ === true
+      },
+      { timeout: 10000 }
+    )
   } catch (error) {
     await page.waitForTimeout(2000)
   }
@@ -21,7 +25,9 @@ export const replaceIframeWithStableWorkout = async (page) => {
   await page.evaluate(() => {
     const iframe = document.querySelector('iframe')
     if (iframe) {
-      iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(`
+      iframe.src =
+        'data:text/html;charset=utf-8,' +
+        encodeURIComponent(`
         <!DOCTYPE html>
         <html><head><style>
         body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: white; }
@@ -47,21 +53,26 @@ export const replaceIframeWithStableWorkout = async (page) => {
 }
 
 // Setup function for visual regression tests
-export const setupVisualRegressionTest = async ({ dashboardPage, controlPage, mockPage, connectPage }) => {
+export const setupVisualRegressionTest = async ({
+  dashboardPage,
+  controlPage,
+  mockPage,
+  connectPage,
+}) => {
   // Navigate all pages and wait for ready signals
   await dashboardPage.goto(BASE_URL)
   await controlPage.goto(`${BASE_URL}/phone`)
   await mockPage.goto(`${BASE_URL}/mock`)
   await connectPage.goto(`${BASE_URL}/connect`)
-  
+
   // Wait for all pages to signal ready
   await Promise.all([
     waitForPageReady(dashboardPage),
     waitForPageReady(controlPage),
     waitForPageReady(mockPage),
-    waitForPageReady(connectPage)
+    waitForPageReady(connectPage),
   ])
-  
+
   // Replace iframe with stable content for dashboard
   await replaceIframeWithStableWorkout(dashboardPage)
 }
@@ -69,32 +80,47 @@ export const setupVisualRegressionTest = async ({ dashboardPage, controlPage, mo
 // Setup function for comprehensive tests
 export const setupComprehensiveTest = async ({ page, context }) => {
   await page.setViewportSize({ width: 1920, height: 1080 })
-  
+
   // Pre-warm all endpoints for comprehensive tests
   const dashboardTab = await context.newPage()
   const controlTab = await context.newPage()
   const mockTab = await context.newPage()
   const connectTab = await context.newPage()
-  
+
   await Promise.all([
     dashboardTab.goto(BASE_URL),
     controlTab.goto(`${BASE_URL}/phone`),
     mockTab.goto(`${BASE_URL}/mock`),
-    connectTab.goto(`${BASE_URL}/connect`)
+    connectTab.goto(`${BASE_URL}/connect`),
   ])
-  
+
   await Promise.all([
     waitForPageReady(dashboardTab),
     waitForPageReady(controlTab),
     waitForPageReady(mockTab),
-    waitForPageReady(connectTab)
+    waitForPageReady(connectTab),
   ])
-  
+
   // Close pre-warm tabs but keep connections alive
   await dashboardTab.close()
   await controlTab.close()
   await mockTab.close()
   await connectTab.close()
+}
+
+export async function setupCoreTest(page) {
+  await waitForPageReady(page)
+  await replaceIframeWithStableWorkout(page)
+  await waitForWebSocketConnection(page)
+}
+
+export async function waitForWebSocketConnection(page) {
+  await page.waitForFunction(
+    () => {
+      return window.__TEST_WEBSOCKET_READY__ === true
+    },
+    { timeout: 10000 }
+  )
 }
 
 export { BASE_URL }
