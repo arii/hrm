@@ -2,15 +2,15 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
-import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { WebSocket, Server as WebSocketServer } from 'ws';
+import { z } from 'zod'; // Import z from zod
+import { SpotifyPolling } from '../services/spotifyPolling.js';
+import TabataTimer from '../services/tabataTimer.js';
 import {
   ClientCommandMessageSchema,
   HrmData,
   UnifiedStateMessage,
-} from '../types/websocket.js'
+} from '../types/websocket.js';
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer
@@ -164,11 +164,12 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
-          // message.command is already typed as SpotifyCommand, which now includes deviceId and volume
+          // message.command is already typed as SpotifyCommand, which now includes deviceId, volume, and playlistUri
           spotifyServiceInstance.handleCommand(
             message.command,
             message.deviceId,
-            message.volume
+            message.volume,
+            message.playlistUri
           )
         }
         break
@@ -190,4 +191,5 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export { initSocketManager };
+
