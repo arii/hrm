@@ -28,8 +28,8 @@ const nextConfig = {
         destination: '/client/connect',
         permanent: true,
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

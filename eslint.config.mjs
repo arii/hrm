@@ -1,7 +1,7 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import nextPlugin from 'eslint-config-next/core-web-vitals';
-import tseslint from 'typescript-eslint';
-import js from '@eslint/js';
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextPlugin from 'eslint-config-next/core-web-vitals'
+import tseslint from 'typescript-eslint'
+import js from '@eslint/js'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -10,7 +10,14 @@ export default defineConfig([
   // Explicitly ignore unused variables starting with '_'
   {
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
@@ -81,7 +88,14 @@ export default defineConfig([
   {
     files: ['services/**/*.ts'],
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^fetch$|^SpotifyData$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern:
+            '^fetch$|^SpotifyData$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$',
+        },
+      ],
     },
   },
-]);
+])

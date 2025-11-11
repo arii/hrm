@@ -7,50 +7,50 @@
 // --- Server Broadcast State Interfaces ---
 
 export interface HrmData {
-  clientId: string;
-  value: number;
-  maxHr: number;
-  name?: string;
-  age?: number;
+  clientId: string
+  value: number
+  maxHr: number
+  name?: string
+  age?: number
 }
 
-export type TimerMode = "STOPWATCH" | "TABATA";
+export type TimerMode = 'STOPWATCH' | 'TABATA'
 export type TimerPhase =
-  | "IDLE"
-  | "PREPARE"
-  | "WORK"
-  | "REST"
-  | "COOLDOWN"
-  | "RUNNING";
+  | 'IDLE'
+  | 'PREPARE'
+  | 'WORK'
+  | 'REST'
+  | 'COOLDOWN'
+  | 'RUNNING'
 
 export interface TimerData {
-  isRunning: boolean;
-  currentPhase: TimerPhase;
-  timeRemaining: number; // Used for countdowns (Tabata, Prepare)
-  timeElapsed: number; // Used for count-ups (Stopwatch)
-  cycle: number;
-  totalCycles: number;
-  mode: TimerMode;
-  workDuration: number; // seconds for Tabata work interval
-  restDuration: number; // seconds for Tabata rest interval
-  soundToPlay?: "WORK" | "REST" | "COUNTDOWN";
-  soundEventId: number; // increments whenever soundToPlay represents a fresh cue
+  isRunning: boolean
+  currentPhase: TimerPhase
+  timeRemaining: number // Used for countdowns (Tabata, Prepare)
+  timeElapsed: number // Used for count-ups (Stopwatch)
+  cycle: number
+  totalCycles: number
+  mode: TimerMode
+  workDuration: number // seconds for Tabata work interval
+  restDuration: number // seconds for Tabata rest interval
+  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }
 export interface SpotifyData {
-  trackName: string;
-  artist: string;
-  isPlaying: boolean;
+  trackName: string
+  artist: string
+  isPlaying: boolean
 }
 
 /**
  * The single, unified state object broadcast by the server to all clients.
  */
 export interface UnifiedStateMessage {
-  type: "STATE_UPDATE";
-  hrmData: HrmData[];
-  timerData: TimerData;
-  spotifyData: SpotifyData;
-  spotifyServiceInitialized?: boolean;
+  type: 'STATE_UPDATE'
+  hrmData: HrmData[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  spotifyServiceInitialized?: boolean
 }
 
 /**
@@ -63,45 +63,45 @@ export interface UnifiedStateMessage {
  * Use the canonical UnifiedStateMessage where possible; here we expose a
  * lightweight alias so services can pass partial state updates.
  */
-export type BroadcastData = Partial<UnifiedStateMessage>;
+export type BroadcastData = Partial<UnifiedStateMessage>
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, "clientId">;
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
 
 export interface HrmInputMessage {
-  type: "HRM_INPUT";
-  data: HrmInputData;
+  type: 'HRM_INPUT'
+  data: HrmInputData
 }
 
 export interface TimerCommandMessage {
-  type: "TIMER_COMMAND";
-  command: "START" | "PAUSE" | "STOP";
+  type: 'TIMER_COMMAND'
+  command: 'START' | 'PAUSE' | 'STOP'
 }
 
 export interface TimerModeCommandMessage {
-  type: "SET_MODE";
-  mode: TimerMode;
+  type: 'SET_MODE'
+  mode: TimerMode
 }
 
 export interface TimerConfigMessage {
-  type: "TIMER_CONFIG";
-  workDuration: number; // seconds
-  restDuration: number; // seconds
-  totalCycles?: number; // optional, defaults to 8
+  type: 'TIMER_CONFIG'
+  workDuration: number // seconds
+  restDuration: number // seconds
+  totalCycles?: number // optional, defaults to 8
 }
 
 export interface SpotifyCommandMessage {
-  type: "SPOTIFY_COMMAND";
+  type: 'SPOTIFY_COMMAND'
   command:
-    | "PLAY"
-    | "PAUSE"
-    | "NEXT"
-    | "PREVIOUS"
-    | "TRANSFER_PLAYBACK"
-    | "SET_VOLUME";
-  deviceId?: string; // Optional: for TRANSFER_PLAYBACK command
-  volume?: number; // Optional: for SET_VOLUME command (0-100)
+    | 'PLAY'
+    | 'PAUSE'
+    | 'NEXT'
+    | 'PREVIOUS'
+    | 'TRANSFER_PLAYBACK'
+    | 'SET_VOLUME'
+  deviceId?: string // Optional: for TRANSFER_PLAYBACK command
+  volume?: number // Optional: for SET_VOLUME command (0-100)
 }
 
 /**
@@ -112,9 +112,9 @@ export type ClientCommandMessage =
   | TimerCommandMessage
   | TimerModeCommandMessage
   | TimerConfigMessage
-  | SpotifyCommandMessage;
+  | SpotifyCommandMessage
 
-import { z } from "zod";
+import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -123,43 +123,43 @@ export const HrmInputDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
-});
+})
 
 export const HrmInputMessageSchema = z.object({
-  type: z.literal("HRM_INPUT"),
+  type: z.literal('HRM_INPUT'),
   data: HrmInputDataSchema,
-});
+})
 
 export const TimerCommandMessageSchema = z.object({
-  type: z.literal("TIMER_COMMAND"),
-  command: z.union([z.literal("START"), z.literal("PAUSE"), z.literal("STOP")]),
-});
+  type: z.literal('TIMER_COMMAND'),
+  command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+})
 
 export const TimerModeCommandMessageSchema = z.object({
-  type: z.literal("SET_MODE"),
-  mode: z.union([z.literal("STOPWATCH"), z.literal("TABATA")]),
-});
+  type: z.literal('SET_MODE'),
+  mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
+})
 
 export const TimerConfigMessageSchema = z.object({
-  type: z.literal("TIMER_CONFIG"),
+  type: z.literal('TIMER_CONFIG'),
   workDuration: z.number().min(1),
   restDuration: z.number().min(0),
   totalCycles: z.number().min(1).optional(),
-});
+})
 
 export const SpotifyCommandMessageSchema = z.object({
-  type: z.literal("SPOTIFY_COMMAND"),
+  type: z.literal('SPOTIFY_COMMAND'),
   command: z.union([
-    z.literal("PLAY"),
-    z.literal("PAUSE"),
-    z.literal("NEXT"),
-    z.literal("PREVIOUS"),
-    z.literal("TRANSFER_PLAYBACK"),
-    z.literal("SET_VOLUME"),
+    z.literal('PLAY'),
+    z.literal('PAUSE'),
+    z.literal('NEXT'),
+    z.literal('PREVIOUS'),
+    z.literal('TRANSFER_PLAYBACK'),
+    z.literal('SET_VOLUME'),
   ]),
   deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
   volume: z.number().min(0).max(100).optional(), // Optional: for SET_VOLUME command (0-100)
-});
+})
 
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
@@ -167,4 +167,4 @@ export const ClientCommandMessageSchema = z.union([
   TimerModeCommandMessageSchema,
   TimerConfigMessageSchema,
   SpotifyCommandMessageSchema,
-]);
+])

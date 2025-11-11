@@ -1,15 +1,10 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import {
-  Container,
-  Typography,
-  Button,
-  Box,
-} from '@mui/material';
-import useWebSocket from '../../../hooks/useWebSocket';
-import { HrmInputMessage } from '../../../types/websocket';
-import BottomNavBar from '../../../components/BottomNavBar';
+import { useState } from 'react'
+import { Container, Typography, Button, Box } from '@mui/material'
+import useWebSocket from '../../../hooks/useWebSocket'
+import { HrmInputMessage } from '../../../types/websocket'
+import BottomNavBar from '../../../components/BottomNavBar'
 
 const HR_ZONES = [
   { label: 'Rest (60)', value: 60 },
@@ -18,14 +13,14 @@ const HR_ZONES = [
   { label: 'Zone 3 (160)', value: 160 },
   { label: 'Zone 4 (180)', value: 180 },
   { label: 'Max (200)', value: 200 },
-];
+]
 
 export default function MockPage() {
-  const [currentHR, setCurrentHR] = useState(0);
-  const { connectionStatus, sendData } = useWebSocket();
+  const [currentHR, setCurrentHR] = useState(0)
+  const { connectionStatus, sendData } = useWebSocket()
 
   const sendMockData = (heartRate: number) => {
-    setCurrentHR(heartRate);
+    setCurrentHR(heartRate)
     const message: HrmInputMessage = {
       type: 'HRM_INPUT',
       data: {
@@ -34,9 +29,9 @@ export default function MockPage() {
         name: 'Mock HRM',
         age: 30,
       },
-    };
-    sendData(message);
-  };
+    }
+    sendData(message)
+  }
 
   return (
     <>
@@ -81,5 +76,5 @@ export default function MockPage() {
       </Container>
       <BottomNavBar />
     </>
-  );
+  )
 }

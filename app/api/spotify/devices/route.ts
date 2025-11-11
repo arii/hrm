@@ -1,6 +1,6 @@
-import { authOptions } from "@/lib/auth";
-import { getServerSession } from "next-auth/next";
-import { NextResponse } from "next/server";
+import { authOptions } from '@/lib/auth'
+import { getServerSession } from 'next-auth/next'
+import { NextResponse } from 'next/server'
 
 /**
  * API route to fetch available Spotify devices for the authenticated user.
@@ -15,47 +15,47 @@ import { NextResponse } from "next/server";
 export async function GET(_req: Request) {
   try {
     // 1. Get the server-side session.
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions)
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error("[API /devices] No session or access token found.");
+      console.error('[API /devices] No session or access token found.')
       return NextResponse.json(
-        { error: "Not authenticated or token is missing." },
+        { error: 'Not authenticated or token is missing.' },
         { status: 401 }
-      );
+      )
     }
 
     // 3. Fetch devices from Spotify API.
     const response = await fetch(
-      "https://api.spotify.com/v1/me/player/devices",
+      'https://api.spotify.com/v1/me/player/devices',
       {
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
         },
       }
-    );
+    )
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorText = await response.text()
       console.error(
         `[API /devices] Spotify API error: ${response.status} ${errorText}`
-      );
+      )
       return NextResponse.json(
-        { error: "Failed to fetch devices from Spotify." },
+        { error: 'Failed to fetch devices from Spotify.' },
         { status: response.status }
-      );
+      )
     }
 
-    const data = await response.json();
-    return NextResponse.json(data.devices || []);
+    const data = await response.json()
+    return NextResponse.json(data.devices || [])
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error(`[API /devices] Internal Server Error: ${message}`);
+      error instanceof Error ? error.message : 'An unknown error occurred.'
+    console.error(`[API /devices] Internal Server Error: ${message}`)
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: 'Internal Server Error' },
       { status: 500 }
-    );
+    )
   }
 }

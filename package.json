@@ -6,7 +6,7 @@
   "scripts": {
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
-    "dev:clean": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
+    "dev:clean": "tsc -p tsconfig.build.json && NODE_ENV=development HOST=127.0.0.1 node dist/server.js",
     "dev:server": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --transpile-only --compiler-options '{\"module\":\"CommonJS\",\"moduleResolution\":\"node\"}' server.ts",
     "build": "npm run build:server && next build",
     "start:node": "node dist/server.js",
@@ -21,6 +21,7 @@
     "pm2:delete": "./node_modules/.bin/pm2 delete ecosystem.config.js",
     "pm2:logs": "./node_modules/.bin/pm2 logs",
     "lint": "eslint",
+    "format": "prettier --write .",
     "test:visual": "playwright test --project=chromium",
     "test:visual:ui": "playwright test --ui",
     "test:visual:update": "playwright test --update-snapshots",
@@ -58,6 +59,7 @@
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.1",
     "pm2": "^5.2.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

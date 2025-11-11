@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+playwright-report/
+test-results/
 
 # next.js
 /.next/
@@ -46,6 +48,7 @@ next-env.d.ts
 .vscode/*
 
 npm_run_dev.log
+server_run.log
 
 # Ignore generated server JS (keep TypeScript source canonical)
 server.js

@@ -1,13 +1,13 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth, { Account, AuthOptions, Session } from "next-auth";
-import { JWT } from "next-auth/jwt";
-import SpotifyProvider from "next-auth/providers/spotify";
-import { getAPIURL } from '../utils/urls';
+import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
+import { JWT } from 'next-auth/jwt'
+import SpotifyProvider from 'next-auth/providers/spotify'
+import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session {
-    accessToken?: string;
+    accessToken?: string
   }
 }
 
@@ -15,14 +15,14 @@ declare module "next-auth" {
 // user-modify-playback-state to control playback (play/pause/skip),
 // streaming for Web Playback SDK (play music in browser).
 const SPOTIFY_SCOPES = [
-  "user-read-private",
-  "user-top-read",
-  "user-read-email",
-  "user-read-playback-state",
-  "user-modify-playback-state",
-  "user-read-currently-playing",
-  "streaming", // Required for Web Playback SDK
-].join(",");
+  'user-read-private',
+  'user-top-read',
+  'user-read-email',
+  'user-read-playback-state',
+  'user-modify-playback-state',
+  'user-read-currently-playing',
+  'streaming', // Required for Web Playback SDK
+].join(',')
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -40,8 +40,8 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // Initial sign in
       if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        token.accessToken = account.access_token
+        token.refreshToken = account.refresh_token
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
@@ -56,52 +56,49 @@ export const authOptions: AuthOptions = {
               expires_in: account.expires_at
                 ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
                 : 3600,
-              scope: account.scope || "",
+              scope: account.scope || '',
               obtainedAt: Date.now(),
-            };
+            }
 
-            const response = await fetch(
-              getAPIURL('internal/token-delivery'),
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(tokenPayload),
-              }
-            );
-            const responseBody = await response.text();
+            const response = await fetch(getAPIURL('internal/token-delivery'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tokenPayload),
+            })
+            const responseBody = await response.text()
             if (response.ok) {
               console.log(
-                "Internal token delivery successful. Status:",
+                'Internal token delivery successful. Status:',
                 response.status,
-                "Body:",
+                'Body:',
                 responseBody
-              );
+              )
             } else {
               console.error(
-                "Internal token delivery failed. Status:",
+                'Internal token delivery failed. Status:',
                 response.status,
-                "Body:",
+                'Body:',
                 responseBody
-              );
+              )
             }
           } catch (e) {
-            console.error("Internal token delivery failed:", e);
+            console.error('Internal token delivery failed:', e)
           }
         }
       }
       // Future logic for token refresh handled internally by spotifyPolling.ts
-      return token;
+      return token
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       // Expose a minimal token structure to the client session
-      if (token.accessToken && typeof token.accessToken === "string") {
-        session.accessToken = token.accessToken;
+      if (token.accessToken && typeof token.accessToken === 'string') {
+        session.accessToken = token.accessToken
       }
-      return session;
+      return session
     },
   },
   // Ensure the token can be accessed securely
   secret: process.env.NEXTAUTH_SECRET,
-};
+}
 
-export default NextAuth(authOptions);
+export default NextAuth(authOptions)

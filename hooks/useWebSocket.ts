@@ -3,22 +3,22 @@
  * Central client-side hook for managing WebSocket connection and application state.
  * It establishes the connection and updates the unified state based on server broadcasts.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ClientCommandMessage,
   HrmData,
   SpotifyData,
   TimerData,
   UnifiedStateMessage,
-} from "../types/websocket";
+} from '../types/websocket'
 
-import { getWebSocketURL } from '../utils/urls';
+import { getWebSocketURL } from '../utils/urls'
 
 interface AppState {
-  hrmData: HrmData[];
-  timerData: TimerData;
-  spotifyData: SpotifyData;
-  spotifyServiceInitialized?: boolean;
+  hrmData: HrmData[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  spotifyServiceInitialized?: boolean
 }
 
 // Initial state, conforming to the interfaces
@@ -26,53 +26,53 @@ const INITIAL_STATE: AppState = {
   hrmData: [],
   timerData: {
     isRunning: false,
-    currentPhase: "IDLE",
+    currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
     cycle: 0,
     totalCycles: 8,
-    mode: "TABATA",
+    mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
   },
-  spotifyData: { trackName: "Awaiting Login...", artist: "", isPlaying: false },
+  spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
   spotifyServiceInitialized: true,
-};
+}
 
 const useWebSocket = (serverUrl?: string) => {
-  const wsUrl = serverUrl || getWebSocketURL();
-  const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const wsUrl = serverUrl || getWebSocketURL()
+  const [connectionStatus, setConnectionStatus] = useState('Connecting...')
 
   // Unified State Object
-  const [appState, setAppState] = useState<AppState>(INITIAL_STATE);
+  const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
     // Ensure this runs only client-side
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return
 
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    const ws = new WebSocket(wsUrl)
+    wsRef.current = ws
 
-    ws.onopen = () => setConnectionStatus("Connected");
-    ws.onclose = () => setConnectionStatus("Disconnected");
+    ws.onopen = () => setConnectionStatus('Connected')
+    ws.onclose = () => setConnectionStatus('Disconnected')
     ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-      setConnectionStatus("Error");
-    };
+      console.error('WebSocket error:', err)
+      setConnectionStatus('Error')
+    }
 
     ws.onmessage = (event) => {
       try {
         // Assert incoming message is the UnifiedStateMessage type
-        const message: UnifiedStateMessage = JSON.parse(event.data);
+        const message: UnifiedStateMessage = JSON.parse(event.data)
 
-        if (message.type === "STATE_UPDATE") {
+        if (message.type === 'STATE_UPDATE') {
           console.log(
-            "[useWebSocket] Received STATE_UPDATE. HRM Data:",
+            '[useWebSocket] Received STATE_UPDATE. HRM Data:',
             message.hrmData
-          );
+          )
           // Merge the incoming state with the current state to preserve non-updated fields
           setAppState((prev) => ({
             hrmData: message.hrmData || prev.hrmData,
@@ -81,45 +81,45 @@ const useWebSocket = (serverUrl?: string) => {
             spotifyServiceInitialized:
               message.spotifyServiceInitialized ??
               prev.spotifyServiceInitialized,
-          }));
+          }))
         }
       } catch (e) {
-        console.error("Failed to parse WebSocket message:", e);
+        console.error('Failed to parse WebSocket message:', e)
       }
-    };
+    }
     return () => {
       // Clean up the connection on unmount
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close()
       }
-    };
-  }, [wsUrl]);
+    }
+  }, [wsUrl])
 
   /**
    * Sends a JSON payload (ClientCommandMessage) to the WebSocket server.
    * Note: The hook takes the typed object and stringifies it internally.
    */
   const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current;
+    const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data);
-      console.log("[useWebSocket] Sending:", data);
-      ws.send(jsonStr);
+      const jsonStr = JSON.stringify(data)
+      console.log('[useWebSocket] Sending:', data)
+      ws.send(jsonStr)
     } else {
       console.warn(
-        "[useWebSocket] WebSocket not open. State:",
+        '[useWebSocket] WebSocket not open. State:',
         ws?.readyState,
-        "Data:",
+        'Data:',
         data
-      );
+      )
     }
-  }, []);
+  }, [])
 
   return {
     ...appState, // Expose all state parts directly
     connectionStatus,
     sendData,
-  };
-};
+  }
+}
 
-export default useWebSocket;
+export default useWebSocket
