@@ -1,0 +1,322 @@
+// File: app/client/control/components/TimerControls.tsx
+'use client'
+import {
+  FitnessCenter,
+  Timer,
+  Add,
+  Remove,
+  PlayArrow,
+  Stop,
+} from '@mui/icons-material'
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import {
+  TimerCommandMessage,
+  TimerModeCommandMessage,
+} from '@/types/websocket'
+import useWebSocket from '@/hooks/useWebSocket'
+import { useState, useCallback } from 'react'
+
+const TimerControls = () => {
+  const { timerData, sendData } = useWebSocket()
+  const [workTime, setWorkTime] = useState(20)
+  const [restTime, setRestTime] = useState(10)
+
+  // Sync with server data only when it changes and is different
+  const serverWorkTime = timerData.workDuration || 20
+  const serverRestTime = timerData.restDuration || 10
+  
+  if (serverWorkTime !== workTime && serverWorkTime !== 20) {
+    setWorkTime(serverWorkTime)
+  }
+  
+  if (serverRestTime !== restTime && serverRestTime !== 10) {
+    setRestTime(serverRestTime)
+  }
+
+  const sendTimerCommand = useCallback(
+    (command: 'START' | 'PAUSE' | 'STOP') => {
+      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
+      sendData(message)
+    },
+    [sendData]
+  )
+
+  const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
+    const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
+    sendData(message)
+  }
+
+  return (
+    <Card
+      sx={{
+        boxShadow: 6,
+        mb: 3,
+        backgroundColor: '#000000',
+        color: '#EF4444',
+        position: 'sticky',
+        top: 16,
+        zIndex: 1000,
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            sx={{
+              color: 'white',
+              fontWeight: 'medium',
+              mb: 1.5,
+              textAlign: 'center',
+            }}
+          >
+            Timer Mode
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button
+              variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
+              onClick={() => sendModeCommand('TABATA')}
+              disabled={timerData.isRunning}
+              startIcon={<FitnessCenter />}
+              sx={{
+                flex: 1,
+                color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
+                backgroundColor:
+                  timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
+                borderColor: '#EF4444',
+                '&:hover': {
+                  backgroundColor:
+                    timerData.mode === 'TABATA'
+                      ? '#DC2626'
+                      : 'rgba(239, 68, 68, 0.1)',
+                  borderColor: '#DC2626',
+                },
+              }}
+            >
+              Tabata
+            </Button>
+            <Button
+              variant={
+                timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
+              }
+              onClick={() => sendModeCommand('STOPWATCH')}
+              disabled={timerData.isRunning}
+              startIcon={<Timer />}
+              sx={{
+                flex: 1,
+                color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
+                backgroundColor:
+                  timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
+                borderColor: '#EF4444',
+                '&:hover': {
+                  backgroundColor:
+                    timerData.mode === 'STOPWATCH'
+                      ? '#DC2626'
+                      : 'rgba(239, 68, 68, 0.1)',
+                  borderColor: '#DC2626',
+                },
+              }}
+            >
+              Stopwatch
+            </Button>
+          </Stack>
+        </Box>
+
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+            {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#EF4444' }}>
+            {timerData.currentPhase}{' '}
+            {timerData.mode === 'TABATA' &&
+              timerData.cycle > 0 &&
+              `• Cycle ${timerData.cycle}/${timerData.totalCycles}`}
+          </Typography>
+        </Box>
+
+        {timerData.mode === 'TABATA' && (
+          <Stack spacing={4} sx={{ mb: 4 }}>
+            <Box>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+                {' '}
+                Work Duration (seconds)
+              </Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={3}
+              >
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => Math.max(5, prev - 5))}
+                  aria-label="Decrease work duration"
+                  sx={{
+                    backgroundColor: 'grey.700',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'grey.600' },
+                    p: 2,
+                  }}
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
+                <TextField
+                  type="number"
+                  value={workTime}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0
+                    setWorkTime(Math.max(5, val))
+                  }}
+                  inputProps={{
+                    min: 0,
+                    step: 5,
+                    style: { textAlign: 'center' },
+                  }}
+                  sx={{
+                    width: '120px',
+                    '& .MuiInputBase-input': {
+                      color: '#EF4444',
+                      fontWeight: 'bold',
+                      fontSize: '3rem',
+                      textAlign: 'center',
+                      padding: '8px',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#EF4444',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#DC2626',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#EF4444',
+                      },
+                    },
+                  }}
+                  aria-label="Work duration in seconds"
+                />
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => prev + 5)}
+                  aria-label="Increase work duration"
+                  sx={{
+                    backgroundColor: 'grey.700',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'grey.600' },
+                    p: 2,
+                  }}
+                >
+                  <Add fontSize="large" />
+                </IconButton>
+              </Stack>
+            </Box>
+
+            <Box>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+                Rest Duration (seconds)
+              </Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={3}
+              >
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                  aria-label="Decrease rest duration"
+                  sx={{
+                    backgroundColor: 'grey.700',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'grey.600' },
+                    p: 2,
+                  }}
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
+                <TextField
+                  type="number"
+                  value={restTime}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0
+                    setRestTime(Math.max(0, val))
+                  }}
+                  inputProps={{
+                    min: 0,
+                    step: 5,
+                    style: { textAlign: 'center' },
+                  }}
+                  sx={{
+                    width: '120px',
+                    '& .MuiInputBase-input': {
+                      color: '#22C55E',
+                      fontWeight: 'bold',
+                      fontSize: '3rem',
+                      textAlign: 'center',
+                      padding: '8px',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#22C55E',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#16A34A',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#22C55E',
+                      },
+                    },
+                  }}
+                  aria-label="Rest duration in seconds"
+                />
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => prev + 5)}
+                  aria-label="Increase rest duration"
+                  sx={{
+                    backgroundColor: 'grey.700',
+                    color: 'white',
+                    '&:hover': { backgroundColor: 'grey.600' },
+                    p: 2,
+                  }}
+                >
+                  <Add fontSize="large" />
+                </IconButton>
+              </Stack>
+            </Box>
+          </Stack>
+        )}
+
+        <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => sendTimerCommand('START')}
+            sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+            startIcon={<PlayArrow fontSize="large" />}
+          >
+            START
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => sendTimerCommand('STOP')}
+            sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+            startIcon={<Stop fontSize="large" />}
+          >
+            STOP
+          </Button>
+        </Stack>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default TimerControls

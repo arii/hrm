@@ -82,7 +82,7 @@ This is **NOT** a standard serverless Next.js app.
 
 **Client Pages:**
 - `app/page.tsx` - Main dashboard (passive viewer, displays HR/timer/music)
-- `app/client/control/page.tsx` - Control panel (sends commands)
+- `app/client/control/page.tsx` / `ControlPanel.tsx` - Control panel container (timer + Spotify commands)
 - `app/client/connect/page.tsx` - Web Bluetooth HRM connector
 - `app/client/mock/page.tsx` - Mock HRM data sender for testing
 
@@ -101,9 +101,17 @@ This is **NOT** a standard serverless Next.js app.
 - `hooks/useBluetoothHRM.ts` - Web Bluetooth HRM connection
 - `hooks/useTabataSounds.ts` - Audio feedback (Web Audio API)
 
+**Dashboard Components:**
+- `components/TimerDisplay.tsx` - Timer visualization
+- `components/HrmTiles.tsx` - HR tile grid wrapper with filtering/skeletons
+- `components/SpotifyDisplay.tsx` - Fixed footer playback controls and volume sync
+
 **Utilities:**
 - `utils/socketManager.ts` - WebSocket message router (server-side)
 - `utils/visualization.ts` - HR zone colors and calculations
+
+**Shared Types:**
+- `types/index.ts` - Shared UI prop types and enums for dashboard/control components
 
 **Configuration:**
 - `.env.local` - Secrets (Spotify, NextAuth)
@@ -174,7 +182,7 @@ If you prefer command-line only, `npm run dev` is the simplest way to run the se
 1.  **State Management**: All global application state (Timer, HR, Music) is **owned by the server** (in `services/`). Clients are "dumb" and just send/receive WebSocket messages.
 2.  **UI Components**: Use **MUI** (`@mui/material`) for all components.
 3.  **Client-Server Communication**:
-    - **To Send/Receive Real-time Data**: Use the `useWebSocket.js` hook.
+  - **To Send/Receive Real-time Data**: Use the `useWebSocket.ts` hook.
     - **For Authentication**: Use the NextAuth flow (`/api/auth/...`).
     - **DO NOT** add new functionality to Next.js API Routes if it involves real-time state.
 4.  **TypeScript**: Use TypeScript for all new files and ensure type safety.
@@ -205,7 +213,7 @@ This application is **stateful** and **cannot** be deployed on a serverless plat
 ## Notes for AI Agents
 
 - **Always respect the `server.ts` architecture.**
-- When adding new controls (e.g., "Skip Song"), add the button to `app/client/control/page.tsx`, send a new WebSocket message type, and handle that message in `utils/socketManager.ts` to trigger `services/spotifyPolling.ts`.
+- When adding new controls (e.g., "Skip Song"), update the relevant component in `app/client/control/components/` (`TimerControls.tsx` or `SpotifyControls.tsx`), send a new WebSocket message type, and handle that message in `utils/socketManager.ts` to trigger `services/spotifyPolling.ts`.
 - When adding new visuals (e.g., "HR Chart"), add the component to `app/page.tsx` and have it read data from the `useWebSocket` hook.
 - Run `npm run lint` before finalizing code.
 
@@ -612,8 +620,8 @@ console.log(`Round-trip latency: ${latency}ms (target: <120ms)`);
    - View logs with timeout: `timeout 10 tail -50 /tmp/mcp.log`
 
 5. Adding new real-time behaviors
-   - To add a new timer or music control:
-     - Add command UI in `app/client/control/page.tsx`.
+  - To add a new timer or music control:
+    - Add command UI in `app/client/control/components/TimerControls.tsx` or `SpotifyControls.tsx` (rendered by `ControlPanel.tsx`).
      - Send a `ClientCommandMessage` via `hooks/useWebSocket.ts`.
      - Handle the command in `utils/socketManager.ts` and delegate to the correct service.
 

@@ -47,6 +47,7 @@ export default defineConfig([
     'server.js', // Exclude server.js
     '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
     '.github/copilot-instructions.md', // Exclude copilot instructions
+    'ecosystem.config.cjs', // Exclude PM2 config file
   ]),
 
   // Configuration for TypeScript files

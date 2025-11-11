@@ -28,6 +28,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "next": "16.0.1",
     "next-auth": "^4.24.13",

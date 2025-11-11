@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - img [ref=e4]
+    - heading "HRM Mock Streamer" [level=1] [ref=e6]
+    - paragraph [ref=e7]: Simulate heart rate data for testing.
+    - generic [ref=e8]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: User Name
+        - generic [ref=e12]:
+          - textbox "User Name" [ref=e13]: Mock User
+          - group:
+            - generic: User Name
+      - generic [ref=e15]:
+        - generic [ref=e16]: Age
+        - generic [ref=e17]:
+          - spinbutton "Age" [ref=e18]: "30"
+          - group:
+            - generic: Age
+    - generic [ref=e19]:
+      - generic [ref=e20]: Current BPM
+      - generic [ref=e21]:
+        - spinbutton "Current BPM" [ref=e22]: "100"
+        - group:
+          - generic: Current BPM
+    - generic [ref=e23]: "Select a zone to set HR:"
+    - generic [ref=e24]:
+      - button "Zone 1" [ref=e26] [cursor=pointer]: Zone 1
+      - button "Zone 2" [ref=e28] [cursor=pointer]: Zone 2
+      - button "Zone 3" [ref=e30] [cursor=pointer]: Zone 3
+      - button "Zone 4" [ref=e32] [cursor=pointer]: Zone 4
+      - button "Zone 5" [ref=e34] [cursor=pointer]: Zone 5
+    - button "START Continuous Stream" [ref=e35] [cursor=pointer]:
+      - img [ref=e37]
+      - text: START Continuous Stream
+    - 'heading "Server Status: Connected" [level=6] [ref=e40]'
+  - generic [ref=e41]:
+    - link "Dashboard" [ref=e42] [cursor=pointer]:
+      - /url: /
+      - img [ref=e43]
+      - generic [ref=e45]: Dashboard
+    - link "Phone Controls" [ref=e46] [cursor=pointer]:
+      - /url: /client/control
+      - img [ref=e47]
+      - generic [ref=e49]: Phone Controls
+    - link "Stream HR" [ref=e50] [cursor=pointer]:
+      - /url: /client/connect
+      - img [ref=e51]
+      - generic [ref=e53]: Stream HR
+  - generic [ref=e54]:
+    - link "Dashboard" [ref=e55] [cursor=pointer]:
+      - /url: /
+      - img [ref=e56]
+      - generic [ref=e58]: Dashboard
+    - link "Phone Controls" [ref=e59] [cursor=pointer]:
+      - /url: /client/control
+      - img [ref=e60]
+      - generic [ref=e62]: Phone Controls
+    - link "Stream HR" [ref=e63] [cursor=pointer]:
+      - /url: /client/connect
+      - img [ref=e64]
+      - generic [ref=e66]: Stream HR
+  - button "Open Next.js Dev Tools" [ref=e72] [cursor=pointer]:
+    - img [ref=e73]
+  - alert [ref=e76]
+```

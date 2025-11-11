@@ -68,7 +68,9 @@ npm run pm2:logs
 
 - **`server.ts`**: Custom Express + Next.js + WebSocket entry point
 - **`app/page.tsx`**: Main dashboard with timer, HR tiles, Spotify controls, and Google Doc viewer
-- **`app/client/control/page.tsx`**: Mobile control panel with timer/Spotify controls and Tabata configuration
+- **`app/client/control/ControlPanel.tsx`**: Mobile control panel container for timer/Spotify controls and Tabata configuration
+- **`app/client/control/components/TimerControls.tsx`**: Dedicated Tabata/Stopwatch control surface with sticky layout
+- **`app/client/control/components/SpotifyControls.tsx`**: Mobile-friendly Spotify playback controls and synced volume slider
 - **`app/client/mock/page.tsx`**: Mock HRM data sender for testing
 - **`app/client/connect/page.tsx`**: Bluetooth HRM connector with user name/age input
 - **`services/tabataTimer.ts`**: Dual-mode timer service (Tabata/Stopwatch) with audio cues
@@ -78,8 +80,11 @@ npm run pm2:logs
 - **`hooks/useAudio.ts`**: Audio playback hook with volume control
 - **`hooks/useVolumePreference.ts`**: Synchronized volume preference across tabs
 - **`components/TimerDisplay.tsx`**: Large timer display with rotated side labels
+- **`components/HrmTiles.tsx`**: Dashboard wrapper that renders live heart rate tiles with skeleton fallbacks
 - **`components/HrTile.tsx`**: Reusable heart rate percentage tile component
+- **`components/SpotifyDisplay.tsx`**: Fixed bottom playback bar with volume/device controls
 - **`utils/socketManager.ts`**: Server-side WebSocket message router
+- **`types/index.ts`**: Shared UI prop types and timer enums
 - **`tests/playwright/visual-regression.spec.ts`**: Screenshot-based tests
 
 ## Available Commands

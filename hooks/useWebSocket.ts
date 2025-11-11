@@ -49,6 +49,7 @@ const useWebSocket = (serverUrl?: string) => {
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
+  const connectRef = useRef<(() => void) | null>(null)
 
   const connect = useCallback(() => {
     // Ensure this runs only client-side
@@ -80,12 +81,12 @@ const useWebSocket = (serverUrl?: string) => {
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('[useWebSocket] Attempting to reconnect...')
           setConnectionStatus('Reconnecting...')
-          connect()
+          connectRef.current?.()
         }, 3000)
       }
     }
 
-    ws.onerror = (err) => {
+    ws.onerror = (_err) => {
       console.warn('[useWebSocket] Connection error')
       setConnectionStatus('Error')
     }
@@ -117,6 +118,7 @@ const useWebSocket = (serverUrl?: string) => {
   }, [wsUrl])
 
   useEffect(() => {
+    connectRef.current = connect
     connect()
 
     return () => {

@@ -155,7 +155,7 @@ export default function ConnectPage() {
         )}
 
         {isConnected && currentHR > 0 && (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ mt: 2 }}>
             <Grid item xs={12}>
               <HrTile
                 name={userName}
@@ -165,6 +165,12 @@ export default function ConnectPage() {
               />
             </Grid>
           </Grid>
+        )}
+
+        {isConnected && currentHR === 0 && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Connected but no heart rate detected. Make sure your heart rate monitor is properly positioned and active.
+          </Alert>
         )}
 
         <Typography

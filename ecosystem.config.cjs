@@ -1,6 +1,4 @@
-const dotenv = require('dotenv')
-const envConfig = dotenv.config({ path: '.env.production' }).parsed || {}
-
+/* eslint-env node */
 module.exports = {
   apps: [
     {
@@ -16,7 +14,6 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        ...envConfig,
       },
     },
   ],

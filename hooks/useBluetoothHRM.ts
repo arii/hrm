@@ -179,7 +179,7 @@ const useBluetoothHRM = () => {
         setDeviceStatus(`Failed: ${fullMessage}`)
       }
     },
-    [deviceStatus, connectionStatus, sendData]
+    [deviceStatus, connectionStatus, sendData, savedDevice]
   )
 
   return {
