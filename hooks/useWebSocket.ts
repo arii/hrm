@@ -43,23 +43,46 @@ const INITIAL_STATE: AppState = {
 const useWebSocket = (serverUrl?: string) => {
   const wsUrl = serverUrl || getWebSocketURL();
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Unified State Object
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE);
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
+  const connect = useCallback(() => {
     // Ensure this runs only client-side
     if (typeof window === "undefined") return;
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => setConnectionStatus("Connected");
-    ws.onclose = () => setConnectionStatus("Disconnected");
+    ws.onopen = () => {
+      console.log("[useWebSocket] Connected to server");
+      setConnectionStatus("Connected");
+      // Clear any pending reconnection
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+    
+    ws.onclose = (event) => {
+      console.log("[useWebSocket] Disconnected from server", event.code, event.reason);
+      setConnectionStatus("Disconnected");
+      
+      // Attempt to reconnect after 3 seconds
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log("[useWebSocket] Attempting to reconnect...");
+          setConnectionStatus("Reconnecting...");
+          connect();
+        }, 3000);
+      }
+    };
+    
     ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
+      console.warn("[useWebSocket] Connection error");
       setConnectionStatus("Error");
     };
 
@@ -87,13 +110,21 @@ const useWebSocket = (serverUrl?: string) => {
         console.error("Failed to parse WebSocket message:", e);
       }
     };
+  }, [wsUrl]);
+
+  useEffect(() => {
+    connect();
+    
     return () => {
-      // Clean up the connection on unmount
+      // Clean up the connection and reconnection timeout on unmount
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
-  }, [wsUrl]);
+  }, [connect]);
 
   /**
    * Sends a JSON payload (ClientCommandMessage) to the WebSocket server.

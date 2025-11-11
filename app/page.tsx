@@ -140,29 +140,34 @@ const Dashboard = () => {
   // Check if user is logged in
   const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated;
 
-  // Fetch available Spotify devices
-  useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
-      const fetchDevices = async () => {
-        try {
-          const response = await fetch("/api/spotify/devices");
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const devices = await response.json();
-          console.log("[Dashboard] Fetched devices:", devices);
-          const deviceArray = Array.isArray(devices) ? devices : [];
-          setAvailableDevices(deviceArray);
-        } catch (error) {
-          console.error("[Dashboard] Failed to fetch Spotify devices:", error);
-        }
-      };
-      fetchDevices();
-    } else {
+  // Fetch available Spotify devices on demand
+  const fetchDevices = useCallback(async () => {
+    if (!spotifyLoggedIn || !spotifyData.trackName) {
       setAvailableDevices([]);
       setSelectedDeviceId("");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/spotify/devices");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const devices = await response.json();
+      console.log("[Dashboard] Fetched devices:", devices);
+      const deviceArray = Array.isArray(devices) ? devices : [];
+      setAvailableDevices(deviceArray);
+    } catch (error) {
+      console.error("[Dashboard] Failed to fetch Spotify devices:", error);
     }
   }, [spotifyLoggedIn, spotifyData.trackName]);
+
+  // Initial fetch when logged in
+  useEffect(() => {
+    if (spotifyLoggedIn && spotifyData.trackName) {
+      fetchDevices();
+    }
+  }, [spotifyLoggedIn, spotifyData.trackName, fetchDevices]);
 
   useEffect(() => {
     if (availableDevices.length === 0) {
@@ -429,10 +434,11 @@ const Dashboard = () => {
                   <VolumeUp sx={{ color: "grey.400", fontSize: 18 }} />
                   <Slider
                     value={volume}
-                    onChange={(_, val) => setVolume(val as number)}
-                    onChangeCommitted={(_, val) =>
-                      sendVolumeCommand(val as number)
-                    }
+                    onChange={(_, val) => {
+                      const newVolume = val as number;
+                      setVolume(newVolume);
+                      sendVolumeCommand(newVolume);
+                    }}
                     min={0}
                     max={100}
                     size="small"
@@ -452,7 +458,10 @@ const Dashboard = () => {
                   {/* Device Selector */}
                   <IconButton
                     size="small"
-                    onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
+                    onClick={(e) => {
+                      fetchDevices();
+                      setDeviceMenuAnchor(e.currentTarget);
+                    }}
                     sx={{
                       color: "common.white",
                       "&:hover": { backgroundColor: "grey.800" },

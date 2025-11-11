@@ -71,15 +71,15 @@ const useSpotifyWebPlayback = () => {
    */
   const getOAuthToken = useCallback(async (cb: (token: string) => void) => {
     try {
-      // This endpoint will be created in the next step.
       const response = await fetch("/api/spotify/access-token");
       if (!response.ok) {
+        if (response.status === 401) {
+          // User not logged in - this is expected, don't show as error
+          console.log("[Spotify Web Playback] User not logged in, Web Playback unavailable");
+          setIsAuthenticated(false);
+          return;
+        }
         const errorText = await response.text();
-        console.error(
-          "[Spotify Web Playback] Token fetch failed:",
-          response.status,
-          errorText
-        );
         throw new Error(
           `Failed to fetch Spotify access token: ${response.status} ${errorText}`
         );
@@ -96,7 +96,7 @@ const useSpotifyWebPlayback = () => {
         e instanceof Error ? e.message : "An unknown error occurred.";
       setError(`Authentication failed: ${message}`);
       setIsAuthenticated(false);
-      console.error(`[Spotify Web Playback] getOAuthToken error: ${message}`);
+      console.warn(`[Spotify Web Playback] getOAuthToken error: ${message}`);
     }
   }, []);
 
@@ -109,29 +109,46 @@ const useSpotifyWebPlayback = () => {
     // Prevent re-initialization if player already exists and is ready
     if (player && isReady) {
       console.log(
-        "[Spotify Web Playback] Player already initialized and ready"
+        "[Spotify Web Playbook] Player already initialized and ready"
       );
       return;
     }
 
-    // Load the SDK script if not already loaded
-    if (!window.Spotify) {
-      console.log("[Spotify Web Playback] Loading Spotify SDK script...");
-      const script = document.createElement("script");
-      script.src = "https://sdk.scdn.co/spotify-player.js";
-      script.async = true;
-      document.body.appendChild(script);
-    } else {
-      console.log("[Spotify Web Playback] Spotify SDK already loaded");
-      // SDK already loaded, initialize immediately
-      initializePlayer();
-    }
+    // Check if user has active session before initializing
+    fetch("/api/spotify/access-token")
+      .then(response => {
+        if (!response.ok) {
+          console.log("[Spotify Web Playback] No active session, skipping Web Playback initialization");
+          return;
+        }
+        // User is logged in, proceed with initialization
+        initializeSDK();
+      })
+      .catch(() => {
+        console.log("[Spotify Web Playback] Session check failed, skipping Web Playback initialization");
+      });
 
-    // This function is called by the Spotify SDK once it's loaded.
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      console.log("[Spotify Web Playback] SDK ready callback triggered");
-      initializePlayer();
-    };
+    function initializeSDK() {
+
+      // Load the SDK script if not already loaded
+      if (!window.Spotify) {
+        console.log("[Spotify Web Playback] Loading Spotify SDK script...");
+        const script = document.createElement("script");
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        document.body.appendChild(script);
+      } else {
+        console.log("[Spotify Web Playback] Spotify SDK already loaded");
+        // SDK already loaded, initialize immediately
+        initializePlayer();
+      }
+
+      // This function is called by the Spotify SDK once it's loaded.
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        console.log("[Spotify Web Playback] SDK ready callback triggered");
+        initializePlayer();
+      };
+    }
 
     function initializePlayer() {
       // Don't initialize if we already have a player
@@ -191,8 +208,9 @@ const useSpotifyWebPlayback = () => {
             "[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!"
           );
         } else {
-          console.error("[Spotify Web Playback] Connection failed");
-          setError("Failed to connect player");
+          // Note: connect() can return false even when connection succeeds
+          // We'll rely on the 'ready' event to confirm actual connection status
+          console.warn("[Spotify Web Playback] connect() returned false, but this may be a false negative");
         }
       });
     }

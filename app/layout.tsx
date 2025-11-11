@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
-import "./globals.css";
-import Providers from "../components/Providers";
 import BottomNavBar from "../components/BottomNavBar"; // Import the new component
-
+import Providers from "../components/Providers";
+import ThemeRegistry from "../components/ThemeRegistry/ThemeRegistry";
+import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -27,8 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <Providers>{children}</Providers>
-        <BottomNavBar /> {/* Add the BottomNavBar here */}
+        {/* ThemeRegistry now contains all the logic */}
+        <ThemeRegistry options={{ key: "mui" }}>
+          <Providers>{children}</Providers>
+          <BottomNavBar />
+        </ThemeRegistry>
       </body>
     </html>
   );

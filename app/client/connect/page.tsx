@@ -49,11 +49,14 @@ export default function ConnectPage() {
     if (savedName) setUserName(savedName);
     if (savedAge) setUserAge(savedAge);
     
-    // Auto-connect if we have saved device info and WebSocket is connected
-    if (savedName && savedAge && savedDeviceId && connectionStatus === 'Connected') {
+    // Auto-connect only once when WebSocket first connects and we're not already connected
+    if (savedName && savedAge && savedDeviceId && 
+        connectionStatus === 'Connected' && 
+        !bluetoothConnected && 
+        !deviceStatus.includes('Connecting')) {
       connectAndStream(savedName, savedAge);
     }
-  }, [connectionStatus, connectAndStream]);
+  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus]);
 
   useEffect(() => {
     setIsConnected(bluetoothConnected);
@@ -128,7 +131,11 @@ export default function ConnectPage() {
             <Button
               variant="outlined"
               size="large"
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                setIsConnected(false);
+                // Clear saved device to force new pairing
+                document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+              }}
               color="error"
             >
               Disconnect

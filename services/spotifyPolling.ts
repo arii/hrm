@@ -3,7 +3,7 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-import fetch from "node-fetch";
+
 import { SpotifyData, UnifiedStateMessage } from "../types/websocket";
 import { SpotifyTokenManager } from "./spotifyTokenManager.js";
 

@@ -4,10 +4,54 @@ import { JWT } from "next-auth/jwt";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { getAPIURL } from '../utils/urls';
 
-// Extend the Session type to include accessToken
+// Extend the Session type to include accessToken and error
 declare module "next-auth" {
   interface Session {
     accessToken?: string;
+    error?: string;
+  }
+}
+
+// A function to handle the token refresh logic
+async function refreshAccessToken(token: JWT) {
+  try {
+    const url = "https://accounts.spotify.com/api/token";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Basic " + Buffer.from(
+          process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET
+        ).toString("base64"),
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: token.refreshToken as string,
+      }),
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    // Update the token object with new values from Spotify
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      // Note: Spotify might or might not send a new refresh token.
+      // If it does, use it. If not, keep the old one.
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+    };
+  } catch (error) {
+    console.error("[AUTH REFRESH ERROR]", error);
+    // If refresh fails, return the original token and an error property
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
   }
 }
 
@@ -38,16 +82,17 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
-      // Initial sign in
+      // 1. Initial sign-in
       if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        const tokenData = {
+          accessToken: account.access_token,
+          accessTokenExpires: Date.now() + (Number(account.expires_in) || 3600) * 1000,
+          refreshToken: account.refresh_token,
+        };
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
           try {
-            // This POSTs the full account/token data to the token delivery endpoint
-            // so it can be persisted to logs/spotify_tokens.json for the server to use.
             const tokenPayload = {
               provider: account.provider,
               sub: account.providerAccountId,
@@ -88,15 +133,24 @@ export const authOptions: AuthOptions = {
             console.error("Internal token delivery failed:", e);
           }
         }
+        
+        return tokenData;
       }
-      // Future logic for token refresh handled internally by spotifyPolling.ts
-      return token;
+
+      // 2. Token is still valid - return it as-is
+      // Add a 60-second buffer to be safe
+      if (Date.now() < (token.accessTokenExpires as number) - 60000) {
+        return token;
+      }
+
+      // 3. Token is expired - try to refresh it
+      console.log("[AUTH] Access token expired, refreshing...");
+      return await refreshAccessToken(token);
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      // Expose a minimal token structure to the client session
-      if (token.accessToken && typeof token.accessToken === "string") {
-        session.accessToken = token.accessToken;
-      }
+      // Pass the updated token and error info to the session object
+      session.accessToken = token.accessToken as string;
+      session.error = token.error as string; // Pass any refresh errors
       return session;
     },
   },

@@ -324,6 +324,24 @@ const ControlPanel = () => {
           backgroundColor: "background.default",
         }}
       >
+        {/* Connection Status */}
+        <Box sx={{ mb: 2, textAlign: "center" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: connectionStatus === "Connected" ? "green" : "orange",
+              fontWeight: "bold",
+              backgroundColor: "rgba(0,0,0,0.1)",
+              px: 2,
+              py: 1,
+              borderRadius: 1,
+              display: "inline-block"
+            }}
+          >
+            Server: {connectionStatus}
+          </Typography>
+        </Box>
+
         {/* 1. Tabata Timer Controls */}
         <Card
           sx={{
@@ -575,16 +593,19 @@ const ControlPanel = () => {
               </Stack>
             )}
 
-            {/* Timer Control Buttons */}
+            {/* Timer Control Buttons - Always visible */}
             <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
-              {" "}
-              {/* Increased spacing and mt */}
               <Button
                 variant="contained"
                 color="success"
                 onClick={() => sendTimerCommand("START")}
                 disabled={connectionStatus !== "Connected"}
-                sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
+                sx={{ 
+                  flex: 1, 
+                  fontWeight: "bold", 
+                  py: 1.5,
+                  opacity: connectionStatus !== "Connected" ? 0.5 : 1
+                }}
                 startIcon={<PlayArrow fontSize="large" />}
               >
                 START
@@ -594,12 +615,32 @@ const ControlPanel = () => {
                 color="error"
                 onClick={() => sendTimerCommand("STOP")}
                 disabled={connectionStatus !== "Connected"}
-                sx={{ flex: 1, fontWeight: "bold", py: 1.5 }} // Increased padding
+                sx={{ 
+                  flex: 1, 
+                  fontWeight: "bold", 
+                  py: 1.5,
+                  opacity: connectionStatus !== "Connected" ? 0.5 : 1
+                }}
                 startIcon={<Stop fontSize="large" />}
               >
                 STOP
               </Button>
             </Stack>
+            
+            {/* Connection Status Indicator */}
+            {connectionStatus !== "Connected" && (
+              <Typography
+                variant="caption"
+                sx={{ 
+                  color: "orange", 
+                  textAlign: "center", 
+                  display: "block", 
+                  mt: 1 
+                }}
+              >
+                Server: {connectionStatus}
+              </Typography>
+            )}
           </CardContent>
         </Card>
 

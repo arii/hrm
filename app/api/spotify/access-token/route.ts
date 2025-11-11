@@ -15,7 +15,7 @@ import { NextResponse } from "next/server";
  */
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session.
+    // 1. Get the server-side session (NextAuth automatically refreshes tokens)
     const session = await getServerSession(authOptions);
 
     // 2. Check if the session and token exist.
@@ -27,7 +27,16 @@ export async function GET(_req: Request) {
       );
     }
 
-    // 3. Return the access token.
+    // 3. Check for refresh errors from NextAuth
+    if (session.error === "RefreshAccessTokenError") {
+      console.error("[API /access-token] Token refresh failed in NextAuth");
+      return NextResponse.json(
+        { error: "Token refresh failed. Please re-authenticate." },
+        { status: 401 }
+      );
+    }
+
+    // 4. Return the access token (already refreshed by NextAuth if needed)
     return NextResponse.json({
       accessToken: session.accessToken,
     });
