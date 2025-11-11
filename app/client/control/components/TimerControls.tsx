@@ -18,10 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  TimerCommandMessage,
-  TimerModeCommandMessage,
-} from '@/types/websocket'
+import { TimerCommandMessage, TimerModeCommandMessage } from '@/types/websocket'
 import useWebSocket from '@/hooks/useWebSocket'
 import { useState, useCallback } from 'react'
 
@@ -33,11 +30,11 @@ const TimerControls = () => {
   // Sync with server data only when it changes and is different
   const serverWorkTime = timerData.workDuration || 20
   const serverRestTime = timerData.restDuration || 10
-  
+
   if (serverWorkTime !== workTime && serverWorkTime !== 20) {
     setWorkTime(serverWorkTime)
   }
-  
+
   if (serverRestTime !== restTime && serverRestTime !== 10) {
     setRestTime(serverRestTime)
   }

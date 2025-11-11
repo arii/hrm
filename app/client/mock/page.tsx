@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { HeartBroken, Science } from '@mui/icons-material'
 import {
-  Container,
-  Typography,
-  Button,
   Box,
-  TextField,
-  Grid,
+  Button,
   Card,
+  Container,
+  Grid,
+  TextField,
+  Typography,
 } from '@mui/material'
-import { Science, HeartBroken } from '@mui/icons-material'
+import { useCallback, useEffect, useState } from 'react'
+import BottomNavBar from '../../../components/BottomNavBar'
 import useWebSocket from '../../../hooks/useWebSocket'
 import { HrmInputMessage } from '../../../types/websocket'
-import BottomNavBar from '../../../components/BottomNavBar'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -29,11 +29,11 @@ export default function MockPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        ;(window as any).__TEST_READY__ = true
+        window.__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1000)
-    
+
     return () => clearTimeout(timer)
   }, [])
 

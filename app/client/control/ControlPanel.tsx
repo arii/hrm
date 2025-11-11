@@ -4,8 +4,8 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-import Head from 'next/head'
 import { Box, Container, Typography } from '@mui/material'
+import Head from 'next/head'
 import { useEffect } from 'react'
 import useWebSocket from '../../../hooks/useWebSocket'
 import SpotifyControls from './components/SpotifyControls'
@@ -18,11 +18,11 @@ const ControlPanel = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        ;(window as any).__TEST_READY__ = true
+        window.__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1500)
-    
+
     return () => clearTimeout(timer)
   }, [])
 

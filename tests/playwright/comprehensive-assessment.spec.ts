@@ -4,14 +4,19 @@
  * for holistic evaluation of the HRM application functionality and UI/UX.
  */
 import { expect, test } from '@playwright/test'
-import { setupComprehensiveTest, waitForPageReady, replaceIframeWithStableWorkout, BASE_URL } from './test-helpers'
+import {
+  setupComprehensiveTest,
+  waitForPageReady,
+  replaceIframeWithStableWorkout,
+  BASE_URL,
+} from './test-helpers'
 
 // Progress tracking helper with fixed console position
 const showProgress = (current: number, total: number, description: string) => {
   const percentage = Math.round((current / total) * 100)
   const filled = Math.round(percentage / 5)
   const bar = '█'.repeat(filled) + '░'.repeat(20 - filled)
-  process.stdout.write(`\r[${bar}] ${percentage}% - ${description.padEnd(30)}`);
+  process.stdout.write(`\r[${bar}] ${percentage}% - ${description.padEnd(30)}`)
 }
 
 test.describe('Comprehensive HRM Assessment', () => {
@@ -23,19 +28,17 @@ test.describe('Comprehensive HRM Assessment', () => {
   }) => {
     const totalSteps = 10
     process.stdout.write('\n🚀 Complete User Journey Test\n')
-    
+
     // Keep all tabs open for WebSocket connections
     const dashboardTab = page
     const controlTab = await context.newPage()
     const mockTab = await context.newPage()
-    
+
     // 1. Setup Dashboard (keep open)
     showProgress(1, totalSteps, 'Setting up dashboard')
     await dashboardTab.goto(BASE_URL)
     await waitForPageReady(dashboardTab)
-    
 
-    
     await dashboardTab.waitForSelector('text=Athlete Alpha', {
       timeout: 5000,
     })
@@ -78,26 +81,26 @@ test.describe('Comprehensive HRM Assessment', () => {
 
     // 5. Start HR Streaming
     showProgress(6, totalSteps, 'Starting HR streaming')
-    
+
     // Clear and fill User Name field
     const userNameField = mockTab.getByLabel('User Name')
     await userNameField.click()
     await userNameField.clear()
     await userNameField.fill('Athlete Alpha')
-    
+
     // Clear and fill BPM field
     const bpmField = mockTab.getByLabel('Current BPM')
     await bpmField.click()
     await bpmField.clear()
     await bpmField.fill('145')
-    
+
     // Wait for fields to update
     await mockTab.waitForTimeout(500)
-    
+
     // Verify fields are filled
     await expect(userNameField).toHaveValue('Athlete Alpha')
     await expect(bpmField).toHaveValue('145')
-    
+
     await mockTab.click('button:has-text("START")')
     await mockTab.waitForTimeout(2000)
 
@@ -144,15 +147,17 @@ test.describe('Comprehensive HRM Assessment', () => {
     if (await stopStreamButton.isVisible()) {
       await stopStreamButton.click()
     }
-    
+
     process.stdout.write('\n\n✅ Complete User Journey test finished!\n')
-    process.stdout.write('📊 View detailed report: npm run test:visual:report\n')
+    process.stdout.write(
+      '📊 View detailed report: npm run test:visual:report\n'
+    )
   })
 
   test('HR Data Streaming Workflow', async ({ page, context }) => {
     const totalSteps = 15 // 5 zones * 2 screenshots + 5 setup steps
     process.stdout.write('\n💓 HR Data Streaming Test\n')
-    
+
     // Keep dashboard open for WebSocket connection
     const dashboardTab = await context.newPage()
     const mockTab = page
@@ -174,23 +179,23 @@ test.describe('Comprehensive HRM Assessment', () => {
 
     // 3. Configure Mock Data
     showProgress(3, totalSteps, 'Configuring mock data')
-    
+
     // Clear and fill User Name field
     const userNameField = mockTab.getByLabel('User Name')
     await userNameField.click()
     await userNameField.clear()
     await userNameField.fill('Demo Athlete')
-    
+
     // Clear and fill BPM field
     const mockBpmInput = mockTab.getByLabel('Current BPM')
     await mockBpmInput.click()
     await mockBpmInput.clear()
     await mockBpmInput.fill('145')
-    
+
     // Verify fields are filled
     await expect(userNameField).toHaveValue('Demo Athlete')
     await expect(mockBpmInput).toHaveValue('145')
-    
+
     await expect(mockTab).toHaveScreenshot('09-mock-hrm-configured.png', {
       fullPage: true,
     })
@@ -213,19 +218,23 @@ test.describe('Comprehensive HRM Assessment', () => {
     ]
 
     for (const [index, zone] of zones.entries()) {
-      const stepNum = 6 + (index * 2)
-      showProgress(stepNum, totalSteps, `Testing ${zone.zone} (${zone.bpm} BPM)`)
-      
+      const stepNum = 6 + index * 2
+      showProgress(
+        stepNum,
+        totalSteps,
+        `Testing ${zone.zone} (${zone.bpm} BPM)`
+      )
+
       // Clear and fill BPM field for each zone
       await mockBpmInput.click()
       await mockBpmInput.clear()
       await mockBpmInput.fill(zone.bpm)
-      
+
       // Verify BPM field is updated
       await expect(mockBpmInput).toHaveValue(zone.bpm)
-      
+
       await mockTab.getByRole('button', { name: zone.zone }).click()
-      
+
       // Check dashboard reflects the change
       showProgress(stepNum + 1, totalSteps, `Dashboard ${zone.zone} screenshot`)
       await dashboardTab.waitForSelector(`text=${zone.bpm} BPM`, {
@@ -237,8 +246,6 @@ test.describe('Comprehensive HRM Assessment', () => {
         { fullPage: true }
       )
     }
-
-
   })
 
   test('Multi-Device Coordination', async ({ page, context }) => {

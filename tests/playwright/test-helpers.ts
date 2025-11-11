@@ -2,12 +2,13 @@
 /**
  * Shared Test Helpers: Reusable functions for consistent test setup
  */
+import type { BrowserContext, Page } from '@playwright/test'
 
 const BASE_URL =
   process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
 
 // Helper function to wait for page ready signal
-export const waitForPageReady = async (page) => {
+export const waitForPageReady = async (page: Page) => {
   try {
     await page.waitForFunction(
       () => {
@@ -15,13 +16,13 @@ export const waitForPageReady = async (page) => {
       },
       { timeout: 10000 }
     )
-  } catch (error) {
+  } catch (_error) {
     await page.waitForTimeout(2000)
   }
 }
 
 // Helper function to replace iframe with stable workout content
-export const replaceIframeWithStableWorkout = async (page) => {
+export const replaceIframeWithStableWorkout = async (page: Page) => {
   await page.evaluate(() => {
     const iframe = document.querySelector('iframe')
     if (iframe) {
@@ -58,6 +59,11 @@ export const setupVisualRegressionTest = async ({
   controlPage,
   mockPage,
   connectPage,
+}: {
+  dashboardPage: Page
+  controlPage: Page
+  mockPage: Page
+  connectPage: Page
 }) => {
   // Navigate all pages and wait for ready signals
   await dashboardPage.goto(BASE_URL)
@@ -78,7 +84,13 @@ export const setupVisualRegressionTest = async ({
 }
 
 // Setup function for comprehensive tests
-export const setupComprehensiveTest = async ({ page, context }) => {
+export const setupComprehensiveTest = async ({
+  page,
+  context,
+}: {
+  page: Page
+  context: BrowserContext
+}) => {
   await page.setViewportSize({ width: 1920, height: 1080 })
 
   // Pre-warm all endpoints for comprehensive tests
@@ -108,13 +120,13 @@ export const setupComprehensiveTest = async ({ page, context }) => {
   await connectTab.close()
 }
 
-export async function setupCoreTest(page) {
+export async function setupCoreTest({ page }: { page: Page }) {
   await waitForPageReady(page)
   await replaceIframeWithStableWorkout(page)
   await waitForWebSocketConnection(page)
 }
 
-export async function waitForWebSocketConnection(page) {
+export async function waitForWebSocketConnection(page: Page) {
   await page.waitForFunction(
     () => {
       return window.__TEST_WEBSOCKET_READY__ === true

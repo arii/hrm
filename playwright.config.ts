@@ -7,7 +7,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests/playwright',
-  testMatch: ['visual-regression.spec.ts', 'comprehensive-assessment.spec.ts'],
+  testMatch: ['**/*.spec.ts'],
 
   // Run tests in parallel
   fullyParallel: false,
@@ -25,7 +25,7 @@ export default defineConfig({
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
     ['json', { outputFile: 'test-results/results.json' }],
-    ['list']
+    ['list'],
   ],
 
   // Shared settings for all tests
@@ -39,13 +39,13 @@ export default defineConfig({
     // Screenshot settings
     screenshot: {
       mode: 'only-on-failure',
-      fullPage: true
+      fullPage: true,
     },
 
     // Video settings
     video: {
       mode: 'retain-on-failure',
-      size: { width: 1920, height: 1080 }
+      size: { width: 1920, height: 1080 },
     },
 
     // Trace settings
@@ -59,13 +59,13 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
         video: {
           mode: 'retain-on-failure',
-          size: { width: 1920, height: 1080 }
-        }
+          size: { width: 1920, height: 1080 },
+        },
       },
     },
   ],

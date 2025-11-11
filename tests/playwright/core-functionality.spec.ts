@@ -4,14 +4,10 @@
  * Consolidated from multiple test files to reduce redundancy and improve maintainability
  */
 import { test, expect } from './fixtures'
-import {
-  setupCoreTest,
-  waitForWebSocketConnection,
-  BASE_URL,
-} from './test-helpers'
+import { setupVisualRegressionTest, BASE_URL } from './test-helpers'
 
 test.describe('HRM Core Functionality', () => {
-  test.beforeEach(setupCoreTest)
+  test.beforeEach(setupVisualRegressionTest)
 
   test('Dashboard - main interface', async ({ dashboardPage }) => {
     await expect(dashboardPage).toHaveScreenshot('dashboard-main.png', {
@@ -84,6 +80,17 @@ test.describe('HRM Core Functionality', () => {
     })
   })
 
+  test('Bluetooth connection interface', async ({ connectPage }) => {
+    await connectPage.fill('input[placeholder="Your name"]', 'Test User')
+    await connectPage.fill('input[type="number"][placeholder="25"]', '28')
+    await connectPage.waitForTimeout(1000)
+
+    await expect(connectPage).toHaveScreenshot('bluetooth-connect.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  })
+
   test('Complete workout workflow', async ({ page, context }) => {
     // Multi-tab workflow test
     const dashboardTab = page
@@ -116,6 +123,11 @@ test.describe('HRM Core Functionality', () => {
     // Verify dashboard shows active workout
     await dashboardTab.waitForSelector('text=Workout User', { timeout: 5000 })
     await dashboardTab.waitForSelector('text=/WORK|REST/', { timeout: 5000 })
+
+    await expect(dashboardTab).toHaveScreenshot('workflow-complete.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
 
     // Stop workout
     await controlTab.click('button:has-text("STOP")')

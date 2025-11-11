@@ -21,9 +21,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, {
-  clampVolume,
-} from '@/hooks/useVolumePreference'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import useWebSocket from '@/hooks/useWebSocket'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
@@ -240,9 +238,7 @@ const SpotifyControls = () => {
               <Slider
                 value={volume}
                 onChange={(_, val) => setVolume(val as number)}
-                onChangeCommitted={(_, val) =>
-                  sendVolumeCommand(val as number)
-                }
+                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
                 min={0}
                 max={100}
                 size="small"
@@ -260,10 +256,7 @@ const SpotifyControls = () => {
             </Stack>
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'grey.400', mb: 1 }}
-                >
+                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
                   Device
                 </Typography>
                 <FormControl fullWidth size="small">

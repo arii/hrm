@@ -1,6 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Grid,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { useEffect, useState } from 'react'
+import BottomNavBar from '../../../components/BottomNavBar'
+import HrTile from '../../../components/HrTile'
+import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+import useWebSocket from '../../../hooks/useWebSocket'
+import { getHrZoneProps } from '../../../utils/visualization'
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
@@ -14,20 +28,6 @@ const getCookie = (name: string): string => {
     return parts[0] === name ? decodeURIComponent(parts[1]) : r
   }, '')
 }
-import {
-  Container,
-  Typography,
-  Button,
-  TextField,
-  Box,
-  Alert,
-  Grid,
-} from '@mui/material'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import useWebSocket from '../../../hooks/useWebSocket'
-import HrTile from '../../../components/HrTile'
-import { getHrZoneProps } from '../../../utils/visualization'
-import BottomNavBar from '../../../components/BottomNavBar'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useState('')
@@ -66,11 +66,11 @@ export default function ConnectPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        ;(window as any).__TEST_READY__ = true
+        window.__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1000)
-    
+
     return () => clearTimeout(timer)
   }, [])
 
@@ -181,7 +181,8 @@ export default function ConnectPage() {
 
         {isConnected && currentHR === 0 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
-            Connected but no heart rate detected. Make sure your heart rate monitor is properly positioned and active.
+            Connected but no heart rate detected. Make sure your heart rate
+            monitor is properly positioned and active.
           </Alert>
         )}
 
