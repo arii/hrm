@@ -28,7 +28,6 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
 ## Implementation Roadmap
 
 1. **Environment Orchestration Script**
-
    - Create `scripts/start-dev-with-chrome.ts` (run via ts-node) to:
      - Ensure dev server (`npm run dev:clean`) is running in background.
      - Launch Chrome with required debugging flags (reusing documented flags) and record PID.
@@ -36,7 +35,6 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
      - Emit structured status logs and teardown instructions.
 
 2. **Baseline Navigation & Interaction**
-
    - Implement `scripts/automation/baseline.ts` using Playwright:
      - Connect to the running Chromium instance (or launch within Playwright with equivalent flags).
      - Open dashboard, control panel, mock client, and connect page.
@@ -44,19 +42,16 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
      - Provide CLI prompts (inquirer-style) for manual step-by-step confirmation when needed.
 
 3. **Screenshot Capture Pipeline**
-
    - Extend baseline script or create `scripts/automation/capture-screenshots.ts` to:
      - Apply consistent viewport, theme, and auth state.
      - Capture full-page screenshots after each major interaction.
      - Store assets under `screenshots/baseline/DATE/` and optionally compare against previous baselines.
 
 4. **Enhanced Flow Coverage**
-
    - Add scenario modules to exercise Spotify controls (using test doubles), timer transitions, and Bluetooth mock hookups.
    - Introduce reusable helper library (`scripts/automation/helpers.ts`) for selectors, waits, and WebSocket validation stubs.
 
 5. **Command & Documentation Integration**
-
    - Update `package.json` (see "Package.json Script Plan" below) so new automation entry points are easily discoverable.
    - Document usage, prerequisites, and troubleshooting in `docs/automation-plan.md` and update `README.md` quick start section.
 
@@ -74,28 +69,23 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
 ## Package.json Script Plan
 
 1. **Inventory Current Scripts**
-
    - Review existing automation-related entries (`mcp:chrome-devtools`, `dev:clean`, etc.) to avoid collisions and reuse patterns for background execution.
 
 2. **Prune / Consolidate Legacy Commands**
-
    - Identify redundant or obsolete scripts (e.g., stale `dev:*` variants, unused deploy helpers) and fold their behavior into the new automation pipeline where appropriate.
    - Remove aliases that duplicate functionality while documenting any intentional changes in `CHANGELOG` or commit messages so downstream environments stay aligned.
 
 3. **Add Core Automation Commands**
-
    - `automation:start`: runs `tsx scripts/start-dev-with-chrome.ts` (or `ts-node` if preferred) to orchestrate dev server + Chrome setup.
    - `automation:baseline`: runs Playwright baseline navigation script (`tsx scripts/automation/baseline.ts`).
    - `automation:screenshots`: runs screenshot capture (`tsx scripts/automation/capture-screenshots.ts`).
    - Include optional `automation:teardown` for stopping Chrome/MCP processes (call helper script).
 
 4. **Wire Supporting Utilities**
-
    - Add helper script shortcuts if needed, e.g., `automation:reset` for cleaning screenshots directory, `automation:report` to summarize outputs.
    - Ensure `playwright test` integration remains separate (`npm run test:visual`) but reference the new automation scripts in documentation.
 
 5. **Dependency Verification**
-
    - Confirm `tsx` (or `ts-node`) and `playwright` are present in `devDependencies`; add `@playwright/test` if not already installed.
    - Update `npm run lint` or CI workflows if they should lint new TypeScript automation files.
 

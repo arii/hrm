@@ -14,6 +14,9 @@
     "pm2:restart": "pm2 restart hrm-server",
     "pm2:delete": "pm2 delete hrm-server",
     "lint": "eslint",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test:visual": "playwright test --project=chromium",
     "test:visual:ui": "playwright test --ui",
     "test:visual:update": "playwright test --update-snapshots",
@@ -46,7 +49,9 @@
     "cross-env": "^10.1.0",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.1",
+    "eslint-config-prettier": "^10.1.8",
     "pm2": "^5.2.0",
+    "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

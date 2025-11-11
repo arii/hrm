@@ -8,7 +8,8 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 **✅ Fully Operational** - All core features implemented and tested
 
-**Recent Updates**: 
+**Recent Updates**:
+
 - ✅ Integrated original HRM audio system with proper beep sounds
 - ✅ Improved timer display with rotated side labels and consistent layout
 - ✅ Added volume synchronization between dashboard and control panel
@@ -97,6 +98,7 @@ npm run test:visual      # Run Playwright visual regression tests
 ### Navigation Shortcuts
 
 The app includes URL redirects for easier navigation:
+
 - `/phone` → `/client/control` (Phone Controls)
 - `/connect` → `/client/connect` (Stream HR)
 - `/mock` → `/client/mock` (Mock HRM)
@@ -152,6 +154,7 @@ NEXTAUTH_SECRET=your_random_secret_here
 ### Audio System
 
 The app includes the original HRM audio feedback system:
+
 - **Countdown beeps**: Short beeps during the last 3 seconds of any countdown phase
 - **Transition beeps**: Long beeps when phases change (prepare→work, work→rest, rest→work)
 - **Volume control**: Synchronized with Spotify volume controls
@@ -206,18 +209,21 @@ For more detailed guidelines, especially for AI agents, see [.github/copilot-ins
 ## Recent Architecture Improvements
 
 ### Audio System Integration
+
 - Copied original HRM audio files from product_hrm
 - Implemented AudioManager class for centralized sound control
 - Added useAudio hook for React components
 - Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
 
 ### UI/UX Enhancements
+
 - Consistent layout proportions (no dynamic resizing)
 - Rotated side labels on timer display for better space utilization
 - Volume synchronization between dashboard and control panel
 - Improved mobile navigation with proper labels
 
 ### Production Readiness
+
 - Complete deployment scripts and documentation
 - PM2 configuration with proper environment handling
 - Nginx configuration template

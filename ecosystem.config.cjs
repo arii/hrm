@@ -1,5 +1,5 @@
-const dotenv = require('dotenv');
-const envConfig = dotenv.config({ path: '.env.production' }).parsed || {};
+const dotenv = require('dotenv')
+const envConfig = dotenv.config({ path: '.env.production' }).parsed || {}
 
 module.exports = {
   apps: [
@@ -20,4 +20,4 @@ module.exports = {
       },
     },
   ],
-};
+}

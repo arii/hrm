@@ -3,13 +3,13 @@
  * Main Viewer Dashboard: The primary output page for the trainer or viewer.
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
-"use client";
-import { VolumeUp } from "@mui/icons-material";
-import PauseIcon from "@mui/icons-material/Pause";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
-import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
-import SpeakerIcon from "@mui/icons-material/Speaker";
+'use client'
+import { VolumeUp } from '@mui/icons-material'
+import PauseIcon from '@mui/icons-material/Pause'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import SkipNextIcon from '@mui/icons-material/SkipNext'
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
+import SpeakerIcon from '@mui/icons-material/Speaker'
 import {
   Box,
   Button,
@@ -21,61 +21,61 @@ import {
   Skeleton,
   Slider,
   Typography,
-} from "@mui/material";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import GoogleDocViewer from "../components/GoogleDocViewer";
-import HrTile from "../components/HrTile";
-import TimerDisplay from "../components/TimerDisplay";
-import { useAudio } from "../hooks/useAudio";
-import useSpotifyWebPlayback from "../hooks/useSpotifyWebPlayback";
-import useVolumePreference, { clampVolume } from "../hooks/useVolumePreference";
-import useWebSocket from "../hooks/useWebSocket";
-import { SpotifyCommandMessage } from "../types/websocket";
-import { MAX_HR_DEFAULT } from "../utils/constants";
-import { getHrZoneProps } from "../utils/visualization";
+} from '@mui/material'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import GoogleDocViewer from '../components/GoogleDocViewer'
+import HrTile from '../components/HrTile'
+import TimerDisplay from '../components/TimerDisplay'
+import { useAudio } from '../hooks/useAudio'
+import useSpotifyWebPlayback from '../hooks/useSpotifyWebPlayback'
+import useVolumePreference, { clampVolume } from '../hooks/useVolumePreference'
+import useWebSocket from '../hooks/useWebSocket'
+import { SpotifyCommandMessage } from '../types/websocket'
+import { MAX_HR_DEFAULT } from '../utils/constants'
+import { getHrZoneProps } from '../utils/visualization'
 
 const DOC_URL =
-  "https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true"; // Ensure embedded view for full-screen content
+  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true' // Ensure embedded view for full-screen content
 
 interface SpotifyDevice {
-  id: string;
-  is_active: boolean;
-  is_private_session: boolean;
-  is_restricted: boolean;
-  name: string;
-  type: string;
-  volume_percent: number;
+  id: string
+  is_active: boolean
+  is_private_session: boolean
+  is_restricted: boolean
+  name: string
+  type: string
+  volume_percent: number
 }
 
 const Dashboard = () => {
   const { hrmData, timerData, connectionStatus, spotifyData, sendData } =
-    useWebSocket();
+    useWebSocket()
 
-  const { data: session } = useSession();
+  const { data: session } = useSession()
 
-  const { volume, setVolume } = useVolumePreference(70);
-  const lastSentVolumeRef = useRef<string | null>(null);
+  const { volume, setVolume } = useVolumePreference(70)
+  const lastSentVolumeRef = useRef<string | null>(null)
 
   // Play server-driven Tabata sounds ON THE DASHBOARD (not control panel)
-  const { initializeAudio } = useAudio(timerData, volume);
+  const { initializeAudio } = useAudio(timerData, volume)
 
   // Initialize audio on first user interaction
   useEffect(() => {
     const handleFirstInteraction = () => {
-      initializeAudio();
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("keydown", handleFirstInteraction);
-    };
+      initializeAudio()
+      document.removeEventListener('click', handleFirstInteraction)
+      document.removeEventListener('keydown', handleFirstInteraction)
+    }
 
-    document.addEventListener("click", handleFirstInteraction);
-    document.addEventListener("keydown", handleFirstInteraction);
+    document.addEventListener('click', handleFirstInteraction)
+    document.addEventListener('keydown', handleFirstInteraction)
 
     return () => {
-      document.removeEventListener("click", handleFirstInteraction);
-      document.removeEventListener("keydown", handleFirstInteraction);
-    };
-  }, [initializeAudio]);
+      document.removeEventListener('click', handleFirstInteraction)
+      document.removeEventListener('keydown', handleFirstInteraction)
+    }
+  }, [initializeAudio])
 
   // Initialize Spotify Web Playback SDK on the dashboard
   const {
@@ -84,147 +84,147 @@ const Dashboard = () => {
     deviceId,
     error: webPlaybackError,
     isAuthenticated: spotifyAuthenticated,
-  } = useSpotifyWebPlayback();
+  } = useSpotifyWebPlayback()
 
-  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
-  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([]);
+  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
-  );
-  const deviceMenuOpen = Boolean(deviceMenuAnchor);
+  )
+  const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== "Connected") return;
-      const sanitized = clampVolume(value);
+      if (connectionStatus !== 'Connected') return
+      const sanitized = clampVolume(value)
       const targetDeviceId =
         selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id;
-      const messageKey = `${targetDeviceId ?? "default"}:${sanitized}`;
-      if (lastSentVolumeRef.current === messageKey) return;
+        availableDevices.find((device) => device.is_active)?.id
+      const messageKey = `${targetDeviceId ?? 'default'}:${sanitized}`
+      if (lastSentVolumeRef.current === messageKey) return
       const message: SpotifyCommandMessage = {
-        type: "SPOTIFY_COMMAND",
-        command: "SET_VOLUME",
+        type: 'SPOTIFY_COMMAND',
+        command: 'SET_VOLUME',
         volume: sanitized,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      };
-      sendData(message);
-      lastSentVolumeRef.current = messageKey;
+      }
+      sendData(message)
+      lastSentVolumeRef.current = messageKey
     },
     [availableDevices, connectionStatus, selectedDeviceId, sendData]
-  );
+  )
 
   useEffect(() => {
-    sendVolumeCommand(volume);
-  }, [volume, sendVolumeCommand]);
+    sendVolumeCommand(volume)
+  }, [volume, sendVolumeCommand])
 
   useEffect(() => {
-    if (connectionStatus !== "Connected") {
-      lastSentVolumeRef.current = null;
+    if (connectionStatus !== 'Connected') {
+      lastSentVolumeRef.current = null
     }
-  }, [connectionStatus]);
+  }, [connectionStatus])
 
   useEffect(() => {
-    if (!player || typeof player.setVolume !== "function") return;
-    const scalar = Math.min(Math.max(volume / 100, 0), 1);
+    if (!player || typeof player.setVolume !== 'function') return
+    const scalar = Math.min(Math.max(volume / 100, 0), 1)
     player
       .setVolume(scalar)
       .catch((err) =>
-        console.warn("[Dashboard] Failed to adjust local Spotify volume:", err)
-      );
-  }, [player, volume]);
+        console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
+      )
+  }, [player, volume])
 
   // Spotify device management
 
   // Check if user is logged in
-  const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated;
+  const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated
 
   // Fetch available Spotify devices on demand
   const fetchDevices = useCallback(async () => {
     if (!spotifyLoggedIn || !spotifyData.trackName) {
-      setAvailableDevices([]);
-      setSelectedDeviceId("");
-      return;
+      setAvailableDevices([])
+      setSelectedDeviceId('')
+      return
     }
 
     try {
-      const response = await fetch("/api/spotify/devices");
+      const response = await fetch('/api/spotify/devices')
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const devices = await response.json();
-      console.log("[Dashboard] Fetched devices:", devices);
-      const deviceArray = Array.isArray(devices) ? devices : [];
-      setAvailableDevices(deviceArray);
+      const devices = await response.json()
+      console.log('[Dashboard] Fetched devices:', devices)
+      const deviceArray = Array.isArray(devices) ? devices : []
+      setAvailableDevices(deviceArray)
     } catch (error) {
-      console.error("[Dashboard] Failed to fetch Spotify devices:", error);
+      console.error('[Dashboard] Failed to fetch Spotify devices:', error)
     }
-  }, [spotifyLoggedIn, spotifyData.trackName]);
+  }, [spotifyLoggedIn, spotifyData.trackName])
 
   // Initial fetch when logged in
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
-      fetchDevices();
+      fetchDevices()
     }
-  }, [spotifyLoggedIn, spotifyData.trackName, fetchDevices]);
+  }, [spotifyLoggedIn, spotifyData.trackName, fetchDevices])
 
   useEffect(() => {
     if (availableDevices.length === 0) {
-      if (selectedDeviceId !== "") {
-        setSelectedDeviceId("");
+      if (selectedDeviceId !== '') {
+        setSelectedDeviceId('')
       }
-      return;
+      return
     }
 
-    const activeDevice = availableDevices.find((device) => device.is_active);
+    const activeDevice = availableDevices.find((device) => device.is_active)
 
     if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id);
-      return;
+      setSelectedDeviceId(activeDevice.id)
+      return
     }
 
     if (
       selectedDeviceId &&
       !availableDevices.some((device) => device.id === selectedDeviceId)
     ) {
-      setSelectedDeviceId(activeDevice?.id ?? "");
+      setSelectedDeviceId(activeDevice?.id ?? '')
     }
-  }, [availableDevices, selectedDeviceId]);
+  }, [availableDevices, selectedDeviceId])
 
   // Spotify command handler
   const sendSpotifyCommand = (
-    command: "PLAY" | "PAUSE" | "NEXT" | "PREVIOUS" | "TRANSFER_PLAYBACK",
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
     targetDeviceId?: string
   ) => {
     const message: SpotifyCommandMessage = {
-      type: "SPOTIFY_COMMAND",
+      type: 'SPOTIFY_COMMAND',
       command,
       ...(targetDeviceId && { deviceId: targetDeviceId }),
-    };
-    sendData(message);
-    console.log("[Dashboard] Sent Spotify command:", message);
-  };
+    }
+    sendData(message)
+    console.log('[Dashboard] Sent Spotify command:', message)
+  }
 
   const handlePlayPauseToggle = () => {
-    const command = spotifyData.isPlaying ? "PAUSE" : "PLAY";
-    sendSpotifyCommand(command);
-  };
+    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
+    sendSpotifyCommand(command)
+  }
 
   const handleDeviceSelect = (deviceId: string) => {
-    console.log("[Dashboard] Transferring playback to device:", deviceId);
-    setSelectedDeviceId(deviceId);
-    sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
-    setDeviceMenuAnchor(null);
-  };
+    console.log('[Dashboard] Transferring playback to device:', deviceId)
+    setSelectedDeviceId(deviceId)
+    sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+    setDeviceMenuAnchor(null)
+  }
 
   const handleSpotifyLogin = () => {
-    signIn("spotify", { callbackUrl: "/" });
-  };
+    signIn('spotify', { callbackUrl: '/' })
+  }
 
   const handleSpotifyLogout = () => {
-    signOut({ callbackUrl: "/" });
-  };
+    signOut({ callbackUrl: '/' })
+  }
 
   return (
     <Container
@@ -232,8 +232,8 @@ const Dashboard = () => {
       sx={{
         py: { xs: 2, sm: 3 },
         pb: { xs: 12, sm: 14 }, // Extra bottom padding for fixed Spotify bar
-        minHeight: "100vh",
-        backgroundColor: "background.default",
+        minHeight: '100vh',
+        backgroundColor: 'background.default',
       }}
     >
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
@@ -258,28 +258,28 @@ const Dashboard = () => {
           hrmData
             // Suppress placeholder entries and zero-value tiles
             .filter((user) => {
-              const isZero = user.value === 0;
+              const isZero = user.value === 0
               const isPlaceholderName =
-                !!user.name && /new user/i.test(user.name);
-              const hasNoIdentity = user.name == null;
+                !!user.name && /new user/i.test(user.name)
+              const hasNoIdentity = user.name == null
               // Hide if no data yet, or explicit placeholder, or zero value
-              return !(isZero || isPlaceholderName || hasNoIdentity);
+              return !(isZero || isPlaceholderName || hasNoIdentity)
             })
             .map((user) => {
               const hrZoneProps = getHrZoneProps(
                 user.value,
                 user.maxHr || MAX_HR_DEFAULT
-              );
+              )
               return (
                 <Grid item xs={12} sm={6} lg={3} key={user.clientId}>
                   <HrTile
-                    name={user.name || ""}
+                    name={user.name || ''}
                     bpm={user.value}
                     percentMax={hrZoneProps.percentage}
                     background={hrZoneProps.progressColor}
                   />
                 </Grid>
-              );
+              )
             })
         ) : (
           // Render skeleton loaders when no HR data
@@ -304,24 +304,24 @@ const Dashboard = () => {
         {/* --------------------- SPOTIFY DISPLAY (COMPACT BAR) --------------------- */}
         {spotifyLoggedIn &&
           spotifyData.trackName &&
-          spotifyData.trackName !== "Awaiting Login..." && (
+          spotifyData.trackName !== 'Awaiting Login...' && (
             <Grid item xs={12}>
               <Box
                 aria-label={`Now playing: ${spotifyData.trackName} by ${
                   spotifyData.artist
-                }, Status: ${spotifyData.isPlaying ? "Playing" : "Paused"}${
-                  isReady ? ", Browser player ready" : ""
+                }, Status: ${spotifyData.isPlaying ? 'Playing' : 'Paused'}${
+                  isReady ? ', Browser player ready' : ''
                 }`}
                 sx={{
-                  backgroundColor: "grey.900",
-                  color: "common.white",
+                  backgroundColor: 'grey.900',
+                  color: 'common.white',
                   px: 3,
                   py: 1.5,
                   borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  position: "fixed", // Make it a floating bar
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  position: 'fixed', // Make it a floating bar
                   bottom: 56, // Height of BottomNavBar + small gap
                   left: 0,
                   right: 0,
@@ -333,8 +333,8 @@ const Dashboard = () => {
                 {/* Left side: Track info and status */}
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
                     flex: 1,
                   }}
@@ -348,8 +348,8 @@ const Dashboard = () => {
                       variant="caption"
                       sx={{
                         opacity: 0.8,
-                        backgroundColor: "info.main",
-                        color: "common.white",
+                        backgroundColor: 'info.main',
+                        color: 'common.white',
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
@@ -363,8 +363,8 @@ const Dashboard = () => {
                       variant="caption"
                       sx={{
                         opacity: 0.8,
-                        backgroundColor: "success.main",
-                        color: "common.white",
+                        backgroundColor: 'success.main',
+                        color: 'common.white',
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
@@ -378,8 +378,8 @@ const Dashboard = () => {
                       variant="caption"
                       sx={{
                         opacity: 0.9,
-                        backgroundColor: "error.main",
-                        color: "common.white",
+                        backgroundColor: 'error.main',
+                        color: 'common.white',
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
@@ -391,13 +391,13 @@ const Dashboard = () => {
                 </Box>
 
                 {/* Center: Playback controls */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <IconButton
                     size="small"
-                    onClick={() => sendSpotifyCommand("PREVIOUS")}
+                    onClick={() => sendSpotifyCommand('PREVIOUS')}
                     sx={{
-                      color: "common.white",
-                      "&:hover": { backgroundColor: "grey.800" },
+                      color: 'common.white',
+                      '&:hover': { backgroundColor: 'grey.800' },
                     }}
                     aria-label="Previous track"
                   >
@@ -407,20 +407,20 @@ const Dashboard = () => {
                     size="medium"
                     onClick={handlePlayPauseToggle}
                     sx={{
-                      color: "common.white",
-                      backgroundColor: "grey.700",
-                      "&:hover": { backgroundColor: "grey.600" },
+                      color: 'common.white',
+                      backgroundColor: 'grey.700',
+                      '&:hover': { backgroundColor: 'grey.600' },
                     }}
-                    aria-label={spotifyData.isPlaying ? "Pause" : "Play"}
+                    aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
                   >
                     {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => sendSpotifyCommand("NEXT")}
+                    onClick={() => sendSpotifyCommand('NEXT')}
                     sx={{
-                      color: "common.white",
-                      "&:hover": { backgroundColor: "grey.800" },
+                      color: 'common.white',
+                      '&:hover': { backgroundColor: 'grey.800' },
                     }}
                     aria-label="Next track"
                   >
@@ -429,29 +429,29 @@ const Dashboard = () => {
                 </Box>
 
                 {/* Right side: Volume, Device selector and logout */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {/* Volume Control */}
-                  <VolumeUp sx={{ color: "grey.400", fontSize: 18 }} />
+                  <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
                   <Slider
                     value={volume}
                     onChange={(_, val) => {
-                      const newVolume = val as number;
-                      setVolume(newVolume);
-                      sendVolumeCommand(newVolume);
+                      const newVolume = val as number
+                      setVolume(newVolume)
+                      sendVolumeCommand(newVolume)
                     }}
                     min={0}
                     max={100}
                     size="small"
                     sx={{
                       width: 80,
-                      color: "#1DB954",
-                      "& .MuiSlider-thumb": {
-                        backgroundColor: "white",
+                      color: '#1DB954',
+                      '& .MuiSlider-thumb': {
+                        backgroundColor: 'white',
                         width: 12,
                         height: 12,
                       },
-                      "& .MuiSlider-track": { height: 3 },
-                      "& .MuiSlider-rail": { height: 3 },
+                      '& .MuiSlider-track': { height: 3 },
+                      '& .MuiSlider-rail': { height: 3 },
                     }}
                   />
 
@@ -459,12 +459,12 @@ const Dashboard = () => {
                   <IconButton
                     size="small"
                     onClick={(e) => {
-                      fetchDevices();
-                      setDeviceMenuAnchor(e.currentTarget);
+                      fetchDevices()
+                      setDeviceMenuAnchor(e.currentTarget)
                     }}
                     sx={{
-                      color: "common.white",
-                      "&:hover": { backgroundColor: "grey.800" },
+                      color: 'common.white',
+                      '&:hover': { backgroundColor: 'grey.800' },
                     }}
                     aria-label="Select playback device"
                   >
@@ -475,12 +475,12 @@ const Dashboard = () => {
                     open={deviceMenuOpen}
                     onClose={() => setDeviceMenuAnchor(null)}
                     anchorOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
+                      vertical: 'top',
+                      horizontal: 'right',
                     }}
                     transformOrigin={{
-                      vertical: "bottom",
-                      horizontal: "right",
+                      vertical: 'bottom',
+                      horizontal: 'right',
                     }}
                   >
                     {availableDevices.length > 0 ? (
@@ -490,7 +490,7 @@ const Dashboard = () => {
                           onClick={() => handleDeviceSelect(device.id)}
                           selected={device.is_active}
                         >
-                          {device.name} {device.is_active && "✓"}
+                          {device.name} {device.is_active && '✓'}
                         </MenuItem>
                       ))
                     ) : (
@@ -503,15 +503,15 @@ const Dashboard = () => {
                     size="small"
                     onClick={handleSpotifyLogout}
                     sx={{
-                      color: "common.white",
-                      borderColor: "grey.600",
-                      "&:hover": {
-                        borderColor: "grey.500",
-                        backgroundColor: "grey.800",
+                      color: 'common.white',
+                      borderColor: 'grey.600',
+                      '&:hover': {
+                        borderColor: 'grey.500',
+                        backgroundColor: 'grey.800',
                       },
-                      minWidth: "auto",
+                      minWidth: 'auto',
                       px: 1.5,
-                      fontSize: "0.75rem",
+                      fontSize: '0.75rem',
                     }}
                   >
                     Logout
@@ -526,15 +526,15 @@ const Dashboard = () => {
           <Grid item xs={12}>
             <Box
               sx={{
-                backgroundColor: "grey.900",
-                color: "common.white",
+                backgroundColor: 'grey.900',
+                color: 'common.white',
                 px: 3,
                 py: 1.5,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "fixed",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'fixed',
                 bottom: 56, // Height of BottomNavBar + small gap
                 left: 0,
                 right: 0,
@@ -569,7 +569,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
     </Container>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard

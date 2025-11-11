@@ -1,6 +1,6 @@
-import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { getServerSession } from 'next-auth'
+import { NextResponse } from 'next/server'
+import { authOptions } from '@/lib/auth'
 
 /**
  * Debug route to return the server side NextAuth session.
@@ -8,13 +8,10 @@ import { authOptions } from "@/lib/auth";
  */
 export async function GET(_req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    return NextResponse.json({ ok: true, session: session ?? null });
+    const session = await getServerSession(authOptions)
+    return NextResponse.json({ ok: true, session: session ?? null })
   } catch (err) {
-    console.error("debug/session error:", err);
-    return NextResponse.json(
-      { ok: false, error: String(err) },
-      { status: 500 }
-    );
+    console.error('debug/session error:', err)
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }
