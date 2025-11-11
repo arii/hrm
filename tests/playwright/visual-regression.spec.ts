@@ -4,70 +4,33 @@
  * with the original HRM site design. Run these tests after layout changes to detect
  * unexpected visual regressions.
  */
-import { test, type Page, expect } from '@playwright/test'
-
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+import { test, expect } from './fixtures'
+import { type Page } from '@playwright/test'
+import { setupVisualRegressionTest, BASE_URL } from './test-helpers'
 
 test.describe('Visual Regression Tests', () => {
-  test.beforeEach(async ({ page }) => {
-    // Set consistent viewport size for screenshot comparisons
-    await page.setViewportSize({ width: 1280, height: 720 })
-  })
+  test.beforeEach(setupVisualRegressionTest)
 
-  test('Dashboard - main viewer page', async ({ page }: { page: Page }) => {
-    await page.goto(BASE_URL)
-
-    // Wait for WebSocket connection and initial state
-    await page.waitForSelector('text=/WORK:|Timer/', {
-      timeout: 5000,
-    })
-
-    // Wait for layout to stabilize
-    await page.waitForTimeout(1000)
-
+  test('Dashboard - main viewer page', async ({ dashboardPage }) => {
     // Capture full-page screenshot
-    await expect(page).toHaveScreenshot('dashboard-viewer.png', {
+    await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
+      fullPage: true,
+      animations: 'disabled',
+      threshold: 0.2, // Allow for minor rendering differences
+    })
+  })
+
+  test('Control Panel - timer and music controls', async ({ controlPage }) => {
+    // Capture screenshot
+    await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
       animations: 'disabled',
     })
   })
 
-  test('Control Panel - timer and music controls', async ({
-    page,
-  }: {
-    page: Page
-  }) => {
-    await page.goto(`${BASE_URL}/client/control`)
-
-    // Wait for connection status
-    await page.waitForSelector('text=/Timer Mode|Tabata/', { timeout: 5000 })
-
-    // Wait for layout to stabilize
-    await page.waitForTimeout(1000)
-
+  test('Mock HRM Client - test data input', async ({ mockPage }) => {
     // Capture screenshot
-    await expect(page).toHaveScreenshot('control-panel.png', {
-      fullPage: true,
-      animations: 'disabled',
-    })
-  })
-
-  test('Mock HRM Client - test data input', async ({
-    page,
-  }: {
-    page: Page
-  }) => {
-    await page.goto(`${BASE_URL}/client/mock`)
-
-    // Wait for connection status
-    await page.waitForSelector('text=/HRM Mock Streamer/', { timeout: 5000 })
-
-    // Wait for layout to stabilize
-    await page.waitForTimeout(1000)
-
-    // Capture screenshot
-    await expect(page).toHaveScreenshot('mock-hrm-client.png', {
+    await expect(mockPage).toHaveScreenshot('mock-hrm-client.png', {
       fullPage: true,
       animations: 'disabled',
     })
@@ -99,27 +62,18 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test('Dashboard with mock HR data streaming', async ({
-    page,
-  }: {
-    page: Page
-  }) => {
-    // First send some mock HR data
-    await page.goto(`${BASE_URL}/client/mock`)
-    await page.waitForSelector('text=/Server Status/', { timeout: 5000 })
+  test('Dashboard with mock HR data streaming', async ({ mockPage, dashboardPage }) => {
+    // Set HR to yellow zone on mock page
+    await mockPage.getByLabel('Current BPM').fill('155')
+    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+    await mockPage.waitForTimeout(500)
 
-    // Set HR to yellow zone
-    await page.fill('input[type="number"][value="100"]', '155')
-    await page.click('button:has-text("Zone 4")')
-    await page.waitForTimeout(500)
-
-    // Navigate to dashboard to see HR data
-    await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(1000)
-
+    // Dashboard page already loaded via fixture
+    await dashboardPage.waitForSelector('text=Mock User', { timeout: 5000 })
+    await dashboardPage.waitForTimeout(1000)
+    
     // Capture screenshot with HR data displayed
-    await expect(page).toHaveScreenshot('dashboard-with-hr-data.png', {
+    await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
       animations: 'disabled',
     })
@@ -127,41 +81,31 @@ test.describe('Visual Regression Tests', () => {
 })
 
 test.describe('Component Visual Tests', () => {
-  test('HR Tiles - all zones', async ({ page }: { page: Page }) => {
-    // First send some mock HR data to create tiles
-    await page.goto(`${BASE_URL}/client/mock`)
-    await page.waitForSelector('text=/HRM Mock Streamer/', { timeout: 5000 })
-    
-    // Send HR data to create a tile
-    await page.fill('input[type="number"][value="100"]', '155')
-    await page.click('button:has-text("Zone 4")')
-    await page.waitForTimeout(500)
-    
-    // Now go to dashboard to see the tiles
-    await page.goto(BASE_URL)
-    await page.waitForSelector('text=/Mock User/', { timeout: 5000 })
+  test.beforeEach(setupVisualRegressionTest)
 
-    // Find HR tile section
-    const hrTilesSection = page.locator('[data-testid="hr-tile"]').first()
-    await expect(hrTilesSection).toHaveScreenshot('hr-tiles-section.png', {
+  test('HR Tiles - all zones', async ({ mockPage, dashboardPage }) => {
+    // Set HR zone first, then start streaming
+    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+    await mockPage.click('button:has-text("START")')
+    await mockPage.waitForTimeout(1000)
+
+    // Wait for HR tiles to load on dashboard
+    await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
+      timeout: 8000,
+    })
+
+    const firstTile = dashboardPage
+      .locator('[data-testid="hr-tile-grid-item"]')
+      .first()
+    await expect(firstTile).toHaveScreenshot('hr-tiles-section.png', {
       animations: 'disabled',
     })
   })
 
-  test('Timer Display - large format', async ({ page }: { page: Page }) => {
-    await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-
-    // Find timer display component
-    const timerDisplay = page.locator('[class*="TimerDisplay"]').first()
-
-    if ((await timerDisplay.count()) > 0) {
-      await expect(timerDisplay).toHaveScreenshot(
-        'timer-display-component.png',
-        {
-          animations: 'disabled',
-        }
-      )
-    }
+  test('Timer Display - large format', async ({ dashboardPage }) => {
+    const timerDisplay = dashboardPage.locator('[class*="TimerDisplay"]').first()
+    await expect(timerDisplay).toHaveScreenshot('timer-display-component.png', {
+      animations: 'disabled',
+    })
   })
 })

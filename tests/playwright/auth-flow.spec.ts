@@ -10,8 +10,9 @@ test.describe('Spotify Authentication', () => {
     const res = await request.get(`${BASE}/api/debug/auth-check`)
     expect(res.ok()).toBeTruthy()
     const data = await res.json()
-    expect(data).toHaveProperty('ok', true)
-    expect(data).toHaveProperty('isAuthenticated')
+    expect(data).toHaveProperty('spotifyConfigured', true)
+    expect(data).toHaveProperty('nextAuthConfigured', true)
+    expect(data).toHaveProperty('hasClientSecret', true)
   })
 
   test('debug page shows auth components', async ({ page }) => {
