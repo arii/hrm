@@ -21,8 +21,8 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           color: "#fff",
           p: 2,
           textAlign: "center",
-          minHeight: 250, // Changed from 200 to 250 as per instruction
-          height: "100%", // Added to make it fill the grid item
+          minHeight: 180,
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -31,13 +31,11 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
         }}
       >
         <CardContent sx={{ p: 0 }}>
-          {" "}
-          {/* Removed default padding */}
           {/* Giant Percentage - should dominate the tile */}
           <Typography
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: "9rem", sm: "9rem", md: "11rem" },
+              fontSize: { xs: "6rem", sm: "7rem", md: "8rem" },
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,

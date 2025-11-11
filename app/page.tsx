@@ -226,6 +226,7 @@ const Dashboard = () => {
       maxWidth="xl"
       sx={{
         py: { xs: 2, sm: 3 },
+        pb: { xs: 12, sm: 14 }, // Extra bottom padding for fixed Spotify bar
         minHeight: "100vh",
         backgroundColor: "background.default",
       }}

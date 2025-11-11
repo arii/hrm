@@ -703,17 +703,43 @@ const ControlPanel = () => {
                     {volume}
                   </Typography>
                 </Stack>
-                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    href="/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Open Dashboard to Select Device
-                  </Button>
-                </Box>
+
+                {/* Device Selection */}
+                {availableDevices.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ color: "grey.400", mb: 1 }}>
+                      Device
+                    </Typography>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        value={selectedDeviceId}
+                        onChange={(e) => {
+                          const deviceId = e.target.value;
+                          setSelectedDeviceId(deviceId);
+                          if (deviceId) {
+                            sendSpotifyCommand("TRANSFER_PLAYBACK", deviceId);
+                          }
+                        }}
+                        disabled={connectionStatus !== "Connected" || devicesLoading}
+                        sx={{
+                          color: "white",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "grey.600",
+                          },
+                          "& .MuiSvgIcon-root": {
+                            color: "white",
+                          },
+                        }}
+                      >
+                        {availableDevices.map((device) => (
+                          <MenuItem key={device.id} value={device.id}>
+                            {device.name} {device.is_active && "(Active)"}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                )}
               </>
             ) : (
               <Typography
