@@ -6,12 +6,25 @@
 'use client'
 import Head from 'next/head'
 import { Box, Container, Typography } from '@mui/material'
+import { useEffect } from 'react'
 import useWebSocket from '../../../hooks/useWebSocket'
 import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus } = useWebSocket()
+
+  // Signal when page is ready for testing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        ;(window as any).__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }
+    }, 1500)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <>

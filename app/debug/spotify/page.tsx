@@ -1,8 +1,8 @@
 'use client'
 
 import { Box, Button, Paper, Typography } from '@mui/material'
-import { signIn, signOut, useSession } from 'next-auth/react'
 import { Session } from 'next-auth'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 
 interface ServerTokenStatus {
@@ -33,6 +33,10 @@ export default function SpotifyDebugPage() {
     const timer = setTimeout(() => {
       fetchServerToken()
     }, 0)
+    if (typeof window !== 'undefined') {
+      const testWindow = window as typeof window & { __TEST_READY__?: boolean }
+      testWindow.__TEST_READY__ = true
+    }
     return () => clearTimeout(timer)
   }, [])
 

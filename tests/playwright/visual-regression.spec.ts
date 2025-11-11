@@ -4,9 +4,9 @@
  * with the original HRM site design. Run these tests after layout changes to detect
  * unexpected visual regressions.
  */
-import { test, expect } from './fixtures'
 import { type Page } from '@playwright/test'
-import { setupVisualRegressionTest, BASE_URL } from './test-helpers'
+import { expect, test } from './fixtures'
+import { BASE_URL, setupVisualRegressionTest } from './test-helpers'
 
 test.describe('Visual Regression Tests', () => {
   test.beforeEach(setupVisualRegressionTest)
@@ -62,7 +62,10 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test('Dashboard with mock HR data streaming', async ({ mockPage, dashboardPage }) => {
+  test('Dashboard with mock HR data streaming', async ({
+    mockPage,
+    dashboardPage,
+  }) => {
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
@@ -71,11 +74,16 @@ test.describe('Visual Regression Tests', () => {
     // Dashboard page already loaded via fixture
     await dashboardPage.waitForSelector('text=Mock User', { timeout: 5000 })
     await dashboardPage.waitForTimeout(1000)
-    
-    // Capture screenshot with HR data displayed
+
+    const primaryTile = dashboardPage
+      .locator('[data-testid="hr-tile-grid-item"]')
+      .first()
+
+    // Capture screenshot with HR data displayed while masking dynamic numbers
     await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
       animations: 'disabled',
+      mask: [primaryTile.getByText(/\d+%/), primaryTile.getByText(/\d+\s*BPM/)],
     })
   })
 })
@@ -103,7 +111,9 @@ test.describe('Component Visual Tests', () => {
   })
 
   test('Timer Display - large format', async ({ dashboardPage }) => {
-    const timerDisplay = dashboardPage.locator('[class*="TimerDisplay"]').first()
+    const timerDisplay = dashboardPage
+      .locator('[class*="TimerDisplay"]')
+      .first()
     await expect(timerDisplay).toHaveScreenshot('timer-display-component.png', {
       animations: 'disabled',
     })

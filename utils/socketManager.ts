@@ -112,8 +112,6 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'HRM_INPUT': {
-        // No need for manual check if message.data and typeof message.data.value === "number"
-        // as Zod schema already validates it.
         const existingData = clientData.get(clientId)
         console.log(
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
@@ -122,9 +120,13 @@ const handleIncomingMessage = (
           message.data.value
         )
         if (existingData) {
+          // Filter out null values to avoid overwriting valid data
+          const updateData = Object.fromEntries(
+            Object.entries(message.data).filter(([_, value]) => value !== null)
+          )
           clientData.set(clientId, {
             ...existingData,
-            ...message.data,
+            ...updateData,
           })
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   Container,
   Typography,
@@ -24,6 +24,18 @@ export default function MockPage() {
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
+
+  // Signal when page is ready for testing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        ;(window as any).__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }
+    }, 1000)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   const sendHrPacket = useCallback(
     (hr: number) => {

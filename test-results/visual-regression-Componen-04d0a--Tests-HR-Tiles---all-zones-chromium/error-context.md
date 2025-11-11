@@ -7,80 +7,63 @@
       - generic [ref=e5]:
         - paragraph [ref=e7]: WORK:20s REST:10s
         - timer [ref=e9]: 00:00
-      - generic [ref=e12]:
-        - iframe [ref=e14]:
-          - generic [ref=f1e2]:
-            - paragraph [ref=f1e3]
+      - 'region "Heart rate monitor for Mock User: 157 beats per minute, 83% of maximum" [ref=e11]':
+        - generic [ref=e12]:
+          - paragraph [ref=e13]: 83%
+          - heading "157 BPM" [level=6] [ref=e14]
+          - heading "Mock User" [level=6] [ref=e15]
+      - generic [ref=e18]:
+        - iframe [ref=e20]:
+          - generic [active] [ref=f1e1]:
+            - paragraph [ref=f1e2]:
+              - strong [ref=f1e3]: Sample Workout Plan
             - table [ref=f1e4]:
               - rowgroup [ref=f1e5]:
-                - row "30/10 x 3 3 way crunch Dead bug Tabata Band h. Bridge Band p. Squat Band hydrants Band p. squat Complex 5x5 RDL High pull 1 ½ squat Hang clean 3x10 Alt box ch press Single Hip thurst 3 x 12 Kb curl Tricep planks Butterfly bridge" [ref=f1e6]:
-                  - cell "30/10 x 3 3 way crunch Dead bug" [ref=f1e7]:
-                    - paragraph [ref=f1e8]: 30/10 x 3
+                - row "30/10 x 3 3 way crunch Dead bug Plank variations Tabata Band h. Bridge Band p. Squat Band hydrants Complex 5x5 RDL High pull 1 ½ squat 3x10 Alt box ch press Single Hip thrust 3 x 12 Kb curl Tricep planks Butterfly bridge" [ref=f1e6]:
+                  - cell "30/10 x 3 3 way crunch Dead bug Plank variations" [ref=f1e7]:
+                    - heading "30/10 x 3" [level=3] [ref=f1e8]
                     - paragraph [ref=f1e9]: 3 way crunch
                     - paragraph [ref=f1e10]: Dead bug
-                    - paragraph [ref=f1e11]
-                    - paragraph [ref=f1e12]
-                    - paragraph [ref=f1e13]
-                    - paragraph [ref=f1e14]
-                    - paragraph [ref=f1e15]
-                    - paragraph [ref=f1e16]
-                    - paragraph [ref=f1e17]
-                    - paragraph [ref=f1e18]
-                  - cell "Tabata Band h. Bridge Band p. Squat Band hydrants Band p. squat" [ref=f1e19]:
-                    - paragraph [ref=f1e20]: Tabata
-                    - paragraph [ref=f1e21]: Band h. Bridge
-                    - paragraph [ref=f1e22]: Band p. Squat
-                    - paragraph [ref=f1e23]: Band hydrants
-                    - paragraph [ref=f1e24]: Band p. squat
-                    - paragraph [ref=f1e25]
-                  - cell "Complex 5x5 RDL High pull 1 ½ squat Hang clean" [ref=f1e26]:
-                    - paragraph [ref=f1e27]: Complex 5x5
-                    - paragraph [ref=f1e28]: RDL
-                    - paragraph [ref=f1e29]: High pull
-                    - paragraph [ref=f1e30]: 1 ½ squat
-                    - paragraph [ref=f1e31]: Hang clean
-                    - paragraph [ref=f1e32]
-                  - cell "3x10 Alt box ch press Single Hip thurst" [ref=f1e33]:
-                    - paragraph [ref=f1e34]: 3x10
-                    - paragraph [ref=f1e35]: Alt box ch press
-                    - paragraph [ref=f1e36]: Single Hip thurst
-                    - paragraph [ref=f1e37]
-                    - paragraph [ref=f1e38]
-                    - paragraph [ref=f1e39]
-                    - paragraph [ref=f1e40]
-                  - cell "3 x 12 Kb curl Tricep planks Butterfly bridge" [ref=f1e41]:
-                    - paragraph [ref=f1e42]: 3 x 12
-                    - paragraph [ref=f1e43]: Kb curl
-                    - paragraph [ref=f1e44]: Tricep planks
-                    - paragraph [ref=f1e45]: Butterfly bridge
-                    - paragraph [ref=f1e46]
-                    - paragraph [ref=f1e47]
-            - paragraph [ref=f1e48]
-            - paragraph [ref=f1e49]
-            - paragraph [ref=f1e50]:
-              - link "Previous workouts" [ref=f1e52] [cursor=pointer]:
-                - /url: https://www.google.com/url?q=https://docs.google.com/document/d/1iBncWEAuk74kwW7SXob8ZDd8BN3RX4mDTED8I1bI0Uo/edit%23&sa=D&source=editors&ust=1762848893190196&usg=AOvVaw2H2p5kyrNWvLwdy41um-oo
-            - paragraph [ref=f1e53]:
-              - link "https://onasafari.privatebits.io" [ref=f1e55] [cursor=pointer]:
-                - /url: https://www.google.com/url?q=https://onasafari.privatebits.io/&sa=D&source=editors&ust=1762848893190498&usg=AOvVaw0Q5szx26pcteEdQWxOsEmB
-            - paragraph [ref=f1e56]
-        - button "Collapse document" [ref=e15] [cursor=pointer]:
-          - img [ref=e16]
-    - button "🎵 Login with Spotify" [ref=e19] [cursor=pointer]: 🎵 Login with Spotify
-  - generic [ref=e20]:
-    - link "Dashboard" [ref=e21] [cursor=pointer]:
+                    - paragraph [ref=f1e11]: Plank variations
+                  - cell "Tabata Band h. Bridge Band p. Squat Band hydrants" [ref=f1e12]:
+                    - heading "Tabata" [level=3] [ref=f1e13]
+                    - paragraph [ref=f1e14]: Band h. Bridge
+                    - paragraph [ref=f1e15]: Band p. Squat
+                    - paragraph [ref=f1e16]: Band hydrants
+                  - cell "Complex 5x5 RDL High pull 1 ½ squat" [ref=f1e17]:
+                    - heading "Complex 5x5" [level=3] [ref=f1e18]
+                    - paragraph [ref=f1e19]: RDL
+                    - paragraph [ref=f1e20]: High pull
+                    - paragraph [ref=f1e21]: 1 ½ squat
+                  - cell "3x10 Alt box ch press Single Hip thrust" [ref=f1e22]:
+                    - heading "3x10" [level=3] [ref=f1e23]
+                    - paragraph [ref=f1e24]: Alt box ch press
+                    - paragraph [ref=f1e25]: Single Hip thrust
+                  - cell "3 x 12 Kb curl Tricep planks Butterfly bridge" [ref=f1e26]:
+                    - heading "3 x 12" [level=3] [ref=f1e27]
+                    - paragraph [ref=f1e28]: Kb curl
+                    - paragraph [ref=f1e29]: Tricep planks
+                    - paragraph [ref=f1e30]: Butterfly bridge
+            - paragraph [ref=f1e31]:
+              - link "Previous workouts" [ref=f1e32] [cursor=pointer]:
+                - /url: "#"
+        - button "Collapse document" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+    - button "🎵 Login with Spotify" [ref=e25] [cursor=pointer]: 🎵 Login with Spotify
+  - generic [ref=e26]:
+    - link "Dashboard" [ref=e27] [cursor=pointer]:
       - /url: /
-      - img [ref=e22]
-      - generic [ref=e24]: Dashboard
-    - link "Phone Controls" [ref=e25] [cursor=pointer]:
+      - img [ref=e28]
+      - generic [ref=e30]: Dashboard
+    - link "Phone Controls" [ref=e31] [cursor=pointer]:
       - /url: /client/control
-      - img [ref=e26]
-      - generic [ref=e28]: Phone Controls
-    - link "Stream HR" [ref=e29] [cursor=pointer]:
+      - img [ref=e32]
+      - generic [ref=e34]: Phone Controls
+    - link "Stream HR" [ref=e35] [cursor=pointer]:
       - /url: /client/connect
-      - img [ref=e30]
-      - generic [ref=e32]: Stream HR
-  - button "Open Next.js Dev Tools" [ref=e38] [cursor=pointer]:
-    - img [ref=e39]
-  - alert [ref=e42]
+      - img [ref=e36]
+      - generic [ref=e38]: Stream HR
+  - button "Open Next.js Dev Tools" [ref=e44] [cursor=pointer]:
+    - img [ref=e45]
+  - alert [ref=e48]
 ```

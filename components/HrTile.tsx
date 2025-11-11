@@ -1,6 +1,6 @@
 // File: components/HrTile.tsx
 'use client'
-import { Card, CardContent, Typography, Tooltip } from '@mui/material'
+import { Card, CardContent, Tooltip, Typography } from '@mui/material'
 
 export interface HrTileProps {
   name: string
@@ -16,6 +16,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
       arrow
     >
       <Card
+        data-testid="hr-tile-card"
         elevation={6}
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}

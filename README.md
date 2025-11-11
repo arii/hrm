@@ -98,6 +98,9 @@ npm run start            # Start production server with PM2
 npm run deploy           # Full deployment script (build + PM2 start)
 npm run lint             # Run ESLint
 npm run test:visual      # Run Playwright visual regression tests
+npm run test:visual:update # Update visual test snapshots
+npm run test:visual:ui   # Run tests with interactive UI
+npm run test:visual:debug # Debug tests step-by-step
 ```
 
 ### Navigation Shortcuts
@@ -108,10 +111,30 @@ The app includes URL redirects for easier navigation:
 - `/connect` → `/client/connect` (Stream HR)
 - `/mock` → `/client/mock` (Mock HRM)
 
-### Debugging & Verification
+### Testing & Verification
 
 ```bash
+# Visual Regression Testing
+npm run test:visual      # Run Playwright visual regression tests
+npm run test:visual:update # Update snapshots after UI changes
+npm run test:visual:ui   # Interactive test runner with browser
+npm run test:visual:headed # Run tests with visible browser
+npm run test:visual:debug # Step-by-step debugging mode
+npm run test:visual:report # View HTML test report
+npm run test:visual:install # Install Playwright browsers (run once)
+
+# Comprehensive Assessment Testing
+npm run test:comprehensive # Complete user journey tests with video
+npm run test:mobile      # Mobile-specific UI/UX tests
+npm run test:workflow    # End-to-end workflow scenarios
+npm run test:all-devices # Test across all configured devices
+npm run test:generate-assets # Generate all screenshots/videos for assessment
+npm run test:record      # Record test sessions for review
+
+# Integration Testing
 npm run verify:spotify   # Automated Spotify integration health check
+
+# Debugging & Monitoring
 npm run pm2:logs         # View PM2 logs
 npm run pm2:stop         # Stop all PM2 processes
 npm run deploy           # Deploy to production with PM2
@@ -205,7 +228,11 @@ This ensures a single source of truth for application state, keeping all viewers
 2. **State Management**: All global state is owned by the server. Client-side state should be ephemeral.
 3. **UI Components**: Use Material-UI (MUI) for all components.
 4. **Code Quality**: Run `npm run lint` before committing changes.
-5. **Visual Testing**: Update visual regression tests (`npm run test:visual:update`) after making intentional UI changes.
+5. **Visual Testing**: 
+   - Run `npm run test:visual` before committing UI changes
+   - Use `npm run test:visual:update` only after verifying changes are intentional
+   - Use `npm run test:visual:ui` for interactive debugging of test failures
+   - Tests cover dashboard, control panel, mock client, and connect pages
 6. **Audio Testing**: Test timer sounds on both dashboard and control panel. Audio only plays on dashboard, not control panel.
 7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
 

@@ -119,7 +119,7 @@ import { z } from 'zod'
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 export const HrmInputDataSchema = z.object({
-  value: z.number().optional(),
+  value: z.number().nullable().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),

@@ -53,3 +53,11 @@ server.js
 logs/*add
 ~/.config
 running_notes.md.backup
+
+# Test results and recordings
+test-results/
+playwright-report/
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png

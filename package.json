@@ -19,8 +19,14 @@
     "format:check": "prettier --check .",
     "test:visual": "playwright test --project=chromium",
     "test:visual:ui": "playwright test --ui",
-    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:update": "playwright test --update-snapshots --reporter=dot",
+    "test:visual:headed": "playwright test --project=chromium --headed",
+    "test:visual:report": "playwright show-report",
+    "test:comprehensive": "playwright test tests/playwright/visual-regression.spec.ts tests/playwright/comprehensive-assessment.spec.ts tests/playwright/mobile-assessment.spec.ts --project=chromium --headed --reporter=dot",
     "verify:spotify": "bash scripts/verify-spotify.sh",
+    "kill-all": "./scripts/kill-all.sh",
+    "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
+    "test:clean:update": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual:update",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222"
   },
   "dependencies": {

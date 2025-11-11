@@ -162,6 +162,39 @@ Ensure code quality and consistency before committing.
 npm run lint
 ```
 
+### Visual Regression Testing with Playwright
+
+The project uses Playwright for screenshot-based visual regression testing to ensure UI consistency.
+
+```bash
+# Run visual regression tests (headless)
+npm run test:visual
+
+# Run tests with browser UI for debugging
+npm run test:visual:ui
+
+# Run tests in headed mode (see browser)
+npm run test:visual:headed
+
+# Debug tests step-by-step
+npm run test:visual:debug
+
+# Update snapshots after intentional UI changes
+npm run test:visual:update
+
+# View test results report
+npm run test:visual:report
+
+# Install Playwright browsers (run once)
+npm run test:visual:install
+```
+
+**Important Notes:**
+- Always run `npm run test:visual` before committing UI changes
+- Use `npm run test:visual:update` only after verifying changes are intentional
+- Tests are located in `tests/playwright/visual-regression.spec.ts`
+- Screenshots are stored in `tests/playwright/screenshots/`
+
 ### VS Code: Run & Debug (recommended)
 
 This workspace includes `.vscode/launch.json` and `.vscode/tasks.json` to make running and debugging easier:
