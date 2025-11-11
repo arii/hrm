@@ -341,7 +341,8 @@ export class SpotifyPolling {
   private async executePlayerCommand(
     endpoint: string,
     method: "POST" | "PUT",
-    deviceId?: string
+    deviceId?: string,
+    playlistUri?: string
   ) {
     if (!this.accessToken) {
       console.warn(
@@ -356,11 +357,18 @@ export class SpotifyPolling {
         url.searchParams.set("device_id", deviceId);
       }
 
+      const body = playlistUri ? JSON.stringify({ context_uri: playlistUri }) : null;
+      const headers: { [key: string]: string } = {
+        Authorization: `Bearer ${this.accessToken}`,
+      };
+      if (body) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const response = await fetch(url.toString(), {
         method,
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
+        headers,
+        body,
       });
 
       if (response.status === 204) {
@@ -473,14 +481,37 @@ export class SpotifyPolling {
     }
   }
 
+  public async getUserPlaylists(): Promise<any[]> {
+    if (!this.accessToken) {
+      console.warn("Cannot get user playlists: Access token is missing.");
+      return [];
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/me/playlists`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user playlists: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.items;
+    } catch (error) {
+      console.error("Error fetching user playlists:", error);
+      return [];
+    }
+  }
+
   public handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
-    volume?: number
+    volume?: number,
+    playlistUri?: string
   ) {
     switch (command) {
       case "PLAY":
-        this.executePlayerCommand("play", "PUT", deviceId);
+        this.executePlayerCommand("play", "PUT", deviceId, playlistUri);
         break;
       case "PAUSE":
         this.executePlayerCommand("pause", "PUT", deviceId);
@@ -572,6 +603,10 @@ export class SpotifyPolling {
   }
 
   // (Legacy duplicate start/stop removed — public startPolling/stopPolling above are used.)
+
+  public forceRefreshToken(): Promise<boolean> {
+    return this.tokenManager.forceRefreshToken();
+  }
 }
 
 export default SpotifyPolling;

@@ -102,6 +102,7 @@ export interface SpotifyCommandMessage {
     | "SET_VOLUME";
   deviceId?: string; // Optional: for TRANSFER_PLAYBACK command
   volume?: number; // Optional: for SET_VOLUME command (0-100)
+  playlistUri?: string; // Optional: for PLAY command
 }
 
 /**
@@ -159,6 +160,7 @@ export const SpotifyCommandMessageSchema = z.object({
   ]),
   deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
   volume: z.number().min(0).max(100).optional(), // Optional: for SET_VOLUME command (0-100)
+  playlistUri: z.string().optional(), // Optional: for PLAY command
 });
 
 export const ClientCommandMessageSchema = z.union([

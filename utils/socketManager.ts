@@ -166,7 +166,8 @@ const handleIncomingMessage = (
           spotifyServiceInstance.handleCommand(
             message.command,
             message.deviceId,
-            message.volume
+            message.volume,
+            message.playlistUri
           );
         }
         break;

@@ -13,7 +13,7 @@ import path from "path";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
-import { UnifiedStateMessage } from "./types/websocket";
+import { UnifiedStateMessage } from "./types/websocket.js";
 
 
 
@@ -23,6 +23,7 @@ import { UnifiedStateMessage } from "./types/websocket";
 import SpotifyPolling from "./services/spotifyPolling.js";
 import TabataTimer from "./services/tabataTimer.js";
 import { initSocketManager } from "./utils/socketManager.js";
+import { createSpotifyRouter } from './services/spotifyRoutes.js';
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000; // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -106,19 +107,9 @@ app
 
     // --- Express Routing ---
 
-    // API endpoint to get available Spotify devices
-    expressApp.get("/api/spotify/devices", async (req: Request, res: Response) => {
-      if (!spotifyServiceInitialized || !spotifyService) {
-        return res.status(503).json({ error: "Spotify service not initialized." });
-      }
-      try {
-        const devices = await spotifyService.getAvailableDevices();
-        return res.json(devices);
-      } catch (error) {
-        console.error("Error fetching Spotify devices via API:", error);
-        return res.status(500).json({ error: "Failed to fetch Spotify devices." });
-      }
-    });
+    // Modular Spotify routes
+    const spotifyRouter = createSpotifyRouter(spotifyService, () => spotifyServiceInitialized);
+    expressApp.use('/api/spotify', spotifyRouter);
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery

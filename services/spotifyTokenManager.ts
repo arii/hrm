@@ -48,13 +48,18 @@ export class SpotifyTokenManager {
   }
 
   private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false;
+    console.log('[SpotifyTokenManager] Attempting to refresh token...');
+    if (!this.currentToken?.payload.refresh_token) {
+      console.error('[SpotifyTokenManager] refreshToken failed: No refresh token available.');
+      return false;
+    }
 
     try {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
       ).toString("base64");
 
+      console.log('[SpotifyTokenManager] Sending token refresh request to Spotify.');
       const response = await fetch("https://accounts.spotify.com/api/token", {
         method: "POST",
         headers: {
@@ -112,20 +117,26 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    if (!this.currentToken) return null;
+    if (!this.currentToken) {
+      console.warn('[SpotifyTokenManager] getValidAccessToken failed: No token loaded.');
+      return null;
+    }
 
     // Check if token needs refresh
     const expiresAt =
       this.currentToken.payload.obtainedAt +
       this.currentToken.payload.expires_in * 1000;
+    const timeLeft = expiresAt - Date.now();
+    console.log(`[SpotifyTokenManager] Token expires in ${Math.round(timeLeft / 1000)} seconds.`);
 
-    if (Date.now() >= expiresAt - 60000) {
+    if (timeLeft <= 60000) {
       console.log(
         "Spotify access token is expiring soon, initiating refresh..."
       );
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
+        console.log('[SpotifyTokenManager] Creating new refresh promise.');
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null;
@@ -135,6 +146,8 @@ export class SpotifyTokenManager {
             this.refreshPromise = null;
             console.error("Spotify access token refresh failed:", error);
           });
+      } else {
+        console.log('[SpotifyTokenManager] Refresh promise already exists, awaiting completion.');
       }
       await this.refreshPromise;
     }
@@ -148,5 +161,10 @@ export class SpotifyTokenManager {
 
   getCurrentRefreshToken(): string | null {
     return this.currentToken?.payload.refresh_token ?? null;
+  }
+
+  public async forceRefreshToken(): Promise<boolean> {
+    console.log('[SpotifyTokenManager] Force refresh initiated via API.');
+    return await this.refreshToken();
   }
 }
