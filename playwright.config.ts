@@ -53,7 +53,7 @@ export default defineConfig({
 
   // Web server configuration (start dev server before tests)
   webServer: {
-    command: 'npm run dev:clean',
+    command: 'npm run dev',
     url:
       process.env.BASE_URL ||
       process.env.NEXTAUTH_URL ||
@@ -62,5 +62,7 @@ export default defineConfig({
     timeout: 120 * 1000,
     stdout: 'pipe',
     stderr: 'pipe',
+    // Kill server when tests complete
+    ignoreHTTPSErrors: true,
   },
 })
