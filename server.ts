@@ -16,7 +16,9 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { createSpotifyRouter } from './services/spotifyRoutes.js'
 import SpotifyPolling from './services/spotifyPolling.js'
+import { SpotifyTokenManager } from './services/spotifyTokenManager.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 
@@ -90,9 +92,11 @@ app
     }
 
     // 2. Initialize Persistent Services
+    const spotifyTokenManager = new SpotifyTokenManager()
+
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = new SpotifyPolling(broadcastState)
+      spotifyService = new SpotifyPolling(broadcastState, spotifyTokenManager)
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure
@@ -110,27 +114,12 @@ app
     initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
-
-    // API endpoint to get available Spotify devices
-    expressApp.get(
-      '/api/spotify/devices',
-      async (req: Request, res: Response) => {
-        if (!spotifyServiceInitialized || !spotifyService) {
-          return res
-            .status(503)
-            .json({ error: 'Spotify service not initialized.' })
-        }
-        try {
-          const devices = await spotifyService.getAvailableDevices()
-          return res.json(devices)
-        } catch (error) {
-          console.error('Error fetching Spotify devices via API:', error)
-          return res
-            .status(500)
-            .json({ error: 'Failed to fetch Spotify devices.' })
-        }
-      }
+    // Initialize Spotify API routes
+    const spotifyRouter = createSpotifyRouter(
+      spotifyService,
+      () => spotifyServiceInitialized
     )
+    expressApp.use('/api/spotify', spotifyRouter)
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
