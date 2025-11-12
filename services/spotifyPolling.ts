@@ -23,7 +23,7 @@ export class SpotifyPolling {
   private tokenManager: UserTokenManager
   public broadcastState: (
     data: Partial<UnifiedStateMessage>,
-    userId?: string,
+    userId?: string
   ) => void
 
   // Per-user state management to avoid unnecessary broadcasts
@@ -39,8 +39,8 @@ export class SpotifyPolling {
   constructor(
     broadcastState: (
       data: Partial<UnifiedStateMessage>,
-      userId?: string,
-    ) => void,
+      userId?: string
+    ) => void
   ) {
     this.broadcastState = broadcastState
     console.log('Spotify Polling Service Initialized (Multi-User Mode).')
@@ -48,7 +48,7 @@ export class SpotifyPolling {
     // Initialize the token manager, which handles all auth logic.
     this.tokenManager = new UserTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
     )
   }
 
@@ -77,7 +77,7 @@ export class SpotifyPolling {
   public async pollUser(userId: string, encryptedRefreshToken: string) {
     const accessToken = await this.tokenManager.getValidAccessTokenForUser(
       userId,
-      encryptedRefreshToken,
+      encryptedRefreshToken
     )
 
     if (!accessToken) {
@@ -89,7 +89,7 @@ export class SpotifyPolling {
             isPlaying: false,
           },
         },
-        userId,
+        userId
       )
       return
     }
@@ -129,7 +129,7 @@ export class SpotifyPolling {
     } catch (error) {
       console.error(
         `Error fetching currently playing track for user ${userId}:`,
-        error,
+        error
       )
       // Potentially handle token errors here by broadcasting a "re-login needed" state
     }
@@ -144,7 +144,7 @@ export class SpotifyPolling {
     encryptedRefreshToken: string,
     command: SpotifyCommand,
     deviceId?: string,
-    volume?: number,
+    volume?: number
   ) {
     await handleCommand(
       this.tokenManager,
@@ -152,7 +152,7 @@ export class SpotifyPolling {
       encryptedRefreshToken,
       command,
       deviceId,
-      volume,
+      volume
     )
 
     // Immediately poll after a command to update the dashboard faster

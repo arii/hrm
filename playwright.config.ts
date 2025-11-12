@@ -2,10 +2,10 @@
 /**
  * Playwright Test Configuration for HRM Visual Regression Tests
  */
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: "./tests/playwright",
+  testDir: './tests/playwright',
 
   // Run tests in parallel
   fullyParallel: false,
@@ -20,21 +20,24 @@ export default defineConfig({
   workers: 1,
 
   // Reporter configuration
-  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
+  reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
 
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
+    baseURL:
+      process.env.BASE_URL ||
+      process.env.NEXTAUTH_URL ||
+      'http://127.0.0.1:3000',
 
     // Screenshot settings
-    screenshot: "only-on-failure",
+    screenshot: 'only-on-failure',
 
     // Video settings
-    video: "retain-on-failure",
+    video: 'retain-on-failure',
 
     // Trace settings
-    trace: "on-first-retry",
+    trace: 'on-first-retry',
 
     // Browser context options
     viewport: { width: 1280, height: 720 },
@@ -43,18 +46,21 @@ export default defineConfig({
   // Configure projects for different browsers
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 
   // Web server configuration (start dev server before tests)
   webServer: {
-    command: "npm run dev:server",
-    url: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
+    command: 'npm run dev:server',
+    url:
+      process.env.BASE_URL ||
+      process.env.NEXTAUTH_URL ||
+      'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
-    stdout: "pipe",
-    stderr: "pipe",
+    stdout: 'pipe',
+    stderr: 'pipe',
   },
-});
+})
