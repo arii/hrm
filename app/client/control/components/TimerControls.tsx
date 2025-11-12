@@ -18,10 +18,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { TimerCommandMessage, TimerModeCommandMessage } from '@/types/websocket'
+import {
+  TimerCommandMessage,
+  TimerModeCommandMessage,
+  SetTimerSettingsMessage,
+} from '@/types/websocket'
 import useWebSocket from '@/hooks/useWebSocket'
-import { useState, useCallback } from 'react'
-
+import { useDebounce } from '@/hooks/useDebounce'
+import { useState, useCallback, useEffect } from 'react'
 const TimerControls = () => {
   const { timerData, sendData } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
@@ -38,6 +42,19 @@ const TimerControls = () => {
   if (serverRestTime !== restTime && serverRestTime !== 10) {
     setRestTime(serverRestTime)
   }
+
+  const debouncedWorkTime = useDebounce(workTime, 500)
+  const debouncedRestTime = useDebounce(restTime, 500)
+
+  // Send settings update to server when local state changes
+  useEffect(() => {
+    const message: SetTimerSettingsMessage = {
+      type: 'SET_TIMER_SETTINGS',
+      workDuration: debouncedWorkTime,
+      restDuration: debouncedRestTime,
+    }
+    sendData(message)
+  }, [debouncedWorkTime, debouncedRestTime, sendData])
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
@@ -292,24 +309,27 @@ const TimerControls = () => {
         )}
 
         <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => sendTimerCommand('START')}
-            sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-            startIcon={<PlayArrow fontSize="large" />}
-          >
-            START
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => sendTimerCommand('STOP')}
-            sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-            startIcon={<Stop fontSize="large" />}
-          >
-            STOP
-          </Button>
+          {!timerData.isRunning ? (
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => sendTimerCommand('START')}
+              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+              startIcon={<PlayArrow fontSize="large" />}
+            >
+              START
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => sendTimerCommand('STOP')}
+              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+              startIcon={<Stop fontSize="large" />}
+            >
+              STOP
+            </Button>
+          )}
         </Stack>
       </CardContent>
     </Card>

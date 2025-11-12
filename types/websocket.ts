@@ -91,6 +91,12 @@ export interface TimerConfigMessage {
   totalCycles?: number // optional, defaults to 8
 }
 
+export interface SetTimerSettingsMessage {
+  type: 'SET_TIMER_SETTINGS'
+  workDuration: number
+  restDuration: number
+}
+
 export interface SpotifyCommandMessage {
   type: 'SPOTIFY_COMMAND'
   command:
@@ -113,6 +119,7 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | TimerConfigMessage
   | SpotifyCommandMessage
+  | SetTimerSettingsMessage
 
 import { z } from 'zod'
 
@@ -147,6 +154,12 @@ export const TimerConfigMessageSchema = z.object({
   totalCycles: z.number().min(1).optional(),
 })
 
+export const SetTimerSettingsMessageSchema = z.object({
+  type: z.literal('SET_TIMER_SETTINGS'),
+  workDuration: z.number(),
+  restDuration: z.number(),
+})
+
 export const SpotifyCommandMessageSchema = z.object({
   type: z.literal('SPOTIFY_COMMAND'),
   command: z.union([
@@ -167,4 +180,5 @@ export const ClientCommandMessageSchema = z.union([
   TimerModeCommandMessageSchema,
   TimerConfigMessageSchema,
   SpotifyCommandMessageSchema,
+  SetTimerSettingsMessageSchema,
 ])
