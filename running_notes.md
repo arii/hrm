@@ -1,0 +1,5 @@
+**Playwright suite** – Recovered the comprehensive/core/mobile/mobile-essential/workflow/visual specs and broadened `testMatch` so every `.spec.ts` executes; regenerated missing desktop and mobile baselines.
+**Logging** – Wrapped noisy Spotify poller logs behind `SPOTIFY_DEBUG`; production defaults to quiet while dev retains verbose output.
+**Prod startup** – Tweaked `start-production.sh` to `set -a` when sourcing `.env.production`, ensuring `NEXTAUTH_URL` and friends reach Node/PM2.
+**Spotify token plumbing** – Updated `server.ts` to construct `SpotifyTokenManager(process.env.SPOTIFY_CLIENT_ID, process.env.SPOTIFY_CLIENT_SECRET)` and added a bootstrap hook plus playlist typing; set HRM merge guard so null readings no longer break the broadcast type.
+**Open issues** – Build still fails: constructor call emits TS2554 when env vars are missing, bootstrap never sees a refresh token, and the NextAuth delivery path is unwired. `HrmData.value` continues to surface as `number | null`. Spotify auth/polling remains broken and needs another pass.

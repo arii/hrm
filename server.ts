@@ -16,8 +16,8 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { createSpotifyRouter } from './services/spotifyRoutes.js'
 import SpotifyPolling from './services/spotifyPolling.js'
+import { createSpotifyRouter } from './services/spotifyRoutes.js'
 import { SpotifyTokenManager } from './services/spotifyTokenManager.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -92,7 +92,10 @@ app
     }
 
     // 2. Initialize Persistent Services
-    const spotifyTokenManager = new SpotifyTokenManager()
+    const spotifyTokenManager = new SpotifyTokenManager(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
+    )
 
     let spotifyService: SpotifyPolling
     try {
