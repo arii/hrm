@@ -1,6 +1,6 @@
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { SpotifyTokenResponse } from '../types/spotify.js'
 
 export interface SpotifyTokenPayload {
   provider: string

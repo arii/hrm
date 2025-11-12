@@ -1,13 +1,11 @@
 // File: playwright.config.ts
 /**
- * Playwright Test Configuration for HRM Comprehensive Assessment
- * Supports visual regression, mobile testing, and video recording
+ * Playwright Test Configuration for HRM Visual Regression Tests
  */
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests/playwright',
-  testMatch: ['**/*.spec.ts'],
+  testDir: "./tests/playwright",
 
   // Run tests in parallel
   fullyParallel: false,
@@ -22,59 +20,41 @@ export default defineConfig({
   workers: 1,
 
   // Reporter configuration
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['list'],
-  ],
+  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
 
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL:
-      process.env.BASE_URL ||
-      process.env.NEXTAUTH_URL ||
-      'http://127.0.0.1:3000',
+    baseURL: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
 
     // Screenshot settings
-    screenshot: {
-      mode: 'only-on-failure',
-      fullPage: true,
-    },
+    screenshot: "only-on-failure",
 
     // Video settings
-    video: {
-      mode: 'retain-on-failure',
-      size: { width: 1920, height: 1080 },
-    },
+    video: "retain-on-failure",
 
     // Trace settings
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
 
     // Browser context options
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1280, height: 720 },
   },
 
-  // Single chromium project for fast testing
+  // Configure projects for different browsers
   projects: [
     {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        video: {
-          mode: 'retain-on-failure',
-          size: { width: 1920, height: 1080 },
-        },
-      },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 
-  // Web server configuration disabled - start server manually
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120 * 1000,
-  // },
-})
+  // Web server configuration (start dev server before tests)
+  webServer: {
+    command: "npm run dev:server",
+    url: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+    stdout: "pipe",
+    stderr: "pipe",
+  },
+});
