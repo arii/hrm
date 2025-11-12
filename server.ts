@@ -111,6 +111,96 @@ app
 
     // --- Express Routing ---
 
+    // API endpoint for Strava Authentication
+    expressApp.get('/api/strava/auth', (req: Request, res: Response) => {
+      const stravaClientId = process.env.STRAVA_CLIENT_ID;
+      if (!stravaClientId) {
+        res.status(500).send('STRAVA_CLIENT_ID is not configured on the server.');
+        return;
+      }
+      const redirectUri = process.env.STRAVA_REDIRECT_URI || `http://${hostname}:${port}/api/strava/callback`;
+      const scope = 'read,activity:write';
+      const authUrl = `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&approval_prompt=force`;
+      res.redirect(authUrl);
+    });
+
+    expressApp.get('/api/strava/callback', async (req: Request, res: Response) => {
+        const { code, error } = req.query;
+
+        if (error) {
+            console.error('Strava OAuth Error:', error);
+            return res.status(500).send(`Strava OAuth Error: ${error}`);
+        }
+
+        if (!code) {
+            return res.status(400).send('Missing authorization code from Strava.');
+        }
+
+        try {
+            const stravaClientId = process.env.STRAVA_CLIENT_ID;
+            const stravaClientSecret = process.env.STRAVA_CLIENT_SECRET;
+            if (!stravaClientId || !stravaClientSecret) {
+              res.status(500).send('Strava client ID or secret is not configured on the server.');
+              return;
+            }
+
+            const response = await fetch('https://www.strava.com/oauth/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    client_id: stravaClientId,
+                    client_secret: stravaClientSecret,
+                    code: code as string,
+                    grant_type: 'authorization_code',
+                }),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Strava token exchange failed: ${errorBody}`);
+            }
+
+            const tokenData = await response.json();
+            const { access_token, refresh_token, expires_in, athlete } = tokenData;
+            const expiresAt = Date.now() + expires_in * 1000;
+
+            // Set the refresh token in a secure, HttpOnly cookie
+            res.cookie('strava_refresh_token', refresh_token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+                path: '/',
+            });
+
+            // Set the access token and expiry in regular cookies for client-side access
+            res.cookie('strava_access_token', access_token, {
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: expires_in * 1000,
+                path: '/',
+            });
+
+            res.cookie('strava_expires_at', expiresAt.toString(), {
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: expires_in * 1000,
+                path: '/',
+            });
+
+            res.cookie('strava_athlete_id', athlete.id.toString(), {
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year, for display
+                path: '/',
+            });
+
+            // Redirect user back to the connect page
+            res.redirect('/client/connect');
+        } catch (err: any) {
+            console.error('Error in Strava callback:', err);
+            res.status(500).send('An error occurred during Strava authentication.');
+        }
+    });
+
     // API endpoint to get available Spotify devices
     expressApp.get(
       '/api/spotify/devices',

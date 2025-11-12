@@ -33,6 +33,7 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [isStravaConnected, setIsStravaConnected] = useState(false)
   const { connectionStatus, hrmData } = useWebSocket()
 
   const {
@@ -77,6 +78,11 @@ export default function ConnectPage() {
   useEffect(() => {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
+
+  useEffect(() => {
+    const accessToken = getCookie('strava_access_token');
+    setIsStravaConnected(!!accessToken);
+  }, []);
 
   const handleConnect = async () => {
     if (!userName.trim()) {
@@ -164,6 +170,41 @@ export default function ConnectPage() {
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
           </Alert>
+        )}
+
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+            {!isStravaConnected ? (
+                <Button
+                    variant="contained"
+                    size="large"
+                    onClick={() => window.location.href = '/api/strava/auth'}
+                    color="primary"
+                >
+                    Connect with Strava
+                </Button>
+            ) : (
+                <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() => {
+                        // Clear Strava cookies
+                        document.cookie = 'strava_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        document.cookie = 'strava_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        document.cookie = 'strava_expires_at=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        document.cookie = 'strava_athlete_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        setIsStravaConnected(false);
+                    }}
+                    color="secondary"
+                >
+                    Disconnect Strava
+                </Button>
+            )}
+        </Box>
+
+        {isStravaConnected && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+                Strava is connected. Heart rate data will be uploaded to your Strava activities.
+            </Alert>
         )}
 
         {isConnected && currentHR > 0 && (
