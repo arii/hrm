@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { createTheme } from "@mui/material/styles";
+import { createTheme } from '@mui/material/styles'
 
 /**
  * HRM Application Design System
@@ -18,139 +18,139 @@ const theme = createTheme({
   // Color Palette - Vibrant fitness-focused colors
   palette: {
     primary: {
-      main: "#F44336", // Red - matches Peak HR zone, high energy
-      light: "#EF5350",
-      dark: "#D32F2F",
-      contrastText: "#FFFFFF",
+      main: '#F44336', // Red - matches Peak HR zone, high energy
+      light: '#EF5350',
+      dark: '#D32F2F',
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: "#2196F3", // Blue - matches Warm-up zone
-      light: "#42A5F5",
-      dark: "#1976D2",
-      contrastText: "#FFFFFF",
+      main: '#2196F3', // Blue - matches Warm-up zone
+      light: '#42A5F5',
+      dark: '#1976D2',
+      contrastText: '#FFFFFF',
     },
     success: {
-      main: "#4CAF50", // Green - matches Fat Burn zone
-      light: "#66BB6A",
-      dark: "#388E3C",
+      main: '#4CAF50', // Green - matches Fat Burn zone
+      light: '#66BB6A',
+      dark: '#388E3C',
     },
     warning: {
-      main: "#FFEB3B", // Yellow - matches Cardio zone
-      light: "#FFF176",
-      dark: "#FBC02D",
-      contrastText: "#000000",
+      main: '#FFEB3B', // Yellow - matches Cardio zone
+      light: '#FFF176',
+      dark: '#FBC02D',
+      contrastText: '#000000',
     },
     error: {
-      main: "#F44336", // Red - matches Peak zone
-      light: "#EF5350",
-      dark: "#D32F2F",
+      main: '#F44336', // Red - matches Peak zone
+      light: '#EF5350',
+      dark: '#D32F2F',
     },
     info: {
-      main: "#2196F3", // Blue
+      main: '#2196F3', // Blue
     },
     // Background colors
     background: {
-      default: "#F5F5F5", // Light grey for main background
-      paper: "#FFFFFF",
+      default: '#F5F5F5', // Light grey for main background
+      paper: '#FFFFFF',
     },
     // Text colors
     text: {
-      primary: "#212121",
-      secondary: "#757575",
-      disabled: "#BDBDBD",
+      primary: '#212121',
+      secondary: '#757575',
+      disabled: '#BDBDBD',
     },
     // Dividers
-    divider: "#E0E0E0",
+    divider: '#E0E0E0',
   },
 
   // Typography - Clear hierarchy
   typography: {
     fontFamily: [
-      "-apple-system",
-      "BlinkMacSystemFont",
+      '-apple-system',
+      'BlinkMacSystemFont',
       '"Segoe UI"',
-      "Roboto",
+      'Roboto',
       '"Helvetica Neue"',
-      "Arial",
-      "sans-serif",
-    ].join(","),
+      'Arial',
+      'sans-serif',
+    ].join(','),
 
     // Large display numbers (HR values, timer)
     h1: {
-      fontSize: "4rem", // 64px
+      fontSize: '4rem', // 64px
       fontWeight: 700,
       lineHeight: 1.2,
-      letterSpacing: "-0.02em",
+      letterSpacing: '-0.02em',
     },
 
     // Section headings
     h2: {
-      fontSize: "2.5rem", // 40px
+      fontSize: '2.5rem', // 40px
       fontWeight: 600,
       lineHeight: 1.3,
-      letterSpacing: "-0.01em",
+      letterSpacing: '-0.01em',
     },
 
     // Card titles
     h3: {
-      fontSize: "2rem", // 32px
+      fontSize: '2rem', // 32px
       fontWeight: 600,
       lineHeight: 1.4,
     },
 
     // Subsection headings
     h4: {
-      fontSize: "1.5rem", // 24px
+      fontSize: '1.5rem', // 24px
       fontWeight: 600,
       lineHeight: 1.4,
     },
 
     // Component labels
     h5: {
-      fontSize: "1.25rem", // 20px
+      fontSize: '1.25rem', // 20px
       fontWeight: 600,
       lineHeight: 1.5,
     },
 
     // Small headings
     h6: {
-      fontSize: "1rem", // 16px
+      fontSize: '1rem', // 16px
       fontWeight: 600,
       lineHeight: 1.5,
     },
 
     // Body text
     body1: {
-      fontSize: "1rem", // 16px
+      fontSize: '1rem', // 16px
       lineHeight: 1.5,
     },
 
     // Secondary body text
     body2: {
-      fontSize: "0.875rem", // 14px
+      fontSize: '0.875rem', // 14px
       lineHeight: 1.5,
     },
 
     // Button text
     button: {
-      fontSize: "0.875rem", // 14px
+      fontSize: '0.875rem', // 14px
       fontWeight: 600,
-      textTransform: "none", // Don't force uppercase
-      letterSpacing: "0.02em",
+      textTransform: 'none', // Don't force uppercase
+      letterSpacing: '0.02em',
     },
 
     // Captions
     caption: {
-      fontSize: "0.75rem", // 12px
+      fontSize: '0.75rem', // 12px
       lineHeight: 1.5,
     },
 
     // Overlines (labels above content)
     overline: {
-      fontSize: "0.75rem", // 12px
+      fontSize: '0.75rem', // 12px
       fontWeight: 600,
-      textTransform: "uppercase",
-      letterSpacing: "0.08em",
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
     },
   },
 
@@ -164,31 +164,31 @@ const theme = createTheme({
 
   // Shadows - Consistent elevation
   shadows: [
-    "none",
-    "0 1px 2px 0 rgba(0, 0, 0, 0.05)", // elevation 1
-    "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)", // elevation 2
-    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)", // elevation 3
-    "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", // elevation 4
-    "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)", // elevation 5
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 6
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 7
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 8
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 9
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 10
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 11
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 12
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 13
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 14
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 15
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 16
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 17
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 18
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 19
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 20
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 21
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 22
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 23
-    "0 25px 50px -12px rgba(0, 0, 0, 0.25)", // elevation 24
+    'none',
+    '0 1px 2px 0 rgba(0, 0, 0, 0.05)', // elevation 1
+    '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // elevation 2
+    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // elevation 3
+    '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // elevation 4
+    '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // elevation 5
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 6
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 7
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 8
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 9
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 10
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 11
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 12
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 13
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 14
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 15
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 16
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 17
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 18
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 19
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 20
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 21
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 22
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 23
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 24
   ],
 
   // Component-specific overrides
@@ -197,33 +197,33 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          padding: "10px 24px",
+          padding: '10px 24px',
           minHeight: 48, // Accessible touch target
-          fontSize: "0.875rem",
+          fontSize: '0.875rem',
           fontWeight: 600,
-          textTransform: "none",
-          boxShadow: "none",
-          "&:hover": {
+          textTransform: 'none',
+          boxShadow: 'none',
+          '&:hover': {
             boxShadow:
-              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           },
         },
         contained: {
           boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-          "&:hover": {
+            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          '&:hover': {
             boxShadow:
-              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           },
         },
         sizeLarge: {
-          padding: "12px 32px",
-          fontSize: "1rem",
+          padding: '12px 32px',
+          fontSize: '1rem',
           minHeight: 56,
         },
         sizeSmall: {
-          padding: "6px 16px",
-          fontSize: "0.8125rem",
+          padding: '6px 16px',
+          fontSize: '0.8125rem',
           minHeight: 40,
         },
       },
@@ -241,7 +241,7 @@ const theme = createTheme({
         root: {
           borderRadius: 12, // Slightly more rounded for cards
           boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         },
       },
     },
@@ -251,30 +251,30 @@ const theme = createTheme({
           borderRadius: 12,
         },
         elevation1: {
-          boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         },
         elevation2: {
           boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         },
         elevation3: {
           boxShadow:
-            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         },
         elevation4: {
           boxShadow:
-            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         },
       },
     },
     MuiTextField: {
       defaultProps: {
-        variant: "outlined",
-        margin: "normal",
+        variant: 'outlined',
+        margin: 'normal',
       },
       styleOverrides: {
         root: {
-          "& .MuiOutlinedInput-root": {
+          '& .MuiOutlinedInput-root': {
             borderRadius: 8,
           },
         },
@@ -292,7 +292,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           boxShadow:
-            "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         },
       },
     },
@@ -321,12 +321,12 @@ const theme = createTheme({
       leavingScreen: 195,
     },
     easing: {
-      easeInOut: "cubic-bezier(0.4, 0, 0.2, 1)",
-      easeOut: "cubic-bezier(0.0, 0, 0.2, 1)",
-      easeIn: "cubic-bezier(0.4, 0, 1, 1)",
-      sharp: "cubic-bezier(0.4, 0, 0.6, 1)",
+      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
+      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
     },
   },
-});
+})
 
-export default theme;
+export default theme

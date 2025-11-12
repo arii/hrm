@@ -1,7 +1,8 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import nextPlugin from 'eslint-config-next/core-web-vitals';
-import tseslint from 'typescript-eslint';
-import js from '@eslint/js';
+import js from '@eslint/js'
+import nextPlugin from 'eslint-config-next/core-web-vitals'
+import prettierConfig from 'eslint-config-prettier'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import tseslint from 'typescript-eslint'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -10,7 +11,14 @@ export default defineConfig([
   // Explicitly ignore unused variables starting with '_'
   {
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
@@ -39,6 +47,7 @@ export default defineConfig([
     'server.js', // Exclude server.js
     '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
     '.github/copilot-instructions.md', // Exclude copilot instructions
+    'ecosystem.config.cjs', // Exclude PM2 config file
   ]),
 
   // Configuration for TypeScript files
@@ -81,7 +90,16 @@ export default defineConfig([
   {
     files: ['services/**/*.ts'],
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^fetch$|^SpotifyData$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern:
+            '^fetch$|^SpotifyData$|^UnifiedStateMessage$|^SpotifyTokenManager$|^TOKEN_URL$|^SpotifyTokenResponse$',
+        },
+      ],
     },
   },
-]);
+  // This turns off any ESLint style rules that conflict with Prettier.
+  prettierConfig,
+])

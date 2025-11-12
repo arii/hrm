@@ -1,40 +1,44 @@
-"use client";
+'use client'
 
-import { Box, Button, Paper, Typography } from "@mui/material";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { Session } from "next-auth";
-import { useEffect, useState } from "react";
+import { Box, Button, Paper, Typography } from '@mui/material'
+import { Session } from 'next-auth'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 interface ServerTokenStatus {
-  status: string;
-  userId?: string;
-  accessToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  obtainedAt?: string;
-  expiresAt?: string;
-  isExpired?: boolean;
-  willExpireSoon?: boolean;
+  status: string
+  userId?: string
+  accessToken?: string
+  refreshToken?: string
+  expiresIn?: number
+  obtainedAt?: string
+  expiresAt?: string
+  isExpired?: boolean
+  willExpireSoon?: boolean
 }
 
 export default function SpotifyDebugPage() {
-  const { data: session } = useSession() as { data: Session | null };
-  const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null);
+  const { data: session } = useSession() as { data: Session | null }
+  const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
 
   const fetchServerToken = async () => {
-    const res = await fetch("/api/debug/spotify-token");
+    const res = await fetch('/api/debug/spotify-token')
     if (res.ok) {
-      const data = await res.json();
-      setServerToken(data.token);
+      const data = await res.json()
+      setServerToken(data.token)
     }
-  };
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchServerToken();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+      fetchServerToken()
+    }, 0)
+    if (typeof window !== 'undefined') {
+      const testWindow = window as typeof window & { __TEST_READY__?: boolean }
+      testWindow.__TEST_READY__ = true
+    }
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <Box sx={{ p: 2 }}>
@@ -50,7 +54,7 @@ export default function SpotifyDebugPage() {
             <Button onClick={() => signOut()}>Sign Out</Button>
           </>
         ) : (
-          <Button onClick={() => signIn("spotify")}>
+          <Button onClick={() => signIn('spotify')}>
             Sign In with Spotify
           </Button>
         )}
@@ -64,5 +68,5 @@ export default function SpotifyDebugPage() {
         <pre>{JSON.stringify(serverToken, null, 2)}</pre>
       </Paper>
     </Box>
-  );
+  )
 }

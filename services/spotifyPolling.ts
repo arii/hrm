@@ -3,22 +3,32 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-import fetch from "node-fetch";
-import { SpotifyData, UnifiedStateMessage } from "../types/websocket";
-import { SpotifyTokenManager } from "./spotifyTokenManager.js";
+import { SpotifyData, UnifiedStateMessage } from '../types/websocket';
+import { SpotifyTokenManager } from './spotifyTokenManager.js';
+
+const isVerboseSpotifyLogging =
+  process.env.SPOTIFY_DEBUG === 'true' ||
+  process.env.SPOTIFY_DEBUG === '1' ||
+  process.env.NODE_ENV !== 'production';
+
+const debugLog = (...args: unknown[]) => {
+  if (isVerboseSpotifyLogging) {
+    console.log('[SpotifyPolling]', ...args);
+  }
+};
 
 // API endpoint constants
-const BASE_URL = "https://api.spotify.com/v1";
-const TOKEN_URL = "https://accounts.spotify.com/api/token";
+const BASE_URL = 'https://api.spotify.com/v1';
+const TOKEN_URL = 'https://accounts.spotify.com/api/token';
 
 type SpotifyCommand =
-  | "PLAY"
-  | "NEXT"
-  | "PREVIOUS"
-  | "LOGIN"
-  | "TRANSFER_PLAYBACK"
-  | "SET_VOLUME"
-  | "PAUSE";
+  | 'PLAY'
+  | 'NEXT'
+  | 'PREVIOUS'
+  | 'LOGIN'
+  | 'TRANSFER_PLAYBACK'
+  | 'SET_VOLUME'
+  | 'PAUSE';
 
 interface SpotifyCurrentlyPlayingResponse {
   timestamp: number;
@@ -119,6 +129,16 @@ export interface SpotifyDevice {
   volume_percent: number;
 }
 
+interface SpotifyPlaylistItem {
+  id: string;
+  name: string;
+  uri: string;
+}
+
+interface SpotifyPlaylistsResponse {
+  items: SpotifyPlaylistItem[];
+}
+
 interface SpotifyDevicesResponse {
   devices: SpotifyDevice[];
 }
@@ -136,18 +156,18 @@ export class SpotifyPolling {
   private lastPlaybackState: boolean | null = null;
 
   private state: SpotifyData = {
-    trackName: "Awaiting Login...",
-    artist: "",
+    trackName: 'Awaiting Login...',
+    artist: '',
     isPlaying: false,
   };
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState;
-    console.log("Spotify Polling Service Initialized.");
+    debugLog('Spotify Polling Service Initialized.');
 
     this.tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || "",
-      process.env.SPOTIFY_CLIENT_SECRET || ""
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
     );
 
     // Load existing token from file if available
@@ -164,9 +184,7 @@ export class SpotifyPolling {
       const refreshToken = this.tokenManager.getCurrentRefreshToken();
       if (refreshToken) {
         this.refreshToken = refreshToken;
-        console.log(
-          "Loaded existing Spotify tokens from file. Starting polling."
-        );
+        debugLog('Loaded existing Spotify tokens from file. Starting polling.');
         this.startPolling();
       }
     }
@@ -183,8 +201,8 @@ export class SpotifyPolling {
    */
   public setRefreshToken(token: string) {
     this.refreshToken = token;
-    console.log(
-      "Spotify Refresh Token received. Attempting initial access token refresh."
+    debugLog(
+      'Spotify Refresh Token received. Attempting initial access token refresh.'
     );
     this.refreshAccessToken(true);
   }
@@ -194,8 +212,8 @@ export class SpotifyPolling {
       if (!initial) {
         this.broadcastState({
           spotifyData: {
-            trackName: "Requires Login",
-            artist: "Please log in via client/control",
+            trackName: 'Requires Login',
+            artist: 'Please log in via client/control',
             isPlaying: false,
           },
         });
@@ -206,17 +224,17 @@ export class SpotifyPolling {
     // Generate Base64 string for Authorization header
     const authString = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString("base64");
+    ).toString('base64');
 
     try {
       const response = await fetch(TOKEN_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Basic ${authString}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          grant_type: "refresh_token",
+          grant_type: 'refresh_token',
           refresh_token: this.refreshToken,
         }).toString(),
       });
@@ -230,11 +248,10 @@ export class SpotifyPolling {
 
       const data = (await response.json()) as SpotifyTokenResponse;
       this.accessToken = data.access_token;
-      console.log(
-        "Spotify Access Token refreshed successfully. Status:",
-        response.status,
-        "Body:",
-        data
+      debugLog(
+        'Spotify Access Token refreshed successfully.',
+        'Status:',
+        response.status
       );
 
       // Start polling if not already running
@@ -242,7 +259,7 @@ export class SpotifyPolling {
         this.startPolling();
       }
     } catch (error) {
-      console.error("Error during Spotify token refresh:", error);
+      console.error('Error during Spotify token refresh:', error);
       this.accessToken = null;
       this.stopPolling();
     }
@@ -255,23 +272,23 @@ export class SpotifyPolling {
     if (this.pollInterval) return;
     // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(this.getCurrentlyPlaying, intervalMs);
-    console.log("Spotify polling started.");
+    debugLog('Spotify polling started.');
   }
 
   public stopPolling() {
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
       this.pollInterval = null;
-      console.log("Spotify polling stopped.");
+      debugLog('Spotify polling stopped.');
     }
   }
 
   private getCurrentlyPlaying = async () => {
     if (!this.accessToken) return;
 
-    const maskedAccessToken = this.accessToken.substring(0, 5) + "...";
-    console.log(
-      "Fetching currently playing track with access token:",
+    const maskedAccessToken = this.accessToken.substring(0, 5) + '...';
+    debugLog(
+      'Fetching currently playing track with access token:',
       maskedAccessToken
     );
 
@@ -283,13 +300,13 @@ export class SpotifyPolling {
       });
 
       if (response.status === 204) {
-        console.log("Currently playing: No content (204).");
+        debugLog('Currently playing: No content (204).');
         // 204 No Content - nothing is playing on the user's account
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false;
           this.state = {
-            trackName: "Nothing is currently playing.",
-            artist: "",
+            trackName: 'Nothing is currently playing.',
+            artist: '',
             isPlaying: false,
           };
           this.broadcastState({ spotifyData: this.getState() });
@@ -300,14 +317,14 @@ export class SpotifyPolling {
       if (!response.ok) {
         const responseBody = await response.text();
         console.error(
-          "Error fetching currently playing track. Status:",
+          'Error fetching currently playing track. Status:',
           response.status,
-          "Body:",
+          'Body:',
           responseBody
         );
         if (response.status === 401) {
           console.warn(
-            "Spotify token expired or invalid. Attempting refresh..."
+            'Spotify token expired or invalid. Attempting refresh...'
           );
           this.refreshAccessToken();
         }
@@ -315,7 +332,7 @@ export class SpotifyPolling {
       }
 
       const data = (await response.json()) as SpotifyCurrentlyPlayingResponse;
-      console.log("Successfully fetched currently playing track. Data:", data);
+      debugLog('Successfully fetched currently playing track.');
 
       // Only broadcast if track ID or playback state has changed
       if (
@@ -325,14 +342,14 @@ export class SpotifyPolling {
         this.lastTrackId = data.item?.id;
         this.lastPlaybackState = data.is_playing;
         this.state = {
-          trackName: data.item?.name || "Unknown Track",
-          artist: data.item?.artists?.[0]?.name || "Unknown Artist",
+          trackName: data.item?.name || 'Unknown Track',
+          artist: data.item?.artists?.[0]?.name || 'Unknown Artist',
           isPlaying: data.is_playing,
         };
         this.broadcastState({ spotifyData: this.getState() });
       }
     } catch (error) {
-      console.error("Error fetching currently playing track:", error);
+      console.error('Error fetching currently playing track:', error);
     }
   };
 
@@ -340,13 +357,13 @@ export class SpotifyPolling {
 
   private async executePlayerCommand(
     endpoint: string,
-    method: "POST" | "PUT",
+    method: 'POST' | 'PUT',
     deviceId?: string,
     playlistUri?: string
   ) {
     if (!this.accessToken) {
       console.warn(
-        "Cannot execute command: Access token is missing. Requires login."
+        'Cannot execute command: Access token is missing. Requires login.'
       );
       return;
     }
@@ -354,7 +371,7 @@ export class SpotifyPolling {
     try {
       const url = new URL(`${BASE_URL}/me/player/${endpoint}`);
       if (deviceId) {
-        url.searchParams.set("device_id", deviceId);
+        url.searchParams.set('device_id', deviceId);
       }
 
       const body = playlistUri ? JSON.stringify({ context_uri: playlistUri }) : null;
@@ -372,7 +389,7 @@ export class SpotifyPolling {
       });
 
       if (response.status === 204) {
-        console.log(`Spotify command '${endpoint}' executed successfully.`);
+        debugLog(`Spotify command '${endpoint}' executed successfully.`);
         // Immediately poll after a successful command to update the dashboard faster
         setTimeout(this.getCurrentlyPlaying, 500);
       } else {
@@ -381,13 +398,13 @@ export class SpotifyPolling {
         );
       }
     } catch (error) {
-      console.error("Error executing Spotify command:", error);
+      console.error('Error executing Spotify command:', error);
     }
   }
 
   public async getAvailableDevices(): Promise<SpotifyDevice[]> {
     if (!this.accessToken) {
-      console.warn("Cannot get devices: Access token is missing.");
+      console.warn('Cannot get devices: Access token is missing.');
       return [];
     }
     try {
@@ -402,34 +419,34 @@ export class SpotifyPolling {
       const data = (await response.json()) as SpotifyDevicesResponse;
       return data.devices as SpotifyDevice[];
     } catch (error) {
-      console.error("Error fetching Spotify devices:", error);
+      console.error('Error fetching Spotify devices:', error);
       return [];
     }
   }
 
   public async setVolume(volume: number, deviceId?: string): Promise<boolean> {
     if (!this.accessToken) {
-      console.warn("Cannot set volume: Access token is missing.");
+      console.warn('Cannot set volume: Access token is missing.');
       return false;
     }
     try {
       const safeVolume = Math.max(0, Math.min(100, Math.round(volume)));
       const volumeUrl = new URL(`${BASE_URL}/me/player/volume`);
-      volumeUrl.searchParams.set("volume_percent", String(safeVolume));
+      volumeUrl.searchParams.set('volume_percent', String(safeVolume));
       if (deviceId) {
-        volumeUrl.searchParams.set("device_id", deviceId);
+        volumeUrl.searchParams.set('device_id', deviceId);
       }
 
       const response = await fetch(volumeUrl.toString(), {
-        method: "PUT",
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
         },
       });
       if (response.status === 204) {
-        console.log(
+        debugLog(
           `Volume set to: ${safeVolume}%${
-            deviceId ? ` (device ${deviceId})` : ""
+            deviceId ? ` (device ${deviceId})` : ''
           }`
         );
         return true;
@@ -441,22 +458,22 @@ export class SpotifyPolling {
         return false;
       }
     } catch (error) {
-      console.error("Error setting volume:", error);
+      console.error('Error setting volume:', error);
       return false;
     }
   }
 
   public async transferPlayback(deviceId: string): Promise<boolean> {
     if (!this.accessToken) {
-      console.warn("Cannot transfer playback: Access token is missing.");
+      console.warn('Cannot transfer playback: Access token is missing.');
       return false;
     }
     try {
       const response = await fetch(`${BASE_URL}/me/player`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           device_ids: [deviceId],
@@ -464,7 +481,7 @@ export class SpotifyPolling {
         }),
       });
       if (response.status === 204) {
-        console.log(`Playback transferred to device: ${deviceId}`);
+        debugLog(`Playback transferred to device: ${deviceId}`);
         setTimeout(this.getCurrentlyPlaying, 500); // Refresh state
         return true;
       } else {
@@ -476,12 +493,12 @@ export class SpotifyPolling {
         return false;
       }
     } catch (error) {
-      console.error("Error transferring Spotify playback:", error);
+      console.error('Error transferring Spotify playback:', error);
       return false;
     }
   }
 
-  public async getUserPlaylists(): Promise<any[]> {
+  public async getUserPlaylists(): Promise<SpotifyPlaylistItem[]> {
     if (!this.accessToken) {
       console.warn("Cannot get user playlists: Access token is missing.");
       return [];
@@ -495,7 +512,7 @@ export class SpotifyPolling {
       if (!response.ok) {
         throw new Error(`Failed to fetch user playlists: ${response.status}`);
       }
-      const data = await response.json();
+      const data = (await response.json()) as SpotifyPlaylistsResponse;
       return data.items;
     } catch (error) {
       console.error("Error fetching user playlists:", error);
@@ -510,37 +527,37 @@ export class SpotifyPolling {
     playlistUri?: string
   ) {
     switch (command) {
-      case "PLAY":
-        this.executePlayerCommand("play", "PUT", deviceId, playlistUri);
+      case 'PLAY':
+        this.executePlayerCommand('play', 'PUT', deviceId, playlistUri);
         break;
-      case "PAUSE":
-        this.executePlayerCommand("pause", "PUT", deviceId);
+      case 'PAUSE':
+        this.executePlayerCommand('pause', 'PUT', deviceId);
         break;
-      case "NEXT":
-        this.executePlayerCommand("next", "POST", deviceId);
+      case 'NEXT':
+        this.executePlayerCommand('next', 'POST', deviceId);
         break;
-      case "PREVIOUS":
-        this.executePlayerCommand("previous", "POST", deviceId);
+      case 'PREVIOUS':
+        this.executePlayerCommand('previous', 'POST', deviceId);
         break;
-      case "TRANSFER_PLAYBACK":
+      case 'TRANSFER_PLAYBACK':
         if (deviceId) {
           this.transferPlayback(deviceId);
         } else {
-          console.warn("TRANSFER_PLAYBACK command requires a deviceId.");
+          console.warn('TRANSFER_PLAYBACK command requires a deviceId.');
         }
         break;
-      case "SET_VOLUME":
+      case 'SET_VOLUME':
         if (volume !== undefined && volume >= 0 && volume <= 100) {
           this.setVolume(volume, deviceId);
         } else {
-          console.warn("SET_VOLUME command requires a valid volume (0-100).");
+          console.warn('SET_VOLUME command requires a valid volume (0-100).');
         }
         break;
-      case "LOGIN":
+      case 'LOGIN':
         // Note: The actual login is handled by the client redirecting to NextAuth.
         // This command is primarily for client-side feedback.
-        console.log(
-          "Received LOGIN command. Client should initiate NextAuth sign-in."
+        debugLog(
+          'Received LOGIN command. Client should initiate NextAuth sign-in.'
         );
         break;
       default:
@@ -551,10 +568,10 @@ export class SpotifyPolling {
   async getCurrentPlayback(): Promise<SpotifyCurrentlyPlayingResponse | null> {
     const accessToken = await this.tokenManager.getValidAccessToken();
     if (!accessToken) {
-      throw new Error("No valid Spotify access token available");
+      throw new Error('No valid Spotify access token available');
     }
 
-    const response = await fetch("https://api.spotify.com/v1/me/player", {
+    const response = await fetch('https://api.spotify.com/v1/me/player', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -572,23 +589,23 @@ export class SpotifyPolling {
   }
 
   async controlPlayback(
-    action: "play" | "pause" | "next" | "previous"
+    action: 'play' | 'pause' | 'next' | 'previous'
   ): Promise<boolean> {
     const accessToken = await this.tokenManager.getValidAccessToken();
     if (!accessToken) return false;
 
     const endpoint = {
-      play: "/play",
-      pause: "/pause",
-      next: "/next",
-      previous: "/previous",
+      play: '/play',
+      pause: '/pause',
+      next: '/next',
+      previous: '/previous',
     }[action];
 
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/me/player${endpoint}`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -597,7 +614,7 @@ export class SpotifyPolling {
 
       return response.ok;
     } catch (err) {
-      console.error("Spotify playback control failed:", err);
+      console.error('Spotify playback control failed:', err);
       return false;
     }
   }

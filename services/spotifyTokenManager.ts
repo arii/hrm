@@ -1,7 +1,6 @@
-import fs from "fs";
-import fetch from "node-fetch";
-import * as path from "path";
-import { SpotifyTokenResponse } from "./spotifyPolling.js";
+import fs from 'fs';
+import * as path from 'path';
+import { SpotifyTokenResponse } from './spotifyPolling.js';
 
 export interface SpotifyTokenPayload {
   provider: string;
@@ -26,24 +25,24 @@ export class SpotifyTokenManager {
   constructor(
     private clientId: string,
     private clientSecret: string,
-    logDir: string = path.resolve(process.cwd(), "logs")
+    logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
-    this.tokenFile = path.join(logDir, "spotify_tokens.json");
+    this.tokenFile = path.join(logDir, 'spotify_tokens.json');
     this.loadTokens();
   }
 
   private loadTokens() {
     try {
       if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, "utf8");
+        const data = fs.readFileSync(this.tokenFile, 'utf8');
         this.currentToken = JSON.parse(data) as TokenRecord;
         console.log(
-          "Loaded Spotify tokens for:",
+          'Loaded Spotify tokens for:',
           this.currentToken.payload.sub
         );
       }
     } catch (err) {
-      console.warn("Failed to load Spotify tokens:", err);
+      console.warn('Failed to load Spotify tokens:', err);
     }
   }
 
@@ -57,17 +56,17 @@ export class SpotifyTokenManager {
     try {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
-      ).toString("base64");
+      ).toString('base64');
 
       console.log('[SpotifyTokenManager] Sending token refresh request to Spotify.');
-      const response = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
         headers: {
           Authorization: `Basic ${basic}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          grant_type: "refresh_token",
+          grant_type: 'refresh_token',
           refresh_token: this.currentToken.payload.refresh_token,
         }).toString(),
       });
@@ -79,9 +78,9 @@ export class SpotifyTokenManager {
 
       const data = (await response.json()) as SpotifyTokenResponse;
       console.log(
-        "Spotify token refresh successful. Status:",
+        'Spotify token refresh successful. Status:',
         response.status,
-        "Body:",
+        'Body:',
         data
       );
 
@@ -102,16 +101,16 @@ export class SpotifyTokenManager {
       fs.writeFileSync(
         this.tokenFile,
         JSON.stringify(this.currentToken, null, 2),
-        "utf8"
+        'utf8'
       );
 
       console.log(
-        "Refreshed Spotify token for:",
+        'Refreshed Spotify token for:',
         this.currentToken.payload.sub
       );
       return true;
     } catch (err) {
-      console.error("Failed to refresh Spotify token:", err);
+      console.error('Failed to refresh Spotify token:', err);
       return false;
     }
   }
@@ -131,7 +130,7 @@ export class SpotifyTokenManager {
 
     if (timeLeft <= 60000) {
       console.log(
-        "Spotify access token is expiring soon, initiating refresh..."
+        'Spotify access token is expiring soon, initiating refresh...'
       );
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
@@ -140,11 +139,11 @@ export class SpotifyTokenManager {
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null;
-            console.log("Spotify access token refresh completed.");
+            console.log('Spotify access token refresh completed.');
           })
           .catch((error) => {
             this.refreshPromise = null;
-            console.error("Spotify access token refresh failed:", error);
+            console.error('Spotify access token refresh failed:', error);
           });
       } else {
         console.log('[SpotifyTokenManager] Refresh promise already exists, awaiting completion.');

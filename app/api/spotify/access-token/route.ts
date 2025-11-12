@@ -1,6 +1,6 @@
-import { authOptions } from "@/lib/auth"; // Using alias for cleaner imports
-import { getServerSession } from "next-auth/next";
-import { NextResponse } from "next/server";
+import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { getServerSession } from 'next-auth/next'
+import { NextResponse } from 'next/server'
 
 /**
  * API route to securely provide the Spotify access token to the client.
@@ -15,29 +15,38 @@ import { NextResponse } from "next/server";
  */
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session.
-    const session = await getServerSession(authOptions);
+    // 1. Get the server-side session (NextAuth automatically refreshes tokens)
+    const session = await getServerSession(authOptions)
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error("[API /access-token] No session or access token found.");
+      console.error('[API /access-token] No session or access token found.')
       return NextResponse.json(
-        { error: "Not authenticated or token is missing." },
+        { error: 'Not authenticated or token is missing.' },
         { status: 401 }
-      );
+      )
     }
 
-    // 3. Return the access token.
+    // 3. Check for refresh errors from NextAuth
+    if (session.error === 'RefreshAccessTokenError') {
+      console.error('[API /access-token] Token refresh failed in NextAuth')
+      return NextResponse.json(
+        { error: 'Token refresh failed. Please re-authenticate.' },
+        { status: 401 }
+      )
+    }
+
+    // 4. Return the access token (already refreshed by NextAuth if needed)
     return NextResponse.json({
       accessToken: session.accessToken,
-    });
+    })
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error(`[API /access-token] Internal Server Error: ${message}`);
+      error instanceof Error ? error.message : 'An unknown error occurred.'
+    console.error(`[API /access-token] Internal Server Error: ${message}`)
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: 'Internal Server Error' },
       { status: 500 }
-    );
+    )
   }
 }

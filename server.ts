@@ -15,10 +15,6 @@ import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
 import { UnifiedStateMessage } from "./types/websocket.js";
 
-
-
-
-
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from "./services/spotifyPolling.js";
 import TabataTimer from "./services/tabataTimer.js";
@@ -27,12 +23,15 @@ import { createSpotifyRouter } from './services/spotifyRoutes.js';
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000; // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.env.HOST || "127.0.0.1"); // Bind to all interfaces in production
+const hostname =
+  process.env.NODE_ENV === "production"
+    ? "0.0.0.0"
+    : process.env.HOST || "127.0.0.1"; // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev, hostname, port });
 
-console.log(`Starting server in ${dev ? 'development' : 'production'} mode`);
+console.log(`Starting server in ${dev ? "development" : "production"} mode`);
 console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`);
 console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
 console.log(`Hostname: ${hostname}, Port: ${port}`);
@@ -79,7 +78,13 @@ app
           if (client.readyState === 1) {
             // 1 means OPEN
             // Note: We use the STATE_UPDATE type defined in types/websocket.ts
-            client.send(JSON.stringify({ type: "STATE_UPDATE", spotifyServiceInitialized, ...data })); // Include spotifyServiceInitialized
+            client.send(
+              JSON.stringify({
+                type: "STATE_UPDATE",
+                spotifyServiceInitialized,
+                ...data,
+              })
+            ); // Include spotifyServiceInitialized
           }
         });
       }

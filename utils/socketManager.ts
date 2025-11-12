@@ -2,15 +2,15 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
-import { WebSocket, Server as WebSocketServer } from "ws";
-import { z } from "zod"; // Import z from zod
-import { SpotifyPolling } from "../services/spotifyPolling.js";
-import TabataTimer from "../services/tabataTimer.js";
+import { WebSocket, Server as WebSocketServer } from 'ws';
+import { z } from 'zod'; // Import z from zod
+import { SpotifyPolling } from '../services/spotifyPolling.js';
+import TabataTimer from '../services/tabataTimer.js';
 import {
   ClientCommandMessageSchema,
   HrmData,
   UnifiedStateMessage,
-} from "../types/websocket.js";
+} from '../types/websocket.js';
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer;
@@ -32,7 +32,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   tabataServiceInstance = services.tabataService;
   spotifyServiceInstance = services.spotifyService;
 
-  wssInstance.on("connection", (ws: WebSocket) => {
+  wssInstance.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`;
     console.log(`WebSocket Client connected: ${clientId}`);
 
@@ -49,18 +49,18 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     // Send initial state upon connection
     ws.send(
       JSON.stringify({
-        type: "STATE_UPDATE",
+        type: 'STATE_UPDATE',
         hrmData: Array.from(clientData.values()),
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
       } as UnifiedStateMessage)
     );
 
-    ws.on("message", (message) => {
+    ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId);
     });
 
-    ws.on("close", () => {
+    ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`);
       clientData.delete(clientId);
       broadcastState();
@@ -70,7 +70,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
 
 const broadcastState = () => {
   const message: UnifiedStateMessage = {
-    type: "STATE_UPDATE",
+    type: 'STATE_UPDATE',
     hrmData: Array.from(clientData.values()),
     timerData: tabataServiceInstance.getState(),
     spotifyData: spotifyServiceInstance.getState(),
@@ -111,20 +111,22 @@ const handleIncomingMessage = (
     );
 
     switch (message.type) {
-      case "HRM_INPUT": {
-        // No need for manual check if message.data and typeof message.data.value === "number"
-        // as Zod schema already validates it.
+      case 'HRM_INPUT': {
         const existingData = clientData.get(clientId);
         console.log(
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
           existingData,
-          "newValue:",
+          'newValue:',
           message.data.value
         );
         if (existingData) {
+          // Filter out null values to avoid overwriting valid data
+          const updateData = Object.fromEntries(
+            Object.entries(message.data).filter(([_, value]) => value !== null)
+          );
           clientData.set(clientId, {
             ...existingData,
-            ...message.data,
+            ...updateData,
           });
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
@@ -135,21 +137,21 @@ const handleIncomingMessage = (
         break;
       }
 
-      case "TIMER_COMMAND": {
+      case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command);
         }
         break;
       }
 
-      case "SET_MODE": {
+      case 'SET_MODE': {
         if (tabataServiceInstance) {
           tabataServiceInstance.setMode(message.mode);
         }
         break;
       }
 
-      case "TIMER_CONFIG": {
+      case 'TIMER_CONFIG': {
         if (tabataServiceInstance) {
           tabataServiceInstance.setConfig({
             workDuration: message.workDuration,
@@ -160,7 +162,7 @@ const handleIncomingMessage = (
         break;
       }
 
-      case "SPOTIFY_COMMAND": {
+      case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
           // message.command is already typed as SpotifyCommand, which now includes deviceId and volume
           spotifyServiceInstance.handleCommand(
@@ -176,15 +178,15 @@ const handleIncomingMessage = (
       default:
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
         console.warn(
-          "Unknown message type received:",
+          'Unknown message type received:',
           (message as { type: unknown }).type
         );
     }
   } catch (e) {
-    console.error("Error processing incoming message:", e);
+    console.error('Error processing incoming message:', e);
     // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
-      console.error("WebSocket message validation failed:", e.issues);
+      console.error('WebSocket message validation failed:', e.issues);
     }
   }
 };

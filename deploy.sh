@@ -41,11 +41,11 @@ npm run build
 
 # Stop and delete existing PM2 processes
 echo "🛑 Stopping existing PM2 processes..."
-pm2 delete hrm-server || true
+npm run pm2:delete || true
 
 # Start with production environment
 echo "▶️ Starting HRM server with PM2..."
-pm2 start ecosystem.config.cjs --env production
+npm run start
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."
@@ -53,4 +53,4 @@ pm2 save
 
 echo "✅ Deployment complete!"
 echo "📊 Check status with: pm2 status"
-echo "📝 View logs with: pm2 logs hrm-server"
+echo "📝 View logs with: npm run pm2:logs"
