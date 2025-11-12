@@ -7,6 +7,17 @@
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 
+const isVerboseSpotifyLogging =
+  process.env.SPOTIFY_DEBUG === 'true' ||
+  process.env.SPOTIFY_DEBUG === '1' ||
+  process.env.NODE_ENV !== 'production'
+
+const debugLog = (...args: unknown[]) => {
+  if (isVerboseSpotifyLogging) {
+    console.log('[SpotifyPolling]', ...args)
+  }
+}
+
 // API endpoint constants
 const BASE_URL = 'https://api.spotify.com/v1'
 const TOKEN_URL = 'https://accounts.spotify.com/api/token'
@@ -143,7 +154,7 @@ export class SpotifyPolling {
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState
-    console.log('Spotify Polling Service Initialized.')
+    debugLog('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
@@ -164,9 +175,7 @@ export class SpotifyPolling {
       const refreshToken = this.tokenManager.getCurrentRefreshToken()
       if (refreshToken) {
         this.refreshToken = refreshToken
-        console.log(
-          'Loaded existing Spotify tokens from file. Starting polling.'
-        )
+        debugLog('Loaded existing Spotify tokens from file. Starting polling.')
         this.startPolling()
       }
     }
@@ -183,7 +192,7 @@ export class SpotifyPolling {
    */
   public setRefreshToken(token: string) {
     this.refreshToken = token
-    console.log(
+    debugLog(
       'Spotify Refresh Token received. Attempting initial access token refresh.'
     )
     this.refreshAccessToken(true)
@@ -230,11 +239,10 @@ export class SpotifyPolling {
 
       const data = (await response.json()) as SpotifyTokenResponse
       this.accessToken = data.access_token
-      console.log(
-        'Spotify Access Token refreshed successfully. Status:',
-        response.status,
-        'Body:',
-        data
+      debugLog(
+        'Spotify Access Token refreshed successfully.',
+        'Status:',
+        response.status
       )
 
       // Start polling if not already running
@@ -255,14 +263,14 @@ export class SpotifyPolling {
     if (this.pollInterval) return
     // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(this.getCurrentlyPlaying, intervalMs)
-    console.log('Spotify polling started.')
+    debugLog('Spotify polling started.')
   }
 
   public stopPolling() {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
-      console.log('Spotify polling stopped.')
+      debugLog('Spotify polling stopped.')
     }
   }
 
@@ -270,7 +278,7 @@ export class SpotifyPolling {
     if (!this.accessToken) return
 
     const maskedAccessToken = this.accessToken.substring(0, 5) + '...'
-    console.log(
+    debugLog(
       'Fetching currently playing track with access token:',
       maskedAccessToken
     )
@@ -283,7 +291,7 @@ export class SpotifyPolling {
       })
 
       if (response.status === 204) {
-        console.log('Currently playing: No content (204).')
+        debugLog('Currently playing: No content (204).')
         // 204 No Content - nothing is playing on the user's account
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
@@ -315,7 +323,7 @@ export class SpotifyPolling {
       }
 
       const data = (await response.json()) as SpotifyCurrentlyPlayingResponse
-      console.log('Successfully fetched currently playing track. Data:', data)
+      debugLog('Successfully fetched currently playing track.')
 
       // Only broadcast if track ID or playback state has changed
       if (
@@ -364,7 +372,7 @@ export class SpotifyPolling {
       })
 
       if (response.status === 204) {
-        console.log(`Spotify command '${endpoint}' executed successfully.`)
+        debugLog(`Spotify command '${endpoint}' executed successfully.`)
         // Immediately poll after a successful command to update the dashboard faster
         setTimeout(this.getCurrentlyPlaying, 500)
       } else {
@@ -419,7 +427,7 @@ export class SpotifyPolling {
         },
       })
       if (response.status === 204) {
-        console.log(
+        debugLog(
           `Volume set to: ${safeVolume}%${
             deviceId ? ` (device ${deviceId})` : ''
           }`
@@ -456,7 +464,7 @@ export class SpotifyPolling {
         }),
       })
       if (response.status === 204) {
-        console.log(`Playback transferred to device: ${deviceId}`)
+        debugLog(`Playback transferred to device: ${deviceId}`)
         setTimeout(this.getCurrentlyPlaying, 500) // Refresh state
         return true
       } else {
@@ -508,7 +516,7 @@ export class SpotifyPolling {
       case 'LOGIN':
         // Note: The actual login is handled by the client redirecting to NextAuth.
         // This command is primarily for client-side feedback.
-        console.log(
+        debugLog(
           'Received LOGIN command. Client should initiate NextAuth sign-in.'
         )
         break
