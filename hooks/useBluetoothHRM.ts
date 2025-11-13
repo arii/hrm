@@ -8,9 +8,11 @@ import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import useWebSocket from './useWebSocket'
 
-// Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
+// Service UUIDs
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
+const BATTERY_SERVICE_UUID = 'battery_service'
+const BATTERY_CHARACTERISTIC_UUID = 'battery_level'
 
 /**
  * Parses the raw DataView received from the HR Measurement characteristic.
@@ -52,6 +54,8 @@ const useBluetoothHRM = () => {
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [deviceName, setDeviceName] = useState<string | null>(null)
 
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string) => {
@@ -79,6 +83,7 @@ const useBluetoothHRM = () => {
             // Request new device
             device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [HR_SERVICE_UUID] }],
+              optionalServices: [BATTERY_SERVICE_UUID],
             })
             // Save device info
             setCookie('hrm_device_id', device.id)
@@ -86,6 +91,7 @@ const useBluetoothHRM = () => {
           }
         }
 
+        setDeviceName(device.name || 'Unknown Device')
         setDeviceStatus(`Connected to: ${device.name}`)
 
         // 2. Connect to GATT server
@@ -107,7 +113,9 @@ const useBluetoothHRM = () => {
               event.target as unknown as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
 
-            console.log('[Bluetooth HRM] Heart rate received:', heartRate)
+            console.log(
+              `[Bluetooth HRM] Heart rate received: ${heartRate} (Page focus: ${document.hasFocus()})`
+            )
 
             // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---
             const calculatedMaxHr = userAge
@@ -127,10 +135,45 @@ const useBluetoothHRM = () => {
           }
         )
 
+        // 6. Get Battery Level (if available)
+        try {
+          const batteryService =
+            await server.getPrimaryService(BATTERY_SERVICE_UUID)
+          const batteryCharacteristic = await batteryService.getCharacteristic(
+            BATTERY_CHARACTERISTIC_UUID
+          )
+          const batteryValue = await batteryCharacteristic.readValue()
+          const batteryPercent = batteryValue.getUint8(0)
+          setBatteryLevel(batteryPercent)
+
+          // Subscribe to battery level changes
+          await batteryCharacteristic.startNotifications()
+          batteryCharacteristic.addEventListener(
+            'characteristicvaluechanged',
+            (event) => {
+              const target =
+                event.target as unknown as BluetoothRemoteGATTCharacteristic
+              const newBatteryLevel = target.value!.getUint8(0)
+              setBatteryLevel(newBatteryLevel)
+              console.log(
+                `[Bluetooth HRM] Battery level updated: ${newBatteryLevel}%`
+              )
+            }
+          )
+        } catch (err) {
+          console.warn(
+            '[Bluetooth HRM] Battery service not found or accessible:',
+            err
+          )
+          setBatteryLevel(null) // Reset if service is not found
+        }
+
         // Handle disconnection gracefully
         device.addEventListener('gattserverdisconnected', () => {
           setDeviceStatus('Disconnected (Server Lost)')
           setSavedDevice(null)
+          setBatteryLevel(null)
+          setDeviceName(null)
         })
       } catch (error: unknown) {
         console.error('Bluetooth connection failed:', error)
@@ -185,6 +228,8 @@ const useBluetoothHRM = () => {
   return {
     connectAndStream,
     deviceStatus,
+    deviceName,
+    batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
   }

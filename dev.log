@@ -1,0 +1,10 @@
+
+> hrm@0.1.0 dev
+> cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --no-warnings server.ts
+
+Starting server in development mode
+Environment: NODE_ENV=development
+NEXTAUTH_URL: undefined
+Hostname: 127.0.0.1, Port: 3000
+ ⨯ Unable to acquire lock at /app/.next/dev/lock, is another instance of next dev running?
+   Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
