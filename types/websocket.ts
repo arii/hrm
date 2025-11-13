@@ -84,17 +84,11 @@ export interface TimerModeCommandMessage {
   mode: TimerMode
 }
 
-export interface TimerConfigMessage {
-  type: 'TIMER_CONFIG'
-  workDuration: number // seconds
-  restDuration: number // seconds
-  totalCycles?: number // optional, defaults to 8
-}
-
-export interface SetTimerSettingsMessage {
+export interface TimerSettingsMessage {
   type: 'SET_TIMER_SETTINGS'
   workDuration: number
   restDuration: number
+  totalCycles?: number
 }
 
 export interface SpotifyCommandMessage {
@@ -117,9 +111,8 @@ export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
   | TimerModeCommandMessage
-  | TimerConfigMessage
   | SpotifyCommandMessage
-  | SetTimerSettingsMessage
+  | TimerSettingsMessage
 
 import { z } from 'zod'
 
@@ -147,17 +140,11 @@ export const TimerModeCommandMessageSchema = z.object({
   mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
 })
 
-export const TimerConfigMessageSchema = z.object({
-  type: z.literal('TIMER_CONFIG'),
-  workDuration: z.number().min(1),
-  restDuration: z.number().min(0),
-  totalCycles: z.number().min(1).optional(),
-})
-
-export const SetTimerSettingsMessageSchema = z.object({
+export const TimerSettingsMessageSchema = z.object({
   type: z.literal('SET_TIMER_SETTINGS'),
   workDuration: z.number(),
   restDuration: z.number(),
+  totalCycles: z.number().optional(),
 })
 
 export const SpotifyCommandMessageSchema = z.object({
@@ -178,7 +165,6 @@ export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
   TimerModeCommandMessageSchema,
-  TimerConfigMessageSchema,
   SpotifyCommandMessageSchema,
-  SetTimerSettingsMessageSchema,
+  TimerSettingsMessageSchema,
 ])

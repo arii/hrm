@@ -21,7 +21,7 @@ import {
 import {
   TimerCommandMessage,
   TimerModeCommandMessage,
-  SetTimerSettingsMessage,
+  TimerSettingsMessage,
 } from '@/types/websocket'
 import useWebSocket from '@/hooks/useWebSocket'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -48,7 +48,7 @@ const TimerControls = () => {
 
   // Send settings update to server when local state changes
   useEffect(() => {
-    const message: SetTimerSettingsMessage = {
+    const message: TimerSettingsMessage = {
       type: 'SET_TIMER_SETTINGS',
       workDuration: debouncedWorkTime,
       restDuration: debouncedRestTime,

@@ -12,14 +12,7 @@ export interface HeartRateZonesProps {
   maxHr: number
 }
 
-export type TimerMode = 'STOPWATCH' | 'TABATA'
-export type TimerPhase =
-  | 'IDLE'
-  | 'PREPARE'
-  | 'RUNNING'
-  | 'WORK'
-  | 'REST'
-  | 'COOLDOWN'
+import { TimerMode, TimerPhase } from './websocket'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
