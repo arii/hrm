@@ -4,11 +4,11 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { TimerData, TimerMode, TimerPhase } from '../../types/websocket'
+import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<(data: any) => void>
+  let broadcastMock: jest.Mock<(data: Partial<{ timerData: TimerData }>) => void>
   let broadcastedStates: TimerData[]
 
   beforeEach(() => {

@@ -6,8 +6,6 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  TimerData,
-  SpotifyData,
   UnifiedStateMessage,
 } from '../../types/websocket'
 
@@ -170,7 +168,7 @@ describe('WebSocket Manager Integration', () => {
     })
 
     it('should support Spotify volume commands', () => {
-      ;(spotifyService as any).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
       
       spotifyService.handleCommand('SET_VOLUME', undefined, 75)
       
@@ -194,7 +192,7 @@ describe('WebSocket Manager Integration', () => {
     })
 
     it('should allow timer and Spotify commands independently', () => {
-      ;(spotifyService as any).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
       
       // Timer command
       tabataTimer.handleCommand('START')
@@ -254,7 +252,7 @@ describe('WebSocket Manager Integration', () => {
     })
 
     it('should support timer start with Spotify skip command', () => {
-      ;(spotifyService as any).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
       
       // Simulate timer start triggering Spotify next
       tabataTimer.handleCommand('START')
@@ -266,7 +264,7 @@ describe('WebSocket Manager Integration', () => {
     })
 
     it('should support timer stop with Spotify pause command', () => {
-      ;(spotifyService as any).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
       
       // Start then stop timer with Spotify pause
       tabataTimer.handleCommand('START')
