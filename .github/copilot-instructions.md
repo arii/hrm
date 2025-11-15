@@ -40,10 +40,10 @@ All core features are implemented and working:
 
 **Key Documentation:**
 - [README.md](../README.md) - Setup and usage
-- [UI_UX_IMPROVEMENTS.md](../UI_UX_IMPROVEMENTS.md) - Actionable tasks for improving the interface
-- [running_notes.md](../running_notes.md) - Current status and quick reference
-- [BRINGUP_TROUBLESHOOTING.md](../BRINGUP_TROUBLESHOOTING.md) - Server startup issues
-- [SPOTIFY_TROUBLESHOOTING.md](../SPOTIFY_TROUBLESHOOTING.md) - OAuth and token issues
+- [FRONTEND_IMPROVEMENT_PLAN.md](../FRONTEND_IMPROVEMENT_PLAN.md) - Actionable tasks for improving the interface
+- [running_notes.md.backup](../running_notes.md.backup) - Current status and quick reference snapshot
+- [TROUBLESHOOTING.md](../TROUBLESHOOTING.md) - Server and integration issues
+- [docs/automation-plan.md](../docs/automation-plan.md) - Chrome DevTools MCP automation workflow
 
 ## Project Architecture: Stateful Next.js with Custom Server
 
@@ -52,27 +52,112 @@ This is **NOT** a standard serverless Next.js app.
 **Critical Components:**
 
 1. **`server.ts`** - The **true entry point**:
-   - Runs Express server
-   - Hosts Next.js application
-   - Manages WebSocket server on `/ws`
-   - Initializes background services (Tabata Timer, Spotify Polling)
+  # Copilot Instructions for the HRM Project
 
-2. **WebSocket (`utils/socketManager.ts`)** - All real-time communication:
-   - HR data, timer state, music status
-   - **DO NOT** use Next.js API Routes for real-time state
+  **Last Updated:** November 2025
 
-3. **Services (server-side only)**:
-   - `services/tabataTimer.ts` - Timer state machine
-   - `services/spotifyPolling.ts` - Spotify API polling (3s interval)
-   - `services/spotifyTokenManager.ts` - Token refresh (55min interval)
+  Welcome to the HRM project. This guide keeps AI coding agents aligned with the stateful server architecture, real-time data flow, and preferred tooling for this repository.
 
-4. **Authentication**:
-   - NextAuth.js for Spotify OAuth
-   - Tokens persist to `logs/spotify_tokens.json`
-   - Auto-loads on server restart
+  ## Project Status: ✅ Fully Operational
 
-5. **UI Components**:
-   - **Material-UI (MUI)** only - NO Tailwind, NO CSS Modules
+  All core features are implemented and working:
+  - Custom Express + Next.js server with WebSocket
+  - Tabata Timer with audio feedback
+  - Spotify integration with OAuth and auto-refresh
+  - Heart rate monitoring (Bluetooth + Mock)
+  - Visual regression tests with Playwright
+  - Automated verification tools
+
+  **Key Documentation:**
+  - [README.md](../README.md) – Setup and usage
+  - [FRONTEND_IMPROVEMENT_PLAN.md](../FRONTEND_IMPROVEMENT_PLAN.md) – UI polish backlog
+  - [running_notes.md.backup](../running_notes.md.backup) – Current status snapshot
+  - [TROUBLESHOOTING.md](../TROUBLESHOOTING.md) – Server and integration issues
+  - [docs/automation-plan.md](../docs/automation-plan.md) – Chrome DevTools MCP automation workflow
+
+  ## Project Architecture: Stateful Next.js with Custom Server
+
+  This is **not** a serverless Next.js deployment. The custom Node entry point keeps global state in memory and coordinates background services.
+
+  **Critical Components:**
+
+  1. **`server.ts`** – True entry point
+    - Runs Express server
+    - Hosts the Next.js application
+    - Manages WebSocket server on `/ws`
+    - Initializes background services (Tabata Timer, Spotify Polling)
+  2. **WebSocket (`utils/socketManager.ts`)** – Real-time communications hub
+    - Broadcasts HR data, timer state, music status
+    - **Do not** use Next.js API routes for live state
+  3. **Services (server-side only)**
+    - `services/tabataTimer.ts` – Timer state machine
+    - `services/spotifyPolling.ts` – Spotify API polling (3s interval)
+    - `services/spotifyTokenManager.ts` – Token refresh (55 min interval)
+  4. **Authentication**
+    - NextAuth.js for Spotify OAuth
+    - Tokens persist to `logs/spotify_tokens.json`
+    - Auto-load on server restart
+  5. **UI Components**
+    - Material-UI (MUI) only – no Tailwind or CSS Modules
+    - Client pages consume `hooks/useWebSocket.ts` for real-time data
+
+  ## Key Files and Their Roles
+
+  **Server Entry Point:**
+  - `server.ts` – Express + Next.js + WebSocket + services bootstrap
+
+  **Client Pages:**
+  - `app/page.tsx` – Main dashboard (HR/timer/music)
+  - `app/client/control/page.tsx` + `ControlPanel.tsx` – Timer and Spotify controls
+  - `app/client/connect/page.tsx` – Web Bluetooth HRM connector
+  - `app/client/mock/page.tsx` – Mock HRM data sender
+
+  **API Routes:**
+  - `app/api/auth/[...nextauth]/route.ts` – Spotify OAuth (NextAuth)
+  - `app/api/internal/token-delivery/route.ts` – Persists OAuth tokens to disk
+  - `app/api/debug/*` – Auth-check, token-status, and session diagnostics
+
+  **Server-Side Services:**
+  - `services/tabataTimer.ts` – Timer state machine and audio events
+  - `services/spotifyPolling.ts` – Spotify polling and playback control
+  - `services/spotifyTokenManager.ts` – Token refresh lifecycle
+
+  **Client-Side Hooks:**
+  - `hooks/useWebSocket.ts` – WebSocket connection + message handling
+  - `hooks/useBluetoothHRM.ts` – Web Bluetooth HRM connection
+  - `hooks/useTabataSounds.ts` – Audio feedback via Web Audio API
+
+  **Dashboard Components:**
+  - `components/TimerDisplay.tsx` – Timer visualization
+  - `components/HrmTiles.tsx` – HR tile grid wrapper with skeletons
+  - `components/SpotifyDisplay.tsx` – Fixed footer playback + volume sync
+
+  **Utilities:**
+  - `utils/socketManager.ts` – Server-side WebSocket router
+  - `utils/visualization.ts` – HR zone colors and calculations
+
+  **Shared Types:**
+  - `types/index.ts` – Cross-cutting UI props and timer enums
+
+  **Configuration:**
+  - `.env.local` – Spotify and NextAuth secrets
+  - `tsconfig.json` – TypeScript configuration (CommonJS for ts-node)
+  - `ecosystem.config.js` – PM2 production configuration
+
+  ## Developer Workflows
+
+  ### Running the Development Server
+
+  **Critical:** always use the custom entry point. Running `next dev` alone skips the WebSocket server and background services.
+
+  ```bash
+  # Next.js + WebSocket + services
+  npm run dev
+  ```
+
+  Notes:
+  - `server.ts` respects the `HOST` env var (defaults to `127.0.0.1`). Use `HOST=0.0.0.0` when running inside containers.
+  - Stopping the dev server should also terminate background services; if not, run `npm run kill-all`.
    - Client pages use `hooks/useWebSocket.ts` for real-time data
 
 ## Key Files and Their Roles
@@ -168,13 +253,13 @@ The project uses Playwright for screenshot-based visual regression testing to en
 
 ```bash
 # Run visual regression tests (headless)
-npm run test:visual
+  }`,
 
 # Run tests with browser UI for debugging
 npm run test:visual:ui
 
 # Run tests in headed mode (see browser)
-npm run test:visual:headed
+  args: [{ uid: "4_1" }] // Replace with actual UID from snapshot
 
 # Debug tests step-by-step
 npm run test:visual:debug
@@ -186,7 +271,7 @@ npm run test:visual:update
 npm run test:visual:report
 
 # Install Playwright browsers (run once)
-npm run test:visual:install
+});
 ```
 
 **Important Notes:**
@@ -277,10 +362,10 @@ Recommended npm scripts (already included in `package.json`):
 
 ```bash
 # Start an isolated MCP server (temporary user-data-dir)
-npm run mcp:chrome-devtools
+
 
 # Start headless (useful for CI traces)
-npm run mcp:chrome-devtools:headless
+console.log(bgColor); // "rgb(33, 150, 243)" (blue) or other zone color
 ```
 
 VS Code task
@@ -374,18 +459,18 @@ sleep 3  # Wait for MCP to start
 
 ```bash
 # Check if servers are running (safe - won't hang)
-lsof -i :3000 | head -3  # Dev server
+```
 lsof -i :9222 | head -3  # Chrome debugging
 ps aux | grep -E "npm run mcp|chrome" | grep -v grep  # Process list
 
 # View logs with TIMEOUT to prevent indefinite blocking
 # ALWAYS use timeout when reading logs - don't use "pm2 logs" without timeout!
-timeout 15 tail -100 /tmp/dev.log 2>&1
-timeout 15 tail -100 /tmp/chrome.log 2>&1
-timeout 15 tail -100 /tmp/mcp.log 2>&1
+
+#### 6. Test Responsive Design
+
 
 # Alternative: Use PM2 logs with timeout
-timeout 10 pm2 logs 2>&1 | head -50
+```typescript
 
 # Kill all if needed
 pkill -9 node chrome chrome-devtools-mcp 2>/dev/null
@@ -397,157 +482,6 @@ pkill -9 node chrome chrome-devtools-mcp 2>/dev/null
 - `--no-sandbox`: Disables Chrome's OS-level sandbox (needed for WebSocket protocol in remote context)
 - `--disable-web-security`: Bypasses CORS/CSP (needed for WebSocket protocol upgrade in remote debugging context)
 - `--user-data-dir=~/.config/chrome-debug-profile`: Persistent profile across sessions; preserves cookies, cache, and debugging state
-
-**⚠️ Security Note**: These flags disable sandbox and security policies. Use only in development/testing environments, never in production or when browsing untrusted sites.
-
-### Working Capabilities
-
-| Capability | Example | Status |
-|-----------|---------|--------|
-| **Page Navigation** | `navigate_page({ type: "url", url: "..." })`, back, forward, reload | ✅ Fully working |
-| **DOM Querying** | `take_snapshot()` → returns all elements with UIDs | ✅ Fully working |
-| **Screenshots** | `take_screenshot({ fullPage: true, filePath: "..." })` | ✅ Fully working |
-| **Console Monitoring** | `list_console_messages({ types: ["error", "warn"] })` | ✅ Fully working |
-| **Form Input** | `fill({ uid: "...", value: "..." })`, `click({ uid: "..." })` | ✅ Fully working |
-| **Keyboard Events** | `press_key({ key: "Enter" })`, `press_key({ key: "Control+A" })` | ✅ Fully working |
-| **Mouse Interactions** | `hover({ uid: "..." })`, `drag({ from_uid, to_uid })` | ✅ Fully working |
-| **JavaScript Eval** | `evaluate_script({ function: "() => { ... }" })` | ✅ Fully working |
-| **Network Requests** | `list_network_requests()`, `get_network_request()` | ✅ Fully working |
-| **WebSocket Connections** | Direct `new WebSocket()` in evaluate_script | ✅ Fully working (after flags fixed) |
-| **WebSocket Streaming** | Long-lived WS connections for real-time updates | ⚠️ Closes after 3–5s in MCP context (workaround: use HTTP polling or keep page open longer) |
-
-### Example Workflows
-
-#### 1. Verify Page Loads & Extract DOM Elements
-
-```typescript
-// Navigate to dashboard
-await mcp.navigate_page({ type: "url", url: "http://127.0.0.1:3000" });
-
-// Capture DOM snapshot with all element UIDs
-const snapshot = await mcp.take_snapshot();
-// Use snapshot UIDs for fill(), click(), evaluate_script() calls
-
-// Take full-page screenshot for visual regression
-await mcp.take_screenshot({
-  fullPage: true,
-  filePath: "/tmp/dashboard.png"
-});
-```
-
-#### 2. Test Form Input & Button Interaction (Mock HRM Streaming)
-
-```typescript
-// Navigate to mock page
-await mcp.navigate_page({
-  type: "url",
-  url: "http://127.0.0.1:3000/client/mock"
-});
-
-// Use snapshot UID to fill BPM input with 150
-await mcp.fill({ uid: "3_12", value: "150" });
-
-// Click START button
-await mcp.click({ uid: "3_19" });
-
-// Wait for status indicator to show "Connected"
-await mcp.wait_for({ text: "Connected", timeout: 5000 });
-
-// Capture screenshot showing streaming state
-await mcp.take_screenshot({
-  fullPage: true,
-  filePath: "/tmp/mock-streaming.png"
-});
-```
-
-#### 3. Monitor Console for Errors & Warnings
-
-```typescript
-// Navigate to page
-await mcp.navigate_page({
-  type: "url",
-  url: "http://127.0.0.1:3000/client/control"
-});
-
-// Wait for page to settle
-await mcp.wait_for({ text: "Workout Control", timeout: 3000 });
-
-// Check for console errors/warnings
-const messages = await mcp.list_console_messages({
-  types: ["error", "warn"]
-});
-
-messages.forEach(msg => {
-  console.log(`[${msg.type}] ${msg.text}`);
-});
-```
-
-#### 4. Verify WebSocket Connectivity (One-Shot Test)
-
-```typescript
-// Navigate to page
-await mcp.navigate_page({
-  type: "url",
-  url: "http://127.0.0.1:3000"
-});
-
-// Test WebSocket connection in browser JavaScript context
-const result = await mcp.evaluate_script({
-  function: `async () => {
-    return new Promise((resolve) => {
-      const ws = new WebSocket('ws://127.0.0.1:3000/ws');
-      const timeout = setTimeout(() => {
-        ws.close();
-        resolve('⏱️ Timeout after 3s');
-      }, 3000);
-
-      ws.onopen = () => {
-        clearTimeout(timeout);
-        ws.close();
-        resolve('✅ WebSocket connected!');
-      };
-
-      ws.onerror = (err) => {
-        clearTimeout(timeout);
-        resolve('❌ WebSocket error: ' + err.message);
-      };
-    });
-  }`
-});
-
-console.log(result); // "✅ WebSocket connected!" if successful
-```
-
-#### 5. Extract Computed Styles (Color Verification)
-
-```typescript
-// Navigate to dashboard
-await mcp.navigate_page({
-  type: "url",
-  url: "http://127.0.0.1:3000"
-});
-
-// Wait for HR tile to render
-await mcp.wait_for({ text: "00:00", timeout: 5000 });
-
-// Get snapshot to find HR tile UID
-const snapshot = await mcp.take_snapshot();
-// Find UID of HR percentage tile (usually contains "%" in text)
-
-// Evaluate computed background color of HR tile
-const bgColor = await mcp.evaluate_script({
-  function: `(el) => {
-    return window.getComputedStyle(el).backgroundColor;
-  }`,
-  args: [{ uid: "4_1" }] // Replace with actual UID from snapshot
-});
-
-console.log(bgColor); // "rgb(33, 150, 243)" (blue) or other zone color
-```
-
-#### 6. Test Responsive Design
-
-```typescript
 // Navigate to control panel
 await mcp.navigate_page({
   type: "url",
