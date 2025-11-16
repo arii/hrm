@@ -10,8 +10,6 @@ import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
-import useVolumePreference from '../hooks/useVolumePreference'
 import useWebSocket from '../hooks/useWebSocket'
 
 const DOC_URL =
@@ -19,25 +17,7 @@ const DOC_URL =
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference(70)
-  const { initializeAudio } = useAudio(timerData, volume)
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-
-  useEffect(() => {
-    const handleFirstInteraction = () => {
-      initializeAudio()
-      document.removeEventListener('click', handleFirstInteraction)
-      document.removeEventListener('keydown', handleFirstInteraction)
-    }
-
-    document.addEventListener('click', handleFirstInteraction)
-    document.addEventListener('keydown', handleFirstInteraction)
-
-    return () => {
-      document.removeEventListener('click', handleFirstInteraction)
-      document.removeEventListener('keydown', handleFirstInteraction)
-    }
-  }, [initializeAudio])
 
   // Signal when page is ready for testing
   useEffect(() => {
