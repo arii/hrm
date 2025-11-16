@@ -14,7 +14,7 @@ This guide provides solutions for common issues encountered during development a
 
 ### Deployment Steps
 
-1.  **Build and Deploy**: Run `./deploy.sh` to build the application and start it with PM2.
+1.  **Build and Start**: Ensure `.env.production` exists, then run `npm run start`. The script verifies build artifacts and kicks off `npm run build` automatically when needed.
 2.  **Nginx Configuration**: Ensure Nginx is configured to proxy requests to port 3000 with WebSocket support.
 3.  **SSL Configuration**: Ensure SSL certificates are configured and renewed as needed.
 4.  **PM2 Startup**: Configure PM2 to start on boot with `pm2 startup`.
