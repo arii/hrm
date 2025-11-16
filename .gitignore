@@ -25,11 +25,47 @@
 *.pem
 
 # debug
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.pnpm-debug.log*
 
+# env files (can opt-in for committing if needed)
+.env*
+logs/spotify_tokens.json
+
+# vercel
+.vercel
+
+# typescript
 # env files (can opt-in for committing if needed)
 .env*
 logs/spotify_tokens.json
@@ -82,6 +118,28 @@ next-env.d.ts
 .gemini/settings.json
 .vscode/*
 .github/*
+
+npm_run_dev.log
+
+# Ignore generated server JS (keep TypeScript source canonical)
+server.js
+/dist
+logs/*add
+~/.config
+running_notes.md.backup
+
+# Test results and recordings
+test-results/
+playwright-report/
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png
+next-env.d.ts
+
+.gemini/*
+.gemini/settings.json
+.vscode/*
 
 *.js
 *.js.map
