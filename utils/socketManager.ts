@@ -14,15 +14,40 @@ import {
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer;
-let tabataServiceInstance: TabataTimer;
-let spotifyServiceInstance: SpotifyPolling;
+export let tabataServiceInstance: TabataTimer;
+export let spotifyServiceInstance: SpotifyPolling;
 
-const clientData = new Map<string, HrmData>();
+export const clientData = new Map<
+  WebSocket,
+  {
+    hrmData: HrmData;
+    userId?: string;
+    encryptedRefreshToken?: string;
+  }
+>();
+
+export const pollingIntervals = new Map<string, NodeJS.Timeout>();
 
 interface Services {
   tabataService: TabataTimer;
   spotifyService: SpotifyPolling;
 }
+
+const getClientByUserId = (userId: string): WebSocket | undefined => {
+  for (const [client, data] of clientData.entries()) {
+    if (data.userId === userId) {
+      return client;
+    }
+  }
+};
+
+export const stopSpotifyPolling = (userId: string) => {
+  if (pollingIntervals.has(userId)) {
+    clearInterval(pollingIntervals.get(userId)!);
+    pollingIntervals.delete(userId);
+    console.log(`Stopped Spotify polling for user ${userId}.`);
+  }
+};
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
@@ -33,159 +58,107 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   spotifyServiceInstance = services.spotifyService;
 
   wssInstance.on("connection", (ws: WebSocket) => {
-    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`;
-    console.log(`WebSocket Client connected: ${clientId}`);
+    console.log(`WebSocket Client connected.`);
 
-    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
+    // Initialize with placeholder HRM data
     const newClient: HrmData = {
-      clientId,
+      clientId: `user-${Math.random().toString(36).substring(2, 9)}`,
       value: 0,
       maxHr: 185,
-      // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     };
-    clientData.set(clientId, newClient);
-
-    // Send initial state upon connection
-    ws.send(
-      JSON.stringify({
-        type: "STATE_UPDATE",
-        hrmData: Array.from(clientData.values()),
-        timerData: tabataServiceInstance.getState(),
-        spotifyData: spotifyServiceInstance.getState(),
-      } as UnifiedStateMessage)
-    );
+    clientData.set(ws, { hrmData: newClient });
 
     ws.on("message", (message) => {
-      handleIncomingMessage(ws, message.toString(), clientId);
+      handleIncomingMessage(ws, message.toString());
     });
 
     ws.on("close", () => {
-      console.log(`WebSocket Client disconnected: ${clientId}`);
-      clientData.delete(clientId);
+      console.log(`WebSocket Client disconnected.`);
+      const userData = clientData.get(ws);
+      if (userData?.userId) {
+        stopSpotifyPolling(userData.userId);
+      }
+      clientData.delete(ws);
       broadcastState();
     });
   });
 };
 
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: "STATE_UPDATE",
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
-  };
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
+export const broadcastState = () => {
+  const allHrmData = Array.from(clientData.values()).map(
+    (data) => data.hrmData
   );
-  wssInstance.clients.forEach((client) => {
+  const timerData = tabataServiceInstance.getState();
+
+  clientData.forEach((data, client) => {
     if (client.readyState === WebSocket.OPEN) {
+      const message: Partial<UnifiedStateMessage> = {
+        type: "STATE_UPDATE",
+        hrmData: allHrmData,
+        timerData: timerData,
+      };
+      // Note: Spotify data is sent via its own polling loop, not here.
       client.send(JSON.stringify(message));
     }
   });
 };
 
+export const pollSpotify = async (
+  userId: string,
+  encryptedRefreshToken: string
+) => {
+  if (!spotifyServiceInstance) return;
+  await spotifyServiceInstance.getCurrentlyPlaying(
+    userId,
+    encryptedRefreshToken
+  );
+};
+
+import { handleIdentify } from "./socketHandlers/identifyHandler.js";
+import { handleHrmInput } from "./socketHandlers/hrmInputHandler.js";
+import { handleTimerCommand } from "./socketHandlers/timerCommandHandler.js";
+import { handleSetMode } from "./socketHandlers/setModeHandler.js";
+import { handleTimerConfig } from "./socketHandlers/timerConfigHandler.js";
+import { handleSpotifyCommand } from "./socketHandlers/spotifyCommandHandler.js";
+
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
-  ws: WebSocket,
-  messageString: string,
-  clientId: string
-) => {
-  console.log(
-    `[socketManager] INCOMING MESSAGE from ${clientId}:`,
-    messageString
-  );
+const handleIncomingMessage = (ws: WebSocket, messageString: string) => {
+  console.log(`[socketManager] INCOMING MESSAGE:`, messageString);
   try {
-    // Parse and validate message type for type-safe routing
     const parsedJson = JSON.parse(messageString);
-    console.log(`[socketManager] PARSED JSON:`, parsedJson);
-
-    const message = ClientCommandMessageSchema.parse(parsedJson); // Use Zod for parsing and validation
-
-    console.log(
-      `[socketManager] Received message from ${clientId}:`,
-      message.type
-    );
+    const message = ClientCommandMessageSchema.parse(parsedJson);
 
     switch (message.type) {
-      case "HRM_INPUT": {
-        // No need for manual check if message.data and typeof message.data.value === "number"
-        // as Zod schema already validates it.
-        const existingData = clientData.get(clientId);
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingData,
-          "newValue:",
-          message.data.value
-        );
-        if (existingData) {
-          clientData.set(clientId, {
-            ...existingData,
-            ...message.data,
-          });
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            clientData.get(clientId)
-          );
-        }
-        broadcastState();
+      case "IDENTIFY":
+        handleIdentify(ws, message);
         break;
-      }
-
-      case "TIMER_COMMAND": {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command);
-        }
+      case "HRM_INPUT":
+        handleHrmInput(ws, message);
         break;
-      }
-
-      case "SET_MODE": {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode);
-        }
+      case "TIMER_COMMAND":
+        handleTimerCommand(message);
         break;
-      }
-
-      case "TIMER_CONFIG": {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
-            workDuration: message.workDuration,
-            restDuration: message.restDuration,
-            totalCycles: message.totalCycles,
-          });
-        }
+      case "SET_MODE":
+        handleSetMode(message);
         break;
-      }
-
-      case "SPOTIFY_COMMAND": {
-        if (spotifyServiceInstance) {
-          // message.command is already typed as SpotifyCommand, which now includes deviceId and volume
-          spotifyServiceInstance.handleCommand(
-            message.command,
-            message.deviceId,
-            message.volume
-          );
-        }
+      case "TIMER_CONFIG":
+        handleTimerConfig(message);
         break;
-      }
-
+      case "SPOTIFY_COMMAND":
+        handleSpotifyCommand(ws, message);
+        break;
       default:
-        // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
-        console.warn(
-          "Unknown message type received:",
-          (message as { type: unknown }).type
-        );
+        console.warn("Unknown message type received:", (message as any).type);
     }
   } catch (e) {
     console.error("Error processing incoming message:", e);
-    // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
       console.error("WebSocket message validation failed:", e.issues);
     }
   }
 };
 
-export { initSocketManager };
+export { initSocketManager, getClientByUserId };

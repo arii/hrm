@@ -6,18 +6,13 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 ## Current Status
 
-**✅ Fully Operational** - All core features implemented and tested
+**✅ Fully Operational** – Core features are implemented, deployed internally, and exercised daily.
 
-**Recent Updates**: 
-- ✅ Integrated original HRM audio system with proper beep sounds
-- ✅ Improved timer display with rotated side labels and consistent layout
-- ✅ Added volume synchronization between dashboard and control panel
-- ✅ Fixed navigation labels and improved mobile UI consistency
-- ✅ Enhanced production deployment configuration
-- ✅ Removed RUNNING phase display from timer (shows in horizontal panel)
-- ✅ Added proper page titles for all client pages
-- ✅ Integrated original favicon from production server
-- ✅ Secured secrets by removing from source code
+**Recent Updates (Nov 2025)**
+
+- ✅ Consolidated Playwright coverage into `tests/playwright/core-functionality.spec.ts` for faster baseline checks.
+- ✅ Documented Chrome DevTools MCP automation workflow and launch checklist for visual audits.
+- ✅ Refreshed deployment, testing, and troubleshooting docs ahead of production readiness review.
 
 ## Features
 
@@ -67,7 +62,9 @@ npm run pm2:logs
 
 - **`server.ts`**: Custom Express + Next.js + WebSocket entry point
 - **`app/page.tsx`**: Main dashboard with timer, HR tiles, Spotify controls, and Google Doc viewer
-- **`app/client/control/page.tsx`**: Mobile control panel with timer/Spotify controls and Tabata configuration
+- **`app/client/control/ControlPanel.tsx`**: Mobile control panel container for timer/Spotify controls and Tabata configuration
+- **`app/client/control/components/TimerControls.tsx`**: Dedicated Tabata/Stopwatch control surface with sticky layout
+- **`app/client/control/components/SpotifyControls.tsx`**: Mobile-friendly Spotify playback controls and synced volume slider
 - **`app/client/mock/page.tsx`**: Mock HRM data sender for testing
 - **`app/client/connect/page.tsx`**: Bluetooth HRM connector with user name/age input
 - **`services/tabataTimer.ts`**: Dual-mode timer service (Tabata/Stopwatch) with audio cues
@@ -77,39 +74,61 @@ npm run pm2:logs
 - **`hooks/useAudio.ts`**: Audio playback hook with volume control
 - **`hooks/useVolumePreference.ts`**: Synchronized volume preference across tabs
 - **`components/TimerDisplay.tsx`**: Large timer display with rotated side labels
+- **`components/HrmTiles.tsx`**: Dashboard wrapper that renders live heart rate tiles with skeleton fallbacks
 - **`components/HrTile.tsx`**: Reusable heart rate percentage tile component
+- **`components/SpotifyDisplay.tsx`**: Fixed bottom playback bar with volume/device controls
 - **`utils/socketManager.ts`**: Server-side WebSocket message router
-- **`tests/playwright/visual-regression.spec.ts`**: Screenshot-based tests
+- **`types/index.ts`**: Shared UI prop types and timer enums
+- **`tests/playwright/core-functionality.spec.ts`**: Screenshot-based tests
 
 ## Available Commands
 
 ### Primary Scripts
 
 ```bash
-npm run dev              # Start dev server (Next.js + WebSocket + services)
-npm run build            # Build for production
-npm run start            # Start production server with PM2
-npm run deploy           # Full deployment script (build + PM2 start)
-npm run lint             # Run ESLint
-npm run test:visual      # Run Playwright visual regression tests
+npm run dev                 # Start dev server (Next.js + WebSocket + services)
+npm run build               # Build for production
+npm run start               # Start production server with PM2
+npm run deploy              # Full deployment script (build + PM2 start)
+npm run lint                # Run ESLint
+npm run lint:fix            # Auto-fix lint issues
+npm run format              # Format codebase with Prettier
+npm run format:check        # Verify formatting without writing
+npm run test:core           # Canonical Playwright suite (chromium baseline screenshots)
+npm run test:quick          # Fast smoke run (Playwright, dot reporter)
+npm run test:visual:update  # Regenerate baseline screenshots after intentional UI changes
+npm run test:visual:headed  # Run Playwright in headed mode for debugging
+npm run test:visual:ui      # Launch Playwright interactive UI
+npm run test:visual:report  # View the latest Playwright HTML report
+npm run test:clean          # Kill stray processes, boot dev server, run baseline tests
+npm run test:clean:update   # Clean start + regenerate baseline screenshots
+npm run verify:spotify      # Automated Spotify integration health check
+npm run kill-all            # Force-stop lingering Node/Chrome processes
+npm run mcp:chrome-devtools # Start Chrome DevTools MCP (isolated profile)
 ```
 
 ### Navigation Shortcuts
 
 The app includes URL redirects for easier navigation:
+
 - `/phone` → `/client/control` (Phone Controls)
 - `/connect` → `/client/connect` (Stream HR)
 - `/mock` → `/client/mock` (Mock HRM)
 
-### Debugging & Verification
+### Testing & Verification
 
-```bash
-npm run verify:spotify   # Automated Spotify integration health check
-npm run pm2:logs         # View PM2 logs
-npm run pm2:stop         # Stop all PM2 processes
-npm run deploy           # Deploy to production with PM2
-npm run mcp:chrome-devtools  # Start Chrome DevTools MCP for debugging
-```
+- **Baseline visual regression:** `npm run test:core`
+- **Snapshot updates (intentional UI changes):** `npm run test:visual:update`
+- **Headed debugging:** `npm run test:visual:headed`
+- **Interactive runner:** `npm run test:visual:ui`
+- **Fast smoke (under a minute):** `npm run test:quick`
+- **Clean environment runs:** `npm run test:clean` / `npm run test:clean:update`
+- **Reports:** `npm run test:visual:report`
+- **Spotify integration health check:** `npm run verify:spotify`
+
+Playwright tests live in `tests/playwright/core-functionality.spec.ts`; baseline screenshots are stored in `tests/playwright/core-functionality.spec.ts-snapshots/`.
+
+**Best practice:** Run `npm run test:core` before pushing UI changes and regenerate snapshots only after manual review.
 
 ## VS Code Integration
 
@@ -152,6 +171,7 @@ NEXTAUTH_SECRET=your_random_secret_here
 ### Audio System
 
 The app includes the original HRM audio feedback system:
+
 - **Countdown beeps**: Short beeps during the last 3 seconds of any countdown phase
 - **Transition beeps**: Long beeps when phases change (prepare→work, work→rest, rest→work)
 - **Volume control**: Synchronized with Spotify volume controls
@@ -159,10 +179,12 @@ The app includes the original HRM audio feedback system:
 
 ## Documentation
 
-- **[Design Guidelines](DESIGN_GUIDELINES.md)**: The design system, UI/UX improvements, and overall visual philosophy of the HRM application.
-- **[Troubleshooting Guide](TROUBLESHOOTING.md)**: Solutions for common issues encountered during development and production.
-- **[Features](FEATURES.md)**: Plans for new features and improvements.
-- **[Development Notes](DEVELOPMENT.md)**: Notes and action items related to the ongoing development.
+- **[Design Guidelines](DESIGN_GUIDELINES.md)** – Theme, typography, and component standards.
+- **[Front-End Improvement Plan](FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
+- **[Test Improvement Plan](TEST_IMPROVEMENT_PLAN.md)** – Roadmap for expanding automated coverage.
+- **[Testing Guide](TESTING.md)** – How to run and interpret the existing suites.
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** – Common issues and recovery steps.
+- **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
 
 ## Architecture Overview
 
@@ -197,27 +219,43 @@ This ensures a single source of truth for application state, keeping all viewers
 2. **State Management**: All global state is owned by the server. Client-side state should be ephemeral.
 3. **UI Components**: Use Material-UI (MUI) for all components.
 4. **Code Quality**: Run `npm run lint` before committing changes.
-5. **Visual Testing**: Update visual regression tests (`npm run test:visual:update`) after making intentional UI changes.
+5. **Visual Testing**:
+   - Run `npm run test:core` before committing UI changes.
+   - Use `npm run test:visual:update` only after verifying differences locally.
+   - Reach for `npm run test:visual:headed` or `npm run test:visual:ui` when debugging failures.
+   - For end-to-end validation, follow with `npm run test:clean` to exercise the dev server startup path.
 6. **Audio Testing**: Test timer sounds on both dashboard and control panel. Audio only plays on dashboard, not control panel.
 7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
 
 For more detailed guidelines, especially for AI agents, see [.github/copilot-instructions.md](.github/copilot-instructions.md).
 
+## Production Readiness Focus
+
+1. **Spotify token persistence audits** – Exercise `npm run verify:spotify` after redeploys and confirm `logs/spotify_tokens.json` survives restarts.
+2. **Automated baseline capture** – Implement the Playwright-driven screenshot workflow defined in `docs/automation-plan.md` (background dev server + Chrome MCP bootstrap).
+3. **Server observability** – Add structured logs for Tabata timer transitions and WebSocket client lifecycle; surface via PM2 log rotation.
+4. **Disaster recovery runbook** – Capture restart, log rotation, and SSL renewal steps under `docs/` to unblock production responders.
+
+Track progress by updating the respective markdown plans after each milestone.
+
 ## Recent Architecture Improvements
 
 ### Audio System Integration
+
 - Copied original HRM audio files from product_hrm
 - Implemented AudioManager class for centralized sound control
 - Added useAudio hook for React components
 - Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
 
 ### UI/UX Enhancements
+
 - Consistent layout proportions (no dynamic resizing)
 - Rotated side labels on timer display for better space utilization
 - Volume synchronization between dashboard and control panel
 - Improved mobile navigation with proper labels
 
 ### Production Readiness
+
 - Complete deployment scripts and documentation
 - PM2 configuration with proper environment handling
 - Nginx configuration template

@@ -1,14 +1,14 @@
 // File: components/WorkoutColumns.tsx
-"use client";
-import { Box, Grid, Paper, Typography } from "@mui/material";
+'use client'
+import { Box, Grid, Paper, Typography } from '@mui/material'
 
 export interface WorkoutItem {
-  title: string;
-  details?: string;
+  title: string
+  details?: string
 }
 
 export interface WorkoutColumnsProps {
-  columns: Array<{ title: string; items: WorkoutItem[] }>;
+  columns: Array<{ title: string; items: WorkoutItem[] }>
 }
 
 const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
@@ -22,15 +22,25 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
           sm={6}
           md={Math.max(12 / columns.length, 3)}
         >
-          <Paper sx={{ p: 3 }}> {/* Increased padding */}
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}> {/* Larger font, increased margin */}
+          <Paper sx={{ p: 3 }}>
+            {' '}
+            {/* Increased padding */}
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
+              {' '}
+              {/* Larger font, increased margin */}
               {col.title}
             </Typography>
-            <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}> {/* Added max height and scroll */}
+            <Box sx={{ maxHeight: 300, overflowY: 'auto', pr: 1 }}>
+              {' '}
+              {/* Added max height and scroll */}
               <Box component="ul" sx={{ m: 0, pl: 2 }}>
                 {col.items.map((it, i) => (
-                  <Box key={i} component="li" sx={{ mb: 1 }}> {/* Increased margin bottom */}
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}> {/* Larger font */}
+                  <Box key={i} component="li" sx={{ mb: 1 }}>
+                    {' '}
+                    {/* Increased margin bottom */}
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {' '}
+                      {/* Larger font */}
                       {it.title}
                     </Typography>
                     {it.details && (
@@ -46,7 +56,7 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
         </Grid>
       ))}
     </Grid>
-  );
-};
+  )
+}
 
-export default WorkoutColumns;
+export default WorkoutColumns

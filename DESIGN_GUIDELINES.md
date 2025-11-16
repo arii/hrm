@@ -75,12 +75,12 @@ Some ARIA labels and improved color contrast have been implemented. Further work
 ### Accessing Theme Values
 
 ```tsx
-import { useTheme } from "@mui/material/styles";
+import { useTheme } from '@mui/material/styles'
 
 // In component
-const theme = useTheme();
-const spacing = theme.spacing(2); // 16px
-const primaryColor = theme.palette.primary.main; // #F44336
+const theme = useTheme()
+const spacing = theme.spacing(2) // 16px
+const primaryColor = theme.palette.primary.main // #F44336
 ```
 
 ### Using Theme in `sx` Prop

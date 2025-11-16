@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['onasafari.ddns.net'],
+  allowedDevOrigins: ['onasafari.ddns.net:444'],
   async redirects() {
     return [
       {
@@ -28,8 +28,8 @@ const nextConfig = {
         destination: '/client/connect',
         permanent: true,
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

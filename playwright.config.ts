@@ -1,11 +1,13 @@
 // File: playwright.config.ts
 /**
- * Playwright Test Configuration for HRM Visual Regression Tests
+ * Playwright Test Configuration for HRM Comprehensive Assessment
+ * Supports visual regression, mobile testing, and video recording
  */
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: "./tests/playwright",
+  testDir: './tests/playwright',
+  testMatch: ['**/*.spec.ts'],
 
   // Run tests in parallel
   fullyParallel: false,
@@ -20,37 +22,57 @@ export default defineConfig({
   workers: 1,
 
   // Reporter configuration
-  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['list'],
+  ],
 
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
+    baseURL:
+      process.env.BASE_URL ||
+      process.env.NEXTAUTH_URL ||
+      'http://127.0.0.1:3000',
 
     // Screenshot settings
-    screenshot: "only-on-failure",
+    screenshot: {
+      mode: 'only-on-failure',
+      fullPage: true,
+    },
 
     // Video settings
-    video: "retain-on-failure",
+    video: {
+      mode: 'retain-on-failure',
+      size: { width: 1920, height: 1080 },
+    },
 
     // Trace settings
-    trace: "on-first-retry",
+    trace: 'on-first-retry',
 
     // Browser context options
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1920, height: 1080 },
   },
 
-  // Configure projects for different browsers
+  // Single chromium project for fast testing
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
+        video: {
+          mode: 'retain-on-failure',
+          size: { width: 1920, height: 1080 },
+        },
+      },
     },
   ],
 
   // Web server configuration (start dev server before tests)
   webServer: {
-    command: "npm run dev:clean",
+    command: "npm run dev:server",
     url: process.env.BASE_URL || process.env.NEXTAUTH_URL || "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

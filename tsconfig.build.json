@@ -4,14 +4,8 @@
     "noEmit": false,
     "outDir": "./dist",
     "module": "esnext",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
     "esModuleInterop": true
   },
-  "include": [
-    "server.ts",
-    "services/**/*.ts",
-    "utils/**/*.ts",
-    "types/**/*.ts"
-  ]
+  "include": ["server.ts", "services/**/*.ts", "utils/**/*.ts", "types/**/*.ts"]
 }

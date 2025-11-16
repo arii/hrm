@@ -13,16 +13,12 @@ import path from "path";
 import { parse } from "url";
 import type { WebSocket } from "ws"; // Import WebSocket as a type
 import { WebSocketServer } from "ws";
-import { UnifiedStateMessage } from "./types/websocket";
-
-
-
-
+import { UnifiedStateMessage } from "./types/websocket.js";
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from "./services/spotifyPolling.js";
 import TabataTimer from "./services/tabataTimer.js";
-import { initSocketManager } from "./utils/socketManager.js";
+import { initSocketManager, getClientByUserId } from "./utils/socketManager.js";
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000; // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -71,14 +67,31 @@ app
     let spotifyServiceInitialized: boolean = true;
 
     // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
-      // Use the socket manager to handle the actual broadcast
-      if (wss.clients.size > 0) {
+    const broadcastState = (
+      data: Partial<UnifiedStateMessage>,
+      userId?: string
+    ): void => {
+      if (userId) {
+        const client = getClientByUserId(userId);
+        if (client && client.readyState === 1) {
+          client.send(
+            JSON.stringify({
+              type: "STATE_UPDATE",
+              spotifyServiceInitialized,
+              ...data,
+            })
+          );
+        }
+      } else {
         wss.clients.forEach((client: WebSocket) => {
           if (client.readyState === 1) {
-            // 1 means OPEN
-            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
-            client.send(JSON.stringify({ type: "STATE_UPDATE", spotifyServiceInitialized, ...data })); // Include spotifyServiceInitialized
+            client.send(
+              JSON.stringify({
+                type: "STATE_UPDATE",
+                spotifyServiceInitialized,
+                ...data,
+              })
+            );
           }
         });
       }
@@ -107,12 +120,19 @@ app
     // --- Express Routing ---
 
     // API endpoint to get available Spotify devices
-    expressApp.get("/api/spotify/devices", async (req: Request, res: Response) => {
+    expressApp.post("/api/spotify/devices", express.json(), async (req: Request, res: Response) => {
       if (!spotifyServiceInitialized || !spotifyService) {
         return res.status(503).json({ error: "Spotify service not initialized." });
       }
+
+      const { userId, encryptedRefreshToken } = req.body;
+
+      if (!userId || !encryptedRefreshToken) {
+        return res.status(400).json({ error: "Missing required body parameters: userId, encryptedRefreshToken." });
+      }
+
       try {
-        const devices = await spotifyService.getAvailableDevices();
+        const devices = await spotifyService.getAvailableDevices(userId, encryptedRefreshToken);
         return res.json(devices);
       } catch (error) {
         console.error("Error fetching Spotify devices via API:", error);
