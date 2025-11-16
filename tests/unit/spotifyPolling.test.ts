@@ -19,7 +19,9 @@ global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
-  let broadcastMock: jest.Mock<(data: Partial<{ spotifyData: SpotifyData }>) => void>
+  let broadcastMock: jest.Mock<
+    (data: Partial<{ spotifyData: SpotifyData }>) => void
+  >
   let broadcastedStates: SpotifyData[]
 
   beforeEach(() => {
@@ -31,12 +33,12 @@ describe('SpotifyPolling Service', () => {
         broadcastedStates.push(data.spotifyData)
       }
     })
-    
+
     // Mock environment variables
     process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
     process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
-    
+
     spotifyService = new SpotifyPolling(broadcastMock)
   })
 
@@ -64,17 +66,18 @@ describe('SpotifyPolling Service', () => {
         status: 204,
         ok: true,
       } as Response)
-      
+
       // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
     })
 
     it('should handle PLAY command', async () => {
       spotifyService.handleCommand('PLAY')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/play'),
         expect.objectContaining({
@@ -85,10 +88,10 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle PAUSE command', async () => {
       spotifyService.handleCommand('PAUSE')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/pause'),
         expect.objectContaining({
@@ -99,10 +102,10 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle NEXT command', async () => {
       spotifyService.handleCommand('NEXT')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/next'),
         expect.objectContaining({
@@ -113,10 +116,10 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle PREVIOUS command', async () => {
       spotifyService.handleCommand('PREVIOUS')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/previous'),
         expect.objectContaining({
@@ -128,10 +131,10 @@ describe('SpotifyPolling Service', () => {
     it('should include device ID when provided', async () => {
       const deviceId = 'test_device_123'
       spotifyService.handleCommand('PLAY', deviceId)
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`device_id=${deviceId}`),
         expect.any(Object)
@@ -145,17 +148,18 @@ describe('SpotifyPolling Service', () => {
         status: 204,
         ok: true,
       } as Response)
-      
+
       // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
     })
 
     it('should set volume with SET_VOLUME command', async () => {
       spotifyService.handleCommand('SET_VOLUME', undefined, 75)
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/volume'),
         expect.objectContaining({
@@ -170,7 +174,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should clamp volume to 0-100 range', async () => {
       await spotifyService.setVolume(150)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('volume_percent=100'),
         expect.objectContaining({})
@@ -179,7 +183,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should clamp negative volume to 0', async () => {
       await spotifyService.setVolume(-10)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('volume_percent=0'),
         expect.any(Object)
@@ -188,7 +192,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should round volume to nearest integer', async () => {
       await spotifyService.setVolume(75.7)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('volume_percent=76'),
         expect.any(Object)
@@ -198,7 +202,7 @@ describe('SpotifyPolling Service', () => {
     it('should include device ID in volume request when provided', async () => {
       const deviceId = 'test_device_123'
       await spotifyService.setVolume(50, deviceId)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`device_id=${deviceId}`),
         expect.any(Object)
@@ -232,7 +236,8 @@ describe('SpotifyPolling Service', () => {
   describe('Device Management', () => {
     beforeEach(() => {
       // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
     })
 
     it('should get available devices', async () => {
@@ -276,7 +281,7 @@ describe('SpotifyPolling Service', () => {
 
       const result = await spotifyService.transferPlayback('device123')
       expect(result).toBe(true)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player'),
         expect.objectContaining({
@@ -296,10 +301,10 @@ describe('SpotifyPolling Service', () => {
       } as Response)
 
       spotifyService.handleCommand('TRANSFER_PLAYBACK', 'device123')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player'),
         expect.objectContaining({
@@ -313,16 +318,16 @@ describe('SpotifyPolling Service', () => {
     it('should accept refresh token', () => {
       const refreshToken = 'test_refresh_token'
       spotifyService.setRefreshToken(refreshToken)
-      
+
       // Should not throw and should be stored internally
       expect(() => spotifyService.setRefreshToken(refreshToken)).not.toThrow()
     })
 
     it('should not execute commands without access token', async () => {
       const newService = new SpotifyPolling(broadcastMock)
-      
+
       await newService.handleCommand('PLAY')
-      
+
       // Should not make API call without token
       expect(global.fetch).not.toHaveBeenCalled()
     })
@@ -343,17 +348,17 @@ describe('SpotifyPolling Service', () => {
         ok: true,
         json: async () => mockPlayback,
       } as Response)
-      
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
 
       // Start polling with fake timers and advance
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
-      
+
       // Flush all promises
       await Promise.resolve()
       await Promise.resolve()
-      
+
       spotifyService.stopPolling()
 
       // Should have broadcast the new state
@@ -368,16 +373,16 @@ describe('SpotifyPolling Service', () => {
         status: 204,
         ok: true,
       } as Response)
-      
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
 
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
-      
+
       // Flush all promises
       await Promise.resolve()
       await Promise.resolve()
-      
+
       spotifyService.stopPolling()
 
       // Should update state to indicate nothing playing
@@ -394,18 +399,19 @@ describe('SpotifyPolling Service', () => {
         status: 204,
         ok: true,
       } as Response)
-      
+
       // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
     })
 
     it('should support NEXT command when timer starts', async () => {
       // Simulate timer start triggering NEXT
       spotifyService.handleCommand('NEXT')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/next'),
         expect.objectContaining({
@@ -417,10 +423,10 @@ describe('SpotifyPolling Service', () => {
     it('should support PAUSE command when timer stops', async () => {
       // Simulate timer stop triggering PAUSE
       spotifyService.handleCommand('PAUSE')
-      
+
       // Wait for async operation
       jest.advanceTimersByTime(100)
-      
+
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/pause'),
         expect.objectContaining({
@@ -431,15 +437,15 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle rapid command sequences', () => {
       jest.clearAllMocks()
-      
+
       // Simulate rapid commands that might happen during workout
       spotifyService.handleCommand('PLAY')
       spotifyService.handleCommand('NEXT')
       spotifyService.handleCommand('PAUSE')
-      
+
       // Advance timers for all async operations
       jest.advanceTimersByTime(100)
-      
+
       // Should have made 3 fetch calls (one for each command)
       expect(global.fetch).toHaveBeenCalledTimes(3)
     })
@@ -450,13 +456,14 @@ describe('SpotifyPolling Service', () => {
       ;(global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValue(
         new Error('Network error')
       )
-      
+
       // Set access token directly
-      ;(spotifyService as unknown as { accessToken: string }).accessToken = 'test_access_token'
+      ;(spotifyService as unknown as { accessToken: string }).accessToken =
+        'test_access_token'
 
       // Should not throw
       expect(() => spotifyService.handleCommand('PLAY')).not.toThrow()
-      
+
       // Advance timers for async operation
       jest.advanceTimersByTime(100)
     })
@@ -479,7 +486,7 @@ describe('SpotifyPolling Service', () => {
     it('should return false for volume change without token', async () => {
       const newService = new SpotifyPolling(broadcastMock)
       const result = await newService.setVolume(50)
-      
+
       expect(result).toBe(false)
     })
   })

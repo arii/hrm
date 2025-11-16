@@ -83,6 +83,18 @@ export const setupVisualRegressionTest = async ({
   await replaceIframeWithStableWorkout(dashboardPage)
 }
 
+// NEW, more efficient setup function
+export const setupMinimalVisualRegressionTest = async (
+  page: Page,
+  path: string = ''
+) => {
+  await page.goto(`${BASE_URL}${path}`)
+  await waitForPageReady(page)
+  if (path === '') {
+    await replaceIframeWithStableWorkout(page)
+  }
+}
+
 // Setup function for comprehensive tests
 export const setupComprehensiveTest = async ({
   page,

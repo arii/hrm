@@ -4,7 +4,7 @@ import TimerControls from '@/app/client/control/components/TimerControls'
 import useWebSocket from '@/hooks/useWebSocket'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
@@ -48,18 +48,28 @@ describe('TimerControls', () => {
     render(<TimerControls />)
 
     const user = userEvent.setup()
-    const workInput = screen.getByLabelText('Work duration in seconds')
-    const restInput = screen.getByLabelText('Rest duration in seconds')
 
-    await user.click(workInput)
-    await user.keyboard('{Control>}a{/Control}')
-    await user.type(workInput, '45')
-    await user.click(restInput)
-    await user.keyboard('{Control>}a{/Control}')
-    await user.type(restInput, '15')
+    // Get the actual input elements using data-testid (following MUI testing pattern)
+    const workInput = screen.getByTestId(
+      'work-duration-input'
+    ) as HTMLInputElement
+    const restInput = screen.getByTestId(
+      'rest-duration-input'
+    ) as HTMLInputElement
+
+    // Use fireEvent.change to directly trigger the onChange event with new values
+    // This properly simulates input changes on MUI TextField components
+    fireEvent.change(workInput, { target: { value: '45' } })
+    fireEvent.change(restInput, { target: { value: '15' } })
+
+    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600))
+    })
 
     await user.click(screen.getByRole('button', { name: /start/i }))
 
+    // Verify that TIMER_CONFIG was sent with the updated values
     expect(sendData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'TIMER_CONFIG',

@@ -8,7 +8,9 @@ import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<(data: Partial<{ timerData: TimerData }>) => void>
+  let broadcastMock: jest.Mock<
+    (data: Partial<{ timerData: TimerData }>) => void
+  >
   let broadcastedStates: TimerData[]
 
   beforeEach(() => {
@@ -66,7 +68,7 @@ describe('TabataTimer Service', () => {
       timer.setMode('STOPWATCH')
       timer.handleCommand('START')
       jest.advanceTimersByTime(6000) // Complete PREPARE phase
-      
+
       const runningState = timer.getState()
       expect(runningState.isRunning).toBe(true)
 
@@ -80,7 +82,9 @@ describe('TabataTimer Service', () => {
       broadcastedStates = []
       timer.setMode('STOPWATCH')
       expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe('STOPWATCH')
+      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
+        'STOPWATCH'
+      )
     })
   })
 
@@ -99,17 +103,17 @@ describe('TabataTimer Service', () => {
 
     it('should count up after PREPARE phase completes', () => {
       timer.handleCommand('START')
-      
+
       // Advance through PREPARE phase (5 seconds)
       jest.advanceTimersByTime(5000)
-      
+
       const prepareComplete = timer.getState()
       expect(prepareComplete.currentPhase).toBe('RUNNING')
       expect(prepareComplete.timeElapsed).toBe(0)
 
       // Count up during RUNNING phase
       jest.advanceTimersByTime(3000)
-      
+
       const running = timer.getState()
       expect(running.timeElapsed).toBe(3)
     })
@@ -117,7 +121,7 @@ describe('TabataTimer Service', () => {
     it('should pause and maintain elapsed time', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(6000) // 5s PREPARE + 1s RUNNING
-      
+
       const beforePause = timer.getState()
       expect(beforePause.timeElapsed).toBe(1)
 
@@ -135,23 +139,23 @@ describe('TabataTimer Service', () => {
     it('should preserve runningTotal when pausing and resuming', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(10000) // 5s PREPARE + 5s RUNNING
-      
+
       const beforePause = timer.getState()
       expect(beforePause.timeElapsed).toBe(5)
       expect(beforePause.currentPhase).toBe('RUNNING')
-      
+
       timer.handleCommand('PAUSE')
       jest.advanceTimersByTime(2000) // Wait while paused - time should not advance
-      
+
       const paused = timer.getState()
       expect(paused.timeElapsed).toBe(5) // Should still be 5
       expect(paused.isRunning).toBe(false)
-      
+
       // When resuming, it will go through PREPARE again
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(3000) // RUNNING
-      
+
       const resumed = timer.getState()
       expect(resumed.currentPhase).toBe('RUNNING')
       // Time should continue counting (might be 3s or more depending on implementation)
@@ -161,7 +165,7 @@ describe('TabataTimer Service', () => {
     it('should reset to zero when stopped', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(10000)
-      
+
       timer.handleCommand('STOP')
       const stopped = timer.getState()
       expect(stopped.isRunning).toBe(false)
@@ -186,7 +190,7 @@ describe('TabataTimer Service', () => {
     it('should transition to WORK phase after PREPARE', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
       expect(state.cycle).toBe(1)
@@ -197,7 +201,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('REST')
       expect(state.cycle).toBe(1)
@@ -209,7 +213,7 @@ describe('TabataTimer Service', () => {
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK cycle 1
       jest.advanceTimersByTime(10000) // REST cycle 1
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
       expect(state.cycle).toBe(2)
@@ -219,13 +223,13 @@ describe('TabataTimer Service', () => {
     it('should complete all cycles and transition to COOLDOWN', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
-      
+
       // Complete 8 cycles (default totalCycles)
       for (let i = 0; i < 8; i++) {
         jest.advanceTimersByTime(20000) // WORK
         jest.advanceTimersByTime(10000) // REST
       }
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('COOLDOWN')
       expect(state.isRunning).toBe(false) // Auto-pauses after last cycle
@@ -235,7 +239,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(10000) // Halfway through WORK
-      
+
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
@@ -248,10 +252,10 @@ describe('TabataTimer Service', () => {
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(10000) // Halfway through WORK
       timer.handleCommand('PAUSE')
-      
+
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
-      
+
       const resumed = timer.getState()
       expect(resumed.currentPhase).toBe('WORK')
       expect(resumed.timeRemaining).toBe(5)
@@ -260,7 +264,7 @@ describe('TabataTimer Service', () => {
     it('should reset to IDLE when stopped', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(15000)
-      
+
       timer.handleCommand('STOP')
       const stopped = timer.getState()
       expect(stopped.isRunning).toBe(false)
@@ -321,7 +325,7 @@ describe('TabataTimer Service', () => {
       timer.setConfig({ workDuration: 30, restDuration: 10 })
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
       expect(state.timeRemaining).toBe(30)
@@ -332,7 +336,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('REST')
       expect(state.timeRemaining).toBe(15)
@@ -343,7 +347,7 @@ describe('TabataTimer Service', () => {
     it('should allow START when timer is IDLE', () => {
       const initialState = timer.getState()
       expect(initialState.isRunning).toBe(false)
-      
+
       timer.handleCommand('START')
       const afterStart = timer.getState()
       expect(afterStart.isRunning).toBe(true)
@@ -352,10 +356,10 @@ describe('TabataTimer Service', () => {
     it('should allow PAUSE when timer is running', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(1000)
-      
+
       const running = timer.getState()
       expect(running.isRunning).toBe(true)
-      
+
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
@@ -364,7 +368,7 @@ describe('TabataTimer Service', () => {
     it('should allow STOP when timer is running', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(1000)
-      
+
       timer.handleCommand('STOP')
       const stopped = timer.getState()
       expect(stopped.isRunning).toBe(false)
@@ -374,13 +378,13 @@ describe('TabataTimer Service', () => {
     it('should ignore START when already running', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(2000)
-      
+
       const beforeSecondStart = timer.getState()
       const phase = beforeSecondStart.currentPhase
-      
+
       timer.handleCommand('START')
       const afterSecondStart = timer.getState()
-      
+
       // State should not change
       expect(afterSecondStart.currentPhase).toBe(phase)
     })
@@ -390,7 +394,7 @@ describe('TabataTimer Service', () => {
     it('should queue WORK sound when transitioning from PREPARE', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
-      
+
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
       // Sound should have been queued (check broadcast was called with soundToPlay)
@@ -404,7 +408,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK
-      
+
       const restTransitionBroadcast = broadcastedStates.find(
         (s) => s.currentPhase === 'REST' && s.soundToPlay === 'REST'
       )
@@ -414,7 +418,7 @@ describe('TabataTimer Service', () => {
     it('should queue COUNTDOWN sound during final 3 seconds', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(2000) // 3 seconds remaining in PREPARE
-      
+
       const countdownBroadcast = broadcastedStates.find(
         (s) => s.soundToPlay === 'COUNTDOWN'
       )
@@ -423,12 +427,12 @@ describe('TabataTimer Service', () => {
 
     it('should increment soundEventId for each sound cue', () => {
       timer.handleCommand('START')
-      
+
       const initialState = broadcastedStates[0]
       const initialId = initialState.soundEventId
-      
+
       jest.advanceTimersByTime(3000) // Trigger countdown sounds
-      
+
       const laterState = broadcastedStates[broadcastedStates.length - 1]
       expect(laterState.soundEventId).toBeGreaterThan(initialId)
     })
@@ -439,7 +443,7 @@ describe('TabataTimer Service', () => {
       broadcastedStates = []
       timer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-      
+
       // Should broadcast at least once per second
       expect(broadcastMock.mock.calls.length).toBeGreaterThanOrEqual(3)
     })
@@ -447,7 +451,7 @@ describe('TabataTimer Service', () => {
     it('should broadcast state when configuration changes', () => {
       broadcastedStates = []
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-      
+
       expect(broadcastMock).toHaveBeenCalled()
       expect(broadcastedStates.length).toBeGreaterThan(0)
     })
@@ -455,7 +459,7 @@ describe('TabataTimer Service', () => {
     it('should broadcast state when mode changes', () => {
       broadcastedStates = []
       timer.setMode('STOPWATCH')
-      
+
       expect(broadcastMock).toHaveBeenCalled()
       expect(broadcastedStates[0].mode).toBe('STOPWATCH')
     })
@@ -463,7 +467,7 @@ describe('TabataTimer Service', () => {
     it('should broadcast complete timer state', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(1000)
-      
+
       const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
       expect(lastBroadcast).toHaveProperty('isRunning')
       expect(lastBroadcast).toHaveProperty('currentPhase')
