@@ -8,17 +8,22 @@ import { Container, Grid } from '@mui/material'
 import { useEffect, useState } from 'react'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
+import HrTile from '../components/HrTile'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
+import { useBluetoothHRMContext } from '../contexts/BluetoothHRMContext'
 import useWebSocket from '../hooks/useWebSocket'
+import { getHrZoneProps } from '../utils/visualization'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
+  const { timerData, hrmData } = useWebSocket()
+  const { isConnected: isHrmConnected } = useBluetoothHRMContext()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
 
+  // Signal when page is ready for testing
   // Signal when page is ready for testing
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -26,6 +31,15 @@ const Dashboard = () => {
       window.dispatchEvent(new CustomEvent('test-ready'))
     }
   }, [])
+
+  // Derive a focused tile for a directly connected Bluetooth HRM (if present)
+  const connectedHrm = hrmData.find((d) => d.name?.includes('Bluetooth HRM'))
+  const hrmTile = connectedHrm
+    ? {
+        ...connectedHrm,
+        ...getHrZoneProps(connectedHrm.value, connectedHrm.maxHr ?? 190),
+      }
+    : null
 
   return (
     <Container
@@ -53,6 +67,17 @@ const Dashboard = () => {
             restDuration={timerData.restDuration}
           />
         </Grid>
+
+        {isHrmConnected && hrmTile && (
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <HrTile
+              name={hrmTile.name ?? 'Bluetooth HRM'}
+              bpm={hrmTile.value}
+              percentMax={hrmTile.percentage}
+              background={hrmTile.progressColor}
+            />
+          </Grid>
+        )}
 
         <HrmTiles />
 

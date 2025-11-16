@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+import { useBluetoothHRMContext } from '../../../contexts/BluetoothHRMContext'
 import useWebSocket from '../../../hooks/useWebSocket'
 import { getHrZoneProps } from '../../../utils/visualization'
 
@@ -35,13 +35,14 @@ export default function ConnectPage() {
   const [isConnected, setIsConnected] = useState(false)
   const { connectionStatus, hrmData } = useWebSocket()
 
+  const hrmCtx = useBluetoothHRMContext()
   const {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
     deviceName,
     batteryLevel,
-  } = useBluetoothHRM()
+  } = hrmCtx
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
@@ -118,6 +119,7 @@ export default function ConnectPage() {
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               sx={{ mb: 2 }}
+              inputProps={{ 'data-testid': 'hrm-name-input' }}
             />
             <TextField
               fullWidth
@@ -125,7 +127,7 @@ export default function ConnectPage() {
               type="number"
               value={userAge}
               onChange={(e) => setUserAge(e.target.value)}
-              inputProps={{ min: 1, max: 120 }}
+              inputProps={{ min: 1, max: 120, 'data-testid': 'hrm-age-input' }}
               sx={{ mb: 2 }}
             />
           </Box>
@@ -144,6 +146,7 @@ export default function ConnectPage() {
               size="large"
               onClick={handleConnect}
               disabled={!userName.trim() || !userAge.trim()}
+              data-testid="hrm-connect-btn"
             >
               Connect Bluetooth HRM
             </Button>
@@ -158,6 +161,7 @@ export default function ConnectPage() {
                   'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
               }}
               color="error"
+              data-testid="hrm-disconnect-btn"
             >
               Disconnect
             </Button>
@@ -169,7 +173,9 @@ export default function ConnectPage() {
             <Alert severity="success" sx={{ mb: 2 }}>
               Connected! Heart rate data is being streamed.
             </Alert>
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+            <Box
+              sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}
+            >
               {deviceName && (
                 <Typography variant="body1" sx={{ mb: 1 }}>
                   <strong>Device:</strong> {deviceName}
