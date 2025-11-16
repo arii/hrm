@@ -41,10 +41,14 @@ const Dashboard = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-      window.dispatchEvent(new CustomEvent('test-ready'))
-    }
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }
+    }, 2000) // Wait for components to mount and stabilize
+
+    return () => clearTimeout(timer)
   }, [])
 
   return (
