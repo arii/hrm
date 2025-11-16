@@ -71,7 +71,7 @@ export default defineConfig([
 
   // Override for Playwright test files
   {
-    files: ['tests/**/*.ts'],
+    files: ['tests/playwright/**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -83,6 +83,23 @@ export default defineConfig([
     },
     rules: {
       // Playwright specific rules or overrides
+    },
+  },
+
+  // Override for Jest unit test files
+  {
+    files: ['tests/unit/**/*.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tests/unit/tsconfig.json',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      // Jest specific rules or overrides
     },
   },
 
