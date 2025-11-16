@@ -1,12 +1,19 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
+import { useDebounce } from '@/hooks/useDebounce'
+import useWebSocket from '@/hooks/useWebSocket'
 import {
-  FitnessCenter,
-  Timer,
+  TimerCommandMessage,
+  TimerConfigMessage,
+  TimerModeCommandMessage,
+} from '@/types/websocket'
+import {
   Add,
-  Remove,
+  FitnessCenter,
   PlayArrow,
+  Remove,
   Stop,
+  Timer,
 } from '@mui/icons-material'
 import {
   Box,
@@ -18,38 +25,32 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  TimerCommandMessage,
-  TimerModeCommandMessage,
-  SetTimerSettingsMessage,
-} from '@/types/websocket'
-import useWebSocket from '@/hooks/useWebSocket'
-import { useDebounce } from '@/hooks/useDebounce'
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 const TimerControls = () => {
   const { timerData, sendData } = useWebSocket()
+  // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
 
-  // Sync with server data only when it changes and is different
-  const serverWorkTime = timerData.workDuration || 20
-  const serverRestTime = timerData.restDuration || 10
-
-  if (serverWorkTime !== workTime && serverWorkTime !== 20) {
-    setWorkTime(serverWorkTime)
-  }
-
-  if (serverRestTime !== restTime && serverRestTime !== 10) {
-    setRestTime(serverRestTime)
-  }
-
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
+  // Track latest numeric values synchronously to avoid stale state on click
+  const latestWork = useRef<number>(workTime)
+  const latestRest = useRef<number>(restTime)
+
+  // Keep refs synchronized with state
+  useEffect(() => {
+    latestWork.current = workTime
+  }, [workTime])
+
+  useEffect(() => {
+    latestRest.current = restTime
+  }, [restTime])
 
   // Send settings update to server when local state changes
   useEffect(() => {
-    const message: SetTimerSettingsMessage = {
-      type: 'SET_TIMER_SETTINGS',
+    const message: TimerConfigMessage = {
+      type: 'TIMER_CONFIG',
       workDuration: debouncedWorkTime,
       restDuration: debouncedRestTime,
     }
@@ -58,10 +59,20 @@ const TimerControls = () => {
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
+      // When starting, ensure the server receives the latest configuration immediately
+      if (command === 'START') {
+        // Prefer reading the current ref values to avoid stale React state
+        const config: TimerConfigMessage = {
+          type: 'TIMER_CONFIG',
+          workDuration: latestWork.current,
+          restDuration: latestRest.current,
+        }
+        sendData(config)
+      }
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
     },
-    [sendData]
+    [sendData, latestWork, latestRest]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
@@ -186,12 +197,15 @@ const TimerControls = () => {
                   value={workTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
-                    setWorkTime(Math.max(5, val))
+                    const next = Math.max(5, val)
+                    latestWork.current = next
+                    setWorkTime(next)
                   }}
                   inputProps={{
                     min: 0,
                     step: 5,
                     style: { textAlign: 'center' },
+                    'data-testid': 'work-duration-input',
                   }}
                   sx={{
                     width: '120px',
@@ -260,12 +274,15 @@ const TimerControls = () => {
                   value={restTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
-                    setRestTime(Math.max(0, val))
+                    const next = Math.max(0, val)
+                    latestRest.current = next
+                    setRestTime(next)
                   }}
                   inputProps={{
                     min: 0,
                     step: 5,
                     style: { textAlign: 'center' },
+                    'data-testid': 'rest-duration-input',
                   }}
                   sx={{
                     width: '120px',
