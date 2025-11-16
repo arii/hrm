@@ -84,8 +84,17 @@ export interface TimerModeCommandMessage {
   mode: TimerMode
 }
 
+// Deprecated: prefer TimerConfigMessage ('TIMER_CONFIG'). Retained for backward compatibility.
 export interface TimerSettingsMessage {
   type: 'SET_TIMER_SETTINGS'
+  workDuration: number
+  restDuration: number
+  totalCycles?: number
+}
+
+// New canonical timer configuration message
+export interface TimerConfigMessage {
+  type: 'TIMER_CONFIG'
   workDuration: number
   restDuration: number
   totalCycles?: number
@@ -113,6 +122,7 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | SpotifyCommandMessage
   | TimerSettingsMessage
+  | TimerConfigMessage
 
 import { z } from 'zod'
 
@@ -147,6 +157,13 @@ export const TimerSettingsMessageSchema = z.object({
   totalCycles: z.number().optional(),
 })
 
+export const TimerConfigMessageSchema = z.object({
+  type: z.literal('TIMER_CONFIG'),
+  workDuration: z.number(),
+  restDuration: z.number(),
+  totalCycles: z.number().optional(),
+})
+
 export const SpotifyCommandMessageSchema = z.object({
   type: z.literal('SPOTIFY_COMMAND'),
   command: z.union([
@@ -167,4 +184,5 @@ export const ClientCommandMessageSchema = z.union([
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerSettingsMessageSchema,
+  TimerConfigMessageSchema,
 ])

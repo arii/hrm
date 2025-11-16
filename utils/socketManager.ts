@@ -162,6 +162,17 @@ const handleIncomingMessage = (
         break
       }
 
+      case 'TIMER_CONFIG': {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.setConfig({
+            workDuration: message.workDuration,
+            restDuration: message.restDuration,
+            totalCycles: message.totalCycles,
+          })
+        }
+        break
+      }
+
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
           // message.command is already typed as SpotifyCommand, which now includes deviceId and volume
