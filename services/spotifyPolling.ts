@@ -374,7 +374,10 @@ export class SpotifyPolling {
         url.searchParams.set('device_id', deviceId);
       }
 
-      const body = playlistUri ? JSON.stringify({ context_uri: playlistUri }) : null;
+      const body =
+        typeof playlistUri === 'string' && playlistUri.length > 0
+          ? JSON.stringify({ context_uri: playlistUri })
+          : null;
       const headers: { [key: string]: string } = {
         Authorization: `Bearer ${this.accessToken}`,
       };
