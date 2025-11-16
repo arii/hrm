@@ -3,14 +3,14 @@
  * A dedicated hook to manage timer sound effects globally.
  * It listens to WebSocket state for sound cues and applies user-defined volume.
  */
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
-import useWebSocket from './useWebSocket'
 import useVolumePreference from './useVolumePreference'
+import useWebSocket from './useWebSocket'
 
 export const useTimerSounds = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference()
+  const { volume } = useVolumePreference(70)
   const lastSoundEventId = useRef<number>(0)
 
   // Update audio volume when volume preference changes
@@ -43,10 +43,13 @@ export const useTimerSounds = () => {
     }
   }, [timerData.soundToPlay, timerData.soundEventId])
 
-  // Expose a function to initialize audio on first user interaction
-  const initializeAudio = () => {
+  // Expose a stable function to initialize audio on first user interaction.
+  // useCallback ensures consumers can safely include it in dependency arrays
+  // without causing unnecessary re-runs. It has no dependencies because
+  // audioManager is a module singleton.
+  const initializeAudio = useCallback(() => {
     audioManager.loadAudio()
-  }
+  }, [])
 
   return { initializeAudio }
 }
