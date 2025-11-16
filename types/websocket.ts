@@ -143,6 +143,7 @@ export const TimerModeCommandMessageSchema = z.object({
 export const TimerConfigMessageSchema = z.object({
   type: z.literal('TIMER_CONFIG'),
   workDuration: z.number().min(1),
+  // restDuration allows 0 to support continuous work cycles with no rest; this asymmetry is intentional.
   restDuration: z.number().min(0),
   totalCycles: z.number().min(1).optional(),
 })
