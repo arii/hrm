@@ -213,3 +213,17 @@ test-recordings/
 tests/playwright/screenshots/
 tests/playwright/*-actual.png
 tests/playwright/*-diff.png
+
+
+# Log files
+*.log
+nohup.out
+
+# Runtime files
+.server_pid
+*.backup
+diff.txt
+start-server.js
+
+# Playwright snapshots
+**/*-snapshots/
