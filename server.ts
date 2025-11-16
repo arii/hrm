@@ -6,6 +6,7 @@
  */
 
 import express, { Request, Response } from 'express'
+import fs from 'fs'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
@@ -14,6 +15,7 @@ import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
+import { shouldPersistSpotifyTokens } from './utils/spotifyTokenPersistence.js'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from './services/spotifyPolling.js'
@@ -38,6 +40,28 @@ const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+
+// Clear Spotify token cache on boot unless persistence is explicitly enabled
+const spotifyTokenFile = path.resolve(
+  process.cwd(),
+  'logs',
+  'spotify_tokens.json'
+)
+
+if (shouldPersistSpotifyTokens()) {
+  console.log('[Startup] Spotify token persistence enabled; retaining cache.')
+} else {
+  try {
+    if (fs.existsSync(spotifyTokenFile)) {
+      fs.unlinkSync(spotifyTokenFile)
+      console.log(
+        '[Startup] Cleared cached Spotify token file (ephemeral persistence mode).'
+      )
+    }
+  } catch (error) {
+    console.warn('[Startup] Failed to clear cached Spotify token file:', error)
+  }
+}
 
 // --- Main Application Setup ---
 

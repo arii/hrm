@@ -10,7 +10,15 @@ BOLD="\033[1m"
 GREEN="\033[0;32m"
 RED="\033[0;31m"
 YELLOW="\033[0;33m"
+CYAN="\033[0;36m"
 RESET="\033[0m"
+
+RAW_PERSISTENCE=$(printf "%s" "${SPOTIFY_TOKEN_CACHE_STRATEGY:-${SPOTIFY_TOKEN_PERSISTENCE:-}}" | tr '[:upper:]' '[:lower:]')
+if [ -n "$RAW_PERSISTENCE" ] && printf "%s" "$RAW_PERSISTENCE" | grep -Eq '^(persistent|persist|keep|retain|true|1)$'; then
+    TOKEN_PERSISTENCE_MODE="persistent"
+else
+    TOKEN_PERSISTENCE_MODE="ephemeral"
+fi
 
 echo -e "${BOLD}Spotify Integration Health Check${RESET}"
 echo "=================================="
@@ -116,6 +124,8 @@ if [ -f "logs/spotify_tokens.json" ]; then
     echo -e "${GREEN}✓ Token file exists${RESET}"
     FILE_SIZE=$(stat -f%z "logs/spotify_tokens.json" 2>/dev/null || stat -c%s "logs/spotify_tokens.json" 2>/dev/null)
     echo "  Size: ${FILE_SIZE} bytes"
+elif [ "$TOKEN_PERSISTENCE_MODE" = "ephemeral" ]; then
+    echo -e "${CYAN}ℹ Token cache is ephemeral; no file present by design${RESET}"
 else
     echo -e "${YELLOW}⚠ Token file not found (logs/spotify_tokens.json)${RESET}"
 fi

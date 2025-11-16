@@ -1,5 +1,6 @@
 import fs from 'fs'
 import * as path from 'path'
+import { shouldPersistSpotifyTokens } from '../utils/spotifyTokenPersistence.js'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 export interface SpotifyTokenPayload {
@@ -21,6 +22,7 @@ export class SpotifyTokenManager {
   private tokenFile: string
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null
+  private readonly persistTokens = shouldPersistSpotifyTokens()
 
   constructor(
     private clientId: string,
@@ -29,6 +31,11 @@ export class SpotifyTokenManager {
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
     this.loadTokens()
+    if (!this.persistTokens) {
+      console.log(
+        '[SpotifyTokenManager] Ephemeral token mode active. Tokens will not be written to disk.'
+      )
+    }
   }
 
   private loadTokens() {
@@ -90,11 +97,13 @@ export class SpotifyTokenManager {
       }
 
       // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      if (this.persistTokens) {
+        fs.writeFileSync(
+          this.tokenFile,
+          JSON.stringify(this.currentToken, null, 2),
+          'utf8'
+        )
+      }
 
       console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
