@@ -41,6 +41,7 @@ describe('WebSocket Manager Integration', () => {
   afterEach(() => {
     jest.useRealTimers()
     spotifyService.stopPolling()
+    spotifyService.cleanup()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

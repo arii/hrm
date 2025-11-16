@@ -137,6 +137,7 @@ interface SpotifyDevicesResponse {
 export class SpotifyPolling {
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
+  private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
   private refreshToken: string | null = null
@@ -165,7 +166,7 @@ export class SpotifyPolling {
     this.loadTokenFromManager()
 
     // Start token refresh check loop (Every 55 mins)
-    setInterval(() => this.refreshAccessToken(), 1000 * 60 * 55)
+    this.tokenRefreshInterval = setInterval(() => this.refreshAccessToken(), 1000 * 60 * 55)
   }
 
   private async loadTokenFromManager() {
@@ -271,6 +272,15 @@ export class SpotifyPolling {
       clearInterval(this.pollInterval)
       this.pollInterval = null
       debugLog('Spotify polling stopped.')
+    }
+  }
+
+  public cleanup() {
+    this.stopPolling()
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval)
+      this.tokenRefreshInterval = null
+      debugLog('Token refresh interval cleared.')
     }
   }
 

@@ -6,6 +6,14 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyData } from '../../types/websocket'
 
+// Mock the SpotifyTokenManager to avoid file system operations
+jest.mock('../../services/spotifyTokenManager', () => ({
+  SpotifyTokenManager: jest.fn().mockImplementation(() => ({
+    getValidAccessToken: jest.fn().mockResolvedValue(null),
+    getCurrentRefreshToken: jest.fn().mockReturnValue(null),
+  })),
+}))
+
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
@@ -15,6 +23,8 @@ describe('SpotifyPolling Service', () => {
   let broadcastedStates: SpotifyData[]
 
   beforeEach(() => {
+    jest.useFakeTimers()
+    jest.clearAllMocks()
     broadcastedStates = []
     broadcastMock = jest.fn((data) => {
       if (data.spotifyData) {
@@ -33,7 +43,9 @@ describe('SpotifyPolling Service', () => {
   afterEach(() => {
     // Ensure polling is stopped and all timers are cleared
     spotifyService.stopPolling()
+    spotifyService.cleanup()
     jest.clearAllTimers()
+    jest.useRealTimers()
   })
 
   describe('Initialization', () => {
@@ -61,7 +73,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('PLAY')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/play'),
@@ -75,7 +87,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('PAUSE')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/pause'),
@@ -89,7 +101,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('NEXT')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/next'),
@@ -103,7 +115,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('PREVIOUS')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/previous'),
@@ -118,7 +130,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('PLAY', deviceId)
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`device_id=${deviceId}`),
@@ -142,7 +154,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('SET_VOLUME', undefined, 75)
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/volume'),
@@ -286,7 +298,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('TRANSFER_PLAYBACK', 'device123')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player'),
@@ -392,7 +404,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('NEXT')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/next'),
@@ -407,7 +419,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('PAUSE')
       
       // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      jest.advanceTimersByTime(100)
       
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/me/player/pause'),
@@ -417,7 +429,7 @@ describe('SpotifyPolling Service', () => {
       )
     })
 
-    it('should handle rapid command sequences', async () => {
+    it('should handle rapid command sequences', () => {
       jest.clearAllMocks()
       
       // Simulate rapid commands that might happen during workout
@@ -425,8 +437,8 @@ describe('SpotifyPolling Service', () => {
       spotifyService.handleCommand('NEXT')
       spotifyService.handleCommand('PAUSE')
       
-      // Wait for all async operations
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      // Advance timers for all async operations
+      jest.advanceTimersByTime(100)
       
       // Should have made 3 fetch calls (one for each command)
       expect(global.fetch).toHaveBeenCalledTimes(3)
@@ -434,7 +446,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Error Handling', () => {
-    it('should handle API errors gracefully', async () => {
+    it('should handle API errors gracefully', () => {
       ;(global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValue(
         new Error('Network error')
       )
@@ -445,11 +457,11 @@ describe('SpotifyPolling Service', () => {
       // Should not throw
       expect(() => spotifyService.handleCommand('PLAY')).not.toThrow()
       
-      // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 10))
+      // Advance timers for async operation
+      jest.advanceTimersByTime(100)
     })
 
-    it('should handle 401 unauthorized responses', async () => {
+    it('should handle 401 unauthorized responses', () => {
       ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
         ok: false,
         status: 401,
@@ -457,7 +469,7 @@ describe('SpotifyPolling Service', () => {
       } as Response)
 
       spotifyService.startPolling(100)
-      await new Promise((resolve) => setTimeout(resolve, 150))
+      jest.advanceTimersByTime(150)
       spotifyService.stopPolling()
 
       // Should attempt to handle 401 without crashing
