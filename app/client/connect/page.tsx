@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+import { useHRM } from '../../../contexts/BluetoothHRMContext'
 import useWebSocket from '../../../hooks/useWebSocket'
 import { getHrZoneProps } from '../../../utils/visualization'
 
@@ -39,7 +39,7 @@ export default function ConnectPage() {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
-  } = useBluetoothHRM()
+  } = useHRM()
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
