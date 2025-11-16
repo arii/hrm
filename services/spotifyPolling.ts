@@ -11,6 +11,10 @@ import * as spotifyApi from './spotifyApi.js'
 export class SpotifyPolling {
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
+  private tokenRefreshInterval: NodeJS.Timeout | null = null
+
+  // Internal auth/state values
+  private refreshToken: string | null = null
   private accessToken: string | null = null
   private broadcastState: (data: Partial<UnifiedStateMessage>) => void
 
@@ -25,9 +29,18 @@ export class SpotifyPolling {
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState
-    this.tokenManager = new SpotifyTokenManager()
-    console.log('Spotify Polling Service Initialized.')
-    this.loadTokenAndStartPolling()
+    debugLog('Spotify Polling Service Initialized.')
+
+    this.tokenManager = new SpotifyTokenManager(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
+    )
+
+    // Load existing token from file if available
+    this.loadTokenFromManager()
+
+    // Start token refresh check loop (Every 55 mins)
+    this.tokenRefreshInterval = setInterval(() => this.refreshAccessToken(), 1000 * 60 * 55)
   }
 
   private async loadTokenAndStartPolling() {
@@ -69,11 +82,23 @@ export class SpotifyPolling {
     }
   }
 
-  private pollCurrentlyPlaying = async () => {
-    if (!this.accessToken) {
-      console.warn('Polling skipped: No access token.')
-      return
+  public cleanup() {
+    this.stopPolling()
+    if (this.tokenRefreshInterval) {
+      clearInterval(this.tokenRefreshInterval)
+      this.tokenRefreshInterval = null
+      debugLog('Token refresh interval cleared.')
     }
+  }
+
+  private getCurrentlyPlaying = async () => {
+    if (!this.accessToken) return
+
+    const maskedAccessToken = this.accessToken.substring(0, 5) + '...'
+    debugLog(
+      'Fetching currently playing track with access token:',
+      maskedAccessToken
+    )
 
     try {
       const data = await spotifyApi.getCurrentlyPlaying(this.accessToken)
