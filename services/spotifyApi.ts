@@ -90,7 +90,7 @@ export const executePlayerCommand = (
   accessToken: string,
   endpoint: 'play' | 'pause' | 'next' | 'previous',
   method: 'PUT' | 'POST',
-  deviceId?: string,
+  deviceId?: string
 ): Promise<null> => {
   let url = `/me/player/${endpoint}`
   if (deviceId) {
