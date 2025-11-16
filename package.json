@@ -8,7 +8,6 @@
     "build": "npm run build:server && next build",
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "start": "pm2 start ecosystem.config.cjs --env production",
-    "deploy": "./deploy.sh",
     "pm2:logs": "pm2 logs hrm-server",
     "pm2:stop": "pm2 stop hrm-server",
     "pm2:restart": "pm2 restart hrm-server",
@@ -62,7 +61,6 @@
     "pm2": "^5.2.0",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
   }
 }
