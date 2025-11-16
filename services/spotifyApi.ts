@@ -92,9 +92,9 @@ export const executePlayerCommand = (
   method: 'PUT' | 'POST',
   deviceId?: string,
 ): Promise<null> => {
-    let url = `/me/player/${endpoint}`
-    if (deviceId) {
-        url += `?device_id=${deviceId}`
-    }
+  let url = `/me/player/${endpoint}`
+  if (deviceId) {
+    url += `?device_id=${deviceId}`
+  }
   return fetchSpotifyAPI(url, accessToken, method)
 }
