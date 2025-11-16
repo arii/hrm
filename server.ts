@@ -14,7 +14,6 @@ import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
-import debounce from './utils/debounce.js'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import SpotifyPolling from './services/spotifyPolling.js'
@@ -71,26 +70,24 @@ app
     let spotifyServiceInitialized: boolean = true
 
     // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = debounce(
-      (data: Partial<UnifiedStateMessage>): void => {
-        // Use the socket manager to handle the actual broadcast
-        if (wss.clients.size > 0) {
-          const clients = Array.from(wss.clients)
-          const message = JSON.stringify({
-            type: 'STATE_UPDATE',
-            spotifyServiceInitialized,
-            ...data,
-          })
-          for (const client of clients) {
-            if (client.readyState === 1) {
-              // 1 means OPEN
-              client.send(message)
-            }
+    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
+      // Use the socket manager to handle the actual broadcast
+      if (wss.clients.size > 0) {
+        wss.clients.forEach((client: WebSocket) => {
+          if (client.readyState === 1) {
+            // 1 means OPEN
+            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
+            client.send(
+              JSON.stringify({
+                type: 'STATE_UPDATE',
+                spotifyServiceInitialized,
+                ...data,
+              })
+            ) // Include spotifyServiceInitialized
           }
-        }
-      },
-      50
-    ) // Debounce to 50ms
+        })
+      }
+    }
 
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling

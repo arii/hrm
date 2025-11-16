@@ -1,3 +1,0 @@
-
-> hrm@0.1.0 dev
-> cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --no-warnings server.ts
