@@ -39,6 +39,8 @@ export default function ConnectPage() {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
+    deviceName,
+    batteryLevel,
   } = useBluetoothHRM()
 
   // Load saved values from cookies on mount and auto-connect if available
@@ -108,24 +110,26 @@ export default function ConnectPage() {
           Connect Heart Rate Monitor
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Your Name"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Your Age"
-            type="number"
-            value={userAge}
-            onChange={(e) => setUserAge(e.target.value)}
-            inputProps={{ min: 1, max: 120 }}
-            sx={{ mb: 2 }}
-          />
-        </Box>
+        {!isConnected && (
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              label="Your Name"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Your Age"
+              type="number"
+              value={userAge}
+              onChange={(e) => setUserAge(e.target.value)}
+              inputProps={{ min: 1, max: 120 }}
+              sx={{ mb: 2 }}
+            />
+          </Box>
+        )}
 
         {deviceStatus.includes('Failed') && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -161,9 +165,23 @@ export default function ConnectPage() {
         </Box>
 
         {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
+          <>
+            <Alert severity="success" sx={{ mb: 2 }}>
+              Connected! Heart rate data is being streamed.
+            </Alert>
+            <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+              {deviceName && (
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  <strong>Device:</strong> {deviceName}
+                </Typography>
+              )}
+              {batteryLevel !== null && (
+                <Typography variant="body1">
+                  <strong>Battery:</strong> {batteryLevel}%
+                </Typography>
+              )}
+            </Box>
+          </>
         )}
 
         {isConnected && currentHR > 0 && (
