@@ -3,7 +3,7 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   collectCoverageFrom: [
     'services/**/*.ts',
@@ -12,7 +12,7 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.ts$': [
+    '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         useESM: true,
@@ -25,9 +25,10 @@ const config = {
       },
     ],
   },
-  extensionsToTreatAsEsm: ['.ts'],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
 }
