@@ -142,12 +142,11 @@ const useBluetoothHRM = () => {
           switch (error.name) {
             case 'NotFoundError':
               userFriendlyMessage =
-                'No Bluetooth device found. Ensure your device is powered on and nearby. If Bluetooth is disabled, visit chrome://flags to enable it.'
-              suggestChromeFlags = true
+                'No Bluetooth device found. Ensure your device is powered on and nearby.'
               break
             case 'SecurityError':
               userFriendlyMessage =
-                'Bluetooth permission denied. Enable Web Bluetooth at chrome://flags, then refresh and try again.'
+                'Bluetooth permission denied. You may need to enable Web Bluetooth in your browser settings.'
               suggestChromeFlags = true
               break
             case 'NetworkError':
@@ -156,24 +155,22 @@ const useBluetoothHRM = () => {
               break
             case 'NotSupportedError':
               userFriendlyMessage =
-                "Web Bluetooth is not supported. Enable it at chrome://flags (search 'Web Bluetooth'), then refresh the page."
+                "Web Bluetooth is not supported on this browser. Please use a compatible browser like Chrome and ensure the feature is enabled."
               suggestChromeFlags = true
               break
             case 'AbortError':
               userFriendlyMessage =
-                'Bluetooth connection attempt was cancelled or aborted by the system.'
+                'Bluetooth connection attempt was cancelled.'
               break
             default:
-              userFriendlyMessage = `Bluetooth error: ${error.name}. If unsupported, try enabling Web Bluetooth at chrome://flags.`
-              suggestChromeFlags = true
+              userFriendlyMessage = `Bluetooth error: ${error.name}.`
           }
         } else if (error instanceof Error) {
-          userFriendlyMessage = `Error: ${error.message}. If Web Bluetooth is not available, enable it at chrome://flags.`
-          suggestChromeFlags = true
+          userFriendlyMessage = `Error: ${error.message}.`
         }
 
         const fullMessage = suggestChromeFlags
-          ? `${userFriendlyMessage} [Visit chrome://flags to enable Web Bluetooth]`
+          ? `${userFriendlyMessage} To enable, copy this URL: chrome://flags/#enable-experimental-web-platform-features`
           : userFriendlyMessage
 
         setDeviceStatus(`Failed: ${fullMessage}`)
