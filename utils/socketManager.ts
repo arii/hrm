@@ -151,17 +151,6 @@ const handleIncomingMessage = (
         break
       }
 
-      case 'SET_TIMER_SETTINGS': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
-            workDuration: message.workDuration,
-            restDuration: message.restDuration,
-            totalCycles: message.totalCycles,
-          })
-        }
-        break
-      }
-
       case 'TIMER_CONFIG': {
         if (tabataServiceInstance) {
           tabataServiceInstance.setConfig({
