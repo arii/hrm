@@ -28,11 +28,25 @@ export const createSpotifyRouter = (
       return res.status(503).json({ error: 'Spotify service not initialized.' });
     }
     try {
-      const presetPlaylists = [
-        { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
-        { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
-        { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
-      ];
+      let presetPlaylists;
+      if (process.env.SPOTIFY_PRESET_PLAYLISTS) {
+        try {
+          presetPlaylists = JSON.parse(process.env.SPOTIFY_PRESET_PLAYLISTS);
+        } catch (e) {
+          console.warn('Failed to parse SPOTIFY_PRESET_PLAYLISTS env variable, using defaults.');
+          presetPlaylists = [
+            { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
+            { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
+            { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
+          ];
+        }
+      } else {
+        presetPlaylists = [
+          { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
+          { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
+          { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
+        ];
+      }
       const userPlaylists = await spotifyService.getUserPlaylists();
       return res.json({ presetPlaylists, userPlaylists });
     } catch (error) {
