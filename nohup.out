@@ -1,6 +1,0 @@
-Starting server in development mode
-Environment: NODE_ENV=undefined
-NEXTAUTH_URL: undefined
-Hostname: 127.0.0.1, Port: 3000
- ⨯ Unable to acquire lock at /home/ari/hrm/.next/dev/lock, is another instance of next dev running?
-   Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
