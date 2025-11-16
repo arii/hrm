@@ -225,16 +225,10 @@ class TabataTimer {
     this.state.restDuration = sanitizedRest
     this.state.totalCycles = sanitizedCycles
 
-    // If the timer is idle in Tabata mode, prime the next countdown length for clarity
+    // If the timer is not running, update timeRemaining to reflect the new work duration.
+    // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
     if (!this.state.isRunning && this.state.mode === 'TABATA') {
-      if (
-        this.state.currentPhase === 'WORK' ||
-        this.state.currentPhase === 'IDLE'
-      ) {
-        this.state.timeRemaining = sanitizedWork
-      } else if (this.state.currentPhase === 'REST') {
-        this.state.timeRemaining = sanitizedRest
-      }
+      this.state.timeRemaining = sanitizedWork
     }
 
     console.log(
