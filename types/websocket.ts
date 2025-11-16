@@ -3,6 +3,7 @@
  * Defines the strict interfaces for all data passed between the server services
  * and the client hooks via the WebSocket connection.
  */
+import { z } from 'zod';
 
 // --- Server Broadcast State Interfaces ---
 
@@ -114,8 +115,6 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | TimerConfigMessage
   | SpotifyCommandMessage;
-
-import { z } from 'zod';
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
