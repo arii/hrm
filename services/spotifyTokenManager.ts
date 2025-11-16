@@ -104,4 +104,8 @@ export class SpotifyTokenManager {
     console.log('Access token is expired or missing, refreshing...')
     return this.refreshAccessToken()
   }
+
+  public getCurrentRefreshToken(): string | null {
+    return this.refreshToken
+  }
 }
