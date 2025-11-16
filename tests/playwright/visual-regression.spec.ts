@@ -6,12 +6,15 @@
  */
 import { type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { BASE_URL, setupVisualRegressionTest } from './test-helpers'
+import {
+  BASE_URL,
+  setupMinimalVisualRegressionTest,
+  setupVisualRegressionTest,
+} from './test-helpers'
 
 test.describe('Visual Regression Tests', () => {
-  test.beforeEach(setupVisualRegressionTest)
-
   test('Dashboard - main viewer page', async ({ dashboardPage }) => {
+    await setupMinimalVisualRegressionTest(dashboardPage)
     // Capture full-page screenshot
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
@@ -19,6 +22,8 @@ test.describe('Visual Regression Tests', () => {
       threshold: 0.2, // Allow for minor rendering differences
     })
   })
+
+  test.beforeEach(setupVisualRegressionTest)
 
   test('Control Panel - timer and music controls', async ({ controlPage }) => {
     // Capture screenshot

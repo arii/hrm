@@ -94,11 +94,26 @@ coverage
 # nyc test coverage
 .nyc_output
 
+
+# nyc test coverage
+.nyc_output
+
 # Grunt intermediate storage (https://gruntjs.com/)
 .grunt
 
 # node-waf configuration
 .lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
