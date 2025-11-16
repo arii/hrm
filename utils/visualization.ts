@@ -1,12 +1,13 @@
-// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
+// File: utils/visualization.ts
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
+import { Theme } from '@mui/material/styles'
 import { TimerData } from '../types/websocket'
 
-// Define types for MUI color props
-type MuiColor =
+// Define types for MUI color props to be used in components
+export type MuiThemeColor =
   | 'primary'
   | 'secondary'
   | 'error'
@@ -14,67 +15,35 @@ type MuiColor =
   | 'info'
   | 'success'
 
-// --- Constants ---
-// Heart Rate Zone Boundaries (as percentage of Max HR)
-export const HR_ZONES = [
-  {
-    name: 'Warm-up',
-    min: 0.5,
-    color: 'text-blue-400',
-    progressColor: '#3b82f6', // Darker blue
-    bgColor: '#3b82f6', // Darker blue
-  },
-  {
-    name: 'Fat Burn',
-    min: 0.6,
-    color: 'text-green-500',
-    progressColor: '#22c55e',
-    bgColor: '#4CAF50',
-  },
-  {
-    name: 'Cardio',
-    min: 0.7,
-    color: 'text-yellow-500',
-    progressColor: '#d97706', // Darker orange/yellow
-    bgColor: '#d97706', // Darker orange/yellow
-  },
-  {
-    name: 'Peak',
-    min: 0.85,
-    color: 'text-red-500',
-    progressColor: '#ef4444',
-    bgColor: '#F44336',
-  },
-  {
-    name: 'Max',
-    min: 0.95,
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
-  },
-]
+// --- HEART RATE ZONE CONFIGURATION ---
 
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: '#2196F3', // Zone 1: Warm-up
-  green: '#4CAF50', // Zone 2: Fat Burn
-  yellow: '#FFEB3B', // Zone 3: Cardio
-  red: '#F44336', // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
+interface HrZone {
+  name: string
+  min: number // Minimum percentage of Max HR for this zone
+  color: MuiThemeColor
 }
 
+// Defines the boundaries and associated theme colors for each heart rate zone.
+export const HR_ZONES: HrZone[] = [
+  { name: 'Warm-up', min: 0.5, color: 'info' }, // Light blue
+  { name: 'Fat Burn', min: 0.6, color: 'success' }, // Green
+  { name: 'Cardio', min: 0.7, color: 'warning' }, // Orange
+  { name: 'Peak', min: 0.85, color: 'error' }, // Red
+  { name: 'Max', min: 0.95, color: 'secondary' }, // Purple
+]
+
 interface HrZoneProps {
-  zone: string
+  zoneName: string
   percentage: number
-  color: string // Tailwind text color class
-  progressColor: string // Hex color for MUI components
-  backgroundColor: string // Hex color for background
+  color: MuiThemeColor
   bpm: number
 }
 
 /**
- * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
+ * Calculates the current HR zone and returns MUI-ready props.
+ * @param currentHr - The current heart rate in beats per minute.
+ * @param maxHr - The user's maximum heart rate.
+ * @returns An object with the zone name, percentage of max HR, and associated theme color.
  */
 export const getHrZoneProps = (
   currentHr: number,
@@ -82,91 +51,59 @@ export const getHrZoneProps = (
 ): HrZoneProps => {
   if (!maxHr || !currentHr || currentHr <= 0) {
     return {
-      zone: 'No Data',
+      zoneName: 'No Data',
       percentage: 0,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
+      color: 'grey' as MuiThemeColor, // Use grey from palette
       bpm: 0,
     }
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone = HR_ZONES[0]
+  let activeZone: HrZone = { name: 'Resting', min: 0, color: 'grey' as MuiThemeColor }
 
-  for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-    if (percentageOfMax / 100 >= HR_ZONES[i].min) {
-      zone = HR_ZONES[i]
-      break
+  // Find the highest applicable zone
+  for (const zone of HR_ZONES) {
+    if (percentageOfMax / 100 >= zone.min) {
+      activeZone = zone
     }
   }
 
   return {
-    zone: zone.name,
+    zoneName: activeZone.name,
     percentage: percentageOfMax,
-    color: zone.color,
-    progressColor: zone.progressColor,
-    backgroundColor: zone.bgColor,
+    color: activeZone.color,
     bpm: currentHr,
   }
 }
 
+// --- TIMER VISUALIZATION ---
+
 interface TimerProps {
   text: string
-  color: MuiColor
-  backgroundColor: string // Tailwind bg class
-  progressColor: string // Hex color
+  color: MuiThemeColor
 }
 
 /**
- * Returns props (color, text) for the Tabata Timer phase display.
+ * Returns theme-based props for the Tabata Timer phase display.
+ * @param currentPhase - The current phase from the timer data.
+ * @returns An object with the display text and associated theme color.
  */
 export const getTimerProps = (
   currentPhase: TimerData['currentPhase']
 ): TimerProps => {
   switch (currentPhase) {
     case 'PREPARE':
-      return {
-        text: 'GET READY',
-        color: 'warning', // MUI color for yellow/warning
-        backgroundColor: 'bg-yellow-500/10',
-        progressColor: '#f59e0b',
-      }
+      return { text: 'GET READY', color: 'warning' }
     case 'WORK':
-      return {
-        text: 'WORK',
-        color: 'error', // MUI color for red
-        backgroundColor: 'bg-red-500/10',
-        progressColor: '#ef4444',
-      }
+      return { text: 'WORK', color: 'error' }
     case 'REST':
-      return {
-        text: 'REST',
-        color: 'success', // MUI color for green
-        backgroundColor: 'bg-green-500/10',
-        progressColor: '#22c55e',
-      }
+      return { text: 'REST', color: 'success' }
     case 'RUNNING':
-      return {
-        text: 'RUNNING',
-        color: 'primary', // MUI color for blue/primary
-        backgroundColor: 'bg-blue-500/10',
-        progressColor: '#2563eb',
-      }
+      return { text: 'RUNNING', color: 'primary' }
     case 'COOLDOWN':
-      return {
-        text: 'COOLDOWN',
-        color: 'info', // MUI color for blue/info
-        backgroundColor: 'bg-blue-500/10',
-        progressColor: '#3b82f6',
-      }
+      return { text: 'COOLDOWN', color: 'info' }
     case 'IDLE':
     default:
-      return {
-        text: 'READY',
-        color: 'secondary', // MUI color for gray/secondary
-        backgroundColor: 'bg-gray-200',
-        progressColor: '#6b7280',
-      }
+      return { text: 'READY', color: 'secondary' }
   }
 }

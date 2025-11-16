@@ -1,201 +1,153 @@
+// File: app/client/connect/page.tsx
 'use client'
 
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  Chip,
   Container,
   Grid,
+  Snackbar,
+  Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
-import HrTile from '../../../components/HrTile'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import useWebSocket from '../../../hooks/useWebSocket'
-import { getHrZoneProps } from '../../../utils/visualization'
-
-// Cookie helpers
-const setCookie = (name: string, value: string, days = 365) => {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
-}
-
-const getCookie = (name: string): string => {
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
+import HrTile from '@/components/HrTile'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import useWebSocket from '@/hooks/useWebSocket'
+import { getHrZoneProps } from '@/utils/visualization'
+import { setCookie, getCookie } from '@/utils/cookie'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: '',
+  })
   const { connectionStatus, hrmData } = useWebSocket()
+  const { connectAndStream, deviceStatus, isConnected: bluetoothConnected } = useBluetoothHRM()
 
-  const {
-    connectAndStream,
-    deviceStatus,
-    isConnected: bluetoothConnected,
-  } = useBluetoothHRM()
-
-  // Load saved values from cookies on mount and auto-connect if available
+  // Load saved user info from cookies
   useEffect(() => {
-    const savedName = getCookie('hrm_user_name')
-    const savedAge = getCookie('hrm_user_age')
-    const savedDeviceId = getCookie('hrm_device_id')
-    if (savedName) setUserName(savedName)
-    if (savedAge) setUserAge(savedAge)
-
-    // Auto-connect only once when WebSocket first connects and we're not already connected
-    if (
-      savedName &&
-      savedAge &&
-      savedDeviceId &&
-      connectionStatus === 'Connected' &&
-      !bluetoothConnected &&
-      !deviceStatus.includes('Connecting')
-    ) {
-      connectAndStream(savedName, savedAge)
-    }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    setUserName(getCookie('hrm_user_name') || '')
+    setUserAge(getCookie('hrm_user_age') || '')
   }, [])
 
-  useEffect(() => {
-    setIsConnected(bluetoothConnected)
-  }, [bluetoothConnected])
-
   const handleConnect = async () => {
-    if (!userName.trim()) {
-      alert('Please enter your name')
+    if (!userName.trim() || !userAge.trim()) {
+      setSnackbar({ open: true, message: 'Please enter your name and age.' })
       return
     }
-    if (!userAge.trim() || parseInt(userAge) < 1 || parseInt(userAge) > 120) {
-      alert('Please enter a valid age (1-120)')
+    const age = parseInt(userAge)
+    if (isNaN(age) || age < 1 || age > 120) {
+      setSnackbar({ open: true, message: 'Please enter a valid age (1-120).' })
       return
     }
-    // Save to cookies
     setCookie('hrm_user_name', userName.trim())
-    setCookie('hrm_user_age', userAge.trim())
-    await connectAndStream(userName, userAge)
+    setCookie('hrm_user_age', age.toString())
+    await connectAndStream(userName, age.toString())
   }
 
-  // Find current user's heart rate data from WebSocket
-  const currentUserData = hrmData.find(
-    (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
-  )
+  // Find the current user's HR data from the WebSocket feed
+  const currentUserData = hrmData.find((user) => user.name === userName)
   const currentHR = currentUserData?.value || 0
   const maxHr = 220 - (parseInt(userAge) || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Connect Heart Rate Monitor
-        </Typography>
-
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Your Name"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Your Age"
-            type="number"
-            value={userAge}
-            onChange={(e) => setUserAge(e.target.value)}
-            inputProps={{ min: 1, max: 120 }}
-            sx={{ mb: 2 }}
-          />
-        </Box>
-
-        {deviceStatus.includes('Failed') && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {deviceStatus}
-          </Alert>
-        )}
-
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Card>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography variant="h4" component="h1" gutterBottom align="center">
+              Connect HRM
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              align="center"
+              sx={{ mb: 3 }}
             >
-              Connect Bluetooth HRM
-            </Button>
-          ) : (
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => {
-                setIsConnected(false)
-                // Clear saved device to force new pairing
-                document.cookie =
-                  'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-              }}
-              color="error"
-            >
-              Disconnect
-            </Button>
-          )}
-        </Box>
+              Enter your details and pair your Bluetooth heart rate monitor to get started.
+            </Typography>
 
-        {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
-        )}
-
-        {isConnected && currentHR > 0 && (
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12}>
-              <HrTile
-                name={userName}
-                bpm={currentHR}
-                percentMax={hrZoneProps.percentage}
-                background={hrZoneProps.progressColor}
+            <Stack spacing={2} sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                label="Your Name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                variant="outlined"
               />
-            </Grid>
-          </Grid>
+              <TextField
+                fullWidth
+                label="Your Age"
+                type="number"
+                value={userAge}
+                onChange={(e) => setUserAge(e.target.value)}
+                variant="outlined"
+              />
+            </Stack>
+
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleConnect}
+                disabled={bluetoothConnected || !userName.trim() || !userAge.trim()}
+              >
+                {bluetoothConnected ? 'Connected' : 'Connect Bluetooth HRM'}
+              </Button>
+            </Box>
+
+            {deviceStatus && (
+              <Alert
+                severity={
+                  deviceStatus.includes('Failed')
+                    ? 'error'
+                    : deviceStatus.includes('Connecting')
+                      ? 'info'
+                      : 'success'
+                }
+                sx={{ mb: 2 }}
+              >
+                {deviceStatus}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {bluetoothConnected && currentHR > 0 && (
+          <Box sx={{ mt: 3 }}>
+            <HrTile
+              name={userName}
+              bpm={currentHR}
+              percentMax={hrZoneProps.percentage}
+              color={hrZoneProps.color}
+            />
+          </Box>
         )}
 
-        {isConnected && currentHR === 0 && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            Connected but no heart rate detected. Make sure your heart rate
-            monitor is properly positioned and active.
-          </Alert>
-        )}
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-          WebSocket: {connectionStatus}
-        </Typography>
+        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+          <Chip
+            label={`WebSocket: ${connectionStatus}`}
+            color={connectionStatus === 'Connected' ? 'success' : 'warning'}
+            variant="outlined"
+            size="small"
+          />
+        </Stack>
       </Container>
-      <BottomNavBar />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </>
   )
 }

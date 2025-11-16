@@ -14,11 +14,13 @@ import {
   CardContent,
   FormControl,
   IconButton,
+  InputLabel,
   MenuItem,
   Select,
   Slider,
   Stack,
   Typography,
+  CircularProgress,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -28,11 +30,7 @@ import { SpotifyCommandMessage } from '@/types/websocket'
 interface SpotifyDevice {
   id: string
   is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
   name: string
-  type: string
-  volume_percent: number
 }
 
 const SpotifyControls = () => {
@@ -42,11 +40,11 @@ const SpotifyControls = () => {
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [devicesLoading, setDevicesLoading] = useState(false)
-  const [_devicesError, setDevicesError] = useState<string | null>(null)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
 
   const hasSpotifyData =
+    spotifyData.trackName &&
     spotifyData.trackName !== 'Awaiting Login...' &&
-    spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
   useEffect(() => {
@@ -56,16 +54,14 @@ const SpotifyControls = () => {
         setDevicesError(null)
         try {
           const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
+          if (!response.ok) throw new Error('Failed to fetch devices')
           const devices = await response.json()
           setAvailableDevices(Array.isArray(devices) ? devices : [])
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to load devices.'
-          console.error('Failed to fetch Spotify devices:', error)
-          setDevicesError(errorMessage)
+          const msg =
+            error instanceof Error ? error.message : 'An unknown error occurred'
+          console.error('Failed to fetch Spotify devices:', msg)
+          setDevicesError(msg)
         } finally {
           setDevicesLoading(false)
         }
@@ -74,230 +70,160 @@ const SpotifyControls = () => {
     } else {
       setAvailableDevices([])
       setSelectedDeviceId('')
-      setDevicesLoading(false)
-      setDevicesError(null)
     }
   }, [hasSpotifyData])
 
   useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
-    }
-
-    const activeDevice = availableDevices.find((device) => device.is_active)
-
-    if (!selectedDeviceId && activeDevice) {
+    const activeDevice = availableDevices.find((d) => d.is_active)
+    if (activeDevice && selectedDeviceId !== activeDevice.id) {
       setSelectedDeviceId(activeDevice.id)
-      return
+    } else if (!activeDevice && !selectedDeviceId && availableDevices.length > 0) {
+      setSelectedDeviceId(availableDevices[0].id)
     }
-
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
-    }
-  }, [availableDevices, selectedDeviceId])
-
-  const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
-    const activeDevice = availableDevices.find((device) => device.is_active)
-    return activeDevice?.id
   }, [availableDevices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
     (
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
+      deviceId?: string
     ) => {
-      const targetDeviceId =
-        overriddenDeviceId !== undefined
-          ? overriddenDeviceId
-          : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
+      const targetDeviceId = deviceId ?? selectedDeviceId
+      if (!targetDeviceId) return
+      sendData({
         type: 'SPOTIFY_COMMAND',
         command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+        deviceId: targetDeviceId,
+      } as SpotifyCommandMessage)
     },
-    [resolveTargetDeviceId, sendData]
+    [sendData, selectedDeviceId]
   )
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus !== 'Connected' || !selectedDeviceId) return
       const sanitized = clampVolume(value)
-      const targetDeviceId = resolveTargetDeviceId()
-      const messageKey = `${targetDeviceId ?? 'default'}:${sanitized}`
+      const messageKey = `${selectedDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
+
+      sendData({
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+        deviceId: selectedDeviceId,
+      })
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus, sendData, selectedDeviceId]
   )
 
+  // Effect to handle volume changes
   useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
+    const handler = setTimeout(() => {
+      sendVolumeCommand(volume);
+    }, 200); // Debounce volume changes
 
-  useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
+    return () => clearTimeout(handler);
+  }, [volume, sendVolumeCommand]);
+
 
   return (
-    <Card
-      sx={{
-        boxShadow: 3,
-        mb: 3,
-        backgroundColor: 'grey.800',
-        color: 'white',
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
+    <Card>
+      <CardContent>
         <Typography
-          variant="h6"
-          sx={{
-            mb: 2,
-            color: '#1DB954',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          variant="h5"
+          align="center"
+          gutterBottom
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <MusicNote sx={{ mr: 1 }} /> Spotify
+          <MusicNote sx={{ mr: 1 }} color="success" /> Spotify
         </Typography>
 
         {hasSpotifyData ? (
           <>
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+            <Box textAlign="center" mb={2}>
+              <Typography variant="h6" noWrap>
                 {spotifyData.trackName}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'grey.400' }}>
+              <Typography variant="body1" color="text.secondary" noWrap>
                 {spotifyData.artist}
               </Typography>
             </Box>
 
-            <Stack
-              direction="row"
-              spacing={1}
-              justifyContent="center"
-              sx={{ mb: 2 }}
-            >
+            <Stack direction="row" spacing={1} justifyContent="center" mb={2}>
               <IconButton
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
                 disabled={connectionStatus !== 'Connected'}
-                sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
-                }}
+                color="secondary"
               >
-                <SkipPrevious />
+                <SkipPrevious fontSize="large" />
               </IconButton>
               <IconButton
-                onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
-                }
+                onClick={() => sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')}
                 disabled={connectionStatus !== 'Connected'}
+                color="primary"
                 sx={{
-                  color: 'white',
-                  backgroundColor: '#1DB954',
-                  '&:hover': { backgroundColor: '#169944' },
+                  transform: 'scale(1.2)',
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {spotifyData.isPlaying ? (
+                  <Pause fontSize="large" />
+                ) : (
+                  <PlayArrow fontSize="large" />
+                )}
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}
                 disabled={connectionStatus !== 'Connected'}
-                sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
-                }}
+                color="secondary"
               >
-                <SkipNext />
+                <SkipNext fontSize="large" />
               </IconButton>
             </Stack>
 
-            <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+            <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+              <VolumeUp color="action" />
               <Slider
                 value={volume}
                 onChange={(_, val) => setVolume(val as number)}
-                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
                 min={0}
                 max={100}
-                size="small"
-                sx={{
-                  color: '#1DB954',
-                  '& .MuiSlider-thumb': { backgroundColor: 'white' },
-                }}
+                color="success"
               />
-              <Typography
-                variant="caption"
-                sx={{ color: 'grey.400', minWidth: '3ch' }}
-              >
+              <Typography variant="body2" color="text.secondary">
                 {volume}
               </Typography>
             </Stack>
-            {availableDevices.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
-                  Device
-                </Typography>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={selectedDeviceId}
-                    onChange={(e) => {
-                      const deviceId = e.target.value
-                      setSelectedDeviceId(deviceId)
-                      if (deviceId) {
-                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-                      }
-                    }}
-                    disabled={
-                      connectionStatus !== 'Connected' || devicesLoading
-                    }
-                    sx={{
-                      color: 'white',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'grey.600',
-                      },
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    {availableDevices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
-                        {device.name} {device.is_active && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            )}
+
+            <FormControl fullWidth>
+              <InputLabel id="device-select-label">Device</InputLabel>
+              <Select
+                labelId="device-select-label"
+                value={selectedDeviceId}
+                label="Device"
+                onChange={(e) => {
+                  const deviceId = e.target.value
+                  setSelectedDeviceId(deviceId)
+                  sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+                }}
+                disabled={connectionStatus !== 'Connected' || devicesLoading || availableDevices.length === 0}
+              >
+                {devicesLoading && (
+                  <MenuItem value="">
+                    <CircularProgress size={20} />
+                  </MenuItem>
+                )}
+                {devicesError && <MenuItem disabled>{devicesError}</MenuItem>}
+                {availableDevices.map((device) => (
+                  <MenuItem key={device.id} value={device.id}>
+                    {device.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </>
         ) : (
-          <Typography
-            variant="body2"
-            sx={{ color: 'grey.400', textAlign: 'center' }}
-          >
-            Login to Spotify on the main dashboard
+          <Typography variant="body1" color="text.secondary" textAlign="center">
+            Login to Spotify on the main dashboard.
           </Typography>
         )}
       </CardContent>

@@ -4,68 +4,54 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-import { Box, Container, Typography } from '@mui/material'
-import Head from 'next/head'
+import { Box, Container, Typography, Chip, Stack } from '@mui/material'
 import { useEffect } from 'react'
 import useWebSocket from '../../../hooks/useWebSocket'
 import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus } = useWebSocket()
+  const { connectionStatus } from useWebSocket()
 
   // Signal when page is ready for testing
   useEffect(() => {
+    // A brief delay to allow the UI to settle before signaling readiness
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
         window.__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
-    }, 1500)
+    }, 500) // Reduced delay as components are simpler now
 
     return () => clearTimeout(timer)
   }, [])
 
   return (
-    <>
-      <Head>
-        <title>HRM Control Panel</title>
-        <meta
-          name="description"
-          content="Heart Rate Monitor Control Panel - Timer and Spotify Controls"
-        />
-      </Head>
-      <Container
-        maxWidth="xs"
-        sx={{
-          py: { xs: 2, sm: 3 },
-          px: { xs: 2, sm: 3 },
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-        }}
-      >
-        {/* Connection Status */}
-        <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: connectionStatus === 'Connected' ? 'green' : 'orange',
-              fontWeight: 'bold',
-              backgroundColor: 'rgba(0,0,0,0.1)',
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              display: 'inline-block',
-            }}
-          >
-            Server: {connectionStatus}
+    <Container
+      maxWidth="xs"
+      sx={{
+        py: { xs: 2, sm: 4 }, // Increased vertical padding
+      }}
+    >
+      <Stack spacing={3}>
+        {/* Page Header */}
+        <Box textAlign="center">
+          <Typography variant="h4" component="h1" gutterBottom>
+            Control Panel
           </Typography>
+          <Chip
+            label={`Server: ${connectionStatus}`}
+            color={connectionStatus === 'Connected' ? 'success' : 'warning'}
+            variant="outlined"
+            size="small"
+          />
         </Box>
 
+        {/* Timer and Spotify Controls */}
         <TimerControls />
         <SpotifyControls />
-      </Container>
-    </>
+      </Stack>
+    </Container>
   )
 }
 
