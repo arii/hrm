@@ -8,7 +8,7 @@ import PlaylistSelector from '../../../components/Spotify/PlaylistSelector';
 import { SpotifyCommandMessage } from '../../../types/websocket';
 import { PlayArrow, Pause, SkipNext, SkipPrevious } from '@mui/icons-material';
 import useVolumePreference from '../../../hooks/useVolumePreference';
-import VolumeControl from '../../../components/Spotify/VolumeControl'; // I will recreate this temporarily
+import VolumeControl from '../../../components/Spotify/VolumeControl';
 
 const SpotifySelectionPage = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket();
