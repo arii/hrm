@@ -2,7 +2,7 @@
 /**
  * Mobile Assessment Tests: Focus on mobile-specific UI/UX and touch interactions
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const BASE_URL =
   process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'

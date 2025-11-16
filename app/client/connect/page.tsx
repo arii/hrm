@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
+import BluetoothDeviceInfo from '../../../components/BluetoothDeviceInfo'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import { useBluetoothHRMContext } from '../../../contexts/BluetoothHRMContext'
@@ -40,8 +41,6 @@ export default function ConnectPage() {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
-    deviceName,
-    batteryLevel,
   } = hrmCtx
 
   // Load saved values from cookies on mount and auto-connect if available
@@ -173,20 +172,7 @@ export default function ConnectPage() {
             <Alert severity="success" sx={{ mb: 2 }}>
               Connected! Heart rate data is being streamed.
             </Alert>
-            <Box
-              sx={{ mb: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}
-            >
-              {deviceName && (
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  <strong>Device:</strong> {deviceName}
-                </Typography>
-              )}
-              {batteryLevel !== null && (
-                <Typography variant="body1">
-                  <strong>Battery:</strong> {batteryLevel}%
-                </Typography>
-              )}
-            </Box>
+            <BluetoothDeviceInfo />
           </>
         )}
 
