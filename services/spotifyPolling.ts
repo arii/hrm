@@ -166,7 +166,10 @@ export class SpotifyPolling {
     this.loadTokenFromManager()
 
     // Start token refresh check loop (Every 55 mins)
-    this.tokenRefreshInterval = setInterval(() => this.refreshAccessToken(), 1000 * 60 * 55)
+    this.tokenRefreshInterval = setInterval(
+      () => this.refreshAccessToken(),
+      1000 * 60 * 55
+    )
   }
 
   private async loadTokenFromManager() {

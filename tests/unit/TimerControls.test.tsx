@@ -4,7 +4,7 @@ import TimerControls from '@/app/client/control/components/TimerControls'
 import useWebSocket from '@/hooks/useWebSocket'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
@@ -62,8 +62,10 @@ describe('TimerControls', () => {
     fireEvent.change(workInput, { target: { value: '45' } })
     fireEvent.change(restInput, { target: { value: '15' } })
 
-    // Wait for debounce and React state updates
-    await new Promise((resolve) => setTimeout(resolve, 600))
+    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600))
+    })
 
     await user.click(screen.getByRole('button', { name: /start/i }))
 
