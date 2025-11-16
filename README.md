@@ -48,15 +48,19 @@ The server will start with:
 ### Production Build
 
 ```bash
-# Build TypeScript server and Next.js app
+# Build TypeScript server and Next.js app (optional; npm run start auto-builds if needed)
 npm run build
 
-# Start with PM2
+# Start with PM2 (requires .env.production)
 npm run start
 
 # View logs
 npm run pm2:logs
 ```
+
+`npm run start` now checks for `.env.production` and verifies build artifacts. When `.next/` or
+`dist/server.mjs` are missing it runs `npm run build` before launching PM2, so manual builds are
+only required when you want to inspect the output ahead of time.
 
 ## Project Structure
 
@@ -89,7 +93,6 @@ npm run pm2:logs
 npm run dev                 # Start dev server (Next.js + WebSocket + services)
 npm run build               # Build for production
 npm run start               # Start production server with PM2
-npm run deploy              # Full deployment script (build + PM2 start)
 npm run lint                # Run ESLint
 npm run lint:fix            # Auto-fix lint issues
 npm run format              # Format codebase with Prettier
@@ -106,6 +109,9 @@ npm run verify:spotify      # Automated Spotify integration health check
 npm run kill-all            # Force-stop lingering Node/Chrome processes
 npm run mcp:chrome-devtools # Start Chrome DevTools MCP (isolated profile)
 ```
+
+For production, create `.env.production` alongside `.env.local`. The start script refuses to run
+without it so sensitive secrets are always loaded before PM2 boots.
 
 ### Navigation Shortcuts
 
