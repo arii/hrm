@@ -168,7 +168,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
               ...params.InputProps,
               startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
               endAdornment: searchLoading ? (
-                <CircularProgress size={20} sx={{ mr: 1 }} />
+                <CircularProgress size={20} aria-label="Searching" sx={{ mr: 1 }} />
               ) : null,
             }}
           />
