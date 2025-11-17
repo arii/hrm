@@ -275,7 +275,7 @@ test.describe('Comprehensive HRM Assessment', () => {
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '45')
     await controlTab.fill('input[aria-label="Rest duration in seconds"]', '15')
     await controlTab.click('button:has-text("START")')
-    await expect(controlTab.locator('text=STOP')).toBeVisible()
+    await expect(controlTab.locator('button:has-text("STOP")')).toBeVisible()
 
     // Take coordinated screenshots
     await expect(controlTab).toHaveScreenshot('multi-device-control.png', {
