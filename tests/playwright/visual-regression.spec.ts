@@ -52,12 +52,11 @@ test.describe('Visual Regression Tests', () => {
 
     // Start timer
     await page.click('button:has-text("START")', { force: true })
-    await page.waitForTimeout(500)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
 
     // Now navigate to dashboard to see active timer
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK|REST/', { timeout: 3000 })
-    await page.waitForTimeout(500)
+    await expect(page.locator('text=/WORK|REST/')).toBeVisible()
 
     // Capture screenshot with running timer
     await expect(page).toHaveScreenshot('dashboard-active-timer.png', {
@@ -74,11 +73,10 @@ test.describe('Visual Regression Tests', () => {
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await mockPage.waitForTimeout(500)
+    await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Dashboard page already loaded via fixture
-    await dashboardPage.waitForSelector('text=Mock User', { timeout: 5000 })
-    await dashboardPage.waitForTimeout(1000)
+    await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     const primaryTile = dashboardPage
       .locator('[data-testid="hr-tile-grid-item"]')
@@ -100,7 +98,9 @@ test.describe('Component Visual Tests', () => {
     // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await mockPage.click('button:has-text("START")')
-    await mockPage.waitForTimeout(1000)
+    await expect(
+      mockPage.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
 
     // Wait for HR tiles to load on dashboard
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {

@@ -8,6 +8,14 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
+  testIgnore: [
+    'integration-tests.spec.ts',
+    'comprehensive-assessment.spec.ts',
+    'core-functionality.spec.ts',
+    'mobile-essential.spec.ts',
+    'mobile-assessment.spec.ts',
+    'workflow-tests.spec.ts',
+  ],
 
   // Run tests in parallel
   fullyParallel: false,

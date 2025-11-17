@@ -15,7 +15,7 @@ test.describe('Integration Tests', () => {
     // Fill user information
     await page.fill('input[placeholder="Your name"]', 'Test User')
     await page.fill('input[type="number"][placeholder="25"]', '28')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('input[value="Test User"]')).toBeVisible()
 
     await expect(page).toHaveScreenshot('bluetooth-connect.png', {
       fullPage: true,
@@ -42,7 +42,7 @@ test.describe('Integration Tests', () => {
     await mockTab.getByLabel('User Name').fill('Multi User')
     await mockTab.getByLabel('Current BPM').fill('150')
     await mockTab.click('button:has-text("START")')
-    await mockTab.waitForTimeout(2000)
+    await expect(mockTab.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Start timer from control
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '30')
@@ -62,23 +62,25 @@ test.describe('Integration Tests', () => {
   test('Error state handling', async ({ page }) => {
     // Test offline state
     await page.goto(`${BASE_URL}/client/mock`)
-    await page.waitForSelector('text=/HRM Mock Streamer/', { timeout: 5000 })
+    await expect(page.locator('text=/HRM Mock Streamer/')).toBeVisible()
 
     // Simulate network issues
     await page.context().setOffline(true)
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=Server Status: Disconnected')).toBeVisible()
 
     // Restore connection
     await page.context().setOffline(false)
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=Server Status: Connected')).toBeVisible()
 
     // Test invalid timer config
     await page.goto(`${BASE_URL}/client/control`)
-    await page.waitForSelector('text=/Timer Mode/', { timeout: 5000 })
+    await expect(page.locator('text=/Timer Mode/')).toBeVisible()
 
     await page.fill('input[aria-label="Work duration in seconds"]', '0')
     await page.fill('input[aria-label="Rest duration in seconds"]', '0')
-    await page.waitForTimeout(500)
+    await expect(
+      page.locator('input[aria-label="Work duration in seconds"]')
+    ).toHaveValue('0')
 
     await expect(page).toHaveScreenshot('error-handling.png', {
       fullPage: true,

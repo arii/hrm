@@ -53,7 +53,6 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
     if (await stopStreaming.isVisible()) {
       await stopStreaming.click()
-      await mockTab.waitForTimeout(500)
     }
 
     // 2. Setup Control Panel (keep open)
@@ -94,15 +93,14 @@ test.describe('Comprehensive HRM Assessment', () => {
     await bpmField.clear()
     await bpmField.fill('145')
 
-    // Wait for fields to update
-    await mockTab.waitForTimeout(500)
-
     // Verify fields are filled
     await expect(userNameField).toHaveValue('Athlete Alpha')
     await expect(bpmField).toHaveValue('145')
 
     await mockTab.click('button:has-text("START")')
-    await mockTab.waitForTimeout(2000)
+    await expect(
+      mockTab.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
 
     // 6. Start Timer
     showProgress(7, totalSteps, 'Starting timer')
@@ -113,7 +111,7 @@ test.describe('Comprehensive HRM Assessment', () => {
 
     // 7. Check Dashboard with Active Timer and HR Data
     showProgress(8, totalSteps, 'Capturing active timer')
-    await dashboardTab.waitForSelector('text=Athlete Alpha', { timeout: 5000 })
+    await expect(dashboardTab.locator('text=/WORK|REST/')).toBeVisible()
     await replaceIframeWithStableWorkout(dashboardTab)
     await expect(dashboardTab).toHaveScreenshot(
       '05-dashboard-active-timer.png',
@@ -271,13 +269,13 @@ test.describe('Comprehensive HRM Assessment', () => {
     const multiDeviceBpmInput = mockTab.getByLabel('Current BPM')
     await multiDeviceBpmInput.fill('145')
     await mockTab.click('button:has-text("START")')
-    await mockTab.waitForTimeout(2000)
+    await expect(mockTab.locator('text=STOP Streaming')).toBeVisible()
 
     // Configure and start timer
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '45')
     await controlTab.fill('input[aria-label="Rest duration in seconds"]', '15')
     await controlTab.click('button:has-text("START")')
-    await controlTab.waitForTimeout(2000)
+    await expect(controlTab.locator('text=STOP')).toBeVisible()
 
     // Take coordinated screenshots
     await expect(controlTab).toHaveScreenshot('multi-device-control.png', {
@@ -297,125 +295,108 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
     if (await stopMultiStream.isVisible()) {
       await stopMultiStream.click()
-      await mockTab.waitForTimeout(500)
     }
-
-    await dashboardTab.waitForTimeout(5000)
   })
 
   test('Bluetooth HRM Connection Flow', async ({ page }) => {
     await page.goto(`${BASE_URL}/client/connect`)
-    await page.waitForSelector('text=/Bluetooth HRM/', { timeout: 5000 })
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/Bluetooth HRM/')).toBeVisible()
     await expect(page).toHaveScreenshot('12-bluetooth-connect-initial.png', {
       fullPage: true,
     })
 
     await page.fill('input[placeholder="Your name"]', 'Test User')
     await page.fill('input[type="number"][placeholder="25"]', '28')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('input[value="Test User"]')).toBeVisible()
     await expect(page).toHaveScreenshot('13-bluetooth-user-info.png', {
       fullPage: true,
     })
 
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=Ready to Connect')).toBeVisible()
     await expect(page).toHaveScreenshot('14-bluetooth-ready-to-connect.png', {
       fullPage: true,
     })
-
-    await page.waitForTimeout(2000)
   })
 
   test('Responsive Design Assessment', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('15-desktop-1920x1080.png', {
       fullPage: true,
     })
 
     await page.setViewportSize({ width: 1366, height: 768 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('16-laptop-1366x768.png', {
       fullPage: true,
     })
 
     await page.setViewportSize({ width: 768, height: 1024 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('17-tablet-768x1024.png', {
       fullPage: true,
     })
 
     await page.goto(`${BASE_URL}/client/control`)
-    await page.waitForSelector('text=/Timer Mode/', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/Timer Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('18-control-tablet-768x1024.png', {
       fullPage: true,
     })
-
-    await page.waitForTimeout(2000)
   })
 
   test('Error States and Edge Cases', async ({ page }) => {
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(3000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('19-dashboard-no-data.png', {
       fullPage: true,
     })
 
     await page.goto(`${BASE_URL}/client/control`)
-    await page.waitForSelector('text=/Timer Mode/', { timeout: 5000 })
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/Timer Mode/')).toBeVisible()
 
     await page.click('text=Stopwatch')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/Stopwatch Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('20-stopwatch-mode.png', {
       fullPage: true,
     })
 
     await page.click('text=Tabata')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/Tabata Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('21-tabata-mode.png', {
       fullPage: true,
     })
 
     await page.goto(`${BASE_URL}/client/mock`)
-    await page.waitForSelector('text=/HRM Mock Streamer/', { timeout: 5000 })
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/HRM Mock Streamer/')).toBeVisible()
     await expect(page).toHaveScreenshot('22-mock-disconnected.png', {
       fullPage: true,
     })
-
-    await page.waitForTimeout(2000)
   })
 
   test('Navigation and UI Components', async ({ page }) => {
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
 
     await page.hover('text=Phone Controls')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text="Control Panel"')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('23-nav-hover-phone.png', {
       fullPage: true,
     })
 
     await page.hover('text=Stream HR')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text="Connect HRM"')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('24-nav-hover-stream.png', {
       fullPage: true,
     })
 
-    await page.waitForSelector('iframe', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('iframe')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('25-google-doc-integration.png', {
       fullPage: true,
@@ -428,18 +409,15 @@ test.describe('Comprehensive HRM Assessment', () => {
         fullPage: true,
       })
     }
-
-    await page.waitForTimeout(3000)
   })
 
   test('Performance and Loading States', async ({ page }) => {
     const startTime = Date.now()
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     const loadTime = Date.now() - startTime
 
     console.log(`Dashboard load time: ${loadTime}ms`)
-    await page.waitForTimeout(2000)
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('27-dashboard-loaded.png', {
       fullPage: true,
@@ -453,12 +431,10 @@ test.describe('Comprehensive HRM Assessment', () => {
       indicator.textContent = 'WebSocket: Connected'
       document.body.appendChild(indicator)
     })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('#ws-status')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('28-websocket-status.png', {
       fullPage: true,
     })
-
-    await page.waitForTimeout(3000)
   })
 })
