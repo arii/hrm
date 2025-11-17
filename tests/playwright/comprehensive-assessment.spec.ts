@@ -295,6 +295,7 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
     if (await stopMultiStream.isVisible()) {
       await stopMultiStream.click()
+      await expect(mockTab.locator('button:has-text("START")')).toBeVisible()
     }
   })
 
