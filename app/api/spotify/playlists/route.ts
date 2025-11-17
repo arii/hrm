@@ -43,7 +43,6 @@ export async function GET(_req: Request) {
     )
 
     // 4. Fetch all user playlists (SDK handles pagination automatically)
-    // Note: The SDK method may vary - checking the actual API structure
     const playlistsResponse = await spotify.currentUser.playlists({ limit: 50 }) // Fetch up to 50 playlists per page
 
     // 5. Preset playlists for the standalone page
