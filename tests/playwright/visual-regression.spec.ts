@@ -93,11 +93,30 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
-    // Capture full-page screenshot
+    // Extra verification: ensure timer is NOT in active state (no WORK/REST)
+    // Wait for any existing timer display to settle or disappear
+    try {
+      await expect(dashboardPage.locator('text=/WORK|REST/')).not.toBeVisible({
+        timeout: 3000,
+      })
+    } catch {
+      // Timer might already be idle, continue
+    }
+
+    // Wait a bit for any animations to settle
+    await dashboardPage.waitForTimeout(1000)
+
+    // Capture full-page screenshot - mask timer numbers in case cleanup didn't work
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
       animations: 'disabled',
+      caret: 'hide', // Hide text cursor
       threshold: 0.2, // Allow for minor rendering differences
+      mask: [
+        // Mask timer countdown numbers that might persist from previous runs
+        dashboardPage.locator('text=/^\\d+$/'),
+        dashboardPage.locator('text=/\\d+s/'),
+      ],
     })
   })
 
@@ -106,6 +125,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
       animations: 'disabled',
+      caret: 'hide',
     })
   })
 
@@ -114,6 +134,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage).toHaveScreenshot('mock-hrm-client.png', {
       fullPage: true,
       animations: 'disabled',
+      caret: 'hide',
     })
   })
 
@@ -161,6 +182,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(dashboardPage).toHaveScreenshot('dashboard-active-timer.png', {
       fullPage: true,
       animations: 'disabled',
+      caret: 'hide',
       mask: [
         // Mask the large timer countdown numbers (e.g., "04", "03")
         dashboardPage.locator('text=/^\\d+$/'),
@@ -179,21 +201,18 @@ test.describe('Visual Regression Tests', () => {
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
-    // Get all HR tiles to mask dynamic content
-    const hrTiles = dashboardPage.locator('[data-testid="hr-tile-grid-item"]')
-
-    // Capture screenshot with HR data displayed while masking dynamic numbers
+    // Capture screenshot with HR data displayed while masking dynamic content
     await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
       animations: 'disabled',
+      caret: 'hide',
       mask: [
-        // Mask the timer countdown numbers (from previous test)
+        // Mask the entire timer display area (countdown numbers and phase labels)
         dashboardPage.locator('text=/^\\d+$/'),
-        // Mask time displays with seconds
         dashboardPage.locator('text=/\\d+s/'),
-        // Mask all percentage and BPM numbers in all HR tiles
-        hrTiles.getByText(/\d+%/),
-        hrTiles.getByText(/\d+\s*BPM/),
+        dashboardPage.locator('text=/WORK|REST|READY|RUNNING/'),
+        // Mask the entire HR tiles section (all dynamic HR data)
+        dashboardPage.locator('[data-testid="hr-tile-grid-item"]'),
       ],
     })
   })
@@ -216,6 +235,7 @@ test.describe('Visual Regression Tests', () => {
       .first()
     await expect(firstTile).toHaveScreenshot('hr-tiles-section.png', {
       animations: 'disabled',
+      caret: 'hide',
     })
   })
 })

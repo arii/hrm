@@ -15,6 +15,8 @@ export default defineConfig({
     'mobile-essential.spec.ts',
     'mobile-assessment.spec.ts',
     'workflow-assessment.spec.ts',
+    'auth-flow.spec.ts', // Requires Spotify credentials
+    'debug.spec.ts', // Session endpoint requires NEXTAUTH_SECRET
   ],
 
   // Run tests in parallel

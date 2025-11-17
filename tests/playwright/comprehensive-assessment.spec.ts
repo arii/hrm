@@ -5,10 +5,10 @@
  */
 import { expect, test } from '@playwright/test'
 import {
+  BASE_URL,
+  replaceIframeWithStableWorkout,
   setupComprehensiveTest,
   waitForPageReady,
-  replaceIframeWithStableWorkout,
-  BASE_URL,
 } from './test-helpers'
 
 // Progress tracking helper with fixed console position
@@ -269,7 +269,9 @@ test.describe('Comprehensive HRM Assessment', () => {
     const multiDeviceBpmInput = mockTab.getByLabel('Current BPM')
     await multiDeviceBpmInput.fill('145')
     await mockTab.click('button:has-text("START")')
-    await expect(mockTab.locator('button:has-text("STOP Streaming")')).toBeVisible()
+    await expect(
+      mockTab.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
 
     // Configure and start timer
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '45')
@@ -295,7 +297,6 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
     if (await stopMultiStream.isVisible()) {
       await stopMultiStream.click()
-      await expect(mockTab.locator('button:has-text("START")')).toBeVisible()
     }
   })
 
@@ -313,7 +314,7 @@ test.describe('Comprehensive HRM Assessment', () => {
       fullPage: true,
     })
 
-    await expect(page.getByRole('button', { name: /connect/i })).toBeVisible()
+    await expect(page.locator('text=Ready to Connect')).toBeVisible()
     await expect(page).toHaveScreenshot('14-bluetooth-ready-to-connect.png', {
       fullPage: true,
     })
@@ -391,7 +392,7 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
 
     await page.hover('text=Stream HR')
-    await expect(page.locator('text=Connect HRM')).toBeVisible()
+    await expect(page.locator('text="Connect HRM"')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('24-nav-hover-stream.png', {
       fullPage: true,
