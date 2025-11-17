@@ -313,7 +313,7 @@ test.describe('Comprehensive HRM Assessment', () => {
       fullPage: true,
     })
 
-    await expect(page.locator('text=Ready to Connect')).toBeVisible()
+    await expect(page.getByRole('button', { name: /connect/i })).toBeVisible()
     await expect(page).toHaveScreenshot('14-bluetooth-ready-to-connect.png', {
       fullPage: true,
     })
