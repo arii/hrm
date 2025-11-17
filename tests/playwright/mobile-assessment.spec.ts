@@ -88,7 +88,9 @@ test.describe('Mobile HRM Assessment', () => {
     // Test volume control interaction
     const volumeSlider = page.locator('input[type="range"]')
     if (await volumeSlider.isVisible()) {
-      await volumeSlider.click()
+      const valueBefore = await volumeSlider.inputValue();
+      await volumeSlider.click();
+      await expect(volumeSlider).not.toHaveValue(valueBefore);
       await expect(page).toHaveScreenshot('mobile-10-volume-interaction.png', {
         fullPage: true,
       })
