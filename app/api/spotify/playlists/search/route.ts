@@ -38,6 +38,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: [] })
     }
 
+    // Enforce a maximum length for the search query to prevent abuse
+    if (query.length > 100) {
+      return NextResponse.json(
+        { error: 'Search query too long' },
+        { status: 400 }
+      )
+    }
     // 4. Initialize Spotify SDK with access token
     const spotify = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID || '',
