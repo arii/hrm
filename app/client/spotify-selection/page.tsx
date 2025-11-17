@@ -36,7 +36,7 @@ const SpotifySelectionPage = () => {
     if (spotifyData.isPlaying) {
         sendSpotifyCommand('PAUSE');
     } else {
-        sendSpotifyCommand('PLAY', { playlistUri: selectedPlaylistUri ?? undefined });
+        sendSpotifyCommand('PLAY', selectedPlaylistUri ? { playlistUri: selectedPlaylistUri } : {});
     }
   }
 
