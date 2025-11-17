@@ -72,7 +72,7 @@ const SpotifySelectionPage = () => {
 
       <Card sx={{ mt: 2 }}>
         <CardContent>
-            <Stack spacing={2} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+            <Stack spacing={2} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <Stack direction="row" spacing={2}>
                     <Button
                         variant="contained"
