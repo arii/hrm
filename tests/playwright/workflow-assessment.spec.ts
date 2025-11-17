@@ -250,7 +250,7 @@ test.describe('HRM Workflow Assessment', () => {
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
-    await expect(page.locator('button:has-text("START")')).toBeFocused()
+    await expect(page.locator('button:has-text("START")')).toBeFocused({ timeout: 1000 })
     await expect(page).toHaveScreenshot('accessibility-keyboard-focus.png', {
       fullPage: true,
     })
