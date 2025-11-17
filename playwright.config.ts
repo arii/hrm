@@ -14,7 +14,7 @@ export default defineConfig({
     'core-functionality.spec.ts',
     'mobile-essential.spec.ts',
     'mobile-assessment.spec.ts',
-    'workflow-tests.spec.ts',
+    'workflow-assessment.spec.ts',
   ],
 
   // Run tests in parallel
