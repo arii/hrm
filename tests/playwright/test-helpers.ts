@@ -17,7 +17,7 @@ export const waitForPageReady = async (page: Page) => {
       { timeout: 10000 }
     )
   } catch (_error) {
-    await page.waitForTimeout(2000)
+    await page.waitForLoadState('networkidle')
   }
 }
 
@@ -50,7 +50,7 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
       `)
     }
   })
-  await page.waitForTimeout(1000)
+  await page.waitForSelector('iframe')
 }
 
 // Setup function for visual regression tests

@@ -22,7 +22,7 @@ test.describe('HRM Workflow Assessment', () => {
     await page.fill('input[placeholder="Device ID"]', 'WORKOUT-SESSION-001')
     await page.fill('input[type="number"]', '120')
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Step 2: Configure Workout on Control Panel
     await page.goto(`${BASE_URL}/client/control`)
@@ -31,16 +31,17 @@ test.describe('HRM Workflow Assessment', () => {
     // Set 30s work, 15s rest for demo
     await page.fill('input[aria-label="Work duration in seconds"]', '30')
     await page.fill('input[aria-label="Rest duration in seconds"]', '15')
-    await page.waitForTimeout(500)
+    await expect(
+      page.locator('input[aria-label="Work duration in seconds"]')
+    ).toHaveValue('30')
 
     // Step 3: Start Workout
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(2000)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
 
     // Step 4: Monitor on Dashboard
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK|REST/', { timeout: 5000 })
-    await page.waitForTimeout(3000)
+    await expect(page.locator('text=/WORK|REST/')).toBeVisible()
 
     // Step 5: Simulate HR Zone Changes During Workout
     await page.goto(`${BASE_URL}/client/mock`)
@@ -48,27 +49,26 @@ test.describe('HRM Workflow Assessment', () => {
     // Warm-up zone
     await page.fill('input[type="number"]', '140')
     await page.click('button:has-text("Zone 2")')
-    await page.waitForTimeout(2000)
+    await expect(page.locator('input[type="number"]')).toHaveValue('140')
 
     // Work zone
     await page.fill('input[type="number"]', '170')
     await page.click('button:has-text("Zone 4")')
-    await page.waitForTimeout(3000)
+    await expect(page.locator('input[type="number"]')).toHaveValue('170')
 
     // Recovery zone
     await page.fill('input[type="number"]', '130')
     await page.click('button:has-text("Zone 1")')
-    await page.waitForTimeout(2000)
+    await expect(page.locator('input[type="number"]')).toHaveValue('130')
 
     // Step 6: Return to Dashboard for Final View
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
 
     // Step 7: Stop Workout
     await page.goto(`${BASE_URL}/client/control`)
     await page.click('button:has-text("STOP")')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("START")')).toBeVisible()
 
     await expect(page).toHaveScreenshot('workflow-complete-session.png', {
       fullPage: true,
@@ -99,7 +99,7 @@ test.describe('HRM Workflow Assessment', () => {
     await mockPage.fill('input[placeholder="Device ID"]', 'PARTICIPANT-001')
     await mockPage.fill('input[type="number"]', '145')
     await mockPage.click('button:has-text("START")')
-    await mockPage.waitForTimeout(1000)
+    await expect(mockPage.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Trainer configures workout
     await controlPage.fill('input[aria-label="Work duration in seconds"]', '45')
@@ -107,16 +107,15 @@ test.describe('HRM Workflow Assessment', () => {
 
     // Start workout from control panel
     await controlPage.click('button:has-text("START")')
-    await controlPage.waitForTimeout(1000)
+    await expect(controlPage.locator('button:has-text("STOP")')).toBeVisible()
 
     // Verify dashboard shows active timer
-    await dashboardPage.waitForSelector('text=/WORK|REST/', { timeout: 5000 })
-    await dashboardPage.waitForTimeout(2000)
+    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible()
 
     // Simulate HR changes during workout
     await mockPage.fill('input[type="number"]', '165')
     await mockPage.click('button:has-text("Zone 3")')
-    await mockPage.waitForTimeout(2000)
+    await expect(mockPage.locator('input[type="number"]')).toHaveValue('165')
 
     // Take coordinated screenshots
     await expect(controlPage).toHaveScreenshot('multi-device-control.png', {
@@ -131,7 +130,7 @@ test.describe('HRM Workflow Assessment', () => {
 
     // Stop workout
     await controlPage.click('button:has-text("STOP")')
-    await controlPage.waitForTimeout(500)
+    await expect(controlPage.locator('button:has-text("START")')).toBeVisible()
 
     await dashboardPage.close()
     await mockPage.close()
@@ -144,18 +143,18 @@ test.describe('HRM Workflow Assessment', () => {
 
     await page.fill('input[type="number"]', '150')
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Simulate network issues by going offline
     await page.context().setOffline(true)
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=Server Status: Disconnected')).toBeVisible()
     await expect(page).toHaveScreenshot('error-offline-state.png', {
       fullPage: true,
     })
 
     // Restore connection
     await page.context().setOffline(false)
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=Server Status: Connected')).toBeVisible()
     await expect(page).toHaveScreenshot('error-reconnected-state.png', {
       fullPage: true,
     })
@@ -167,18 +166,20 @@ test.describe('HRM Workflow Assessment', () => {
     // Try to set invalid values
     await page.fill('input[aria-label="Work duration in seconds"]', '0')
     await page.fill('input[aria-label="Rest duration in seconds"]', '0')
-    await page.waitForTimeout(500)
+    await expect(
+      page.locator('input[aria-label="Work duration in seconds"]')
+    ).toHaveValue('0')
     await expect(page).toHaveScreenshot('error-invalid-timer-config.png', {
       fullPage: true,
     })
 
     // Test 3: Rapid Mode Switching
     await page.click('text=Stopwatch')
-    await page.waitForTimeout(200)
+    await expect(page.locator('text=/Stopwatch Mode/')).toBeVisible()
     await page.click('text=Tabata')
-    await page.waitForTimeout(200)
+    await expect(page.locator('text=/Tabata Mode/')).toBeVisible()
     await page.click('text=Stopwatch')
-    await page.waitForTimeout(500)
+    await expect(page.locator('text=/Stopwatch Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('error-rapid-mode-switching.png', {
       fullPage: true,
     })
@@ -191,20 +192,21 @@ test.describe('HRM Workflow Assessment', () => {
 
     await page.fill('input[placeholder="Device ID"]', 'LOAD-TEST-DEVICE')
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(500)
+    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Rapid HR updates
     const hrValues = [120, 135, 150, 165, 180, 175, 160, 145, 130, 125]
     for (const hr of hrValues) {
       await page.fill('input[type="number"]', hr.toString())
       await page.click('button:has-text("Zone 3")')
-      await page.waitForTimeout(100) // Very fast updates
+      await expect(page.locator('input[type="number"]')).toHaveValue(
+        hr.toString()
+      )
     }
 
     // Check dashboard responsiveness
     await page.goto(BASE_URL)
-    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 5000 })
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await expect(page).toHaveScreenshot(
       'performance-high-frequency-updates.png',
       { fullPage: true }
@@ -226,10 +228,12 @@ test.describe('HRM Workflow Assessment', () => {
     for (let i = 0; i < 10; i++) {
       await mockTab.fill('input[type="number"]', (140 + i * 5).toString())
       await mockTab.click('button:has-text("Zone 2")')
-      await mockTab.waitForTimeout(500)
+      await expect(mockTab.locator('input[type="number"]')).toHaveValue(
+        (140 + i * 5).toString()
+      )
     }
 
-    await page.waitForTimeout(3000)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
     await expect(page).toHaveScreenshot('performance-timer-under-load.png', {
       fullPage: true,
     })
@@ -244,18 +248,16 @@ test.describe('HRM Workflow Assessment', () => {
 
     // Tab through controls
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
     await page.keyboard.press('Tab')
-    await page.waitForTimeout(200)
+    await expect(page.locator('button:has-text("START")')).toBeFocused({ timeout: 1000 })
     await expect(page).toHaveScreenshot('accessibility-keyboard-focus.png', {
       fullPage: true,
     })
 
     // Test keyboard shortcuts
     await page.keyboard.press('Space') // Should activate focused element
-    await page.waitForTimeout(500)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
     await expect(page).toHaveScreenshot(
       'accessibility-keyboard-activation.png',
       { fullPage: true }
@@ -273,7 +275,27 @@ test.describe('HRM Workflow Assessment', () => {
         }
       `,
     })
-    await page.waitForTimeout(1000)
+    // Flexible check: background color is "dark enough" (all RGB channels <= 10)
+    const bgColor = await page.evaluate(() => {
+      const c = getComputedStyle(document.body).backgroundColor;
+      // c is usually 'rgb(r, g, b)' or 'rgba(r, g, b, a)'
+      const match = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!match) return c;
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+        raw: c,
+      };
+    });
+    if (typeof bgColor === 'string') {
+      // fallback: allow any variant of rgb(0,0,0) with optional spaces
+      expect(bgColor.replace(/\s+/g, '')).toMatch(/^rgb\(0,0,0\)$/);
+    } else {
+      expect(bgColor.r).toBeLessThanOrEqual(10);
+      expect(bgColor.g).toBeLessThanOrEqual(10);
+      expect(bgColor.b).toBeLessThanOrEqual(10);
+    }
     await expect(page).toHaveScreenshot('accessibility-high-contrast.png', {
       fullPage: true,
     })
@@ -288,13 +310,13 @@ test.describe('HRM Workflow Assessment', () => {
     await page.fill('input[aria-label="Work duration in seconds"]', '60')
     await page.fill('input[aria-label="Rest duration in seconds"]', '30')
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(2000)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
 
     // Navigate away and back
     await page.goto(BASE_URL)
-    await page.waitForTimeout(1000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await page.goto(`${BASE_URL}/client/control`)
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("STOP")')).toBeVisible()
 
     // Verify timer is still running
     await expect(page).toHaveScreenshot('persistence-timer-state.png', {
@@ -308,13 +330,13 @@ test.describe('HRM Workflow Assessment', () => {
     await page.fill('input[placeholder="Device ID"]', 'PERSISTENCE-TEST')
     await page.fill('input[type="number"]', '155')
     await page.click('button:has-text("START")')
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Navigate to dashboard and back
     await page.goto(BASE_URL)
-    await page.waitForTimeout(2000)
+    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await page.goto(`${BASE_URL}/client/mock`)
-    await page.waitForTimeout(1000)
+    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Verify connection state persisted
     await expect(page).toHaveScreenshot('persistence-hr-connection.png', {
