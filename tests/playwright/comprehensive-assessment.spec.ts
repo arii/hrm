@@ -391,7 +391,7 @@ test.describe('Comprehensive HRM Assessment', () => {
     })
 
     await page.hover('text=Stream HR')
-    await expect(page.locator('text="Connect HRM"')).toBeVisible()
+    await expect(page.locator('text=Connect HRM')).toBeVisible()
     await replaceIframeWithStableWorkout(page)
     await expect(page).toHaveScreenshot('24-nav-hover-stream.png', {
       fullPage: true,
