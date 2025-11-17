@@ -269,7 +269,7 @@ test.describe('Comprehensive HRM Assessment', () => {
     const multiDeviceBpmInput = mockTab.getByLabel('Current BPM')
     await multiDeviceBpmInput.fill('145')
     await mockTab.click('button:has-text("START")')
-    await expect(mockTab.locator('text=STOP Streaming')).toBeVisible()
+    await expect(mockTab.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Configure and start timer
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '45')
