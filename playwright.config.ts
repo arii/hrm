@@ -5,19 +5,34 @@
  */
 import { defineConfig, devices } from '@playwright/test'
 
+// Check if Spotify/NextAuth credentials are available
+const hasSpotifyCredentials = !!(
+  process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET
+)
+const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
+
+// Build ignore list based on available credentials
+const testIgnoreList = [
+  'integration-tests.spec.ts',
+  'comprehensive-assessment.spec.ts',
+  'core-functionality.spec.ts',
+  'mobile-essential.spec.ts',
+  'mobile-assessment.spec.ts',
+  'workflow-assessment.spec.ts',
+]
+
+// Only ignore auth-dependent tests if credentials are missing
+if (!hasSpotifyCredentials) {
+  testIgnoreList.push('auth-flow.spec.ts')
+}
+if (!hasNextAuthSecret) {
+  testIgnoreList.push('debug.spec.ts')
+}
+
 export default defineConfig({
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
-  testIgnore: [
-    'integration-tests.spec.ts',
-    'comprehensive-assessment.spec.ts',
-    'core-functionality.spec.ts',
-    'mobile-essential.spec.ts',
-    'mobile-assessment.spec.ts',
-    'workflow-assessment.spec.ts',
-    'auth-flow.spec.ts', // Requires Spotify credentials
-    'debug.spec.ts', // Session endpoint requires NEXTAUTH_SECRET
-  ],
+  testIgnore: testIgnoreList,
 
   // Run tests in parallel
   fullyParallel: false,

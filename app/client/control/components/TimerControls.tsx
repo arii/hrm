@@ -3,6 +3,7 @@
 import { useDebounce } from '@/hooks/useDebounce'
 import useWebSocket from '@/hooks/useWebSocket'
 import {
+  SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
@@ -57,6 +58,17 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
 
+  const sendSpotifyCommand = useCallback(
+    (command: 'NEXT' | 'PAUSE') => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
+
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
       // When starting, ensure the server receives the latest configuration immediately
@@ -71,8 +83,14 @@ const TimerControls = () => {
       }
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
+
+      if (command === 'START') {
+        sendSpotifyCommand('NEXT')
+      } else if (command === 'STOP') {
+        sendSpotifyCommand('PAUSE')
+      }
     },
-    [sendData, latestWork, latestRest]
+    [sendData, latestWork, latestRest, sendSpotifyCommand]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
