@@ -43,7 +43,8 @@ export async function GET(_req: Request) {
     )
 
     // 4. Fetch all user playlists (SDK handles pagination automatically)
-    const playlistsResponse = await spotify.currentUser.playlists({ limit: 50 }) // Fetch up to 50 playlists per page
+    // Correct syntax for @spotify/web-api-ts-sdk
+    const playlistsResponse = await spotify.currentUser.playlists.playlists(50)
 
     // 5. Preset playlists for the standalone page
     const presetPlaylists = [
@@ -58,9 +59,10 @@ export async function GET(_req: Request) {
       name: playlist.name,
       uri: playlist.uri,
       description: playlist.description || null,
-      imageUrl: playlist.images && playlist.images.length > 0 
-        ? playlist.images[0].url 
-        : null,
+      imageUrl:
+        playlist.images && playlist.images.length > 0
+          ? playlist.images[0].url
+          : null,
       trackCount: playlist.tracks?.total || 0,
       owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
       public: playlist.public || false,
