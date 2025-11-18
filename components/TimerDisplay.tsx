@@ -7,8 +7,6 @@ export interface TimerDisplayProps {
   phase: TimerPhase
   timeRemaining: number // seconds (for countdown)
   timeElapsed: number // seconds (for stopwatch)
-  cycle: number
-  totalCycles: number
   mode: TimerMode
   workDuration?: number
   restDuration?: number
@@ -20,8 +18,6 @@ const TimerDisplay = ({
   phase,
   timeRemaining,
   timeElapsed,
-  cycle,
-  totalCycles,
   mode,
   workDuration = 20,
   restDuration = 10,
@@ -189,19 +185,6 @@ const TimerDisplay = ({
           {displayTime}
         </Typography>
 
-        {/* Cycle Counter (Tabata only) */}
-        {mode === 'TABATA' && cycle > 0 && (
-          <Typography
-            variant="h5"
-            sx={{
-              mt: 2,
-              color: '#666',
-              fontWeight: 600,
-            }}
-          >
-            Cycle {cycle} of {totalCycles}
-          </Typography>
-        )}
       </CardContent>
     </Card>
   )

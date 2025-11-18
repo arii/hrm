@@ -159,10 +159,7 @@ const TimerControls = () => {
             {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
-            {timerData.currentPhase}{' '}
-            {timerData.mode === 'TABATA' &&
-              timerData.cycle > 0 &&
-              `• Cycle ${timerData.cycle}/${timerData.totalCycles}`}
+            {timerData.currentPhase}
           </Typography>
         </Box>
 

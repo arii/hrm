@@ -28,8 +28,6 @@ export interface TimerData {
   currentPhase: TimerPhase
   timeRemaining: number // Used for countdowns (Tabata, Prepare)
   timeElapsed: number // Used for count-ups (Stopwatch)
-  cycle: number
-  totalCycles: number
   mode: TimerMode
   workDuration: number // seconds for Tabata work interval
   restDuration: number // seconds for Tabata rest interval
@@ -88,7 +86,6 @@ export interface TimerConfigMessage {
   type: 'TIMER_CONFIG'
   workDuration: number
   restDuration: number
-  totalCycles?: number
 }
 
 export interface SpotifyCommandMessage {
@@ -145,7 +142,6 @@ export const TimerConfigMessageSchema = z.object({
   type: z.literal('TIMER_CONFIG'),
   workDuration: z.number(),
   restDuration: z.number(),
-  totalCycles: z.number().optional(),
 })
 
 export const SpotifyCommandMessageSchema = z.object({
