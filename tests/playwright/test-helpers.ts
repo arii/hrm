@@ -17,7 +17,7 @@ export const waitForPageReady = async (page: Page) => {
       { timeout: 10000 }
     )
   } catch (_error) {
-    await page.waitForTimeout(2000)
+    await page.waitForLoadState('networkidle')
   }
 }
 
@@ -50,7 +50,7 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
       `)
     }
   })
-  await page.waitForTimeout(1000)
+  await page.waitForSelector('iframe')
 }
 
 // Setup function for visual regression tests
@@ -81,6 +81,18 @@ export const setupVisualRegressionTest = async ({
 
   // Replace iframe with stable content for dashboard
   await replaceIframeWithStableWorkout(dashboardPage)
+}
+
+// NEW, more efficient setup function
+export const setupMinimalVisualRegressionTest = async (
+  page: Page,
+  path: string = ''
+) => {
+  await page.goto(`${BASE_URL}${path}`)
+  await waitForPageReady(page)
+  if (path === '') {
+    await replaceIframeWithStableWorkout(page)
+  }
 }
 
 // Setup function for comprehensive tests

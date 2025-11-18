@@ -41,7 +41,9 @@ test.describe('HRM Core Functionality', () => {
     // Configure timer settings
     await controlPage.fill('input[aria-label="Work duration in seconds"]', '45')
     await controlPage.fill('input[aria-label="Rest duration in seconds"]', '15')
-    await controlPage.waitForTimeout(500)
+    await expect(
+      controlPage.locator('input[aria-label="Work duration in seconds"]')
+    ).toHaveValue('45')
 
     await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
@@ -56,10 +58,7 @@ test.describe('HRM Core Functionality', () => {
     await controlPage.click('button:has-text("START")')
 
     // Wait for timer to be active
-    await controlPage.waitForSelector('button:has-text("PAUSE")', {
-      timeout: 5000,
-    })
-    await controlPage.waitForTimeout(1000)
+    await expect(controlPage.locator('button:has-text("PAUSE")')).toBeVisible()
 
     await expect(controlPage).toHaveScreenshot('control-panel-running.png', {
       fullPage: true,
@@ -72,7 +71,7 @@ test.describe('HRM Core Functionality', () => {
     await mockPage.getByLabel('User Name').fill('Mock User')
     await mockPage.getByLabel('Current BPM').fill('145')
     await mockPage.getByRole('button', { name: 'Zone 2' }).click()
-    await mockPage.waitForTimeout(500)
+    await expect(mockPage.locator('input[type="number"]')).toHaveValue('140')
 
     await expect(mockPage).toHaveScreenshot('mock-hrm.png', {
       fullPage: true,
@@ -83,7 +82,7 @@ test.describe('HRM Core Functionality', () => {
   test('Bluetooth connection interface', async ({ connectPage }) => {
     await connectPage.fill('input[placeholder="Your name"]', 'Test User')
     await connectPage.fill('input[type="number"][placeholder="25"]', '28')
-    await connectPage.waitForTimeout(1000)
+    await expect(connectPage.locator('input[value="Test User"]')).toBeVisible()
 
     await expect(connectPage).toHaveScreenshot('bluetooth-connect.png', {
       fullPage: true,
@@ -113,7 +112,7 @@ test.describe('HRM Core Functionality', () => {
     await mockTab.getByLabel('User Name').fill('Workout User')
     await mockTab.getByLabel('Current BPM').fill('140')
     await mockTab.click('button:has-text("START")')
-    await mockTab.waitForTimeout(2000)
+    await expect(mockTab.locator('button:has-text("STOP Streaming")')).toBeVisible()
 
     // Configure and start timer
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '20')

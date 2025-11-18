@@ -28,7 +28,23 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 ## Quick Start
 
-### Development
+### Development with Dev Container (Recommended)
+
+This project is configured to run in a VS Code Dev Container, which provides a fully pre-configured and isolated development environment.
+
+1.  **Prerequisites**:
+    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    *   [Visual Studio Code](https://code.visualstudio.com/)
+    *   [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for VS Code.
+
+2.  **Launch**:
+    *   Open the project folder in VS Code.
+    *   When prompted "Reopen in Container", click the button.
+    *   VS Code will build the Docker image and configure the environment. This might take a few minutes on the first launch.
+
+Once the container is running, the development server will start automatically. You can access the application at `http://127.0.0.1:3000`.
+
+### Local Development (Without Dev Container)
 
 ```bash
 # Install dependencies

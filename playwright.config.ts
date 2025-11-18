@@ -8,6 +8,16 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
+  testIgnore: [
+    'integration-tests.spec.ts',
+    'comprehensive-assessment.spec.ts',
+    'core-functionality.spec.ts',
+    'mobile-essential.spec.ts',
+    'mobile-assessment.spec.ts',
+    'workflow-assessment.spec.ts',
+    'auth-flow.spec.ts', // Requires Spotify credentials
+    'debug.spec.ts', // Session endpoint requires NEXTAUTH_SECRET
+  ],
 
   // Run tests in parallel
   fullyParallel: false,

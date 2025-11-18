@@ -3,7 +3,6 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 
@@ -362,7 +361,8 @@ export class SpotifyPolling {
   private async executePlayerCommand(
     endpoint: string,
     method: 'POST' | 'PUT',
-    deviceId?: string
+    deviceId?: string,
+    playlistUri?: string
   ) {
     if (!this.accessToken) {
       console.warn(
@@ -377,11 +377,18 @@ export class SpotifyPolling {
         url.searchParams.set('device_id', deviceId)
       }
 
+      const body = playlistUri ? JSON.stringify({ context_uri: playlistUri }) : null
+      const headers: { [key: string]: string } = {
+        Authorization: `Bearer ${this.accessToken}`,
+      }
+      if (body) {
+        headers['Content-Type'] = 'application/json'
+      }
+
       const response = await fetch(url.toString(), {
         method,
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
+        headers,
+        body,
       })
 
       if (response.status === 204) {
@@ -497,11 +504,12 @@ export class SpotifyPolling {
   public handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
-    volume?: number
+    volume?: number,
+    playlistUri?: string
   ) {
     switch (command) {
       case 'PLAY':
-        this.executePlayerCommand('play', 'PUT', deviceId)
+        this.executePlayerCommand('play', 'PUT', deviceId, playlistUri)
         break
       case 'PAUSE':
         this.executePlayerCommand('pause', 'PUT', deviceId)
