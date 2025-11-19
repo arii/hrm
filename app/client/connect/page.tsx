@@ -4,7 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Container,
   Grid,
   TextField,
@@ -34,11 +33,13 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const { connectionStatus, hrmData } = useWebSocket()
-  const { connectAndStream, hrmState } = useBluetoothHRM()
+  const { connectAndStream, abortConnection, hrmState } = useBluetoothHRM()
 
   const isConnecting =
     hrmState.status === 'CONNECTING' || hrmState.status === 'RECONNECTING'
+  const isWaitingForHr = hrmState.status === 'WAITING_FOR_HR'
   const isConnected = hrmState.status === 'CONNECTED'
+  const isBusy = isConnecting || isWaitingForHr || isConnected
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
@@ -109,6 +110,7 @@ export default function ConnectPage() {
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             sx={{ mb: 2 }}
+            disabled={isBusy}
           />
           <TextField
             fullWidth
@@ -118,6 +120,7 @@ export default function ConnectPage() {
             onChange={(e) => setUserAge(e.target.value)}
             inputProps={{ min: 1, max: 120 }}
             sx={{ mb: 2 }}
+            disabled={isBusy}
           />
         </Box>
 
@@ -127,35 +130,47 @@ export default function ConnectPage() {
           </Alert>
         )}
 
-        {(hrmState.status === 'CONNECTING' ||
-          hrmState.status === 'RECONNECTING') && (
-          <Alert severity="info" sx={{ mb: 2 }}>
+        {(isConnecting || isWaitingForHr) && (
+          <Alert
+            severity="info"
+            icon={<CircularProgress size={20} />}
+            sx={{ mb: 2 }}
+          >
             {hrmState.message}
           </Alert>
         )}
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
+        <Box sx={{ textAlign: 'center', mb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
+          {!isBusy && (
             <Button
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={
-                !userName.trim() || !userAge.trim() || isConnecting
-              }
-              startIcon={isConnecting && <CircularProgress size={20} />}
+              disabled={!userName.trim() || !userAge.trim()}
             >
-              {isConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
+              Connect Bluetooth HRM
             </Button>
-          ) : (
+          )}
+
+          {isConnecting && (
+             <Button
+              variant="outlined"
+              size="large"
+              onClick={abortConnection}
+              color="warning"
+            >
+              Cancel
+            </Button>
+          )}
+
+          {isConnected && (
             <Button
               variant="outlined"
               size="large"
               onClick={() => {
-                // Disconnect logic might go into the hook in the future
+                abortConnection()
                 document.cookie =
                   'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-                window.location.reload() // Force a state reset
               }}
               color="error"
             >

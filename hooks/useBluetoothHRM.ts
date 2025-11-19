@@ -12,6 +12,7 @@ export type BluetoothHRMStatus =
   | 'DISCONNECTED'
   | 'CONNECTING'
   | 'CONNECTED'
+  | 'WAITING_FOR_HR'
   | 'ERROR'
   | 'RECONNECTING'
 
@@ -67,11 +68,23 @@ const useBluetoothHRM = () => {
     status: 'DISCONNECTED',
     message: 'Ready to connect',
   })
-  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
+  const [device, setDevice] = useState<BluetoothDevice | null>(null)
+
+  const abortConnection = useCallback(async () => {
+    if (device && device.gatt?.connected) {
+      device.gatt.disconnect()
+    }
+    setDevice(null)
+    setHrmState({ status: 'DISCONNECTED', message: 'Connection cancelled.' })
+  }, [device])
 
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
-      if (hrmState.status === 'CONNECTED' || hrmState.status === 'CONNECTING') {
+      if (
+        hrmState.status === 'CONNECTED' ||
+        hrmState.status === 'CONNECTING' ||
+        hrmState.status === 'WAITING_FOR_HR'
+      ) {
         return true
       }
 
@@ -84,127 +97,139 @@ const useBluetoothHRM = () => {
       }
 
       try {
+        let currentDevice = device
 
-        // 1. Try to reconnect to saved device first
-        let device = savedDevice
+        // 1. Auto-reconnect if a device ID is saved in cookies
         const savedDeviceId = getCookie('hrm_device_id')
-
         if (
-          !device &&
+          !currentDevice &&
           savedDeviceId &&
           typeof navigator.bluetooth.getDevices === 'function'
         ) {
           setHrmState({ status: 'RECONNECTING', message: 'Finding device...' })
           const devices = await navigator.bluetooth.getDevices()
-          device = devices.find((d) => d.id === savedDeviceId) || null
+          currentDevice = devices.find((d) => d.id === savedDeviceId) || null
         }
 
-        // 2. If no saved device, request a new one
-        if (!device) {
+        // 2. If no device, prompt the user to select one
+        if (!currentDevice) {
           setHrmState({ status: 'CONNECTING', message: 'Requesting device...' })
-          device = await navigator.bluetooth.requestDevice({
+          currentDevice = await navigator.bluetooth.requestDevice({
             filters: [{ services: [HR_SERVICE_UUID] }],
           })
-          setCookie('hrm_device_id', device.id)
+          setCookie('hrm_device_id', currentDevice.id)
         }
 
-        if (!device) {
+        if (!currentDevice) {
           setHrmState({
             status: 'ERROR',
             message: 'No device selected or found.',
           })
           return false
         }
+        setDevice(currentDevice)
 
-        // Save for future reconnections
-        setSavedDevice(device)
         setHrmState({
           status: 'CONNECTING',
-          message: `Connecting to ${device.name}...`,
-          deviceName: device.name,
+          message: `Connecting to ${currentDevice.name}...`,
+          deviceName: currentDevice.name,
         })
 
-        // 3. Connect to GATT server
-        const server = await device.gatt!.connect()
+        // 3. Connect to GATT and get characteristic
+        const server = await currentDevice.gatt!.connect()
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
-
-        // 3. Get the Heart Rate Measurement characteristic
         const characteristic = await service.getCharacteristic(
           HR_CHARACTERISTIC_UUID
         )
 
-        // 4. Start notifications to receive real-time data
-        await characteristic.startNotifications()
+        // Set a timeout for receiving the first heart rate data
+        const hrTimeout = setTimeout(() => {
+          setHrmState({
+            status: 'WAITING_FOR_HR',
+            message: 'Connected. Waiting for first heart rate signal...',
+            deviceName: currentDevice?.name,
+          })
+        }, 2000) // 2-second delay before showing "waiting" message
+
+        // 4. Add listener for heart rate data
+        const handleCharacteristicValueChanged = (event: Event) => {
+          clearTimeout(hrTimeout) // HR data received, cancel timeout
+          const target =
+            event.target as unknown as BluetoothRemoteGATTCharacteristic
+          const heartRate = parseHeartRate(target.value!)
+
+          // Once we get the first value, we are fully connected
+          if (hrmState.status !== 'CONNECTED') {
+            setHrmState({
+              status: 'CONNECTED',
+              message: `Streaming data from ${currentDevice?.name}`,
+              deviceName: currentDevice?.name,
+            })
+          }
+
+          const calculatedMaxHr = userAge
+            ? 220 - parseInt(userAge)
+            : MAX_HR_DEFAULT
+          const message: HrmInputMessage = {
+            type: 'HRM_INPUT',
+            data: {
+              value: heartRate,
+              maxHr: calculatedMaxHr,
+              name:
+                userName ||
+                `Bluetooth HRM (${currentDevice?.name || 'Unknown'})`,
+              age: userAge ? parseInt(userAge) : undefined,
+            },
+          }
+          sendData(message)
+        }
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
-          (event) => {
-            const target =
-              event.target as unknown as BluetoothRemoteGATTCharacteristic
-            const heartRate = parseHeartRate(target.value!)
-
-            // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---
-            const calculatedMaxHr = userAge
-              ? 220 - parseInt(userAge)
-              : MAX_HR_DEFAULT
-            const message: HrmInputMessage = {
-              type: 'HRM_INPUT',
-              data: {
-                value: heartRate,
-                maxHr: calculatedMaxHr,
-                name:
-                  userName || `Bluetooth HRM (${device?.name || 'Unknown'})`,
-                age: userAge ? parseInt(userAge) : undefined,
-              },
-            }
-            sendData(message)
-          }
+          handleCharacteristicValueChanged
         )
 
-        // Handle disconnection gracefully
-        device.addEventListener('gattserverdisconnected', () => {
+        // 5. Start notifications
+        await characteristic.startNotifications()
+
+        // Handle disconnection
+        currentDevice.addEventListener('gattserverdisconnected', () => {
+          characteristic.removeEventListener(
+            'characteristicvaluechanged',
+            handleCharacteristicValueChanged
+          )
+          clearTimeout(hrTimeout)
+          setDevice(null)
           setHrmState({
             status: 'DISCONNECTED',
             message: 'Device disconnected',
           })
-          setSavedDevice(null) // Clear saved device to allow re-pairing
         })
 
-        setHrmState({
-          status: 'CONNECTED',
-          message: `Streaming data from ${device.name}`,
-          deviceName: device.name,
-        })
         return true
       } catch (error: unknown) {
         console.error('Bluetooth connection failed:', error)
         let userFriendlyMessage = 'An unknown error occurred.'
 
-        if (error instanceof DOMException) {
-          if (error.name === 'AbortError') {
-            userFriendlyMessage = 'Device selection cancelled.'
-            setHrmState({ status: 'DISCONNECTED', message: userFriendlyMessage })
-          } else {
-            userFriendlyMessage = `Bluetooth Error: ${error.message}`
-            setHrmState({ status: 'ERROR', message: userFriendlyMessage })
-          }
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          userFriendlyMessage = 'Device selection cancelled.'
         } else if (error instanceof Error) {
-          userFriendlyMessage = error.message
-          setHrmState({ status: 'ERROR', message: userFriendlyMessage })
-        } else {
-          setHrmState({ status: 'ERROR', message: userFriendlyMessage })
+          userFriendlyMessage = `Error: ${error.message}`
         }
 
-        setSavedDevice(null)
+        setDevice(null)
+        setHrmState({ status: 'ERROR', message: userFriendlyMessage })
         return false
       }
     },
-    [connectionStatus, sendData, hrmState.status, savedDevice]
+    [connectionStatus, sendData, hrmState.status, device]
   )
 
   return {
     connectAndStream,
+    abortConnection,
     hrmState,
+    setHrmState,
     MAX_HR: MAX_HR_DEFAULT,
   }
 }
