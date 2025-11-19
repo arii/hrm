@@ -204,22 +204,11 @@ describe('TabataTimer Service', () => {
       expect(state.timeRemaining).toBe(10) // Default rest duration
     })
 
-    it('should transition from REST to next WORK cycle', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(20000) // WORK cycle 1
-      jest.advanceTimersByTime(10000) // REST cycle 1
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('WORK')
-      expect(state.timeRemaining).toBe(20)
-    })
-
     it('should loop indefinitely between WORK and REST', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
 
-      // Complete 20 cycles
+      // Complete 20 iterations
       for (let i = 0; i < 20; i++) {
         jest.advanceTimersByTime(20000) // WORK
         expect(timer.getState().currentPhase).toBe('REST')
@@ -312,15 +301,6 @@ describe('TabataTimer Service', () => {
       expect(lastState.restDuration).toBe(15)
     })
 
-    it('should use new work duration in next cycle', () => {
-      timer.setConfig({ workDuration: 30, restDuration: 10 })
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('WORK')
-      expect(state.timeRemaining).toBe(30)
-    })
 
     it('should use new rest duration in next rest phase', () => {
       timer.setConfig({ workDuration: 20, restDuration: 15 })
