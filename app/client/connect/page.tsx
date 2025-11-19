@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Container,
   Grid,
   TextField,
@@ -32,14 +33,12 @@ const getCookie = (name: string): string => {
 export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
-  const [isConnected, setIsConnected] = useState(false)
   const { connectionStatus, hrmData } = useWebSocket()
+  const { connectAndStream, hrmState } = useBluetoothHRM()
 
-  const {
-    connectAndStream,
-    deviceStatus,
-    isConnected: bluetoothConnected,
-  } = useBluetoothHRM()
+  const isConnecting =
+    hrmState.status === 'CONNECTING' || hrmState.status === 'RECONNECTING'
+  const isConnected = hrmState.status === 'CONNECTED'
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
@@ -49,18 +48,17 @@ export default function ConnectPage() {
     if (savedName) setUserName(savedName)
     if (savedAge) setUserAge(savedAge)
 
-    // Auto-connect only once when WebSocket first connects and we're not already connected
+    // Auto-connect logic
     if (
       savedName &&
       savedAge &&
       savedDeviceId &&
       connectionStatus === 'Connected' &&
-      !bluetoothConnected &&
-      !deviceStatus.includes('Connecting')
+      hrmState.status === 'DISCONNECTED'
     ) {
       connectAndStream(savedName, savedAge)
     }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
+  }, [connectionStatus, hrmState.status, connectAndStream])
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -73,10 +71,6 @@ export default function ConnectPage() {
 
     return () => clearTimeout(timer)
   }, [])
-
-  useEffect(() => {
-    setIsConnected(bluetoothConnected)
-  }, [bluetoothConnected])
 
   const handleConnect = async () => {
     if (!userName.trim()) {
@@ -127,9 +121,16 @@ export default function ConnectPage() {
           />
         </Box>
 
-        {deviceStatus.includes('Failed') && (
+        {hrmState.status === 'ERROR' && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {deviceStatus}
+            {hrmState.message}
+          </Alert>
+        )}
+
+        {(hrmState.status === 'CONNECTING' ||
+          hrmState.status === 'RECONNECTING') && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {hrmState.message}
           </Alert>
         )}
 
@@ -139,19 +140,22 @@ export default function ConnectPage() {
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={
+                !userName.trim() || !userAge.trim() || isConnecting
+              }
+              startIcon={isConnecting && <CircularProgress size={20} />}
             >
-              Connect Bluetooth HRM
+              {isConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
             </Button>
           ) : (
             <Button
               variant="outlined"
               size="large"
               onClick={() => {
-                setIsConnected(false)
-                // Clear saved device to force new pairing
+                // Disconnect logic might go into the hook in the future
                 document.cookie =
                   'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+                window.location.reload() // Force a state reset
               }}
               color="error"
             >
@@ -160,9 +164,9 @@ export default function ConnectPage() {
           )}
         </Box>
 
-        {isConnected && bluetoothConnected && (
+        {isConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
+            {hrmState.message}
           </Alert>
         )}
 

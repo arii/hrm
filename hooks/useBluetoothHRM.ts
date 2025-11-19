@@ -6,6 +6,20 @@
 import { useCallback, useState } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
+
+// Define a more structured state for the hook
+export type BluetoothHRMStatus =
+  | 'DISCONNECTED'
+  | 'CONNECTING'
+  | 'CONNECTED'
+  | 'ERROR'
+  | 'RECONNECTING'
+
+export interface BluetoothHRMState {
+  status: BluetoothHRMStatus
+  message: string
+  deviceName?: string
+}
 import useWebSocket from './useWebSocket'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
@@ -48,53 +62,69 @@ const getCookie = (name: string): string => {
 }
 
 const useBluetoothHRM = () => {
-  // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket()
-  const [deviceStatus, setDeviceStatus] = useState('Disconnected')
+  const [hrmState, setHrmState] = useState<BluetoothHRMState>({
+    status: 'DISCONNECTED',
+    message: 'Ready to connect',
+  })
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
 
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
-      if (deviceStatus.startsWith('Connected')) return true
+      if (hrmState.status === 'CONNECTED' || hrmState.status === 'CONNECTING') {
+        return true
+      }
 
       if (connectionStatus !== 'Connected') {
-        setDeviceStatus('Waiting for WebSocket connection...')
+        setHrmState({
+          status: 'DISCONNECTED',
+          message: 'Waiting for WebSocket...',
+        })
         return false
       }
 
       try {
-        setDeviceStatus('Connecting...') // More specific status
 
-        // 1. Try to reconnect to saved device first, otherwise request new device
+        // 1. Try to reconnect to saved device first
         let device = savedDevice
-        if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
-          if (savedDeviceId && navigator.bluetooth.getDevices) {
-            // Try to get previously paired device
-            const devices = await navigator.bluetooth.getDevices()
-            device = devices.find((d) => d.id === savedDeviceId) || null
-          }
+        const savedDeviceId = getCookie('hrm_device_id')
 
-          if (!device) {
-            // Request new device
-            device = await navigator.bluetooth.requestDevice({
-              filters: [{ services: [HR_SERVICE_UUID] }],
-            })
-            // Save device info
-            setCookie('hrm_device_id', device.id)
-          }
-          // After getting the device, save it to the state for future use
-          setSavedDevice(device)
+        if (
+          !device &&
+          savedDeviceId &&
+          typeof navigator.bluetooth.getDevices === 'function'
+        ) {
+          setHrmState({ status: 'RECONNECTING', message: 'Finding device...' })
+          const devices = await navigator.bluetooth.getDevices()
+          device = devices.find((d) => d.id === savedDeviceId) || null
+        }
+
+        // 2. If no saved device, request a new one
+        if (!device) {
+          setHrmState({ status: 'CONNECTING', message: 'Requesting device...' })
+          device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [HR_SERVICE_UUID] }],
+          })
+          setCookie('hrm_device_id', device.id)
         }
 
         if (!device) {
-          setDeviceStatus('Failed: No device selected or found.')
+          setHrmState({
+            status: 'ERROR',
+            message: 'No device selected or found.',
+          })
           return false
         }
 
-        setDeviceStatus(`Connecting to: ${device.name}...`)
+        // Save for future reconnections
+        setSavedDevice(device)
+        setHrmState({
+          status: 'CONNECTING',
+          message: `Connecting to ${device.name}...`,
+          deviceName: device.name,
+        })
 
-        // 2. Connect to GATT server
+        // 3. Connect to GATT server
         const server = await device.gatt!.connect()
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
 
@@ -133,59 +163,49 @@ const useBluetoothHRM = () => {
 
         // Handle disconnection gracefully
         device.addEventListener('gattserverdisconnected', () => {
-          setDeviceStatus('Disconnected (Server Lost)')
-          setSavedDevice(null) // Clear saved device on disconnect
+          setHrmState({
+            status: 'DISCONNECTED',
+            message: 'Device disconnected',
+          })
+          setSavedDevice(null) // Clear saved device to allow re-pairing
         })
 
-        setDeviceStatus(`Connected to: ${device.name}`)
-        return true // Signal success
+        setHrmState({
+          status: 'CONNECTED',
+          message: `Streaming data from ${device.name}`,
+          deviceName: device.name,
+        })
+        return true
       } catch (error: unknown) {
         console.error('Bluetooth connection failed:', error)
-        let userFriendlyMessage =
-          'An unknown error occurred during Bluetooth connection.'
+        let userFriendlyMessage = 'An unknown error occurred.'
 
         if (error instanceof DOMException) {
-          switch (error.name) {
-            case 'NotFoundError':
-              userFriendlyMessage =
-                'No Bluetooth device found. Ensure your device is powered on and nearby.'
-              break
-            case 'SecurityError':
-              userFriendlyMessage =
-                'Bluetooth permission denied. Please allow Bluetooth access in your browser.'
-              break
-            case 'NetworkError':
-              userFriendlyMessage =
-                'Bluetooth connection lost. Ensure your device is nearby and powered on.'
-              break
-            case 'NotSupportedError':
-              userFriendlyMessage =
-                'Web Bluetooth is not supported on this browser or device.'
-              break
-            case 'AbortError':
-              // This can happen if the user cancels the device picker. It's not a "failure" in the same way.
-              userFriendlyMessage = 'Device selection cancelled.'
-              break
-            default:
-              userFriendlyMessage = `Bluetooth error: ${error.name}.`
+          if (error.name === 'AbortError') {
+            userFriendlyMessage = 'Device selection cancelled.'
+            setHrmState({ status: 'DISCONNECTED', message: userFriendlyMessage })
+          } else {
+            userFriendlyMessage = `Bluetooth Error: ${error.message}`
+            setHrmState({ status: 'ERROR', message: userFriendlyMessage })
           }
         } else if (error instanceof Error) {
-          userFriendlyMessage = `Error: ${error.message}.`
+          userFriendlyMessage = error.message
+          setHrmState({ status: 'ERROR', message: userFriendlyMessage })
+        } else {
+          setHrmState({ status: 'ERROR', message: userFriendlyMessage })
         }
 
-        setDeviceStatus(`Failed: ${userFriendlyMessage}`)
-        setSavedDevice(null) // Clear saved device on failure to allow re-pairing
-        return false // Signal failure
+        setSavedDevice(null)
+        return false
       }
     },
-    [connectionStatus, sendData, deviceStatus, savedDevice]
+    [connectionStatus, sendData, hrmState.status, savedDevice]
   )
 
   return {
     connectAndStream,
-    deviceStatus,
+    hrmState,
     MAX_HR: MAX_HR_DEFAULT,
-    isConnected: deviceStatus.startsWith('Connected'),
   }
 }
 
