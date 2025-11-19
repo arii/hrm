@@ -34,6 +34,7 @@ describe('TabataTimer Service', () => {
       expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
       expect(state.mode).toBe('TABATA')
+      expect(state.cycle).toBe(0)
       expect(state.timeElapsed).toBe(0)
     })
 
@@ -41,6 +42,7 @@ describe('TabataTimer Service', () => {
       const state = timer.getState()
       expect(state.workDuration).toBe(20)
       expect(state.restDuration).toBe(10)
+      expect(state.totalCycles).toBe(8)
     })
   })
 
@@ -191,6 +193,7 @@ describe('TabataTimer Service', () => {
 
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
+      expect(state.cycle).toBe(1)
       expect(state.timeRemaining).toBe(20) // Default work duration
     })
 
@@ -201,24 +204,35 @@ describe('TabataTimer Service', () => {
 
       const state = timer.getState()
       expect(state.currentPhase).toBe('REST')
+      expect(state.cycle).toBe(1)
       expect(state.timeRemaining).toBe(10) // Default rest duration
     })
 
-    it('should loop indefinitely between WORK and REST', () => {
+    it('should transition from REST to next WORK cycle', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
-
-      // Complete 20 iterations
-      for (let i = 0; i < 20; i++) {
-        jest.advanceTimersByTime(20000) // WORK
-        expect(timer.getState().currentPhase).toBe('REST')
-        jest.advanceTimersByTime(10000) // REST
-        expect(timer.getState().currentPhase).toBe('WORK')
-      }
+      jest.advanceTimersByTime(20000) // WORK cycle 1
+      jest.advanceTimersByTime(10000) // REST cycle 1
 
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
-      expect(state.isRunning).toBe(true)
+      expect(state.cycle).toBe(2)
+      expect(state.timeRemaining).toBe(20)
+    })
+
+    it('should complete all cycles and transition to COOLDOWN', () => {
+      timer.handleCommand('START')
+      jest.advanceTimersByTime(5000) // PREPARE
+
+      // Complete 8 cycles (default totalCycles)
+      for (let i = 0; i < 8; i++) {
+        jest.advanceTimersByTime(20000) // WORK
+        jest.advanceTimersByTime(10000) // REST
+      }
+
+      const state = timer.getState()
+      expect(state.currentPhase).toBe('COOLDOWN')
+      expect(state.isRunning).toBe(false) // Auto-pauses after last cycle
     })
 
     it('should pause during any phase', () => {
@@ -255,6 +269,7 @@ describe('TabataTimer Service', () => {
       const stopped = timer.getState()
       expect(stopped.isRunning).toBe(false)
       expect(stopped.currentPhase).toBe('IDLE')
+      expect(stopped.cycle).toBe(0)
       expect(stopped.timeRemaining).toBe(20) // Default work duration
     })
   })
@@ -272,6 +287,11 @@ describe('TabataTimer Service', () => {
       expect(state.restDuration).toBe(15)
     })
 
+    it('should update total cycles', () => {
+      timer.setConfig({ workDuration: 20, restDuration: 10, totalCycles: 12 })
+      const state = timer.getState()
+      expect(state.totalCycles).toBe(12)
+    })
 
     it('should sanitize work duration to minimum of 1 second', () => {
       timer.setConfig({ workDuration: 0, restDuration: 10 })
@@ -301,6 +321,15 @@ describe('TabataTimer Service', () => {
       expect(lastState.restDuration).toBe(15)
     })
 
+    it('should use new work duration in next cycle', () => {
+      timer.setConfig({ workDuration: 30, restDuration: 10 })
+      timer.handleCommand('START')
+      jest.advanceTimersByTime(5000) // PREPARE
+
+      const state = timer.getState()
+      expect(state.currentPhase).toBe('WORK')
+      expect(state.timeRemaining).toBe(30)
+    })
 
     it('should use new rest duration in next rest phase', () => {
       timer.setConfig({ workDuration: 20, restDuration: 15 })
@@ -444,6 +473,8 @@ describe('TabataTimer Service', () => {
       expect(lastBroadcast).toHaveProperty('currentPhase')
       expect(lastBroadcast).toHaveProperty('timeRemaining')
       expect(lastBroadcast).toHaveProperty('timeElapsed')
+      expect(lastBroadcast).toHaveProperty('cycle')
+      expect(lastBroadcast).toHaveProperty('totalCycles')
       expect(lastBroadcast).toHaveProperty('mode')
       expect(lastBroadcast).toHaveProperty('workDuration')
       expect(lastBroadcast).toHaveProperty('restDuration')

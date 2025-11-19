@@ -20,6 +20,8 @@ const baseTimerData: TimerData = {
   currentPhase: 'IDLE',
   timeRemaining: 20,
   timeElapsed: 0,
+  cycle: 0,
+  totalCycles: 8,
   mode: 'TABATA',
   workDuration: 20,
   restDuration: 10,

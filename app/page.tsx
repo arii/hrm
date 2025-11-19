@@ -46,6 +46,8 @@ const Dashboard = () => {
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
             timeElapsed={timerData.timeElapsed}
+            cycle={timerData.cycle}
+            totalCycles={timerData.totalCycles}
             mode={timerData.mode}
             workDuration={timerData.workDuration}
             restDuration={timerData.restDuration}

@@ -28,6 +28,8 @@ export interface TimerData {
   currentPhase: TimerPhase
   timeRemaining: number // Used for countdowns (Tabata, Prepare)
   timeElapsed: number // Used for count-ups (Stopwatch)
+  cycle: number
+  totalCycles: number
   mode: TimerMode
   workDuration: number // seconds for Tabata work interval
   restDuration: number // seconds for Tabata rest interval
@@ -86,6 +88,7 @@ export interface TimerConfigMessage {
   type: 'TIMER_CONFIG'
   workDuration: number
   restDuration: number
+  totalCycles?: number
 }
 
 export interface SpotifyCommandMessage {
@@ -99,7 +102,6 @@ export interface SpotifyCommandMessage {
     | 'SET_VOLUME'
   deviceId?: string // Optional: for TRANSFER_PLAYBACK command
   volume?: number // Optional: for SET_VOLUME command (0-100)
-  playlistUri?: string // Optional: for PLAY command
 }
 
 /**
@@ -142,6 +144,7 @@ export const TimerConfigMessageSchema = z.object({
   type: z.literal('TIMER_CONFIG'),
   workDuration: z.number(),
   restDuration: z.number(),
+  totalCycles: z.number().optional(),
 })
 
 export const SpotifyCommandMessageSchema = z.object({
@@ -156,7 +159,6 @@ export const SpotifyCommandMessageSchema = z.object({
   ]),
   deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
   volume: z.number().min(0).max(100).optional(), // Optional: for SET_VOLUME command (0-100)
-  playlistUri: z.string().optional(), // Optional: for PLAY command
 })
 
 export const ClientCommandMessageSchema = z.union([

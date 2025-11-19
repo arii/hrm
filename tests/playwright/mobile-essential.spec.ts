@@ -14,7 +14,8 @@ test.describe('Mobile Essential Tests', () => {
 
   test('Mobile dashboard - portrait view', async ({ page }) => {
     await page.goto(BASE_URL)
-    await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
+    await page.waitForSelector('text=/WORK:|Timer/', { timeout: 10000 })
+    await page.waitForTimeout(3000)
 
     await expect(page).toHaveScreenshot('mobile-dashboard.png', {
       fullPage: true,
@@ -24,7 +25,8 @@ test.describe('Mobile Essential Tests', () => {
 
   test('Mobile controls - timer interface', async ({ page }) => {
     await page.goto(`${BASE_URL}/client/control`)
-    await expect(page.locator('text=/Timer Mode/')).toBeVisible()
+    await page.waitForSelector('text=/Timer Mode/', { timeout: 10000 })
+    await page.waitForTimeout(2000)
 
     await expect(page).toHaveScreenshot('mobile-controls.png', {
       fullPage: true,
@@ -34,7 +36,8 @@ test.describe('Mobile Essential Tests', () => {
 
   test('Mobile mock HRM interface', async ({ page }) => {
     await page.goto(`${BASE_URL}/client/mock`)
-    await expect(page.locator('text=/HRM Mock Streamer/')).toBeVisible()
+    await page.waitForSelector('text=/HRM Mock Streamer/', { timeout: 10000 })
+    await page.waitForTimeout(2000)
 
     await expect(page).toHaveScreenshot('mobile-mock.png', {
       fullPage: true,

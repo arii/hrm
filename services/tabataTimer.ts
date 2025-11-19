@@ -13,6 +13,7 @@ import {
 } from '../types/websocket'
 
 // --- Tabata Constants ---
+const DEFAULT_CYCLES = 8
 const DEFAULT_WORK_DURATION = 20 // seconds
 const DEFAULT_REST_DURATION = 10 // seconds
 const COOLDOWN_DURATION = 5 // seconds
@@ -27,6 +28,8 @@ interface DualModeTimerState {
   currentPhase: TimerPhase
   timeElapsed: number // For Stopwatch mode
   timeRemaining: number // For Tabata mode
+  cycle: number
+  totalCycles: number
   workDuration: number // Configurable work duration
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
@@ -46,6 +49,8 @@ class TabataTimer {
     currentPhase: 'IDLE',
     timeElapsed: 0,
     timeRemaining: 0,
+    cycle: 0,
+    totalCycles: DEFAULT_CYCLES,
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
@@ -83,8 +88,8 @@ class TabataTimer {
       return
     }
 
-    // Build marker per phase + second to avoid replaying countdown in same second
-    const marker = `${phase}-${remaining}`
+    // Build marker per phase + cycle + second to avoid replaying countdown in same second
+    const marker = `${phase}-${this.state.cycle}-${remaining}`
     // Play short beep for countdown during PREPARE, WORK, and REST phases when 1-3 seconds remain
     if (remaining >= 1 && remaining <= 3 && this.countdownMarker !== marker) {
       this.queueSound('COUNTDOWN')
@@ -99,6 +104,8 @@ class TabataTimer {
       currentPhase: this.state.currentPhase,
       timeRemaining: this.state.timeRemaining,
       timeElapsed: this.state.timeElapsed,
+      cycle: this.state.cycle,
+      totalCycles: this.state.totalCycles,
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,
@@ -147,6 +154,7 @@ class TabataTimer {
     if (this.state.currentPhase === 'IDLE') {
       this.state.currentPhase = 'PREPARE'
       this.state.timeRemaining = START_COUNTDOWN_DURATION
+      this.state.cycle = 0 // Pre-start
       this.resetCountdownMarker()
       console.log(
         `Starting universal PREPARE countdown for ${this.state.mode} mode.`
@@ -189,6 +197,7 @@ class TabataTimer {
       currentPhase: 'IDLE',
       timeElapsed: 0,
       timeRemaining: this.state.mode === 'TABATA' ? this.state.workDuration : 0,
+      cycle: 0,
       soundToPlay: undefined,
     }
     this.resetCountdownMarker()
@@ -201,12 +210,20 @@ class TabataTimer {
   }
 
   // --- Configuration ---
-  public setConfig(config: { workDuration: number; restDuration: number }) {
+  public setConfig(config: {
+    workDuration: number
+    restDuration: number
+    totalCycles?: number
+  }) {
     const sanitizedWork = Math.max(1, Math.floor(config.workDuration))
     const sanitizedRest = Math.max(0, Math.floor(config.restDuration))
+    const sanitizedCycles = config.totalCycles
+      ? Math.max(1, Math.floor(config.totalCycles))
+      : this.state.totalCycles
 
     this.state.workDuration = sanitizedWork
     this.state.restDuration = sanitizedRest
+    this.state.totalCycles = sanitizedCycles
 
     // If the timer is not running, update timeRemaining to reflect the new work duration.
     // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
@@ -215,7 +232,7 @@ class TabataTimer {
     }
 
     console.log(
-      `Timer configuration updated. Work: ${sanitizedWork}s, Rest: ${sanitizedRest}s`
+      `Timer configuration updated. Work: ${sanitizedWork}s, Rest: ${sanitizedRest}s, Cycles: ${sanitizedCycles}`
     )
     this.broadcastState({ timerData: this.getState() })
   }
@@ -235,27 +252,34 @@ class TabataTimer {
           this.startTime = Date.now() // Reset start time for accurate count up
           console.log('Transition from PREPARE to STOPWATCH RUNNING.')
         } else {
-          // Start Tabata WORK phase
+          // Start Tabata Cycle 1 WORK
+          this.state.cycle = 1
           this.state.currentPhase = 'WORK'
           this.state.timeRemaining = this.state.workDuration
-          console.log('Transition from PREPARE to TABATA WORK.')
+          console.log('Transition from PREPARE to TABATA WORK (Cycle 1).')
         }
         break
 
       case 'WORK':
-        // Infinite loop: WORK -> REST
-        this.queueSound('REST')
-        this.state.currentPhase = 'REST'
-        this.state.timeRemaining = this.state.restDuration
-        console.log('Transition to REST.')
+        this.queueSound('REST') // Long beep when transitioning to rest
+        if (this.state.cycle < this.state.totalCycles) {
+          this.state.currentPhase = 'REST'
+          this.state.timeRemaining = this.state.restDuration
+          console.log(`Transition to REST for cycle ${this.state.cycle}`)
+        } else {
+          this.state.currentPhase = 'COOLDOWN'
+          this.state.timeRemaining = COOLDOWN_DURATION
+          this.pauseTimer() // Auto-pause after last cycle
+          console.log('Tabata finished. Transition to COOLDOWN.')
+        }
         break
 
       case 'REST':
-        // Infinite loop: REST -> WORK
-        this.queueSound('WORK')
+        this.queueSound('WORK') // Long beep when transitioning to work
+        this.state.cycle += 1
         this.state.currentPhase = 'WORK'
         this.state.timeRemaining = this.state.workDuration
-        console.log('Transition to WORK.')
+        console.log(`Transition to WORK for cycle ${this.state.cycle}`)
         break
 
       case 'IDLE':
@@ -291,6 +315,7 @@ class TabataTimer {
     this.state.currentPhase = 'IDLE'
     this.state.timeRemaining = mode === 'TABATA' ? this.state.workDuration : 0
     this.state.timeElapsed = 0
+    this.state.cycle = 0
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
     this.broadcastState({ timerData: this.getState() })
