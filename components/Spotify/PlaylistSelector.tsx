@@ -107,23 +107,39 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
     if (!debouncedSearch.trim()) {
       return allPlaylists;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 554cd5b84ebff42a5b01602823e73c3c3b2a3407
     // When searching, combine local matches with Spotify search results
     const query = debouncedSearch.toLowerCase();
     const localMatches = allPlaylists.filter(
       (playlist) => playlist.name.toLowerCase().includes(query)
     );
+<<<<<<< HEAD
 
     // Combine local matches with search results, removing duplicates by URI
     const combined = [...localMatches];
     const existingUris = new Set(localMatches.map(p => p.uri));
 
+=======
+    
+    // Combine local matches with search results, removing duplicates by URI
+    const combined = [...localMatches];
+    const existingUris = new Set(localMatches.map(p => p.uri));
+    
+>>>>>>> 554cd5b84ebff42a5b01602823e73c3c3b2a3407
     searchResults.forEach((playlist) => {
       if (!existingUris.has(playlist.uri)) {
         combined.push(playlist);
       }
     });
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 554cd5b84ebff42a5b01602823e73c3c3b2a3407
     return combined;
   }, [allPlaylists, debouncedSearch, searchResults]);
 

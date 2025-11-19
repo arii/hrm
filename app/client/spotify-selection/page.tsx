@@ -48,8 +48,13 @@ const SpotifySelectionPage = () => {
 
       <Card>
         <CardContent>
+<<<<<<< HEAD
           {spotifyData.trackName &&
            spotifyData.trackName !== 'Awaiting Login...' &&
+=======
+          {spotifyData.trackName && 
+           spotifyData.trackName !== 'Awaiting Login...' && 
+>>>>>>> 554cd5b84ebff42a5b01602823e73c3c3b2a3407
            spotifyData.trackName !== 'Requires Login' ? (
             <Box sx={{textAlign: 'center'}}>
               <Typography variant="h6">Now Playing</Typography>

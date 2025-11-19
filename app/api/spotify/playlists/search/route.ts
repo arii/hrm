@@ -3,7 +3,7 @@
 // This endpoint is used by the PlaylistSelector component to search for popular playlists
 
 import { authOptions } from '@/lib/auth'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -59,22 +59,41 @@ export async function GET(req: NextRequest) {
     // 5. Search for playlists using the SDK
     // The search method searches across tracks, albums, artists, and playlists
     // Method signature: search(query: string, types: SearchType[], limit?: number, market?: string)
-    const searchResponse = await spotify.search(query, ['playlist'], 20)
+    // const searchResponse = await spotify.search(query, ['playlist'], 20)
+    // Pass 'undefined' for the 3rd parameter (market) to set the 4th (limit)
+    const searchResponse = await spotify.search(
+      query,
+      ['playlist'],
+      undefined,
+      20
+    )
 
     // 6. Map search results to include full data
-    const searchResults = (searchResponse.playlists?.items || []).map((playlist) => ({
-      id: playlist.id,
-      name: playlist.name,
-      uri: playlist.uri,
-      description: playlist.description || null,
-      imageUrl: playlist.images && playlist.images.length > 0
-        ? playlist.images[0].url
-        : null,
-      trackCount: playlist.tracks?.total || 0,
-      owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
-      public: playlist.public || false,
-      isSearchResult: true, // Flag to distinguish from user/preset playlists
-    }))
+    const searchResults = (searchResponse.playlists?.items || []).map(
+      (playlist) => {
+        // Assert the type here
+        const fullPlaylist = playlist as SimplifiedPlaylist
+
+        return {
+          id: fullPlaylist.id,
+          name: fullPlaylist.name,
+          uri: fullPlaylist.uri,
+          description: fullPlaylist.description || null,
+          imageUrl:
+            fullPlaylist.images && fullPlaylist.images.length > 0
+              ? fullPlaylist.images[0].url
+              : null,
+          // This line will now work
+          trackCount: fullPlaylist.tracks?.total || 0,
+          owner:
+            fullPlaylist.owner?.display_name ||
+            fullPlaylist.owner?.id ||
+            'Unknown',
+          public: fullPlaylist.public || false,
+          isSearchResult: true,
+        }
+      }
+    )
 
     return NextResponse.json({ items: searchResults })
   } catch (error) {
