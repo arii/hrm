@@ -39,3 +39,10 @@ export const getAPIURL = (endpoint: string): string => {
   const baseUrl = getBaseURL()
   return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
 }
+
+export const getSpotifyCallbackURL = (): string => {
+  return (
+    process.env.SPOTIFY_CALLBACK_URL ||
+    `${getBaseURL()}/api/auth/callback/spotify`
+  )
+}

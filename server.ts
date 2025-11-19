@@ -19,6 +19,7 @@ import { UnifiedStateMessage } from './types/websocket'
 import SpotifyPolling from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
+import { getBaseURL } from './utils/urls.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -32,7 +33,7 @@ const app = next({ dev, hostname, port })
 
 console.log(`Starting server in ${dev ? 'development' : 'production'} mode`)
 console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
-console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`)
+console.log(`NEXTAUTH_URL: ${getBaseURL()}`)
 console.log(`Hostname: ${hostname}, Port: ${port}`)
 const handle = app.getRequestHandler()
 

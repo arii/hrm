@@ -105,6 +105,8 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
+    // Always reload the token file before returning the access token
+    this.loadTokens()
     if (!this.currentToken) return null
 
     // Check if token needs refresh
