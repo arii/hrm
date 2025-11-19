@@ -42,6 +42,7 @@ export const getAPIURL = (endpoint: string): string => {
 
 export const getSpotifyCallbackURL = (): string => {
   return (
-    process.env.SPOTIFY_CALLBACK_URL || `${getBaseURL()}/api/auth/callback/spotify`
+    process.env.SPOTIFY_CALLBACK_URL ||
+    `${getBaseURL()}/api/auth/callback/spotify`
   )
 }
