@@ -41,6 +41,7 @@ class TabataTimer {
     play: () => void
     pause: () => void
     setVolume: (volume: number) => void
+    next: () => void
   }
   private interval: NodeJS.Timeout | null = null
   private startTime: number | null = null
@@ -66,6 +67,7 @@ class TabataTimer {
       play: () => void
       pause: () => void
       setVolume: (volume: number) => void
+      next: () => void
     }
   ) {
     this.broadcastState = broadcastState
@@ -181,7 +183,13 @@ class TabataTimer {
 
     this.interval = setInterval(this.tick, 1000)
     this.broadcastState({ timerData: this.getState() })
-    if (this.state.mode === 'TABATA') this.spotifyService?.play()
+
+    if (this.state.mode === 'TABATA') {
+      this.spotifyService?.play()
+    } else if (this.state.mode === 'STOPWATCH') {
+      this.spotifyService?.next()
+      this.spotifyService?.play()
+    }
   }
 
   private pauseTimer() {
@@ -224,7 +232,7 @@ class TabataTimer {
 
     console.log('Timer stopped and reset.')
     this.broadcastState({ timerData: this.getState() })
-    if (this.state.mode === 'TABATA') this.spotifyService?.pause()
+    this.spotifyService?.pause()
   }
 
   // --- Configuration ---

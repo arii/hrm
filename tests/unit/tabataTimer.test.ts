@@ -469,13 +469,18 @@ describe('TabataTimer Service', () => {
       expect(spotifyService.pause).toHaveBeenCalled()
     })
 
-    it('should not call spotifyService when in STOPWATCH mode', () => {
+    it('should call spotifyService.next() and .play() when starting in STOPWATCH mode', () => {
       timer.setMode('STOPWATCH')
       timer.handleCommand('START')
-      timer.handleCommand('PAUSE')
+      expect(spotifyService.next).toHaveBeenCalled()
+      expect(spotifyService.play).toHaveBeenCalled()
+    })
+
+    it('should call spotifyService.pause() when stopping in STOPWATCH mode', () => {
+      timer.setMode('STOPWATCH')
+      timer.handleCommand('START') // to make it runnable
       timer.handleCommand('STOP')
-      expect(spotifyService.play).not.toHaveBeenCalled()
-      expect(spotifyService.pause).not.toHaveBeenCalled()
+      expect(spotifyService.pause).toHaveBeenCalled()
     })
   })
 
