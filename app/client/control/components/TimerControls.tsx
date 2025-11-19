@@ -185,6 +185,32 @@ const TimerControls = () => {
           <Stack spacing={4} sx={{ mb: 4 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+                Timer Presets
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setWorkTime(60)
+                    setRestTime(60)
+                  }}
+                >
+                  EMOM
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setWorkTime(20)
+                    setRestTime(10)
+                  }}
+                >
+                  Tabata
+                </Button>
+              </Stack>
+            </Box>
+
+            <Box>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 {' '}
                 Work Duration (seconds)
               </Typography>
@@ -196,7 +222,7 @@ const TimerControls = () => {
               >
                 <IconButton
                   color="primary"
-                  onClick={() => setWorkTime((prev) => Math.max(5, prev - 5))}
+                  onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease work duration"
                   sx={{
                     backgroundColor: 'grey.700',
@@ -212,7 +238,7 @@ const TimerControls = () => {
                   value={workTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
-                    const next = Math.max(5, val)
+                    const next = Math.max(0, val)
                     latestWork.current = next
                     setWorkTime(next)
                   }}

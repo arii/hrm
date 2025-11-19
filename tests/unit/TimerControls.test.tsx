@@ -77,4 +77,64 @@ describe('TimerControls', () => {
       })
     )
   })
+  it('should update work and rest durations when preset buttons are clicked', async () => {
+    const sendData = jest.fn()
+    mockedUseWebSocket.mockReturnValue({
+      hrmData: [],
+      timerData: { ...baseTimerData },
+      spotifyData: { trackName: '', artist: '', isPlaying: false },
+      spotifyServiceInitialized: true,
+      connectionStatus: 'Connected',
+      sendData,
+    } as unknown as UseWebSocketReturn)
+
+    render(<TimerControls />)
+    const user = userEvent.setup()
+
+    const workInput = screen.getByTestId('work-duration-input')
+    const restInput = screen.getByTestId('rest-duration-input')
+
+    // Test EMOM preset
+    const emomButton = screen.getByRole('button', { name: /emom/i })
+    await user.click(emomButton)
+    expect(workInput).toHaveValue(60)
+    expect(restInput).toHaveValue(60)
+
+    // Test Tabata preset
+    const tabataButtons = screen.getAllByRole('button', { name: /tabata/i })
+    const tabataButton = tabataButtons[1]
+    await user.click(tabataButton)
+    expect(workInput).toHaveValue(20)
+    expect(restInput).toHaveValue(10)
+  })
+
+  it('should not allow work duration to be less than 0', async () => {
+    const sendData = jest.fn()
+    mockedUseWebSocket.mockReturnValue({
+      hrmData: [],
+      timerData: { ...baseTimerData },
+      spotifyData: { trackName: '', artist: '', isPlaying: false },
+      spotifyServiceInitialized: true,
+      connectionStatus: 'Connected',
+      sendData,
+    } as unknown as UseWebSocketReturn)
+
+    render(<TimerControls />)
+    const user = userEvent.setup()
+
+    const workInput = screen.getByTestId('work-duration-input')
+    const decreaseButton = screen.getByLabelText(/decrease work duration/i)
+
+    // Set initial work time to 5
+    fireEvent.change(workInput, { target: { value: '5' } })
+    expect(workInput).toHaveValue(5)
+
+    // Click decrease button, should go to 0
+    await user.click(decreaseButton)
+    expect(workInput).toHaveValue(0)
+
+    // Click again, should stay at 0
+    await user.click(decreaseButton)
+    expect(workInput).toHaveValue(0)
+  })
 })
