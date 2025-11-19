@@ -5,6 +5,7 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { TimerData } from '../../types/websocket'
+import { MockSpotifyService } from './mocks/spotifyService'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
@@ -12,6 +13,7 @@ describe('TabataTimer Service', () => {
     (data: Partial<{ timerData: TimerData }>) => void
   >
   let broadcastedStates: TimerData[]
+  let spotifyService: MockSpotifyService
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -21,7 +23,8 @@ describe('TabataTimer Service', () => {
         broadcastedStates.push(data.timerData)
       }
     })
-    timer = new TabataTimer(broadcastMock)
+    spotifyService = new MockSpotifyService()
+    timer = new TabataTimer(broadcastMock, spotifyService)
   })
 
   afterEach(() => {
@@ -272,7 +275,6 @@ describe('TabataTimer Service', () => {
       expect(state.restDuration).toBe(15)
     })
 
-
     it('should sanitize work duration to minimum of 1 second', () => {
       timer.setConfig({ workDuration: 0, restDuration: 10 })
       const state = timer.getState()
@@ -300,7 +302,6 @@ describe('TabataTimer Service', () => {
       expect(lastState.workDuration).toBe(30)
       expect(lastState.restDuration).toBe(15)
     })
-
 
     it('should use new rest duration in next rest phase', () => {
       timer.setConfig({ workDuration: 20, restDuration: 15 })
@@ -447,6 +448,75 @@ describe('TabataTimer Service', () => {
       expect(lastBroadcast).toHaveProperty('mode')
       expect(lastBroadcast).toHaveProperty('workDuration')
       expect(lastBroadcast).toHaveProperty('restDuration')
+    })
+  })
+
+  describe('Spotify Integration', () => {
+    it('should call spotifyService.play() when timer starts', () => {
+      timer.handleCommand('START')
+      expect(spotifyService.play).toHaveBeenCalled()
+    })
+
+    it('should call spotifyService.pause() when timer is paused', () => {
+      timer.handleCommand('START')
+      timer.handleCommand('PAUSE')
+      expect(spotifyService.pause).toHaveBeenCalled()
+    })
+
+    it('should call spotifyService.pause() when timer is stopped', () => {
+      timer.handleCommand('START')
+      timer.handleCommand('STOP')
+      expect(spotifyService.pause).toHaveBeenCalled()
+    })
+
+    it('should not call spotifyService when in STOPWATCH mode', () => {
+      timer.setMode('STOPWATCH')
+      timer.handleCommand('START')
+      timer.handleCommand('PAUSE')
+      timer.handleCommand('STOP')
+      expect(spotifyService.play).not.toHaveBeenCalled()
+      expect(spotifyService.pause).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Volume Control', () => {
+    it('should have a default volume of 100', () => {
+      const state = timer.getState()
+      expect(state.volume).toBe(100)
+    })
+
+    it('should update the volume when setVolume is called', () => {
+      timer.setVolume(50)
+      const state = timer.getState()
+      expect(state.volume).toBe(50)
+    })
+
+    it('should clamp the volume between 0 and 100', () => {
+      timer.setVolume(150)
+      let state = timer.getState()
+      expect(state.volume).toBe(100)
+
+      timer.setVolume(-50)
+      state = timer.getState()
+      expect(state.volume).toBe(0)
+    })
+
+    it('should broadcast the volume when it changes', () => {
+      timer.setVolume(50)
+      const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
+      expect(lastBroadcast.volume).toBe(50)
+    })
+
+    it('should call spotifyService.setVolume when volume is changed in TABATA mode', () => {
+      timer.setMode('TABATA')
+      timer.setVolume(75)
+      expect(spotifyService.setVolume).toHaveBeenCalledWith(75)
+    })
+
+    it('should not call spotifyService.setVolume when volume is changed in STOPWATCH mode', () => {
+      timer.setMode('STOPWATCH')
+      timer.setVolume(75)
+      expect(spotifyService.setVolume).not.toHaveBeenCalled()
     })
   })
 })

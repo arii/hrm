@@ -31,11 +31,17 @@ interface DualModeTimerState {
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
+  volume: number // 0-100
 }
 
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
   private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+  private spotifyService?: {
+    play: () => void
+    pause: () => void
+    setVolume: (volume: number) => void
+  }
   private interval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private runningTotal: number = 0 // Stored elapsed time when paused (in seconds)
@@ -49,12 +55,21 @@ class TabataTimer {
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
+    volume: 100,
   }
 
   private countdownMarker: string | null = null
 
-  constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
+  constructor(
+    broadcastState: (data: Partial<UnifiedStateMessage>) => void,
+    spotifyService?: {
+      play: () => void
+      pause: () => void
+      setVolume: (volume: number) => void
+    }
+  ) {
     this.broadcastState = broadcastState
+    this.spotifyService = spotifyService
     console.log('Dual-Mode Timer Service Initialized.')
   }
 
@@ -104,7 +119,16 @@ class TabataTimer {
       restDuration: this.state.restDuration,
       soundToPlay: this.state.soundToPlay,
       soundEventId: this.state.soundEventId,
+      volume: this.state.volume,
     }
+  }
+
+  public setVolume(volume: number) {
+    this.state.volume = Math.max(0, Math.min(100, volume))
+    if (this.state.mode === 'TABATA') {
+      this.spotifyService?.setVolume(this.state.volume)
+    }
+    this.broadcastState({ timerData: this.getState() })
   }
 
   // --- Core Timer Logic ---
@@ -157,6 +181,7 @@ class TabataTimer {
 
     this.interval = setInterval(this.tick, 1000)
     this.broadcastState({ timerData: this.getState() })
+    if (this.state.mode === 'TABATA') this.spotifyService?.play()
   }
 
   private pauseTimer() {
@@ -177,6 +202,7 @@ class TabataTimer {
 
     console.log('Timer paused.')
     this.broadcastState({ timerData: this.getState() })
+    if (this.state.mode === 'TABATA') this.spotifyService?.pause()
   }
 
   private stopTimer() {
@@ -198,6 +224,7 @@ class TabataTimer {
 
     console.log('Timer stopped and reset.')
     this.broadcastState({ timerData: this.getState() })
+    if (this.state.mode === 'TABATA') this.spotifyService?.pause()
   }
 
   // --- Configuration ---
