@@ -156,7 +156,6 @@ const handleIncomingMessage = (
           tabataServiceInstance.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
-            totalCycles: message.totalCycles,
           })
         }
         break

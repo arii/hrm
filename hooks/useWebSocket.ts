@@ -29,8 +29,6 @@ const INITIAL_STATE: AppState = {
     currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
-    cycle: 0,
-    totalCycles: 8,
     mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
