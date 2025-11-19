@@ -3,9 +3,9 @@
  * Shared Test Helpers: Reusable functions for consistent test setup
  */
 import type { BrowserContext, Page } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 // Helper function to wait for page ready signal
 export const waitForPageReady = async (page: Page) => {

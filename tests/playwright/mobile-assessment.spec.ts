@@ -3,9 +3,9 @@
  * Mobile Assessment Tests: Focus on mobile-specific UI/UX and touch interactions
  */
 import { test, expect, type Page } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 test.describe('Mobile HRM Assessment', () => {
   test.beforeEach(async ({ page }) => {
