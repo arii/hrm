@@ -3,9 +3,9 @@
  * Workflow Assessment Tests: End-to-end user scenarios with video recording
  */
 import { test, expect } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL = getBaseURL()
+const BASE_URL =
+  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
 
 test.describe('HRM Workflow Assessment', () => {
   test.beforeEach(async ({ page }) => {

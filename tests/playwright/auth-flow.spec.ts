@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
 
-const BASE = getBaseURL()
+const BASE =
+  process.env.TEST_BASE_URL ||
+  process.env.NEXTAUTH_URL ||
+  'http://127.0.0.1:3000'
 
 test.describe('Spotify Authentication', () => {
   test('auth check endpoint responds', async ({ request }) => {

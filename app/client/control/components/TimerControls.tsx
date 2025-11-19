@@ -172,14 +172,16 @@ const TimerControls = () => {
           </Stack>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
-            {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#EF4444' }}>
-            {timerData.currentPhase}
-          </Typography>
-        </Box>
+        {timerData.isRunning && (
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+              Timer Running
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#EF4444' }}>
+              {timerData.currentPhase}
+            </Typography>
+          </Box>
+        )}
 
         {timerData.mode === 'TABATA' && (
           <Stack spacing={4} sx={{ mb: 4 }}>
@@ -191,8 +193,11 @@ const TimerControls = () => {
                 <Button
                   variant="outlined"
                   onClick={() => {
+                    latestWork.current = 60
+                    latestRest.current = 60
                     setWorkTime(60)
                     setRestTime(60)
+                    sendTimerCommand('START')
                   }}
                 >
                   EMOM
@@ -200,8 +205,11 @@ const TimerControls = () => {
                 <Button
                   variant="outlined"
                   onClick={() => {
+                    latestWork.current = 20
+                    latestRest.current = 10
                     setWorkTime(20)
                     setRestTime(10)
+                    sendTimerCommand('START')
                   }}
                 >
                   Tabata

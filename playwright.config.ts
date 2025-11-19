@@ -4,7 +4,6 @@
  * Supports visual regression, mobile testing, and video recording
  */
 import { defineConfig, devices } from '@playwright/test'
-import { getBaseURL } from './utils/urls'
 
 // Check if Spotify/NextAuth credentials are available
 const hasSpotifyCredentials = !!(
@@ -57,7 +56,10 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL: getBaseURL(),
+    baseURL:
+      process.env.BASE_URL ||
+      process.env.NEXTAUTH_URL ||
+      'http://127.0.0.1:3000',
 
     // Screenshot settings
     screenshot: {

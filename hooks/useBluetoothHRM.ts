@@ -54,16 +54,16 @@ const useBluetoothHRM = () => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
 
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: string): Promise<boolean> => {
-      if (deviceStatus.startsWith('Connected')) return true
+    async (userName?: string, userAge?: string) => {
+      if (deviceStatus.startsWith('Connected')) return
 
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
-        return false
+        return
       }
 
       try {
-        setDeviceStatus('Connecting...') // More specific status
+        setDeviceStatus('Connecting')
 
         // 1. Try to reconnect to saved device first, otherwise request new device
         let device = savedDevice
@@ -82,17 +82,11 @@ const useBluetoothHRM = () => {
             })
             // Save device info
             setCookie('hrm_device_id', device.id)
+            setSavedDevice(device)
           }
-          // After getting the device, save it to the state for future use
-          setSavedDevice(device)
         }
 
-        if (!device) {
-          setDeviceStatus('Failed: No device selected or found.')
-          return false
-        }
-
-        setDeviceStatus(`Connecting to: ${device.name}...`)
+        setDeviceStatus(`Connected to: ${device.name}`)
 
         // 2. Connect to GATT server
         const server = await device.gatt!.connect()
@@ -113,6 +107,8 @@ const useBluetoothHRM = () => {
               event.target as unknown as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
 
+            console.log('[Bluetooth HRM] Heart rate received:', heartRate)
+
             // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---
             const calculatedMaxHr = userAge
               ? 220 - parseInt(userAge)
@@ -122,11 +118,11 @@ const useBluetoothHRM = () => {
               data: {
                 value: heartRate,
                 maxHr: calculatedMaxHr,
-                name:
-                  userName || `Bluetooth HRM (${device?.name || 'Unknown'})`,
+                name: userName || `Bluetooth HRM (${device.name || 'Unknown'})`,
                 age: userAge ? parseInt(userAge) : undefined,
               },
             }
+            console.log('[Bluetooth HRM] Sending message:', message)
             sendData(message)
           }
         )
@@ -134,25 +130,25 @@ const useBluetoothHRM = () => {
         // Handle disconnection gracefully
         device.addEventListener('gattserverdisconnected', () => {
           setDeviceStatus('Disconnected (Server Lost)')
-          setSavedDevice(null) // Clear saved device on disconnect
+          setSavedDevice(null)
         })
-
-        setDeviceStatus(`Connected to: ${device.name}`)
-        return true // Signal success
       } catch (error: unknown) {
         console.error('Bluetooth connection failed:', error)
         let userFriendlyMessage =
           'An unknown error occurred during Bluetooth connection.'
+        let suggestChromeFlags = false
 
         if (error instanceof DOMException) {
           switch (error.name) {
             case 'NotFoundError':
               userFriendlyMessage =
-                'No Bluetooth device found. Ensure your device is powered on and nearby.'
+                'No Bluetooth device found. Ensure your device is powered on and nearby. If Bluetooth is disabled, visit chrome://flags to enable it.'
+              suggestChromeFlags = true
               break
             case 'SecurityError':
               userFriendlyMessage =
-                'Bluetooth permission denied. Please allow Bluetooth access in your browser.'
+                'Bluetooth permission denied. Enable Web Bluetooth at chrome://flags, then refresh and try again.'
+              suggestChromeFlags = true
               break
             case 'NetworkError':
               userFriendlyMessage =
@@ -160,25 +156,30 @@ const useBluetoothHRM = () => {
               break
             case 'NotSupportedError':
               userFriendlyMessage =
-                'Web Bluetooth is not supported on this browser or device.'
+                "Web Bluetooth is not supported. Enable it at chrome://flags (search 'Web Bluetooth'), then refresh the page."
+              suggestChromeFlags = true
               break
             case 'AbortError':
-              // This can happen if the user cancels the device picker. It's not a "failure" in the same way.
-              userFriendlyMessage = 'Device selection cancelled.'
+              userFriendlyMessage =
+                'Bluetooth connection attempt was cancelled or aborted by the system.'
               break
             default:
-              userFriendlyMessage = `Bluetooth error: ${error.name}.`
+              userFriendlyMessage = `Bluetooth error: ${error.name}. If unsupported, try enabling Web Bluetooth at chrome://flags.`
+              suggestChromeFlags = true
           }
         } else if (error instanceof Error) {
-          userFriendlyMessage = `Error: ${error.message}.`
+          userFriendlyMessage = `Error: ${error.message}. If Web Bluetooth is not available, enable it at chrome://flags.`
+          suggestChromeFlags = true
         }
 
-        setDeviceStatus(`Failed: ${userFriendlyMessage}`)
-        setSavedDevice(null) // Clear saved device on failure to allow re-pairing
-        return false // Signal failure
+        const fullMessage = suggestChromeFlags
+          ? `${userFriendlyMessage} [Visit chrome://flags to enable Web Bluetooth]`
+          : userFriendlyMessage
+
+        setDeviceStatus(`Failed: ${fullMessage}`)
       }
     },
-    [connectionStatus, sendData, deviceStatus, savedDevice]
+    [deviceStatus, connectionStatus, sendData, savedDevice]
   )
 
   return {

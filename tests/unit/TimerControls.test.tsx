@@ -61,7 +61,7 @@ describe('TimerControls', () => {
     fireEvent.change(workInput, { target: { value: '45' } })
     fireEvent.change(restInput, { target: { value: '15' } })
 
-    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
+    // Wait for debounce and React state updates
     act(() => {
       jest.advanceTimersByTime(600)
     })
@@ -77,7 +77,7 @@ describe('TimerControls', () => {
       })
     )
   })
-  it('should update work and rest durations when preset buttons are clicked', async () => {
+  it('should update work and rest durations and start the timer when preset buttons are clicked', async () => {
     const sendData = jest.fn()
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
@@ -89,7 +89,7 @@ describe('TimerControls', () => {
     } as unknown as UseWebSocketReturn)
 
     render(<TimerControls />)
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
     const workInput = screen.getByTestId('work-duration-input')
     const restInput = screen.getByTestId('rest-duration-input')
@@ -99,6 +99,12 @@ describe('TimerControls', () => {
     await user.click(emomButton)
     expect(workInput).toHaveValue(60)
     expect(restInput).toHaveValue(60)
+    expect(sendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
+    )
 
     // Test Tabata preset
     const tabataButtons = screen.getAllByRole('button', { name: /tabata/i })
@@ -106,6 +112,12 @@ describe('TimerControls', () => {
     await user.click(tabataButton)
     expect(workInput).toHaveValue(20)
     expect(restInput).toHaveValue(10)
+    expect(sendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
+    )
   })
 
   it('should not allow work duration to be less than 0', async () => {
@@ -120,7 +132,7 @@ describe('TimerControls', () => {
     } as unknown as UseWebSocketReturn)
 
     render(<TimerControls />)
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
     const workInput = screen.getByTestId('work-duration-input')
     const decreaseButton = screen.getByLabelText(/decrease work duration/i)
@@ -136,5 +148,20 @@ describe('TimerControls', () => {
     // Click again, should stay at 0
     await user.click(decreaseButton)
     expect(workInput).toHaveValue(0)
+  })
+
+  it('should not show "Timer Stopped" text when timer is not running', () => {
+    mockedUseWebSocket.mockReturnValue({
+      hrmData: [],
+      timerData: { ...baseTimerData, isRunning: false },
+      spotifyData: { trackName: '', artist: '', isPlaying: false },
+      spotifyServiceInitialized: true,
+      connectionStatus: 'Connected',
+      sendData: jest.fn(),
+    } as unknown as UseWebSocketReturn)
+
+    render(<TimerControls />)
+
+    expect(screen.queryByText(/timer stopped/i)).not.toBeInTheDocument()
   })
 })

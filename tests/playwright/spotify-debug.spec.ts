@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
 
-const BASE = getBaseURL()
+const BASE =
+  process.env.TEST_BASE_URL ||
+  process.env.NEXTAUTH_URL ||
+  'http://127.0.0.1:3000'
 
 test.describe('Spotify Debug UI', () => {
   test('debug page loads and shows signin option', async ({
