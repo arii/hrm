@@ -20,6 +20,7 @@ import SpotifyPolling from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
+import { registerService } from './utils/serviceRegistry.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -94,6 +95,7 @@ app
     let spotifyService: SpotifyPolling
     try {
       spotifyService = new SpotifyPolling(broadcastState)
+      registerService('spotifyService', spotifyService)
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure
@@ -103,38 +105,21 @@ app
         stopPolling: () => {},
         startPolling: () => {},
         setRefreshToken: () => {},
+        getAvailableDevices: () => Promise.resolve([]),
       } as unknown as SpotifyPolling
+      registerService('spotifyService', spotifyService) // Register fallback
     }
     const tabataService = new TabataTimer(broadcastState)
+    registerService('tabataService', tabataService)
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
 
-    // API endpoint to get available Spotify devices
-    expressApp.get(
-      '/api/spotify/devices',
-      async (req: Request, res: Response) => {
-        if (!spotifyServiceInitialized || !spotifyService) {
-          return res
-            .status(503)
-            .json({ error: 'Spotify service not initialized.' })
-        }
-        try {
-          const devices = await spotifyService.getAvailableDevices()
-          return res.json(devices)
-        } catch (error) {
-          console.error('Error fetching Spotify devices via API:', error)
-          return res
-            .status(500)
-            .json({ error: 'Failed to fetch Spotify devices.' })
-        }
-      }
-    )
-
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    // The Express route for /api/spotify/devices has been removed and is now handled by Next.js
     expressApp.use((req: Request, res: Response) => {
       return handle(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
