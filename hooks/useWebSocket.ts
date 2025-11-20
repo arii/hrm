@@ -47,12 +47,26 @@ const useWebSocket = (serverUrl?: string) => {
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
+  const shouldReconnect = useRef(true)
   const connectRef = useRef<(() => void) | null>(null)
+
+  const disconnect = useCallback(() => {
+    shouldReconnect.current = false
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    if (wsRef.current) {
+      wsRef.current.close()
+    }
+    console.log('[useWebSocket] Manually disconnected.')
+  }, [])
 
   const connect = useCallback(() => {
     // Ensure this runs only client-side
     if (typeof window === 'undefined') return
 
+    shouldReconnect.current = true
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
@@ -74,8 +88,8 @@ const useWebSocket = (serverUrl?: string) => {
       )
       setConnectionStatus('Disconnected')
 
-      // Attempt to reconnect after 3 seconds
-      if (!reconnectTimeoutRef.current) {
+      // Attempt to reconnect after 3 seconds, if not explicitly disconnected
+      if (shouldReconnect.current && !reconnectTimeoutRef.current) {
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('[useWebSocket] Attempting to reconnect...')
           setConnectionStatus('Reconnecting...')
@@ -154,6 +168,8 @@ const useWebSocket = (serverUrl?: string) => {
     ...appState, // Expose all state parts directly
     connectionStatus,
     sendData,
+    connect,
+    disconnect,
   }
 }
 
