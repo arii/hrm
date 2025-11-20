@@ -39,6 +39,14 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
+    // Provide a default mock for fetch that can be overridden in specific tests
+    ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: async () => ({ access_token: 'mock_access_token' }),
+      text: async () => '',
+    } as Response)
+
     spotifyService = new SpotifyPolling(broadcastMock)
   })
 
@@ -61,12 +69,6 @@ describe('SpotifyPolling Service', () => {
 
   describe('Command Handling', () => {
     beforeEach(() => {
-      // Mock a successful API response
-      ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-        status: 204,
-        ok: true,
-      } as Response)
-
       // Set access token directly without triggering refresh
       ;(spotifyService as unknown as { accessToken: string }).accessToken =
         'test_access_token'
@@ -144,11 +146,6 @@ describe('SpotifyPolling Service', () => {
 
   describe('Volume Control', () => {
     beforeEach(() => {
-      ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-        status: 204,
-        ok: true,
-      } as Response)
-
       // Set access token directly without triggering refresh
       ;(spotifyService as unknown as { accessToken: string }).accessToken =
         'test_access_token'
@@ -395,11 +392,6 @@ describe('SpotifyPolling Service', () => {
 
   describe('Integration with Timer', () => {
     beforeEach(() => {
-      ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-        status: 204,
-        ok: true,
-      } as Response)
-
       // Set access token directly without triggering refresh
       ;(spotifyService as unknown as { accessToken: string }).accessToken =
         'test_access_token'
