@@ -34,7 +34,7 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -165,6 +165,10 @@ const SpotifyDisplay = () => {
 
   const handleSpotifyLogout = () => {
     signOut({ callbackUrl: '/' })
+  }
+
+  if (status === 'loading') {
+    return null
   }
 
   if (!spotifyLoggedIn) {
