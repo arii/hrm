@@ -3,9 +3,9 @@
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
-import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
-import { SpotifyTokenManager } from './spotifyTokenManager'
+import { SpotifyTokenManager } from './spotifyTokenManager.js'
 
 const isVerboseSpotifyLogging =
   process.env.SPOTIFY_DEBUG === 'true' || process.env.SPOTIFY_DEBUG === '1'
@@ -305,7 +305,10 @@ export class SpotifyPolling {
             break
           case 'SET_VOLUME':
             if (volume !== undefined) {
-              const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)));
+              const clampedVolume = Math.max(
+                0,
+                Math.min(100, Math.round(volume))
+              )
               await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
             }
             break
