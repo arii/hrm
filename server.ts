@@ -16,10 +16,10 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import SpotifyPolling from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { getBaseURL } from './utils/urls.js'
+import { SpotifyPolling } from './services/spotifyPolling'
+import TabataTimer from './services/tabataTimer'
+import { initSocketManager } from './utils/socketManager'
+import { getBaseURL } from './utils/urls'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -44,7 +44,7 @@ const expressApp = express()
 
 app
   .prepare()
-  .then(() => {
+  .then(async () => {
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
@@ -93,7 +93,7 @@ app
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = new SpotifyPolling(broadcastState)
+      spotifyService = await SpotifyPolling.create(broadcastState)
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure

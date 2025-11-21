@@ -1,6 +1,7 @@
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { SpotifyTokenResponse } from './spotifyPolling'
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -143,5 +144,18 @@ export class SpotifyTokenManager {
 
   getCurrentRefreshToken(): string | null {
     return this.currentToken?.payload.refresh_token ?? null
+  }
+
+  getSdkAccessToken(): AccessToken | null {
+    if (!this.currentToken) return null
+    return {
+      access_token: this.currentToken.payload.access_token,
+      token_type: 'Bearer',
+      expires_in: this.currentToken.payload.expires_in,
+      refresh_token: this.currentToken.payload.refresh_token,
+      expires:
+        this.currentToken.payload.obtainedAt +
+        this.currentToken.payload.expires_in * 1000,
+    }
   }
 }
