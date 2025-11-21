@@ -5,6 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
+import cors from 'cors'
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
@@ -39,6 +40,13 @@ const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+
+// --- Middleware ---
+
+// 1. CORS Middleware
+// By default, this allows all origins. In a production environment, you'd want to
+// configure this more securely.
+expressApp.use(cors())
 
 // --- Main Application Setup ---
 
