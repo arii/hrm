@@ -6,10 +6,15 @@ cd "$(dirname "$0")/.."
 
 echo "Running setup script..."
 
-# Copy .env.example to .env.local if it doesn't exist
+# Create .env.local if it doesn't exist
 if [ ! -f .env.local ]; then
-  echo "Creating .env.local from .env.example..."
-  cp .env.example .env.local
+  if [ -f .env.example ]; then
+    echo "Creating .env.local from .env.example..."
+    cp .env.example .env.local
+  else
+    echo "No .env.example found. Creating an empty .env.local."
+    touch .env.local
+  fi
 else
   echo ".env.local already exists, skipping creation."
 fi

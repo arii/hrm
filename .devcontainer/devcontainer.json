@@ -1,6 +1,6 @@
 {
   "name": "Node.js & TypeScript",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:18-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
   "forwardPorts": [
     3000,
     9229
