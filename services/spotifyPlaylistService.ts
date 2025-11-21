@@ -3,6 +3,7 @@
  * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
  * This service is used by the standalone playlist selection page.
  */
+import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 
 export interface SpotifyPlaylistItem {
   id: string
@@ -14,12 +15,6 @@ export interface SpotifyPlaylist {
   name: string
   uri: string
 }
-
-interface SpotifyPlaylistsResponse {
-  items: SpotifyPlaylistItem[]
-}
-
-const BASE_URL = 'https://api.spotify.com/v1'
 
 /**
  * Fetches user playlists from Spotify API.
@@ -33,19 +28,32 @@ export async function getUserPlaylists(
     return []
   }
   try {
-    const response = await fetch(`${BASE_URL}/me/playlists`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user playlists: ${response.status}`)
+    // We need to construct an AccessToken object for the SDK
+    // Since we only have the string, we assume it's valid and expiration is handled by caller or ignored for this one-shot call.
+    // The SDK requires the full object structure.
+    const tokenObject: AccessToken = {
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: 3600, // Dummy value, as we likely won't refresh inside this short-lived instance
+      refresh_token: '',
+      expires: Date.now() + 3600 * 1000,
     }
-    const data = (await response.json()) as SpotifyPlaylistsResponse
-    return data.items
+
+    const sdk = SpotifyApi.withAccessToken(
+      process.env.SPOTIFY_CLIENT_ID || 'client_id_placeholder', // Client ID is needed even if we have token? Yes, usually.
+      tokenObject
+    )
+
+    // Fetch playlists
+    const response = await sdk.currentUser.playlists.playlists(50)
+
+    return response.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      uri: item.uri,
+    }))
   } catch (error) {
     console.error('Error fetching user playlists:', error)
     return []
   }
 }
-

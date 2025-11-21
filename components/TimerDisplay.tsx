@@ -184,7 +184,6 @@ const TimerDisplay = ({
         >
           {displayTime}
         </Typography>
-
       </CardContent>
     </Card>
   )
