@@ -28,13 +28,41 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 ## Quick Start
 
-### Development
+### One-Click Start with DevContainer (Recommended)
+
+This repository is configured with a VS Code DevContainer, which provides a fully automated, "one-click" setup.
+
+1.  **Prerequisites**:
+    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+    *   [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+
+2.  **Launch**:
+    *   Open the repository in VS Code.
+    *   Click the "Reopen in Container" button when prompted.
+
+That's it. The container will build, install all dependencies (`npm ci` and Playwright), and create a `.env.local` file for you. Once the container is ready, you can start the development server:
 
 ```bash
-# Install dependencies
-npm install
+npm run dev
+```
 
-# Build the server and start the development server (runs on http://127.0.0.1:3000)
+### Manual Setup
+
+If you are not using the DevContainer, you can set up the project manually:
+
+```bash
+# 1. Create your environment file from the example
+cp .env.example .env.local
+
+# 2. Fill in the required values in .env.local (see "Environment Variables" section)
+
+# 3. Install dependencies using the lockfile
+npm ci
+
+# 4. Install Playwright's browser dependencies
+npx playwright install --with-deps
+
+# 5. Start the development server
 npm run dev
 ```
 
