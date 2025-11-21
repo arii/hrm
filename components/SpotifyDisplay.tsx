@@ -1,5 +1,9 @@
-// File: app/components/dashboard/SpotifyDisplay.tsx
 'use client'
+// File: app/components/dashboard/SpotifyDisplay.tsx
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useWebSocket from '@/hooks/useWebSocket'
+import { SpotifyCommandMessage } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -17,10 +21,6 @@ import {
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
-import { SpotifyCommandMessage } from '@/types/websocket'
 
 interface SpotifyDevice {
   id: string
@@ -35,6 +35,7 @@ interface SpotifyDevice {
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
+  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -92,7 +93,16 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn = !!session?.accessToken || spotifyAuthenticated
+  const spotifyLoggedIn =
+    Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
+  console.log(
+    'spotifyLoggedIn:',
+    spotifyLoggedIn,
+    'session?.accessToken:',
+    session?.accessToken,
+    'spotifyAuthenticated:',
+    spotifyAuthenticated
+  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {

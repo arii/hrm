@@ -40,6 +40,12 @@ export interface SpotifyTokenResponse {
 }
 
 export class SpotifyPolling {
+  /**
+   * Public method to force a poll and broadcast current track state.
+   */
+  public forcePollAndBroadcast() {
+    return this.getCurrentlyPlaying()
+  }
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
