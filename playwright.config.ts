@@ -93,11 +93,11 @@ export default defineConfig({
     },
   ],
 
-  // Web server configuration disabled - start server manually
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120 * 1000,
-  // },
+  // Web server configuration
+  webServer: {
+    command: 'npm start',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: false,
+    timeout: 120 * 1000,
+  },
 })

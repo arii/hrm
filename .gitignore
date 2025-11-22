@@ -19,7 +19,33 @@
 
 # production
 /build
-/dist
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
 
 # misc
 .DS_Store
@@ -30,22 +56,24 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.pnpm-debug.log*
 
-# env files
+# env files (can opt-in for committing if needed)
 .env*
-!/.env.example
-
-# logs
-logs/
-*.log
+logs/spotify_tokens.json
 
 # vercel
 .vercel
 
 # typescript
-*.tsbuildinfo
-next-env.d.ts
+# env files (can opt-in for committing if needed)
+.env*
+logs/spotify_tokens.json
 
+# vercel
+.vercel
+
+# typescript
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -66,6 +94,10 @@ coverage
 # nyc test coverage
 .nyc_output
 
+
+# nyc test coverage
+.nyc_output
+
 # Grunt intermediate storage (https://gruntjs.com/)
 .grunt
 
@@ -76,26 +108,103 @@ coverage
 build/Release
 
 # Dependency directories
+node_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
-# IDE settings
-.gemini/
-.vscode/
-.idea/
 
-# PM2
-.pm2/
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
 
-# Playwright test artifacts
-playwright-report/
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+.gemini/*
+.gemini/settings.json
+.vscode/*
+.github/*
+
+npm_run_dev.log
+
+# Ignore generated server JS (keep TypeScript source canonical)
+server.js
+/dist
+logs/*add
+~/.config
+running_notes.md.backup
+
+# Test results and recordings
 test-results/
+playwright-report/
 test-recordings/
 tests/playwright/screenshots/
 tests/playwright/*-actual.png
 tests/playwright/*-diff.png
+next-env.d.ts
+
+.gemini/*
+.gemini/settings.json
+.vscode/*
+
+*.js
+*.js.map
+*.mjs
+*.d.ts
+# Exceptions for config files
+!*.config.js
+!*.config.mjs
+!eslint.config.mjs
+!start-server.js
+
+# Next.js build outputs
+.next/
+out/
+
+# PM2
+.pm2/
+*.pid
+
+# Playwright test artifacts
+playwright-report/
+playwright-report.log
+test-results/
+
+# Note: Snapshots ARE typically checked in.
+# If you don't want to check in snapshots, uncomment the line below
+# **/tests/playwright/**/*.+(png|txt)
+
+# Local Environment files
+.env.local
+.env.*.local
+.env.production
+.env
+
+# OS-specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE Folders
+.vscode/
+.idea/
+.gemini/
+
+
+# Temporary & Backup files
+*.tmp
+*.backup
+*.swp
+*~
 
 # Custom App-specific
 diff.txt
@@ -113,3 +222,11 @@ server.js
 logs/*add
 ~/.config
 running_notes.md.backup
+
+# Test results and recordings
+test-results/
+playwright-report/
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png

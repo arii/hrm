@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
