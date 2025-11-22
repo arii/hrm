@@ -144,6 +144,8 @@ export class SpotifyPolling {
    */
   public setRefreshToken(_token: string) {
     debugLog('Spotify Refresh Token signal received. Reloading SDK.')
+    // Reset the token manager state to ensure it re-reads the file
+    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
     setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
@@ -376,54 +378,77 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     error: unknown
   ) {
-    if (error instanceof SyntaxError) {
-      console.error(
-        `Error executing Spotify command ${command}: SyntaxError:`,
-        error
-      )
-    } else if (error && typeof error === 'object') {
-      if (
-        'response' in error &&
-        (error as { response?: { text?: () => Promise<string> } }).response
-      ) {
-        try {
-          let text = '[No response text available]'
-          if (
-            typeof error === 'object' &&
-            error !== null &&
-            'response' in error &&
-            typeof (error as { response?: unknown }).response === 'object' &&
-            (error as { response?: { text?: unknown } }).response &&
-            'text' in (error as { response: { text?: unknown } }).response &&
-            typeof (error as { response: { text?: unknown } }).response.text ===
-              'function'
-          ) {
-            text = await (
-              error as { response: { text: () => Promise<string> } }
-            ).response.text()
-            const parsed = safeParseJSON(text)
-            if (typeof parsed === 'object' && parsed !== null) {
-              console.error(
-                `Error executing Spotify command ${command}: Parsed response:`,
-                parsed
-              )
-            } else {
-              console.error(
-                `Error executing Spotify command ${command}: Response body:`,
-                text
-              )
+    try {
+      if (error instanceof SyntaxError) {
+        console.error(
+          `Error executing Spotify command ${command}: SyntaxError:`,
+          error
+        )
+      } else if (error && typeof error === 'object') {
+        if (
+          'response' in error &&
+          (error as { response?: { text?: () => Promise<string> } }).response
+        ) {
+          try {
+            let text = '[No response text available]'
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as { response?: unknown }).response === 'object' &&
+              (error as { response?: { text?: unknown } }).response &&
+              'text' in (error as { response: { text?: unknown } }).response &&
+              typeof (error as { response: { text?: unknown } }).response
+                .text === 'function'
+            ) {
+              try {
+                text = await (
+                  error as { response: { text: () => Promise<string> } }
+                ).response.text()
+              } catch (textError) {
+                // Sometimes calling text() itself might fail if body was already consumed or invalid
+                console.error(
+                  `Error executing Spotify command ${command}: Failed to retrieve error response text:`,
+                  textError
+                )
+                console.error(
+                  `Error executing Spotify command ${command}:`,
+                  error
+                )
+                return
+              }
+
+              const parsed = safeParseJSON(text)
+              if (typeof parsed === 'object' && parsed !== null) {
+                console.error(
+                  `Error executing Spotify command ${command}: Parsed response:`,
+                  parsed
+                )
+              } else {
+                console.error(
+                  `Error executing Spotify command ${command}: Response body:`,
+                  text
+                )
+              }
             }
+          } catch (e) {
+            console.error(
+              `Error executing Spotify command ${command}: Could not read response body.`,
+              e
+            )
           }
-        } catch (e) {
-          console.error(
-            `Error executing Spotify command ${command}: Could not read response body.`,
-            e
-          )
         }
+        console.error(`Error executing Spotify command ${command}:`, error)
+      } else {
+        console.error(`Error executing Spotify command ${command}:`, error)
       }
-      console.error(`Error executing Spotify command ${command}:`, error)
-    } else {
-      console.error(`Error executing Spotify command ${command}:`, error)
+    } catch (loggingError) {
+      // Absolute failsafe to prevent logger from crashing the app
+      console.error(
+        `Error executing Spotify command ${command}: (Logging failed)`,
+        loggingError
+      )
+      console.error(`Original error for ${command}:`, error)
     }
   }
 }
