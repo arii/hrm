@@ -55,17 +55,21 @@ const SpotifyDisplay = () => {
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
-      const sanitized = clampVolume(value)
       const targetDeviceId =
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
-      const messageKey = `${targetDeviceId ?? 'default'}:${sanitized}`
+
+      // Prevent sending volume command if no device is targeted
+      if (!targetDeviceId) return
+
+      const sanitized = clampVolume(value)
+      const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        deviceId: targetDeviceId,
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
@@ -124,7 +128,7 @@ const SpotifyDisplay = () => {
       setAvailableDevices([])
       setSelectedDeviceId('')
     }
-  }, [spotifyLoggedIn, spotifyData.trackName])
+  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
 
   useEffect(() => {
     if (availableDevices.length === 0) {
