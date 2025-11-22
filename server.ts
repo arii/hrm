@@ -46,23 +46,15 @@ const expressApp = express()
 // Basic rate-limiting middleware to prevent abuse.
 // This will apply to all HTTP requests handled by the Express server.
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 1 minute)
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: 'Too many requests from this IP, please try again after 1 minute',
+  message: 'Too many requests from this IP, please try again after 15 minutes',
 })
 
 // Apply the rate limiting middleware to all requests
-if (process.env.NODE_ENV !== 'test') {
-  console.log('Rate limiter ENABLED: NODE_ENV is', process.env.NODE_ENV)
-  expressApp.use(limiter)
-} else {
-  console.log(
-    'Rate limiter DISABLED for testing: NODE_ENV is',
-    process.env.NODE_ENV
-  )
-}
+expressApp.use(limiter)
 
 // --- Main Application Setup ---
 
