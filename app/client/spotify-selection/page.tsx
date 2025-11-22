@@ -11,7 +11,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PlaylistSelector from '../../../components/Spotify/PlaylistSelector'
 import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
@@ -23,6 +23,46 @@ const SpotifySelectionPage = () => {
   const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
     null
   )
+  interface SpotifyDevice {
+    id: string
+    name: string
+    is_active?: boolean
+  }
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  // Helper: is there an active device?
+  const activeDevice = availableDevices.find((d) => d.is_active)
+  const hasActiveDevice = !!activeDevice
+  // Fetch available devices on mount
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await fetch('/api/spotify/devices')
+        if (!response.ok) throw new Error('Failed to fetch devices')
+        const devices: SpotifyDevice[] = await response.json()
+        setAvailableDevices(Array.isArray(devices) ? devices : [])
+      } catch (_err) {
+        setAvailableDevices([])
+      }
+    }
+    fetchDevices()
+  }, [])
+
+  // Whenever availableDevices changes, ensure selectedDeviceId is valid
+  useEffect(() => {
+    if (availableDevices.length > 0) {
+      // If current selectedDeviceId is not in the list, or is empty, select active or first
+      const found = availableDevices.find((d) => d.id === selectedDeviceId)
+      if (!found) {
+        const activeDevice = availableDevices.find((d) => d.is_active)
+        setSelectedDeviceId(
+          activeDevice ? activeDevice.id : availableDevices[0].id
+        )
+      }
+    } else {
+      setSelectedDeviceId('')
+    }
+  }, [availableDevices, selectedDeviceId])
   const { volume, setVolume } = useVolumePreference(70)
 
   const handlePlaylistSelected = (uri: string) => {
@@ -31,11 +71,23 @@ const SpotifySelectionPage = () => {
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
-    options: { playlistUri?: string; volume?: number } = {}
+    options: { playlistUri?: string; volume?: number; token?: string } = {}
   ) => {
+    // Always include a deviceId, fallback to active device if not set
+    let deviceId = selectedDeviceId
+    if (!deviceId && availableDevices.length > 0) {
+      const activeDevice = availableDevices.find((d) => d.is_active)
+      deviceId = activeDevice ? activeDevice.id : availableDevices[0].id
+      setSelectedDeviceId(deviceId)
+    }
+    if (!deviceId) {
+      console.warn('No deviceId available, command not sent.')
+      return
+    }
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command,
+      deviceId,
       ...options,
     }
     sendData(message)
@@ -100,7 +152,7 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
-                disabled={connectionStatus !== 'Connected'}
+                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
                 startIcon={<SkipPrevious />}
               >
                 Previous
@@ -108,7 +160,7 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={handlePlayPause}
-                disabled={connectionStatus !== 'Connected'}
+                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
                 startIcon={spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               >
                 {spotifyData.isPlaying ? 'Pause' : 'Play'}
@@ -116,7 +168,7 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={() => sendSpotifyCommand('NEXT')}
-                disabled={connectionStatus !== 'Connected'}
+                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
                 startIcon={<SkipNext />}
               >
                 Next
@@ -126,9 +178,31 @@ const SpotifySelectionPage = () => {
               volume={volume}
               onVolumeChange={setVolume}
               onVolumeChangeCommitted={(newVolume) =>
+                hasActiveDevice &&
                 sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
               }
             />
+            {/* Device dropdown */}
+            {availableDevices.length > 0 && (
+              <Box sx={{ mt: 2, minWidth: 200 }}>
+                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
+                  Device
+                </Typography>
+                <select
+                  value={selectedDeviceId}
+                  onChange={(e) => {
+                    setSelectedDeviceId(e.target.value)
+                  }}
+                  style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+                >
+                  {availableDevices.map((device) => (
+                    <option key={device.id} value={device.id}>
+                      {device.name} {device.is_active ? '(Active)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </Box>
+            )}
           </Stack>
         </CardContent>
       </Card>
