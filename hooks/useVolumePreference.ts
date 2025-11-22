@@ -2,6 +2,7 @@
 // Provides a shared volume preference persisted to localStorage so multiple
 // client surfaces (dashboard, control panel) stay in sync.
 import { useCallback, useEffect, useState } from 'react'
+import { useDebounce } from './useDebounce'
 
 const STORAGE_KEY = 'hrm-volume'
 
@@ -29,18 +30,21 @@ const useVolumePreference = (defaultVolume = 70) => {
     window.localStorage.setItem(STORAGE_KEY, String(sanitizedDefault))
     return sanitizedDefault
   })
+  const debouncedVolume = useDebounce(volume, 200) // 200ms delay
 
   const setVolume = useCallback((value: number) => {
     const sanitized = clampVolume(value)
     setVolumeState(sanitized)
+  }, [])
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, String(sanitized))
-      // Dispatch custom event for same-tab updates
+      window.localStorage.setItem(STORAGE_KEY, String(debouncedVolume))
       window.dispatchEvent(
-        new CustomEvent('volumeChange', { detail: sanitized })
+        new CustomEvent('volumeChange', { detail: debouncedVolume })
       )
     }
-  }, [])
+  }, [debouncedVolume])
 
   // Listen for storage changes from other tabs and custom events from same tab
   useEffect(() => {
