@@ -6,6 +6,8 @@
 'use client'
 import { Container, Grid } from '@mui/material'
 import { useEffect, useState } from 'react'
+import ErrorBoundary from '../components/ErrorBoundary'
+import ErrorFallback from '../components/ErrorFallback'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
@@ -52,7 +54,9 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <HrmTiles />
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmTiles />
+        </ErrorBoundary>
 
         <Grid item xs={12}>
           <GoogleDocViewer
@@ -65,7 +69,9 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      <SpotifyDisplay />
+      <ErrorBoundary fallback={<ErrorFallback />}>
+        <SpotifyDisplay />
+      </ErrorBoundary>
     </Container>
   )
 }
