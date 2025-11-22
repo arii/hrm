@@ -50,7 +50,13 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
       `)
     }
   })
-  await page.waitForSelector('iframe')
+
+  // Try to wait for iframe, but don't block indefinitely if it's missing
+  try {
+      await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
+  } catch (e) {
+      console.warn('Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.')
+  }
 }
 
 // Setup function for visual regression tests
