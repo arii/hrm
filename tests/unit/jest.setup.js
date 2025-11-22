@@ -1,0 +1,11 @@
+// Mock environment variables for testing
+process.env.NEXTAUTH_SECRET = 'test_secret'
+process.env.NEXTAUTH_URL = 'http://localhost:3000'
+process.env.BASE_URL = 'http://localhost:3000'
+process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
+process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
+process.env.SPOTIFY_CALLBACK_URL = 'http://localhost:3000/callback'
+process.env.INTERNAL_TOKEN_DELIVERY_SECRET = 'test_token_secret'
+process.env.SPOTIFY_DEBUG = 'false'
+process.env.CI = 'true'
+process.env.NODE_ENV = 'test'
