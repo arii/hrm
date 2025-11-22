@@ -16,24 +16,21 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { env } from './lib/env.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { getBaseURL } from './utils/urls.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
+const hostname = env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST // Bind to all interfaces in production
 
-const dev = process.env.NODE_ENV !== 'production'
+const dev = env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
 
 console.log(`Starting server in ${dev ? 'development' : 'production'} mode`)
-console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
-console.log(`NEXTAUTH_URL: ${getBaseURL()}`)
+console.log(`Environment: NODE_ENV=${env.NODE_ENV}`)
+console.log(`NEXTAUTH_URL: ${env.NEXTAUTH_URL}`)
 console.log(`Hostname: ${hostname}, Port: ${port}`)
 const handle = app.getRequestHandler()
 
