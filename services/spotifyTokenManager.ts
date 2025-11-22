@@ -1,6 +1,6 @@
+import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenResponse } from './spotifyPolling'
 
 export interface SpotifyTokenPayload {
@@ -19,6 +19,41 @@ export interface TokenRecord {
 }
 
 export class SpotifyTokenManager {
+  /**
+   * Directly set the access token (for command injection/testing).
+   */
+  public setAccessToken(token: string) {
+    if (this.currentToken) {
+      this.currentToken.payload.access_token = token
+      this.currentToken.payload.obtainedAt = Date.now()
+      fs.writeFileSync(
+        this.tokenFile,
+        JSON.stringify(this.currentToken, null, 2),
+        'utf8'
+      )
+      console.log('Access token updated via setAccessToken.')
+    } else {
+      // If no token record exists, create a minimal one
+      this.currentToken = {
+        receivedAt: Date.now(),
+        payload: {
+          provider: 'manual',
+          sub: 'manual',
+          access_token: token,
+          refresh_token: '',
+          expires_in: 3600,
+          scope: '',
+          obtainedAt: Date.now(),
+        },
+      }
+      fs.writeFileSync(
+        this.tokenFile,
+        JSON.stringify(this.currentToken, null, 2),
+        'utf8'
+      )
+      console.log('Access token created via setAccessToken.')
+    }
+  }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null

@@ -109,10 +109,12 @@ const useWebSocket = (serverUrl?: string) => {
         const message: UnifiedStateMessage = JSON.parse(event.data)
 
         if (message.type === 'STATE_UPDATE') {
-          console.log(
-            '[useWebSocket] Received STATE_UPDATE. HRM Data:',
-            message.hrmData
-          )
+          if (message.hrmData !== undefined) {
+            console.log(
+              '[useWebSocket] Received STATE_UPDATE. HRM Data:',
+              message.hrmData
+            )
+          }
           // Merge the incoming state with the current state to preserve non-updated fields
           setAppState((prev) => ({
             hrmData: message.hrmData || prev.hrmData,
