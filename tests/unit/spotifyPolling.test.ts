@@ -88,12 +88,16 @@ describe('SpotifyPolling Service', () => {
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as unknown)['pollInterval']) {
-      clearInterval((spotifyService as unknown)['pollInterval'] as NodeJS.Timeout)
+      clearInterval(
+        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
+      )
       ;(spotifyService as unknown)['pollInterval'] = null
     }
 
     if ((spotifyService as unknown)['tokenRefreshInterval']) {
-      clearInterval((spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout)
+      clearInterval(
+        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
+      )
       ;(spotifyService as unknown)['tokenRefreshInterval'] = null
     }
   })

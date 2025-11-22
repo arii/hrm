@@ -58,7 +58,9 @@ describe('API Route: /api/spotify/playlists', () => {
   it('should return 401 Unauthorized if no session is found', async () => {
     mockedGetServerSession.mockResolvedValue(null)
 
-    const response = await GET(new Request('http://localhost/api/spotify/playlists'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(401)
@@ -71,7 +73,9 @@ describe('API Route: /api/spotify/playlists', () => {
       accessToken: 'fake-access-token',
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/playlists'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -96,13 +100,19 @@ describe('API Route: /api/spotify/playlists', () => {
     const mockSpotifyApiWithError = {
       currentUser: {
         playlists: {
-          playlists: jest.fn().mockRejectedValue(new Error('Spotify API failed')),
+          playlists: jest
+            .fn()
+            .mockRejectedValue(new Error('Spotify API failed')),
         },
       },
     }
-    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSpotifyApiWithError)
+    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(
+      mockSpotifyApiWithError
+    )
 
-    const response = await GET(new Request('http://localhost/api/spotify/playlists'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/playlists')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(500)

@@ -18,10 +18,7 @@ const ErrorFallback = () => {
       <Typography variant="h6" gutterBottom>
         Something went wrong.
       </Typography>
-      <Button
-        variant="contained"
-        onClick={() => window.location.reload()}
-      >
+      <Button variant="contained" onClick={() => window.location.reload()}>
         Reload Page
       </Button>
     </Box>

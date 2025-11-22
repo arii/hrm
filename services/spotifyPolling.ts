@@ -39,6 +39,17 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
+// We use SDK types now, but keep internal state types as needed.
+// Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
+
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+  refresh_token?: string
+  scope: string
+}
+
 export class SpotifyPolling {
   /**
    * Public method to force a poll and broadcast current track state.
@@ -169,7 +180,28 @@ export class SpotifyPolling {
     // We rely on background refresh or failure handling.
 
     try {
-      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+      let playbackState
+      try {
+        playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+      } catch (err: unknown) {
+        // If response is not JSON, fallback to text
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: unknown }).response === 'object' &&
+          (err as { response?: { text?: unknown } }).response &&
+          'text' in (err as { response: { text?: unknown } }).response &&
+          typeof (err as { response: { text?: unknown } }).response.text ===
+            'function'
+        ) {
+          const text = await (
+            err as { response: { text: () => Promise<string> } }
+          ).response.text()
+          console.error('Spotify API response (not JSON):', text)
+        }
+        throw err
+      }
 
       if (!playbackState) {
         // Nothing playing or 204
@@ -328,10 +360,49 @@ export class SpotifyPolling {
         // Refresh state shortly after command
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
-        console.error(`Error executing Spotify command ${command}:`, error)
+        // Enhanced error handling/logging
+        if (error instanceof SyntaxError) {
+          console.error(
+            `Error executing Spotify command ${command}: SyntaxError:`,
+            error
+          )
+        } else if (error && typeof error === 'object') {
+          // Try to log full response if available
+          if ('response' in error && error.response) {
+            try {
+              let text = '[No response text available]'
+              if (
+                typeof error === 'object' &&
+                error !== null &&
+                'response' in error &&
+                typeof (error as { response?: unknown }).response ===
+                  'object' &&
+                (error as { response?: { text?: unknown } }).response &&
+                'text' in
+                  (error as { response: { text?: unknown } }).response &&
+                typeof (error as { response: { text?: unknown } }).response
+                  .text === 'function'
+              ) {
+                text = await (
+                  error as { response: { text: () => Promise<string> } }
+                ).response.text()
+              }
+              console.error(
+                `Error executing Spotify command ${command}: Response body:`,
+                text
+              )
+            } catch (e) {
+              console.error(
+                `Error executing Spotify command ${command}: Could not read response body.`,
+                e
+              )
+            }
+          }
+          console.error(`Error executing Spotify command ${command}:`, error)
+        } else {
+          console.error(`Error executing Spotify command ${command}:`, error)
+        }
       }
     })()
   }
 }
-
-export default SpotifyPolling
