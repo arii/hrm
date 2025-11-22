@@ -9,16 +9,12 @@ const BASE_URL = getBaseURL()
 
 // Helper function to wait for page ready signal
 export const waitForPageReady = async (page: Page) => {
-  try {
-    await page.waitForFunction(
-      () => {
-        return window.__TEST_READY__ === true
-      },
-      { timeout: 10000 }
-    )
-  } catch (_error) {
-    await page.waitForLoadState('networkidle')
-  }
+  await page.waitForFunction(
+    () => {
+      return window.__TEST_READY__ === true
+    },
+    { timeout: 10000 }
+  )
 }
 
 // Helper function to replace iframe with stable workout content
@@ -53,9 +49,11 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
 
   // Try to wait for iframe, but don't block indefinitely if it's missing
   try {
-      await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
+    await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
   } catch (e) {
-      console.warn('Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.')
+    console.warn(
+      'Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.'
+    )
   }
 }
 
