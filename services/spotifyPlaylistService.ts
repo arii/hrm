@@ -4,11 +4,20 @@
  * This service is used by the standalone playlist selection page.
  */
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
+import { presetPlaylists, SeedPlaylist } from './seedData'
 
 export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
+}
+
+/**
+ * Gets the preset playlists for development.
+ * This is used to provide seed data for the Spotify playlist selection page.
+ */
+export function getPresetPlaylists(): SeedPlaylist[] {
+  return presetPlaylists
 }
 
 export interface SpotifyPlaylist {

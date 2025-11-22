@@ -103,4 +103,13 @@ diff.txt
 *err.log
 server.log
 test-update.log
+npm_run_dev.log
+npm_output.log
+dev.log
+
+# Ignore generated server JS (keep TypeScript source canonical)
+server.js
+/dist
+logs/*add
+~/.config
 running_notes.md.backup
