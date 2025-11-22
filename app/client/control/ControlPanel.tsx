@@ -12,7 +12,8 @@ import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus, connect } = useWebSocket()
+  const { connectionStatus, connect, timerData, spotifyData, sendData } =
+    useWebSocket()
 
   // Reconnect on page visibility
   useEffect(() => {
@@ -81,8 +82,12 @@ const ControlPanel = () => {
           </Typography>
         </Box>
 
-        <TimerControls />
-        <SpotifyControls />
+        <TimerControls timerData={timerData} sendData={sendData} />
+        <SpotifyControls
+          spotifyData={spotifyData}
+          connectionStatus={connectionStatus}
+          sendData={sendData}
+        />
       </Container>
     </>
   )

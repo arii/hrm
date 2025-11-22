@@ -109,19 +109,41 @@ const useWebSocket = (serverUrl?: string) => {
         const message: UnifiedStateMessage = JSON.parse(event.data)
 
         if (message.type === 'STATE_UPDATE') {
-          console.log(
-            '[useWebSocket] Received STATE_UPDATE. HRM Data:',
-            message.hrmData
-          )
           // Merge the incoming state with the current state to preserve non-updated fields
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
+          setAppState((prev) => {
+            const newHrmData = message.hrmData || prev.hrmData
+            const newTimerData = message.timerData || prev.timerData
+            const newSpotifyData = message.spotifyData || prev.spotifyData
+            const newServiceInit =
               message.spotifyServiceInitialized ??
-              prev.spotifyServiceInitialized,
-          }))
+              prev.spotifyServiceInitialized
+
+            // Deep equality check to preserve referential identity and prevent re-renders
+            const hrmChanged =
+              JSON.stringify(newHrmData) !== JSON.stringify(prev.hrmData)
+            const timerChanged =
+              JSON.stringify(newTimerData) !== JSON.stringify(prev.timerData)
+            const spotifyChanged =
+              JSON.stringify(newSpotifyData) !== JSON.stringify(prev.spotifyData)
+            const serviceInitChanged =
+              newServiceInit !== prev.spotifyServiceInitialized
+
+            if (
+              !hrmChanged &&
+              !timerChanged &&
+              !spotifyChanged &&
+              !serviceInitChanged
+            ) {
+              return prev
+            }
+
+            return {
+              hrmData: hrmChanged ? newHrmData : prev.hrmData,
+              timerData: timerChanged ? newTimerData : prev.timerData,
+              spotifyData: spotifyChanged ? newSpotifyData : prev.spotifyData,
+              spotifyServiceInitialized: newServiceInit,
+            }
+          })
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

@@ -5,20 +5,26 @@
  */
 'use client'
 import { Container, Grid } from '@mui/material'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
 import useWebSocket from '../hooks/useWebSocket'
 
+const GoogleDocViewer = dynamic(
+  () => import('../components/GoogleDocViewer'),
+  { ssr: false }
+)
+
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
+  const { timerData, hrmData, spotifyData, connectionStatus, sendData } =
+    useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
 
   // Signal when page is ready for testing
@@ -55,7 +61,7 @@ const Dashboard = () => {
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles />
+          <HrmTiles hrmData={hrmData} />
         </ErrorBoundary>
 
         <Grid item xs={12}>
@@ -70,7 +76,11 @@ const Dashboard = () => {
       </Grid>
 
       <ErrorBoundary fallback={<ErrorFallback />}>
-        <SpotifyDisplay />
+        <SpotifyDisplay
+          spotifyData={spotifyData}
+          connectionStatus={connectionStatus}
+          sendData={sendData}
+        />
       </ErrorBoundary>
     </Container>
   )

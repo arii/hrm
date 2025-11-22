@@ -1,5 +1,11 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import {
+  ClientCommandMessage,
+  SpotifyCommandMessage,
+  SpotifyData,
+} from '@/types/websocket'
 import {
   MusicNote,
   Pause,
@@ -20,10 +26,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 
 interface SpotifyDevice {
   id: string
@@ -35,8 +38,17 @@ interface SpotifyDevice {
   volume_percent: number
 }
 
-const SpotifyControls = () => {
-  const { spotifyData, connectionStatus, sendData } = useWebSocket()
+interface SpotifyControlsProps {
+  spotifyData: SpotifyData
+  connectionStatus: string
+  sendData: (data: ClientCommandMessage) => void
+}
+
+const SpotifyControls = ({
+  spotifyData,
+  connectionStatus,
+  sendData,
+}: SpotifyControlsProps) => {
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
@@ -305,4 +317,4 @@ const SpotifyControls = () => {
   )
 }
 
-export default SpotifyControls
+export default memo(SpotifyControls)

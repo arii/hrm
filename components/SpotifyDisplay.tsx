@@ -2,8 +2,7 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { ClientCommandMessage, SpotifyData, SpotifyCommandMessage } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -20,7 +19,7 @@ import {
   Typography,
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, memo } from 'react'
 
 interface SpotifyDevice {
   id: string
@@ -32,8 +31,13 @@ interface SpotifyDevice {
   volume_percent: number
 }
 
-const SpotifyDisplay = () => {
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+interface SpotifyDisplayProps {
+  spotifyData: SpotifyData
+  connectionStatus: string
+  sendData: (data: ClientCommandMessage) => void
+}
+
+const SpotifyDisplay = ({ spotifyData, connectionStatus, sendData }: SpotifyDisplayProps) => {
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
@@ -411,4 +415,4 @@ const SpotifyDisplay = () => {
   return null
 }
 
-export default SpotifyDisplay
+export default memo(SpotifyDisplay)

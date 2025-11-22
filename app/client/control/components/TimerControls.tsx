@@ -1,11 +1,12 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import useWebSocket from '@/hooks/useWebSocket'
 import {
+  ClientCommandMessage,
   SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
+  TimerData,
   TimerModeCommandMessage,
 } from '@/types/websocket'
 import {
@@ -26,9 +27,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
-const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
+
+interface TimerControlsProps {
+  timerData: TimerData
+  sendData: (data: ClientCommandMessage) => void
+}
+
+const TimerControls = ({ timerData, sendData }: TimerControlsProps) => {
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -410,4 +416,4 @@ const TimerControls = () => {
   )
 }
 
-export default TimerControls
+export default memo(TimerControls)
