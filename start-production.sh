@@ -21,4 +21,4 @@ if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
   npm run build && npm run build:server
 fi
 
-exec node dist/server.mjs
+exec NODE_ENV=production node dist/server.mjs
