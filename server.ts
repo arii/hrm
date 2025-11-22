@@ -16,6 +16,7 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import rateLimit from 'express-rate-limit'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -39,6 +40,20 @@ const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+
+// --- Rate Limiting Setup ---
+// Basic rate-limiting middleware to prevent abuse.
+// This will apply to all HTTP requests handled by the Express server.
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+})
+
+// Apply the rate limiting middleware to all requests
+expressApp.use(limiter)
 
 // --- Main Application Setup ---
 
