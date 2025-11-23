@@ -1,9 +1,9 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useWebSocket from '@/hooks/useWebSocket'
 import {
-  SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
@@ -28,18 +28,21 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
-  // Local state is source of truth for editing
+  const { timerData, spotifyData, sendData } = useWebSocket()
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
-
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
-  // Track latest numeric values synchronously to avoid stale state on click
   const latestWork = useRef<number>(workTime)
   const latestRest = useRef<number>(restTime)
 
-  // Keep refs synchronized with state
+  const hasSpotifyData =
+    spotifyData.trackName !== 'Awaiting Login...' &&
+    spotifyData.trackName !== '' &&
+    spotifyData.trackName !== 'No Track Playing'
+
+  const { selectedDeviceId } = useSpotifyDevices(hasSpotifyData)
+
   useEffect(() => {
     latestWork.current = workTime
   }, [workTime])
@@ -48,7 +51,6 @@ const TimerControls = () => {
     latestRest.current = restTime
   }, [restTime])
 
-  // Send settings update to server when local state changes
   useEffect(() => {
     const message: TimerConfigMessage = {
       type: 'TIMER_CONFIG',
@@ -58,22 +60,9 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
 
-  const sendSpotifyCommand = useCallback(
-    (command: 'NEXT' | 'PAUSE') => {
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-      }
-      sendData(message)
-    },
-    [sendData]
-  )
-
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
-      // When starting, ensure the server receives the latest configuration immediately
       if (command === 'START') {
-        // Prefer reading the current ref values to avoid stale React state
         const config: TimerConfigMessage = {
           type: 'TIMER_CONFIG',
           workDuration: latestWork.current,
@@ -81,16 +70,15 @@ const TimerControls = () => {
         }
         sendData(config)
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
 
-      if (command === 'START') {
-        sendSpotifyCommand('NEXT')
-      } else if (command === 'STOP') {
-        sendSpotifyCommand('PAUSE')
+      const message: TimerCommandMessage = {
+        type: 'TIMER_COMMAND',
+        command,
+        deviceId: selectedDeviceId,
       }
+      sendData(message)
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
+    [sendData, selectedDeviceId]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {

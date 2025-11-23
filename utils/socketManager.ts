@@ -140,6 +140,14 @@ const handleIncomingMessage = (
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)
+          // Spotify integration
+          if (spotifyServiceInstance && message.deviceId) {
+            if (message.command === 'START') {
+              spotifyServiceInstance.handleCommand('NEXT', message.deviceId)
+            } else if (message.command === 'STOP') {
+              spotifyServiceInstance.handleCommand('PAUSE', message.deviceId)
+            }
+          }
         }
         break
       }
