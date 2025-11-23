@@ -4,16 +4,17 @@
  * This service is used by the standalone playlist selection page.
  */
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
+import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
+import { presetPlaylists } from './seedData'
 
-export interface SpotifyPlaylistItem {
-  id: string
-  name: string
-  uri: string
-}
+// Re-export types for backward compatibility
+export type { SpotifyPlaylistItem, SpotifyPlaylist }
 
-export interface SpotifyPlaylist {
-  name: string
-  uri: string
+/**
+ * Returns a list of preset workout playlists.
+ */
+export function getPresetPlaylists(): SpotifyPlaylistItem[] {
+  return presetPlaylists
 }
 
 /**

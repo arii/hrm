@@ -14,7 +14,7 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import { useUserSettings } from '@/contexts/UserSettingsContext'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import useWebSocket from '../../../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 
 export default function ConnectPage() {
