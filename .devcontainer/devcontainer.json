@@ -1,22 +1,21 @@
 {
-<<<<<<< HEAD
   "name": "HRM Dashboard Dev Container",
-  "dockerFile": "Dockerfile",
-=======
-  "name": "Node.js & TypeScript",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
   "forwardPorts": [
     3000,
     9229
   ],
->>>>>>> origin/leader
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-<<<<<<< HEAD
-        "ms-playwright.playwright"
+        "ms-playwright.playwright",
+        "ms-vscode.vscode-typescript-next",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "github.vscode-pull-request-github",
+        "humao.rest-client"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -24,20 +23,6 @@
       }
     }
   },
-  "forwardPorts": [3000],
-  "postCreateCommand": "sh .devcontainer/post-create.sh",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteUser": "node"
 }
-=======
-        "ms-playwright.playwright",
-        "ms-vscode.vscode-typescript-next",
-        "eamodio.gitlens",
-        "mhutchie.git-graph",
-        "github.vscode-pull-request-github",
-        "humao.rest-client"
-      ]
-    }
-  },
-  "postCreateCommand": "bash .devcontainer/post-create.sh"
-}
->>>>>>> origin/leader

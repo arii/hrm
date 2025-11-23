@@ -29,23 +29,19 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 ## Quick Start
 
 <<<<<<< HEAD
-### Development with Dev Container (Recommended)
+### One-Click Start with DevContainer (Recommended)
 
-This project is configured to run in a VS Code Dev Container, which provides a fully pre-configured and isolated development environment.
+This repository is configured with a VS Code DevContainer, which provides a fully automated, "one-click" setup.
 
 1.  **Prerequisites**:
-    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-    *   [Visual Studio Code](https://code.visualstudio.com/)
-    *   [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for VS Code.
+    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+    *   [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
 2.  **Launch**:
-    *   Open the project folder in VS Code.
-    *   When prompted "Reopen in Container", click the button.
-    *   VS Code will build the Docker image and configure the environment. This might take a few minutes on the first launch.
+    *   Open the repository in VS Code.
+    *   Click the "Reopen in Container" button when prompted.
 
-Once the container is running, the development server will start automatically. You can access the application at `http://127.0.0.1:3000`.
-
-### Local Development (Without Dev Container)
+That's it. The container will build, install all dependencies (`npm ci` and Playwright), and create a `.env.local` file for you. Once the container is ready, you can start the development server:
 =======
 ### One-Click Start with DevContainer (Recommended)
 
