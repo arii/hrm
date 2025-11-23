@@ -209,7 +209,7 @@ const SpotifyControls = () => {
                 {spotifyData.artist}
               </Typography>
             </Box>
-            {spotifyData.durationMs && (
+            {spotifyData.progressMs !== undefined && spotifyData.durationMs ? (
               <LinearProgress
                 variant="determinate"
                 value={
@@ -217,7 +217,7 @@ const SpotifyControls = () => {
                 }
                 sx={{ mb: 2 }}
               />
-            )}
+            ) : null}
             <Stack
               direction="row"
               spacing={1}
