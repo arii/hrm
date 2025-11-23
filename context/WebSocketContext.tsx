@@ -93,15 +93,17 @@ export const WebSocketProvider = ({
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
       const jsonStr = JSON.stringify(data)
-      console.log('[useWebSocket] Sending:', data)
+      console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
     } else {
       console.warn(
-        '[useWebSocket] WebSocket not open. State:',
+        '[WebSocketProvider] WebSocket not open, queueing action. State:',
         ws?.readyState,
         'Data:',
         data
       )
+      pendingActions.current.push(data)
+      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
     }
   }, [])
 
@@ -118,12 +120,7 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-<<<<<<< HEAD:hooks/useWebSocket.ts
-      // Subscribe to all topics on connection
-      sendData({ type: 'SUBSCRIBE', topic: 'HRM' })
-      sendData({ type: 'SUBSCRIBE', topic: 'TIMER' })
-      sendData({ type: 'SUBSCRIBE', topic: 'SPOTIFY' })
-=======
+      // Send any pending actions that were queued while offline
       if (pendingActions.current.length > 0) {
         console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach(action => {
@@ -132,7 +129,11 @@ export const WebSocketProvider = ({
         pendingActions.current = []
         localStorage.setItem('pendingActions', '[]')
       }
->>>>>>> origin/leader:context/WebSocketContext.tsx
+
+      // Subscribe to all topics on connection
+      sendData({ type: 'SUBSCRIBE', topic: 'HRM' })
+      sendData({ type: 'SUBSCRIBE', topic: 'TIMER' })
+      sendData({ type: 'SUBSCRIBE', topic: 'SPOTIFY' })
 
       // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
@@ -164,7 +165,6 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-<<<<<<< HEAD:hooks/useWebSocket.ts
         const message: ServerMessage | UnifiedStateMessage = JSON.parse(
           event.data
         )
@@ -178,27 +178,17 @@ export const WebSocketProvider = ({
             break
           case 'SPOTIFY_UPDATE':
             setAppState((prev) => ({ ...prev, spotifyData: message.payload }))
-            break
-          // Handle initial full state for backward compatibility and initial connection
+            break;
           case 'STATE_UPDATE':
             setAppState((prev) => ({
               ...prev,
               hrmData: message.hrmData || prev.hrmData,
               timerData: message.timerData || prev.timerData,
               spotifyData: message.spotifyData || prev.spotifyData,
+              spotifyServiceInitialized:
+                message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
             }))
             break
-=======
-        const message: UnifiedStateMessage = JSON.parse(event.data)
-        if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
-          }))
->>>>>>> origin/leader:context/WebSocketContext.tsx
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
@@ -214,31 +204,8 @@ export const WebSocketProvider = ({
     }
   }, [connect, disconnect])
 
-<<<<<<< HEAD:hooks/useWebSocket.ts
-  return {
-    ...appState, // Expose all state parts directly
-=======
-  const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
-      ws.send(jsonStr)
-    } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
-      pendingActions.current.push(data)
-      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
-    }
-  }, [])
-
   const contextValue = {
     ...appState,
->>>>>>> origin/leader:context/WebSocketContext.tsx
     connectionStatus,
     sendData,
     connect,
