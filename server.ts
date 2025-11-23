@@ -94,12 +94,8 @@ app
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-<<<<<<< HEAD
-      spotifyService = new SpotifyPolling(broadcastState)
-      registerService('spotifyService', spotifyService)
-=======
       spotifyService = await SpotifyPolling.create(broadcastState)
->>>>>>> origin/leader
+      registerService('spotifyService', spotifyService)
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure
@@ -123,10 +119,6 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-<<<<<<< HEAD
-    // The Express route for /api/spotify/devices has been removed and is now handled by Next.js
-    expressApp.use((req: Request, res: Response) => {
-=======
     expressApp.use(async (req: Request, res: Response) => {
       // Intercept token delivery POST and force Spotify poll
       if (
@@ -149,7 +141,6 @@ app
           }
         }, 1000)
       }
->>>>>>> origin/leader
       return handle(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
