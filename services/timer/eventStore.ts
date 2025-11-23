@@ -8,6 +8,11 @@ import { UnifiedStateMessage } from '../../types/websocket'
  * This class is the central hub for all timer-related state changes.
  */
 
+// Helper to omit a key from a union type while preserving the union structure
+export type DistributiveOmit<T, K extends keyof any> = T extends any
+  ? Omit<T, K>
+  : never
+
 export class TimerEventStore {
   private events: TimerEvent[] = []
   private broadcast: (data: Partial<UnifiedStateMessage>) => void
@@ -25,7 +30,7 @@ export class TimerEventStore {
    * Records a new event and broadcasts the resulting state change.
    * @param event - The event to record.
    */
-  public record(event: Omit<TimerEvent, 'timestamp'>): void {
+  public record(event: DistributiveOmit<TimerEvent, 'timestamp'>): void {
     const fullEvent: TimerEvent = {
       ...event,
       timestamp: Date.now(),
