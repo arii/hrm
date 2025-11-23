@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --no-warnings server.ts",
+    "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "npm run build:server && next build",
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "start": "pm2 start ecosystem.config.cjs --env production",
