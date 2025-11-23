@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --no-warnings server.ts",
+    "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "npm run build:server && next build",
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "start": "pm2 start ecosystem.config.cjs --env production",
@@ -31,7 +32,10 @@
     "kill-all": "./scripts/kill-all.sh",
     "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
     "test:clean:update": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual:update",
-    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222"
+    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+    "release:patch": "npm version patch -m \"release: patch %s\"",
+    "release:minor": "npm version minor -m \"release: minor %s\"",
+    "release:major": "npm version major -m \"release: major %s\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -39,7 +43,6 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "next": "16.0.1",
     "next-auth": "^4.24.13",
