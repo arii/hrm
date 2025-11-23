@@ -35,14 +35,22 @@ describe('Services Integration', () => {
   let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
   let mockSdk: {
     player: {
-      getCurrentlyPlayingTrack: jest.Mock
-      startResumePlayback: jest.Mock
-      pausePlayback: jest.Mock
-      skipToNext: jest.Mock
-      skipToPrevious: jest.Mock
-      transferPlayback: jest.Mock
-      setPlaybackVolume: jest.Mock
-      getAvailableDevices: jest.Mock
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getCurrentlyPlayingTrack: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      startResumePlayback: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pausePlayback: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      skipToNext: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      skipToPrevious: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transferPlayback: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setPlaybackVolume: jest.Mock<any>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getAvailableDevices: jest.Mock<any>
     }
   }
 
@@ -72,14 +80,22 @@ describe('Services Integration', () => {
     // Mock SDK instance
     mockSdk = {
       player: {
-        getCurrentlyPlayingTrack: jest.fn().mockResolvedValue(null),
-        startResumePlayback: jest.fn().mockResolvedValue(undefined),
-        pausePlayback: jest.fn().mockResolvedValue(undefined),
-        skipToNext: jest.fn().mockResolvedValue(undefined),
-        skipToPrevious: jest.fn().mockResolvedValue(undefined),
-        transferPlayback: jest.fn().mockResolvedValue(undefined),
-        setPlaybackVolume: jest.fn().mockResolvedValue(undefined),
-        getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getCurrentlyPlayingTrack: jest.fn<any>().mockResolvedValue(null),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        startResumePlayback: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pausePlayback: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        skipToNext: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        skipToPrevious: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transferPlayback: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPlaybackVolume: jest.fn<any>().mockResolvedValue(undefined),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getAvailableDevices: jest.fn<any>().mockResolvedValue({ devices: [] }),
       },
     }
 
@@ -92,9 +108,9 @@ describe('Services Integration', () => {
   })
 
   afterEach(() => {
+    spotifyService.dispose()
+    tabataTimer.dispose()
     jest.useRealTimers()
-    spotifyService.stopPolling()
-    spotifyService.cleanup()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

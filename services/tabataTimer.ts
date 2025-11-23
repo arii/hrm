@@ -56,6 +56,15 @@ class TabataTimer {
     this.broadcastState = broadcastState
   }
 
+  // Helper for tests and cleanup
+  public dispose() {
+    this.stopTimer()
+    if (this.interval) {
+      clearInterval(this.interval)
+      this.interval = null
+    }
+  }
+
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
