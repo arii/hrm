@@ -9,7 +9,6 @@ import {
   HrmData,
   SpotifyData,
   TimerData,
-  UnifiedStateMessage,
 } from '../types/websocket'
 
 import { getWebSocketURL } from '../utils/urls'
@@ -105,25 +104,30 @@ const useWebSocket = (serverUrl?: string) => {
 
     ws.onmessage = (event) => {
       try {
-        // Assert incoming message is the UnifiedStateMessage type
-        const message: UnifiedStateMessage = JSON.parse(event.data)
+        const message = JSON.parse(event.data)
 
-        if (message.type === 'STATE_UPDATE') {
-          if (message.hrmData !== undefined) {
-            console.log(
-              '[useWebSocket] Received STATE_UPDATE. HRM Data:',
-              message.hrmData
-            )
-          }
-          // Merge the incoming state with the current state to preserve non-updated fields
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ??
-              prev.spotifyServiceInitialized,
-          }))
+        switch (message.type) {
+          case 'INITIAL_STATE':
+          case 'STATE_UPDATE':
+            // Full state update
+            setAppState((prev) => ({
+              hrmData: message.hrmData || prev.hrmData,
+              timerData: message.timerData || prev.timerData,
+              spotifyData: message.spotifyData || prev.spotifyData,
+              spotifyServiceInitialized:
+                message.spotifyServiceInitialized ??
+                prev.spotifyServiceInitialized,
+            }))
+            break
+          case 'HRM_UPDATE':
+            // Partial update for high-frequency HRM data
+            setAppState((prev) => ({
+              ...prev,
+              hrmData: message.payload,
+            }))
+            break
+          default:
+            console.warn('[useWebSocket] Received unknown message type:', message.type)
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

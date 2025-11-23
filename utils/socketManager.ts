@@ -97,6 +97,25 @@ const broadcastHrmUpdate = () => {
 }
 
 /**
+ * Broadcasts the full application state to all clients.
+ * This is used for low-frequency events like timer commands or Spotify changes.
+ */
+const broadcastFullState = () => {
+  const message: UnifiedStateMessage = {
+    type: 'STATE_UPDATE',
+    hrmData: Array.from(clientData.values()),
+    timerData: tabataServiceInstance.getState(),
+    spotifyData: spotifyServiceInstance.getState(),
+  }
+
+  wssInstance.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message))
+    }
+  })
+}
+
+/**
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
@@ -150,6 +169,7 @@ const handleIncomingMessage = (
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)
+          broadcastFullState()
         }
         break
       }
@@ -157,6 +177,7 @@ const handleIncomingMessage = (
       case 'SET_MODE': {
         if (tabataServiceInstance) {
           tabataServiceInstance.setMode(message.mode)
+          broadcastFullState()
         }
         break
       }
@@ -167,6 +188,7 @@ const handleIncomingMessage = (
             workDuration: message.workDuration,
             restDuration: message.restDuration,
           })
+          broadcastFullState()
         }
         break
       }
@@ -180,6 +202,7 @@ const handleIncomingMessage = (
             message.volume,
             message.playlistUri
           )
+          broadcastFullState()
         }
         break
       }
