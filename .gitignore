@@ -30,6 +30,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+<<<<<<< HEAD
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # env files
@@ -43,6 +44,16 @@ logs/*
 !logs/spotify_tokens.json
 dev.log
 prod.log
+=======
+
+# env files
+.env*
+!/.env.example
+
+# logs
+logs/
+*.log
+>>>>>>> origin/leader
 
 # vercel
 .vercel
@@ -50,6 +61,12 @@ prod.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+<<<<<<< HEAD
+=======
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+>>>>>>> origin/leader
 
 # runtime data
 pids
@@ -68,7 +85,11 @@ coverage
 # nyc test coverage
 .nyc_output
 
+<<<<<<< HEAD
 # grunt intermediate storage (https://gruntjs.com/)
+=======
+# Grunt intermediate storage (https://gruntjs.com/)
+>>>>>>> origin/leader
 .grunt
 
 # node-waf configuration
@@ -77,6 +98,7 @@ coverage
 # compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
+<<<<<<< HEAD
 # dependency directories
 jspm_packages/
 
@@ -92,14 +114,26 @@ web_modules/
 
 # github
 .github/*
+=======
+# Dependency directories
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
+# IDE settings
+.gemini/
+.vscode/
+.idea/
+>>>>>>> origin/leader
 
 # pm2
 .pm2/
 
 # playwright
 playwright-report/
-playwright-report.log
 test-results/
+<<<<<<< HEAD
 **/tests/playwright/**/*.+(png|txt)
 
 # os-specific
@@ -114,6 +148,12 @@ ehthumbs.db
 *.backup
 *.swp
 *~
+=======
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png
+>>>>>>> origin/leader
 
 # custom app-specific
 diff.txt
@@ -121,5 +161,10 @@ diff.txt
 *err.log
 server.log
 test-update.log
+<<<<<<< HEAD
 npm_run_dev.log
 running_notes.md.backup
+=======
+running_notes.md.backup
+~/.config/
+>>>>>>> origin/leader

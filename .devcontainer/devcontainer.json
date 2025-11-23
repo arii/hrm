@@ -1,0 +1,23 @@
+{
+  "name": "Node.js & TypeScript",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20-bullseye",
+  "forwardPorts": [
+    3000,
+    9229
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-playwright.playwright",
+        "ms-vscode.vscode-typescript-next",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "github.vscode-pull-request-github",
+        "humao.rest-client"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh"
+}

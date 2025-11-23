@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import useWebSocket from '../../../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 
 // Cookie helpers
