@@ -4,6 +4,7 @@
  * Supports visual regression, mobile testing, and video recording
  */
 import { defineConfig, devices } from '@playwright/test'
+import { getBaseURL } from './utils/urls'
 
 export default defineConfig({
   testDir: './tests/playwright',
@@ -31,10 +32,7 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL:
-      process.env.BASE_URL ||
-      process.env.NEXTAUTH_URL ||
-      'http://127.0.0.1:3000',
+    baseURL: getBaseURL(),
 
     // Screenshot settings
     screenshot: {

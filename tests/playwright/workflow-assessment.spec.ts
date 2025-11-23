@@ -3,9 +3,9 @@
  * Workflow Assessment Tests: End-to-end user scenarios with video recording
  */
 import { test, expect } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 test.describe('HRM Workflow Assessment', () => {
   test.beforeEach(async ({ page }) => {
@@ -22,7 +22,13 @@ test.describe('HRM Workflow Assessment', () => {
     await page.fill('input[placeholder="Device ID"]', 'WORKOUT-SESSION-001')
     await page.fill('input[type="number"]', '120')
     await page.click('button:has-text("START")')
+<<<<<<< HEAD
     await page.waitForTimeout(1000)
+=======
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Step 2: Configure Workout on Control Panel
     await page.goto(`${BASE_URL}/client/control`)
@@ -99,7 +105,13 @@ test.describe('HRM Workflow Assessment', () => {
     await mockPage.fill('input[placeholder="Device ID"]', 'PARTICIPANT-001')
     await mockPage.fill('input[type="number"]', '145')
     await mockPage.click('button:has-text("START")')
+<<<<<<< HEAD
     await mockPage.waitForTimeout(1000)
+=======
+    await expect(
+      mockPage.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Trainer configures workout
     await controlPage.fill('input[aria-label="Work duration in seconds"]', '45')
@@ -144,7 +156,13 @@ test.describe('HRM Workflow Assessment', () => {
 
     await page.fill('input[type="number"]', '150')
     await page.click('button:has-text("START")')
+<<<<<<< HEAD
     await page.waitForTimeout(1000)
+=======
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Simulate network issues by going offline
     await page.context().setOffline(true)
@@ -191,7 +209,13 @@ test.describe('HRM Workflow Assessment', () => {
 
     await page.fill('input[placeholder="Device ID"]', 'LOAD-TEST-DEVICE')
     await page.click('button:has-text("START")')
+<<<<<<< HEAD
     await page.waitForTimeout(500)
+=======
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Rapid HR updates
     const hrValues = [120, 135, 150, 165, 180, 175, 160, 145, 130, 125]
@@ -248,7 +272,13 @@ test.describe('HRM Workflow Assessment', () => {
     await page.keyboard.press('Tab')
     await page.waitForTimeout(200)
     await page.keyboard.press('Tab')
+<<<<<<< HEAD
     await page.waitForTimeout(200)
+=======
+    await expect(page.locator('button:has-text("START")')).toBeFocused({
+      timeout: 1000,
+    })
+>>>>>>> origin/leader
     await expect(page).toHaveScreenshot('accessibility-keyboard-focus.png', {
       fullPage: true,
     })
@@ -273,7 +303,31 @@ test.describe('HRM Workflow Assessment', () => {
         }
       `,
     })
+<<<<<<< HEAD
     await page.waitForTimeout(1000)
+=======
+    // Flexible check: background color is "dark enough" (all RGB channels <= 10)
+    const bgColor = await page.evaluate(() => {
+      const c = getComputedStyle(document.body).backgroundColor
+      // c is usually 'rgb(r, g, b)' or 'rgba(r, g, b, a)'
+      const match = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+      if (!match) return c
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+        raw: c,
+      }
+    })
+    if (typeof bgColor === 'string') {
+      // fallback: allow any variant of rgb(0,0,0) with optional spaces
+      expect(bgColor.replace(/\s+/g, '')).toMatch(/^rgb\(0,0,0\)$/)
+    } else {
+      expect(bgColor.r).toBeLessThanOrEqual(10)
+      expect(bgColor.g).toBeLessThanOrEqual(10)
+      expect(bgColor.b).toBeLessThanOrEqual(10)
+    }
+>>>>>>> origin/leader
     await expect(page).toHaveScreenshot('accessibility-high-contrast.png', {
       fullPage: true,
     })
@@ -308,13 +362,25 @@ test.describe('HRM Workflow Assessment', () => {
     await page.fill('input[placeholder="Device ID"]', 'PERSISTENCE-TEST')
     await page.fill('input[type="number"]', '155')
     await page.click('button:has-text("START")')
+<<<<<<< HEAD
     await page.waitForTimeout(1000)
+=======
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Navigate to dashboard and back
     await page.goto(BASE_URL)
     await page.waitForTimeout(2000)
     await page.goto(`${BASE_URL}/client/mock`)
+<<<<<<< HEAD
     await page.waitForTimeout(1000)
+=======
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Verify connection state persisted
     await expect(page).toHaveScreenshot('persistence-hr-connection.png', {

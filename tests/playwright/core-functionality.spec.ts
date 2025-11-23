@@ -113,7 +113,13 @@ test.describe('HRM Core Functionality', () => {
     await mockTab.getByLabel('User Name').fill('Workout User')
     await mockTab.getByLabel('Current BPM').fill('140')
     await mockTab.click('button:has-text("START")')
+<<<<<<< HEAD
     await mockTab.waitForTimeout(2000)
+=======
+    await expect(
+      mockTab.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Configure and start timer
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '20')

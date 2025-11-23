@@ -3,12 +3,13 @@
  * Shared Test Helpers: Reusable functions for consistent test setup
  */
 import type { BrowserContext, Page } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 // Helper function to wait for page ready signal
 export const waitForPageReady = async (page: Page) => {
+<<<<<<< HEAD
   try {
     await page.waitForFunction(
       () => {
@@ -19,6 +20,14 @@ export const waitForPageReady = async (page: Page) => {
   } catch (_error) {
     await page.waitForTimeout(2000)
   }
+=======
+  await page.waitForFunction(
+    () => {
+      return window.__TEST_READY__ === true
+    },
+    { timeout: 10000 }
+  )
+>>>>>>> origin/leader
 }
 
 // Helper function to replace iframe with stable workout content
@@ -50,7 +59,19 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
       `)
     }
   })
+<<<<<<< HEAD
   await page.waitForTimeout(1000)
+=======
+
+  // Try to wait for iframe, but don't block indefinitely if it's missing
+  try {
+    await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
+  } catch {
+    console.warn(
+      'Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.'
+    )
+  }
+>>>>>>> origin/leader
 }
 
 // Setup function for visual regression tests

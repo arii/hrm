@@ -3,9 +3,9 @@
  * Integration Tests: Multi-component and error scenarios
  */
 import { test, expect } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL =
-  process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 test.describe('Integration Tests', () => {
   test('Bluetooth connection flow', async ({ page }) => {
@@ -42,7 +42,13 @@ test.describe('Integration Tests', () => {
     await mockTab.getByLabel('User Name').fill('Multi User')
     await mockTab.getByLabel('Current BPM').fill('150')
     await mockTab.click('button:has-text("START")')
+<<<<<<< HEAD
     await mockTab.waitForTimeout(2000)
+=======
+    await expect(
+      mockTab.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+>>>>>>> origin/leader
 
     // Start timer from control
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '30')

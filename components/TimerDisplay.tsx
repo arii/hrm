@@ -1,6 +1,7 @@
 // File: components/TimerDisplay.tsx
 'use client'
 import { Box, Card, CardContent, Typography } from '@mui/material'
+import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
 export interface TimerDisplayProps {
@@ -188,6 +189,7 @@ const TimerDisplay = ({
         >
           {displayTime}
         </Typography>
+<<<<<<< HEAD
 
         {/* Cycle Counter (Tabata only) */}
         {mode === 'TABATA' && cycle > 0 && (
@@ -202,9 +204,11 @@ const TimerDisplay = ({
             Cycle {cycle} of {totalCycles}
           </Typography>
         )}
+=======
+>>>>>>> origin/leader
       </CardContent>
     </Card>
   )
 }
 
-export default TimerDisplay
+export default memo(TimerDisplay)

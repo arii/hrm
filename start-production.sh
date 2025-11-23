@@ -8,8 +8,23 @@ cd "$SCRIPT_DIR"
 export NODE_ENV=production
 
 if [ ! -f ".env.production" ]; then
+<<<<<<< HEAD
   echo "[start-production] Error: .env.production not found. Create it before running npm start." >&2
   exit 1
+=======
+  echo "[start-production] Warning: .env.production not found. Running without secrets (Spotify features disabled)." >&2
+else
+  # Export all variables defined in .env.production to child processes
+  set -a
+  source .env.production
+  set +a
+  
+  # Debug: Show critical env vars
+  echo "Environment: NODE_ENV=$NODE_ENV"
+  echo "NEXTAUTH_URL: $NEXTAUTH_URL"
+  echo "AUTH_TRUST_HOST: $AUTH_TRUST_HOST"
+  echo "Hostname: ${HOST:-0.0.0.0}, Port: ${PORT:-3000}"
+>>>>>>> origin/leader
 fi
 
 # Export all variables defined in .env.production to child processes
@@ -21,5 +36,9 @@ if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
   echo "[start-production] Build artifacts missing. Running npm run build..."
   npm run build
 fi
+
+# Ensure AUTH_TRUST_HOST is set for NextAuth
+export AUTH_TRUST_HOST=true
+export NEXTAUTH_TRUST_HOST=true
 
 exec node dist/server.mjs

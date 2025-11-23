@@ -287,12 +287,15 @@ describe('TabataTimer Service', () => {
       expect(state.restDuration).toBe(15)
     })
 
+<<<<<<< HEAD
     it('should update total cycles', () => {
       timer.setConfig({ workDuration: 20, restDuration: 10, totalCycles: 12 })
       const state = timer.getState()
       expect(state.totalCycles).toBe(12)
     })
 
+=======
+>>>>>>> origin/leader
     it('should sanitize work duration to minimum of 1 second', () => {
       timer.setConfig({ workDuration: 0, restDuration: 10 })
       const state = timer.getState()
@@ -321,6 +324,7 @@ describe('TabataTimer Service', () => {
       expect(lastState.restDuration).toBe(15)
     })
 
+<<<<<<< HEAD
     it('should use new work duration in next cycle', () => {
       timer.setConfig({ workDuration: 30, restDuration: 10 })
       timer.handleCommand('START')
@@ -331,6 +335,8 @@ describe('TabataTimer Service', () => {
       expect(state.timeRemaining).toBe(30)
     })
 
+=======
+>>>>>>> origin/leader
     it('should use new rest duration in next rest phase', () => {
       timer.setConfig({ workDuration: 20, restDuration: 15 })
       timer.handleCommand('START')
