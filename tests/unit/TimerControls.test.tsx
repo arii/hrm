@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
 import TimerControls from '@/app/client/control/components/TimerControls'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
@@ -9,7 +9,8 @@ import userEvent from '@testing-library/user-event'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
 
-jest.mock('@/hooks/useWebSocket')
+jest.mock('@/context/WebSocketContext')
+jest.useFakeTimers()
 
 const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
   () => UseWebSocketReturn
@@ -45,7 +46,7 @@ describe('TimerControls', () => {
 
     render(<TimerControls />)
 
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
     // Get the actual input elements using data-testid (following MUI testing pattern)
     const workInput = screen.getByTestId(
@@ -61,8 +62,8 @@ describe('TimerControls', () => {
     fireEvent.change(restInput, { target: { value: '15' } })
 
     // Wait for debounce and React state updates (wrapped in act to avoid warnings)
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 600))
+    act(() => {
+      jest.advanceTimersByTime(600)
     })
 
     await user.click(screen.getByRole('button', { name: /start/i }))

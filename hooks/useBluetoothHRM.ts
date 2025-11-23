@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 // Define a more structured state for the hook
 export type BluetoothHRMStatus =
@@ -21,7 +22,6 @@ export interface BluetoothHRMState {
   message: string
   deviceName?: string
 }
-import useWebSocket from './useWebSocket'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -71,7 +71,7 @@ const useBluetoothHRM = () => {
   const [device, setDevice] = useState<BluetoothDevice | null>(null)
 
   const abortConnection = useCallback(async () => {
-    if (device && device.gatt) {
+    if (device && device.gatt?.connected) {
       device.gatt.disconnect()
     }
     setDevice(null)

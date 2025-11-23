@@ -1,5 +1,4 @@
-// File: hooks/useAutoConnect.ts
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const MAX_DELAY = 30000 // 30 seconds
 const INITIAL_DELAY = 1000 // 1 second
@@ -10,48 +9,43 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
   const [isConnecting, setIsConnecting] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const delayRef = useRef(INITIAL_DELAY)
-  const savedConnectFn = useRef(connectFn)
 
   useEffect(() => {
-    savedConnectFn.current = connectFn
-  }, [connectFn])
+    let isMounted = true
+    const tryConnect = async (delay: number) => {
+      if (!start || !isMounted) {
+        return
+      }
 
-  const tryConnect = useCallback(() => {
-    const connect = async () => {
       setIsConnecting(true)
       setAttempts((prev) => prev + 1)
-      const success = await savedConnectFn.current()
-      if (success) {
-        setIsConnecting(false)
-        setAttempts(0)
-        delayRef.current = INITIAL_DELAY
-      } else {
-        const newDelay = Math.min(delayRef.current * 2, MAX_DELAY)
-        delayRef.current = newDelay
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current)
+
+      const success = await connectFn()
+
+      if (isMounted) {
+        if (success) {
+          setIsConnecting(false)
+          setAttempts(0)
+        } else {
+          const newDelay = Math.min(delay * 2, MAX_DELAY)
+          timeoutRef.current = setTimeout(() => tryConnect(newDelay), newDelay)
         }
-        timeoutRef.current = setTimeout(connect, newDelay)
       }
     }
-    connect()
-  }, [])
 
-  useEffect(() => {
     if (start) {
-      tryConnect()
+      tryConnect(INITIAL_DELAY)
     }
 
     return () => {
+      isMounted = false
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
       setIsConnecting(false)
       setAttempts(0)
-      delayRef.current = INITIAL_DELAY
     }
-  }, [start, tryConnect])
+  }, [start, connectFn])
 
   return { isConnecting, attempts }
 }
