@@ -1,9 +1,3 @@
-import withBundleAnalyzerPkg from '@next/bundle-analyzer'
-
-const withBundleAnalyzer = withBundleAnalyzerPkg({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
@@ -54,4 +48,4 @@ const nextConfig = {
   }
 }
 
-export default withBundleAnalyzer(nextConfig)
+export default nextConfig
