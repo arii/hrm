@@ -20,6 +20,9 @@ const debugLog = (...args: unknown[]) => {
   }
 }
 
+// Device activation delay in milliseconds
+const DEVICE_ACTIVATION_DELAY_MS = 500
+
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
 
@@ -348,12 +351,18 @@ export class SpotifyPolling {
         if (playlistUri) {
           console.log(`[SpotifyPolling] Playing playlist with context_uri: ${playlistUri} on device: ${deviceId}`)
           
+          // Ensure deviceId is valid before proceeding
+          if (!deviceId) {
+            console.error(`[SpotifyPolling] Cannot play playlist: deviceId is null or undefined`)
+            return
+          }
+          
           // First, transfer playback to the device to ensure it's active
           try {
             console.log(`[SpotifyPolling] Transferring playback to device: ${deviceId}`)
-            await this.sdk!.player.transferPlayback([deviceId!], false)
+            await this.sdk!.player.transferPlayback([deviceId], false)
             // Wait a moment for the device to become active
-            await new Promise(resolve => setTimeout(resolve, 500))
+            await new Promise(resolve => setTimeout(resolve, DEVICE_ACTIVATION_DELAY_MS))
           } catch (transferError) {
             console.warn(`[SpotifyPolling] Failed to transfer playback to device:`, transferError)
           }
@@ -362,7 +371,7 @@ export class SpotifyPolling {
           try {
             console.log(`[SpotifyPolling] Calling startResumePlayback with context_uri`)
             await this.sdk!.player.startResumePlayback(
-              deviceId!,
+              deviceId,
               playlistUri // context_uri as second parameter
             )
             console.log(`[SpotifyPolling] Successfully started playlist playback`)
