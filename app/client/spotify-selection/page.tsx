@@ -66,6 +66,7 @@ const SpotifySelectionPage = () => {
   const { volume, setVolume } = useVolumePreference(70)
 
   const handlePlaylistSelected = (uri: string) => {
+    console.log(`[SpotifySelectionPage] Playlist selected: ${uri}`)
     setSelectedPlaylistUri(uri)
   }
 
@@ -94,13 +95,17 @@ const SpotifySelectionPage = () => {
   }
 
   const handlePlayPause = () => {
+    console.log(`[SpotifySelectionPage] Play/Pause clicked. isPlaying: ${spotifyData.isPlaying}, selectedPlaylist: ${selectedPlaylistUri}`)
     if (spotifyData.isPlaying) {
       sendSpotifyCommand('PAUSE')
     } else {
-      sendSpotifyCommand(
-        'PLAY',
-        selectedPlaylistUri ? { playlistUri: selectedPlaylistUri } : {}
-      )
+      if (selectedPlaylistUri) {
+        console.log(`[SpotifySelectionPage] Playing playlist: ${selectedPlaylistUri}`)
+        sendSpotifyCommand('PLAY', { playlistUri: selectedPlaylistUri })
+      } else {
+        console.log(`[SpotifySelectionPage] Resuming playback (no playlist selected)`)
+        sendSpotifyCommand('PLAY')
+      }
     }
   }
 
@@ -134,6 +139,12 @@ const SpotifySelectionPage = () => {
           <Typography variant="h6" gutterBottom>
             Select a Playlist
           </Typography>
+          {selectedPlaylistUri && (
+            <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
+              Selected: {selectedPlaylistUri.split(':').pop()} 
+              {/* Show just the playlist ID for now, ideally we'd show the name */}
+            </Typography>
+          )}
           <PlaylistSelector onPlaylistSelected={handlePlaylistSelected} />
         </CardContent>
       </Card>

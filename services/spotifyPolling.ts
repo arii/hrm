@@ -316,6 +316,11 @@ export class SpotifyPolling {
       return Promise.resolve()
     }
 
+    // Debug logging for playlist selection
+    if (command === 'PLAY' && playlistUri) {
+      console.log(`[SpotifyPolling] Playing playlist: ${playlistUri} on device: ${deviceId}`)
+    }
+
     return (async () => {
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
@@ -341,8 +346,13 @@ export class SpotifyPolling {
     switch (command) {
       case 'PLAY':
         if (playlistUri) {
-          await this.sdk!.player.startResumePlayback(deviceId!, playlistUri)
+          // Play specific playlist using context_uri parameter
+          await this.sdk!.player.startResumePlayback(
+            deviceId!,
+            playlistUri // context_uri as second parameter
+          )
         } else {
+          // Resume current playback
           await this.sdk!.player.startResumePlayback(deviceId!)
         }
         break

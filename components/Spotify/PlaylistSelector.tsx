@@ -143,6 +143,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const handlePlaylistSelect = (playlist: Playlist | null) => {
     setSelectedPlaylist(playlist)
     if (playlist) {
+      console.log(`[PlaylistSelector] Selected playlist: ${playlist.name} (${playlist.uri})`)
       onPlaylistSelected(playlist.uri)
     }
   }
