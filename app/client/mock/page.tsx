@@ -9,20 +9,40 @@ import {
   Grid,
   TextField,
   Typography,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
+import HrTile from '../../../components/HrTile'
 import useWebSocket from '../../../hooks/useWebSocket'
 import { HrmInputMessage } from '../../../types/websocket'
+import { getHrZoneProps } from '../../../utils/visualization'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
-  const [hrValue, setHrValue] = useState(100)
+  const [hrValue, setHrValue] = useState<number>(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [simulationProfile, setSimulationProfile] = useState('manual')
 
-  const isStreaming = intervalId !== null
+  const workerRef = useRef<Worker | null>(null)
+
+  // Use refs for values needed in callbacks to avoid recreating callbacks/effects
+  const nameRef = useRef(name)
+  const ageRef = useRef(age)
+  const maxHrRef = useRef(220 - age)
+
+  useEffect(() => {
+    nameRef.current = name
+  }, [name])
+
+  useEffect(() => {
+    ageRef.current = age
+    maxHrRef.current = 220 - age
+  }, [age])
+
   const maxHr = 220 - age
 
   // Signal when page is ready for testing
@@ -38,48 +58,100 @@ export default function MockPage() {
   }, [])
 
   const sendHrPacket = useCallback(
-    (hr: number) => {
+    (hr: number | null) => {
       const message: HrmInputMessage = {
         type: 'HRM_INPUT',
         data: {
-          value: hr,
-          maxHr: maxHr,
-          name: name,
-          age: age,
+          value: hr === null ? undefined : hr,
+          maxHr: maxHrRef.current,
+          name: nameRef.current,
+          age: ageRef.current,
         },
       }
       sendData(message)
     },
-    [sendData, name, age, maxHr]
+    [sendData]
   )
+
+  useEffect(() => {
+    workerRef.current = new Worker('/workers/mockWorker.js')
+
+    return () => {
+      workerRef.current?.terminate()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!workerRef.current) return
+
+    workerRef.current.onmessage = (e) => {
+      if (e.data.type === 'TICK') {
+        const newHr = e.data.hr
+        setHrValue(newHr !== null ? newHr : 0)
+        sendHrPacket(newHr)
+      }
+    }
+  }, [sendHrPacket])
+
+  // Update baseHr in worker when it changes manually
+  useEffect(() => {
+    if (simulationProfile === 'manual' && workerRef.current) {
+      workerRef.current.postMessage({
+        type: 'CONFIG',
+        payload: { mode: 'manual', baseHr: hrValue },
+      })
+    }
+  }, [hrValue, simulationProfile])
+
+  // Update worker configuration when parameters change
+  useEffect(() => {
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        type: 'CONFIG',
+        payload: { mode: simulationProfile, baseHr: hrValue },
+      })
+    }
+  }, [simulationProfile, hrValue])
+
+  // Handle manual changes specifically
+  const handleManualChange = (newValue: number) => {
+    setHrValue(newValue)
+    if (!isStreaming) {
+      sendHrPacket(newValue)
+    }
+  }
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
-    sendHrPacket(hrValue)
-    const id = setInterval(() => {
-      const fluctuatedHr = Math.max(
-        70,
-        hrValue + Math.floor(Math.random() * 5) - 2
-      )
-      setHrValue(fluctuatedHr)
-      sendHrPacket(fluctuatedHr)
-    }, 2000)
-    setIntervalId(id)
+    setIsStreaming(true)
+
+    // Sync current state before starting
+    workerRef.current?.postMessage({
+      type: 'CONFIG',
+      payload: { mode: simulationProfile, baseHr: hrValue },
+    })
+
+    workerRef.current?.postMessage({ type: 'START' })
   }
 
   const stopStreaming = () => {
-    if (intervalId) {
-      clearInterval(intervalId)
-      setIntervalId(null)
+    setIsStreaming(false)
+    workerRef.current?.postMessage({ type: 'STOP' })
+  }
+
+  const handleProfileChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newProfile: string | null
+  ) => {
+    if (newProfile !== null) {
+      setSimulationProfile(newProfile)
     }
   }
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
-    setHrValue(isNaN(value) ? 0 : value)
-    if (!isStreaming) {
-      sendHrPacket(value)
-    }
+    const newValue = isNaN(value) ? 0 : value
+    handleManualChange(newValue)
   }
 
   const setHrByZone = (zone: 'grey' | 'blue' | 'green' | 'yellow' | 'red') => {
@@ -90,156 +162,248 @@ export default function MockPage() {
       yellow: 155,
       red: 175,
     }
-    const newHr = zones[zone]
-    setHrValue(newHr)
-    if (!isStreaming) {
-      sendHrPacket(newHr)
-    }
+    handleManualChange(zones[zone])
   }
+
+  const hrZoneProps = getHrZoneProps(hrValue, maxHr)
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
-        <Card sx={{ p: 3, textAlign: 'center' }}>
-          <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
-          <Typography
-            variant="h5"
-            component="h1"
-            sx={{ fontWeight: 'bold', mb: 2 }}
-          >
-            HRM Mock Streamer
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Simulate heart rate data for testing.
-          </Typography>
+      <Container maxWidth="md" sx={{ py: 3, pb: 10 }}>
+        <Grid container spacing={3}>
+          {/* Left Column: Controls */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ p: 3, textAlign: 'center', height: '100%' }}>
+              <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
+              <Typography
+                variant="h5"
+                component="h1"
+                sx={{ fontWeight: 'bold', mb: 2 }}
+              >
+                HRM Mock Streamer
+              </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={8}>
-              <TextField
-                label="User Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid item xs={8}>
+                  <TextField
+                    label="User Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    label="Age"
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+
+              <Typography variant="subtitle2" align="left" sx={{ mb: 1 }}>
+                Simulation Profile
+              </Typography>
+              <ToggleButtonGroup
+                value={simulationProfile}
+                exclusive
+                onChange={handleProfileChange}
+                aria-label="simulation profile"
                 fullWidth
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Age"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                size="small"
+                sx={{ mb: 3 }}
+                orientation="vertical"
+              >
+                <ToggleButton value="manual" aria-label="manual">
+                  Manual Control
+                </ToggleButton>
+                <ToggleButton value="intervals" aria-label="intervals">
+                  Intervals (170/110)
+                </ToggleButton>
+                <ToggleButton value="steady" aria-label="steady">
+                  Steady Ramp (Max 140)
+                </ToggleButton>
+                <ToggleButton value="drop" aria-label="signal drop">
+                  Signal Drop (Null)
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              {simulationProfile === 'manual' && (
+                <>
+                  <TextField
+                    label="Target BPM"
+                    type="number"
+                    value={hrValue}
+                    onChange={handleValueChange}
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{ mb: 2 }}
+                    disabled={isStreaming}
+                  />
+
+                  <Grid container spacing={1} sx={{ mb: 3 }}>
+                    <Grid item xs>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#9E9E9E',
+                          minWidth: 'auto',
+                          px: 0,
+                        }}
+                        onClick={() => setHrByZone('grey')}
+                      >
+                        Z1
+                      </Button>
+                    </Grid>
+                    <Grid item xs>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#2196F3',
+                          minWidth: 'auto',
+                          px: 0,
+                        }}
+                        onClick={() => setHrByZone('blue')}
+                      >
+                        Z2
+                      </Button>
+                    </Grid>
+                    <Grid item xs>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#4CAF50',
+                          minWidth: 'auto',
+                          px: 0,
+                        }}
+                        onClick={() => setHrByZone('green')}
+                      >
+                        Z3
+                      </Button>
+                    </Grid>
+                    <Grid item xs>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#FFEB3B',
+                          color: 'black',
+                          minWidth: 'auto',
+                          px: 0,
+                        }}
+                        onClick={() => setHrByZone('yellow')}
+                      >
+                        Z4
+                      </Button>
+                    </Grid>
+                    <Grid item xs>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#F44336',
+                          minWidth: 'auto',
+                          px: 0,
+                        }}
+                        onClick={() => setHrByZone('red')}
+                      >
+                        Z5
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </>
+              )}
+
+              <Button
+                variant="contained"
+                size="large"
+                color={isStreaming ? 'error' : 'primary'}
+                onClick={isStreaming ? stopStreaming : startStreaming}
+                disabled={connectionStatus !== 'Connected'}
+                startIcon={<HeartBroken />}
                 fullWidth
-              />
-            </Grid>
+                sx={{ mb: 2 }}
+              >
+                {isStreaming ? `STOP Stream` : 'START Stream'}
+              </Button>
+
+              <Box
+                sx={{
+                  p: 1,
+                  borderRadius: 1,
+                  backgroundColor:
+                    connectionStatus === 'Connected'
+                      ? 'success.light'
+                      : 'error.light',
+                  color:
+                    connectionStatus === 'Connected'
+                      ? 'success.contrastText'
+                      : 'error.contrastText',
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                  Status: {connectionStatus}
+                </Typography>
+              </Box>
+            </Card>
           </Grid>
 
-          <TextField
-            label="Current BPM"
-            type="number"
-            value={hrValue}
-            onChange={handleValueChange}
-            variant="outlined"
-            fullWidth
-            size="medium"
-            disabled={isStreaming}
-            sx={{ mb: 3 }}
-          />
+          {/* Right Column: Visualization */}
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Box sx={{ p: 2, flexGrow: 1 }}>
+                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                  Outgoing Data Stream
+                </Typography>
+                <HrTile
+                  name={name}
+                  bpm={hrValue}
+                  percentMax={hrZoneProps.percentage}
+                  background={hrZoneProps.progressColor}
+                />
 
-          <Typography
-            variant="caption"
-            display="block"
-            color="text.secondary"
-            sx={{ mb: 2 }}
-          >
-            Select a zone to set HR:
-          </Typography>
-          <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid item xs>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#9E9E9E' }}
-                onClick={() => setHrByZone('grey')}
-              >
-                Zone 1
-              </Button>
-            </Grid>
-            <Grid item xs>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#2196F3' }}
-                onClick={() => setHrByZone('blue')}
-              >
-                Zone 2
-              </Button>
-            </Grid>
-            <Grid item xs>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#4CAF50' }}
-                onClick={() => setHrByZone('green')}
-              >
-                Zone 3
-              </Button>
-            </Grid>
-            <Grid item xs>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
-                onClick={() => setHrByZone('yellow')}
-              >
-                Zone 4
-              </Button>
-            </Grid>
-            <Grid item xs>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#F44336' }}
-                onClick={() => setHrByZone('red')}
-              >
-                Zone 5
-              </Button>
-            </Grid>
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    component="pre"
+                    sx={{ overflowX: 'auto' }}
+                  >
+                    {`{
+  "type": "HRM_INPUT",
+  "data": {
+    "value": ${hrValue},
+    "maxHr": ${maxHr},
+    "name": "${name}",
+    "age": ${age}
+  }
+}`}
+                  </Typography>
+                </Box>
+              </Box>
+            </Card>
           </Grid>
-
-          <Button
-            variant="contained"
-            size="large"
-            color={isStreaming ? 'error' : 'primary'}
-            onClick={isStreaming ? stopStreaming : startStreaming}
-            disabled={connectionStatus !== 'Connected'}
-            startIcon={<HeartBroken />}
-            fullWidth
-            sx={{ mb: 3 }}
-          >
-            {isStreaming
-              ? `STOP Streaming HR: ${hrValue} BPM`
-              : 'START Continuous Stream'}
-          </Button>
-
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 1,
-              backgroundColor:
-                connectionStatus === 'Connected'
-                  ? 'success.light'
-                  : 'error.light',
-              color:
-                connectionStatus === 'Connected'
-                  ? 'success.contrastText'
-                  : 'error.contrastText',
-            }}
-          >
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Server Status: {connectionStatus}
-            </Typography>
-          </Box>
-        </Card>
+        </Grid>
       </Container>
       <BottomNavBar />
     </>

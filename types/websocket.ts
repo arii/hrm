@@ -65,7 +65,9 @@ export type BroadcastData = Partial<UnifiedStateMessage>
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId'> & {
+  value?: number | null
+}
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
