@@ -22,7 +22,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
 interface SpotifyDevice {
@@ -132,9 +132,13 @@ const SpotifyControls = () => {
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
-      const sanitized = clampVolume(value)
       const targetDeviceId = resolveTargetDeviceId()
-      const messageKey = `${targetDeviceId ?? 'default'}:${sanitized}`
+
+      // Prevent sending volume command if no device is targeted
+      if (!targetDeviceId) return
+
+      const sanitized = clampVolume(value)
+      const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
