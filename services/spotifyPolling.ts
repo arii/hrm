@@ -346,13 +346,33 @@ export class SpotifyPolling {
     switch (command) {
       case 'PLAY':
         if (playlistUri) {
+          console.log(`[SpotifyPolling] Playing playlist with context_uri: ${playlistUri} on device: ${deviceId}`)
+          
+          // First, transfer playback to the device to ensure it's active
+          try {
+            console.log(`[SpotifyPolling] Transferring playback to device: ${deviceId}`)
+            await this.sdk!.player.transferPlayback([deviceId!], false)
+            // Wait a moment for the device to become active
+            await new Promise(resolve => setTimeout(resolve, 500))
+          } catch (transferError) {
+            console.warn(`[SpotifyPolling] Failed to transfer playback to device:`, transferError)
+          }
+          
           // Play specific playlist using context_uri parameter
-          await this.sdk!.player.startResumePlayback(
-            deviceId!,
-            playlistUri // context_uri as second parameter
-          )
+          try {
+            console.log(`[SpotifyPolling] Calling startResumePlayback with context_uri`)
+            await this.sdk!.player.startResumePlayback(
+              deviceId!,
+              playlistUri // context_uri as second parameter
+            )
+            console.log(`[SpotifyPolling] Successfully started playlist playback`)
+          } catch (playError) {
+            console.error(`[SpotifyPolling] Failed to start playlist playback:`, playError)
+            throw playError
+          }
         } else {
           // Resume current playback
+          console.log(`[SpotifyPolling] Resuming playback on device: ${deviceId}`)
           await this.sdk!.player.startResumePlayback(deviceId!)
         }
         break

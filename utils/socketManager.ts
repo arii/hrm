@@ -163,6 +163,12 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
+          console.log(`[socketManager] SPOTIFY_COMMAND received:`, {
+            command: message.command,
+            deviceId: message.deviceId,
+            volume: message.volume,
+            playlistUri: message.playlistUri
+          })
           // message.command is already typed as SpotifyCommand, which now includes deviceId, volume, and playlistUri
           spotifyServiceInstance.handleCommand(
             message.command,
