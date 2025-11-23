@@ -4,38 +4,19 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import useWebSocket from '@/hooks/useWebSocket'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { VolumeUp } from '@mui/icons-material'
-import PauseIcon from '@mui/icons-material/Pause'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import SkipNextIcon from '@mui/icons-material/SkipNext'
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
-import SpeakerIcon from '@mui/icons-material/Speaker'
-import {
-  Box,
-  Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Slider,
-  Typography,
-} from '@mui/material'
+import { SpotifyDevice } from '@/types/index'
+import { Box, Button, Typography } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
+// Atomic Components
+import VolumeControl from './Spotify/VolumeControl'
+import DeviceSelector from './Spotify/DeviceSelector'
+import PlayerControls from './Spotify/PlayerControls'
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
-  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -47,10 +28,6 @@ const SpotifyDisplay = () => {
   } = useSpotifyWebPlayback()
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
-  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
-    null
-  )
-  const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
@@ -95,14 +72,6 @@ const SpotifyDisplay = () => {
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
@@ -166,7 +135,6 @@ const SpotifyDisplay = () => {
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-    setDeviceMenuAnchor(null)
   }
 
   const handleSpotifyLogin = () => {
@@ -287,103 +255,27 @@ const SpotifyDisplay = () => {
           )}
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('PREVIOUS')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Previous track"
-          >
-            <SkipPreviousIcon />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handlePlayPauseToggle}
-            sx={{
-              color: 'common.white',
-              backgroundColor: 'grey.700',
-              '&:hover': { backgroundColor: 'grey.600' },
-            }}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
-          >
-            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('NEXT')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Next track"
-          >
-            <SkipNextIcon />
-          </IconButton>
-        </Box>
+        <PlayerControls
+          isPlaying={spotifyData.isPlaying}
+          onPlayPause={handlePlayPauseToggle}
+          onNext={() => sendSpotifyCommand('NEXT')}
+          onPrev={() => sendSpotifyCommand('PREVIOUS')}
+        />
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
-          <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-            min={0}
-            max={100}
-            size="small"
-            sx={{
-              width: 80,
-              color: '#1DB954',
-              '& .MuiSlider-thumb': {
-                backgroundColor: 'white',
-                width: 12,
-                height: 12,
-              },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': { height: 3 },
-            }}
+          <VolumeControl
+            volume={volume}
+            onVolumeChange={setVolume}
+            onVolumeChangeCommitted={sendVolumeCommand}
+            width={80}
+            showValue={false}
           />
 
-          <IconButton
-            size="small"
-            onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Select playback device"
-          >
-            <SpeakerIcon fontSize="small" />
-          </IconButton>
-          <Menu
-            anchorEl={deviceMenuAnchor}
-            open={deviceMenuOpen}
-            onClose={() => setDeviceMenuAnchor(null)}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-          >
-            {availableDevices.length > 0 ? (
-              availableDevices.map((device) => (
-                <MenuItem
-                  key={device.id}
-                  onClick={() => handleDeviceSelect(device.id)}
-                  selected={device.is_active}
-                >
-                  {device.name} {device.is_active && '✓'}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No devices available</MenuItem>
-            )}
-          </Menu>
+          <DeviceSelector
+            devices={availableDevices}
+            selectedDeviceId={selectedDeviceId}
+            onDeviceSelect={handleDeviceSelect}
+          />
 
           <Button
             variant="outlined"

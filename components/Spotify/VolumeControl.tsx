@@ -1,22 +1,26 @@
 // components/Spotify/VolumeControl.tsx
 import React from 'react'
-import { Slider, Stack, Typography } from '@mui/material'
+import { Slider, Stack, Typography, Box } from '@mui/material'
 import { VolumeUp } from '@mui/icons-material'
 
 interface VolumeControlProps {
   volume: number
   onVolumeChange: (volume: number) => void
   onVolumeChangeCommitted: (volume: number) => void
+  width?: number | string
+  showValue?: boolean
 }
 
 const VolumeControl: React.FC<VolumeControlProps> = ({
   volume,
   onVolumeChange,
   onVolumeChangeCommitted,
+  width,
+  showValue = true,
 }) => {
   return (
     <Stack direction="row" spacing={1} alignItems="center">
-      <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+      <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
       <Slider
         value={volume}
         onChange={(_, val) => onVolumeChange(val as number)}
@@ -25,13 +29,25 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
         max={100}
         size="small"
         sx={{
+          width: width,
           color: '#1DB954',
-          '& .MuiSlider-thumb': { backgroundColor: 'white' },
+          '& .MuiSlider-thumb': {
+            backgroundColor: 'white',
+            width: 12,
+            height: 12,
+          },
+          '& .MuiSlider-track': { height: 3 },
+          '& .MuiSlider-rail': { height: 3 },
         }}
       />
-      <Typography variant="caption" sx={{ color: 'grey.400', minWidth: '3ch' }}>
-        {volume}
-      </Typography>
+      {showValue && (
+        <Typography
+          variant="caption"
+          sx={{ color: 'grey.400', minWidth: '3ch' }}
+        >
+          {volume}
+        </Typography>
+      )}
     </Stack>
   )
 }
