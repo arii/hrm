@@ -9,28 +9,20 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 const SettingsPage: React.FC = () => {
   const { userSettings, updateUserSettings, isInitialized } = useUserSettings()
-  const [name, setName] = useState(userSettings.userName)
-  const [age, setAge] = useState<number | ''>(userSettings.userAge ?? '')
-  const [maxHr, setMaxHr] = useState<number | ''>(userSettings.maxHr ?? '')
-  const [restingHr, setRestingHr] = useState<number | ''>(
-    userSettings.restingHr ?? ''
-  )
   const [statusMessage, setStatusMessage] = useState('')
 
-  useEffect(() => {
-    if (isInitialized) {
-      setName(userSettings.userName)
-      setAge(userSettings.userAge ?? '')
-      setMaxHr(userSettings.maxHr ?? '')
-      setRestingHr(userSettings.restingHr ?? '')
-    }
-  }, [isInitialized, userSettings])
+  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const name = formData.get('name') as string
+    const age = formData.get('age') as string
+    const maxHr = formData.get('maxHr') as string
+    const restingHr = formData.get('restingHr') as string
 
-  const handleSave = () => {
     updateUserSettings({
       userName: name,
       userAge: age === '' ? null : Number(age),
@@ -59,18 +51,15 @@ const SettingsPage: React.FC = () => {
           component="form"
           noValidate
           autoComplete="off"
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleSave()
-          }}
+          onSubmit={handleSave}
         >
           <TextField
             label="Name"
             variant="outlined"
             fullWidth
             margin="normal"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            name="name"
+            defaultValue={userSettings.userName}
           />
           <TextField
             label="Age"
@@ -78,10 +67,8 @@ const SettingsPage: React.FC = () => {
             type="number"
             fullWidth
             margin="normal"
-            value={age}
-            onChange={(e) =>
-              setAge(e.target.value === '' ? '' : Number(e.target.value))
-            }
+            name="age"
+            defaultValue={userSettings.userAge ?? ''}
           />
           <TextField
             label="Maximum Heart Rate"
@@ -89,10 +76,8 @@ const SettingsPage: React.FC = () => {
             type="number"
             fullWidth
             margin="normal"
-            value={maxHr}
-            onChange={(e) =>
-              setMaxHr(e.target.value === '' ? '' : Number(e.target.value))
-            }
+            name="maxHr"
+            defaultValue={userSettings.maxHr ?? ''}
           />
           <TextField
             label="Resting Heart Rate"
@@ -100,10 +85,8 @@ const SettingsPage: React.FC = () => {
             type="number"
             fullWidth
             margin="normal"
-            value={restingHr}
-            onChange={(e) =>
-              setRestingHr(e.target.value === '' ? '' : Number(e.target.value))
-            }
+            name="restingHr"
+            defaultValue={userSettings.restingHr ?? ''}
           />
           <Button
             type="submit"

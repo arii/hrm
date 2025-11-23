@@ -6,12 +6,8 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
-<<<<<<< HEAD
 import { useUserSettings } from '@/contexts/UserSettingsContext'
-import useWebSocket from './useWebSocket'
-=======
 import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -66,7 +62,7 @@ const useBluetoothHRM = () => {
             const devices = await navigator.bluetooth.getDevices()
             connectedDevice =
               devices.find((d) => d.id === userSettings.deviceId) || null
-          } catch (error) {
+          } catch (_error) {
             console.warn('Could not retrieve previously connected devices.')
           }
         }
@@ -174,18 +170,13 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-<<<<<<< HEAD
     [
       connectionStatus,
       sendData,
-      deviceStatus,
       device,
       userSettings.deviceId,
       updateUserSettings,
     ]
-=======
-    [connectionStatus, sendData, savedDevice]
->>>>>>> origin/leader
   )
 
   const disconnect = useCallback(() => {

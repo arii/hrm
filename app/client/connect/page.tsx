@@ -6,7 +6,6 @@ import {
   Button,
   Container,
   Grid,
-  TextField,
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
@@ -85,7 +84,7 @@ export default function ConnectPage() {
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
   )
   const currentHR = currentUserData?.value || 0
-  const maxHr = 220 - (parseInt(userAge) || 30)
+  const maxHr = 220 - (userAge || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   return (

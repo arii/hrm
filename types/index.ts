@@ -34,14 +34,13 @@ export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>
 }
 
-<<<<<<< HEAD
 export interface UserSettings {
   userName: string
   userAge: number | null
   maxHr: number | null
   restingHr: number | null
   deviceId: string | null
-=======
+}
 export interface SpotifyPlaylistItem {
   id: string
   name: string
@@ -51,5 +50,4 @@ export interface SpotifyPlaylistItem {
 export interface SpotifyPlaylist {
   name: string
   uri: string
->>>>>>> origin/leader
 }
