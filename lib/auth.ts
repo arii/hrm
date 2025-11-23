@@ -98,7 +98,11 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         // Set domain based on environment
+<<<<<<< HEAD
         domain: process.env.NODE_ENV === 'production' ?
+=======
+        domain: process.env.NODE_ENV === 'production' ? 
+>>>>>>> origin/leader
           process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
           undefined,
       },
@@ -110,7 +114,11 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
+<<<<<<< HEAD
         domain: process.env.NODE_ENV === 'production' ?
+=======
+        domain: process.env.NODE_ENV === 'production' ? 
+>>>>>>> origin/leader
           process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
           undefined,
       },
@@ -122,7 +130,11 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
+<<<<<<< HEAD
         domain: process.env.NODE_ENV === 'production' ?
+=======
+        domain: process.env.NODE_ENV === 'production' ? 
+>>>>>>> origin/leader
           process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
           undefined,
       },
@@ -135,7 +147,11 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
+<<<<<<< HEAD
         domain: process.env.NODE_ENV === 'production' ?
+=======
+        domain: process.env.NODE_ENV === 'production' ? 
+>>>>>>> origin/leader
           process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
           undefined,
       },
@@ -148,7 +164,11 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
+<<<<<<< HEAD
         domain: process.env.NODE_ENV === 'production' ?
+=======
+        domain: process.env.NODE_ENV === 'production' ? 
+>>>>>>> origin/leader
           process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
           undefined,
       },
