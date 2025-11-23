@@ -33,3 +33,11 @@ export interface WorkoutItem {
 export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>
 }
+
+export interface UserSettings {
+  userName: string
+  userAge: number | null
+  maxHr: number | null
+  restingHr: number | null
+  deviceId: string | null
+}

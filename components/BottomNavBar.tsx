@@ -15,6 +15,8 @@ export default function BottomNavBar() {
       return 1
     } else if (pathname === '/client/connect') {
       return 2
+    } else if (pathname === '/settings') {
+      return 3
     }
     return 0 // Default to Dashboard
   })
@@ -53,6 +55,12 @@ export default function BottomNavBar() {
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
+      />
+      <BottomNavigationAction
+        label="Settings"
+        icon={<SettingsIcon />}
+        component={Link}
+        href="/settings"
       />
     </BottomNavigation>
   )

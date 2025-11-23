@@ -12,55 +12,44 @@ import {
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
+import { useUserSettings } from '@/contexts/UserSettingsContext'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import useWebSocket from '../../../hooks/useWebSocket'
 import { getHrZoneProps } from '../../../utils/visualization'
 
-// Cookie helpers
-const setCookie = (name: string, value: string, days = 365) => {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
-}
-
-const getCookie = (name: string): string => {
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
-
 export default function ConnectPage() {
-  const [userName, setUserName] = useState('')
-  const [userAge, setUserAge] = useState('')
+  const { userSettings } = useUserSettings()
+  const { userName, userAge } = userSettings
   const [isConnected, setIsConnected] = useState(false)
+  const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const { connectionStatus, hrmData } = useWebSocket()
 
   const {
     connectAndStream,
+    disconnect,
     deviceStatus,
     isConnected: bluetoothConnected,
   } = useBluetoothHRM()
 
-  // Load saved values from cookies on mount and auto-connect if available
+  // Auto-connect only once when WebSocket first connects and we're not already connected
   useEffect(() => {
-    const savedName = getCookie('hrm_user_name')
-    const savedAge = getCookie('hrm_user_age')
-    const savedDeviceId = getCookie('hrm_device_id')
-    if (savedName) setUserName(savedName)
-    if (savedAge) setUserAge(savedAge)
-
-    // Auto-connect only once when WebSocket first connects and we're not already connected
     if (
-      savedName &&
-      savedAge &&
-      savedDeviceId &&
+      userName &&
+      userAge &&
       connectionStatus === 'Connected' &&
       !bluetoothConnected &&
       !deviceStatus.includes('Connecting')
     ) {
-      connectAndStream(savedName, savedAge)
+      connectAndStream(userName, String(userAge))
     }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
+  }, [
+    connectionStatus,
+    connectAndStream,
+    bluetoothConnected,
+    deviceStatus,
+    userName,
+    userAge,
+  ])
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -79,18 +68,16 @@ export default function ConnectPage() {
   }, [bluetoothConnected])
 
   const handleConnect = async () => {
-    if (!userName.trim()) {
-      alert('Please enter your name')
+    setAlertMessage(null)
+    if (!userName || userName.trim() === '') {
+      setAlertMessage('Please set your name in the settings page.')
       return
     }
-    if (!userAge.trim() || parseInt(userAge) < 1 || parseInt(userAge) > 120) {
-      alert('Please enter a valid age (1-120)')
+    if (!userAge || userAge < 1 || userAge > 120) {
+      setAlertMessage('Please set a valid age (1-120) in the settings page.')
       return
     }
-    // Save to cookies
-    setCookie('hrm_user_name', userName.trim())
-    setCookie('hrm_user_age', userAge.trim())
-    await connectAndStream(userName, userAge)
+    await connectAndStream(userName, String(userAge))
   }
 
   // Find current user's heart rate data from WebSocket
@@ -108,24 +95,22 @@ export default function ConnectPage() {
           Connect Heart Rate Monitor
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Your Name"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Your Age"
-            type="number"
-            value={userAge}
-            onChange={(e) => setUserAge(e.target.value)}
-            inputProps={{ min: 1, max: 120 }}
-            sx={{ mb: 2 }}
-          />
-        </Box>
+        {!userName || !userAge ? (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Please set your name and age on the{' '}
+            <a href="/settings">settings page</a> before connecting.
+          </Alert>
+        ) : (
+          <Typography align="center" sx={{ mb: 2 }}>
+            Connecting as: <strong>{userName}</strong> (Age: {userAge})
+          </Typography>
+        )}
+
+        {alertMessage && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {alertMessage}
+          </Alert>
+        )}
 
         {deviceStatus.includes('Failed') && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -139,7 +124,7 @@ export default function ConnectPage() {
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={!userName || !userAge}
             >
               Connect Bluetooth HRM
             </Button>
@@ -147,12 +132,7 @@ export default function ConnectPage() {
             <Button
               variant="outlined"
               size="large"
-              onClick={() => {
-                setIsConnected(false)
-                // Clear saved device to force new pairing
-                document.cookie =
-                  'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-              }}
+              onClick={disconnect}
               color="error"
             >
               Disconnect

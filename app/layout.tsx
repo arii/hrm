@@ -4,6 +4,7 @@ import BottomNavBar from '../components/BottomNavBar' // Import the new componen
 import Providers from '../components/Providers'
 import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '../components/TimerSoundProvider'
+import { UserSettingsProvider } from '../contexts/UserSettingsContext'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -31,7 +32,9 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <Providers>
-            <TimerSoundProvider>{children}</TimerSoundProvider>
+            <UserSettingsProvider>
+              <TimerSoundProvider>{children}</TimerSoundProvider>
+            </UserSettingsProvider>
           </Providers>
           <BottomNavBar />
         </ThemeRegistry>
