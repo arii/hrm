@@ -39,6 +39,7 @@ class TabataTimer {
   private interval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private runningTotal: number = 0 // Stored elapsed time when paused (in seconds)
+  private targetDuration: number = 0 // The duration of the current countdown phase
 
   private state: DualModeTimerState = {
     mode: 'TABATA', // Default mode
@@ -112,21 +113,26 @@ class TabataTimer {
   private tick = () => {
     if (!this.state.isRunning || !this.startTime) return
 
+    const elapsedMs = Date.now() - this.startTime
+    const elapsedSeconds = Math.floor(elapsedMs / 1000)
+
     if (
       this.state.mode === 'STOPWATCH' &&
       this.state.currentPhase === 'RUNNING'
     ) {
       // COUNT UP (STOPWATCH)
-      const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-      this.state.timeElapsed = this.runningTotal + currentDelta
+      this.state.timeElapsed = this.runningTotal + elapsedSeconds
     }
 
     // This applies to TABATA and PREPARE modes (which count down)
     if (this.state.mode === 'TABATA' || this.state.currentPhase === 'PREPARE') {
-      const nextRemaining = Math.max(0, this.state.timeRemaining - 1)
-      this.state.timeRemaining = nextRemaining
+      const timeRemaining = Math.max(
+        0,
+        this.targetDuration - (this.runningTotal + elapsedSeconds)
+      )
+      this.state.timeRemaining = timeRemaining
 
-      if (nextRemaining <= 0) {
+      if (timeRemaining <= 0) {
         this.transitionPhase()
       } else {
         this.handleCountdownCue()
@@ -134,6 +140,10 @@ class TabataTimer {
     }
 
     this.broadcastState({ timerData: this.getState() })
+
+    // Self-adjusting timeout loop
+    const nextTick = 1000 - (elapsedMs % 1000)
+    this.interval = setTimeout(this.tick, nextTick)
   }
 
   private startTimer() {
@@ -143,19 +153,25 @@ class TabataTimer {
     this.startTime = Date.now()
 
     // --- UNIVERSAL PREPARE LOGIC ---
-    // If starting from IDLE, always begin with the PREPARE countdown.
-    if (this.state.currentPhase === 'IDLE') {
+    // Case 1: A completely fresh start for either mode.
+    if (this.state.currentPhase === 'IDLE' && this.runningTotal === 0) {
       this.state.currentPhase = 'PREPARE'
-      this.state.timeRemaining = START_COUNTDOWN_DURATION
+      this.targetDuration = START_COUNTDOWN_DURATION
+      this.state.timeRemaining = this.targetDuration
       this.resetCountdownMarker()
       console.log(
         `Starting universal PREPARE countdown for ${this.state.mode} mode.`
       )
+      // Case 2: Resuming a paused Stopwatch.
+    } else if (this.state.mode === 'STOPWATCH') {
+      this.state.currentPhase = 'RUNNING'
+      // Case 3: Resuming a paused Tabata.
+    } else if (this.state.mode === 'TABATA') {
+      this.targetDuration = this.state.timeRemaining
+      this.runningTotal = 0
     }
-    // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, runningTotal is used to resume count up.
 
-    this.interval = setInterval(this.tick, 1000)
+    this.tick() // Start the loop immediately
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -167,11 +183,11 @@ class TabataTimer {
       this.state.currentPhase === 'RUNNING'
     ) {
       this.runningTotal = this.state.timeElapsed // Save elapsed time
-      this.state.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+      this.state.currentPhase = 'IDLE'
     }
 
     this.state.isRunning = false
-    if (this.interval) clearInterval(this.interval)
+    if (this.interval) clearTimeout(this.interval)
     this.interval = null
     this.startTime = null
 
@@ -180,7 +196,7 @@ class TabataTimer {
   }
 
   private stopTimer() {
-    if (this.interval) clearInterval(this.interval)
+    if (this.interval) clearTimeout(this.interval)
 
     // Full reset of all time and cycle variables
     this.state = {
@@ -224,43 +240,41 @@ class TabataTimer {
 
   private transitionPhase() {
     this.resetCountdownMarker()
+    this.startTime = Date.now() // Reset start time for every new phase for accuracy
+    this.runningTotal = 0 // Reset elapsed time for the new phase
+
     switch (this.state.currentPhase) {
       case 'PREPARE': // Transition from 5s countdown
-        this.queueSound('WORK') // Long beep when starting
+        this.queueSound('WORK')
         if (this.state.mode === 'STOPWATCH') {
-          // Start Stopwatch counting up
           this.state.currentPhase = 'RUNNING'
           this.state.timeElapsed = 0
-          this.runningTotal = 0
-          this.startTime = Date.now() // Reset start time for accurate count up
           console.log('Transition from PREPARE to STOPWATCH RUNNING.')
         } else {
-          // Start Tabata WORK phase
           this.state.currentPhase = 'WORK'
-          this.state.timeRemaining = this.state.workDuration
+          this.targetDuration = this.state.workDuration
+          this.state.timeRemaining = this.targetDuration
           console.log('Transition from PREPARE to TABATA WORK.')
         }
         break
 
       case 'WORK':
-        // Infinite loop: WORK -> REST
         this.queueSound('REST')
         this.state.currentPhase = 'REST'
-        this.state.timeRemaining = this.state.restDuration
+        this.targetDuration = this.state.restDuration
+        this.state.timeRemaining = this.targetDuration
         console.log('Transition to REST.')
         break
 
       case 'REST':
-        // Infinite loop: REST -> WORK
         this.queueSound('WORK')
         this.state.currentPhase = 'WORK'
-        this.state.timeRemaining = this.state.workDuration
+        this.targetDuration = this.state.workDuration
+        this.state.timeRemaining = this.targetDuration
         console.log('Transition to WORK.')
         break
 
-      case 'IDLE':
-      case 'COOLDOWN':
-      case 'RUNNING':
+      default:
         this.stopTimer()
         break
     }
