@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
-import useWebSocket from '../../../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { HrmInputMessage } from '../../../types/websocket'
 
 export default function MockPage() {
