@@ -24,7 +24,7 @@ fi
 
 if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
   echo "[start-production] Build artifacts missing. Running npm run build..."
-  npm run build && npm run build:server
+  npm run build
 fi
 
 # Ensure AUTH_TRUST_HOST is set for NextAuth
