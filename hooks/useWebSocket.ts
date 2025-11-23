@@ -1,9 +1,22 @@
+<<<<<<< HEAD:hooks/useWebSocket.ts
 // File: hooks/useWebSocket.ts (Central WebSocket Client Hook - Typed)
 /**
  * Central client-side hook for managing WebSocket connection and application state.
  * It establishes the connection and updates the unified state based on server broadcasts.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
+=======
+'use client'
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+>>>>>>> origin/leader:context/WebSocketContext.tsx
 import {
   ClientCommandMessage,
   HrmData,
@@ -42,6 +55,10 @@ const useWebSocket = (serverUrl?: string) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+<<<<<<< HEAD:hooks/useWebSocket.ts
+=======
+  const pendingActions = useRef<ClientCommandMessage[]>([])
+>>>>>>> origin/leader:context/WebSocketContext.tsx
 
   // Unified State Object
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
@@ -50,6 +67,18 @@ const useWebSocket = (serverUrl?: string) => {
   const shouldReconnect = useRef(true)
   const connectRef = useRef<(() => void) | null>(null)
 
+<<<<<<< HEAD:hooks/useWebSocket.ts
+=======
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedActions = localStorage.getItem('pendingActions')
+      if (savedActions) {
+        pendingActions.current = JSON.parse(savedActions)
+      }
+    }
+  }, [])
+
+>>>>>>> origin/leader:context/WebSocketContext.tsx
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
     if (reconnectTimeoutRef.current) {
@@ -58,6 +87,16 @@ const useWebSocket = (serverUrl?: string) => {
     }
     if (wsRef.current) {
       wsRef.current.close()
+<<<<<<< HEAD:hooks/useWebSocket.ts
+=======
+    }
+    console.log('[useWebSocket] Manually disconnected.')
+  }, [])
+
+  const connect = useCallback(() => {
+    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
+      return
+>>>>>>> origin/leader:context/WebSocketContext.tsx
     }
     console.log('[useWebSocket] Manually disconnected.')
   }, [])
@@ -73,6 +112,19 @@ const useWebSocket = (serverUrl?: string) => {
     ws.onopen = () => {
       console.log('[useWebSocket] Connected to server')
       setConnectionStatus('Connected')
+<<<<<<< HEAD:hooks/useWebSocket.ts
+=======
+
+      if (pendingActions.current.length > 0) {
+        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
+        pendingActions.current.forEach(action => {
+          ws.send(JSON.stringify(action))
+        })
+        pendingActions.current = []
+        localStorage.setItem('pendingActions', '[]')
+      }
+
+>>>>>>> origin/leader:context/WebSocketContext.tsx
       // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
@@ -156,11 +208,17 @@ const useWebSocket = (serverUrl?: string) => {
       ws.send(jsonStr)
     } else {
       console.warn(
+<<<<<<< HEAD:hooks/useWebSocket.ts
         '[useWebSocket] WebSocket not open. State:',
+=======
+        '[WebSocketProvider] WebSocket not open, queueing action. State:',
+>>>>>>> origin/leader:context/WebSocketContext.tsx
         ws?.readyState,
         'Data:',
         data
       )
+      pendingActions.current.push(data)
+      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
     }
   }, [])
 
