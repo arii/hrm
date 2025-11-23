@@ -12,18 +12,13 @@ import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
-<<<<<<< HEAD
-import { WebSocketProvider } from '../contexts/WebSocketContext'
-import { useTimer } from '../hooks/useWebSocketContext'
-=======
 import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
-const DashboardContent = () => {
-  const timerData = useTimer()
+const Dashboard = () => {
+  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
 
   // Signal when page is ready for testing
@@ -80,11 +75,5 @@ const DashboardContent = () => {
     </Container>
   )
 }
-
-const Dashboard = () => (
-  <WebSocketProvider>
-    <DashboardContent />
-  </WebSocketProvider>
-)
 
 export default Dashboard

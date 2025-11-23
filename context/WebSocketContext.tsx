@@ -1,17 +1,9 @@
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-// File: contexts/WebSocketContext.tsx
-'use client'
-import React, {
-  createContext,
-  useCallback,
-=======
 'use client'
 import {
   createContext,
   ReactNode,
   useCallback,
   useContext,
->>>>>>> origin/leader:context/WebSocketContext.tsx
   useEffect,
   useRef,
   useState,
@@ -25,7 +17,6 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-// Define the shape of our application's state
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -33,10 +24,6 @@ interface AppState {
   spotifyServiceInitialized?: boolean
 }
 
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-// Initial state for each context, ensuring proper typing
-=======
->>>>>>> origin/leader:context/WebSocketContext.tsx
 const INITIAL_STATE: AppState = {
   hrmData: [],
   timerData: {
@@ -53,35 +40,6 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-// Create separate contexts for each slice of the state
-export const TimerContext = createContext<TimerData>(INITIAL_STATE.timerData)
-export const HrmContext = createContext<HrmData[]>(INITIAL_STATE.hrmData)
-export const SpotifyContext = createContext<SpotifyData>(
-  INITIAL_STATE.spotifyData
-)
-
-// Create a context for WebSocket actions (sendData, connect, disconnect)
-interface WebSocketActions {
-  sendData: (data: ClientCommandMessage) => void
-  connect: () => void
-  disconnect: () => void
-  connectionStatus: string
-}
-
-export const WebSocketActionsContext = createContext<WebSocketActions>({
-  sendData: () => console.warn('WebSocket not initialized'),
-  connect: () => console.warn('WebSocket not initialized'),
-  disconnect: () => console.warn('WebSocket not initialized'),
-  connectionStatus: 'Disconnected',
-})
-
-// The provider component that will wrap our application
-export const WebSocketProvider: React.FC<{
-  children: React.ReactNode
-  serverUrl?: string
-}> = ({ children, serverUrl }) => {
-=======
 interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
@@ -98,13 +56,12 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
->>>>>>> origin/leader:context/WebSocketContext.tsx
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
-  // Unified state object managed by the provider
+  // Unified State Object
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
@@ -128,17 +85,13 @@ export const WebSocketProvider = ({
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[WebSocketProvider] Manually disconnected.')
+    console.log('[useWebSocket] Manually disconnected.')
   }, [])
 
   const connect = useCallback(() => {
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-    if (typeof window === 'undefined') return
-=======
     if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
       return
     }
->>>>>>> origin/leader:context/WebSocketContext.tsx
 
     shouldReconnect.current = true
     const ws = new WebSocket(wsUrl)
@@ -147,8 +100,6 @@ export const WebSocketProvider = ({
     ws.onopen = () => {
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-=======
 
       if (pendingActions.current.length > 0) {
         console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
@@ -160,7 +111,6 @@ export const WebSocketProvider = ({
       }
 
       // Clear any pending reconnection
->>>>>>> origin/leader:context/WebSocketContext.tsx
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -210,29 +160,13 @@ export const WebSocketProvider = ({
     connect()
 
     return () => {
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      if (wsRef.current) {
-        wsRef.current.close()
-      }
-=======
       disconnect()
->>>>>>> origin/leader:context/WebSocketContext.tsx
     }
   }, [connect, disconnect])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-      ws.send(JSON.stringify(data))
-    } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open. State:',
-        ws?.readyState
-=======
       const jsonStr = JSON.stringify(data)
       console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
@@ -242,29 +176,12 @@ export const WebSocketProvider = ({
         ws?.readyState,
         'Data:',
         data
->>>>>>> origin/leader:context/WebSocketContext.tsx
       )
       pendingActions.current.push(data)
       localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
     }
   }, [])
 
-<<<<<<< HEAD:contexts/WebSocketContext.tsx
-  return (
-    <WebSocketActionsContext.Provider
-      value={{ sendData, connect, disconnect, connectionStatus }}
-    >
-      <TimerContext.Provider value={appState.timerData}>
-        <HrmContext.Provider value={appState.hrmData}>
-          <SpotifyContext.Provider value={appState.spotifyData}>
-            {children}
-          </SpotifyContext.Provider>
-        </HrmContext.Provider>
-      </TimerContext.Provider>
-    </WebSocketActionsContext.Provider>
-  )
-}
-=======
   const contextValue = {
     ...appState,
     connectionStatus,
@@ -287,4 +204,3 @@ export const useWebSocket = () => {
   }
   return context
 }
->>>>>>> origin/leader:context/WebSocketContext.tsx

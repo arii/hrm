@@ -1,16 +1,8 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-import { useDebounce } from '@/hooks/useDebounce'
-<<<<<<< HEAD
-import {
-  useTimer,
-  useWebSocketActions,
-} from '@/hooks/useWebSocketContext'
-=======
 import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
+import { useDebounce } from '@/hooks/useDebounce'
 import {
-  SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
@@ -28,16 +20,20 @@ import {
   Button,
   Card,
   CardContent,
+  CircularProgress,
   IconButton,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useButtonFeedback } from './useButtonFeedback'
+
 const TimerControls = () => {
-  const timerData = useTimer()
-  const { sendData } = useWebSocketActions()
-  // Local state is source of truth for editing
+  const { timerData, sendData, connectionStatus } = useWebSocket()
+  const { feedback, handleButtonClick } = useButtonFeedback()
+
+  // Local state is the source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
 
@@ -71,53 +67,24 @@ const TimerControls = () => {
     id: string
     name: string
     is_active?: boolean
-    is_private_session?: boolean
-    is_restricted?: boolean
-    type?: string
-    volume_percent?: number
   }
   const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
-  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
   useEffect(() => {
     const fetchDevices = async () => {
       try {
         const response = await fetch('/api/spotify/devices')
         if (!response.ok) throw new Error('Failed to fetch devices')
         const devices: SpotifyDevice[] = await response.json()
-        setSpotifyDevices(Array.isArray(devices) ? devices : [])
         const activeDevice = devices.find((d) => d.is_active)
         setSpotifyDeviceId(
           activeDevice ? activeDevice.id : devices[0]?.id || ''
         )
       } catch (_err) {
-        setSpotifyDevices([])
         setSpotifyDeviceId('')
       }
     }
     fetchDevices()
   }, [])
-
-  const sendSpotifyCommand = useCallback(
-    (command: 'NEXT' | 'PAUSE') => {
-      let deviceId = spotifyDeviceId
-      if (!deviceId && spotifyDevices.length > 0) {
-        const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
-        setSpotifyDeviceId(deviceId)
-      }
-      if (!deviceId) {
-        console.warn('No deviceId available, Spotify command not sent.')
-        return
-      }
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        deviceId,
-      }
-      sendData(message)
-    },
-    [sendData, spotifyDeviceId, spotifyDevices]
-  )
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
@@ -131,22 +98,19 @@ const TimerControls = () => {
         }
         sendData(config)
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
+      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command, deviceId: spotifyDeviceId }
       sendData(message)
-
-      if (command === 'START') {
-        sendSpotifyCommand('NEXT')
-      } else if (command === 'STOP') {
-        sendSpotifyCommand('PAUSE')
-      }
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
+    [sendData, latestWork, latestRest, spotifyDeviceId]
   )
+
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
     const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
     sendData(message)
   }
+
+  const isConnected = connectionStatus === 'Connected'
 
   return (
     <Card
@@ -176,7 +140,7 @@ const TimerControls = () => {
             <Button
               variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
               onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
+              disabled={timerData.isRunning || !isConnected}
               startIcon={<FitnessCenter />}
               sx={{
                 flex: 1,
@@ -200,7 +164,7 @@ const TimerControls = () => {
                 timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
               }
               onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
+              disabled={timerData.isRunning || !isConnected}
               startIcon={<Timer />}
               sx={{
                 flex: 1,
@@ -254,6 +218,7 @@ const TimerControls = () => {
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
                   }}
+                  disabled={!isConnected}
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -294,6 +259,7 @@ const TimerControls = () => {
                     },
                   }}
                   aria-label="Work duration in seconds"
+                  disabled={!isConnected}
                 />
                 <IconButton
                   color="primary"
@@ -305,6 +271,7 @@ const TimerControls = () => {
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
                   }}
+                  disabled={!isConnected}
                 >
                   <Add fontSize="large" />
                 </IconButton>
@@ -331,6 +298,7 @@ const TimerControls = () => {
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
                   }}
+                  disabled={!isConnected}
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -371,6 +339,7 @@ const TimerControls = () => {
                     },
                   }}
                   aria-label="Rest duration in seconds"
+                  disabled={!isConnected}
                 />
                 <IconButton
                   color="primary"
@@ -382,6 +351,7 @@ const TimerControls = () => {
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
                   }}
+                  disabled={!isConnected}
                 >
                   <Add fontSize="large" />
                 </IconButton>
@@ -395,9 +365,16 @@ const TimerControls = () => {
             <Button
               variant="contained"
               color="success"
-              onClick={() => sendTimerCommand('START')}
+              onClick={() => handleButtonClick('start', () => sendTimerCommand('START'))}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-              startIcon={<PlayArrow fontSize="large" />}
+              startIcon={
+                feedback.start ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <PlayArrow fontSize="large" />
+                )
+              }
+              disabled={feedback.start || !isConnected}
             >
               START
             </Button>
@@ -405,9 +382,16 @@ const TimerControls = () => {
             <Button
               variant="contained"
               color="error"
-              onClick={() => sendTimerCommand('STOP')}
+              onClick={() => handleButtonClick('stop', () => sendTimerCommand('STOP'))}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-              startIcon={<Stop fontSize="large" />}
+              startIcon={
+                feedback.stop ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <Stop fontSize="large" />
+                )
+              }
+              disabled={feedback.stop || !isConnected}
             >
               STOP
             </Button>

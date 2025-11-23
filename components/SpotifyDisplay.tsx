@@ -1,15 +1,8 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
+import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-<<<<<<< HEAD
-import {
-  useSpotify,
-  useWebSocketActions,
-} from '@/hooks/useWebSocketContext'
-=======
-import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -40,8 +33,7 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const spotifyData = useSpotify()
-  const { sendData, connectionStatus } = useWebSocketActions()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
