@@ -58,6 +58,21 @@ else
     echo -e "${RED}✗ Client secret missing${RESET}"
 fi
 
+# Check Persistence
+PERSISTENCE_ENABLED=false
+if [ "$SPOTIFY_TOKEN_CACHE_STRATEGY" = "persistence" ] || [ "$SPOTIFY_TOKEN_CACHE_STRATEGY" = "persistent" ]; then
+    PERSISTENCE_ENABLED=true
+elif [ "$SPOTIFY_TOKEN_PERSISTENCE" = "true" ] || [ "$SPOTIFY_TOKEN_PERSISTENCE" = "1" ]; then
+    PERSISTENCE_ENABLED=true
+fi
+
+if [ "$PERSISTENCE_ENABLED" = "true" ]; then
+    echo -e "${GREEN}✓ Token persistence ENABLED${RESET}"
+else
+    echo -e "${YELLOW}⚠ Token persistence DISABLED (ephemeral mode)${RESET}"
+    echo "  Tokens will be cleared on restart. Set SPOTIFY_TOKEN_PERSISTENCE=true to enable."
+fi
+
 # Validate callback URL format
 if [ "$REDIRECT_URI" != "null" ] && [ "$REDIRECT_URI" != "" ]; then
     if [[ "$REDIRECT_URI" == */api/auth/callback/spotify ]]; then

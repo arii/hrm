@@ -51,4 +51,4 @@ This guide provides solutions for common issues encountered during development a
 ### Token Not Persisting
 
 - **Symptom**: You have to log in every time the server restarts.
-- **Fix**: Check that the `logs/spotify_tokens.json` file exists and is writable.
+- **Fix**: Check that `SPOTIFY_TOKEN_PERSISTENCE` is set to `true` or `1` in your `.env.local` or `.env.production` file. If not set, the server defaults to ephemeral mode and clears tokens on startup.

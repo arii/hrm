@@ -1,6 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
+import { shouldPersistSpotifyTokens } from '../utils/spotifyTokenPersistence'
 import { SpotifyTokenResponse } from './spotifyPolling'
 
 export interface SpotifyTokenPayload {
@@ -26,12 +27,6 @@ export class SpotifyTokenManager {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
       this.currentToken = {
@@ -46,13 +41,16 @@ export class SpotifyTokenManager {
           obtainedAt: Date.now(),
         },
       }
+    }
+
+    if (shouldPersistSpotifyTokens()) {
       fs.writeFileSync(
         this.tokenFile,
         JSON.stringify(this.currentToken, null, 2),
         'utf8'
       )
-      console.log('Access token created via setAccessToken.')
     }
+    console.log('Access token updated via setAccessToken.')
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
@@ -64,7 +62,24 @@ export class SpotifyTokenManager {
     logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
+
+    if (shouldPersistSpotifyTokens()) {
+      this.loadTokens()
+    } else {
+      // Ephemeral mode: Clear existing tokens on startup to avoid confusion
+      if (fs.existsSync(this.tokenFile)) {
+        try {
+          fs.unlinkSync(this.tokenFile)
+          console.log(
+            'Ephemeral Mode: Cleared existing Spotify token file on startup.'
+          )
+        } catch (e) {
+          console.warn('Ephemeral Mode: Failed to clear Spotify token file:', e)
+        }
+      } else {
+        console.log('Ephemeral Mode: No existing token file to clear.')
+      }
+    }
   }
 
   private loadTokens() {
@@ -126,11 +141,13 @@ export class SpotifyTokenManager {
       }
 
       // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      if (shouldPersistSpotifyTokens()) {
+        fs.writeFileSync(
+          this.tokenFile,
+          JSON.stringify(this.currentToken, null, 2),
+          'utf8'
+        )
+      }
 
       console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
@@ -141,8 +158,12 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
+    // Only reload from disk if persistence is enabled or if we have no token yet (initial load)
+    // In ephemeral mode, we rely on memory for updates (refreshToken doesn't write to disk),
+    // but we still need to load the initial token delivered via IPC (file) from the API route.
+    if (shouldPersistSpotifyTokens() || !this.currentToken) {
+      this.loadTokens()
+    }
     if (!this.currentToken) return null
 
     // Check if token needs refresh

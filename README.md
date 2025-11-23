@@ -190,6 +190,10 @@ SPOTIFY_CLIENT_SECRET=your_client_secret
 # NextAuth.js configuration
 NEXTAUTH_URL=http://127.0.0.1:3000
 NEXTAUTH_SECRET=your_random_secret_here
+
+# Spotify Token Persistence (Optional)
+# Set to 'true' or '1' to persist tokens across restarts
+SPOTIFY_TOKEN_PERSISTENCE=true
 ```
 
 ### Spotify Setup
