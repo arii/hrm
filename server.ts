@@ -5,6 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
+import { validateProductionEnvironment } from './lib/env' // Import and validate environment variables
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
@@ -31,7 +32,10 @@ const hostname =
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
 
+validateProductionEnvironment();
+
 console.log(`Starting server in ${dev ? 'development' : 'production'} mode`)
+
 console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 console.log(`NEXTAUTH_URL: ${getBaseURL()}`)
 console.log(`Hostname: ${hostname}, Port: ${port}`)

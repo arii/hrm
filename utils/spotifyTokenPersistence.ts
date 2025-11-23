@@ -9,15 +9,17 @@
  *
  * @returns {boolean} True if persistence is enabled, false otherwise.
  */
+import { env } from '../lib/env'
+
 export function shouldPersistSpotifyTokens(): boolean {
-  const strategy = process.env.SPOTIFY_TOKEN_CACHE_STRATEGY?.toLowerCase()
-  const persistence = process.env.SPOTIFY_TOKEN_PERSISTENCE?.toLowerCase()
+  const strategy = env.SPOTIFY_TOKEN_CACHE_STRATEGY?.toLowerCase()
+  const persistence = env.SPOTIFY_TOKEN_PERSISTENCE
 
   if (strategy === 'persistence' || strategy === 'persistent') {
     return true
   }
 
-  if (persistence === 'true' || persistence === '1') {
+  if (persistence) {
     return true
   }
 
