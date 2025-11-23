@@ -1,11 +1,5 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-<<<<<<< HEAD
-import { Card, CardContent, Typography } from '@mui/material'
-import { MusicNote } from '@mui/icons-material'
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from '@/components/SpotifyPlayer'
-=======
 import {
   MusicNote,
   Pause,
@@ -30,28 +24,23 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
->>>>>>> origin/leader
+import { Device } from '@spotify/web-api-ts-sdk'
 
 const SpotifyControls = () => {
-  const { spotifyData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { volume, setVolume } = useVolumePreference()
+  const lastSentVolumeRef = useRef<string | null>(null)
+
+  const [availableDevices, setAvailableDevices] = useState<Device[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [devicesLoading, setDevicesLoading] = useState<boolean>(false)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     if (hasSpotifyData) {
       const fetchDevices = async () => {
@@ -90,9 +79,14 @@ const SpotifyControls = () => {
       return
     }
 
-    const activeDevice = availableDevices.find((device) => device.is_active)
+    const lastDeviceId = localStorage.getItem('spotify_last_device_id')
+    if (lastDeviceId && availableDevices.some((d) => d.id === lastDeviceId)) {
+      setSelectedDeviceId(lastDeviceId)
+      return
+    }
 
-    if (!selectedDeviceId && activeDevice) {
+    const activeDevice = availableDevices.find((device) => device.is_active)
+    if (!selectedDeviceId && activeDevice && activeDevice.id) {
       setSelectedDeviceId(activeDevice.id)
       return
     }
@@ -104,6 +98,12 @@ const SpotifyControls = () => {
       setSelectedDeviceId(activeDevice?.id ?? '')
     }
   }, [availableDevices, selectedDeviceId])
+
+  useEffect(() => {
+    if (selectedDeviceId) {
+      localStorage.setItem('spotify_last_device_id', selectedDeviceId)
+    }
+  }, [selectedDeviceId])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
@@ -137,7 +137,6 @@ const SpotifyControls = () => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
@@ -165,7 +164,10 @@ const SpotifyControls = () => {
     sendVolumeCommand(volume)
   }, [volume, sendVolumeCommand])
 
->>>>>>> origin/leader
+  const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
+    setVolume(newValue as number)
+  }
+
   return (
     <Card
       sx={{
@@ -175,7 +177,7 @@ const SpotifyControls = () => {
         color: 'white',
       }}
     >
-      <CardContent sx={{ p: 2 }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         <Typography
           variant="h6"
           sx={{
@@ -190,11 +192,113 @@ const SpotifyControls = () => {
         </Typography>
 
         {hasSpotifyData ? (
-          <SpotifyPlayer
-            isMobileLayout={true}
-            showDeviceSelector={true}
-            showVolumeControl={true}
-          />
+          <Box>
+            <Box sx={{ textAlign: 'center', mb: 1 }}>
+              <Typography variant="body1" noWrap>
+                {spotifyData.trackName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" noWrap>
+                {spotifyData.artist}
+              </Typography>
+            </Box>
+
+            <Stack
+              direction="row"
+              spacing={1}
+              justifyContent="center"
+              alignItems="center"
+              sx={{ mb: 1 }}
+            >
+              <IconButton
+                onClick={() => sendSpotifyCommand('PREVIOUS')}
+                disabled={connectionStatus !== 'Connected'}
+                color="inherit"
+              >
+                <SkipPrevious />
+              </IconButton>
+              <IconButton
+                onClick={() =>
+                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
+                }
+                disabled={connectionStatus !== 'Connected'}
+                color="inherit"
+                size="large"
+              >
+                {spotifyData.isPlaying ? (
+                  <Pause sx={{ fontSize: 40 }} />
+                ) : (
+                  <PlayArrow sx={{ fontSize: 40 }} />
+                )}
+              </IconButton>
+              <IconButton
+                onClick={() => sendSpotifyCommand('NEXT')}
+                disabled={connectionStatus !== 'Connected'}
+                color="inherit"
+              >
+                <SkipNext />
+              </IconButton>
+            </Stack>
+
+            {availableDevices.length > 0 && (
+              <FormControl fullWidth sx={{ mb: 1 }}>
+                <Select
+                  value={selectedDeviceId}
+                  onChange={(e) => {
+                    const newDeviceId = e.target.value
+                    setSelectedDeviceId(newDeviceId)
+                    sendSpotifyCommand('TRANSFER_PLAYBACK', newDeviceId)
+                  }}
+                  disabled={devicesLoading || connectionStatus !== 'Connected'}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    '& .MuiSvgIcon-root': { color: 'white' },
+                    '&.MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'grey.600',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'grey.500',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1DB954',
+                      },
+                    },
+                  }}
+                >
+                  {availableDevices
+                    .filter((device) => device.id)
+                    .map((device) => (
+                      <MenuItem key={device.id} value={device.id!}>
+                        {device.name}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+            {devicesError && (
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ textAlign: 'center', mb: 1 }}
+              >
+                {devicesError}
+              </Typography>
+            )}
+
+            <Stack spacing={2} direction="row" alignItems="center">
+              <VolumeUp />
+              <Slider
+                aria-label="Volume"
+                value={volume}
+                onChange={handleVolumeChange}
+                disabled={
+                  connectionStatus !== 'Connected' || !resolveTargetDeviceId()
+                }
+                sx={{ color: '#1DB954' }}
+              />
+            </Stack>
+          </Box>
         ) : (
           <Typography
             variant="body2"

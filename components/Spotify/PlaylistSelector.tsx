@@ -94,7 +94,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setSearchLoading(true)
       try {
         const response = await fetch(
-          `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+          `/api/spotify/playlists/search?q=${encodeURIComponent(
+            debouncedSearch
+          )}`
         )
         if (!response.ok) {
           throw new Error('Failed to search playlists')
@@ -354,7 +356,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                       primary={playlist.name}
                       secondary={
                         playlist.trackCount !== undefined
-                          ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+                          ? `${playlist.trackCount} tracks${
+                              playlist.owner ? ` • ${playlist.owner}` : ''
+                            }`
                           : playlist.owner
                             ? playlist.owner
                             : undefined
@@ -417,7 +421,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     primary={playlist.name}
                     secondary={
                       playlist.trackCount !== undefined
-                        ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+                        ? `${playlist.trackCount} tracks${
+                            playlist.owner ? ` • ${playlist.owner}` : ''
+                          }`
                         : playlist.owner
                           ? playlist.owner
                           : undefined
@@ -444,12 +450,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           ) : (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-<<<<<<< HEAD
-                No playlists found matching &quot;{searchQuery}&quot;
-=======
                 {/* eslint-disable-next-line react/no-unescaped-entities */}
                 No playlists found matching "{searchQuery}"
->>>>>>> origin/leader
               </Typography>
             </Box>
           )}

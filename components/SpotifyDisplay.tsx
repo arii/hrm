@@ -1,63 +1,52 @@
-<<<<<<< HEAD
 // File: components/SpotifyDisplay.tsx
 'use client'
-=======
-'use client'
-// File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { VolumeUp } from '@mui/icons-material'
-import PauseIcon from '@mui/icons-material/Pause'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import SkipNextIcon from '@mui/icons-material/SkipNext'
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
-import SpeakerIcon from '@mui/icons-material/Speaker'
->>>>>>> origin/leader
+import { Device } from '@spotify/web-api-ts-sdk'
 import {
   Box,
   Button,
+  Card,
+  CardMedia,
+  IconButton,
+  Menu,
+  MenuItem,
+  Slider,
+  Stack,
+  Tooltip,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
+import {
+  VolumeUp,
+  Pause as PauseIcon,
+  PlayArrow as PlayArrowIcon,
+  SkipNext as SkipNextIcon,
+  SkipPrevious as SkipPreviousIcon,
+  Speaker as SpeakerIcon,
+} from '@mui/icons-material'
 import { signIn, signOut, useSession } from 'next-auth/react'
-<<<<<<< HEAD
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from './SpotifyPlayer'
-=======
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
->>>>>>> origin/leader
-
 const SpotifyDisplay = () => {
-  const { spotifyData } = useWebSocket()
-  const { data: session } = useSession()
-<<<<<<< HEAD
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { data: session, status } = useSession()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-=======
-  console.log('spotifyData.trackName:', spotifyData.trackName)
+
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,
     isReady,
-    deviceId,
     error: webPlaybackError,
     isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback()
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+  const [availableDevices, setAvailableDevices] = useState<Device[]>([])
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
@@ -70,7 +59,6 @@ const SpotifyDisplay = () => {
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
@@ -110,17 +98,9 @@ const SpotifyDisplay = () => {
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
 
   useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
+    if (spotifyLoggedIn) {
       const fetchDevices = async () => {
         try {
           const response = await fetch('/api/spotify/devices')
@@ -139,7 +119,7 @@ const SpotifyDisplay = () => {
       setAvailableDevices([])
       setSelectedDeviceId('')
     }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
+  }, [spotifyLoggedIn, isReady, spotifyData.trackName]) // re-fetch when track changes
 
   useEffect(() => {
     if (availableDevices.length === 0) {
@@ -149,7 +129,7 @@ const SpotifyDisplay = () => {
       return
     }
     const activeDevice = availableDevices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
+    if (!selectedDeviceId && activeDevice && activeDevice.id) {
       setSelectedDeviceId(activeDevice.id)
       return
     }
@@ -183,7 +163,6 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
   }
->>>>>>> origin/leader
 
   const handleSpotifyLogin = () => {
     signIn('spotify', { callbackUrl: '/' })
@@ -191,6 +170,10 @@ const SpotifyDisplay = () => {
 
   const handleSpotifyLogout = () => {
     signOut({ callbackUrl: '/' })
+  }
+
+  if (status === 'loading') {
+    return null // Avoid flicker
   }
 
   if (!session?.accessToken) {
@@ -206,12 +189,13 @@ const SpotifyDisplay = () => {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'fixed',
-          bottom: 56,
-          left: 0,
-          right: 0,
+          bottom: { xs: 56, sm: 16 },
+          left: { xs: 0, sm: '50%' },
+          transform: { sm: 'translateX(-50%)' },
+          right: { xs: 0, sm: 'auto' },
+          width: { xs: '100%', sm: 'auto' },
           zIndex: 1100,
           boxShadow: 3,
-          mb: 0,
         }}
       >
         <Button
@@ -220,248 +204,119 @@ const SpotifyDisplay = () => {
           onClick={handleSpotifyLogin}
           sx={{ px: 4, py: 1 }}
         >
-          🎵 Login with Spotify
+          Login with Spotify
         </Button>
       </Box>
     )
   }
 
-<<<<<<< HEAD
-  if (!spotifyData.trackName || spotifyData.trackName === 'Awaiting Login...') {
-    return null
-  }
-
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: 56,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        boxShadow: 3,
-        mb: 0,
-      }}
-    >
-      <SpotifyPlayer
-        isMobileLayout={isMobile}
-        showDeviceSelector={true}
-        showVolumeControl={true}
-      />
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleSpotifyLogout}
-=======
-  // If we are logged in, we show the player bar.
-  // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
-  // or simply showing the controls so the user can transfer playback.
   if (spotifyLoggedIn) {
     const isWaiting = spotifyData.trackName === 'Awaiting Login...'
-    const displayTrackName = isWaiting
-      ? 'No Active Playback'
-      : spotifyData.trackName
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
+    const displayTrackName = isWaiting ? 'No Active Playback' : spotifyData.trackName
+    const displayArtistName = isWaiting ? '' : spotifyData.artist
 
     return (
       <Box
-        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.isPlaying ? 'Playing' : 'Paused'
-        }${isReady ? ', Browser player ready' : ''}`}
->>>>>>> origin/leader
+        aria-label={`Now playing: ${displayTrackName} by ${displayArtistName}`}
         sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          zIndex: 2,
+          backgroundColor: 'rgba(25, 20, 20, 0.7)',
+          backdropFilter: 'blur(10px)',
           color: 'common.white',
-          borderColor: 'grey.600',
-          '&:hover': {
-            borderColor: 'grey.500',
-            backgroundColor: 'grey.800',
-          },
+          px: 2,
+          py: 1,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'fixed',
+          bottom: { xs: 56, sm: 16 },
+          left: { xs: 0, sm: 16 },
+          right: { xs: 0, sm: 16 },
+          zIndex: 1100,
+          boxShadow: 3,
+          gap: 2,
         }}
       >
-<<<<<<< HEAD
-        Logout
-      </Button>
-    </Box>
-  )
-=======
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {displayTrackName} {displayArtist}
-          </Typography>
-          {spotifyAuthenticated && !isReady && !webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'info.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🔄 Connecting Player...
+        <Stack direction="row" alignItems="center" spacing={1.5} flexShrink={1} minWidth={0}>
+          <Card sx={{ width: 56, height: 56, flexShrink: 0 }}>
+            {spotifyData.albumArtUrl ? (
+              <CardMedia
+                component="img"
+                image={spotifyData.albumArtUrl}
+                alt="album art"
+              />
+            ) : null}
+          </Card>
+          <Box minWidth={0}>
+            <Typography variant="body1" fontWeight={600} noWrap>
+              {displayTrackName}
             </Typography>
-          )}
-          {isReady && deviceId && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'success.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🎵 Browser Player Active
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {displayArtistName}
             </Typography>
+          </Box>
+        </Stack>
+
+        {!isMobile && (
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <IconButton size="large" onClick={() => sendSpotifyCommand('PREVIOUS')} color="inherit">
+              <SkipPreviousIcon />
+            </IconButton>
+            <IconButton size="large" onClick={handlePlayPauseToggle} color="inherit">
+              {spotifyData.isPlaying ? <PauseIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+            </IconButton>
+            <IconButton size="large" onClick={() => sendSpotifyCommand('NEXT')} color="inherit">
+              <SkipNextIcon />
+            </IconButton>
+          </Stack>
+        )}
+
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          {!isMobile && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ width: 120 }}>
+              <VolumeUp />
+              <Slider
+                value={volume}
+                onChange={(_, val) => setVolume(val as number)}
+                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
+                size="small"
+                sx={{ color: '#1DB954' }}
+              />
+            </Stack>
           )}
-          {webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.9,
-                backgroundColor: 'error.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              ⚠️ Player Error
-            </Typography>
-          )}
-        </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('PREVIOUS')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Previous track"
-          >
-            <SkipPreviousIcon />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handlePlayPauseToggle}
-            sx={{
-              color: 'common.white',
-              backgroundColor: 'grey.700',
-              '&:hover': { backgroundColor: 'grey.600' },
-            }}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
-          >
-            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('NEXT')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Next track"
-          >
-            <SkipNextIcon />
-          </IconButton>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
-          <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-            min={0}
-            max={100}
-            size="small"
-            sx={{
-              width: 80,
-              color: '#1DB954',
-              '& .MuiSlider-thumb': {
-                backgroundColor: 'white',
-                width: 12,
-                height: 12,
-              },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': { height: 3 },
-            }}
-          />
-
-          <IconButton
-            size="small"
-            onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Select playback device"
-          >
-            <SpeakerIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title={isReady ? 'Browser player active' : webPlaybackError ? 'Player error' : 'Connecting player...'}>
+            <IconButton onClick={(e) => setDeviceMenuAnchor(e.currentTarget)} color="inherit">
+              <SpeakerIcon sx={{ color: isReady ? 'success.main' : webPlaybackError ? 'error.main' : 'inherit' }} />
+            </IconButton>
+          </Tooltip>
           <Menu
             anchorEl={deviceMenuAnchor}
             open={deviceMenuOpen}
             onClose={() => setDeviceMenuAnchor(null)}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
           >
-            {availableDevices.length > 0 ? (
-              availableDevices.map((device) => (
+            {availableDevices
+              .filter((device) => device.id)
+              .map((device) => (
                 <MenuItem
                   key={device.id}
-                  onClick={() => handleDeviceSelect(device.id)}
-                  selected={device.is_active}
+                  onClick={() => handleDeviceSelect(device.id!)}
+                  selected={selectedDeviceId === device.id}
                 >
-                  {device.name} {device.is_active && '✓'}
+                  {device.name}
                 </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No devices available</MenuItem>
-            )}
+              ))}
           </Menu>
 
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleSpotifyLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
-          >
+          <Button variant="outlined" size="small" onClick={handleSpotifyLogout} color="inherit">
             Logout
           </Button>
-        </Box>
+        </Stack>
       </Box>
     )
   }
 
   return null
->>>>>>> origin/leader
 }
 
 export default SpotifyDisplay
