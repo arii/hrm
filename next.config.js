@@ -30,7 +30,6 @@ const nextConfig = {
     ]
   },
   async headers() {
-<<<<<<< HEAD
     const cspHeader = `
       default-src 'self';
       script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.scdn.co;
@@ -53,14 +52,10 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: cspHeader.replace(/\n/g, '').trim(),
+            value: cspHeader.replace(/\s{2,}/g, ' ').trim(),
           },
         ],
       },
-    ]
-  },
-=======
-    return [
       {
         source: '/api/auth/:path*',
         headers: [
@@ -76,7 +71,6 @@ const nextConfig = {
       }
     ]
   }
->>>>>>> origin/leader
 }
 
 export default nextConfig
