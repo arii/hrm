@@ -18,6 +18,7 @@ const DEFAULT_REST_DURATION = 10 // seconds
 const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
+type TimerConfig = { workDuration: number; restDuration: number }
 
 // Internal state structure
 interface DualModeTimerState {
@@ -56,18 +57,18 @@ class TabataTimer {
     this.broadcastState = broadcastState
   }
 
-  private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
+  private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN'): void {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
     // Broadcast immediately so clients can play sound
     this.broadcastState({ timerData: this.getState() })
   }
 
-  private resetCountdownMarker() {
+  private resetCountdownMarker(): void {
     this.countdownMarker = null
   }
 
-  private handleCountdownCue() {
+  private handleCountdownCue(): void {
     const phase = this.state.currentPhase
     if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN') {
       return
@@ -131,7 +132,7 @@ class TabataTimer {
     this.broadcastState({ timerData: this.getState() })
   }
 
-  private startTimer() {
+  private startTimer(): void {
     if (this.state.isRunning) return
 
     this.state.isRunning = true
@@ -151,7 +152,7 @@ class TabataTimer {
     this.broadcastState({ timerData: this.getState() })
   }
 
-  private pauseTimer() {
+  private pauseTimer(): void {
     if (!this.state.isRunning || !this.startTime) return
 
     if (
@@ -170,7 +171,7 @@ class TabataTimer {
     this.broadcastState({ timerData: this.getState() })
   }
 
-  private stopTimer() {
+  private stopTimer(): void {
     if (this.interval) clearInterval(this.interval)
 
     // Full reset of all time and cycle variables
@@ -191,7 +192,7 @@ class TabataTimer {
   }
 
   // --- Configuration ---
-  public setConfig(config: { workDuration: number; restDuration: number }) {
+  public setConfig(config: TimerConfig): void {
     const sanitizedWork = Math.max(1, Math.floor(config.workDuration))
     const sanitizedRest = Math.max(0, Math.floor(config.restDuration))
 
@@ -209,7 +210,7 @@ class TabataTimer {
 
   // --- Universal Transition Logic ---
 
-  private transitionPhase() {
+  private transitionPhase(): void {
     this.resetCountdownMarker()
     switch (this.state.currentPhase) {
       case 'PREPARE': // Transition from 5s countdown
@@ -250,7 +251,7 @@ class TabataTimer {
   }
 
   // --- Command Handler (Used by socketManager) ---
-  public handleCommand(command: TimerCommand) {
+  public handleCommand(command: TimerCommand): void {
     switch (command) {
       case 'START':
         // START now triggers PREPARE if in IDLE
@@ -268,7 +269,7 @@ class TabataTimer {
   }
 
   // --- Mode Switching ---
-  public setMode(mode: TimerMode) {
+  public setMode(mode: TimerMode): void {
     if (this.state.isRunning) this.stopTimer()
     this.state.mode = mode
     this.state.currentPhase = 'IDLE'
