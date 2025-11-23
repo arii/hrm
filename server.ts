@@ -116,7 +116,6 @@ app
         req.url.includes('/api/internal/token-delivery')
       ) {
         setTimeout(async () => {
-<<<<<<< HEAD
           if (spotifyService) {
             // Signal the service to reload tokens from disk
             spotifyService.setRefreshToken('signal')
@@ -127,13 +126,6 @@ app
                 await spotifyService.forcePollAndBroadcast()
               }
             }, 1500)
-=======
-          if (
-            spotifyService &&
-            typeof spotifyService.forcePollAndBroadcast === 'function'
-          ) {
-            await spotifyService.forcePollAndBroadcast()
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages
           }
         }, 1000)
       }

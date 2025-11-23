@@ -185,6 +185,12 @@ class TabataTimer {
     this.broadcastTimerUpdate(this.getState())
   }
 
+  public dispose() {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
+  }
+
   // --- Configuration ---
   public setConfig(config: { workDuration: number; restDuration: number }) {
     const sanitizedWork = Math.max(1, Math.floor(config.workDuration))
