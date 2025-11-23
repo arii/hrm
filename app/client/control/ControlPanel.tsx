@@ -6,11 +6,17 @@
 'use client'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
+import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import SpotifyControls from './components/SpotifyControls'
+import dynamic from 'next/dynamic'
+
+const SpotifyControls = dynamic(
+  () => import('./components/SpotifyControls'),
+  { loading: () => <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1, mb: 2 }}/> }
+)
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
