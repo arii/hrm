@@ -122,7 +122,7 @@ const TimerControls = () => {
           >
             Timer Mode
           </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center">
+              <Stack direction="row" spacing={3} justifyContent="center">
             <Button
               variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
               onClick={() => sendModeCommand('TABATA')}
@@ -130,6 +130,7 @@ const TimerControls = () => {
               startIcon={<FitnessCenter />}
               sx={{
                 flex: 1,
+                minHeight: '48px',
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
@@ -154,6 +155,7 @@ const TimerControls = () => {
               startIcon={<Timer />}
               sx={{
                 flex: 1,
+                minHeight: '48px',
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
@@ -203,6 +205,8 @@ const TimerControls = () => {
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    minWidth: '48px',
+                    minHeight: '48px',
                   }}
                 >
                   <Remove fontSize="large" />
@@ -254,6 +258,8 @@ const TimerControls = () => {
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    minWidth: '48px',
+                    minHeight: '48px',
                   }}
                 >
                   <Add fontSize="large" />
@@ -280,6 +286,8 @@ const TimerControls = () => {
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    minWidth: '48px',
+                    minHeight: '48px',
                   }}
                 >
                   <Remove fontSize="large" />
@@ -331,6 +339,8 @@ const TimerControls = () => {
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    minWidth: '48px',
+                    minHeight: '48px',
                   }}
                 >
                   <Add fontSize="large" />
@@ -340,27 +350,53 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
+        <Stack direction="row" spacing={3} sx={{ mt: 4, gap: 2 }}>
           {!timerData.isRunning ? (
             <Button
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+              sx={{
+                flex: 1,
+                fontWeight: 'bold',
+                py: 1.5,
+                minHeight: '64px',
+              }}
               startIcon={<PlayArrow fontSize="large" />}
             >
               START
             </Button>
           ) : (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => sendTimerCommand('STOP')}
-              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-              startIcon={<Stop fontSize="large" />}
-            >
-              STOP
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={() => sendTimerCommand('PAUSE')}
+                sx={{
+                  flex: 1,
+                  fontWeight: 'bold',
+                  py: 1.5,
+                  minHeight: '64px',
+                }}
+                startIcon={<Pause fontSize="large" />}
+              >
+                PAUSE
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => sendTimerCommand('STOP')}
+                sx={{
+                  flex: 1,
+                  fontWeight: 'bold',
+                  py: 1.5,
+                  minHeight: '64px',
+                }}
+                startIcon={<Stop fontSize="large" />}
+              >
+                STOP
+              </Button>
+            </>
           )}
         </Stack>
       </CardContent>

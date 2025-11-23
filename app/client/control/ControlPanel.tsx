@@ -4,15 +4,56 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-import { Box, Container, Typography } from '@mui/material'
+import {
+  Box,
+  Container,
+  FormControlLabel,
+  Switch,
+  Typography,
+} from '@mui/material'
 import Head from 'next/head'
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import useWebSocket from '../../../hooks/useWebSocket'
+import useWakeLock from '../../../hooks/useWakeLock'
 import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus } = useWebSocket()
+  const { connectionStatus, timerData } = useWebSocket()
+  const {
+    request: requestWakeLock,
+    release: releaseWakeLock,
+    isActive: isWakeLockActive,
+    isSupported: isWakeLockSupported,
+  } = useWakeLock()
+  const [keepScreenOn, setKeepScreenOn] = useState(true)
+
+  const manageWakeLock = useCallback(async () => {
+    if (keepScreenOn && timerData.isRunning) {
+      await requestWakeLock()
+    } else {
+      await releaseWakeLock()
+    }
+  }, [keepScreenOn, timerData.isRunning, requestWakeLock, releaseWakeLock])
+
+  useEffect(() => {
+    manageWakeLock()
+  }, [manageWakeLock])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        manageWakeLock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      releaseWakeLock() // Release on component unmount
+    }
+  }, [manageWakeLock, releaseWakeLock])
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -44,8 +85,16 @@ const ControlPanel = () => {
           backgroundColor: 'background.default',
         }}
       >
-        {/* Connection Status */}
-        <Box sx={{ mb: 2, textAlign: 'center' }}>
+        {/* Status Indicators */}
+        <Box
+          sx={{
+            mb: 2,
+            textAlign: 'center',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
+          }}
+        >
           <Typography
             variant="body2"
             sx={{
@@ -60,6 +109,23 @@ const ControlPanel = () => {
           >
             Server: {connectionStatus}
           </Typography>
+          {isWakeLockSupported && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={keepScreenOn}
+                  onChange={(e) => setKeepScreenOn(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {isWakeLockActive ? 'Screen On' : 'Screen Off'}
+                </Typography>
+              }
+              sx={{ mr: 0 }}
+            />
+          )}
         </Box>
 
         <TimerControls />

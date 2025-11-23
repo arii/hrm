@@ -204,9 +204,11 @@ const SpotifyControls = () => {
                 sx={{
                   color: 'white',
                   '&:hover': { backgroundColor: 'grey.700' },
+                  minWidth: '48px',
+                  minHeight: '48px',
                 }}
               >
-                <SkipPrevious />
+                <SkipPrevious fontSize="large" />
               </IconButton>
               <IconButton
                 onClick={() =>
@@ -217,9 +219,16 @@ const SpotifyControls = () => {
                   color: 'white',
                   backgroundColor: '#1DB954',
                   '&:hover': { backgroundColor: '#169944' },
+                  minWidth: '64px',
+                  minHeight: '64px',
+                  mx: 1,
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {spotifyData.isPlaying ? (
+                  <Pause fontSize="large" />
+                ) : (
+                  <PlayArrow fontSize="large" />
+                )}
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}
@@ -227,9 +236,11 @@ const SpotifyControls = () => {
                 sx={{
                   color: 'white',
                   '&:hover': { backgroundColor: 'grey.700' },
+                  minWidth: '48px',
+                  minHeight: '48px',
                 }}
               >
-                <SkipNext />
+                <SkipNext fontSize="large" />
               </IconButton>
             </Stack>
 
