@@ -228,3 +228,4 @@ test-recordings/
 tests/playwright/screenshots/
 tests/playwright/*-actual.png
 tests/playwright/*-diff.png
+dev.log
