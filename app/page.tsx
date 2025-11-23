@@ -6,13 +6,11 @@
 'use client'
 import { Container, Grid } from '@mui/material'
 import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
-import { useWebSocket } from '@/context/WebSocketContext'
+import useWebSocket from '../hooks/useWebSocket'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -54,9 +52,7 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles />
-        </ErrorBoundary>
+        <HrmTiles />
 
         <Grid item xs={12}>
           <GoogleDocViewer
@@ -69,9 +65,7 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      <ErrorBoundary fallback={<ErrorFallback />}>
-        <SpotifyDisplay />
-      </ErrorBoundary>
+      <SpotifyDisplay />
     </Container>
   )
 }
