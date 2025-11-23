@@ -1,17 +1,12 @@
 // File: services/timer/eventStore.ts
-import { TimerEvent } from './events'
-import { reducer, TimerState, initialState } from './reducer'
+import { TimerEvent } from './events.js'
+import { reducer, TimerState, initialState } from './reducer.js'
 import { UnifiedStateMessage } from '../../types/websocket'
 
 /**
  * @fileoverview Manages the storage, replay, and broadcasting of timer events.
  * This class is the central hub for all timer-related state changes.
  */
-
-// Helper to omit a key from a union type while preserving the union structure
-export type DistributiveOmit<T, K extends keyof any> = T extends any
-  ? Omit<T, K>
-  : never
 
 export class TimerEventStore {
   private events: TimerEvent[] = []
@@ -30,7 +25,7 @@ export class TimerEventStore {
    * Records a new event and broadcasts the resulting state change.
    * @param event - The event to record.
    */
-  public record(event: DistributiveOmit<TimerEvent, 'timestamp'>): void {
+  public record(event: Omit<TimerEvent, 'timestamp'>): void {
     const fullEvent: TimerEvent = {
       ...event,
       timestamp: Date.now(),

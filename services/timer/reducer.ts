@@ -1,5 +1,5 @@
 // File: services/timer/reducer.ts
-import { TimerEvent } from './events'
+import { TimerEvent } from './events.js'
 import { TimerMode, TimerPhase } from '../../types/websocket'
 
 /**

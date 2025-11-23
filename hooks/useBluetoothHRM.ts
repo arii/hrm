@@ -6,7 +6,7 @@
 import { useCallback, useState } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
-import { useWebSocket } from '@/context/WebSocketContext'
+import useWebSocket from './useWebSocket'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'

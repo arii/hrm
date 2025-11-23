@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react'
 import PlaylistSelector from '../../../components/Spotify/PlaylistSelector'
 import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
+import useWebSocket from '../../../hooks/useWebSocket'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 
 const SpotifySelectionPage = () => {

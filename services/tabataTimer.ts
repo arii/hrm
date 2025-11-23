@@ -4,7 +4,7 @@ import {
   TimerMode,
   UnifiedStateMessage,
 } from '../types/websocket'
-import { TimerEventStore } from './timer/eventStore'
+import { TimerEventStore } from './timer/eventStore.js'
 
 /**
  * @fileoverview This file contains the TabataTimer class, which is responsible
@@ -63,7 +63,7 @@ class TabataTimer {
   }
 
   public setMode(mode: TimerMode) {
-    this.eventStore.record({ type: 'SET_MODE', mode })
+    this.eventStore.record({ type: 'SET_MODE', mode } as any)
   }
 
   public setConfig(config: { workDuration: number; restDuration: number }) {
@@ -71,7 +71,7 @@ class TabataTimer {
       type: 'SET_CONFIG',
       workDuration: config.workDuration,
       restDuration: config.restDuration,
-    })
+    } as any)
   }
 
   public getState(): TimerData {

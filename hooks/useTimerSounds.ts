@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import useVolumePreference from './useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
+import useWebSocket from './useWebSocket'
 
 export const useTimerSounds = () => {
   const { timerData } = useWebSocket()

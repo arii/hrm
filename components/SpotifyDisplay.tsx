@@ -2,7 +2,7 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
+import useWebSocket from '@/hooks/useWebSocket'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
