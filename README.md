@@ -79,7 +79,6 @@ If you are not using the DevContainer, you can set up the project manually:
 cp .env.example .env.local
 
 # 2. Fill in the required values in .env.local (see "Environment Variables" section)
-<<<<<<< HEAD
 
 # 3. Install dependencies using the lockfile
 npm ci
@@ -87,15 +86,6 @@ npm ci
 # 4. Install Playwright's browser dependencies
 npx playwright install --with-deps
 
-=======
-
-# 3. Install dependencies using the lockfile
-npm ci
-
-# 4. Install Playwright's browser dependencies
-npx playwright install --with-deps
-
->>>>>>> origin/leader
 # 5. Start the development server
 npm run dev
 ```

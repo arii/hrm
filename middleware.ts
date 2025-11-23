@@ -13,38 +13,22 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next()
-<<<<<<< HEAD
-
-  // Handle reverse proxy headers for NextAuth
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto')
-
-=======
   
   // Handle reverse proxy headers for NextAuth
   const forwardedHost = request.headers.get('x-forwarded-host')
   const forwardedProto = request.headers.get('x-forwarded-proto')
   
->>>>>>> origin/leader
   if (forwardedHost && forwardedProto) {
     // Set the correct host and protocol for NextAuth
     response.headers.set('x-forwarded-host', forwardedHost)
     response.headers.set('x-forwarded-proto', forwardedProto)
-<<<<<<< HEAD
-
-=======
     
->>>>>>> origin/leader
     // Ensure NextAuth recognizes HTTPS
     if (forwardedProto === 'https') {
       response.headers.set('x-forwarded-ssl', 'on')
     }
   }
-<<<<<<< HEAD
-
-=======
   
->>>>>>> origin/leader
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
     console.log('[Middleware] Auth request:', {
@@ -54,11 +38,7 @@ export function middleware(request: NextRequest) {
       forwardedProto
     })
   }
-<<<<<<< HEAD
-
-=======
   
->>>>>>> origin/leader
   return response
 }
 

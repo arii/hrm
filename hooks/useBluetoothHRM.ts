@@ -3,11 +3,10 @@
  * Hook to manage Web Bluetooth connection to a Heart Rate Monitor (HRM) device.
  * It streams data using the provided sendData function (from useWebSocket).
  */
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
-<<<<<<< HEAD
 
 // Define a more structured state for the hook
 export type BluetoothHRMStatus =
@@ -23,8 +22,6 @@ export interface BluetoothHRMState {
   message: string
   deviceName?: string
 }
-=======
->>>>>>> origin/leader
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -53,7 +50,9 @@ const parseHeartRate = (value: DataView): number => {
 const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+    document.cookie = `${name}=${encodeURIComponent(
+      value
+    )}; expires=${expires}; path=/`
   }
 }
 
@@ -81,15 +80,8 @@ const useBluetoothHRM = () => {
     setHrmState({ status: 'DISCONNECTED', message: 'Connection cancelled.' })
   }, [device])
 
-  // Use a ref to track the current status to break the dependency cycle
-  const statusRef = useRef(deviceStatus)
-  useEffect(() => {
-    statusRef.current = deviceStatus
-  }, [deviceStatus])
-
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
-<<<<<<< HEAD
       if (
         hrmState.status === 'CONNECTED' ||
         hrmState.status === 'CONNECTING' ||
@@ -97,9 +89,6 @@ const useBluetoothHRM = () => {
       ) {
         return true
       }
-=======
-      if (statusRef.current.startsWith('Connected')) return true
->>>>>>> origin/leader
 
       if (connectionStatus !== 'Connected') {
         setHrmState({
@@ -224,10 +213,33 @@ const useBluetoothHRM = () => {
         console.error('Bluetooth connection failed:', error)
         let userFriendlyMessage = 'An unknown error occurred.'
 
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          userFriendlyMessage = 'Device selection cancelled.'
+        if (error instanceof DOMException) {
+          switch (error.name) {
+            case 'NotFoundError':
+              userFriendlyMessage =
+                'No Bluetooth device found. Ensure your device is powered on and nearby.'
+              break
+            case 'SecurityError':
+              userFriendlyMessage =
+                'Bluetooth permission denied. Please allow Bluetooth access in your browser.'
+              break
+            case 'NetworkError':
+              userFriendlyMessage =
+                'Bluetooth connection lost. Ensure your device is nearby and powered on.'
+              break
+            case 'NotSupportedError':
+              userFriendlyMessage =
+                'Web Bluetooth is not supported on this browser or device.'
+              break
+            case 'AbortError':
+              // This can happen if the user cancels the device picker. It's not a "failure" in the same way.
+              userFriendlyMessage = 'Device selection cancelled.'
+              break
+            default:
+              userFriendlyMessage = `Bluetooth error: ${error.name}.`
+          }
         } else if (error instanceof Error) {
-          userFriendlyMessage = `Error: ${error.message}`
+          userFriendlyMessage = `Error: ${error.message}.`
         }
 
         setDevice(null)
@@ -235,11 +247,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-<<<<<<< HEAD
     [connectionStatus, sendData, hrmState.status, device]
-=======
-    [connectionStatus, sendData, savedDevice]
->>>>>>> origin/leader
   )
 
   return {
