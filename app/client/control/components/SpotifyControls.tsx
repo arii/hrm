@@ -22,7 +22,7 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
 interface SpotifyDevice {
