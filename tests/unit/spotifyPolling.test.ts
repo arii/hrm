@@ -4,50 +4,11 @@
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { SpotifyData } from '../../types/websocket'
+import { SpotifyData, UnifiedStateMessage } from '../../types/websocket'
 
 // Mock the SpotifyTokenManager module
-jest.mock('../../services/spotifyTokenManager', () => {
-  const SpotifyTokenManager = jest.fn().mockImplementation(() => {
-    return {
-      getValidAccessToken: jest
-        .fn()
-        .mockImplementation(() => Promise.resolve('mock_access_token')),
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'mock_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
-    }
-  })
-  return {
-    SpotifyTokenManager,
-  }
-})
-
-const mockPlayer: { [key: string]: jest.Mock } = {
-  getCurrentlyPlayingTrack: jest
-    .fn()
-    .mockImplementation(() => Promise.resolve(null)),
-  startResumePlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  pausePlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  skipToNext: jest.fn().mockImplementation(() => Promise.resolve()),
-  skipToPrevious: jest.fn().mockImplementation(() => Promise.resolve()),
-  transferPlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  setPlaybackVolume: jest.fn().mockImplementation(() => Promise.resolve()),
-  getAvailableDevices: jest
-    .fn()
-    .mockImplementation(() => Promise.resolve({ devices: [] })),
-}
-
-jest.mock('@spotify/web-api-ts-sdk', () => ({
-  SpotifyApi: {
-    withAccessToken: jest.fn(() => ({
-      player: mockPlayer,
-    })),
-  },
-  AccessToken: jest.fn(),
-}))
+jest.mock('../../services/spotifyTokenManager')
+jest.mock('@spotify/web-api-ts-sdk')
 
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
@@ -55,20 +16,13 @@ describe('SpotifyPolling Service', () => {
     (data: Partial<{ spotifyData: SpotifyData }>) => void
   >
   let broadcastedStates: SpotifyData[]
+  let mockPlayer: any
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
     // Reset mockPlayer's mocks
-    mockPlayer.getCurrentlyPlayingTrack.mockClear()
-    mockPlayer.startResumePlayback.mockClear()
-    mockPlayer.pausePlayback.mockClear()
-    mockPlayer.skipToNext.mockClear()
-    mockPlayer.skipToPrevious.mockClear()
-    mockPlayer.transferPlayback.mockClear()
-    mockPlayer.setPlaybackVolume.mockClear()
-    mockPlayer.getAvailableDevices.mockClear()
-    mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
+    mockPlayer = SpotifyApi.withAccessToken().player
 
     broadcastedStates = []
     broadcastMock = jest.fn((data) => {
@@ -86,14 +40,15 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
-      clearInterval((spotifyService as unknown)['pollInterval'] as NodeJS.Timeout)
-      ;(spotifyService as unknown)['pollInterval'] = null
+    const spotifyServiceAny = spotifyService as any
+    if (spotifyServiceAny.pollInterval) {
+      clearInterval(spotifyServiceAny.pollInterval as NodeJS.Timeout)
+      spotifyServiceAny.pollInterval = null
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
-      clearInterval((spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout)
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+    if (spotifyServiceAny.tokenRefreshInterval) {
+      clearInterval(spotifyServiceAny.tokenRefreshInterval as NodeJS.Timeout)
+      spotifyServiceAny.tokenRefreshInterval = null
     }
   })
 
@@ -341,7 +296,7 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle 401 unauthorized responses', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
-        Promise.reject({ status: 401 })
+        Promise.reject(new Error('Unauthorized'))
       )
 
       spotifyService.startPolling(100)
@@ -355,26 +310,12 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Mock SpotifyPolling.create to return an instance with a null SDK
-      const originalSpotifyPollingCreate = SpotifyPolling.create
-      SpotifyPolling.create = jest.fn().mockResolvedValue({
-        handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
-        getState: jest.fn(),
-        stopPolling: jest.fn(),
-        cleanup: jest.fn(),
-        initializeSdk: jest.fn(),
-        setRefreshToken: jest.fn(),
-        startPolling: jest.fn(),
-        getAvailableDevices: jest.fn(),
-        sdk: null, // Ensure SDK is null
-      })
-
-      const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('SET_VOLUME', undefined, 50)
-      expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
-
-      // Restore original SpotifyPolling.create
-      SpotifyPolling.create = originalSpotifyPollingCreate
+      // Create a new service instance that hasn't gone through the full async initialization
+      // This ensures its SDK is null initially
+      const newService = new (SpotifyPolling as any)(broadcastMock)
+      await newService.handleCommand('PLAY')
+      // Should not make API call without token
+      expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
     })
   })
 })

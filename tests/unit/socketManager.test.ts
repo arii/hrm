@@ -21,12 +21,7 @@ global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
-jest.mock('@spotify/web-api-ts-sdk', () => ({
-  SpotifyApi: {
-    withAccessToken: jest.fn(),
-  },
-  AccessToken: jest.fn(),
-}))
+jest.mock('@spotify/web-api-ts-sdk')
 
 describe('WebSocket Manager Integration', () => {
   let tabataTimer: TabataTimer
@@ -56,37 +51,8 @@ describe('WebSocket Manager Integration', () => {
       broadcastedMessages.push(data)
     }
 
-    // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest
-        .fn()
-        .mockResolvedValue('test_access_token') as jest.Mock,
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'test_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }) as jest.Mock,
-      stopPolling: jest.fn() as jest.Mock,
-      cleanup: jest.fn() as jest.Mock,
-    }))
-
     // Mock SDK instance
-    mockSdk = {
-      player: {
-        getCurrentlyPlayingTrack: jest.fn().mockResolvedValue(null),
-        startResumePlayback: jest.fn().mockResolvedValue(undefined),
-        pausePlayback: jest.fn().mockResolvedValue(undefined),
-        skipToNext: jest.fn().mockResolvedValue(undefined),
-        skipToPrevious: jest.fn().mockResolvedValue(undefined),
-        transferPlayback: jest.fn().mockResolvedValue(undefined),
-        setPlaybackVolume: jest.fn().mockResolvedValue(undefined),
-        getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
-      },
-    }
-
-    // Mock SpotifyApi.withAccessToken to return our mock SDK
-    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
+    mockSdk = SpotifyApi.withAccessToken() as jest.Mocked<SpotifyApi>['player']
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
