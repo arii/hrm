@@ -4,6 +4,7 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
+<<<<<<< HEAD
 import {
   Box,
   Container,
@@ -44,16 +45,53 @@ const ControlPanel = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         manageWakeLock()
+=======
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
+import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
+import Head from 'next/head'
+import { useEffect } from 'react'
+import { useWebSocket } from '@/context/WebSocketContext'
+import dynamic from 'next/dynamic'
+
+const SpotifyControls = dynamic(
+  () => import('./components/SpotifyControls'),
+  { loading: () => <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1, mb: 2 }}/> }
+)
+import TimerControls from './components/TimerControls'
+
+const ControlPanel = () => {
+  const { connectionStatus, connect } = useWebSocket()
+
+  // Reconnect on page visibility
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        connectionStatus !== 'Connected'
+      ) {
+        console.log(
+          '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
+        )
+        connect() // Attempt to reconnect
+>>>>>>> origin/leader
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
+<<<<<<< HEAD
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       releaseWakeLock() // Release on component unmount
     }
   }, [manageWakeLock, releaseWakeLock])
+=======
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [connectionStatus, connect])
+>>>>>>> origin/leader
 
   // Signal when page is ready for testing
   useEffect(() => {

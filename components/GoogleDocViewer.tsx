@@ -5,8 +5,12 @@
  */
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { Box, Card, CardContent, IconButton, Skeleton } from '@mui/material'
-import { useEffect, useState } from 'react'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import IconButton from '@mui/material/IconButton'
+import Skeleton from '@mui/material/Skeleton'
+import { memo, useEffect, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
@@ -102,4 +106,4 @@ const GoogleDocViewer = ({
   )
 }
 
-export default GoogleDocViewer
+export default memo(GoogleDocViewer)

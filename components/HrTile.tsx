@@ -1,6 +1,10 @@
 // File: components/HrTile.tsx
 'use client'
-import { Card, CardContent, Tooltip, Typography } from '@mui/material'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { memo } from 'react'
 
 export interface HrTileProps {
   name: string
@@ -80,4 +84,4 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   )
 }
 
-export default HrTile
+export default memo(HrTile)

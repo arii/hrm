@@ -30,11 +30,22 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+<<<<<<< HEAD
 dev.log
 
 # env files
 .env*
 logs/spotify_tokens.json
+=======
+
+# env files
+.env*
+!/.env.example
+
+# logs
+logs/
+*.log
+>>>>>>> origin/leader
 
 # vercel
 .vercel
@@ -42,6 +53,10 @@ logs/spotify_tokens.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/leader
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -77,6 +92,7 @@ jspm_packages/
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
+<<<<<<< HEAD
 # Gemini files
 .gemini/*
 .gemini/settings.json
@@ -88,11 +104,22 @@ web_modules/
 .github/*
 
 # PM2 files
+=======
+# IDE settings
+.gemini/
+.vscode/
+.idea/
+
+# PM2
+>>>>>>> origin/leader
 .pm2/
 
 # Playwright test artifacts
 playwright-report/
+<<<<<<< HEAD
 playwright-report.log
+=======
+>>>>>>> origin/leader
 test-results/
 test-recordings/
 tests/playwright/screenshots/
@@ -105,6 +132,7 @@ diff.txt
 *err.log
 server.log
 test-update.log
+<<<<<<< HEAD
 npm_run_dev.log
 running_notes.md.backup
 
@@ -121,3 +149,7 @@ running_notes.md.backup
 
 # logs
 logs/*
+=======
+running_notes.md.backup
+~/.config/
+>>>>>>> origin/leader
