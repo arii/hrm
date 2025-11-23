@@ -18,6 +18,7 @@ let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 
 const clientData = new Map<string, HrmData>()
+let hrmUpdateTimeout: NodeJS.Timeout | null = null // For batching HRM updates
 
 interface Services {
   tabataService: TabataTimer
@@ -87,6 +88,18 @@ const broadcastState = () => {
 }
 
 /**
+ * Schedules a batched broadcast of HRM data to avoid overwhelming clients.
+ */
+const scheduleHrmUpdate = () => {
+  if (hrmUpdateTimeout) return // Update is already scheduled
+
+  hrmUpdateTimeout = setTimeout(() => {
+    broadcastState()
+    hrmUpdateTimeout = null // Clear the timeout ID after execution
+  }, 250) // 250ms batching window
+}
+
+/**
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
@@ -133,7 +146,7 @@ const handleIncomingMessage = (
             clientData.get(clientId)
           )
         }
-        broadcastState()
+        scheduleHrmUpdate()
         break
       }
 

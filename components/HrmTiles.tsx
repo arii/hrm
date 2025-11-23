@@ -1,13 +1,14 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocketContext } from '@/contexts/WebSocketContext'
+import { memo } from 'react'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import { Grid, Skeleton } from '@mui/material'
 
 const HrmTiles = () => {
-  const { hrmData } = useWebSocket()
+  const hrmData = useWebSocketContext((state) => state.hrmData)
 
   if (hrmData.length > 0) {
     return (
@@ -58,4 +59,4 @@ const HrmTiles = () => {
   )
 }
 
-export default HrmTiles
+export default memo(HrmTiles)

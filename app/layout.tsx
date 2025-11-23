@@ -6,6 +6,7 @@ import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import TimerSoundProvider from '../components/TimerSoundProvider'
+import { WebSocketProvider } from '../contexts/WebSocketContext'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -33,9 +34,11 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <Providers>
-            <ErrorBoundary fallback={<ErrorFallback />}>
-              <TimerSoundProvider>{children}</TimerSoundProvider>
-            </ErrorBoundary>
+            <WebSocketProvider>
+              <ErrorBoundary fallback={<ErrorFallback />}>
+                <TimerSoundProvider>{children}</TimerSoundProvider>
+              </ErrorBoundary>
+            </WebSocketProvider>
           </Providers>
           <BottomNavBar />
         </ThemeRegistry>
