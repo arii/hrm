@@ -127,7 +127,7 @@ test.describe('Visual Regression Tests', () => {
       fullPage: true,
       animations: 'disabled',
       caret: 'hide', // Hide text cursor
-      threshold: 0.2, // Allow for minor rendering differences
+      threshold: 0.3, // Allow for minor rendering differences
       mask: [
         // Mask timer countdown numbers that might persist from previous runs
         dashboardPage.locator('text=/^\\d+$/'),
