@@ -1,4 +1,3 @@
-<<<<<<< HEAD:context/WebSocketContext.tsx
 'use client'
 import {
   createContext,
@@ -7,16 +6,10 @@ import {
   useContext,
   useEffect,
   useRef,
+  useReducer,
   useState,
 } from 'react'
-=======
-// File: hooks/useWebSocket.ts (Central WebSocket Client Hook - Typed)
-/**
- * Central client-side hook for managing WebSocket connection and application state.
- * It establishes the connection and updates state based on topic-based server broadcasts.
- */
-import { useCallback, useEffect, useRef, useState, useReducer } from 'react'
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
+
 import {
   ClientCommandMessage,
   HrmData,
@@ -26,6 +19,7 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
+// --- App State Interfaces and Initial State ---
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -33,19 +27,7 @@ interface AppState {
   spotifyServiceInitialized: boolean
 }
 
-<<<<<<< HEAD:context/WebSocketContext.tsx
-const INITIAL_STATE: AppState = {
-=======
-// --- State Management ---
-
-type StateAction =
-  | { type: 'SET_INITIAL_STATE'; payload: AppState }
-  | { type: 'UPDATE_HRM'; payload: HrmData[] }
-  | { type: 'UPDATE_TIMER'; payload: TimerData }
-  | { type: 'UPDATE_SPOTIFY'; payload: SpotifyData }
-
 const initialState: AppState = {
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
   hrmData: [],
   timerData: {
     isRunning: false,
@@ -61,31 +43,13 @@ const initialState: AppState = {
   spotifyServiceInitialized: true,
 }
 
-<<<<<<< HEAD:context/WebSocketContext.tsx
-interface WebSocketContextType extends AppState {
-  connectionStatus: string
-  sendData: (data: ClientCommandMessage) => void
-  connect: () => void
-  disconnect: () => void
-}
+// --- State Management Reducer ---
+type StateAction =
+  | { type: 'SET_INITIAL_STATE'; payload: AppState }
+  | { type: 'UPDATE_HRM'; payload: HrmData[] }
+  | { type: 'UPDATE_TIMER'; payload: TimerData }
+  | { type: 'UPDATE_SPOTIFY'; payload: SpotifyData }
 
-const WebSocketContext = createContext<WebSocketContextType | null>(null)
-
-export const WebSocketProvider = ({
-  children,
-  serverUrl,
-}: {
-  children: ReactNode
-  serverUrl?: string
-}) => {
-  const wsUrl = serverUrl || getWebSocketURL()
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...')
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const pendingActions = useRef<ClientCommandMessage[]>([])
-
-  // Unified State Object
-  const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
-=======
 const appStateReducer = (state: AppState, action: StateAction): AppState => {
   switch (action.type) {
     case 'SET_INITIAL_STATE':
@@ -101,16 +65,33 @@ const appStateReducer = (state: AppState, action: StateAction): AppState => {
   }
 }
 
-const useWebSocket = (serverUrl?: string) => {
+// --- WebSocket Context Definition ---
+interface WebSocketContextType extends AppState {
+  connectionStatus: string
+  sendData: (data: ClientCommandMessage) => void
+  connect: () => void
+  disconnect: () => void
+}
+
+const WebSocketContext = createContext<WebSocketContextType | null>(null)
+
+// --- WebSocket Provider Component ---
+export const WebSocketProvider = ({
+  children,
+  serverUrl,
+}: {
+  children: ReactNode
+  serverUrl?: string
+}) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  const [appState, dispatch] = useReducer(appStateReducer, initialState)
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
-
+  const pendingActions = useRef<ClientCommandMessage[]>([])
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
+
+  // Use the reducer for state management
+  const [appState, dispatch] = useReducer(appStateReducer, initialState)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -130,17 +111,13 @@ const useWebSocket = (serverUrl?: string) => {
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[useWebSocket] Manually disconnected.')
+    console.log('[WebSocketProvider] Manually disconnected.')
   }, [])
 
   const connect = useCallback(() => {
-<<<<<<< HEAD:context/WebSocketContext.tsx
     if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
       return
     }
-=======
-    if (typeof window === 'undefined') return
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
 
     shouldReconnect.current = true
     const ws = new WebSocket(wsUrl)
@@ -151,7 +128,7 @@ const useWebSocket = (serverUrl?: string) => {
       setConnectionStatus('Connected')
 
       if (pendingActions.current.length > 0) {
-        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
+        console.log(`[WebSocketProvider] Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach(action => {
           ws.send(JSON.stringify(action))
         })
@@ -159,7 +136,6 @@ const useWebSocket = (serverUrl?: string) => {
         localStorage.setItem('pendingActions', '[]')
       }
 
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -189,19 +165,9 @@ const useWebSocket = (serverUrl?: string) => {
 
     ws.onmessage = (event) => {
       try {
-<<<<<<< HEAD:context/WebSocketContext.tsx
-        const message: UnifiedStateMessage = JSON.parse(event.data)
-        if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
-          }))
-=======
         const message: ServerBroadcastMessage = JSON.parse(event.data)
 
+        // Use the reducer to dispatch actions based on message type
         switch (message.type) {
           case 'INITIAL_STATE':
             dispatch({ type: 'SET_INITIAL_STATE', payload: message.payload })
@@ -215,7 +181,6 @@ const useWebSocket = (serverUrl?: string) => {
           case 'SPOTIFY_UPDATE':
             dispatch({ type: 'UPDATE_SPOTIFY', payload: message.payload })
             break
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
@@ -225,18 +190,8 @@ const useWebSocket = (serverUrl?: string) => {
 
   useEffect(() => {
     connect()
-
     return () => {
-<<<<<<< HEAD:context/WebSocketContext.tsx
       disconnect()
-=======
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      if (wsRef.current) {
-        wsRef.current.close()
-      }
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
     }
   }, [connect, disconnect])
 
@@ -258,11 +213,7 @@ const useWebSocket = (serverUrl?: string) => {
     }
   }, [])
 
-<<<<<<< HEAD:context/WebSocketContext.tsx
   const contextValue = {
-=======
-  return {
->>>>>>> feat: Optimize WebSocket broadcasting with topic-based messages:hooks/useWebSocket.ts
     ...appState,
     connectionStatus,
     sendData,
@@ -277,6 +228,7 @@ const useWebSocket = (serverUrl?: string) => {
   )
 }
 
+// --- Custom Hook to consume the context ---
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext)
   if (!context) {

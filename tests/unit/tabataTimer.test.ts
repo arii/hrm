@@ -8,18 +8,16 @@ import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<
-    (data: Partial<{ timerData: TimerData }>) => void
-  >
+  // Update the mock to expect TimerData directly
+  let broadcastMock: jest.Mock<(data: TimerData) => void>
   let broadcastedStates: TimerData[]
 
   beforeEach(() => {
     jest.useFakeTimers()
     broadcastedStates = []
-    broadcastMock = jest.fn((data) => {
-      if (data.timerData) {
-        broadcastedStates.push(data.timerData)
-      }
+    // The broadcast function now receives the TimerData payload directly
+    broadcastMock = jest.fn((data: TimerData) => {
+      broadcastedStates.push(data)
     })
     timer = new TabataTimer(broadcastMock)
   })
@@ -126,6 +124,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
+      // In Stopwatch, PAUSE now goes to IDLE but preserves time elapsed
       expect(paused.currentPhase).toBe('IDLE')
       expect(paused.timeElapsed).toBe(1)
 
@@ -156,8 +155,7 @@ describe('TabataTimer Service', () => {
 
       const resumed = timer.getState()
       expect(resumed.currentPhase).toBe('RUNNING')
-      // Time should continue counting (might be 3s or more depending on implementation)
-      expect(resumed.timeElapsed).toBeGreaterThanOrEqual(2)
+      expect(resumed.timeElapsed).toBe(8)
     })
 
     it('should reset to zero when stopped', () => {

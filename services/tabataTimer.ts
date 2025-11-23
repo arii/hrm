@@ -212,8 +212,7 @@ class TabataTimer {
         if (this.state.mode === 'STOPWATCH') {
           // Start Stopwatch counting up
           this.state.currentPhase = 'RUNNING'
-          this.state.timeElapsed = 0
-          this.runningTotal = 0
+          this.state.timeElapsed = this.runningTotal
           this.startTime = Date.now() // Reset start time for accurate count up
         } else {
           // Start Tabata WORK phase

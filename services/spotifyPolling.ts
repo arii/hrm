@@ -338,11 +338,7 @@ export class SpotifyPolling {
     }
     switch (command) {
       case 'PLAY':
-        if (playlistUri) {
-          await this.sdk!.player.startResumePlayback(deviceId!, playlistUri)
-        } else {
-          await this.sdk!.player.startResumePlayback(deviceId!)
-        }
+        await this.sdk!.player.startResumePlayback(deviceId!, playlistUri)
         break
       case 'PAUSE':
         await this.sdk!.player.pausePlayback(deviceId!)
