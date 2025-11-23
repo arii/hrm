@@ -16,7 +16,7 @@ import { WebSocketServer } from 'ws'
 import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import SpotifyPolling from './services/spotifyPolling.js'
+import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
@@ -45,7 +45,7 @@ const expressApp = express()
 
 app
   .prepare()
-  .then(() => {
+  .then(async () => {
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
@@ -94,8 +94,12 @@ app
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
+<<<<<<< HEAD
       spotifyService = new SpotifyPolling(broadcastState)
       registerService('spotifyService', spotifyService)
+=======
+      spotifyService = await SpotifyPolling.create(broadcastState)
+>>>>>>> origin/leader
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure
@@ -119,8 +123,33 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+<<<<<<< HEAD
     // The Express route for /api/spotify/devices has been removed and is now handled by Next.js
     expressApp.use((req: Request, res: Response) => {
+=======
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes('/api/internal/token-delivery')
+      ) {
+        // Wait a moment for token to be written
+        setTimeout(async () => {
+          if (spotifyService) {
+            // Signal the service to reload tokens from disk
+            spotifyService.setRefreshToken('signal')
+
+            // Wait a bit for reload, then force poll
+            setTimeout(async () => {
+              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+                await spotifyService.forcePollAndBroadcast()
+              }
+            }, 1500)
+          }
+        }, 1000)
+      }
+>>>>>>> origin/leader
       return handle(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 

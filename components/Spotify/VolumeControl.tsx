@@ -1,15 +1,19 @@
 // components/Spotify/VolumeControl.tsx
-import React from 'react';
-import { Slider, Stack, Typography } from '@mui/material';
-import { VolumeUp } from '@mui/icons-material';
+import React from 'react'
+import { Slider, Stack, Typography } from '@mui/material'
+import { VolumeUp } from '@mui/icons-material'
 
 interface VolumeControlProps {
-  volume: number;
-  onVolumeChange: (volume: number) => void;
-  onVolumeChangeCommitted: (volume: number) => void;
+  volume: number
+  onVolumeChange: (volume: number) => void
+  onVolumeChangeCommitted: (volume: number) => void
 }
 
-const VolumeControl: React.FC<VolumeControlProps> = ({ volume, onVolumeChange, onVolumeChangeCommitted }) => {
+const VolumeControl: React.FC<VolumeControlProps> = ({
+  volume,
+  onVolumeChange,
+  onVolumeChangeCommitted,
+}) => {
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
@@ -29,7 +33,7 @@ const VolumeControl: React.FC<VolumeControlProps> = ({ volume, onVolumeChange, o
         {volume}
       </Typography>
     </Stack>
-  );
-};
+  )
+}
 
-export default VolumeControl;
+export default VolumeControl
