@@ -72,10 +72,10 @@ test.describe('Spotify OAuth Integration (Local)', () => {
 
     // 4. Verify WebSocket Connection
     // We check for a UI element that appears only when connected, e.g., the connection status or user profile
-    const statusIndicator = page.getByText(/Connected|Online/i); 
+    const _statusIndicator = page.getByText(/Connected|Online/i); 
     // Or checking internal state via evaluation if UI is subtle
     const socketState = await page.evaluate(() => {
-        // @ts-ignore - assuming we might expose this for debug, otherwise check UI
+        // @ts-expect-error - assuming we might expose this for debug, otherwise check UI
         return window._socketStatus || 'unknown'; 
     });
     console.log(`WebSocket State: ${socketState}`);

@@ -234,7 +234,7 @@ describe('SpotifyPolling Service', () => {
       const refreshToken = 'test_refresh_token'
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService, 'initializeSdk' as any)
+        .spyOn(spotifyService, 'initializeSdk' as keyof typeof spotifyService)
         .mockResolvedValue(undefined)
       spotifyService.setRefreshToken(refreshToken)
       // Advance timers to allow setTimeout to run
