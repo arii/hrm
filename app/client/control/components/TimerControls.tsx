@@ -1,7 +1,10 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import useWebSocket from '@/hooks/useWebSocket'
+import {
+  useTimer,
+  useWebSocketActions,
+} from '@/hooks/useWebSocketContext'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
@@ -28,7 +31,8 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+  const timerData = useTimer()
+  const { sendData } = useWebSocketActions()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)

@@ -1,9 +1,12 @@
-// File: hooks/useWebSocket.ts (Central WebSocket Client Hook - Typed)
-/**
- * Central client-side hook for managing WebSocket connection and application state.
- * It establishes the connection and updates the unified state based on server broadcasts.
- */
-import { useCallback, useEffect, useRef, useState } from 'react'
+// File: contexts/WebSocketContext.tsx
+'use client'
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   ClientCommandMessage,
   HrmData,
@@ -11,9 +14,9 @@ import {
   TimerData,
   UnifiedStateMessage,
 } from '../types/websocket'
-
 import { getWebSocketURL } from '../utils/urls'
 
+// Define the shape of our application's state
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -21,7 +24,7 @@ interface AppState {
   spotifyServiceInitialized?: boolean
 }
 
-// Initial state, conforming to the interfaces
+// Initial state for each context, ensuring proper typing
 const INITIAL_STATE: AppState = {
   hrmData: [],
   timerData: {
@@ -38,12 +41,38 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
-const useWebSocket = (serverUrl?: string) => {
+// Create separate contexts for each slice of the state
+export const TimerContext = createContext<TimerData>(INITIAL_STATE.timerData)
+export const HrmContext = createContext<HrmData[]>(INITIAL_STATE.hrmData)
+export const SpotifyContext = createContext<SpotifyData>(
+  INITIAL_STATE.spotifyData
+)
+
+// Create a context for WebSocket actions (sendData, connect, disconnect)
+interface WebSocketActions {
+  sendData: (data: ClientCommandMessage) => void
+  connect: () => void
+  disconnect: () => void
+  connectionStatus: string
+}
+
+export const WebSocketActionsContext = createContext<WebSocketActions>({
+  sendData: () => console.warn('WebSocket not initialized'),
+  connect: () => console.warn('WebSocket not initialized'),
+  disconnect: () => console.warn('WebSocket not initialized'),
+  connectionStatus: 'Disconnected',
+})
+
+// The provider component that will wrap our application
+export const WebSocketProvider: React.FC<{
+  children: React.ReactNode
+  serverUrl?: string
+}> = ({ children, serverUrl }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Unified State Object
+  // Unified state object managed by the provider
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
@@ -59,11 +88,10 @@ const useWebSocket = (serverUrl?: string) => {
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[useWebSocket] Manually disconnected.')
+    console.log('[WebSocketProvider] Manually disconnected.')
   }, [])
 
   const connect = useCallback(() => {
-    // Ensure this runs only client-side
     if (typeof window === 'undefined') return
 
     shouldReconnect.current = true
@@ -71,9 +99,8 @@ const useWebSocket = (serverUrl?: string) => {
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log('[useWebSocket] Connected to server')
+      console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -82,16 +109,14 @@ const useWebSocket = (serverUrl?: string) => {
 
     ws.onclose = (event) => {
       console.log(
-        '[useWebSocket] Disconnected from server',
+        '[WebSocketProvider] Disconnected from server',
         event.code,
         event.reason
       )
       setConnectionStatus('Disconnected')
-
-      // Attempt to reconnect after 3 seconds, if not explicitly disconnected
       if (shouldReconnect.current && !reconnectTimeoutRef.current) {
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[useWebSocket] Attempting to reconnect...')
+          console.log('[WebSocketProvider] Attempting to reconnect...')
           setConnectionStatus('Reconnecting...')
           connectRef.current?.()
         }, 3000)
@@ -99,23 +124,14 @@ const useWebSocket = (serverUrl?: string) => {
     }
 
     ws.onerror = (_err) => {
-      console.warn('[useWebSocket] Connection error')
+      console.warn('[WebSocketProvider] Connection error')
       setConnectionStatus('Error')
     }
 
     ws.onmessage = (event) => {
       try {
-        // Assert incoming message is the UnifiedStateMessage type
         const message: UnifiedStateMessage = JSON.parse(event.data)
-
         if (message.type === 'STATE_UPDATE') {
-          if (message.hrmData !== undefined) {
-            console.log(
-              '[useWebSocket] Received STATE_UPDATE. HRM Data:',
-              message.hrmData
-            )
-          }
-          // Merge the incoming state with the current state to preserve non-updated fields
           setAppState((prev) => ({
             hrmData: message.hrmData || prev.hrmData,
             timerData: message.timerData || prev.timerData,
@@ -136,7 +152,6 @@ const useWebSocket = (serverUrl?: string) => {
     connect()
 
     return () => {
-      // Clean up the connection and reconnection timeout on unmount
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
       }
@@ -146,33 +161,29 @@ const useWebSocket = (serverUrl?: string) => {
     }
   }, [connect])
 
-  /**
-   * Sends a JSON payload (ClientCommandMessage) to the WebSocket server.
-   * Note: The hook takes the typed object and stringifies it internally.
-   */
   const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      console.log('[useWebSocket] Sending:', data)
-      ws.send(jsonStr)
+      ws.send(JSON.stringify(data))
     } else {
       console.warn(
-        '[useWebSocket] WebSocket not open. State:',
-        ws?.readyState,
-        'Data:',
-        data
+        '[WebSocketProvider] WebSocket not open. State:',
+        ws?.readyState
       )
     }
   }, [])
 
-  return {
-    ...appState, // Expose all state parts directly
-    connectionStatus,
-    sendData,
-    connect,
-    disconnect,
-  }
+  return (
+    <WebSocketActionsContext.Provider
+      value={{ sendData, connect, disconnect, connectionStatus }}
+    >
+      <TimerContext.Provider value={appState.timerData}>
+        <HrmContext.Provider value={appState.hrmData}>
+          <SpotifyContext.Provider value={appState.spotifyData}>
+            {children}
+          </SpotifyContext.Provider>
+        </HrmContext.Provider>
+      </TimerContext.Provider>
+    </WebSocketActionsContext.Provider>
+  )
 }
-
-export default useWebSocket

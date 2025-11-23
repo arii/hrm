@@ -5,11 +5,11 @@
  */
 import { useCallback, useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
+import { useTimer } from './useWebSocketContext'
 import useVolumePreference from './useVolumePreference'
-import useWebSocket from './useWebSocket'
 
 export const useTimerSounds = () => {
-  const { timerData } = useWebSocket()
+  const timerData = useTimer()
   const { volume } = useVolumePreference(70)
   const lastSoundEventId = useRef<number>(0)
 
