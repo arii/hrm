@@ -14,11 +14,7 @@ else
   set -a
   source .env.production
   set +a
-<<<<<<< HEAD
-
-=======
   
->>>>>>> origin/leader
   # Debug: Show critical env vars
   echo "Environment: NODE_ENV=$NODE_ENV"
   echo "NEXTAUTH_URL: $NEXTAUTH_URL"

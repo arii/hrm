@@ -67,11 +67,7 @@ if [ "$REDIRECT_URI" != "null" ] && [ "$REDIRECT_URI" != "" ]; then
         echo "  Expected: .../api/auth/callback/spotify"
         echo "  Current: ${REDIRECT_URI}"
     fi
-<<<<<<< HEAD
-
-=======
     
->>>>>>> origin/leader
     # Check if using HTTPS in production
     if [[ "$REDIRECT_URI" == https://* ]]; then
         echo -e "${GREEN}✓ Using HTTPS for OAuth (secure cookies enabled)${RESET}"
@@ -169,20 +165,12 @@ echo -e "${BOLD}5. OAuth Cookie Configuration${RESET}"
 # Test if NextAuth cookies are configured properly for HTTPS
 if [[ "$REDIRECT_URI" == https://* ]]; then
     echo "Testing OAuth cookie configuration for HTTPS..."
-<<<<<<< HEAD
-
-=======
     
->>>>>>> origin/leader
     # Make a test request to the NextAuth provider configuration
     PROVIDER_TEST=$(curl -s -H "Accept: application/json" "${BASE_URL}/api/auth/providers" 2>/dev/null)
     if echo "$PROVIDER_TEST" | jq -e '.spotify' > /dev/null 2>&1; then
         echo -e "${GREEN}✓ OAuth provider endpoint accessible${RESET}"
-<<<<<<< HEAD
-
-=======
         
->>>>>>> origin/leader
         # Check if we can access the signin page without errors
         SIGNIN_TEST=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/api/auth/signin/spotify")
         if [ "$SIGNIN_TEST" = "200" ]; then
@@ -190,11 +178,7 @@ if [[ "$REDIRECT_URI" == https://* ]]; then
         else
             echo -e "${YELLOW}⚠ Spotify signin returned HTTP ${SIGNIN_TEST}${RESET}"
         fi
-<<<<<<< HEAD
-
-=======
         
->>>>>>> origin/leader
         # Test CSRF token generation (this validates cookie setup)
         CSRF_TEST=$(curl -s "${BASE_URL}/api/auth/csrf" | jq -r '.csrfToken' 2>/dev/null)
         if [ "$CSRF_TEST" != "null" ] && [ "$CSRF_TEST" != "" ]; then
@@ -232,11 +216,7 @@ if [[ "$REDIRECT_URI" == https://* ]] && [[ "$REDIRECT_URI" != *"127.0.0.1"* ]] 
     echo "Testing callback URL accessibility..."
     CALLBACK_HOST=$(echo "$REDIRECT_URI" | sed -E 's|https?://([^/]+).*|\1|')
     CALLBACK_TEST=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 "${REDIRECT_URI}" 2>/dev/null || echo "timeout")
-<<<<<<< HEAD
-
-=======
     
->>>>>>> origin/leader
     if [ "$CALLBACK_TEST" = "405" ] || [ "$CALLBACK_TEST" = "400" ] || [ "$CALLBACK_TEST" = "302" ]; then
         echo -e "${GREEN}✓ Callback URL is accessible (HTTP ${CALLBACK_TEST} is normal)${RESET}"
         echo "  Note: 302 redirect is expected for OAuth callbacks"
