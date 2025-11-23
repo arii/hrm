@@ -139,7 +139,6 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-<<<<<<< HEAD:hooks/useWebSocket.ts
         const message = JSON.parse(event.data)
 
         switch (message.type) {
@@ -164,17 +163,6 @@ export const WebSocketProvider = ({
             break
           default:
             console.warn('[useWebSocket] Received unknown message type:', message.type)
-=======
-        const message: UnifiedStateMessage = JSON.parse(event.data)
-        if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
-          }))
->>>>>>> origin/leader:context/WebSocketContext.tsx
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

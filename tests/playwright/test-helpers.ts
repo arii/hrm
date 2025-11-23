@@ -50,11 +50,7 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
   // Try to wait for iframe, but don't block indefinitely if it's missing
   try {
     await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
-<<<<<<< HEAD
-  } catch (_e) {
-=======
   } catch {
->>>>>>> origin/leader
     console.warn(
       'Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.'
     )
@@ -130,7 +126,7 @@ export const setupComprehensiveTest = async ({
     waitForPageReady(dashboardTab),
     waitForPageReady(controlTab),
     waitForPageReady(mockTab),
-    waitForPageReady(connectTab),
+    waitForPageReady(connectPage),
   ])
 
   // Close pre-warm tabs but keep connections alive
