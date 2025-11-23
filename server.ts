@@ -10,6 +10,7 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
+import fs from 'fs'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
@@ -39,6 +40,7 @@ const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+expressApp.use(express.json())
 
 // --- Main Application Setup ---
 
@@ -133,33 +135,56 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes('/api/internal/token-delivery')
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (
-            spotifyService &&
-            typeof spotifyService.forcePollAndBroadcast === 'function'
-          ) {
-            await spotifyService.forcePollAndBroadcast()
+    // Intercept Token Delivery Here
+    expressApp.post(
+      '/api/internal/token-delivery',
+      async (req: Request, res: Response) => {
+        try {
+          const secretHeader =
+            (req.headers['x-internal-token-secret'] as string) || ''
+          const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
+
+          if (expected && secretHeader !== expected) {
+            return res.status(401).json({ error: 'unauthorized' })
           }
+
+          const payload = req.body
+          const LOG_DIR = path.resolve(process.cwd(), 'logs')
+          const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
+
+          // 1. Persist to disk (so it works on restart)
+          if (!fs.existsSync(LOG_DIR))
+            fs.mkdirSync(LOG_DIR, { recursive: true })
+          const record = { receivedAt: Date.now(), payload }
+          fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
+
+          console.log(
+            '[Server] Received token delivery. Updating live service...'
+          )
+
+          // 2. Update the live service immediately
           if (
+            spotifyServiceInitialized &&
             spotifyService &&
-            typeof spotifyService.forcePollAndBroadcast === 'function'
+            payload.refresh_token
           ) {
-            await spotifyService.forcePollAndBroadcast()
+            spotifyService.setRefreshToken(payload.refresh_token)
           }
-        }, 1000)
+
+          return res.json({ ok: true })
+        } catch (err) {
+          console.error('[Server] Token delivery error:', err)
+          return res.status(500).json({ error: 'server_error' })
+        }
       }
+    )
+
+    // Handle all Next.js routing (pages, API routes, etc.)
+    expressApp.use(async (req: Request, res: Response) => {
       return handle(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
