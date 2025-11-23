@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '../components/BottomNavBar' // Import the new component
-import Providers from '../components/Providers'
-import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry'
+import { Providers } from '../components/Providers'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import TimerSoundProvider from '../components/TimerSoundProvider'
@@ -30,15 +29,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        {/* ThemeRegistry now contains all the logic */}
-        <ThemeRegistry options={{ key: 'mui' }}>
-          <Providers>
-            <ErrorBoundary fallback={<ErrorFallback />}>
-              <TimerSoundProvider>{children}</TimerSoundProvider>
-            </ErrorBoundary>
-          </Providers>
-          <BottomNavBar />
-        </ThemeRegistry>
+        <Providers>
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <TimerSoundProvider>{children}</TimerSoundProvider>
+          </ErrorBoundary>
+        </Providers>
+        <BottomNavBar />
       </body>
     </html>
   )

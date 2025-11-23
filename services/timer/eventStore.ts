@@ -1,5 +1,5 @@
 // File: services/timer/eventStore.ts
-import { TimerEvent } from './events.js'
+export type { TimerEvent } from './events.js'
 import { reducer, TimerState, initialState } from './reducer.js'
 import { UnifiedStateMessage } from '../../types/websocket'
 

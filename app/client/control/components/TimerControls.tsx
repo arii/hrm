@@ -1,7 +1,7 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,

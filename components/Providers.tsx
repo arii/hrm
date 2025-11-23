@@ -1,17 +1,16 @@
 'use client'
 
-import theme from '@/lib/theme'
-import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider } from '@mui/material/styles'
+import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
+import { ReactNode } from 'react'
+import ThemeRegistry from './ThemeRegistry/ThemeRegistry'
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <ThemeRegistry options={{ key: 'mui' }}>
+        <WebSocketProvider>{children}</WebSocketProvider>
+      </ThemeRegistry>
     </SessionProvider>
   )
 }

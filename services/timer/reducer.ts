@@ -110,7 +110,7 @@ function transitionPhase(currentState: TimerState): Partial<TimerState> {
  */
 export function reducer(state: TimerState, event: TimerEvent): TimerState {
   switch (event.type) {
-    case 'START':
+    case 'START': {
       if (state.isRunning) {
         return state
       }
@@ -129,6 +129,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
         isRunning: true,
         lastTickedAt: startTime,
       }
+    }
 
     case 'PAUSE':
       return {
@@ -148,7 +149,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
           state.mode === 'TABATA' ? state.workDuration : 0,
       }
 
-    case 'TICK':
+    case 'TICK': {
       if (!state.isRunning) {
         return state
       }
@@ -187,6 +188,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
       }
 
       return { ...newState, lastTickedAt: event.timestamp }
+    }
 
     case 'SET_MODE':
       if (state.isRunning) {
@@ -202,7 +204,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
           event.mode === 'TABATA' ? state.workDuration : 0,
       }
 
-    case 'SET_CONFIG':
+    case 'SET_CONFIG': {
       const newWorkDuration = Math.max(1, Math.floor(event.workDuration))
       const newRestDuration = Math.max(0, Math.floor(event.restDuration))
       const configState = {
@@ -215,6 +217,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
         configState.timeRemaining = newWorkDuration
       }
       return configState
+    }
 
     default:
       return state

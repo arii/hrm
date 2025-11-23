@@ -1,20 +1,20 @@
 /** @jest-environment jsdom */
 
 import TimerControls from '@/app/client/control/components/TimerControls'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-type UseWebSocketReturn = ReturnType<typeof useWebSocket>
+// Mock the context directly
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+}))
 
-jest.mock('@/hooks/useWebSocket')
 jest.useFakeTimers()
 
-const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
-  () => UseWebSocketReturn
->
+const mockedUseWebSocket = useWebSocket as jest.Mock
 
 const baseTimerData: TimerData = {
   isRunning: false,
@@ -30,51 +30,42 @@ const baseTimerData: TimerData = {
 describe('TimerControls', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+    // Provide a default mock implementation for each test
+    mockedUseWebSocket.mockReturnValue({
+      timerData: { ...baseTimerData },
+      sendData: jest.fn(),
+      connectionStatus: 'Connected',
+    })
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
     const sendData = jest.fn()
-
     mockedUseWebSocket.mockReturnValue({
-      hrmData: [],
       timerData: { ...baseTimerData },
-      spotifyData: { trackName: '', artist: '', isPlaying: false },
-      spotifyServiceInitialized: true,
-      connectionStatus: 'Connected',
       sendData,
-    } as unknown as UseWebSocketReturn)
+      connectionStatus: 'Connected',
+    })
 
     render(<TimerControls />)
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
-    // Get the actual input elements using data-testid (following MUI testing pattern)
-    const workInput = screen.getByTestId(
-      'work-duration-input'
-    ) as HTMLInputElement
-    const restInput = screen.getByTestId(
-      'rest-duration-input'
-    ) as HTMLInputElement
+    const workInput = screen.getByTestId('work-duration-input')
+    const restInput = screen.getByTestId('rest-duration-input')
 
-    // Use fireEvent.change to directly trigger the onChange event with new values
-    // This properly simulates input changes on MUI TextField components
     fireEvent.change(workInput, { target: { value: '45' } })
     fireEvent.change(restInput, { target: { value: '15' } })
 
-    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
     act(() => {
-      jest.advanceTimersByTime(600)
+      jest.advanceTimersByTime(600) // Wait for debounce
     })
 
     await user.click(screen.getByRole('button', { name: /start/i }))
 
-    // Verify that TIMER_CONFIG was sent with the updated values
-    expect(sendData).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'TIMER_CONFIG',
-        workDuration: 45,
-        restDuration: 15,
-      })
-    )
+    expect(sendData).toHaveBeenCalledWith({
+      type: 'TIMER_CONFIG',
+      workDuration: 45,
+      restDuration: 15,
+    })
   })
 })
