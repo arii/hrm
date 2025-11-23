@@ -94,8 +94,9 @@ test.describe('Spotify OAuth Integration (Local)', () => {
     const tokenResponse = await page.request.get(`${BASE_URL}/api/debug/spotify-token-status`);
     expect(tokenResponse.status()).toBe(200);
     const tokenData = await tokenResponse.json();
-    expect(tokenData.hasAccessToken, '❌ No Access Token found on server').toBe(true);
-    expect(tokenData.hasRefreshToken, '❌ No Refresh Token found on server').toBe(true);
+    expect(tokenData.status, '❌ No valid token status found on server').toBe('token_found');
+    expect(tokenData.accessToken, '❌ No Access Token found on server').toBeTruthy();
+    expect(tokenData.refreshToken, '❌ No Refresh Token found on server').toBeTruthy();
 
     console.log('✅ OAuth Flow & Token Exchange Verified Successfully');
     

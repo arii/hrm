@@ -123,7 +123,7 @@ def main():
         "npx",
         "playwright",
         "test",
-        "tests/playwright/local-oauth.spec.ts",
+        "tests/playwright/oauth/local-oauth.spec.ts",
         "--project=chromium",
         "--headed",  # Force headed mode for local debugging
     ]
