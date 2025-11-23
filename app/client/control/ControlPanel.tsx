@@ -4,23 +4,23 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-<<<<<<< HEAD
 import {
   Box,
   Container,
   FormControlLabel,
   Switch,
   Typography,
+  Skeleton, // Added from origin/leader
 } from '@mui/material'
 import Head from 'next/head'
 import { useEffect, useState, useCallback } from 'react'
-import useWebSocket from '../../../hooks/useWebSocket'
+import useWebSocket from '../../../hooks/useWebSocket' // Keeping HEAD's useWebSocket
 import useWakeLock from '../../../hooks/useWakeLock'
 import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus, timerData } = useWebSocket()
+  const { connectionStatus, timerData, connect } = useWebSocket() // Connect added from origin/leader
   const {
     request: requestWakeLock,
     release: releaseWakeLock,
@@ -30,70 +30,46 @@ const ControlPanel = () => {
   const [keepScreenOn, setKeepScreenOn] = useState(true)
 
   const manageWakeLock = useCallback(async () => {
-    if (keepScreenOn && timerData.isRunning) {
+    if (isWakeLockSupported && keepScreenOn && timerData.isRunning) { // Added isWakeLockSupported check
       await requestWakeLock()
     } else {
       await releaseWakeLock()
     }
-  }, [keepScreenOn, timerData.isRunning, requestWakeLock, releaseWakeLock])
+  }, [isWakeLockSupported, keepScreenOn, timerData.isRunning, requestWakeLock, releaseWakeLock]) // Added isWakeLockSupported
 
+  // Effect to manage wake lock when relevant state changes
   useEffect(() => {
     manageWakeLock()
   }, [manageWakeLock])
 
+  // Effect to handle page visibility changes for both wake lock and WebSocket reconnect
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        // Reconnect WebSocket if not connected (from origin/leader)
+        if (connectionStatus !== 'Connected') {
+          console.log(
+            '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
+          )
+          connect()
+        }
+        // Manage wake lock (from HEAD)
         manageWakeLock()
-=======
-import Box from '@mui/material/Box'
-import Container from '@mui/material/Container'
-import Skeleton from '@mui/material/Skeleton'
-import Typography from '@mui/material/Typography'
-import Head from 'next/head'
-import { useEffect } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
-import dynamic from 'next/dynamic'
-
-const SpotifyControls = dynamic(
-  () => import('./components/SpotifyControls'),
-  { loading: () => <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1, mb: 2 }}/> }
-)
-import TimerControls from './components/TimerControls'
-
-const ControlPanel = () => {
-  const { connectionStatus, connect } = useWebSocket()
-
-  // Reconnect on page visibility
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        connectionStatus !== 'Connected'
-      ) {
-        console.log(
-          '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
-        )
-        connect() // Attempt to reconnect
->>>>>>> origin/leader
+      } else {
+        // Release wake lock when page is hidden (good practice)
+        releaseWakeLock()
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
-<<<<<<< HEAD
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       releaseWakeLock() // Release on component unmount
     }
-  }, [manageWakeLock, releaseWakeLock])
-=======
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [connectionStatus, connect])
->>>>>>> origin/leader
+  }, [connectionStatus, connect, manageWakeLock, releaseWakeLock]) // Added connectionStatus, connect
 
-  // Signal when page is ready for testing
+  // Signal when page is ready for testing (existing block)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
