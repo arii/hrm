@@ -75,6 +75,7 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
+  deviceId?: string
 }
 
 export interface TimerModeCommandMessage {

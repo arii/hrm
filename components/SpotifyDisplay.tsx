@@ -99,50 +99,9 @@ const SpotifyDisplay = () => {
   }, [player, volume])
 
   useEffect(() => {
-<<<<<<< HEAD
     if (isReady && deviceId) {
       // Automatically transfer playback to the new web player
       sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-=======
-    if (spotifyLoggedIn && spotifyData.trackName) {
-      const fetchDevices = async () => {
-        try {
-          const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          const deviceArray = Array.isArray(devices) ? devices : []
-          setAvailableDevices(deviceArray)
-        } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
-        }
-      }
-      fetchDevices()
-    } else {
-      setAvailableDevices([])
-      setSelectedDeviceId('')
-    }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
-
-  useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
-    }
-    const activeDevice = availableDevices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
->>>>>>> origin/leader
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, deviceId])
