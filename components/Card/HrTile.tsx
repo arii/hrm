@@ -1,6 +1,7 @@
 // components/Card/HrTile.tsx
 'use client'
 import { Tooltip, Typography } from '@mui/material'
+import { memo } from 'react'
 import DashboardCard from './DashboardCard'
 
 export interface HrTileProps {
@@ -79,4 +80,4 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   )
 }
 
-export default HrTile
+export default memo(HrTile)
