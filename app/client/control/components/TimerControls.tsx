@@ -1,8 +1,12 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
+<<<<<<< HEAD
 import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useWebSocket from '@/hooks/useWebSocket'
+=======
+import { useWebSocket } from '@/context/WebSocketContext'
+>>>>>>> origin/leader
 import {
   TimerCommandMessage,
   TimerConfigMessage,
@@ -60,6 +64,62 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
 
+<<<<<<< HEAD
+=======
+  // Get deviceId from SpotifyControls context or fallback to active device
+  interface SpotifyDevice {
+    id: string
+    name: string
+    is_active?: boolean
+    is_private_session?: boolean
+    is_restricted?: boolean
+    type?: string
+    volume_percent?: number
+  }
+  const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
+  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
+  useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        const response = await fetch('/api/spotify/devices')
+        if (!response.ok) throw new Error('Failed to fetch devices')
+        const devices: SpotifyDevice[] = await response.json()
+        setSpotifyDevices(Array.isArray(devices) ? devices : [])
+        const activeDevice = devices.find((d) => d.is_active)
+        setSpotifyDeviceId(
+          activeDevice ? activeDevice.id : devices[0]?.id || ''
+        )
+      } catch (_err) {
+        setSpotifyDevices([])
+        setSpotifyDeviceId('')
+      }
+    }
+    fetchDevices()
+  }, [])
+
+  const sendSpotifyCommand = useCallback(
+    (command: 'NEXT' | 'PAUSE') => {
+      let deviceId = spotifyDeviceId
+      if (!deviceId && spotifyDevices.length > 0) {
+        const activeDevice = spotifyDevices.find((d) => d.is_active)
+        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
+        setSpotifyDeviceId(deviceId)
+      }
+      if (!deviceId) {
+        console.warn('No deviceId available, Spotify command not sent.')
+        return
+      }
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        deviceId,
+      }
+      sendData(message)
+    },
+    [sendData, spotifyDeviceId, spotifyDevices]
+  )
+
+>>>>>>> origin/leader
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
       if (command === 'START') {

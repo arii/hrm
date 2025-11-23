@@ -34,6 +34,7 @@ export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>
 }
 
+<<<<<<< HEAD
 export interface SpotifyDevice {
   id: string
   is_active: boolean
@@ -42,4 +43,15 @@ export interface SpotifyDevice {
   name: string
   type: string
   volume_percent: number
+=======
+export interface SpotifyPlaylistItem {
+  id: string
+  name: string
+  uri: string
+}
+
+export interface SpotifyPlaylist {
+  name: string
+  uri: string
+>>>>>>> origin/leader
 }
