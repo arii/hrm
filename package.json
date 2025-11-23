@@ -21,10 +21,10 @@
     "test:unit": "cross-env NODE_ENV=test jest",
     "test:unit:watch": "cross-env NODE_ENV=test jest --watch",
     "test:unit:coverage": "cross-env NODE_ENV=test jest --coverage",
-    "test:visual": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual": "cross-env TESTING=true npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:all": "npm run test:visual && npm run test:unit",
-    "test:quick": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
-    "test:visual:ui": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --ui; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:quick": "cross-env TESTING=true npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:ui": "cross-env TESTING=true npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --ui; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:update": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "cross-env NODE_ENV=test playwright test --project=chromium --headed",
     "test:visual:report": "cross-env NODE_ENV=test playwright show-report",
@@ -40,11 +40,8 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-<<<<<<< HEAD
     "@types/express-rate-limit": "^5.1.3",
     "dotenv": "^17.2.3",
-=======
->>>>>>> origin/leader
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "next": "16.0.1",
