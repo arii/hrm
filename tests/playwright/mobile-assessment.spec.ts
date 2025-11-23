@@ -2,7 +2,12 @@
 /**
  * Mobile Assessment Tests: Focus on mobile-specific UI/UX and touch interactions
  */
+<<<<<<< HEAD
 import { test, expect, type Page } from '@playwright/test'
+=======
+import { test, expect } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
+>>>>>>> origin/leader
 
 const BASE_URL =
   process.env.BASE_URL || process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
@@ -88,9 +93,9 @@ test.describe('Mobile HRM Assessment', () => {
     // Test volume control interaction
     const volumeSlider = page.locator('input[type="range"]')
     if (await volumeSlider.isVisible()) {
-      const valueBefore = await volumeSlider.inputValue();
-      await volumeSlider.click();
-      await expect(volumeSlider).not.toHaveValue(valueBefore);
+      const valueBefore = await volumeSlider.inputValue()
+      await volumeSlider.click()
+      await expect(volumeSlider).not.toHaveValue(valueBefore)
       await expect(page).toHaveScreenshot('mobile-10-volume-interaction.png', {
         fullPage: true,
       })
@@ -121,7 +126,9 @@ test.describe('Mobile HRM Assessment', () => {
 
     // Start streaming
     await page.click('button:has-text("START")')
-    await expect(page.locator('button:has-text("STOP Streaming")')).toBeVisible()
+    await expect(
+      page.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-14-streaming-active.png', {
       fullPage: true,
     })

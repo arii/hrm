@@ -3,10 +3,10 @@
  * Hook to manage Web Bluetooth connection to a Heart Rate Monitor (HRM) device.
  * It streams data using the provided sendData function (from useWebSocket).
  */
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
-import useWebSocket from './useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -53,9 +53,20 @@ const useBluetoothHRM = () => {
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
 
+  // Use a ref to track the current status to break the dependency cycle
+  const statusRef = useRef(deviceStatus)
+  useEffect(() => {
+    statusRef.current = deviceStatus
+  }, [deviceStatus])
+
   const connectAndStream = useCallback(
+<<<<<<< HEAD
     async (userName?: string, userAge?: string) => {
       if (deviceStatus.startsWith('Connected')) return
+=======
+    async (userName?: string, userAge?: string): Promise<boolean> => {
+      if (statusRef.current.startsWith('Connected')) return true
+>>>>>>> origin/leader
 
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
@@ -179,7 +190,11 @@ const useBluetoothHRM = () => {
         setDeviceStatus(`Failed: ${fullMessage}`)
       }
     },
+<<<<<<< HEAD
     [deviceStatus, connectionStatus, sendData, savedDevice]
+=======
+    [connectionStatus, sendData, savedDevice]
+>>>>>>> origin/leader
   )
 
   return {

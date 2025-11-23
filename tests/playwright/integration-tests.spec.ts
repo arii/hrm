@@ -42,7 +42,9 @@ test.describe('Integration Tests', () => {
     await mockTab.getByLabel('User Name').fill('Multi User')
     await mockTab.getByLabel('Current BPM').fill('150')
     await mockTab.click('button:has-text("START")')
-    await expect(mockTab.locator('button:has-text("STOP Streaming")')).toBeVisible()
+    await expect(
+      mockTab.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
 
     // Start timer from control
     await controlTab.fill('input[aria-label="Work duration in seconds"]', '30')

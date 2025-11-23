@@ -84,6 +84,77 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  // Handle reverse proxy configuration
+  ...(process.env.NODE_ENV === 'production' && {
+    trustHost: true
+  }),
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        // Set domain based on environment
+        domain: process.env.NODE_ENV === 'production' ? 
+          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
+          undefined,
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? 
+          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
+          undefined,
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? 
+          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
+          undefined,
+      },
+    },
+    pkceCodeVerifier: {
+      name: `next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 900, // 15 minutes
+        domain: process.env.NODE_ENV === 'production' ? 
+          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
+          undefined,
+      },
+    },
+    state: {
+      name: `next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 900, // 15 minutes
+        domain: process.env.NODE_ENV === 'production' ? 
+          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
+          undefined,
+      },
+    },
+  },
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
