@@ -1,5 +1,6 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
+<<<<<<< HEAD
 import {
   MusicNote,
   Pause,
@@ -22,6 +23,25 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useRef } from 'react'
 import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
+=======
+import MusicNote from '@mui/icons-material/MusicNote'
+import Pause from '@mui/icons-material/Pause'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import SkipNext from '@mui/icons-material/SkipNext'
+import SkipPrevious from '@mui/icons-material/SkipPrevious'
+import VolumeUp from '@mui/icons-material/VolumeUp'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import FormControl from '@mui/material/FormControl'
+import IconButton from '@mui/material/IconButton'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import { useCallback, useEffect, useRef, useState } from 'react'
+>>>>>>> origin/leader
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
