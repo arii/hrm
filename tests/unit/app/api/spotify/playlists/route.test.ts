@@ -4,6 +4,7 @@
 import { GET } from '@/app/api/spotify/playlists/route'
 import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { getServerSession } from 'next-auth/next'
 
 // Mock 'next-auth' to prevent TypeError during initialization
@@ -51,7 +52,14 @@ jest.mock('@spotify/web-api-ts-sdk', () => {
 const mockedGetServerSession = getServerSession as jest.Mock
 
 describe('API Route: /api/spotify/playlists', () => {
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>
+
+  beforeEach(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
   afterEach(() => {
+    consoleErrorSpy.mockRestore()
     jest.clearAllMocks()
   })
 

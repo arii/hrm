@@ -6,6 +6,7 @@ import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
 
@@ -28,8 +29,15 @@ const baseTimerData: TimerData = {
 }
 
 describe('TimerControls', () => {
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>
+
   beforeEach(() => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     jest.resetAllMocks()
+  })
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore()
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
