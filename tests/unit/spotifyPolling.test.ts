@@ -3,7 +3,14 @@
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
  */
-import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyData } from '../../types/websocket'
 
@@ -56,10 +63,15 @@ describe('SpotifyPolling Service', () => {
     (data: Partial<{ spotifyData: SpotifyData }>) => void
   >
   let broadcastedStates: SpotifyData[]
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+    // Spy on console methods and provide a mock implementation
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     // Reset mockPlayer's mocks
     mockPlayer.getCurrentlyPlayingTrack.mockClear()
     mockPlayer.startResumePlayback.mockClear()
@@ -87,18 +99,20 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
+    if ((spotifyService as unknown as any)['pollInterval']) {
       clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
+        (spotifyService as unknown as any)['pollInterval'] as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['pollInterval'] = null
+      ;(spotifyService as unknown as any)['pollInterval'] = null
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
+    if ((spotifyService as unknown as any)['tokenRefreshInterval']) {
       clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
+        (spotifyService as unknown as any)[
+          'tokenRefreshInterval'
+        ] as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+      ;(spotifyService as unknown as any)['tokenRefreshInterval'] = null
     }
   })
 
@@ -108,6 +122,8 @@ describe('SpotifyPolling Service', () => {
       spotifyService.stopPolling()
       spotifyService.cleanup()
     }
+    consoleErrorSpy.mockRestore()
+    consoleWarnSpy.mockRestore()
     jest.clearAllTimers()
     jest.useRealTimers()
   })
@@ -383,8 +399,6 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle SyntaxError during error logging gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-
       // Simulate an error that returns invalid JSON when text() is called
       const errorResponse = {
         response: {
@@ -396,49 +410,45 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error executing Spotify command PLAY: Response body:'),
+        expect.stringContaining(
+          'Error executing Spotify command PLAY: Response body:'
+        ),
         'Invalid JSON'
       )
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
-       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      // Simulate a deeply nested error that might crash text() retrieval
+      const badError = {
+        response: {
+          text: jest.fn().mockRejectedValue(new Error('Stream closed')),
+        },
+      }
+      mockPlayer.startResumePlayback.mockRejectedValue(badError)
 
-       // Simulate a deeply nested error that might crash text() retrieval
-       const badError = {
-           response: {
-               text: jest.fn().mockRejectedValue(new Error('Stream closed'))
-           }
-       }
-       mockPlayer.startResumePlayback.mockRejectedValue(badError)
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
-       await spotifyService.handleCommand('PLAY', 'device_id')
-
-       expect(consoleErrorSpy).toHaveBeenCalledWith(
-           expect.stringContaining('Error executing Spotify command PLAY: Failed to retrieve error response text:'),
-           expect.anything()
-       )
-
-       consoleErrorSpy.mockRestore()
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Error executing Spotify command PLAY: Failed to retrieve error response text:'
+        ),
+        expect.anything()
+      )
     })
 
     it('should handle direct SyntaxError gracefully (suppress logs)', async () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-
-      mockPlayer.startResumePlayback.mockRejectedValue(new SyntaxError('Unexpected token'))
+      mockPlayer.startResumePlayback.mockRejectedValue(
+        new SyntaxError('Unexpected token')
+      )
 
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[SpotifyPolling] Command PLAY executed, but response was not valid JSON')
+        expect.stringContaining(
+          '[SpotifyPolling] Command PLAY executed, but response was not valid JSON'
+        )
       )
       expect(consoleErrorSpy).not.toHaveBeenCalled()
-
-      consoleWarnSpy.mockRestore()
-      consoleErrorSpy.mockRestore()
     })
   })
 })
