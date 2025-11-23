@@ -8,24 +8,20 @@ import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<
-    (data: Partial<{ timerData: TimerData }>) => void
-  >
   let broadcastedStates: TimerData[]
 
   beforeEach(() => {
     jest.useFakeTimers()
     broadcastedStates = []
-    broadcastMock = jest.fn((data) => {
-      if (data.timerData) {
-        broadcastedStates.push(data.timerData)
-      }
+    timer = new TabataTimer()
+    timer.on('TIMER_UPDATE', (data) => {
+      broadcastedStates.push(data)
     })
-    timer = new TabataTimer(broadcastMock)
   })
 
   afterEach(() => {
     jest.useRealTimers()
+    timer.removeAllListeners()
   })
 
   describe('Initialization', () => {
@@ -79,7 +75,7 @@ describe('TabataTimer Service', () => {
     it('should broadcast state update when mode changes', () => {
       broadcastedStates = []
       timer.setMode('STOPWATCH')
-      expect(broadcastMock).toHaveBeenCalled()
+      expect(broadcastedStates.length).toBeGreaterThan(0)
       expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
         'STOPWATCH'
       )
@@ -294,7 +290,7 @@ describe('TabataTimer Service', () => {
     it('should broadcast state after configuration change', () => {
       broadcastedStates = []
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-      expect(broadcastMock).toHaveBeenCalled()
+      expect(broadcastedStates.length).toBeGreaterThan(0)
       const lastState = broadcastedStates[broadcastedStates.length - 1]
       expect(lastState.workDuration).toBe(30)
       expect(lastState.restDuration).toBe(15)
@@ -414,14 +410,13 @@ describe('TabataTimer Service', () => {
       jest.advanceTimersByTime(3000)
 
       // Should broadcast at least once per second
-      expect(broadcastMock.mock.calls.length).toBeGreaterThanOrEqual(3)
+      expect(broadcastedStates.length).toBeGreaterThanOrEqual(3)
     })
 
     it('should broadcast state when configuration changes', () => {
       broadcastedStates = []
       timer.setConfig({ workDuration: 30, restDuration: 15 })
 
-      expect(broadcastMock).toHaveBeenCalled()
       expect(broadcastedStates.length).toBeGreaterThan(0)
     })
 
@@ -429,7 +424,7 @@ describe('TabataTimer Service', () => {
       broadcastedStates = []
       timer.setMode('STOPWATCH')
 
-      expect(broadcastMock).toHaveBeenCalled()
+      expect(broadcastedStates.length).toBeGreaterThan(0)
       expect(broadcastedStates[0].mode).toBe('STOPWATCH')
     })
 

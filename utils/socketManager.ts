@@ -9,7 +9,11 @@ import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
+  HrmUpdateMessage,
+  SpotifyUpdateMessage,
+  TimerUpdateMessage,
   UnifiedStateMessage,
+  WebSocketTopic,
 } from '../types/websocket.js'
 
 // Define service instances to be managed
@@ -18,6 +22,7 @@ let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 
 const clientData = new Map<string, HrmData>()
+const subscriptions = new Map<WebSocket, Set<WebSocketTopic>>()
 
 interface Services {
   tabataService: TabataTimer
@@ -31,6 +36,15 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   wssInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+
+  // Listen for state changes from services
+  tabataServiceInstance.on('TIMER_UPDATE', (timerData) => {
+    broadcastTimerUpdate(timerData)
+  })
+
+  spotifyServiceInstance.on('SPOTIFY_UPDATE', (spotifyData) => {
+    broadcastSpotifyUpdate(spotifyData)
+  })
 
   wssInstance.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
@@ -63,24 +77,56 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       clientData.delete(clientId)
-      broadcastState()
+      subscriptions.delete(ws)
+      broadcastHrmUpdate()
     })
   })
 }
 
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: 'STATE_UPDATE',
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
+// --- Broadcasting Functions ---
+
+const broadcastHrmUpdate = () => {
+  const message: HrmUpdateMessage = {
+    type: 'HRM_UPDATE',
+    payload: Array.from(clientData.values()),
   }
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
-  )
   wssInstance.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      subscriptions.get(client)?.has('HRM')
+    ) {
+      client.send(JSON.stringify(message))
+    }
+  })
+}
+
+const broadcastTimerUpdate = (timerData: TimerUpdateMessage['payload']) => {
+  const message: TimerUpdateMessage = {
+    type: 'TIMER_UPDATE',
+    payload: timerData,
+  }
+  wssInstance.clients.forEach((client) => {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      subscriptions.get(client)?.has('TIMER')
+    ) {
+      client.send(JSON.stringify(message))
+    }
+  })
+}
+
+const broadcastSpotifyUpdate = (
+  spotifyData: SpotifyUpdateMessage['payload']
+) => {
+  const message: SpotifyUpdateMessage = {
+    type: 'SPOTIFY_UPDATE',
+    payload: spotifyData,
+  }
+  wssInstance.clients.forEach((client) => {
+    if (
+      client.readyState === WebSocket.OPEN &&
+      subscriptions.get(client)?.has('SPOTIFY')
+    ) {
       client.send(JSON.stringify(message))
     }
   })
@@ -133,13 +179,42 @@ const handleIncomingMessage = (
             clientData.get(clientId)
           )
         }
-        broadcastState()
+        broadcastHrmUpdate()
         break
       }
 
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)
+        }
+        break
+      }
+
+      case 'SUBSCRIBE': {
+        if (!subscriptions.has(ws)) {
+          subscriptions.set(ws, new Set())
+        }
+        subscriptions.get(ws)?.add(message.topic)
+        console.log(
+          `Client ${clientId} subscribed to ${
+            message.topic
+          }. Current subscriptions: ${Array.from(
+            subscriptions.get(ws) || []
+          ).join(', ')}`
+        )
+        break
+      }
+
+      case 'UNSUBSCRIBE': {
+        if (subscriptions.has(ws)) {
+          subscriptions.get(ws)?.delete(message.topic)
+          console.log(
+            `Client ${clientId} unsubscribed from ${
+              message.topic
+            }. Current subscriptions: ${Array.from(
+              subscriptions.get(ws) || []
+            ).join(', ')}`
+          )
         }
         break
       }

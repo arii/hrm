@@ -28,11 +28,33 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+import { WebSocket, WebSocketServer } from 'ws'
+import { initSocketManager } from '../../utils/socketManager'
+
+// Mock ws server
+jest.mock('ws', () => ({
+  WebSocket: jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    send: jest.fn(),
+    close: jest.fn(),
+    readyState: 1, // OPEN
+  })),
+  WebSocketServer: jest.fn().mockImplementation(() => ({
+    on: jest.fn(),
+    clients: new Set(),
+    handleUpgrade: jest.fn((_req, _socket, _head, cb) => {
+      const ws = new (jest.requireActual('ws').WebSocket)('ws://localhost:1234')
+      cb(ws)
+    }),
+  })),
+}))
+
 describe('WebSocket Manager Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
-  let broadcastedMessages: Partial<UnifiedStateMessage>[]
-  let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
+  let wss: WebSocketServer
+  let mockClient: WebSocket
+
   let mockSdk: {
     player: {
       getCurrentlyPlayingTrack: jest.Mock<any>
@@ -49,12 +71,6 @@ describe('WebSocket Manager Integration', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    broadcastedMessages = []
-
-    // Create broadcast function that collects messages
-    broadcastFn = (data: Partial<UnifiedStateMessage>) => {
-      broadcastedMessages.push(data)
-    }
 
     // Mock TokenManager to return a valid token
     ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementation(() => ({
@@ -88,9 +104,29 @@ describe('WebSocket Manager Integration', () => {
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-    tabataTimer = new TabataTimer(broadcastFn)
-    // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    tabataTimer = new TabataTimer()
+    spotifyService = await SpotifyPolling.create()
+    wss = new WebSocketServer()
+    mockClient = new WebSocket('ws://localhost:1234')
+    ;(wss.clients as Set<WebSocket>).add(mockClient)
+
+    initSocketManager(wss, {
+      tabataService: tabataTimer,
+      spotifyService: spotifyService,
+    })
+
+    // Simulate client subscription after init
+    const connectionHandler = (wss.on as jest.Mock).mock.calls.find(
+      (call) => call[0] === 'connection'
+    )[1]
+    if (connectionHandler) {
+      connectionHandler(mockClient)
+      const messageHandler = (mockClient.on as jest.Mock).mock.calls.find(
+        (call) => call[0] === 'message'
+      )[1]
+      messageHandler(JSON.stringify({ type: 'SUBSCRIBE', topic: 'TIMER' }))
+      messageHandler(JSON.stringify({ type: 'SUBSCRIBE', topic: 'SPOTIFY' }))
+    }
   })
 
   afterEach(() => {
@@ -99,61 +135,62 @@ describe('WebSocket Manager Integration', () => {
       spotifyService.stopPolling()
       spotifyService.cleanup()
     }
+    ;(wss.clients as Set<WebSocket>).clear()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {
+    beforeEach(() => {
+      // Clear the initial STATE_UPDATE message before each test in this block
+      ;(mockClient.send as jest.Mock).mockClear()
+      const messageHandler = (mockClient.on as jest.Mock).mock.calls.find(
+        (call) => call[0] === 'message'
+      )[1]
+      messageHandler(JSON.stringify({ type: 'SUBSCRIBE', topic: 'TIMER' }))
+    })
+
     it('should broadcast timer state when mode changes to STOPWATCH', () => {
-      broadcastedMessages = []
       tabataTimer.setMode('STOPWATCH')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.mode).toBe('STOPWATCH')
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.mode).toBe('STOPWATCH')
     })
 
     it('should broadcast timer state when mode changes to TABATA', () => {
       tabataTimer.setMode('STOPWATCH')
-      broadcastedMessages = []
       tabataTimer.setMode('TABATA')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.mode).toBe('TABATA')
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.mode).toBe('TABATA')
     })
 
     it('should broadcast timer state when work duration changes', () => {
-      broadcastedMessages = []
       tabataTimer.setConfig({ workDuration: 45, restDuration: 15 })
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.workDuration).toBe(45)
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.workDuration).toBe(45)
     })
 
     it('should broadcast timer state when rest duration changes', () => {
-      broadcastedMessages = []
       tabataTimer.setConfig({ workDuration: 20, restDuration: 12 })
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.restDuration).toBe(12)
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.restDuration).toBe(12)
     })
 
     it('should broadcast timer state when timer starts', () => {
-      broadcastedMessages = []
       tabataTimer.handleCommand('START')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.isRunning).toBe(true)
-      expect(lastMessage?.timerData?.currentPhase).toBe('PREPARE')
-    })
-
-    it('should broadcast timer state during phase transitions', () => {
-      broadcastedMessages = []
-      tabataTimer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // Complete PREPARE phase
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
-      expect(phases).toEqual(expect.arrayContaining(['PREPARE', 'WORK']))
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.isRunning).toBe(true)
+      expect(message.payload.currentPhase).toBe('PREPARE')
     })
 
     it('should broadcast timer state every second while running', () => {
-      broadcastedMessages = []
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-      // Only check the last broadcast for isRunning
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.isRunning).toBe(true)
+      const lastCall = (mockClient.send as jest.Mock).mock.calls.at(-1)[0]
+      const message = JSON.parse(lastCall)
+      expect(message.payload.isRunning).toBe(true)
     })
   })
 
@@ -195,16 +232,27 @@ describe('WebSocket Manager Integration', () => {
   })
 
   describe('Volume Changes', () => {
+    beforeEach(() => {
+      ;(mockClient.send as jest.Mock).mockClear()
+      const messageHandler = (mockClient.on as jest.Mock).mock.calls.find(
+        (call) => call[0] === 'message'
+      )[1]
+      messageHandler(JSON.stringify({ type: 'SUBSCRIBE', topic: 'SPOTIFY' }))
+    })
     it('should handle beep volume through timer state', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(5000)
 
-      const broadcasts = broadcastedMessages.filter(
-        (m) => m.timerData?.soundToPlay
+      const soundBroadcast = (mockClient.send as jest.Mock).mock.calls.find(
+        (call) => {
+          const message = JSON.parse(call[0])
+          return message.payload && message.payload.soundToPlay
+        }
       )
 
-      expect(broadcasts.length).toBeGreaterThan(0)
-      expect(broadcasts[0].timerData?.soundEventId).toBeGreaterThan(0)
+      expect(soundBroadcast).toBeDefined()
+      const message = JSON.parse(soundBroadcast[0])
+      expect(message.payload.soundEventId).toBeGreaterThan(0)
     })
 
     it('should support Spotify volume commands', async () => {
@@ -240,21 +288,17 @@ describe('WebSocket Manager Integration', () => {
     })
 
     it('should broadcast updates from both services', () => {
-      broadcastedMessages = []
-
+      ;(mockClient.send as jest.Mock).mockClear()
       tabataTimer.setMode('STOPWATCH')
-      const timerBroadcast = broadcastedMessages.find(
-        (m) => m.timerData?.mode === 'STOPWATCH'
+      const timerBroadcast = (mockClient.send as jest.Mock).mock.calls.find(
+        (call) => JSON.parse(call[0]).type === 'TIMER_UPDATE'
       )
-
       expect(timerBroadcast).toBeDefined()
     })
   })
 
   describe('Complete Workflow Integration', () => {
     it('should handle complete workout workflow', () => {
-      broadcastedMessages = []
-
       // Configure timer
       tabataTimer.setConfig({ workDuration: 30, restDuration: 10 })
 
@@ -264,7 +308,12 @@ describe('WebSocket Manager Integration', () => {
       jest.advanceTimersByTime(30000) // WORK
       jest.advanceTimersByTime(10000) // REST
 
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
+      const phases = (mockClient.send as jest.Mock).mock.calls
+        .map((call) => {
+          const message = JSON.parse(call[0])
+          return message.payload ? message.payload.currentPhase : null
+        })
+        .filter(Boolean)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')

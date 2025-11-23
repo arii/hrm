@@ -42,6 +42,7 @@ export interface SpotifyData {
 
 /**
  * The single, unified state object broadcast by the server to all clients.
+ * @deprecated Use topic-specific messages instead.
  */
 export interface UnifiedStateMessage {
   type: 'STATE_UPDATE'
@@ -50,6 +51,27 @@ export interface UnifiedStateMessage {
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
 }
+
+// --- Topic-specific server messages ---
+export interface HrmUpdateMessage {
+  type: 'HRM_UPDATE'
+  payload: HrmData[]
+}
+
+export interface TimerUpdateMessage {
+  type: 'TIMER_UPDATE'
+  payload: TimerData
+}
+
+export interface SpotifyUpdateMessage {
+  type: 'SPOTIFY_UPDATE'
+  payload: SpotifyData
+}
+
+export type ServerMessage =
+  | HrmUpdateMessage
+  | TimerUpdateMessage
+  | SpotifyUpdateMessage
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
@@ -102,6 +124,18 @@ export interface SpotifyCommandMessage {
   playlistUri?: string // Optional: for PLAY command
 }
 
+export type WebSocketTopic = 'HRM' | 'TIMER' | 'SPOTIFY'
+
+export interface SubscribeMessage {
+  type: 'SUBSCRIBE'
+  topic: WebSocketTopic
+}
+
+export interface UnsubscribeMessage {
+  type: 'UNSUBSCRIBE'
+  topic: WebSocketTopic
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -111,6 +145,8 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | SpotifyCommandMessage
   | TimerConfigMessage
+  | SubscribeMessage
+  | UnsubscribeMessage
 
 import { z } from 'zod'
 
@@ -159,10 +195,28 @@ export const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(), // Optional: for PLAY command
 })
 
+export const WebSocketTopicSchema = z.union([
+  z.literal('HRM'),
+  z.literal('TIMER'),
+  z.literal('SPOTIFY'),
+])
+
+export const SubscribeMessageSchema = z.object({
+  type: z.literal('SUBSCRIBE'),
+  topic: WebSocketTopicSchema,
+})
+
+export const UnsubscribeMessageSchema = z.object({
+  type: z.literal('UNSUBSCRIBE'),
+  topic: WebSocketTopicSchema,
+})
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
+  SubscribeMessageSchema,
+  UnsubscribeMessageSchema,
 ])

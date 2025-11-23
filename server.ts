@@ -70,30 +70,10 @@ app
     // Declare spotifyServiceInitialized here
     let spotifyServiceInitialized: boolean = true
 
-    // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
-      // Use the socket manager to handle the actual broadcast
-      if (wss.clients.size > 0) {
-        wss.clients.forEach((client: WebSocket) => {
-          if (client.readyState === 1) {
-            // 1 means OPEN
-            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
-            client.send(
-              JSON.stringify({
-                type: 'STATE_UPDATE',
-                spotifyServiceInitialized,
-                ...data,
-              })
-            ) // Include spotifyServiceInitialized
-          }
-        })
-      }
-    }
-
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcastState)
+      spotifyService = await SpotifyPolling.create()
     } catch (e) {
       console.error('SpotifyPolling initialization failed:', e)
       spotifyServiceInitialized = false // Set to false on failure
@@ -105,7 +85,7 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
-    const tabataService = new TabataTimer(broadcastState)
+    const tabataService = new TabataTimer()
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, { tabataService, spotifyService })

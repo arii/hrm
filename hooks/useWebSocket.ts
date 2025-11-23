@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ClientCommandMessage,
   HrmData,
+  ServerMessage,
   SpotifyData,
   TimerData,
   UnifiedStateMessage,
@@ -62,6 +63,22 @@ const useWebSocket = (serverUrl?: string) => {
     console.log('[useWebSocket] Manually disconnected.')
   }, [])
 
+  const sendData = useCallback((data: ClientCommandMessage) => {
+    const ws = wsRef.current
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      const jsonStr = JSON.stringify(data)
+      console.log('[useWebSocket] Sending:', data)
+      ws.send(jsonStr)
+    } else {
+      console.warn(
+        '[useWebSocket] WebSocket not open. State:',
+        ws?.readyState,
+        'Data:',
+        data
+      )
+    }
+  }, [])
+
   const connect = useCallback(() => {
     // Ensure this runs only client-side
     if (typeof window === 'undefined') return
@@ -73,6 +90,12 @@ const useWebSocket = (serverUrl?: string) => {
     ws.onopen = () => {
       console.log('[useWebSocket] Connected to server')
       setConnectionStatus('Connected')
+
+      // Subscribe to all topics on connection
+      sendData({ type: 'SUBSCRIBE', topic: 'HRM' })
+      sendData({ type: 'SUBSCRIBE', topic: 'TIMER' })
+      sendData({ type: 'SUBSCRIBE', topic: 'SPOTIFY' })
+
       // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
@@ -105,29 +128,35 @@ const useWebSocket = (serverUrl?: string) => {
 
     ws.onmessage = (event) => {
       try {
-        // Assert incoming message is the UnifiedStateMessage type
-        const message: UnifiedStateMessage = JSON.parse(event.data)
+        const message: ServerMessage | UnifiedStateMessage = JSON.parse(
+          event.data
+        )
 
-        if (message.type === 'STATE_UPDATE') {
-          console.log(
-            '[useWebSocket] Received STATE_UPDATE. HRM Data:',
-            message.hrmData
-          )
-          // Merge the incoming state with the current state to preserve non-updated fields
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ??
-              prev.spotifyServiceInitialized,
-          }))
+        switch (message.type) {
+          case 'HRM_UPDATE':
+            setAppState((prev) => ({ ...prev, hrmData: message.payload }))
+            break
+          case 'TIMER_UPDATE':
+            setAppState((prev) => ({ ...prev, timerData: message.payload }))
+            break
+          case 'SPOTIFY_UPDATE':
+            setAppState((prev) => ({ ...prev, spotifyData: message.payload }))
+            break
+          // Handle initial full state for backward compatibility and initial connection
+          case 'STATE_UPDATE':
+            setAppState((prev) => ({
+              ...prev,
+              hrmData: message.hrmData || prev.hrmData,
+              timerData: message.timerData || prev.timerData,
+              spotifyData: message.spotifyData || prev.spotifyData,
+            }))
+            break
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl])
+  }, [wsUrl, sendData])
 
   useEffect(() => {
     connectRef.current = connect
@@ -143,26 +172,6 @@ const useWebSocket = (serverUrl?: string) => {
       }
     }
   }, [connect])
-
-  /**
-   * Sends a JSON payload (ClientCommandMessage) to the WebSocket server.
-   * Note: The hook takes the typed object and stringifies it internally.
-   */
-  const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      console.log('[useWebSocket] Sending:', data)
-      ws.send(jsonStr)
-    } else {
-      console.warn(
-        '[useWebSocket] WebSocket not open. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
-    }
-  }, [])
 
   return {
     ...appState, // Expose all state parts directly
