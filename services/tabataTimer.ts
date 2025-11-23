@@ -15,7 +15,6 @@ import {
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
 const DEFAULT_REST_DURATION = 10 // seconds
-const COOLDOWN_DURATION = 5 // seconds
 const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
@@ -55,15 +54,11 @@ class TabataTimer {
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState
-    console.log('Dual-Mode Timer Service Initialized.')
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
-    console.log(
-      `[TabataTimer] Queued sound cue: ${sound} (#${this.state.soundEventId})`
-    )
     // Broadcast immediately so clients can play sound
     this.broadcastState({ timerData: this.getState() })
   }
@@ -148,9 +143,6 @@ class TabataTimer {
       this.state.currentPhase = 'PREPARE'
       this.state.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
-      console.log(
-        `Starting universal PREPARE countdown for ${this.state.mode} mode.`
-      )
     }
     // If resuming after PAUSE, restore previous state (no PREPARE)
     // Note: For Stopwatch, runningTotal is used to resume count up.
@@ -175,7 +167,6 @@ class TabataTimer {
     this.interval = null
     this.startTime = null
 
-    console.log('Timer paused.')
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -196,7 +187,6 @@ class TabataTimer {
     this.startTime = null
     this.interval = null
 
-    console.log('Timer stopped and reset.')
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -214,9 +204,6 @@ class TabataTimer {
       this.state.timeRemaining = sanitizedWork
     }
 
-    console.log(
-      `Timer configuration updated. Work: ${sanitizedWork}s, Rest: ${sanitizedRest}s`
-    )
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -233,12 +220,10 @@ class TabataTimer {
           this.state.timeElapsed = 0
           this.runningTotal = 0
           this.startTime = Date.now() // Reset start time for accurate count up
-          console.log('Transition from PREPARE to STOPWATCH RUNNING.')
         } else {
           // Start Tabata WORK phase
           this.state.currentPhase = 'WORK'
           this.state.timeRemaining = this.state.workDuration
-          console.log('Transition from PREPARE to TABATA WORK.')
         }
         break
 
@@ -247,7 +232,6 @@ class TabataTimer {
         this.queueSound('REST')
         this.state.currentPhase = 'REST'
         this.state.timeRemaining = this.state.restDuration
-        console.log('Transition to REST.')
         break
 
       case 'REST':
@@ -255,7 +239,6 @@ class TabataTimer {
         this.queueSound('WORK')
         this.state.currentPhase = 'WORK'
         this.state.timeRemaining = this.state.workDuration
-        console.log('Transition to WORK.')
         break
 
       case 'IDLE':
@@ -294,7 +277,6 @@ class TabataTimer {
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
     this.broadcastState({ timerData: this.getState() })
-    console.log(`Mode set to ${mode}.`)
   }
 }
 
