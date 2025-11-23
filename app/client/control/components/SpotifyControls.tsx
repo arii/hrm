@@ -23,7 +23,7 @@ import {
 import { useCallback, useEffect, useRef } from 'react'
 import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
 const SpotifyControls = () => {
