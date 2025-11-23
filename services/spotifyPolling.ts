@@ -43,17 +43,6 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-// We use SDK types now, but keep internal state types as needed.
-// Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
-
-export interface SpotifyTokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-  refresh_token?: string
-  scope: string
-}
-
 export class SpotifyPolling {
   /**
    * Public method to force a poll and broadcast current track state.
@@ -267,19 +256,23 @@ export class SpotifyPolling {
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
+
+        let albumArtUrl = ''
+        if (item) {
+          if ('album' in item) {
+            albumArtUrl = item.album.images?.[0]?.url || ''
+          } else if ('show' in item) {
+            albumArtUrl = item.show.images?.[0]?.url || ''
+          }
+        }
+
         this.state = {
-<<<<<<< HEAD
-          trackName: data.item?.name || 'Unknown Track',
-          artist: data.item?.artists?.[0]?.name || 'Unknown Artist',
-          isPlaying: data.is_playing,
-          albumArtUrl: data.item?.album?.images?.[0]?.url || '',
-          progressMs: data.progress_ms,
-          durationMs: data.item?.duration_ms,
-=======
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
->>>>>>> origin/leader
+          albumArtUrl: albumArtUrl,
+          progressMs: playbackState.progress_ms,
+          durationMs: item?.duration_ms,
         }
         this.broadcastState({ spotifyData: this.getState() })
       }
