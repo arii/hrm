@@ -11,7 +11,10 @@ import { withValidation } from '@/lib/middleware/validation'
 import { spotifyControlSchema } from '@/lib/validation/schemas'
 import { z } from 'zod'
 
-const handler = async (req: NextRequest, body: z.infer<typeof spotifyControlSchema>) => {
+const handler = async (
+  req: NextRequest,
+  body: z.infer<typeof spotifyControlSchema>
+) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
@@ -21,7 +24,7 @@ const handler = async (req: NextRequest, body: z.infer<typeof spotifyControlSche
     )
   }
 
-  const { command } = body;
+  const { command } = body
 
   try {
     const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player'
@@ -79,4 +82,4 @@ const handler = async (req: NextRequest, body: z.infer<typeof spotifyControlSche
   }
 }
 
-export const POST = withValidation(spotifyControlSchema, handler);
+export const POST = withValidation(spotifyControlSchema, handler)
