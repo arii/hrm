@@ -1,0 +1,40 @@
+
+> hrm@0.1.0 build
+> npm run build:server && next build
+
+
+> hrm@0.1.0 build:server
+> tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs
+
+   ▲ Next.js 16.0.1 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./context/WebSocketContext.tsx:160:9
+Ecmascript file had an error
+[0m [90m 158 |[39m   }[33m,[39m [wsUrl])
+ [90m 159 |[39m
+[31m[1m>[22m[39m[90m 160 |[39m   [36mconst[39m disconnect [33m=[39m useCallback(() [33m=>[39m {
+ [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 161 |[39m     shouldReconnect[33m.[39mcurrent [33m=[39m [36mfalse[39m
+ [90m 162 |[39m     [36mif[39m (reconnectTimeoutRef[33m.[39mcurrent) {
+ [90m 163 |[39m       clearTimeout(reconnectTimeoutRef[33m.[39mcurrent)[0m
+
+the name `disconnect` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./context/WebSocketContext.tsx [Client Component Browser]
+    ./app/client/mock/page.tsx [Client Component Browser]
+    ./app/client/mock/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./context/WebSocketContext.tsx [Client Component SSR]
+    ./app/client/mock/page.tsx [Client Component SSR]
+    ./app/client/mock/page.tsx [Server Component]
+
+
+    at <unknown> (./context/WebSocketContext.tsx:160:9)
