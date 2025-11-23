@@ -10,14 +10,23 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Container from '@mui/material/Container'
+import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import PlaylistSelector from '../../../components/Spotify/PlaylistSelector'
 import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
+
+const PlaylistSelector = dynamic(
+  () => import('../../../components/Spotify/PlaylistSelector'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={200} />,
+  }
+)
 
 const SpotifySelectionPage = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
