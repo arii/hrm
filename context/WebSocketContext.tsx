@@ -1,12 +1,12 @@
 'use client'
 import {
   createContext,
+  ReactNode,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
-  ReactNode,
 } from 'react'
 import {
   ClientCommandMessage,
@@ -58,11 +58,36 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pendingActions = useRef<ClientCommandMessage[]>([])
+
+  // Unified State Object
   const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const shouldReconnect = useRef(true)
+  const connectRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedActions = localStorage.getItem('pendingActions')
+      if (savedActions) {
+        pendingActions.current = JSON.parse(savedActions)
+      }
+    }
+  }, [])
+
+  const disconnect = useCallback(() => {
+    shouldReconnect.current = false
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    if (wsRef.current) {
+      wsRef.current.close()
+    }
+    console.log('[useWebSocket] Manually disconnected.')
+  }, [])
 
   const connect = useCallback(() => {
     if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
@@ -76,6 +101,17 @@ export const WebSocketProvider = ({
     ws.onopen = () => {
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
+
+      if (pendingActions.current.length > 0) {
+        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
+        pendingActions.current.forEach(action => {
+          ws.send(JSON.stringify(action))
+        })
+        pendingActions.current = []
+        localStorage.setItem('pendingActions', '[]')
+      }
+
+      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -150,10 +186,13 @@ export const WebSocketProvider = ({
     } else {
       console.warn(
         '[WebSocketProvider] WebSocket not open. State:',
+        '[useWebSocket] WebSocket not open, queueing action. State:',
         ws?.readyState,
         'Data:',
         data
       )
+      pendingActions.current.push(data)
+      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
     }
   }, [])
 
