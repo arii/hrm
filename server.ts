@@ -145,15 +145,7 @@ app
         // Wait a moment for token to be written
         setTimeout(async () => {
           if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
+            await spotifyService.reloadTokens()
           }
         }, 1000)
       }
