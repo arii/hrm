@@ -44,22 +44,10 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-<<<<<<< HEAD
-export class SpotifyPolling extends EventEmitter {
-=======
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
-export interface SpotifyTokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-  refresh_token?: string
-  scope: string
-}
-
-export class SpotifyPolling {
->>>>>>> origin/leader
+export class SpotifyPolling extends EventEmitter {
   /**
    * Public method to force a poll and broadcast current track state.
    */
