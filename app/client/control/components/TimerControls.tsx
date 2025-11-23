@@ -11,6 +11,7 @@ import {
 import {
   Add,
   FitnessCenter,
+  Pause,
   PlayArrow,
   Remove,
   Stop,
