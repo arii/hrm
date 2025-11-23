@@ -20,17 +20,8 @@ import {
   Typography,
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
@@ -45,8 +36,16 @@ const SpotifyDisplay = () => {
     error: webPlaybackError,
     isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback()
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+
+  const spotifyLoggedIn =
+    Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
+
+  const {
+    devices: availableDevices,
+    selectedDeviceId,
+    setSelectedDeviceId,
+  } = useSpotifyDevices(spotifyLoggedIn && !!spotifyData.trackName)
+
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
@@ -97,8 +96,21 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn =
-    Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
+  // Automatically transfer playback to the browser device when it becomes ready
+  useEffect(() => {
+    if (isReady && deviceId) {
+      console.log(
+        '[SpotifyDisplay] Player ready, transferring playback to:',
+        deviceId
+      )
+      // Small delay to ensure player is fully registered on Spotify backend
+      const timer = setTimeout(() => {
+        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [isReady, deviceId])
+
   console.log(
     'spotifyLoggedIn:',
     spotifyLoggedIn,
@@ -107,48 +119,6 @@ const SpotifyDisplay = () => {
     'spotifyAuthenticated:',
     spotifyAuthenticated
   )
-
-  useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
-      const fetchDevices = async () => {
-        try {
-          const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          const deviceArray = Array.isArray(devices) ? devices : []
-          setAvailableDevices(deviceArray)
-        } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
-        }
-      }
-      fetchDevices()
-    } else {
-      setAvailableDevices([])
-      setSelectedDeviceId('')
-    }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
-
-  useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
-    }
-    const activeDevice = availableDevices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
-    }
-  }, [availableDevices, selectedDeviceId])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',

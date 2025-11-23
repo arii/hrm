@@ -20,87 +20,28 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import useWebSocket from '@/hooks/useWebSocket'
 import { SpotifyCommandMessage } from '@/types/websocket'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
 
 const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [devicesLoading, setDevicesLoading] = useState(false)
-  const [_devicesError, setDevicesError] = useState<string | null>(null)
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-  useEffect(() => {
-    if (hasSpotifyData) {
-      const fetchDevices = async () => {
-        setDevicesLoading(true)
-        setDevicesError(null)
-        try {
-          const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          setAvailableDevices(Array.isArray(devices) ? devices : [])
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to load devices.'
-          console.error('Failed to fetch Spotify devices:', error)
-          setDevicesError(errorMessage)
-        } finally {
-          setDevicesLoading(false)
-        }
-      }
-      fetchDevices()
-    } else {
-      setAvailableDevices([])
-      setSelectedDeviceId('')
-      setDevicesLoading(false)
-      setDevicesError(null)
-    }
-  }, [hasSpotifyData])
-
-  useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
-    }
-
-    const activeDevice = availableDevices.find((device) => device.is_active)
-
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
-    }
-
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
-    }
-  }, [availableDevices, selectedDeviceId])
+  const {
+    devices: availableDevices,
+    selectedDeviceId,
+    setSelectedDeviceId,
+    loading: devicesLoading,
+  } = useSpotifyDevices(hasSpotifyData)
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {

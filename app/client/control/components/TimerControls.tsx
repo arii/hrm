@@ -1,6 +1,7 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useWebSocket from '@/hooks/useWebSocket'
 import {
   SpotifyCommandMessage,
@@ -58,36 +59,8 @@ const TimerControls = () => {
     sendData(message)
   }, [debouncedWorkTime, debouncedRestTime, sendData])
 
-  // Get deviceId from SpotifyControls context or fallback to active device
-  interface SpotifyDevice {
-    id: string
-    name: string
-    is_active?: boolean
-    is_private_session?: boolean
-    is_restricted?: boolean
-    type?: string
-    volume_percent?: number
-  }
-  const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
-  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch('/api/spotify/devices')
-        if (!response.ok) throw new Error('Failed to fetch devices')
-        const devices: SpotifyDevice[] = await response.json()
-        setSpotifyDevices(Array.isArray(devices) ? devices : [])
-        const activeDevice = devices.find((d) => d.is_active)
-        setSpotifyDeviceId(
-          activeDevice ? activeDevice.id : devices[0]?.id || ''
-        )
-      } catch (_err) {
-        setSpotifyDevices([])
-        setSpotifyDeviceId('')
-      }
-    }
-    fetchDevices()
-  }, [])
+  const { selectedDeviceId: spotifyDeviceId, devices: spotifyDevices } =
+    useSpotifyDevices(true)
 
   const sendSpotifyCommand = useCallback(
     (command: 'NEXT' | 'PAUSE') => {
@@ -95,7 +68,6 @@ const TimerControls = () => {
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
         deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
-        setSpotifyDeviceId(deviceId)
       }
       if (!deviceId) {
         console.warn('No deviceId available, Spotify command not sent.')
@@ -123,16 +95,14 @@ const TimerControls = () => {
         }
         sendData(config)
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
-
-      if (command === 'START') {
-        sendSpotifyCommand('NEXT')
-      } else if (command === 'STOP') {
-        sendSpotifyCommand('PAUSE')
+      const message: TimerCommandMessage = {
+        type: 'TIMER_COMMAND',
+        command,
+        ...(spotifyDeviceId && { deviceId: spotifyDeviceId }),
       }
+      sendData(message)
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
+    [sendData, latestWork, latestRest, spotifyDeviceId]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {

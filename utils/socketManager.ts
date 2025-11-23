@@ -141,6 +141,26 @@ const handleIncomingMessage = (
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)
         }
+        // If a device ID is provided, trigger the associated Spotify action
+        if (message.deviceId && spotifyServiceInstance) {
+          if (message.command === 'START') {
+            // "START" maps to "NEXT" track
+            spotifyServiceInstance.handleCommand(
+              'NEXT',
+              message.deviceId,
+              undefined,
+              undefined
+            )
+          } else if (message.command === 'STOP') {
+            // "STOP" maps to "PAUSE"
+            spotifyServiceInstance.handleCommand(
+              'PAUSE',
+              message.deviceId,
+              undefined,
+              undefined
+            )
+          }
+        }
         break
       }
 
