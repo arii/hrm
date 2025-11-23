@@ -4,7 +4,9 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-import { Box, Container, Typography } from '@mui/material'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
