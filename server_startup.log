@@ -1,0 +1,8 @@
+[start-production] Warning: .env.production not found. Running without secrets (Spotify features disabled).
+Starting server in production mode
+Environment: NODE_ENV=production
+NEXTAUTH_URL: http://127.0.0.1:3000
+Hostname: 0.0.0.0, Port: 3000
+Serving static files from: /app/.next/static
+> Ready on http://0.0.0.0:3000
+> WebSocket Server listening on ws://0.0.0.0:3000/ws

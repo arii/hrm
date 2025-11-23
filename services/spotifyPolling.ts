@@ -46,6 +46,12 @@ export class SpotifyPolling {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
+
+  public async reloadTokens() {
+    debugLog('Reloading tokens requested.')
+    await this.initializeSdk()
+  }
+
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
@@ -163,7 +169,10 @@ export class SpotifyPolling {
   }
 
   private getCurrentlyPlaying = async () => {
-    if (!this.sdk) return
+    if (!this.sdk) {
+      debugLog('getCurrentlyPlaying aborted: SDK not initialized.')
+      return
+    }
 
     // Ensure token is valid before call?
     // We rely on background refresh or failure handling.
@@ -171,7 +180,10 @@ export class SpotifyPolling {
     try {
       const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
+      debugLog('Playback State:', JSON.stringify(playbackState, null, 2))
+
       if (!playbackState) {
+        debugLog('No content currently playing.')
         // Nothing playing or 204
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false

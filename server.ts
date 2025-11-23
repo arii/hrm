@@ -144,17 +144,13 @@ app
       ) {
         // Wait a moment for token to be written
         setTimeout(async () => {
-          if (
-            spotifyService &&
-            typeof spotifyService.forcePollAndBroadcast === 'function'
-          ) {
-            await spotifyService.forcePollAndBroadcast()
-          }
-          if (
-            spotifyService &&
-            typeof spotifyService.forcePollAndBroadcast === 'function'
-          ) {
-            await spotifyService.forcePollAndBroadcast()
+          if (spotifyService) {
+            if (typeof spotifyService.reloadTokens === 'function') {
+              await spotifyService.reloadTokens()
+            }
+            if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+              await spotifyService.forcePollAndBroadcast()
+            }
           }
         }, 1000)
       }
