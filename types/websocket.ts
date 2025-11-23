@@ -131,6 +131,7 @@ export const HrmInputMessageSchema = z.object({
 export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+  deviceId: z.string().optional(),
 })
 
 export const TimerModeCommandMessageSchema = z.object({
