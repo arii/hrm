@@ -1,52 +1,30 @@
-<<<<<<< HEAD
-// File: components/SpotifyDisplay.tsx
-'use client'
-=======
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommandMessage, SpotifyDevice } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
->>>>>>> origin/leader
 import {
   Box,
   Button,
-  useMediaQuery,
-  useTheme,
+  IconButton,
+  Menu,
+  MenuItem,
+  Slider,
+  Typography,
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
-<<<<<<< HEAD
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from './SpotifyPlayer'
-=======
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
->>>>>>> origin/leader
-
 const SpotifyDisplay = () => {
-  const { spotifyData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
-<<<<<<< HEAD
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-=======
-  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -65,12 +43,11 @@ const SpotifyDisplay = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus !== 'Connected' || !sendData) return
       const targetDeviceId =
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
@@ -89,7 +66,10 @@ const SpotifyDisplay = () => {
   )
 
   useEffect(() => {
-    sendVolumeCommand(volume)
+    const handler = setTimeout(() => {
+      sendVolumeCommand(volume)
+    }, 200)
+    return () => clearTimeout(handler)
   }, [volume, sendVolumeCommand])
 
   useEffect(() => {
@@ -110,14 +90,6 @@ const SpotifyDisplay = () => {
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
@@ -165,6 +137,7 @@ const SpotifyDisplay = () => {
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
     targetDeviceId?: string
   ) => {
+    if (!sendData) return
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command,
@@ -183,7 +156,6 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
   }
->>>>>>> origin/leader
 
   const handleSpotifyLogin = () => {
     signIn('spotify', { callbackUrl: '/' })
@@ -226,36 +198,6 @@ const SpotifyDisplay = () => {
     )
   }
 
-<<<<<<< HEAD
-  if (!spotifyData.trackName || spotifyData.trackName === 'Awaiting Login...') {
-    return null
-  }
-
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: 56,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        boxShadow: 3,
-        mb: 0,
-      }}
-    >
-      <SpotifyPlayer
-        isMobileLayout={isMobile}
-        showDeviceSelector={true}
-        showVolumeControl={true}
-      />
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleSpotifyLogout}
-=======
-  // If we are logged in, we show the player bar.
-  // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
-  // or simply showing the controls so the user can transfer playback.
   if (spotifyLoggedIn) {
     const isWaiting = spotifyData.trackName === 'Awaiting Login...'
     const displayTrackName = isWaiting
@@ -268,26 +210,21 @@ const SpotifyDisplay = () => {
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
           spotifyData.isPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
->>>>>>> origin/leader
         sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          zIndex: 2,
+          position: 'fixed',
+          bottom: 56,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          backgroundColor: 'grey.900',
           color: 'common.white',
-          borderColor: 'grey.600',
-          '&:hover': {
-            borderColor: 'grey.500',
-            backgroundColor: 'grey.800',
-          },
+          p: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.5)',
         }}
       >
-<<<<<<< HEAD
-        Logout
-      </Button>
-    </Box>
-  )
-=======
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {displayTrackName} {displayArtist}
@@ -461,7 +398,6 @@ const SpotifyDisplay = () => {
   }
 
   return null
->>>>>>> origin/leader
 }
 
 export default SpotifyDisplay

@@ -83,35 +83,23 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
-<<<<<<< HEAD
-    // Provide a default mock for fetch that can be overridden in specific tests
-    ;(global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-      ok: true,
-      status: 204,
-      json: async () => ({ access_token: 'mock_access_token' }),
-      text: async () => '',
-    } as Response)
-
-    spotifyService = new SpotifyPolling(broadcastMock)
-=======
     // Initialize the service and await its creation, which includes SDK setup
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
+    if ((spotifyService as any)['pollInterval']) {
       clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
+        (spotifyService as any)['pollInterval'] as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['pollInterval'] = null
+      ;(spotifyService as any)['pollInterval'] = null
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
+    if ((spotifyService as any)['tokenRefreshInterval']) {
       clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
+        (spotifyService as any)['tokenRefreshInterval'] as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+      ;(spotifyService as any)['tokenRefreshInterval'] = null
     }
->>>>>>> origin/leader
   })
 
   afterEach(() => {
@@ -134,15 +122,6 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Command Handling', () => {
-<<<<<<< HEAD
-    beforeEach(() => {
-      // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken =
-        'test_access_token'
-    })
-
-=======
->>>>>>> origin/leader
     it('should handle PLAY command', async () => {
       await spotifyService.handleCommand('PLAY', 'test_device_id') // Assuming a deviceId is passed
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
@@ -173,15 +152,6 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Volume Control', () => {
-<<<<<<< HEAD
-    beforeEach(() => {
-      // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken =
-        'test_access_token'
-    })
-
-=======
->>>>>>> origin/leader
     it('should set volume with SET_VOLUME command', async () => {
       await spotifyService.handleCommand('SET_VOLUME', undefined, 75)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
@@ -333,15 +303,6 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Integration with Timer', () => {
-<<<<<<< HEAD
-    beforeEach(() => {
-      // Set access token directly without triggering refresh
-      ;(spotifyService as unknown as { accessToken: string }).accessToken =
-        'test_access_token'
-    })
-
-=======
->>>>>>> origin/leader
     it('should support NEXT command when timer starts', async () => {
       // Simulate timer start triggering NEXT
       await spotifyService.handleCommand('NEXT', 'test_device_id')

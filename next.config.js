@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-<<<<<<< HEAD
   images: {
     remotePatterns: [
       {
@@ -12,8 +11,6 @@ const nextConfig = {
     ],
   },
   allowedDevOrigins: ['onasafari.ddns.net:444'],
-=======
->>>>>>> origin/leader
   async redirects() {
     return [
       {

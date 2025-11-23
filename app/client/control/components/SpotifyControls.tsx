@@ -1,11 +1,5 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-<<<<<<< HEAD
-import { Card, CardContent, Typography } from '@mui/material'
-import { MusicNote } from '@mui/icons-material'
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from '@/components/SpotifyPlayer'
-=======
 import {
   MusicNote,
   Pause,
@@ -29,29 +23,23 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
->>>>>>> origin/leader
+import { SpotifyCommandMessage, SpotifyDevice } from '@/types/websocket'
 
 const SpotifyControls = () => {
-  const { spotifyData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { volume, setVolume } = useVolumePreference(70)
+
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [devicesLoading, setDevicesLoading] = useState(false)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
+  const lastSentVolumeRef = useRef<string | null>(null)
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     if (hasSpotifyData) {
       const fetchDevices = async () => {
@@ -118,6 +106,7 @@ const SpotifyControls = () => {
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
+      if (!sendData) return
       const targetDeviceId =
         overriddenDeviceId !== undefined
           ? overriddenDeviceId
@@ -132,12 +121,16 @@ const SpotifyControls = () => {
     [resolveTargetDeviceId, sendData]
   )
 
+  const handlePlayPauseToggle = () => {
+    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
+    sendSpotifyCommand(command)
+  }
+
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus !== 'Connected' || !sendData) return
       const targetDeviceId = resolveTargetDeviceId()
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
@@ -162,10 +155,15 @@ const SpotifyControls = () => {
   }, [connectionStatus])
 
   useEffect(() => {
-    sendVolumeCommand(volume)
+    const handler = setTimeout(() => {
+      sendVolumeCommand(volume)
+    }, 200)
+
+    return () => {
+      clearTimeout(handler)
+    }
   }, [volume, sendVolumeCommand])
 
->>>>>>> origin/leader
   return (
     <Card
       sx={{
@@ -190,17 +188,48 @@ const SpotifyControls = () => {
         </Typography>
 
         {hasSpotifyData ? (
-          <SpotifyPlayer
-            isMobileLayout={true}
-            showDeviceSelector={true}
-            showVolumeControl={true}
-          />
+          <Box>
+            <Typography noWrap sx={{ textAlign: 'center', mb: 1 }}>
+              {spotifyData.trackName} &mdash; {spotifyData.artist}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <IconButton color="inherit" size="small" onClick={() => sendSpotifyCommand('PREVIOUS')} aria-label="previous track"><SkipPrevious /></IconButton>
+              <IconButton color="inherit" size="medium" onClick={handlePlayPauseToggle} aria-label={spotifyData.isPlaying ? 'pause' : 'play'}>
+                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+              </IconButton>
+              <IconButton color="inherit" size="small" onClick={() => sendSpotifyCommand('NEXT')} aria-label="next track"><SkipNext /></IconButton>
+            </Box>
+            <Stack spacing={2} direction="row" sx={{ mt: 1 }} alignItems="center">
+              <VolumeUp />
+              <Slider
+                aria-label="Volume"
+                value={volume}
+                onChange={(_, value) => setVolume(value as number)}
+              />
+            </Stack>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <Select
+                value={selectedDeviceId || ''}
+                onChange={(e) => sendSpotifyCommand('TRANSFER_PLAYBACK', e.target.value)}
+                displayEmpty
+                inputProps={{ 'aria-label': 'Select Device' }}
+                sx={{ color: 'white', '& .MuiSvgIcon-root': { color: 'white' }, '& .MuiOutlinedInput-notchedOutline': { borderColor: 'grey.600' } }}
+              >
+                {devicesLoading && <MenuItem value=""><em>Loading devices...</em></MenuItem>}
+                {devicesError && <MenuItem value=""><em>Error: {devicesError}</em></MenuItem>}
+                {!devicesLoading && !devicesError && availableDevices.length === 0 && <MenuItem value=""><em>No devices available</em></MenuItem>}
+                {availableDevices.map((device) => (
+                  <MenuItem key={device.id} value={device.id}>{device.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         ) : (
           <Typography
             variant="body2"
             sx={{ color: 'grey.400', textAlign: 'center' }}
           >
-            Login to Spotify on the main dashboard
+            Login to Spotify on the main dashboard to see controls.
           </Typography>
         )}
       </CardContent>
