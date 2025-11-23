@@ -145,12 +145,18 @@ class TabataTimer {
     // --- UNIVERSAL PREPARE LOGIC ---
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.state.currentPhase === 'IDLE') {
-      this.state.currentPhase = 'PREPARE'
-      this.state.timeRemaining = START_COUNTDOWN_DURATION
-      this.resetCountdownMarker()
-      console.log(
-        `Starting universal PREPARE countdown for ${this.state.mode} mode.`
-      )
+      // EXCEPTION: If resuming Stopwatch (runningTotal > 0), skip PREPARE.
+      if (this.state.mode === 'STOPWATCH' && this.runningTotal > 0) {
+        this.state.currentPhase = 'RUNNING'
+        console.log('Resuming Stopwatch from PAUSE.')
+      } else {
+        this.state.currentPhase = 'PREPARE'
+        this.state.timeRemaining = START_COUNTDOWN_DURATION
+        this.resetCountdownMarker()
+        console.log(
+          `Starting universal PREPARE countdown for ${this.state.mode} mode.`
+        )
+      }
     }
     // If resuming after PAUSE, restore previous state (no PREPARE)
     // Note: For Stopwatch, runningTotal is used to resume count up.
