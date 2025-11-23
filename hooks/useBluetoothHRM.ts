@@ -71,7 +71,7 @@ const useBluetoothHRM = () => {
   const [device, setDevice] = useState<BluetoothDevice | null>(null)
 
   const abortConnection = useCallback(async () => {
-    if (device && device.gatt?.connected) {
+    if (device && device.gatt) {
       device.gatt.disconnect()
     }
     setDevice(null)

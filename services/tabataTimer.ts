@@ -15,7 +15,6 @@ import {
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
 const DEFAULT_REST_DURATION = 10 // seconds
-const COOLDOWN_DURATION = 5 // seconds
 const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'

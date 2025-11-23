@@ -221,7 +221,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
           </Box>
         )}
         noOptionsText={
-          debouncedSearch ? `No playlists found matching "${debouncedSearch}"` : 'No playlists available'
+          debouncedSearch
+            ? `No playlists found matching "${debouncedSearch}"`
+            : 'No playlists available'
         }
         sx={{ mb: 2 }}
       />
@@ -395,7 +397,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
           ) : (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                No playlists found matching "{searchQuery}"
+                No playlists found matching &quot;{searchQuery}&quot;
               </Typography>
             </Box>
           )}

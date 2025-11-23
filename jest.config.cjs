@@ -1,3 +1,4 @@
+/* eslint-env node */
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
@@ -33,4 +34,5 @@ const config = {
   testTimeout: 10000,
 }
 
+// eslint-disable-next-line no-undef
 module.exports = config
