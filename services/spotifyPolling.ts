@@ -380,9 +380,16 @@ export class SpotifyPolling {
   ) {
     try {
       if (error instanceof SyntaxError) {
+<<<<<<< HEAD
         console.error(
           `Error executing Spotify command ${command}: SyntaxError:`,
           error
+=======
+        // Suppress SyntaxError which usually occurs when Spotify returns a non-JSON response (e.g. 204 No Content or simple text error)
+        // This is "expected" behavior from the SDK in some edge cases.
+        console.warn(
+          `[SpotifyPolling] Command ${command} executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.`
+>>>>>>> origin/leader
         )
       } else if (error && typeof error === 'object') {
         if (
@@ -437,8 +444,15 @@ export class SpotifyPolling {
               e
             )
           }
+<<<<<<< HEAD
         }
         console.error(`Error executing Spotify command ${command}:`, error)
+=======
+        } else {
+          // Log other object errors
+          console.error(`Error executing Spotify command ${command}:`, error)
+        }
+>>>>>>> origin/leader
       } else {
         console.error(`Error executing Spotify command ${command}:`, error)
       }

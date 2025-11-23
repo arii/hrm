@@ -1,11 +1,21 @@
 /** @jest-environment jsdom */
 
 import TimerControls from '@/app/client/control/components/TimerControls'
+<<<<<<< HEAD
+=======
+import { useWebSocket } from '@/context/WebSocketContext'
+>>>>>>> origin/leader
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+<<<<<<< HEAD
+=======
+type UseWebSocketReturn = ReturnType<typeof useWebSocket>
+
+jest.mock('@/context/WebSocketContext')
+>>>>>>> origin/leader
 jest.useFakeTimers()
 
 const baseTimerData: TimerData = {

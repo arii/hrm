@@ -423,5 +423,25 @@ describe('SpotifyPolling Service', () => {
 
        consoleErrorSpy.mockRestore()
     })
+<<<<<<< HEAD
+=======
+
+    it('should handle direct SyntaxError gracefully (suppress logs)', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      mockPlayer.startResumePlayback.mockRejectedValue(new SyntaxError('Unexpected token'))
+
+      await spotifyService.handleCommand('PLAY', 'device_id')
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[SpotifyPolling] Command PLAY executed, but response was not valid JSON')
+      )
+      expect(consoleErrorSpy).not.toHaveBeenCalled()
+
+      consoleWarnSpy.mockRestore()
+      consoleErrorSpy.mockRestore()
+    })
+>>>>>>> origin/leader
   })
 })

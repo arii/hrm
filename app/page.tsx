@@ -12,7 +12,7 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
-import useWebSocket from '../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 const GoogleDocViewer = dynamic(
   () => import('../components/GoogleDocViewer'),

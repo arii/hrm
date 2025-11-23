@@ -7,7 +7,7 @@
 import { Box, Container, Typography } from '@mui/material'
 import Head from 'next/head'
 import { useEffect } from 'react'
-import useWebSocket from '../../../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import SpotifyControls from './components/SpotifyControls'
 import TimerControls from './components/TimerControls'
 

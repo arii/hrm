@@ -1,7 +1,11 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
+<<<<<<< HEAD
 import { HrmData } from '@/types/websocket'
+=======
+import { useWebSocket } from '@/context/WebSocketContext'
+>>>>>>> origin/leader
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import { Grid, Skeleton } from '@mui/material'
