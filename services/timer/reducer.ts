@@ -153,7 +153,7 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
         return state
       }
 
-      let newState = { ...state, soundToPlay: undefined }
+      let newState: TimerState = { ...state, soundToPlay: undefined }
 
       // Stopwatch mode: count up
       if (state.mode === 'STOPWATCH' && state.phase === 'RUNNING') {
