@@ -14,12 +14,8 @@ import {
 } from '@mui/material'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
-<<<<<<< HEAD
 import HrTile from '../../../components/HrTile'
-import useWebSocket from '../../../hooks/useWebSocket'
-=======
 import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
 import { HrmInputMessage } from '../../../types/websocket'
 import { getHrZoneProps } from '../../../utils/visualization'
 
