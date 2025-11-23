@@ -150,6 +150,9 @@ export class SpotifyPolling {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
+    albumArtUrl: '',
+    progressMs: 0,
+    durationMs: 0,
   }
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
@@ -311,6 +314,9 @@ export class SpotifyPolling {
             trackName: 'Nothing is currently playing.',
             artist: '',
             isPlaying: false,
+            albumArtUrl: '',
+            progressMs: 0,
+            durationMs: 0,
           }
           this.broadcastState({ spotifyData: this.getState() })
         }
@@ -348,6 +354,9 @@ export class SpotifyPolling {
           trackName: data.item?.name || 'Unknown Track',
           artist: data.item?.artists?.[0]?.name || 'Unknown Artist',
           isPlaying: data.is_playing,
+          albumArtUrl: data.item?.album?.images?.[0]?.url || '',
+          progressMs: data.progress_ms,
+          durationMs: data.item?.duration_ms,
         }
         this.broadcastState({ spotifyData: this.getState() })
       }

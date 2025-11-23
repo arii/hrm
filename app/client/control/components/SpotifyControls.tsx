@@ -14,6 +14,7 @@ import {
   CardContent,
   FormControl,
   IconButton,
+  LinearProgress,
   MenuItem,
   Select,
   Slider,
@@ -183,6 +184,19 @@ const SpotifyControls = () => {
 
         {hasSpotifyData ? (
           <>
+            {spotifyData.albumArtUrl && (
+              <Box
+                component="img"
+                src={spotifyData.albumArtUrl}
+                alt="Album art"
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: 1,
+                  mb: 2,
+                }}
+              />
+            )}
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
                 {spotifyData.trackName}
@@ -191,7 +205,15 @@ const SpotifyControls = () => {
                 {spotifyData.artist}
               </Typography>
             </Box>
-
+            {spotifyData.durationMs && (
+              <LinearProgress
+                variant="determinate"
+                value={
+                  (spotifyData.progressMs / spotifyData.durationMs) * 100
+                }
+                sx={{ mb: 2 }}
+              />
+            )}
             <Stack
               direction="row"
               spacing={1}
@@ -215,11 +237,17 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
-                  backgroundColor: '#1DB954',
-                  '&:hover': { backgroundColor: '#169944' },
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.3)',
+                  },
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {spotifyData.isPlaying ? (
+                  <Pause fontSize="large" />
+                ) : (
+                  <PlayArrow fontSize="large" />
+                )}
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}

@@ -38,6 +38,9 @@ export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
+  albumArtUrl?: string
+  progressMs?: number
+  durationMs?: number
 }
 
 /**

@@ -10,9 +10,11 @@ import {
   Box,
   Button,
   IconButton,
+  LinearProgress,
   Menu,
   MenuItem,
   Slider,
+  Stack,
   Typography,
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
@@ -201,6 +203,11 @@ const SpotifyDisplay = () => {
   }
 
   if (spotifyData.trackName && spotifyData.trackName !== 'Awaiting Login...') {
+    const progress =
+      spotifyData.progressMs && spotifyData.durationMs
+        ? (spotifyData.progressMs / spotifyData.durationMs) * 100
+        : 0
+
     return (
       <Box
         aria-label={`Now playing: ${spotifyData.trackName} by ${
@@ -209,191 +216,182 @@ const SpotifyDisplay = () => {
           isReady ? ', Browser player ready' : ''
         }`}
         sx={{
-          backgroundColor: 'grey.900',
-          color: 'common.white',
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
           position: 'fixed',
           bottom: 56,
           left: 0,
           right: 0,
           zIndex: 1100,
+          color: 'common.white',
           boxShadow: 3,
-          mb: 0,
+          overflow: 'hidden',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {spotifyData.trackName} — {spotifyData.artist}
-          </Typography>
-          {spotifyAuthenticated && !isReady && !webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'info.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🔄 Connecting Player...
-            </Typography>
-          )}
-          {isReady && deviceId && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'success.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🎵 Browser Player Active
-            </Typography>
-          )}
-          {webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.9,
-                backgroundColor: 'error.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              ⚠️ Player Error
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('PREVIOUS')}
+        {spotifyData.albumArtUrl && (
+          <Box
+            component="img"
+            src={spotifyData.albumArtUrl}
+            alt="Album art"
             sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Previous track"
-          >
-            <SkipPreviousIcon />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handlePlayPauseToggle}
-            sx={{
-              color: 'common.white',
-              backgroundColor: 'grey.700',
-              '&:hover': { backgroundColor: 'grey.600' },
-            }}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
-          >
-            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('NEXT')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Next track"
-          >
-            <SkipNextIcon />
-          </IconButton>
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
-          <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-            min={0}
-            max={100}
-            size="small"
-            sx={{
-              width: 80,
-              color: '#1DB954',
-              '& .MuiSlider-thumb': {
-                backgroundColor: 'white',
-                width: 12,
-                height: 12,
-              },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': { height: 3 },
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'blur(20px) brightness(0.4)',
+              zIndex: -1,
             }}
           />
-
-          <IconButton
-            size="small"
-            onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Select playback device"
+        )}
+        <Stack
+          spacing={2}
+          sx={{
+            p: 2,
+            position: 'relative',
+            zIndex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
           >
-            <SpeakerIcon fontSize="small" />
-          </IconButton>
-          <Menu
-            anchorEl={deviceMenuAnchor}
-            open={deviceMenuOpen}
-            onClose={() => setDeviceMenuAnchor(null)}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-          >
-            {availableDevices.length > 0 ? (
-              availableDevices.map((device) => (
-                <MenuItem
-                  key={device.id}
-                  onClick={() => handleDeviceSelect(device.id)}
-                  selected={device.is_active}
-                >
-                  {device.name} {device.is_active && '✓'}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No devices available</MenuItem>
-            )}
-          </Menu>
-
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleSpotifyLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
-          >
-            Logout
-          </Button>
-        </Box>
+            <Stack direction="row" spacing={2} alignItems="center" flexGrow={1}>
+              {spotifyData.albumArtUrl && (
+                <Box
+                  component="img"
+                  src={spotifyData.albumArtUrl}
+                  alt="Album art"
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 1,
+                    boxShadow: 2,
+                  }}
+                />
+              )}
+              <Box>
+                <Typography variant="h6" noWrap>
+                  {spotifyData.trackName}
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary" noWrap>
+                  {spotifyData.artist}
+                </Typography>
+                {spotifyAuthenticated && !isReady && !webPlaybackError && (
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                    Connecting player...
+                  </Typography>
+                )}
+                {isReady && deviceId && (
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                    Browser player active
+                  </Typography>
+                )}
+                {webPlaybackError && (
+                  <Typography variant="caption" sx={{ opacity: 0.9, color: 'error.main' }}>
+                    Player error
+                  </Typography>
+                )}
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton
+                onClick={() => sendSpotifyCommand('PREVIOUS')}
+                aria-label="Previous track"
+                sx={{ color: 'common.white' }}
+              >
+                <SkipPreviousIcon />
+              </IconButton>
+              <IconButton
+                onClick={handlePlayPauseToggle}
+                aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
+                sx={{
+                  color: 'common.white',
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.3)',
+                  },
+                }}
+              >
+                {spotifyData.isPlaying ? (
+                  <PauseIcon fontSize="large" />
+                ) : (
+                  <PlayArrowIcon fontSize="large" />
+                )}
+              </IconButton>
+              <IconButton
+                onClick={() => sendSpotifyCommand('NEXT')}
+                aria-label="Next track"
+                sx={{ color: 'common.white' }}
+              >
+                <SkipNextIcon />
+              </IconButton>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
+              <Slider
+                value={volume}
+                onChange={(_, val) => setVolume(val as number)}
+                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
+                min={0}
+                max={100}
+                size="small"
+                sx={{
+                  width: 80,
+                  color: '#1DB954',
+                  '& .MuiSlider-thumb': {
+                    backgroundColor: 'white',
+                    width: 12,
+                    height: 12,
+                  },
+                  '& .MuiSlider-track': { height: 3 },
+                  '& .MuiSlider-rail': { height: 3 },
+                }}
+              />
+              <IconButton
+                size="small"
+                onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
+                sx={{
+                  color: 'common.white',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+                }}
+                aria-label="Select playback device"
+              >
+                <SpeakerIcon fontSize="small" />
+              </IconButton>
+              <Menu
+                anchorEl={deviceMenuAnchor}
+                open={deviceMenuOpen}
+                onClose={() => setDeviceMenuAnchor(null)}
+              >
+                {availableDevices.map((device) => (
+                  <MenuItem
+                    key={device.id}
+                    onClick={() => handleDeviceSelect(device.id)}
+                    selected={device.is_active}
+                  >
+                    {device.name} {device.is_active && '✓'}
+                  </MenuItem>
+                ))}
+              </Menu>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleSpotifyLogout}
+                sx={{ color: 'common.white', borderColor: 'grey.600' }}
+              >
+                Logout
+              </Button>
+            </Stack>
+          </Stack>
+          {spotifyData.durationMs && (
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{ height: 2, mt: 1 }}
+            />
+          )}
+        </Stack>
       </Box>
     )
   }
