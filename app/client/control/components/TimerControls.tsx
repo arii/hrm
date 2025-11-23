@@ -21,14 +21,17 @@ import {
   Button,
   Card,
   CardContent,
+  CircularProgress,
   IconButton,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useButtonFeedback } from './useButtonFeedback'
+
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+  const { timerData, connectionStatus, sendData } = useWebSocket()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -38,6 +41,8 @@ const TimerControls = () => {
   // Track latest numeric values synchronously to avoid stale state on click
   const latestWork = useRef<number>(workTime)
   const latestRest = useRef<number>(restTime)
+
+  const { isButtonLoading, triggerFeedback } = useButtonFeedback()
 
   // Keep refs synchronized with state
   useEffect(() => {
@@ -140,6 +145,19 @@ const TimerControls = () => {
     sendData(message)
   }
 
+  const handleTimerClick = (command: 'START' | 'STOP') => {
+    const btnId = command === 'START' ? 'start' : 'stop'
+    triggerFeedback(btnId)
+    sendTimerCommand(command)
+  }
+
+  const handleModeClick = (mode: 'TABATA' | 'STOPWATCH') => {
+    triggerFeedback(mode)
+    sendModeCommand(mode)
+  }
+
+  const isConnected = connectionStatus === 'Connected'
+
   return (
     <Card
       sx={{
@@ -167,9 +185,19 @@ const TimerControls = () => {
           <Stack direction="row" spacing={2} justifyContent="center">
             <Button
               variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
-              onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
-              startIcon={<FitnessCenter />}
+              onClick={() => handleModeClick('TABATA')}
+              disabled={
+                !isConnected ||
+                timerData.isRunning ||
+                isButtonLoading('TABATA')
+              }
+              startIcon={
+                isButtonLoading('TABATA') ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <FitnessCenter />
+                )
+              }
               sx={{
                 flex: 1,
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
@@ -185,15 +213,25 @@ const TimerControls = () => {
                 },
               }}
             >
-              Tabata
+              {isButtonLoading('TABATA') ? '' : 'Tabata'}
             </Button>
             <Button
               variant={
                 timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
               }
-              onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
-              startIcon={<Timer />}
+              onClick={() => handleModeClick('STOPWATCH')}
+              disabled={
+                !isConnected ||
+                timerData.isRunning ||
+                isButtonLoading('STOPWATCH')
+              }
+              startIcon={
+                isButtonLoading('STOPWATCH') ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <Timer />
+                )
+              }
               sx={{
                 flex: 1,
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
@@ -209,7 +247,7 @@ const TimerControls = () => {
                 },
               }}
             >
-              Stopwatch
+              {isButtonLoading('STOPWATCH') ? '' : 'Stopwatch'}
             </Button>
           </Stack>
         </Box>
@@ -239,12 +277,17 @@ const TimerControls = () => {
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => Math.max(5, prev - 5))}
+                  disabled={!isConnected}
                   aria-label="Decrease work duration"
                   sx={{
                     backgroundColor: 'grey.700',
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    '&.Mui-disabled': {
+                      backgroundColor: 'grey.800',
+                      color: 'grey.600',
+                    },
                   }}
                 >
                   <Remove fontSize="large" />
@@ -252,6 +295,7 @@ const TimerControls = () => {
                 <TextField
                   type="number"
                   value={workTime}
+                  disabled={!isConnected}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(5, val)
@@ -284,18 +328,27 @@ const TimerControls = () => {
                         borderColor: '#EF4444',
                       },
                     },
+                    '& .Mui-disabled': {
+                      color: 'grey.600',
+                      WebkitTextFillColor: 'grey.600',
+                    },
                   }}
                   aria-label="Work duration in seconds"
                 />
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => prev + 5)}
+                  disabled={!isConnected}
                   aria-label="Increase work duration"
                   sx={{
                     backgroundColor: 'grey.700',
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    '&.Mui-disabled': {
+                      backgroundColor: 'grey.800',
+                      color: 'grey.600',
+                    },
                   }}
                 >
                   <Add fontSize="large" />
@@ -316,12 +369,17 @@ const TimerControls = () => {
                 <IconButton
                   color="primary"
                   onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                  disabled={!isConnected}
                   aria-label="Decrease rest duration"
                   sx={{
                     backgroundColor: 'grey.700',
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    '&.Mui-disabled': {
+                      backgroundColor: 'grey.800',
+                      color: 'grey.600',
+                    },
                   }}
                 >
                   <Remove fontSize="large" />
@@ -329,6 +387,7 @@ const TimerControls = () => {
                 <TextField
                   type="number"
                   value={restTime}
+                  disabled={!isConnected}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(0, val)
@@ -361,18 +420,27 @@ const TimerControls = () => {
                         borderColor: '#22C55E',
                       },
                     },
+                    '& .Mui-disabled': {
+                      color: 'grey.600',
+                      WebkitTextFillColor: 'grey.600',
+                    },
                   }}
                   aria-label="Rest duration in seconds"
                 />
                 <IconButton
                   color="primary"
                   onClick={() => setRestTime((prev) => prev + 5)}
+                  disabled={!isConnected}
                   aria-label="Increase rest duration"
                   sx={{
                     backgroundColor: 'grey.700',
                     color: 'white',
                     '&:hover': { backgroundColor: 'grey.600' },
                     p: 2,
+                    '&.Mui-disabled': {
+                      backgroundColor: 'grey.800',
+                      color: 'grey.600',
+                    },
                   }}
                 >
                   <Add fontSize="large" />
@@ -387,21 +455,35 @@ const TimerControls = () => {
             <Button
               variant="contained"
               color="success"
-              onClick={() => sendTimerCommand('START')}
+              onClick={() => handleTimerClick('START')}
+              disabled={!isConnected || isButtonLoading('start')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-              startIcon={<PlayArrow fontSize="large" />}
+              startIcon={
+                isButtonLoading('start') ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <PlayArrow fontSize="large" />
+                )
+              }
             >
-              START
+              {isButtonLoading('start') ? 'STARTING...' : 'START'}
             </Button>
           ) : (
             <Button
               variant="contained"
               color="error"
-              onClick={() => sendTimerCommand('STOP')}
+              onClick={() => handleTimerClick('STOP')}
+              disabled={!isConnected || isButtonLoading('stop')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
-              startIcon={<Stop fontSize="large" />}
+              startIcon={
+                isButtonLoading('stop') ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <Stop fontSize="large" />
+                )
+              }
             >
-              STOP
+              {isButtonLoading('stop') ? 'STOPPING...' : 'STOP'}
             </Button>
           )}
         </Stack>

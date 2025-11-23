@@ -12,6 +12,7 @@ import {
   Box,
   Card,
   CardContent,
+  CircularProgress,
   FormControl,
   IconButton,
   MenuItem,
@@ -24,6 +25,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
+import { useButtonFeedback } from './useButtonFeedback'
 
 interface SpotifyDevice {
   id: string
@@ -35,6 +37,8 @@ interface SpotifyDevice {
   volume_percent: number
 }
 
+const DEVICE_STORAGE_KEY = 'spotify_last_device_id'
+
 const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { volume, setVolume } = useVolumePreference(70)
@@ -43,6 +47,8 @@ const SpotifyControls = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [devicesLoading, setDevicesLoading] = useState(false)
   const [_devicesError, setDevicesError] = useState<string | null>(null)
+
+  const { isButtonLoading, triggerFeedback } = useButtonFeedback()
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
@@ -60,7 +66,13 @@ const SpotifyControls = () => {
             throw new Error(`HTTP error! status: ${response.status}`)
           }
           const devices = await response.json()
-          setAvailableDevices(Array.isArray(devices) ? devices : [])
+          const list = Array.isArray(devices) ? devices : []
+          // Sort active device to top
+          list.sort((a: SpotifyDevice, b: SpotifyDevice) => {
+            if (a.is_active === b.is_active) return 0
+            return a.is_active ? -1 : 1
+          })
+          setAvailableDevices(list)
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Failed to load devices.'
@@ -79,6 +91,7 @@ const SpotifyControls = () => {
     }
   }, [hasSpotifyData])
 
+  // Auto-select device logic
   useEffect(() => {
     if (availableDevices.length === 0) {
       if (selectedDeviceId !== '') {
@@ -88,17 +101,17 @@ const SpotifyControls = () => {
     }
 
     const activeDevice = availableDevices.find((device) => device.is_active)
+    const savedId =
+      typeof window !== 'undefined'
+        ? localStorage.getItem(DEVICE_STORAGE_KEY)
+        : null
 
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
-    }
-
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
+    if (!selectedDeviceId) {
+      if (activeDevice) {
+        setSelectedDeviceId(activeDevice.id)
+      } else if (savedId && availableDevices.some((d) => d.id === savedId)) {
+        setSelectedDeviceId(savedId)
+      }
     }
   }, [availableDevices, selectedDeviceId])
 
@@ -162,6 +175,16 @@ const SpotifyControls = () => {
     sendVolumeCommand(volume)
   }, [volume, sendVolumeCommand])
 
+  const handleControlClick = (
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS',
+    btnId: string
+  ) => {
+    triggerFeedback(btnId)
+    sendSpotifyCommand(command)
+  }
+
+  const isConnected = connectionStatus === 'Connected'
+
   return (
     <Card
       sx={{
@@ -203,37 +226,54 @@ const SpotifyControls = () => {
               sx={{ mb: 2 }}
             >
               <IconButton
-                onClick={() => sendSpotifyCommand('PREVIOUS')}
-                disabled={connectionStatus !== 'Connected'}
+                onClick={() => handleControlClick('PREVIOUS', 'prev')}
+                disabled={!isConnected || isButtonLoading('prev')}
                 sx={{
                   color: 'white',
                   '&:hover': { backgroundColor: 'grey.700' },
                 }}
               >
-                <SkipPrevious />
+                {isButtonLoading('prev') ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <SkipPrevious />
+                )}
               </IconButton>
               <IconButton
                 onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
+                  handleControlClick(
+                    spotifyData.isPlaying ? 'PAUSE' : 'PLAY',
+                    'play'
+                  )
                 }
-                disabled={connectionStatus !== 'Connected'}
+                disabled={!isConnected || isButtonLoading('play')}
                 sx={{
                   color: 'white',
                   backgroundColor: '#1DB954',
                   '&:hover': { backgroundColor: '#169944' },
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {isButtonLoading('play') ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : spotifyData.isPlaying ? (
+                  <Pause />
+                ) : (
+                  <PlayArrow />
+                )}
               </IconButton>
               <IconButton
-                onClick={() => sendSpotifyCommand('NEXT')}
-                disabled={connectionStatus !== 'Connected'}
+                onClick={() => handleControlClick('NEXT', 'next')}
+                disabled={!isConnected || isButtonLoading('next')}
                 sx={{
                   color: 'white',
                   '&:hover': { backgroundColor: 'grey.700' },
                 }}
               >
-                <SkipNext />
+                {isButtonLoading('next') ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  <SkipNext />
+                )}
               </IconButton>
             </Stack>
 
@@ -241,6 +281,7 @@ const SpotifyControls = () => {
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
               <Slider
                 value={volume}
+                disabled={!isConnected}
                 onChange={(_, val) => setVolume(val as number)}
                 onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
                 min={0}
@@ -269,13 +310,12 @@ const SpotifyControls = () => {
                     onChange={(e) => {
                       const deviceId = e.target.value
                       setSelectedDeviceId(deviceId)
+                      localStorage.setItem(DEVICE_STORAGE_KEY, deviceId)
                       if (deviceId) {
                         sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                       }
                     }}
-                    disabled={
-                      connectionStatus !== 'Connected' || devicesLoading
-                    }
+                    disabled={!isConnected || devicesLoading}
                     sx={{
                       color: 'white',
                       '& .MuiOutlinedInput-notchedOutline': {

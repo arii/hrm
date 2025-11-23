@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Unit tests for WebSocket manager
  * Tests state broadcasting and command routing through services
