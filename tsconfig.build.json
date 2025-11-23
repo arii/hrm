@@ -5,7 +5,8 @@
     "outDir": "./dist",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "traceResolution": false
   },
   "include": ["server.ts", "services/**/*.ts", "utils/**/*.ts", "types/**/*.ts"]
 }
