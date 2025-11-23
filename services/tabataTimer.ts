@@ -60,15 +60,15 @@ class TabataTimer {
 
   constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
     this.broadcastState = broadcastState
-    console.log('Dual-Mode Timer Service Initialized.')
+    // console.log('Dual-Mode Timer Service Initialized.')
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
-    console.log(
-      `[TabataTimer] Queued sound cue: ${sound} (#${this.state.soundEventId})`
-    )
+    // console.log(
+    //   `[TabataTimer] Queued sound cue: ${sound} (#${this.state.soundEventId})`
+    // )
     // Broadcast immediately so clients can play sound
     this.broadcastState({ timerData: this.getState() })
   }
@@ -156,9 +156,9 @@ class TabataTimer {
       this.state.timeRemaining = START_COUNTDOWN_DURATION
       this.state.cycle = 0 // Pre-start
       this.resetCountdownMarker()
-      console.log(
-        `Starting universal PREPARE countdown for ${this.state.mode} mode.`
-      )
+      // console.log(
+      //   `Starting universal PREPARE countdown for ${this.state.mode} mode.`
+      // )
     }
     // If resuming after PAUSE, restore previous state (no PREPARE)
     // Note: For Stopwatch, runningTotal is used to resume count up.
@@ -183,7 +183,7 @@ class TabataTimer {
     this.interval = null
     this.startTime = null
 
-    console.log('Timer paused.')
+    // console.log('Timer paused.')
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -205,7 +205,7 @@ class TabataTimer {
     this.startTime = null
     this.interval = null
 
-    console.log('Timer stopped and reset.')
+    // console.log('Timer stopped and reset.')
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -231,9 +231,9 @@ class TabataTimer {
       this.state.timeRemaining = sanitizedWork
     }
 
-    console.log(
-      `Timer configuration updated. Work: ${sanitizedWork}s, Rest: ${sanitizedRest}s, Cycles: ${sanitizedCycles}`
-    )
+    // console.log(
+    //   `Timer configuration updated. Work: ${sanitizedWork}s, Rest: ${sanitizedRest}s, Cycles: ${sanitizedCycles}`
+    // )
     this.broadcastState({ timerData: this.getState() })
   }
 
@@ -250,13 +250,13 @@ class TabataTimer {
           this.state.timeElapsed = 0
           this.runningTotal = 0
           this.startTime = Date.now() // Reset start time for accurate count up
-          console.log('Transition from PREPARE to STOPWATCH RUNNING.')
+          // console.log('Transition from PREPARE to STOPWATCH RUNNING.')
         } else {
           // Start Tabata Cycle 1 WORK
           this.state.cycle = 1
           this.state.currentPhase = 'WORK'
           this.state.timeRemaining = this.state.workDuration
-          console.log('Transition from PREPARE to TABATA WORK (Cycle 1).')
+          // console.log('Transition from PREPARE to TABATA WORK (Cycle 1).')
         }
         break
 
@@ -265,12 +265,12 @@ class TabataTimer {
         if (this.state.cycle < this.state.totalCycles) {
           this.state.currentPhase = 'REST'
           this.state.timeRemaining = this.state.restDuration
-          console.log(`Transition to REST for cycle ${this.state.cycle}`)
+          // console.log(`Transition to REST for cycle ${this.state.cycle}`)
         } else {
           this.state.currentPhase = 'COOLDOWN'
           this.state.timeRemaining = COOLDOWN_DURATION
           this.pauseTimer() // Auto-pause after last cycle
-          console.log('Tabata finished. Transition to COOLDOWN.')
+          // console.log('Tabata finished. Transition to COOLDOWN.')
         }
         break
 
@@ -279,7 +279,7 @@ class TabataTimer {
         this.state.cycle += 1
         this.state.currentPhase = 'WORK'
         this.state.timeRemaining = this.state.workDuration
-        console.log(`Transition to WORK for cycle ${this.state.cycle}`)
+        // console.log(`Transition to WORK for cycle ${this.state.cycle}`)
         break
 
       case 'IDLE':
@@ -319,7 +319,7 @@ class TabataTimer {
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
     this.broadcastState({ timerData: this.getState() })
-    console.log(`Mode set to ${mode}.`)
+    // console.log(`Mode set to ${mode}.`)
   }
 }
 

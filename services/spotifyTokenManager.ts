@@ -36,7 +36,7 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        // console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
       }
     } catch (err) {
       console.warn('Failed to load Spotify tokens:', err)
@@ -69,12 +69,12 @@ export class SpotifyTokenManager {
       }
 
       const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
-      )
+      // console.log(
+      //   'Spotify token refresh successful. Status:',
+      //   response.status,
+      //   'Body:',
+      //   data
+      // )
 
       // Update current token with new values
       this.currentToken = {
@@ -96,7 +96,7 @@ export class SpotifyTokenManager {
         'utf8'
       )
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      // console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -113,16 +113,16 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
-      )
+      // console.log(
+      //   'Spotify access token is expiring soon, initiating refresh...'
+      // )
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
+            // console.log('Spotify access token refresh completed.')
           })
           .catch((error) => {
             this.refreshPromise = null

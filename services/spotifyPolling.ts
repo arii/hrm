@@ -7,10 +7,7 @@
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 
-const isVerboseSpotifyLogging =
-  process.env.SPOTIFY_DEBUG === 'true' ||
-  process.env.SPOTIFY_DEBUG === '1' ||
-  process.env.NODE_ENV !== 'production'
+const isVerboseSpotifyLogging = false
 
 const debugLog = (...args: unknown[]) => {
   if (isVerboseSpotifyLogging) {
