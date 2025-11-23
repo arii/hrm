@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
 
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.
@@ -8,7 +9,7 @@ export async function GET() {
   try {
     const clientId = process.env.SPOTIFY_CLIENT_ID
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-    const nextAuthUrl = process.env.NEXTAUTH_URL
+    const nextAuthUrl = getBaseURL()
     const nextAuthSecret = process.env.NEXTAUTH_SECRET
 
     return NextResponse.json({
@@ -16,9 +17,7 @@ export async function GET() {
       spotifyConfigured: !!(clientId && clientSecret),
       clientId: clientId || undefined,
       hasClientSecret: !!clientSecret,
-      redirectUri: nextAuthUrl
-        ? `${nextAuthUrl}/api/auth/callback/spotify`
-        : undefined,
+      redirectUri: getSpotifyCallbackURL(),
     })
   } catch (err) {
     console.error('Auth check failed:', err)

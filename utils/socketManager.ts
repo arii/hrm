@@ -2,15 +2,15 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
-import { WebSocket, Server as WebSocketServer } from 'ws';
-import { z } from 'zod'; // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js';
-import TabataTimer from '../services/tabataTimer.js';
+import { WebSocket, Server as WebSocketServer } from 'ws'
+import { z } from 'zod' // Import z from zod
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
   UnifiedStateMessage,
-} from '../types/websocket.js';
+} from '../types/websocket.js'
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer
@@ -156,7 +156,6 @@ const handleIncomingMessage = (
           tabataServiceInstance.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
-            totalCycles: message.totalCycles,
           })
         }
         break
@@ -191,8 +190,12 @@ const handleIncomingMessage = (
   }
 }
 
+<<<<<<< HEAD
 export { initSocketManager };
 <<<<<<< HEAD
 =======
 
 >>>>>>> 554cd5b84ebff42a5b01602823e73c3c3b2a3407
+=======
+export { initSocketManager }
+>>>>>>> origin/leader
