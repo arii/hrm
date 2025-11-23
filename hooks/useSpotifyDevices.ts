@@ -1,5 +1,5 @@
 // File: hooks/useSpotifyDevices.ts
-import { SpotifyDevice } from '@/types'
+import { SpotifyDevice } from '@/types/websocket'
 import { useCallback, useEffect, useState } from 'react'
 
 export const useSpotifyDevices = (isSpotifyReady: boolean) => {

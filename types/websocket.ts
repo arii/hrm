@@ -75,6 +75,7 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
+  deviceId?: string
 }
 
 export interface TimerModeCommandMessage {
@@ -101,6 +102,16 @@ export interface SpotifyCommandMessage {
   volume?: number // Optional: for SET_VOLUME command (0-100)
   playlistUri?: string // Optional: for PLAY command
   token?: string // Optional: for passing access token
+}
+
+export interface SpotifyDevice {
+  id: string
+  is_active: boolean
+  is_private_session: boolean
+  is_restricted: boolean
+  name: string
+  type: string
+  volume_percent: number | null
 }
 
 /**
