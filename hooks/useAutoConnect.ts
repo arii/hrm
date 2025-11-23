@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // File: hooks/useAutoConnect.ts
+=======
+>>>>>>> origin/leader
 import { useState, useEffect, useRef } from 'react'
 
 const MAX_DELAY = 30000 // 30 seconds
@@ -11,6 +14,7 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
   const [attempts, setAttempts] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+<<<<<<< HEAD
   const savedConnectFn = useRef(connectFn)
   useEffect(() => {
     savedConnectFn.current = connectFn
@@ -43,12 +47,40 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
         delay = Math.min(delay * 2, MAX_DELAY)
         timeoutRef.current = setTimeout(tryConnect, delay)
       }
+=======
+  useEffect(() => {
+    let isMounted = true
+    const tryConnect = async (delay: number) => {
+      if (!start || !isMounted) {
+        return
+      }
+
+      setIsConnecting(true)
+      setAttempts((prev) => prev + 1)
+
+      const success = await connectFn()
+
+      if (isMounted) {
+        if (success) {
+          setIsConnecting(false)
+          setAttempts(0)
+        } else {
+          const newDelay = Math.min(delay * 2, MAX_DELAY)
+          timeoutRef.current = setTimeout(() => tryConnect(newDelay), newDelay)
+        }
+      }
+    }
+
+    if (start) {
+      tryConnect(INITIAL_DELAY)
+>>>>>>> origin/leader
     }
 
     tryConnect()
 
     // This cleanup function runs when `start` becomes false or the component unmounts.
     return () => {
+<<<<<<< HEAD
       isActive = false
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -58,6 +90,16 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
       setAttempts(0)
     }
   }, [start])
+=======
+      isMounted = false
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      setIsConnecting(false)
+      setAttempts(0)
+    }
+  }, [start, connectFn])
+>>>>>>> origin/leader
 
   return { isConnecting, attempts }
 }

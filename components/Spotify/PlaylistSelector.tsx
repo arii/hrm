@@ -1,146 +1,166 @@
 // components/Spotify/PlaylistSelector.tsx
-import { MusicNote, Search } from '@mui/icons-material';
+import { MusicNote, Search } from '@mui/icons-material'
 import {
-    Alert,
-    Autocomplete,
-    Box,
-    Chip,
-    CircularProgress,
-    Divider,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemText,
-    Paper,
-    TextField,
-    Typography,
-} from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useDebounce } from '../../hooks/useDebounce';
+  Alert,
+  Autocomplete,
+  Box,
+  Chip,
+  CircularProgress,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useDebounce } from '../../hooks/useDebounce'
 
 interface Playlist {
-  name: string;
-  uri: string;
-  id?: string;
-  isPreset?: boolean;
-  isSearchResult?: boolean;
-  imageUrl?: string | null;
-  description?: string | null;
-  trackCount?: number;
-  owner?: string;
+  name: string
+  uri: string
+  id?: string
+  isPreset?: boolean
+  isSearchResult?: boolean
+  imageUrl?: string | null
+  description?: string | null
+  trackCount?: number
+  owner?: string
 }
 
 interface PlaylistSelectorProps {
-  onPlaylistSelected: (uri: string) => void;
+  onPlaylistSelected: (uri: string) => void
 }
 
-const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected }) => {
-  const [presetPlaylists, setPresetPlaylists] = useState<Playlist[]>([]);
-  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
-  const [searchResults, setSearchResults] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
+  onPlaylistSelected,
+}) => {
+  const [presetPlaylists, setPresetPlaylists] = useState<Playlist[]>([])
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([])
+  const [searchResults, setSearchResults] = useState<Playlist[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
+    null
+  )
 
-  const debouncedSearch = useDebounce(searchQuery, 500);
+  const debouncedSearch = useDebounce(searchQuery, 500)
 
   useEffect(() => {
     const fetchPlaylists = async () => {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
       try {
-        const response = await fetch('/api/spotify/playlists');
+        const response = await fetch('/api/spotify/playlists')
         if (!response.ok) {
-          throw new Error('Failed to fetch playlists');
+          throw new Error('Failed to fetch playlists')
         }
-        const data = await response.json();
-        const presets = (data.presetPlaylists || []).map((p: Playlist) => ({ ...p, isPreset: true }));
-        const user = (data.userPlaylists || []).map((p: Playlist) => ({ ...p, isPreset: false }));
-        setPresetPlaylists(presets);
-        setUserPlaylists(user);
+        const data = await response.json()
+        const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
+          ...p,
+          isPreset: true,
+        }))
+        const user = (data.userPlaylists || []).map((p: Playlist) => ({
+          ...p,
+          isPreset: false,
+        }))
+        setPresetPlaylists(presets)
+        setUserPlaylists(user)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to fetch playlists';
-        setError(message);
-        console.error('Error fetching playlists:', error);
+        const message =
+          error instanceof Error ? error.message : 'Failed to fetch playlists'
+        setError(message)
+        console.error('Error fetching playlists:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchPlaylists();
-  }, []);
+    fetchPlaylists()
+  }, [])
 
   // Fetch search results when user types
   useEffect(() => {
     if (!debouncedSearch.trim()) {
-      setSearchResults([]);
-      return;
+      setSearchResults([])
+      return
     }
 
     const fetchSearchResults = async () => {
-      setSearchLoading(true);
+      setSearchLoading(true)
       try {
-        const response = await fetch(`/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`);
+        const response = await fetch(
+          `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+        )
         if (!response.ok) {
-          throw new Error('Failed to search playlists');
+          throw new Error('Failed to search playlists')
         }
-        const data = await response.json();
-        setSearchResults(data.items || []);
+        const data = await response.json()
+        setSearchResults(data.items || [])
       } catch (error) {
-        console.error('Error searching playlists:', error);
-        setSearchResults([]);
+        console.error('Error searching playlists:', error)
+        setSearchResults([])
       } finally {
-        setSearchLoading(false);
+        setSearchLoading(false)
       }
-    };
+    }
 
-    fetchSearchResults();
-  }, [debouncedSearch]);
+    fetchSearchResults()
+  }, [debouncedSearch])
 
   const allPlaylists = useMemo(() => {
-    return [...presetPlaylists, ...userPlaylists];
-  }, [presetPlaylists, userPlaylists]);
+    return [...presetPlaylists, ...userPlaylists]
+  }, [presetPlaylists, userPlaylists])
 
   const filteredPlaylists = useMemo(() => {
     if (!debouncedSearch.trim()) {
-      return allPlaylists;
+      return allPlaylists
     }
-    
+
     // When searching, combine local matches with Spotify search results
-    const query = debouncedSearch.toLowerCase();
-    const localMatches = allPlaylists.filter(
-      (playlist) => playlist.name.toLowerCase().includes(query)
-    );
-    
+    const query = debouncedSearch.toLowerCase()
+    const localMatches = allPlaylists.filter((playlist) =>
+      playlist.name.toLowerCase().includes(query)
+    )
+
     // Combine local matches with search results, removing duplicates by URI
-    const combined = [...localMatches];
-    const existingUris = new Set(localMatches.map(p => p.uri));
-    
+    const combined = [...localMatches]
+    const existingUris = new Set(localMatches.map((p) => p.uri))
+
     searchResults.forEach((playlist) => {
       if (!existingUris.has(playlist.uri)) {
-        combined.push(playlist);
+        combined.push(playlist)
       }
-    });
-    
-    return combined;
-  }, [allPlaylists, debouncedSearch, searchResults]);
+    })
+
+    return combined
+  }, [allPlaylists, debouncedSearch, searchResults])
 
   const handlePlaylistSelect = (playlist: Playlist | null) => {
-    setSelectedPlaylist(playlist);
+    setSelectedPlaylist(playlist)
     if (playlist) {
-      onPlaylistSelected(playlist.uri);
+      onPlaylistSelected(playlist.uri)
     }
-  };
+  }
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          py: 4,
+        }}
+      >
         <CircularProgress />
         <Typography sx={{ ml: 2 }}>Loading playlists...</Typography>
       </Box>
-    );
+    )
   }
 
   if (error) {
@@ -148,7 +168,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
       <Alert severity="error" sx={{ mb: 2 }}>
         {error}
       </Alert>
-    );
+    )
   }
 
   return (
@@ -166,9 +186,15 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
             placeholder="Search your playlists or browse popular playlists..."
             InputProps={{
               ...params.InputProps,
-              startAdornment: <Search sx={{ color: 'text.secondary', mr: 1 }} />,
+              startAdornment: (
+                <Search sx={{ color: 'text.secondary', mr: 1 }} />
+              ),
               endAdornment: searchLoading ? (
-                <CircularProgress size={20} aria-label="Searching" sx={{ mr: 1 }} />
+                <CircularProgress
+                  size={20}
+                  aria-label="Searching"
+                  sx={{ mr: 1 }}
+                />
               ) : null,
             }}
           />
@@ -190,7 +216,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                   }}
                 />
               ) : (
-                <MusicNote sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                <MusicNote
+                  sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }}
+                />
               )}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="body2" noWrap>
@@ -221,7 +249,12 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
           </Box>
         )}
         noOptionsText={
-          debouncedSearch ? `No playlists found matching "${debouncedSearch}"` : 'No playlists available'
+          debouncedSearch ? (
+            // eslint-disable-next-line react/no-unescaped-entities
+            <>No playlists found matching "{debouncedSearch}"</>
+          ) : (
+            'No playlists available'
+          )
         }
         sx={{ mb: 2 }}
       />
@@ -260,7 +293,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                         }}
                       />
                     ) : (
-                      <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
+                      <MusicNote
+                        sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                      />
                     )}
                     <ListItemText
                       primary={playlist.name}
@@ -311,7 +346,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                         }}
                       />
                     ) : (
-                      <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
+                      <MusicNote
+                        sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                      />
                     )}
                     <ListItemText
                       primary={playlist.name}
@@ -319,8 +356,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                         playlist.trackCount !== undefined
                           ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
                           : playlist.owner
-                          ? playlist.owner
-                          : undefined
+                            ? playlist.owner
+                            : undefined
                       }
                     />
                   </ListItemButton>
@@ -332,9 +369,19 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
       )}
 
       {searchQuery && (
-        <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto', mt: 1 }}>
+        <Paper
+          variant="outlined"
+          sx={{ maxHeight: 300, overflow: 'auto', mt: 1 }}
+        >
           {searchLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 3,
+              }}
+            >
               <CircularProgress size={24} />
               <Typography sx={{ ml: 2 }} variant="body2" color="text.secondary">
                 Searching Spotify...
@@ -362,7 +409,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                       }}
                     />
                   ) : (
-                    <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
+                    <MusicNote
+                      sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                    />
                   )}
                   <ListItemText
                     primary={playlist.name}
@@ -370,8 +419,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
                       playlist.trackCount !== undefined
                         ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
                         : playlist.owner
-                        ? playlist.owner
-                        : undefined
+                          ? playlist.owner
+                          : undefined
                     }
                   />
                   {playlist.isPreset && (
@@ -395,14 +444,19 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({ onPlaylistSelected 
           ) : (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
+<<<<<<< HEAD
                 No playlists found matching &quot;{searchQuery}&quot;
+=======
+                {/* eslint-disable-next-line react/no-unescaped-entities */}
+                No playlists found matching "{searchQuery}"
+>>>>>>> origin/leader
               </Typography>
             </Box>
           )}
         </Paper>
       )}
     </Box>
-  );
-};
+  )
+}
 
-export default PlaylistSelector;
+export default PlaylistSelector
