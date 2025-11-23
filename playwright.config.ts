@@ -14,7 +14,6 @@ const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
 
 // Build ignore list based on available credentials
 const testIgnoreList = [
-  'integration-tests.spec.ts',
   'comprehensive-assessment.spec.ts',
   'core-functionality.spec.ts',
   'mobile-essential.spec.ts',

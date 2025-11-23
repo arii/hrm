@@ -4,6 +4,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { getBaseURL } from '../../utils/urls'
+import { mockSpotifyLogin } from './test-helpers'
 
 const BASE_URL = getBaseURL()
 
@@ -87,5 +88,53 @@ test.describe('Integration Tests', () => {
     await expect(page).toHaveScreenshot('error-handling.png', {
       fullPage: true,
     })
+  })
+
+  test('Timer and Spotify integration', async ({ page, context }) => {
+    const controlTab = page
+    const dashboardTab = await context.newPage()
+
+    // Authenticate Spotify
+    await mockSpotifyLogin(controlTab)
+
+    // Initialize tabs
+    await dashboardTab.goto(BASE_URL)
+
+    // Start timer and verify Spotify playback
+    await controlTab.click('button:has-text("START")')
+    await dashboardTab.waitForSelector('[data-testid="spotify-play-button"]', {
+      state: 'visible',
+    })
+
+    // Stop timer and verify Spotify is paused
+    await controlTab.click('button:has-text("STOP")')
+    await dashboardTab.waitForSelector('[data-testid="spotify-pause-button"]', {
+      state: 'hidden',
+    })
+
+    await dashboardTab.close()
+  })
+
+  test('Settings persistence', async ({ page }) => {
+    await page.goto(`${BASE_URL}/client/connect`)
+    await page.waitForSelector('text=/Bluetooth HRM/', { timeout: 5000 })
+
+    // Fill user information
+    const userName = 'Persistent User'
+    const userAge = '42'
+    await page.fill('input[placeholder="Your name"]', userName)
+    await page.fill('input[type="number"][placeholder="25"]', userAge)
+
+    // Verify the values are set
+    await expect(page.locator(`input[value="${userName}"]`)).toBeVisible()
+    await expect(page.locator(`input[value="${userAge}"]`)).toBeVisible()
+
+    // Reload the page
+    await page.reload()
+    await page.waitForSelector('text=/Bluetooth HRM/', { timeout: 5000 })
+
+    // Verify the values are still there
+    await expect(page.locator(`input[value="${userName}"]`)).toBeVisible()
+    await expect(page.locator(`input[value="${userAge}"]`)).toBeVisible()
   })
 })

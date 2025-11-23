@@ -151,4 +151,18 @@ export async function waitForWebSocketConnection(page: Page) {
   )
 }
 
+export async function mockSpotifyLogin(page: Page) {
+  await page.goto(`${BASE_URL}/client/connect`)
+  await page.click('text=/Spotify/')
+
+  // Mock the Spotify authentication by setting a local storage item
+  await page.evaluate(() => {
+    localStorage.setItem('spotify_access_token', 'mock_token')
+    localStorage.setItem('spotify_refresh_token', 'mock_refresh_token')
+  })
+
+  // Navigate back to the control page to continue the test
+  await page.goto(`${BASE_URL}/client/control`)
+}
+
 export { BASE_URL }
