@@ -7,8 +7,6 @@ import {
   Slider,
   Stack,
   Typography,
-  useMediaQuery,
-  useTheme,
   Menu,
   MenuItem,
 } from '@mui/material'
@@ -57,15 +55,16 @@ const SpotifyPlayer = ({
 
   useEffect(() => {
     if (spotifyData.isPlaying && spotifyData.progressMs && spotifyData.durationMs) {
-      const start = Date.now() - spotifyData.progressMs
+      const { durationMs, progressMs } = spotifyData
+      const start = Date.now() - progressMs
       const timer = setInterval(() => {
         const elapsed = Date.now() - start
-        const newProgress = (elapsed / spotifyData.durationMs) * 100
+        const newProgress = (elapsed / durationMs) * 100
         setProgress(newProgress > 100 ? 100 : newProgress)
       }, 1000)
       return () => clearInterval(timer)
     }
-  }, [spotifyData.isPlaying, spotifyData.progressMs, spotifyData.durationMs])
+  }, [spotifyData])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
@@ -301,7 +300,7 @@ const SpotifyPlayer = ({
           </>
         )}
       </Stack>
-      {spotifyData.durationMs > 0 && (
+      {typeof spotifyData.durationMs === 'number' && spotifyData.durationMs > 0 && (
         <LinearProgress
           variant="determinate"
           value={progress}
