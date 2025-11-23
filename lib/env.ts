@@ -45,8 +45,12 @@ const envSchema = z.object({
     .transform((val) => val === 'true' || val === '1'),
 })
 
+// --- Conditionally Relax Schema for Testing ---
+const finalSchema =
+  process.env.TESTING === 'true' ? envSchema.partial() : envSchema
+
 // --- Parse and Export Environment Variables ---
-const parsedEnv = envSchema.safeParse(process.env)
+const parsedEnv = finalSchema.safeParse(process.env)
 
 if (!parsedEnv.success) {
   console.error(
