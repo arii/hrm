@@ -14,10 +14,10 @@ import {
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+export let tabataServiceInstance: TabataTimer
+export let spotifyServiceInstance: SpotifyPolling
 
-const clientData = new Map<string, HrmData>()
+export const clientData = new Map<string, HrmData>()
 
 interface Services {
   tabataService: TabataTimer
