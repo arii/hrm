@@ -14,7 +14,6 @@ import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { UnifiedStateMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>

@@ -5,7 +5,8 @@
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { SpotifyData, UnifiedStateMessage } from '../../types/websocket'
+import { SpotifyData } from '../../types/websocket'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the SpotifyTokenManager module
 jest.mock('../../services/spotifyTokenManager')
@@ -41,17 +42,6 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-<<<<<<< HEAD
-    const spotifyServiceAny = spotifyService as any
-    if (spotifyServiceAny.pollInterval) {
-      clearInterval(spotifyServiceAny.pollInterval as NodeJS.Timeout)
-      spotifyServiceAny.pollInterval = null
-    }
-
-    if (spotifyServiceAny.tokenRefreshInterval) {
-      clearInterval(spotifyServiceAny.tokenRefreshInterval as NodeJS.Timeout)
-      spotifyServiceAny.tokenRefreshInterval = null
-=======
     if ((spotifyService as unknown)['pollInterval']) {
       clearInterval(
         (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
@@ -64,7 +54,6 @@ describe('SpotifyPolling Service', () => {
         (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
       )
       ;(spotifyService as unknown)['tokenRefreshInterval'] = null
->>>>>>> origin/leader
     }
   })
 
