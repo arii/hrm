@@ -32,7 +32,10 @@
     "kill-all": "./scripts/kill-all.sh",
     "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
     "test:clean:update": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual:update",
-    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222"
+    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+    "release:patch": "npm version patch -m \"release: patch %s\"",
+    "release:minor": "npm version minor -m \"release: minor %s\"",
+    "release:major": "npm version major -m \"release: major %s\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
