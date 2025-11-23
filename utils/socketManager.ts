@@ -32,6 +32,9 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
 
+  // Start the interval-based broadcaster
+  const broadcastInterval = setInterval(broadcastHrmUpdate, 500) // Broadcast every 500ms
+
   wssInstance.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     console.log(`WebSocket Client connected: ${clientId}`)
@@ -49,7 +52,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     // Send initial state upon connection
     ws.send(
       JSON.stringify({
-        type: 'STATE_UPDATE',
+        type: 'INITIAL_STATE',
         hrmData: Array.from(clientData.values()),
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
@@ -63,25 +66,32 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       clientData.delete(clientId)
-      broadcastState()
+      broadcastHrmUpdate() // Immediately broadcast the removal
     })
   })
+
+  // Return a dispose function to clear the interval
+  return () => {
+    clearInterval(broadcastInterval)
+  }
 }
 
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: 'STATE_UPDATE',
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
+/**
+ * Broadcasts only the HRM data to all clients.
+ * This is designed for high-frequency updates.
+ */
+const broadcastHrmUpdate = () => {
+  if (wssInstance.clients.size === 0) return
+
+  const message = {
+    type: 'HRM_UPDATE',
+    payload: Array.from(clientData.values()),
   }
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
-  )
+  const messageString = JSON.stringify(message)
+
   wssInstance.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message))
+      client.send(messageString)
     }
   })
 }
@@ -133,7 +143,7 @@ const handleIncomingMessage = (
             clientData.get(clientId)
           )
         }
-        broadcastState()
+        // No broadcast here; handled by interval broadcaster
         break
       }
 

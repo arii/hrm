@@ -44,11 +44,19 @@ export interface SpotifyData {
  * The single, unified state object broadcast by the server to all clients.
  */
 export interface UnifiedStateMessage {
-  type: 'STATE_UPDATE'
+  type: 'INITIAL_STATE' | 'STATE_UPDATE'
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+}
+
+/**
+ * A specialized message for high-frequency heart rate data updates.
+ */
+export interface HrmUpdateMessage {
+  type: 'HRM_UPDATE'
+  payload: HrmData[]
 }
 
 /**
