@@ -1,6 +1,14 @@
 // File: components/HrTile.tsx
 'use client'
+<<<<<<< HEAD
 import { Card, CardContent, Tooltip, Typography } from '@mui/material'
+=======
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { memo } from 'react'
+>>>>>>> origin/leader
 
 export interface HrTileProps {
   name: string

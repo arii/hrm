@@ -1,15 +1,14 @@
 'use client'
 
-import { HeartBroken, Science } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-} from '@mui/material'
+import HeartBroken from '@mui/icons-material/HeartBroken'
+import Science from '@mui/icons-material/Science'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import useWebSocket from '../../../hooks/useWebSocket'

@@ -4,7 +4,8 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
-import { Container, Grid } from '@mui/material'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
 import { useEffect, useState } from 'react'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'

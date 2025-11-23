@@ -1,25 +1,21 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-import {
-  MusicNote,
-  Pause,
-  PlayArrow,
-  SkipNext,
-  SkipPrevious,
-  VolumeUp,
-} from '@mui/icons-material'
-import {
-  Box,
-  Card,
-  CardContent,
-  FormControl,
-  IconButton,
-  MenuItem,
-  Select,
-  Slider,
-  Stack,
-  Typography,
-} from '@mui/material'
+import MusicNote from '@mui/icons-material/MusicNote'
+import Pause from '@mui/icons-material/Pause'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import SkipNext from '@mui/icons-material/SkipNext'
+import SkipPrevious from '@mui/icons-material/SkipPrevious'
+import VolumeUp from '@mui/icons-material/VolumeUp'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import FormControl from '@mui/material/FormControl'
+import IconButton from '@mui/material/IconButton'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import useWebSocket from '@/hooks/useWebSocket'
