@@ -1,28 +1,21 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
-import SpeakerIcon from '@mui/icons-material/Speaker'
 import {
   Box,
   Button,
   IconButton,
-  LinearProgress,
-  Menu,
-  MenuItem,
-  Slider,
-  Stack,
   Typography,
 } from '@mui/material'
-import { signIn, signOut, useSession } from 'next-auth/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 interface SpotifyDevice {
   id: string
@@ -35,13 +28,11 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, sendData } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume } = useVolumePreference(70)
-  const lastSentVolumeRef = useRef<string | null>(null)
+  useVolumePreference(70)
   const {
-    player,
     isReady,
     deviceId,
     error: webPlaybackError,
@@ -49,55 +40,9 @@ const SpotifyDisplay = () => {
   } = useSpotifyWebPlayback()
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
-  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+  const [_deviceMenuAnchor, _setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
-  const deviceMenuOpen = Boolean(deviceMenuAnchor)
-
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-      lastSentVolumeRef.current = messageKey
-    },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
-  )
-
-  useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
-
-  useEffect(() => {
-    if (!player || typeof player.setVolume !== 'function') return
-    const scalar = Math.min(Math.max(volume / 100, 0), 1)
-    player
-      .setVolume(scalar)
-      .catch((err) =>
-        console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
-      )
-  }, [player, volume])
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
@@ -169,18 +114,8 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand(command)
   }
 
-  const handleDeviceSelect = (deviceId: string) => {
-    setSelectedDeviceId(deviceId)
-    sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-    setDeviceMenuAnchor(null)
-  }
-
   const handleSpotifyLogin = () => {
     signIn('spotify', { callbackUrl: '/' })
-  }
-
-  const handleSpotifyLogout = () => {
-    signOut({ callbackUrl: '/' })
   }
 
   if (!spotifyLoggedIn) {
