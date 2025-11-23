@@ -1,5 +1,5 @@
 // utils/serviceRegistry.ts
-import SpotifyPolling from '../services/spotifyPolling.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 
 interface ServiceRegistry {
