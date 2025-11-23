@@ -6,11 +6,15 @@
  */
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-// Assuming your authOptions are in 'app/api/auth/[...nextauth]/route.ts'
-// Adjust the path if you've placed it in 'lib/auth' as your comment suggests
 import { authOptions } from '@/lib/auth'
+import { withValidation } from '@/lib/middleware/validation'
+import { spotifyControlSchema } from '@/lib/validation/schemas'
+import { z } from 'zod'
 
-export async function POST(req: NextRequest) {
+const handler = async (
+  req: NextRequest,
+  body: z.infer<typeof spotifyControlSchema>
+) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
@@ -20,11 +24,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { command } = await req.json()
-
-  if (!['PLAY', 'NEXT', 'PREVIOUS'].includes(command)) {
-    return NextResponse.json({ error: 'Invalid command' }, { status: 400 })
-  }
+  const { command } = body
 
   try {
     const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player'
@@ -81,3 +81,5 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
+export const POST = withValidation(spotifyControlSchema, handler)
