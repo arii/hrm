@@ -34,12 +34,7 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-<<<<<<< HEAD
   const { data: session, status } = useSession()
-=======
-  const { data: session } = useSession()
-  console.log('spotifyData.trackName:', spotifyData.trackName)
->>>>>>> origin/leader
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
