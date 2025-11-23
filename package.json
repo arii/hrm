@@ -36,9 +36,9 @@
     "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
     "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
-    "release:patch": "npm version patch -m \"release: patch %s\"",
-    "release:minor": "npm version minor -m \"release: minor %s\"",
-    "release:major": "npm version major -m \"release: major %s\""
+    "release:patch": "pnpm version patch -m \"release: patch %s\"",
+    "release:minor": "pnpm version minor -m \"release: minor %s\"",
+    "release:major": "pnpm version major -m \"release: major %s\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
