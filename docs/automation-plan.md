@@ -29,7 +29,7 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
 
 1. **Environment Orchestration Script**
    - Create `scripts/start-dev-with-chrome.ts` (run via ts-node) to:
-     - Ensure dev server (`npm run dev:clean`) is running in background.
+     - Ensure dev server (`pnpm run dev:clean`) is running in background.
      - Launch Chrome with required debugging flags (reusing documented flags) and record PID.
      - Optionally start the Chrome DevTools MCP server for advanced workflows.
      - Emit structured status logs and teardown instructions.
@@ -83,12 +83,12 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
 
 4. **Wire Supporting Utilities**
    - Add helper script shortcuts if needed, e.g., `automation:reset` for cleaning screenshots directory, `automation:report` to summarize outputs.
-   - Ensure `playwright test` integration remains separate (`npm run test:visual`) but reference the new automation scripts in documentation.
+   - Ensure `playwright test` integration remains separate (`pnpm run test:visual`) but reference the new automation scripts in documentation.
 
 5. **Dependency Verification**
    - Confirm `tsx` (or `ts-node`) and `playwright` are present in `devDependencies`; add `@playwright/test` if not already installed.
-   - Update `npm run lint` or CI workflows if they should lint new TypeScript automation files.
+   - Update `pnpm run lint` or CI workflows if they should lint new TypeScript automation files.
 
 6. **Documentation & Task Sync**
-   - Mirror new npm scripts in `.vscode/tasks.json` for quick access via VS Code Run panel.
-   - Update `README.md` and this plan with usage examples (`npm run automation:baseline`).
+   - Mirror new pnpm scripts in `.vscode/tasks.json` for quick access via VS Code Run panel.
+   - Update `README.md` and this plan with usage examples (`pnpm run automation:baseline`).

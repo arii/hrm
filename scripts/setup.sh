@@ -19,8 +19,8 @@ else
   echo ".env.local already exists, skipping creation."
 fi
 
-# Verify package-lock.json integrity and install dependencies
-echo "Installing dependencies with npm ci..."
-npm ci
+# Verify pnpm-lock.yaml integrity and install dependencies
+echo "Installing dependencies with pnpm..."
+pnpm install --frozen-lockfile
 
 echo "Setup complete."
