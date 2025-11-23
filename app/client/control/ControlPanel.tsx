@@ -13,10 +13,15 @@ import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
 
-const SpotifyControls = dynamic(
-  () => import('./components/SpotifyControls'),
-  { loading: () => <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1, mb: 2 }}/> }
-)
+const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
+  loading: () => (
+    <Skeleton
+      variant="rectangular"
+      height={280}
+      sx={{ borderRadius: 1, mb: 2 }}
+    />
+  ),
+})
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {

@@ -89,7 +89,10 @@ export const WebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      typeof window === 'undefined' ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return
     }
 
@@ -102,8 +105,10 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       if (pendingActions.current.length > 0) {
-        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
-        pendingActions.current.forEach(action => {
+        console.log(
+          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
+        )
+        pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
@@ -147,7 +152,8 @@ export const WebSocketProvider = ({
             timerData: message.timerData || prev.timerData,
             spotifyData: message.spotifyData || prev.spotifyData,
             spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
+              message.spotifyServiceInitialized ??
+              prev.spotifyServiceInitialized,
           }))
         }
       } catch (e) {
@@ -178,7 +184,10 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
+      localStorage.setItem(
+        'pendingActions',
+        JSON.stringify(pendingActions.current)
+      )
     }
   }, [])
 

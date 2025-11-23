@@ -87,7 +87,7 @@ export const authOptions: AuthOptions = {
   ],
   // Handle reverse proxy configuration
   ...(process.env.NODE_ENV === 'production' && {
-    trustHost: true
+    trustHost: true,
   }),
   cookies: {
     sessionToken: {
@@ -98,9 +98,12 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         // Set domain based on environment
-        domain: process.env.NODE_ENV === 'production' ? 
-          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
-          undefined,
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.NEXTAUTH_URL
+              ? new URL(process.env.NEXTAUTH_URL).hostname
+              : undefined
+            : undefined,
       },
     },
     callbackUrl: {
@@ -110,9 +113,12 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? 
-          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
-          undefined,
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.NEXTAUTH_URL
+              ? new URL(process.env.NEXTAUTH_URL).hostname
+              : undefined
+            : undefined,
       },
     },
     csrfToken: {
@@ -122,9 +128,12 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? 
-          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
-          undefined,
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.NEXTAUTH_URL
+              ? new URL(process.env.NEXTAUTH_URL).hostname
+              : undefined
+            : undefined,
       },
     },
     pkceCodeVerifier: {
@@ -135,9 +144,12 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain: process.env.NODE_ENV === 'production' ? 
-          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
-          undefined,
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.NEXTAUTH_URL
+              ? new URL(process.env.NEXTAUTH_URL).hostname
+              : undefined
+            : undefined,
       },
     },
     state: {
@@ -148,9 +160,12 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain: process.env.NODE_ENV === 'production' ? 
-          process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).hostname : undefined :
-          undefined,
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.NEXTAUTH_URL
+              ? new URL(process.env.NEXTAUTH_URL).hostname
+              : undefined
+            : undefined,
       },
     },
   },

@@ -57,12 +57,12 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 This repository is configured with a VS Code DevContainer, which provides a fully automated, "one-click" setup.
 
 1.  **Prerequisites**:
-    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-    *   [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+    - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+    - [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
 2.  **Launch**:
-    *   Open the repository in VS Code.
-    *   Click the "Reopen in Container" button when prompted.
+    - Open the repository in VS Code.
+    - Click the "Reopen in Container" button when prompted.
 
 That's it. The container will build, install all dependencies (`pnpm install --frozen-lockfile` and Playwright), and create a `.env.local` file for you. Once the container is ready, you can start the development server:
 
