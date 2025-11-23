@@ -5,12 +5,7 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
-import {
-  TimerData,
-  TimerMode,
-  TimerPhase,
-  UnifiedStateMessage,
-} from '../types/websocket'
+import { TimerData, TimerMode, TimerPhase } from '../types/websocket'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -34,7 +29,7 @@ interface DualModeTimerState {
 
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
-  private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+  private broadcastTimerUpdate: (data: TimerData) => void
   private interval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private runningTotal: number = 0 // Stored elapsed time when paused (in seconds)
@@ -52,15 +47,15 @@ class TabataTimer {
 
   private countdownMarker: string | null = null
 
-  constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
-    this.broadcastState = broadcastState
+  constructor(broadcastTimerUpdate: (data: TimerData) => void) {
+    this.broadcastTimerUpdate = broadcastTimerUpdate
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
     // Broadcast immediately so clients can play sound
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   private resetCountdownMarker() {
@@ -128,7 +123,7 @@ class TabataTimer {
       }
     }
 
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   private startTimer() {
@@ -148,7 +143,7 @@ class TabataTimer {
     // Note: For Stopwatch, runningTotal is used to resume count up.
 
     this.interval = setInterval(this.tick, 1000)
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   private pauseTimer() {
@@ -167,7 +162,7 @@ class TabataTimer {
     this.interval = null
     this.startTime = null
 
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   private stopTimer() {
@@ -187,7 +182,7 @@ class TabataTimer {
     this.startTime = null
     this.interval = null
 
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   // --- Configuration ---
@@ -204,7 +199,7 @@ class TabataTimer {
       this.state.timeRemaining = sanitizedWork
     }
 
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 
   // --- Universal Transition Logic ---
@@ -276,7 +271,7 @@ class TabataTimer {
     this.state.timeElapsed = 0
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
-    this.broadcastState({ timerData: this.getState() })
+    this.broadcastTimerUpdate(this.getState())
   }
 }
 
