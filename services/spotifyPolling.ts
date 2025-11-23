@@ -1,12 +1,25 @@
+<<<<<<< HEAD
 // File: services/spotifyPolling.ts (Spotify Polling Service - Typed)
 /**
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
  * Bridges the REST API data to the real-time WebSocket broadcast.
  */
 import { AccessToken } from '@spotify/web-api-ts-sdk'
+=======
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+>>>>>>> origin/leader
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import { SpotifyApiService } from './spotifyApi.js'
+
+// Utility: Safely parse JSON, fallback to text
+function safeParseJSON(input: string): unknown {
+  try {
+    return JSON.parse(input)
+  } catch {
+    return input // Return raw text if not JSON
+  }
+}
 
 const isVerboseSpotifyLogging =
   process.env.SPOTIFY_DEBUG === 'true' || process.env.SPOTIFY_DEBUG === '1'
@@ -25,6 +38,17 @@ type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'PAUSE'
+
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+  refresh_token?: string
+  scope: string
+}
+
+// We use SDK types now, but keep internal state types as needed.
+// Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -126,6 +150,8 @@ export class SpotifyPolling {
    */
   public setRefreshToken(_token: string) {
     debugLog('Spotify Refresh Token signal received. Reloading SDK.')
+    // Reset the token manager state to ensure it re-reads the file
+    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
     setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
@@ -168,7 +194,37 @@ export class SpotifyPolling {
     if (!this.spotifyApi) return
 
     try {
+<<<<<<< HEAD
       const playbackState = await this.spotifyApi.getCurrentlyPlayingTrack()
+=======
+      let playbackState
+      try {
+        playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
+      } catch (err: unknown) {
+        // If response is not JSON, fallback to text
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: unknown }).response === 'object' &&
+          (err as { response?: { text?: unknown } }).response &&
+          'text' in (err as { response: { text?: unknown } }).response &&
+          typeof (err as { response: { text?: unknown } }).response.text ===
+            'function'
+        ) {
+          const text = await (
+            err as { response: { text: () => Promise<string> } }
+          ).response.text()
+          const parsed = safeParseJSON(text)
+          if (typeof parsed === 'object' && parsed !== null) {
+            console.error('Spotify API response (parsed):', parsed)
+          } else {
+            console.error('Spotify API response (not JSON):', text)
+          }
+        }
+        throw err
+      }
+>>>>>>> origin/leader
 
       if (!playbackState) {
         // Nothing playing or 204
@@ -273,20 +329,65 @@ export class SpotifyPolling {
       return Promise.resolve()
     }
 
-    // Wrap in async IIFE to handle promise without blocking caller
     return (async () => {
       try {
-        // Most player commands require a device ID.
-        if (
-          ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS'].includes(command) &&
-          !deviceId
-        ) {
-          console.warn(
-            `[SpotifyPolling] ${command} command ignored: no deviceId provided.`
-          )
-          return
-        }
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        setTimeout(() => this.getCurrentlyPlaying(), 500)
+      } catch (error) {
+        this.logSpotifyCommandError(command, error)
+      }
+    })()
+  }
 
+  private async executeSpotifyCommand(
+    command: SpotifyCommand,
+    deviceId?: string,
+    volume?: number,
+    playlistUri?: string
+  ) {
+    if (['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS'].includes(command) && !deviceId) {
+      console.warn(
+        `[SpotifyPolling] ${command} command ignored: no deviceId provided.`
+      )
+      return
+    }
+    switch (command) {
+      case 'PLAY':
+        if (playlistUri) {
+          await this.sdk!.player.startResumePlayback(deviceId!, playlistUri)
+        } else {
+          await this.sdk!.player.startResumePlayback(deviceId!)
+        }
+        break
+      case 'PAUSE':
+        await this.sdk!.player.pausePlayback(deviceId!)
+        break
+      case 'NEXT':
+        await this.sdk!.player.skipToNext(deviceId!)
+        break
+      case 'PREVIOUS':
+        await this.sdk!.player.skipToPrevious(deviceId!)
+        break
+      case 'TRANSFER_PLAYBACK':
+        if (deviceId) {
+          await this.sdk!.player.transferPlayback([deviceId], true)
+        }
+        break
+      case 'SET_VOLUME':
+        if (volume !== undefined) {
+          const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
+          await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+        }
+        break
+      case 'LOGIN':
+        debugLog('Received LOGIN command.')
+        break
+      default:
+        console.warn(`Unknown Spotify command: ${command}`)
+    }
+  }
+
+<<<<<<< HEAD
         switch (command) {
           case 'PLAY':
             await this.spotifyApi!.startResumePlayback(deviceId!, playlistUri)
@@ -312,22 +413,86 @@ export class SpotifyPolling {
                 Math.min(100, Math.round(volume))
               )
               await this.spotifyApi!.setPlaybackVolume(clampedVolume, deviceId)
-            }
-            break
-          case 'LOGIN':
-            debugLog('Received LOGIN command.')
-            break
-          default:
-            console.warn(`Unknown Spotify command: ${command}`)
-        }
+=======
+  private async logSpotifyCommandError(
+    command: SpotifyCommand,
+    error: unknown
+  ) {
+    try {
+      if (error instanceof SyntaxError) {
+        // Suppress SyntaxError which usually occurs when Spotify returns a non-JSON response (e.g. 204 No Content or simple text error)
+        // This is "expected" behavior from the SDK in some edge cases.
+        console.warn(
+          `[SpotifyPolling] Command ${command} executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.`
+        )
+      } else if (error && typeof error === 'object') {
+        if (
+          'response' in error &&
+          (error as { response?: { text?: () => Promise<string> } }).response
+        ) {
+          try {
+            let text = '[No response text available]'
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error as { response?: unknown }).response === 'object' &&
+              (error as { response?: { text?: unknown } }).response &&
+              'text' in (error as { response: { text?: unknown } }).response &&
+              typeof (error as { response: { text?: unknown } }).response
+                .text === 'function'
+            ) {
+              try {
+                text = await (
+                  error as { response: { text: () => Promise<string> } }
+                ).response.text()
+              } catch (textError) {
+                // Sometimes calling text() itself might fail if body was already consumed or invalid
+                console.error(
+                  `Error executing Spotify command ${command}: Failed to retrieve error response text:`,
+                  textError
+                )
+                console.error(
+                  `Error executing Spotify command ${command}:`,
+                  error
+                )
+                return
+              }
 
-        // Refresh state shortly after command
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
+              const parsed = safeParseJSON(text)
+              if (typeof parsed === 'object' && parsed !== null) {
+                console.error(
+                  `Error executing Spotify command ${command}: Parsed response:`,
+                  parsed
+                )
+              } else {
+                console.error(
+                  `Error executing Spotify command ${command}: Response body:`,
+                  text
+                )
+              }
+>>>>>>> origin/leader
+            }
+          } catch (e) {
+            console.error(
+              `Error executing Spotify command ${command}: Could not read response body.`,
+              e
+            )
+          }
+        } else {
+          // Log other object errors
+          console.error(`Error executing Spotify command ${command}:`, error)
+        }
+      } else {
         console.error(`Error executing Spotify command ${command}:`, error)
       }
-    })()
+    } catch (loggingError) {
+      // Absolute failsafe to prevent logger from crashing the app
+      console.error(
+        `Error executing Spotify command ${command}: (Logging failed)`,
+        loggingError
+      )
+      console.error(`Original error for ${command}:`, error)
+    }
   }
 }
-
-export default SpotifyPolling

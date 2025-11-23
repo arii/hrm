@@ -33,3 +33,14 @@ export interface WorkoutItem {
 export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>
 }
+
+export interface SpotifyPlaylistItem {
+  id: string
+  name: string
+  uri: string
+}
+
+export interface SpotifyPlaylist {
+  name: string
+  uri: string
+}
