@@ -1,19 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-<<<<<<< HEAD
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'i.scdn.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  allowedDevOrigins: ['onasafari.ddns.net:444'],
-=======
->>>>>>> origin/leader
   async redirects() {
     return [
       {

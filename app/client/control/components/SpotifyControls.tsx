@@ -1,11 +1,5 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-<<<<<<< HEAD
-import { Card, CardContent, Typography } from '@mui/material'
-import { MusicNote } from '@mui/icons-material'
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from '@/components/SpotifyPlayer'
-=======
 import {
   MusicNote,
   Pause,
@@ -40,18 +34,21 @@ interface SpotifyDevice {
   type: string
   volume_percent: number
 }
->>>>>>> origin/leader
 
 const SpotifyControls = () => {
-  const { spotifyData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { volume, setVolume } = useVolumePreference(70)
+  const lastSentVolumeRef = useRef<string | null>(null)
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState('')
+  const [devicesLoading, setDevicesLoading] = useState(false)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     if (hasSpotifyData) {
       const fetchDevices = async () => {
@@ -165,7 +162,6 @@ const SpotifyControls = () => {
     sendVolumeCommand(volume)
   }, [volume, sendVolumeCommand])
 
->>>>>>> origin/leader
   return (
     <Card
       sx={{
@@ -190,11 +186,59 @@ const SpotifyControls = () => {
         </Typography>
 
         {hasSpotifyData ? (
-          <SpotifyPlayer
-            isMobileLayout={true}
-            showDeviceSelector={true}
-            showVolumeControl={true}
-          />
+          <Box>
+            <Typography noWrap>
+              {spotifyData.trackName} - {spotifyData.artist}
+            </Typography>
+            <Stack spacing={2} direction="row" sx={{ my: 1 }} alignItems="center" justifyContent="center">
+              <IconButton onClick={() => sendSpotifyCommand('PREVIOUS')} color="inherit"><SkipPrevious /></IconButton>
+              <IconButton onClick={() => sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')} color="inherit">
+                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+              </IconButton>
+              <IconButton onClick={() => sendSpotifyCommand('NEXT')} color="inherit"><SkipNext /></IconButton>
+            </Stack>
+            <Stack spacing={2} direction="row" sx={{ my: 1 }} alignItems="center">
+              <VolumeUp />
+              <Slider value={volume} onChange={(_, v) => setVolume(v as number)} />
+            </Stack>
+            <FormControl fullWidth size="small">
+              <Select
+                value={selectedDeviceId}
+                onChange={(e) => {
+                  const newDeviceId = e.target.value as string
+                  setSelectedDeviceId(newDeviceId)
+                  sendSpotifyCommand('TRANSFER_PLAYBACK', newDeviceId)
+                }}
+                displayEmpty
+                disabled={devicesLoading}
+                sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'grey.500',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'grey.400',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1DB954',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: 'white',
+                    },
+                }}
+              >
+                <MenuItem value="" disabled>
+                  {devicesLoading ? 'Loading Devices...' : 'Select Device'}
+                </MenuItem>
+                {availableDevices.map((device) => (
+                  <MenuItem key={device.id} value={device.id}>
+                    {device.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {devicesError && <Typography color="error">{devicesError}</Typography>}
+          </Box>
         ) : (
           <Typography
             variant="body2"

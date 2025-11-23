@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-// File: components/SpotifyDisplay.tsx
-'use client'
-=======
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
@@ -14,18 +10,16 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
->>>>>>> origin/leader
 import {
   Box,
   Button,
-  useMediaQuery,
-  useTheme,
+  IconButton,
+  Menu,
+  MenuItem,
+  Slider,
+  Typography,
 } from '@mui/material'
 import { signIn, signOut, useSession } from 'next-auth/react'
-<<<<<<< HEAD
-import useWebSocket from '@/hooks/useWebSocket'
-import SpotifyPlayer from './SpotifyPlayer'
-=======
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SpotifyDevice {
@@ -37,16 +31,10 @@ interface SpotifyDevice {
   type: string
   volume_percent: number
 }
->>>>>>> origin/leader
 
 const SpotifyDisplay = () => {
-  const { spotifyData } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
-<<<<<<< HEAD
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-=======
-  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -110,14 +98,6 @@ const SpotifyDisplay = () => {
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
@@ -183,7 +163,6 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
   }
->>>>>>> origin/leader
 
   const handleSpotifyLogin = () => {
     signIn('spotify', { callbackUrl: '/' })
@@ -226,33 +205,6 @@ const SpotifyDisplay = () => {
     )
   }
 
-<<<<<<< HEAD
-  if (!spotifyData.trackName || spotifyData.trackName === 'Awaiting Login...') {
-    return null
-  }
-
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        bottom: 56,
-        left: 0,
-        right: 0,
-        zIndex: 1100,
-        boxShadow: 3,
-        mb: 0,
-      }}
-    >
-      <SpotifyPlayer
-        isMobileLayout={isMobile}
-        showDeviceSelector={true}
-        showVolumeControl={true}
-      />
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleSpotifyLogout}
-=======
   // If we are logged in, we show the player bar.
   // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
   // or simply showing the controls so the user can transfer playback.
@@ -268,26 +220,24 @@ const SpotifyDisplay = () => {
         aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
           spotifyData.isPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
->>>>>>> origin/leader
         sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          zIndex: 2,
+          position: 'fixed',
+          bottom: 56,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          boxShadow: 3,
+          mb: 0,
+          backgroundColor: 'grey.900',
           color: 'common.white',
-          borderColor: 'grey.600',
-          '&:hover': {
-            borderColor: 'grey.500',
-            backgroundColor: 'grey.800',
-          },
+          px: 3,
+          py: 1.5,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-<<<<<<< HEAD
-        Logout
-      </Button>
-    </Box>
-  )
-=======
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {displayTrackName} {displayArtist}
@@ -461,7 +411,6 @@ const SpotifyDisplay = () => {
   }
 
   return null
->>>>>>> origin/leader
 }
 
 export default SpotifyDisplay
