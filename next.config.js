@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['onasafari.ddns.net:444'],
   async redirects() {
     return [
       {
@@ -27,6 +26,35 @@ const nextConfig = {
         source: '/hrm',
         destination: '/client/connect',
         permanent: true,
+      },
+    ]
+  },
+  async headers() {
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://sdk.scdn.co;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' blob: data: https://i.scdn.co https://*.spotifycdn.com;
+      font-src 'self';
+      frame-src 'self' https://docs.google.com https://sheets.google.com https://accounts.google.com;
+      connect-src 'self' ws: wss: https://api.spotify.com https://accounts.spotify.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      block-all-mixed-content;
+      upgrade-insecure-requests;
+    `
+
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: cspHeader.replace(/\n/g, '').trim(),
+          },
+        ],
       },
     ]
   },

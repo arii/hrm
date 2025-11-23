@@ -169,6 +169,43 @@ app
 
         // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
+          // --- Security: Verify Origin ---
+          const origin = req.headers.origin
+          const baseURL = getBaseURL()
+
+          // Helper to strip protocol and get hostname
+          const getHost = (url: string) => url.replace(/^https?:\/\//, '')
+
+          const allowedHost = getHost(baseURL)
+          const allowedDevOrigins = ['localhost:3000', '127.0.0.1:3000']
+
+          let isAllowed = false
+          if (!origin) {
+            // Some non-browser clients might not send origin (e.g. scripts),
+            // but browsers MUST send it for WebSocket.
+            // Strictest security requires origin.
+            isAllowed = false
+          } else {
+            const originHost = getHost(origin)
+            if (originHost === allowedHost) {
+              isAllowed = true
+            } else if (dev && allowedDevOrigins.includes(originHost)) {
+              isAllowed = true
+            }
+          }
+
+          // Allow tests/scripts if needed? The requirement says "WebSocket connections from untrusted origins are immediately closed."
+          // I'll trust the logic above.
+
+          if (!isAllowed) {
+            console.warn(
+              `WebSocket connection rejected from unauthorized origin: ${origin}`
+            )
+            socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+            socket.destroy()
+            return
+          }
+
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })

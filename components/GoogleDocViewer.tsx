@@ -7,6 +7,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Box, Card, CardContent, IconButton, Skeleton } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { convertGoogleDocUrl } from '../utils/urls'
 
 interface GoogleDocViewerProps {
   title: string
@@ -26,10 +27,8 @@ const GoogleDocViewer = ({
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  // Ensure embedUrl always includes ?embedded=true
-  const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? embedUrl
-    : `${embedUrl}?embedded=true`
+  // Use the centralized utility to ensure the URL is correctly formatted for embedding
+  const finalEmbedUrl = convertGoogleDocUrl(embedUrl)
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
 
@@ -69,6 +68,7 @@ const GoogleDocViewer = ({
             title={title}
             width="100%"
             height="100%"
+            loading="lazy" // Added lazy loading
             sx={{
               border: 'none',
               display: iframeLoading ? 'none' : 'block',

@@ -46,3 +46,54 @@ export const getSpotifyCallbackURL = (): string => {
     `${getBaseURL()}/api/auth/callback/spotify`
   )
 }
+
+/**
+ * Converts a Google Doc/Sheet URL to an embeddable URL.
+ * Replaces /edit with /embed and ensures ?embedded=true is present.
+ */
+export const convertGoogleDocUrl = (url: string): string => {
+  if (!url.includes('docs.google.com')) {
+    return url
+  }
+
+  let newUrl = url
+  // Use a regex to replace /edit with /embed, preserving anything before it.
+  // We'll strip anything after /edit and re-append necessary query params.
+  if (newUrl.includes('/edit')) {
+    newUrl = newUrl.split('/edit')[0] + '/embed'
+  }
+
+  // Ensure ?embedded=true is present
+  if (!newUrl.includes('?embedded=true')) {
+      // If there are other query params, append &embedded=true, otherwise ?embedded=true
+      // However, for Google Docs embed, usually it is just /embed?embedded=true or just /embed (which might work but ?embedded=true is safer).
+      // Simpler approach: if we stripped params when removing /edit, we just add ?embedded=true.
+      // But what if it was passed as /embed without query params?
+
+      // Let's handle the existing query params if any.
+      // If the url has '?', append '&embedded=true'
+      if (newUrl.includes('?')) {
+           newUrl += '&embedded=true'
+      } else {
+           newUrl += '?embedded=true'
+      }
+  }
+
+  // Special case: If I stripped everything after /edit, I lost query params.
+  // My previous logic: `newUrl = newUrl.split('/edit')[0] + '/embed'` drops query params.
+  // This is often desired because /edit params (like usp=sharing) might not apply to /embed.
+  // But if the input was `/embed` it keeps params.
+
+  // Let's refine the logic to match the test case exactly.
+  // "converts a standard /edit URL with query params to an /embed URL"
+  // Expected: 'https://docs.google.com/document/d/DOC_ID/embed?embedded=true'
+  // Input: 'https://docs.google.com/document/d/DOC_ID/edit?usp=sharing'
+
+  // So stripping params after /edit IS the desired behavior for the test case.
+
+  // What about: "preserves an existing /embed URL and ensures query param is present"
+  // Input: 'https://docs.google.com/document/d/DOC_ID/embed'
+  // Expected: 'https://docs.google.com/document/d/DOC_ID/embed?embedded=true'
+
+  return newUrl
+}
