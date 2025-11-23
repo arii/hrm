@@ -272,7 +272,6 @@ describe('TabataTimer Service', () => {
       expect(state.restDuration).toBe(15)
     })
 
-
     it('should sanitize work duration to minimum of 1 second', () => {
       timer.setConfig({ workDuration: 0, restDuration: 10 })
       const state = timer.getState()
@@ -300,7 +299,6 @@ describe('TabataTimer Service', () => {
       expect(lastState.workDuration).toBe(30)
       expect(lastState.restDuration).toBe(15)
     })
-
 
     it('should use new rest duration in next rest phase', () => {
       timer.setConfig({ workDuration: 20, restDuration: 15 })
