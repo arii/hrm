@@ -104,10 +104,25 @@ diff.txt
 server.log
 test-update.log
 running_notes.md.backup
+<<<<<<< HEAD
+
+# Test results and recordings
+test-results/
+playwright-report/
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png
+dev.log
+=======
 ~/.config/
+<<<<<<< HEAD
 
 # Test coverage
 coverage/
 *.lcov
 .nyc_output/
 junit.xml
+=======
+>>>>>>> origin/leader
+>>>>>>> origin/leader
