@@ -1,0 +1,59 @@
+# EditorConfig helps maintain consistent coding styles for multiple developers
+# working on the same project across various editors and IDEs.
+# Learn more at: https://editorconfig.org/
+
+root = true
+
+# Default settings for all files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Specific settings for TypeScript and JavaScript files
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+
+# Specific settings for JSON files
+[*.json]
+indent_size = 2
+
+# Specific settings for YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# Specific settings for Markdown files
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# Specific settings for package.json
+[package.json]
+indent_size = 2
+
+# Specific settings for configuration files
+[*.{rc,config}]
+indent_size = 2
+
+# Specific settings for shell scripts
+[*.sh]
+indent_size = 2
+
+# Specific settings for CSS and SCSS
+[*.{css,scss,less}]
+indent_size = 2
+
+# Specific settings for HTML
+[*.html]
+indent_size = 2
+
+# Specific settings for XML
+[*.xml]
+indent_size = 2
+
+# Specific settings for Dockerfile
+[Dockerfile]
+indent_size = 2
