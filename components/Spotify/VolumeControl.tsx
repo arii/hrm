@@ -1,7 +1,9 @@
 // components/Spotify/VolumeControl.tsx
 import React from 'react'
-import { Slider, Stack, Typography } from '@mui/material'
 import { VolumeUp } from '@mui/icons-material'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 
 interface VolumeControlProps {
   volume: number
