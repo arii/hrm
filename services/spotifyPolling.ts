@@ -268,18 +268,12 @@ export class SpotifyPolling {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
         this.state = {
-<<<<<<< HEAD
-          trackName: data.item?.name || 'Unknown Track',
-          artist: data.item?.artists?.[0]?.name || 'Unknown Artist',
-          isPlaying: data.is_playing,
-          albumArtUrl: data.item?.album?.images?.[0]?.url || '',
-          progressMs: data.progress_ms,
-          durationMs: data.item?.duration_ms,
-=======
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
->>>>>>> origin/leader
+          albumArtUrl: 'album' in item && item.album?.images?.[0]?.url || '',
+          progressMs: playbackState.progress_ms,
+          durationMs: item?.duration_ms,
         }
         this.broadcastState({ spotifyData: this.getState() })
       }

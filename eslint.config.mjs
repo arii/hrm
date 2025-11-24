@@ -22,8 +22,6 @@ export default defineConfig([
     },
   },
 
-  // Apply recommended TypeScript ESLint rules
-  ...tseslint.configs.recommended,
 
   // Next.js specific rules and configurations
   ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
@@ -61,6 +59,10 @@ export default defineConfig([
           jsx: true,
         },
       },
+      globals: {
+        'React': 'readonly',
+        'NodeJS': 'readonly',
+      }
     },
     rules: {
       // TypeScript specific rules
@@ -80,6 +82,9 @@ export default defineConfig([
           jsx: true,
         },
       },
+      globals: {
+        'NodeJS': 'readonly',
+      }
     },
     rules: {
       // Playwright specific rules or overrides
@@ -88,7 +93,7 @@ export default defineConfig([
 
   // Override for Jest unit test files
   {
-    files: ['tests/unit/**/*.ts'],
+    files: ['tests/unit/**/*.ts', 'tests/unit/**/*.tsx'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -97,6 +102,15 @@ export default defineConfig([
           jsx: true,
         },
       },
+      globals: {
+        'jest': 'readonly',
+        'describe': 'readonly',
+        'it': 'readonly',
+        'expect': 'readonly',
+        'beforeEach': 'readonly',
+        'afterEach': 'readonly',
+        'NodeJS': 'readonly',
+      }
     },
     rules: {
       // Jest specific rules or overrides
