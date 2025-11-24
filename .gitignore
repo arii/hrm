@@ -30,11 +30,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-<<<<<<< HEAD
-dev.log
-.pnpm-debug.log*
-=======
->>>>>>> origin/leader
 
 # env files
 .env*

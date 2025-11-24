@@ -1,28 +1,5 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-<<<<<<< HEAD
-import {
-  MusicNote,
-  Pause,
-  PlayArrow,
-  SkipNext,
-  SkipPrevious,
-  VolumeUp,
-} from '@mui/icons-material'
-import {
-  Box,
-  Card,
-  CardContent,
-  FormControl,
-  IconButton,
-  LinearProgress,
-  MenuItem,
-  Select,
-  Slider,
-  Stack,
-  Typography,
-} from '@mui/material'
-=======
 import MusicNote from '@mui/icons-material/MusicNote'
 import Pause from '@mui/icons-material/Pause'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -34,12 +11,12 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
 import IconButton from '@mui/material/IconButton'
+import LinearProgress from '@mui/material/LinearProgress'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
->>>>>>> origin/leader
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -228,7 +205,7 @@ const SpotifyControls = () => {
                 {spotifyData.artist}
               </Typography>
             </Box>
-            {spotifyData.durationMs && (
+            {spotifyData.durationMs && spotifyData.progressMs && (
               <LinearProgress
                 variant="determinate"
                 value={

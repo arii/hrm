@@ -10,27 +10,15 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
-<<<<<<< HEAD
-import {
-  Box,
-  Button,
-  IconButton,
-  LinearProgress,
-  Menu,
-  MenuItem,
-  Slider,
-  Stack,
-  Typography,
-} from '@mui/material'
-=======
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
+import LinearProgress from '@mui/material/LinearProgress'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
->>>>>>> origin/leader
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -47,7 +35,6 @@ interface SpotifyDevice {
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
-  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference(70)
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -111,14 +98,6 @@ const SpotifyDisplay = () => {
 
   const spotifyLoggedIn =
     Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
@@ -227,13 +206,6 @@ const SpotifyDisplay = () => {
     )
   }
 
-<<<<<<< HEAD
-  if (spotifyData.trackName && spotifyData.trackName !== 'Awaiting Login...') {
-    const progress =
-      spotifyData.progressMs && spotifyData.durationMs
-        ? (spotifyData.progressMs / spotifyData.durationMs) * 100
-        : 0
-=======
   // If we are logged in, we show the player bar.
   // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
   // or simply showing the controls so the user can transfer playback.
@@ -243,7 +215,10 @@ const SpotifyDisplay = () => {
       ? 'No Active Playback'
       : spotifyData.trackName
     const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
->>>>>>> origin/leader
+    const progress =
+      spotifyData.progressMs && spotifyData.durationMs
+        ? (spotifyData.progressMs / spotifyData.durationMs) * 100
+        : 0
 
     return (
       <Box
@@ -261,92 +236,11 @@ const SpotifyDisplay = () => {
           overflow: 'hidden',
         }}
       >
-<<<<<<< HEAD
         {spotifyData.albumArtUrl && (
           <Box
             component="img"
             src={spotifyData.albumArtUrl}
             alt="Album art"
-=======
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {displayTrackName} {displayArtist}
-          </Typography>
-          {spotifyAuthenticated && !isReady && !webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'info.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🔄 Connecting Player...
-            </Typography>
-          )}
-          {isReady && deviceId && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'success.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🎵 Browser Player Active
-            </Typography>
-          )}
-          {webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.9,
-                backgroundColor: 'error.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              ⚠️ Player Error
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('PREVIOUS')}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Previous track"
-          >
-            <SkipPreviousIcon />
-          </IconButton>
-          <IconButton
-            size="medium"
-            onClick={handlePlayPauseToggle}
-            sx={{
-              color: 'common.white',
-              backgroundColor: 'grey.700',
-              '&:hover': { backgroundColor: 'grey.600' },
-            }}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
-          >
-            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => sendSpotifyCommand('NEXT')}
->>>>>>> origin/leader
             sx={{
               position: 'absolute',
               width: '100%',
@@ -388,10 +282,10 @@ const SpotifyDisplay = () => {
               )}
               <Box>
                 <Typography variant="h6" noWrap>
-                  {spotifyData.trackName}
+                  {displayTrackName}
                 </Typography>
                 <Typography variant="subtitle1" color="text.secondary" noWrap>
-                  {spotifyData.artist}
+                  {displayArtist}
                 </Typography>
                 {spotifyAuthenticated && !isReady && !webPlaybackError && (
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>
@@ -423,7 +317,7 @@ const SpotifyDisplay = () => {
                 aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
                 sx={{
                   color: 'common.white',
-                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  backgroundColor: 'rgba(255,255,2s5,0.2)',
                   '&:hover': {
                     backgroundColor: 'rgba(255,255,255,0.3)',
                   },

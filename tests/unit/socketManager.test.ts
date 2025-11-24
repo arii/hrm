@@ -35,21 +35,21 @@ describe('WebSocket Manager Integration', () => {
   let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
   let mockSdk: {
     player: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       getCurrentlyPlayingTrack: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       startResumePlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       pausePlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       skipToNext: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       skipToPrevious: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       transferPlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       setPlaybackVolume: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       getAvailableDevices: jest.Mock<any>
     }
   }
