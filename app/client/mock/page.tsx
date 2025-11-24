@@ -116,6 +116,7 @@ export default function MockPage() {
             <Grid item xs={8}>
               <TextField
                 label="User Name"
+                placeholder="e.g., Mock User"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
@@ -124,6 +125,7 @@ export default function MockPage() {
             <Grid item xs={4}>
               <TextField
                 label="Age"
+                placeholder="e.g., 30"
                 type="number"
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
@@ -134,6 +136,7 @@ export default function MockPage() {
 
           <TextField
             label="Current BPM"
+            placeholder="e.g., 120"
             type="number"
             value={hrValue}
             onChange={handleValueChange}
@@ -141,6 +144,7 @@ export default function MockPage() {
             fullWidth
             size="medium"
             disabled={isStreaming}
+            inputProps={{ 'data-testid': 'hr-input' }}
             sx={{ mb: 3 }}
           />
 

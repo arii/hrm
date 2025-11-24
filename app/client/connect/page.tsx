@@ -18,6 +18,7 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 >>>>>>> origin/leader
@@ -114,26 +115,34 @@ export default function ConnectPage() {
           Connect Heart Rate Monitor
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
           <TextField
             fullWidth
             label="Your Name"
+            placeholder="e.g., Jane Doe"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
+<<<<<<< HEAD
             sx={{ mb: 2 }}
             disabled={isBusy}
+=======
+>>>>>>> origin/leader
           />
           <TextField
             fullWidth
             label="Your Age"
+            placeholder="e.g., 30"
             type="number"
             value={userAge}
             onChange={(e) => setUserAge(e.target.value)}
             inputProps={{ min: 1, max: 120 }}
+<<<<<<< HEAD
             sx={{ mb: 2 }}
             disabled={isBusy}
+=======
+>>>>>>> origin/leader
           />
-        </Box>
+        </Stack>
 
         {hrmState.status === 'ERROR' && (
           <Alert severity="error" sx={{ mb: 2 }}>
