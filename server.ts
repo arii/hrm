@@ -17,7 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
+import { broadcastUpdate, initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
