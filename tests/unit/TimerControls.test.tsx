@@ -33,6 +33,9 @@ describe('TimerControls', () => {
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
     const sendData = jest.fn()
 
     mockedUseWebSocket.mockReturnValue({
@@ -76,5 +79,6 @@ describe('TimerControls', () => {
         restDuration: 15,
       })
     )
+    consoleWarnSpy.mockRestore()
   })
 })

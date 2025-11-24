@@ -9,7 +9,7 @@ echo "🚀 Starting HRM production deployment..."
 if [ ! -f ".env.production" ]; then
     echo "❌ Error: .env.production file not found!"
     echo "Please create .env.production with:"
-    echo "  NEXTAUTH_URL=https://onasafari.ddns.net"
+    echo "  NEXTAUTH_URL=https://your-domain.com"
     echo "  NEXTAUTH_SECRET=your-secret-here"
     echo "  SPOTIFY_CLIENT_ID=your-client-id"
     echo "  SPOTIFY_CLIENT_SECRET=your-client-secret"
