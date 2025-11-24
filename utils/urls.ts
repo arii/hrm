@@ -9,7 +9,7 @@ export const getBaseURL = (): string => {
     return window.location.origin
   }
 
-  // Server-side: use environment variable or default
+  // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
   return (
     process.env.NEXTAUTH_URL || process.env.BASE_URL || 'http://127.0.0.1:3000'
   )
