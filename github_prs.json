@@ -1,0 +1,370 @@
+[
+  {
+    "id":"389",
+    "title":"Fix unit test console errors and update visual snapshots",
+    "branch":"feature-issue-308-update-deps-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:55:05Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/389"
+  },
+  {
+    "id":"388",
+    "title":"Fix merge conflicts and increase HR card name size",
+    "branch":"feat-increase-hr-card-name-size-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:45:17Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/388"
+  },
+  {
+    "id":"387",
+    "title":"Fix Merge Conflicts with Leader",
+    "branch":"hrm-connect-ui-improvements-1-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:42:56Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/387"
+  },
+  {
+    "id":"380",
+    "title":"Integrate Sentry for Application Performance Monitoring",
+    "branch":"feat\/sentry-apm-integration",
+    "review":"",
+    "updated_at":"2025-11-24T10:09:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/380"
+  },
+  {
+    "id":"378",
+    "title":"Add Unit Tests for Core Business Logic Modules",
+    "branch":"test\/add-unit-tests-for-core-logic",
+    "review":"",
+    "updated_at":"2025-11-24T10:10:27Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/378"
+  },
+  {
+    "id":"362",
+    "title":"Implement 'Clear Selection' button for Spotify item selection",
+    "branch":"feat\/add-clear-selection-button",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:10Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/362"
+  },
+  {
+    "id":"358",
+    "title":"Add 'Play' button to Spotify playlist cards",
+    "branch":"feature\/add-play-button-to-spotify-playlists",
+    "review":"",
+    "updated_at":"2025-11-24T10:08:35Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/358"
+  },
+  {
+    "id":"357",
+    "title":"Update README with a 'Features' section highlighting key functionalities",
+    "branch":"docs\/update-readme-features",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:12Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/357"
+  },
+  {
+    "id":"341",
+    "title":"\ud83c\udfaf Phase 2: Test Coverage Expansion",
+    "branch":"feat\/test-coverage-expansion-phase2",
+    "review":"",
+    "updated_at":"2025-11-24T10:04:24Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/341"
+  },
+  {
+    "id":"340",
+    "title":"Implement comprehensive CI\/CD pipeline and project infrastructure",
+    "branch":"feature\/issue-312-ci-improvements",
+    "review":"",
+    "updated_at":"2025-11-24T09:25:57Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/340"
+  },
+  {
+    "id":"339",
+    "title":"Add comprehensive test coverage infrastructure",
+    "branch":"feature\/issue-313-test-coverage",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:16Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/339"
+  },
+  {
+    "id":"338",
+    "title":"Enable additional TypeScript strict mode options",
+    "branch":"feature\/issue-311-typescript-strict",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:16Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/338"
+  },
+  {
+    "id":"337",
+    "title":"Add comprehensive security audit infrastructure",
+    "branch":"feature\/issue-309-security-audit",
+    "review":"",
+    "updated_at":"2025-11-24T03:23:41Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/337"
+  },
+  {
+    "id":"336",
+    "title":"Update dependencies and fix security vulnerabilities",
+    "branch":"feature\/issue-308-update-deps",
+    "review":"",
+    "updated_at":"2025-11-24T10:08:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/336"
+  },
+  {
+    "id":"334",
+    "title":"Fix #308: Configure ESLint rule for trailing commas",
+    "branch":"fix\/eslint-trailing-commas-308",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:12Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/334"
+  },
+  {
+    "id":"323",
+    "title":"Developer Experience & Production CI\/CD Automation",
+    "branch":"feat\/DX-pnpm-cicd-automation",
+    "review":"",
+    "updated_at":"2025-11-24T15:39:04Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/323"
+  },
+  {
+    "id":"315",
+    "title":"Core Architecture, Performance & Code Quality Refactor",
+    "branch":"feature\/core-architecture-refactor",
+    "review":"",
+    "updated_at":"2025-11-24T15:40:41Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/315"
+  },
+  {
+    "id":"314",
+    "title":"feat: implement structured logging with pino",
+    "branch":"feat\/structured-logging",
+    "review":"",
+    "updated_at":"2025-11-24T15:39:58Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/314"
+  },
+  {
+    "id":"293",
+    "title":"\ud83d\udd12 Fix: NGINX Security Hardening",
+    "branch":"fix\/nginx-security-hardening",
+    "review":"",
+    "updated_at":"2025-11-24T02:41:17Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/293"
+  },
+  {
+    "id":"270",
+    "title":"Hrm connect UI improvements 1",
+    "branch":"hrm-connect-ui-improvements-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:38:49Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/270"
+  },
+  {
+    "id":"269",
+    "title":"Refactor unify api routing 1",
+    "branch":"refactor-unify-api-routing-1",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:03Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/269"
+  },
+  {
+    "id":"252",
+    "title":"UI: Increase Name Font Size on Heart Rate Monitor Cards for Better Readability",
+    "branch":"feat\/increase-hr-card-name-size",
+    "review":"",
+    "updated_at":"2025-11-24T09:46:41Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/252"
+  },
+  {
+    "id":"241",
+    "title":"Feature: Enhanced Environment Variable Management with Zod Validation",
+    "branch":"feat-env-var-management-2-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:40:57Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/241"
+  },
+  {
+    "id":"214",
+    "title":"Fix: Resolve Build Configuration and Unit Test Execution Issues",
+    "branch":"fix-build-and-test-issues-1-1",
+    "review":"",
+    "updated_at":"2025-11-24T06:57:25Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/214"
+  },
+  {
+    "id":"210",
+    "title":"Fix: Eliminate Spotify Login Button Flickering and UI State Issues",
+    "branch":"fix-spotify-login-button-flicker-1",
+    "review":"",
+    "updated_at":"2025-11-24T15:41:29Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/210"
+  },
+  {
+    "id":"208",
+    "title":"Feature: Make Spotify Token Persistence Configurable with Environment Variables",
+    "branch":"configure-spotify-token-persistence",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:04Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/208"
+  },
+  {
+    "id":"202",
+    "title":"Security Hardening: CSP, WebSocket Origin Check, and URL Utility",
+    "branch":"security-hardening-url-utility",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:05Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/202"
+  },
+  {
+    "id":"198",
+    "title":"TypeScript: Add Missing Type Definitions to Core Services and Components",
+    "branch":"add-missing-types",
+    "review":"",
+    "updated_at":"2025-11-24T09:26:06Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/198"
+  },
+  {
+    "id":"196",
+    "title":"Verify Build, Lint, and Tests",
+    "branch":"verify-build-lint-test",
+    "review":"",
+    "updated_at":"2025-11-24T06:47:54Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/196"
+  },
+  {
+    "id":"195",
+    "title":"Refactor: Break Down SpotifyDisplay into Reusable Atomic Components",
+    "branch":"refactor-spotify-display",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:25Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/195"
+  },
+  {
+    "id":"194",
+    "title":"Feature: Upgrade HRM Mock Client with Advanced Simulation Profiles and Web Workers",
+    "branch":"mock-client-upgrade",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:07Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/194"
+  },
+  {
+    "id":"193",
+    "title":"Feature: Implement Server-Side Spotify Token Interception and Management",
+    "branch":"server-token-interceptor",
+    "review":"",
+    "updated_at":"2025-11-24T09:26:08Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/193"
+  },
+  {
+    "id":"190",
+    "title":"DevOps: Add Pre-commit Hooks for Code Quality with Husky and Lint-staged",
+    "branch":"feat-add-pre-commit-hooks",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:19Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/190"
+  },
+  {
+    "id":"186",
+    "title":"fix: Correct Spotify playlist selection and playback",
+    "branch":"fix-playlist-selection-issue",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:10Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/186"
+  },
+  {
+    "id":"183",
+    "title":"Refactor Timer to Improve Precision and Fix Regressions",
+    "branch":"feature-timer-precision-fix",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:11Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/183"
+  },
+  {
+    "id":"178",
+    "title":"Spotify Component Aesthetic Upgrade",
+    "branch":"feature-spotify-ui-upgrade",
+    "review":"",
+    "updated_at":"2025-11-24T09:26:10Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/178"
+  },
+  {
+    "id":"177",
+    "title":"feat: Add Server Reset Option",
+    "branch":"feat-server-reset-option",
+    "review":"",
+    "updated_at":"2025-11-24T03:41:51Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/177"
+  },
+  {
+    "id":"176",
+    "title":"Add Integration Tests for Settings Persistence and Spotify",
+    "branch":"feature-105-add-integration-tests",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:26Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/176"
+  },
+  {
+    "id":"175",
+    "title":"feat: Mobile Optimization & Wake Lock",
+    "branch":"feat-mobile-optimization-wake-lock",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:13Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/175"
+  },
+  {
+    "id":"167",
+    "title":"Create Reusable Card Components",
+    "branch":"feat-reusable-card-components",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:26Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/167"
+  },
+  {
+    "id":"161",
+    "title":"feat: Add GraphQL API endpoint",
+    "branch":"feat\/graphql-api",
+    "review":"",
+    "updated_at":"2025-11-24T09:08:13Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/161"
+  },
+  {
+    "id":"157",
+    "title":"Consolidate Prettier Configuration",
+    "branch":"refactor\/consolidate-prettier-config",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:27Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/157"
+  },
+  {
+    "id":"148",
+    "title":"feat: Add component testing with React Testing Library",
+    "branch":"feat-add-component-testing",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:20Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/148"
+  },
+  {
+    "id":"147",
+    "title":"Debounce Volume Preference Updates",
+    "branch":"feature-debounce-volume-control",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:29Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/147"
+  },
+  {
+    "id":"145",
+    "title":"Consolidate Device Selection Logic",
+    "branch":"feature-98-consolidate-device-selection-logic",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:21Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/145"
+  },
+  {
+    "id":"137",
+    "title":"Implement Rate Limiting",
+    "branch":"feature-rate-limiting",
+    "review":"",
+    "updated_at":"2025-11-24T09:27:22Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/pull\/137"
+  }
+]

@@ -1,0 +1,527 @@
+[
+  {
+    "id":"384",
+    "title":"Audit tsconfig.json for deprecated compiler options, unused path aliases, and redundant settings",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:55:54Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/384"
+  },
+  {
+    "id":"383",
+    "title":"Identify and remove configuration files for unutilized or deprecated development tools",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:55:53Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/383"
+  },
+  {
+    "id":"382",
+    "title":"Review package.json for unused scripts, outdated metadata, and redundant development dependencies",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:55:53Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/382"
+  },
+  {
+    "id":"381",
+    "title":"Audit and update project documentation (.md files excluding README.md) for outdated content and dead links",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:55:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/381"
+  },
+  {
+    "id":"376",
+    "title":"Audit and Remove Unused Database Schema Elements and Obsolete Migration Files",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:31:32Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/376"
+  },
+  {
+    "id":"375",
+    "title":"Review and Prune Obsolete Build System and CI\/CD Configurations",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:31:31Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/375"
+  },
+  {
+    "id":"374",
+    "title":"Refactor Code to Eliminate Usage of Deprecated JavaScript\/TypeScript Features and Library APIs",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:30:11Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/374"
+  },
+  {
+    "id":"373",
+    "title":"Analyze and Optimize Frontend Bundle Size for Faster Loading Times",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:28:49Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/373"
+  },
+  {
+    "id":"372",
+    "title":"Configure ESLint Rule to Enforce Explicit Function Return Types in TypeScript",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:28:48Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/372"
+  },
+  {
+    "id":"371",
+    "title":"Integrate Application Performance Monitoring (APM) Tools for Production Environment",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:53:26Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/371"
+  },
+  {
+    "id":"370",
+    "title":"Conduct Accessibility Audit and Address WCAG Compliance Issues",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:28:47Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/370"
+  },
+  {
+    "id":"369",
+    "title":"Generate and Maintain OpenAPI\/Swagger Documentation for API Endpoints",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:28:46Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/369"
+  },
+  {
+    "id":"368",
+    "title":"Implement Unit Tests for Core Business Logic Modules",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:47:03Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/368"
+  },
+  {
+    "id":"328",
+    "title":"Add 'Play' button to Spotify playlist cards\/items",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:24:42Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/328"
+  },
+  {
+    "id":"327",
+    "title":"Update README with a 'Features' section highlighting key functionalities",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:19:43Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/327"
+  },
+  {
+    "id":"325",
+    "title":"Implement 'Clear Selection' button for Spotify item selection",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:05:36Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/325"
+  },
+  {
+    "id":"324",
+    "title":"Add clear visual feedback for selected Spotify items (e.g., tracks in a playlist view)",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:04Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/324"
+  },
+  {
+    "id":"322",
+    "title":"Eliminate Dead Code Blocks, Feature Flags for Removed Features, and 'TODO: Remove' Comments",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:05:33Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/322"
+  },
+  {
+    "id":"321",
+    "title":"Audit and Remove Unused UI Components, Styles, and Asset Files",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:05:34Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/321"
+  },
+  {
+    "id":"320",
+    "title":"Clean Up Legacy API Endpoints and Unused Route Definitions",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:05:35Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/320"
+  },
+  {
+    "id":"319",
+    "title":"Remove Unused Third-Party Dependencies and Packages",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:19Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/319"
+  },
+  {
+    "id":"318",
+    "title":"Create a Shared Validation Utility Module using Zod",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:20Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/318"
+  },
+  {
+    "id":"317",
+    "title":"Develop a Centralized Spotify API Client Module",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:21Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/317"
+  },
+  {
+    "id":"316",
+    "title":"Establish a Shared UI Component Library\/Design System",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:22Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/316"
+  },
+  {
+    "id":"313",
+    "title":"Implement Global Error Boundary for React Components",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:22Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/313"
+  },
+  {
+    "id":"312",
+    "title":"Integrate Prettier for Automated Code Formatting",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:24Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/312"
+  },
+  {
+    "id":"311",
+    "title":"Enable strictNullChecks in tsconfig.json for enhanced type safety",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:25Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/311"
+  },
+  {
+    "id":"309",
+    "title":"Ensure all external links open in a new browser tab",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:27Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/309"
+  },
+  {
+    "id":"308",
+    "title":"Configure ESLint Rule for Trailing Commas",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:27Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/308"
+  },
+  {
+    "id":"307",
+    "title":"Ensure Consistent Border-Radius for Input Fields",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:28Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/307"
+  },
+  {
+    "id":"306",
+    "title":"Add a favicon to the application",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:30Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/306"
+  },
+  {
+    "id":"304",
+    "title":"Standardize Button Styling on Login\/Registration Pages",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:32Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/304"
+  },
+  {
+    "id":"303",
+    "title":"Add 'Prerequisites' Section to README",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:05Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/303"
+  },
+  {
+    "id":"302",
+    "title":"Consolidate and standardize data fetching and mutation patterns",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:33Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/302"
+  },
+  {
+    "id":"301",
+    "title":"Standardize and centralize error handling across API and client",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:34Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/301"
+  },
+  {
+    "id":"300",
+    "title":"Enable 'noImplicitAny' TypeScript Rule for the `utils` Module",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:35Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/300"
+  },
+  {
+    "id":"299",
+    "title":"Audit and Remove Excessive Console Logging",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:06Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/299"
+  },
+  {
+    "id":"298",
+    "title":"Investigate and Resolve Playwright Test State Cleanup Issues",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:27:22Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/298"
+  },
+  {
+    "id":"297",
+    "title":"Configure Dependabot for automated dependency updates",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:38Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/297"
+  },
+  {
+    "id":"296",
+    "title":"Remove redundant console.log statements from client-side UI components",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:07Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/296"
+  },
+  {
+    "id":"292",
+    "title":"Epic: Developer Experience & Production CI\/CD Automation",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:41Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/292"
+  },
+  {
+    "id":"291",
+    "title":"Epic: Robust Testing Strategy & Stability",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:42Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/291"
+  },
+  {
+    "id":"290",
+    "title":"Refactor: Comprehensive Spotify Integration & UI Improvements",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:10:10Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/290"
+  },
+  {
+    "id":"289",
+    "title":"Epic: Core Architecture, Performance & Code Quality Refactor",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:43Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/289"
+  },
+  {
+    "id":"288",
+    "title":"Epic: Enhanced Observability (Logging & Monitoring)",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:44Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/288"
+  },
+  {
+    "id":"275",
+    "title":"Improve production capability ",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:45Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/275"
+  },
+  {
+    "id":"274",
+    "title":"Improve running instructions ",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:07Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/274"
+  },
+  {
+    "id":"132",
+    "title":"Add Missing TypeScript Types",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:47Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/132"
+  },
+  {
+    "id":"129",
+    "title":"Add GitHub Actions Workflow",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:48Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/129"
+  },
+  {
+    "id":"123",
+    "title":"Separate Concerns: API Layer",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:49Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/123"
+  },
+  {
+    "id":"122",
+    "title":"Implement Workout History",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:49Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/122"
+  },
+  {
+    "id":"121",
+    "title":"Add User Preferences Persistence",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:50Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/121"
+  },
+  {
+    "id":"119",
+    "title":"Add Pre-commit Hooks",
+    "assignees":"",
+    "updated_at":"2025-11-24T10:06:08Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/119"
+  },
+  {
+    "id":"118",
+    "title":"Create Docker Compose for Development",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/118"
+  },
+  {
+    "id":"114",
+    "title":"Add Health Check Endpoints",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/114"
+  },
+  {
+    "id":"112",
+    "title":"Implement WebSocket Authentication",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:54Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/112"
+  },
+  {
+    "id":"108",
+    "title":"Implement Rate Limiting",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:10:07Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/108"
+  },
+  {
+    "id":"107",
+    "title":"Improve E2E Test Stability",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:56Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/107"
+  },
+  {
+    "id":"106",
+    "title":"Add Component Testing with React Testing Library",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:57Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/106"
+  },
+  {
+    "id":"105",
+    "title":"Create Integration Tests",
+    "assignees":"",
+    "updated_at":"2025-11-24T07:14:58Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/105"
+  },
+  {
+    "id":"103",
+    "title":"Implement Request Debouncing",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:28:51Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/103"
+  },
+  {
+    "id":"98",
+    "title":"Consolidate Device Selection Logic",
+    "assignees":"",
+    "updated_at":"2025-11-24T01:17:52Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/98"
+  },
+  {
+    "id":"97",
+    "title":"Create Shared Spotify Controls Component",
+    "assignees":"",
+    "updated_at":"2025-11-24T09:10:09Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/97"
+  },
+  {
+    "id":"96",
+    "title":"Consolidate Audio Hooks",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:29:17Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/96"
+  },
+  {
+    "id":"72",
+    "title":"Playwright tests do not consistently clear server state between test runs.",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:29:16Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/72"
+  },
+  {
+    "id":"69",
+    "title":"Improve github actions and repo confguration",
+    "assignees":"",
+    "updated_at":"2025-11-24T00:47:29Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/69"
+  },
+  {
+    "id":"68",
+    "title":"increase name size on heart rate card",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:50:20Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/68"
+  },
+  {
+    "id":"66",
+    "title":"Excessive Console Logging in Tests and Production",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:29:16Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/66"
+  },
+  {
+    "id":"57",
+    "title":"Feature: Timer Input Validation and EMOM\/Tabata Presets",
+    "assignees":"",
+    "updated_at":"2025-11-23T12:21:23Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/57"
+  },
+  {
+    "id":"50",
+    "title":"On the spotify dashboard the connect to spotify button is shown even when already connected",
+    "assignees":"",
+    "updated_at":"2025-11-24T01:17:47Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/50"
+  },
+  {
+    "id":"47",
+    "title":"Spotify dashboard did not show HRM webplayer",
+    "assignees":"",
+    "updated_at":"2025-11-24T01:17:55Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/47"
+  },
+  {
+    "id":"41",
+    "title":"Provide automatic connection on \/client\/control",
+    "assignees":"",
+    "updated_at":"2025-11-23T11:43:18Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/41"
+  },
+  {
+    "id":"28",
+    "title":"[P3] Performance: Server broadcasts entire globalState on every update",
+    "assignees":"",
+    "updated_at":"2025-11-24T01:17:48Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/28"
+  },
+  {
+    "id":"26",
+    "title":"[P2] Refactor: app\/client\/control\/page.tsx \"God Component\" is over 600 lines",
+    "assignees":"",
+    "updated_at":"2025-11-23T11:43:21Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/26"
+  },
+  {
+    "id":"24",
+    "title":"[P0] CRITICAL Security: Unauthenticated token-delivery endpoint allows server token poisoning",
+    "assignees":"",
+    "updated_at":"2025-11-24T01:17:48Z",
+    "url":"https:\/\/github.com\/arii\/hrm\/issues\/24"
+  }
+]

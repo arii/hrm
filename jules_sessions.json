@@ -1,0 +1,263 @@
+[
+  {
+    "id":"14099934150645038400",
+    "full_name":"sessions\/14099934150645038400",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:51:02.638774103Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #389",
+    "pr_url":null,
+    "branch":"feature-issue-308-update-deps-1"
+  },
+  {
+    "id":"16975016331832679896",
+    "full_name":"sessions\/16975016331832679896",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:41:27.072145457Z",
+    "title":"Fix Lint Failure - PR #210",
+    "pr_url":null,
+    "branch":"fix-spotify-login-button-flicker-1"
+  },
+  {
+    "id":"5170351793153832658",
+    "full_name":"sessions\/5170351793153832658",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:40:55.160864625Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #241",
+    "pr_url":null,
+    "branch":"feat-env-var-management-2-1"
+  },
+  {
+    "id":"14683085244536446233",
+    "full_name":"sessions\/14683085244536446233",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T15:40:39.987061224Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #315",
+    "pr_url":null,
+    "branch":"feature\/core-architecture-refactor"
+  },
+  {
+    "id":"6849445877355496272",
+    "full_name":"sessions\/6849445877355496272",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T15:40:26.024567875Z",
+    "title":"Fix Lint Failure - PR #331",
+    "pr_url":null,
+    "branch":"feat-copyright-year"
+  },
+  {
+    "id":"9877466812615604044",
+    "full_name":"sessions\/9877466812615604044",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:39:56.484601692Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #314",
+    "pr_url":null,
+    "branch":"feat\/structured-logging"
+  },
+  {
+    "id":"13954781384405271057",
+    "full_name":"sessions\/13954781384405271057",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:39:41.421520204Z",
+    "title":"Fix Lint Failure - PR #332",
+    "pr_url":null,
+    "branch":"feat\/test-performance-optimization-phase1"
+  },
+  {
+    "id":"4377212296631257586",
+    "full_name":"sessions\/4377212296631257586",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T15:39:02.409174493Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #323",
+    "pr_url":null,
+    "branch":"feat\/DX-pnpm-cicd-automation"
+  },
+  {
+    "id":"10274527162563879895",
+    "full_name":"sessions\/10274527162563879895",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T15:38:48.087075285Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #270",
+    "pr_url":null,
+    "branch":"hrm-connect-ui-improvements-1"
+  },
+  {
+    "id":"17348869369990018943",
+    "full_name":"sessions\/17348869369990018943",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T10:04:22.153663260Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #341",
+    "pr_url":null,
+    "branch":"feat\/test-coverage-expansion-phase2"
+  },
+  {
+    "id":"3011729593900450062",
+    "full_name":"sessions\/3011729593900450062",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T10:00:27.755702974Z",
+    "title":"Fix Lint Failure - PR #360",
+    "pr_url":null,
+    "branch":"style\/standardize-form-spacing"
+  },
+  {
+    "id":"17668233739900657667",
+    "full_name":"sessions\/17668233739900657667",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T09:59:30.098938847Z",
+    "title":"Fix Lint Failure - PR #365",
+    "pr_url":null,
+    "branch":"feature\/spotify-selection-feedback"
+  },
+  {
+    "id":"3827507800368954019",
+    "full_name":"sessions\/3827507800368954019",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T09:44:56.863117826Z",
+    "title":"Fix Merge Conflicts - PR #252",
+    "pr_url":null,
+    "branch":"feat\/increase-hr-card-name-size"
+  },
+  {
+    "id":"179889306346998821",
+    "full_name":"sessions\/179889306346998821",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T09:40:19.005916336Z",
+    "title":"Fix Merge Conflicts - PR #252",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/388",
+    "branch":"feat\/increase-hr-card-name-size"
+  },
+  {
+    "id":"4496396464859356958",
+    "full_name":"sessions\/4496396464859356958",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T09:31:34.282434362Z",
+    "title":"Integrate Application Performance Monitoring (APM) Tools for Production Environment",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/380",
+    "branch":null
+  },
+  {
+    "id":"16358509746890658786",
+    "full_name":"sessions\/16358509746890658786",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T09:31:33.673447559Z",
+    "title":"Implement Unit Tests for Core Business Logic Modules",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/378",
+    "branch":null
+  },
+  {
+    "id":"15134373595969721102",
+    "full_name":"sessions\/15134373595969721102",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T08:53:46.359551485Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #252",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/377",
+    "branch":"feat\/increase-hr-card-name-size"
+  },
+  {
+    "id":"9409302666827610834",
+    "full_name":"sessions\/9409302666827610834",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T08:35:50.340440721Z",
+    "title":"Fix Visual Tests Failure - PR #269",
+    "pr_url":null,
+    "branch":"refactor-unify-api-routing-1"
+  },
+  {
+    "id":"697851744895719680",
+    "full_name":"sessions\/697851744895719680",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T08:24:15.880199365Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #270",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/387",
+    "branch":"hrm-connect-ui-improvements-1"
+  },
+  {
+    "id":"14891558240009922621",
+    "full_name":"sessions\/14891558240009922621",
+    "state":"AWAITING_USER_FEEDBACK",
+    "created_at":"2025-11-24T08:23:57.563584648Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #323",
+    "pr_url":null,
+    "branch":"feat\/DX-pnpm-cicd-automation"
+  },
+  {
+    "id":"2799647554149033257",
+    "full_name":"sessions\/2799647554149033257",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T08:03:03.106567790Z",
+    "title":"Fix Unit Tests Failure - PR #336",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/389",
+    "branch":"feature\/issue-308-update-deps"
+  },
+  {
+    "id":"8873182038354769360",
+    "full_name":"sessions\/8873182038354769360",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T07:59:29.387532036Z",
+    "title":"Fix Git Rebase\/Merge Failure - PR #339",
+    "pr_url":null,
+    "branch":"feature\/issue-313-test-coverage"
+  },
+  {
+    "id":"463244690336596400",
+    "full_name":"sessions\/463244690336596400",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T07:13:18.733971182Z",
+    "title":"Standardize vertical spacing between form elements",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/360",
+    "branch":null
+  },
+  {
+    "id":"9431246595298402434",
+    "full_name":"sessions\/9431246595298402434",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T07:13:17.676385347Z",
+    "title":"Update README with a 'Features' section highlighting key functionalities",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/357",
+    "branch":null
+  },
+  {
+    "id":"17722736821654681400",
+    "full_name":"sessions\/17722736821654681400",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T07:13:16.761647436Z",
+    "title":"Implement 'Clear Selection' button for Spotify item selection",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/362",
+    "branch":null
+  },
+  {
+    "id":"58979939044418254",
+    "full_name":"sessions\/58979939044418254",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T07:13:16.291145043Z",
+    "title":"Eliminate Dead Code Blocks, Feature Flags for Removed Features, and 'TODO: Remove' Comments",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/366",
+    "branch":null
+  },
+  {
+    "id":"17737926323211941826",
+    "full_name":"sessions\/17737926323211941826",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T01:35:59.930635436Z",
+    "title":"Epic: Enhanced Observability (Logging & Monitoring)",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/314",
+    "branch":null
+  },
+  {
+    "id":"7491627204677621025",
+    "full_name":"sessions\/7491627204677621025",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T01:35:53.576731871Z",
+    "title":"Epic: Developer Experience & Production CI\/CD Automation",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/323",
+    "branch":null
+  },
+  {
+    "id":"17063561137210679172",
+    "full_name":"sessions\/17063561137210679172",
+    "state":"COMPLETED",
+    "created_at":"2025-11-24T01:34:02.696728344Z",
+    "title":"Epic: Core Architecture, Performance & Code Quality Refactor",
+    "pr_url":"https:\/\/github.com\/arii\/hrm\/pull\/315",
+    "branch":null
+  }
+]
