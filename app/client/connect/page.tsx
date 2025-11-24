@@ -111,6 +111,7 @@ export default function ConnectPage() {
           <TextField
             fullWidth
             label="Your Name"
+            placeholder="e.g., Jane Doe"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             sx={{ mb: 2 }}
@@ -118,6 +119,7 @@ export default function ConnectPage() {
           <TextField
             fullWidth
             label="Your Age"
+            placeholder="e.g., 30"
             type="number"
             value={userAge}
             onChange={(e) => setUserAge(e.target.value)}

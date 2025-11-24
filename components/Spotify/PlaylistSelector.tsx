@@ -184,7 +184,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder="Search your playlists or browse popular playlists..."
+            placeholder="Search or browse playlists..."
             InputProps={{
               ...params.InputProps,
               startAdornment: (
