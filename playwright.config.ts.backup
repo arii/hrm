@@ -1,7 +1,7 @@
 // File: playwright.config.ts
 /**
  * Playwright Test Configuration for HRM Comprehensive Assessment
- * Optimized for performance and parallel execution
+ * Supports visual regression, mobile testing, and video recording
  */
 import { defineConfig, devices } from '@playwright/test'
 import { getBaseURL } from './utils/urls'
@@ -12,14 +12,14 @@ const hasSpotifyCredentials = !!(
 )
 const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
 
-// Optimized ignore list - run more tests by default
+// Build ignore list based on available credentials
 const testIgnoreList = [
-  // Only ignore truly integration-heavy tests for speed
+  'integration-tests.spec.ts',
   'comprehensive-assessment.spec.ts',
-  'mobile-assessment.spec.ts', 
+  'core-functionality.spec.ts',
+  'mobile-essential.spec.ts',
+  'mobile-assessment.spec.ts',
   'workflow-assessment.spec.ts',
-  // OAuth tests are excluded from regular test runs (use separate npm script)
-  'oauth/**/*.spec.ts',
 ]
 
 // Only ignore auth-dependent tests if credentials are missing
@@ -35,74 +35,8 @@ export default defineConfig({
   testMatch: ['**/*.spec.ts'],
   testIgnore: testIgnoreList,
 
-  // Performance Optimizations
-  fullyParallel: true, // Enable full parallelism
-  workers: process.env.CI ? 2 : '50%', // Use half workers locally, 2 in CI
-  retries: process.env.CI ? 2 : 1, // Retry flaky tests
-  timeout: 15000, // Reduced timeout for faster feedback
-
-  // Test execution optimizations
-  expect: {
-    timeout: 5000, // Faster assertion timeouts
-  },
-  use: {
-    // Global test settings
-    baseURL: getBaseURL(),
-    actionTimeout: 0,
-    
-    // Optimized browser settings
-    headless: true,
-    viewport: { width: 1280, height: 720 },
-    
-    // Reduce overhead for faster execution
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: process.env.CI ? 'on-first-retry' : 'off',
-  },
-
-  // Browser configurations - optimized for speed
-  projects: [
-    {
-      name: 'chromium',
-      use: { 
-        ...devices['Desktop Chrome'],
-        // Disable features for faster execution
-        launchOptions: {
-          args: [
-            '--disable-web-security',
-            '--disable-features=TranslateUI',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-          ],
-        },
-      },
-    },
-    // Mobile testing (optional, faster without it)
-    ...(process.env.INCLUDE_MOBILE ? [{
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    }] : []),
-  ],
-
-  // Webserver configuration for auto-start
-  webServer: {
-    command: 'npm run build:server && npm run dev',
-    port: 3000,
-    timeout: 30000, // Reduced startup timeout
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
-
-  // Output configuration
-  outputDir: 'test-results/',
-  reporter: [
-    ['list'],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ...(process.env.CI ? [['github']] : []),
-  ],
-})
+  // Run tests in parallel
+  fullyParallel: false,
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
