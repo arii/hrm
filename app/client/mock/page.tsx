@@ -1,20 +1,5 @@
 'use client'
 
-<<<<<<< HEAD
-import { HeartBroken, Science } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-} from '@mui/material'
-import { useCallback, useEffect, useState, useRef } from 'react'
-=======
 import HeartBroken from '@mui/icons-material/HeartBroken'
 import Science from '@mui/icons-material/Science'
 import Box from '@mui/material/Box'
@@ -23,16 +8,13 @@ import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
->>>>>>> origin/leader
+import { useCallback, useEffect, useRef, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
-<<<<<<< HEAD
 import HrTile from '../../../components/HrTile'
-import useWebSocket from '../../../hooks/useWebSocket'
-=======
 import { useWebSocket } from '@/context/WebSocketContext'
->>>>>>> origin/leader
 import { HrmInputMessage } from '../../../types/websocket'
 import { getHrZoneProps } from '../../../utils/visualization'
 
