@@ -1,0 +1,8 @@
+    "test:fast": "jest --selectProjects unit --passWithNoTests --maxWorkers=50%",
+    "test:debug": "jest --detectOpenHandles --forceExit --verbose",
+    "test:ci": "jest --ci --coverage --watchAll=false --maxWorkers=2",
+    "test:visual:fast": "playwright test tests/playwright/simple-smoke.spec.ts tests/playwright/visual-regression.spec.ts --project=chromium",
+    "test:visual:install": "playwright install",
+    "test:all": "npm run test:unit && npm run test:visual:fast",
+    "test:coverage": "npm run test:unit:coverage && npm run test:visual:fast",
+    "test:watch": "jest --watch --maxWorkers=25%",
