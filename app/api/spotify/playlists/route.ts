@@ -3,7 +3,6 @@
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
 import { authOptions } from '@/lib/auth'
-import logger from '@/utils/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -25,7 +24,7 @@ export async function GET(_req: Request) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      logger.error('[API /playlists] No session or access token found.')
+      console.error('[API /playlists] No session or access token found.')
       return NextResponse.json(
         { error: 'Not authenticated or token is missing.' },
         { status: 401 }
@@ -73,7 +72,7 @@ export async function GET(_req: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error(`[API /playlists] Internal Server Error: ${message}`)
+    console.error(`[API /playlists] Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
