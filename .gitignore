@@ -30,41 +30,20 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-<<<<<<< HEAD
-<<<<<<< HEAD
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # env files
 .env*
-!*.config.js
-!*.config.mjs
-!eslint.config.mjs
+!/.env.example
 
 # logs
 logs/*
 !logs/spotify_tokens.json
 dev.log
 prod.log
-=======
-
-# env files
-.env*
-!/.env.example
-
-# logs
-logs/
 *.log
->>>>>>> origin/leader
-=======
-
-# env files
-.env*
-!/.env.example
-
-# logs
-logs/
-*.log
->>>>>>> origin/leader
 
 # vercel
 .vercel
@@ -72,15 +51,6 @@ logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/leader
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
->>>>>>> origin/leader
 
 # runtime data
 pids
@@ -99,14 +69,7 @@ coverage
 # nyc test coverage
 .nyc_output
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-# grunt intermediate storage (https://gruntjs.com/)
-=======
-=======
->>>>>>> origin/leader
 # Grunt intermediate storage (https://gruntjs.com/)
->>>>>>> origin/leader
 .grunt
 
 # node-waf configuration
@@ -115,26 +78,6 @@ coverage
 # compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-# dependency directories
-jspm_packages/
-
-# snowpack dependency directory (https://snowpack.dev/)
-web_modules/
-
-# gemini
-.gemini/*
-.gemini/settings.json
-
-# vscode
-.vscode/*
-
-# github
-.github/*
-=======
-=======
->>>>>>> origin/leader
 # Dependency directories
 jspm_packages/
 
@@ -145,10 +88,6 @@ web_modules/
 .gemini/
 .vscode/
 .idea/
-<<<<<<< HEAD
->>>>>>> origin/leader
-=======
->>>>>>> origin/leader
 
 # pm2
 .pm2/
@@ -156,33 +95,21 @@ web_modules/
 # playwright
 playwright-report/
 test-results/
-<<<<<<< HEAD
-<<<<<<< HEAD
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png
 **/tests/playwright/**/*.+(png|txt)
 
 # os-specific
 Thumbs.db
 ehthumbs.db
 
-# ide folders
-.idea/
-
 # temporary & backup files
 *.tmp
 *.backup
 *.swp
 *~
-=======
-=======
->>>>>>> origin/leader
-test-recordings/
-tests/playwright/screenshots/
-tests/playwright/*-actual.png
-tests/playwright/*-diff.png
-<<<<<<< HEAD
->>>>>>> origin/leader
-=======
->>>>>>> origin/leader
 
 # custom app-specific
 diff.txt
@@ -190,15 +117,6 @@ diff.txt
 *err.log
 server.log
 test-update.log
-<<<<<<< HEAD
-<<<<<<< HEAD
 npm_run_dev.log
 running_notes.md.backup
-=======
-running_notes.md.backup
 ~/.config/
->>>>>>> origin/leader
-=======
-running_notes.md.backup
-~/.config/
->>>>>>> origin/leader

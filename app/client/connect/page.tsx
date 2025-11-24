@@ -1,17 +1,5 @@
 'use client'
 
-<<<<<<< HEAD
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-} from '@mui/material'
-=======
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -20,7 +8,6 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
->>>>>>> origin/leader
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
@@ -32,7 +19,9 @@ import { getHrZoneProps } from '../../../utils/visualization'
 const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+    document.cookie = `${name}=${encodeURIComponent(
+      value
+    )}; expires=${expires}; path=/`
   }
 }
 
@@ -151,28 +140,28 @@ export default function ConnectPage() {
           </Alert>
         )}
 
-        <Box sx={{ textAlign: 'center', mb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
+        <Box
+          sx={{
+            textAlign: 'center',
+            mb: 3,
+            display: 'flex',
+            gap: 2,
+            justifyContent: 'center',
+          }}
+        >
           {!isBusy && (
             <Button
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
+              disabled={!userName.trim() || !userAge.trim()}
             >
-              {deviceStatus.includes('Connecting') ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
+              Connect Bluetooth HRM
             </Button>
           )}
 
           {isConnecting && (
-             <Button
+            <Button
               variant="outlined"
               size="large"
               onClick={abortConnection}
