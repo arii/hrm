@@ -22,7 +22,7 @@ if curl -s --connect-timeout 2 "${BASE_URL}/api/debug/ping" > /dev/null 2>&1; th
     echo -e "${GREEN}✓ Server is running${RESET}"
 else
     echo -e "${RED}✗ Server is not responding at ${BASE_URL}${RESET}"
-    echo "  Start server with: pnpm run dev:clean"
+    echo "  Start server with: ppnpm run dev:clean"
     exit 1
 fi
 echo ""

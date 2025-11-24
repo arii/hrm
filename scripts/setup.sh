@@ -21,6 +21,6 @@ fi
 
 # Verify pnpm-lock.yaml integrity and install dependencies
 echo "Installing dependencies with pnpm..."
-pnpm install --frozen-lockfile
+ppnpm install --frozen-lockfile
 
 echo "Setup complete."

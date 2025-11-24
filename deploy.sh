@@ -37,19 +37,19 @@ mkdir -p logs
 
 # Install dependencies (Added step for safety)
 echo "📦 Installing dependencies..."
-pnpm install --frozen-lockfile
+ppnpm install --frozen-lockfile
 
 # Build the application
 echo "📦 Building Next.js application..."
-pnpm run build
+ppnpm run build
 
 # Stop and delete existing PM2 processes
 echo "🛑 Stopping existing PM2 processes..."
-pnpm run pm2:delete || true
+ppnpm run pm2:delete || true
 
 # Start with production environment
 echo "▶️ Starting HRM server with PM2..."
-pnpm run start
+ppnpm run start
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."
@@ -57,4 +57,4 @@ pm2 save
 
 echo "✅ Deployment complete!"
 echo "📊 Check status with: pm2 status"
-echo "📝 View logs with: pnpm run pm2:logs"
+echo "📝 View logs with: ppnpm run pm2:logs"
