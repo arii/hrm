@@ -1,0 +1,8 @@
+    "test:components": "jest --testPathPattern=components --coverage",
+    "test:hooks": "jest --testPathPattern=hooks --coverage",
+    "test:apis": "jest --testPathPattern=apis --coverage",
+    "test:integration": "playwright test tests/integration/ --project=chromium",
+    "test:coverage:components": "jest --testPathPattern=components --coverage --coverageDirectory=coverage/components",
+    "test:coverage:detailed": "jest --coverage --coverageReporters=html --coverageDirectory=coverage/detailed",
+    "test:phase2": "npm run test:components && npm run test:hooks && npm run test:apis",
+    "test:phase2:watch": "jest --testPathPattern='(components|hooks|apis)' --watch",
