@@ -16,26 +16,33 @@ export async function sendSpotifyCommand(
   command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS'
 ) {
   const accessToken = await getAccessToken()
-  let endpoint = ''
-  let method = ''
+  let endpoint: string
+  let method: string
 
   switch (command) {
-    case 'PLAY':
+    case 'PLAY': {
       endpoint = 'play'
       method = 'PUT'
       break
-    case 'PAUSE':
+    }
+    case 'PAUSE': {
       endpoint = 'pause'
       method = 'PUT'
       break
-    case 'NEXT':
+    }
+    case 'NEXT': {
       endpoint = 'next'
       method = 'POST'
       break
-    case 'PREVIOUS':
+    }
+    case 'PREVIOUS': {
       endpoint = 'previous'
       method = 'POST'
       break
+    }
+    default: {
+      throw new Error(`Unhandled Spotify command: ${command}`)
+    }
   }
 
   const response = await fetch(`${SPOTIFY_API_BASE}/${endpoint}`, {
