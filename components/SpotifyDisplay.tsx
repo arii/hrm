@@ -205,6 +205,7 @@ const SpotifyDisplay = () => {
           color="success"
           onClick={handleSpotifyLogin}
           sx={{ px: 4, py: 1 }}
+          data-testid="login-button"
         >
           🎵 Login with Spotify
         </Button>
