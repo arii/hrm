@@ -1,13 +1,7 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
-import {
-  SpotifyCommandMessage,
-  TimerCommandMessage,
-  TimerConfigMessage,
-  TimerModeCommandMessage,
-} from '@/types/websocket'
+import { SpotifyCommandMessage } from '@/types/websocket'
 import Add from '@mui/icons-material/Add'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -22,77 +16,33 @@ import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
+import { useTimerControls } from '@/hooks/useTimerControls'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
+
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
-  // Local state is source of truth for editing
-  const [workTime, setWorkTime] = useState(20)
-  const [restTime, setRestTime] = useState(10)
+  const { sendData, spotifyData } = useWebSocket()
+  const {
+    timerData,
+    workTime,
+    setWorkTime,
+    restTime,
+    setRestTime,
+    latestWork,
+    latestRest,
+    sendTimerCommand: sendTimerCommandInternal,
+    sendModeCommand,
+  } = useTimerControls()
 
-  const debouncedWorkTime = useDebounce(workTime, 500)
-  const debouncedRestTime = useDebounce(restTime, 500)
-  // Track latest numeric values synchronously to avoid stale state on click
-  const latestWork = useRef<number>(workTime)
-  const latestRest = useRef<number>(restTime)
-
-  // Keep refs synchronized with state
-  useEffect(() => {
-    latestWork.current = workTime
-  }, [workTime])
-
-  useEffect(() => {
-    latestRest.current = restTime
-  }, [restTime])
-
-  // Send settings update to server when local state changes
-  useEffect(() => {
-    const message: TimerConfigMessage = {
-      type: 'TIMER_CONFIG',
-      workDuration: debouncedWorkTime,
-      restDuration: debouncedRestTime,
-    }
-    sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
-
-  // Get deviceId from SpotifyControls context or fallback to active device
-  interface SpotifyDevice {
-    id: string
-    name: string
-    is_active?: boolean
-    is_private_session?: boolean
-    is_restricted?: boolean
-    type?: string
-    volume_percent?: number
-  }
-  const [spotifyDeviceId, setSpotifyDeviceId] = useState<string>('')
-  const [spotifyDevices, setSpotifyDevices] = useState<SpotifyDevice[]>([])
-  useEffect(() => {
-    const fetchDevices = async () => {
-      try {
-        const response = await fetch('/api/spotify/devices')
-        if (!response.ok) throw new Error('Failed to fetch devices')
-        const devices: SpotifyDevice[] = await response.json()
-        setSpotifyDevices(Array.isArray(devices) ? devices : [])
-        const activeDevice = devices.find((d) => d.is_active)
-        setSpotifyDeviceId(
-          activeDevice ? activeDevice.id : devices[0]?.id || ''
-        )
-      } catch (_err) {
-        setSpotifyDevices([])
-        setSpotifyDeviceId('')
-      }
-    }
-    fetchDevices()
-  }, [])
+  const hasSpotifyData =
+    spotifyData.trackName !== 'Awaiting Login...' &&
+    spotifyData.trackName !== '' &&
+    spotifyData.trackName !== 'No Track Playing'
+  const { resolveTargetDeviceId } = useSpotifyDevices(hasSpotifyData)
 
   const sendSpotifyCommand = useCallback(
     (command: 'NEXT' | 'PAUSE') => {
-      let deviceId = spotifyDeviceId
-      if (!deviceId && spotifyDevices.length > 0) {
-        const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
-        setSpotifyDeviceId(deviceId)
-      }
+      const deviceId = resolveTargetDeviceId()
       if (!deviceId) {
         console.warn('No deviceId available, Spotify command not sent.')
         return
@@ -104,37 +54,20 @@ const TimerControls = () => {
       }
       sendData(message)
     },
-    [sendData, spotifyDeviceId, spotifyDevices]
+    [sendData, resolveTargetDeviceId]
   )
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
-      // When starting, ensure the server receives the latest configuration immediately
-      if (command === 'START') {
-        // Prefer reading the current ref values to avoid stale React state
-        const config: TimerConfigMessage = {
-          type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
-        }
-        sendData(config)
-      }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
-
+      sendTimerCommandInternal(command)
       if (command === 'START') {
         sendSpotifyCommand('NEXT')
       } else if (command === 'STOP') {
         sendSpotifyCommand('PAUSE')
       }
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
+    [sendTimerCommandInternal, sendSpotifyCommand]
   )
-
-  const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
-    const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
-    sendData(message)
-  }
 
   return (
     <Card

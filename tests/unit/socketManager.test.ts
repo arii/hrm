@@ -14,7 +14,11 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import TabataTimer from '../../services/tabataTimer'
-import { UnifiedStateMessage } from '../../types/websocket'
+import {
+  SpotifyData,
+  TimerData,
+  UnifiedStateMessage,
+} from '../../types/websocket'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
@@ -32,25 +36,16 @@ describe('WebSocket Manager Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
   let broadcastedMessages: Partial<UnifiedStateMessage>[]
-  let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
   let mockSdk: {
     player: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      getCurrentlyPlayingTrack: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      startResumePlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pausePlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      skipToNext: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      skipToPrevious: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      transferPlayback: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setPlaybackVolume: jest.Mock<any>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      getAvailableDevices: jest.Mock<any>
+      getCurrentlyPlayingTrack: jest.Mock<unknown>
+      startResumePlayback: jest.Mock<unknown>
+      pausePlayback: jest.Mock<unknown>
+      skipToNext: jest.Mock<unknown>
+      skipToPrevious: jest.Mock<unknown>
+      transferPlayback: jest.Mock<unknown>
+      setPlaybackVolume: jest.Mock<unknown>
+      getAvailableDevices: jest.Mock<unknown>
     }
   }
 
@@ -60,8 +55,11 @@ describe('WebSocket Manager Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (data: Partial<UnifiedStateMessage>) => {
-      broadcastedMessages.push(data)
+    const broadcastFn = (
+      type: string,
+      payload: Partial<UnifiedStateMessage>
+    ) => {
+      broadcastedMessages.push(payload)
     }
 
     // Mock TokenManager to return a valid token
@@ -96,9 +94,19 @@ describe('WebSocket Manager Integration', () => {
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-    tabataTimer = new TabataTimer(broadcastFn)
+    tabataTimer = new TabataTimer(
+      broadcastFn as (
+        type: 'TIMER_UPDATE',
+        payload: { timerData: TimerData }
+      ) => void
+    )
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    spotifyService = await SpotifyPolling.create(
+      broadcastFn as (
+        type: 'SPOTIFY_UPDATE',
+        payload: { spotifyData: SpotifyData }
+      ) => void
+    )
   })
 
   afterEach(() => {

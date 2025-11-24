@@ -11,9 +11,9 @@ import {
 import {
   ClientCommandMessage,
   HrmData,
+  ServerMessage,
   SpotifyData,
   TimerData,
-  UnifiedStateMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -140,15 +140,20 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-        const message: UnifiedStateMessage = JSON.parse(event.data)
-        if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
-          }))
+        const message: ServerMessage = JSON.parse(event.data)
+        switch (message.type) {
+          case 'INITIAL_STATE':
+            setAppState(message.payload)
+            break
+          case 'HRM_UPDATE':
+            setAppState((prev) => ({ ...prev, hrmData: message.payload.hrmData || prev.hrmData }))
+            break
+          case 'TIMER_UPDATE':
+            setAppState((prev) => ({ ...prev, timerData: message.payload.timerData || prev.timerData }))
+            break
+          case 'SPOTIFY_UPDATE':
+            setAppState((prev) => ({ ...prev, spotifyData: message.payload.spotifyData || prev.spotifyData }))
+            break
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

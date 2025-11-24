@@ -9,7 +9,9 @@ import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
-  UnifiedStateMessage,
+  ServerMessage,
+  SpotifyData,
+  TimerData,
 } from '../types/websocket.js'
 
 // Define service instances to be managed
@@ -49,11 +51,13 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     // Send initial state upon connection
     ws.send(
       JSON.stringify({
-        type: 'STATE_UPDATE',
-        hrmData: Array.from(clientData.values()),
-        timerData: tabataServiceInstance.getState(),
-        spotifyData: spotifyServiceInstance.getState(),
-      } as UnifiedStateMessage)
+        type: 'INITIAL_STATE',
+        payload: {
+          hrmData: Array.from(clientData.values()),
+          timerData: tabataServiceInstance.getState(),
+          spotifyData: spotifyServiceInstance.getState(),
+        },
+      } as ServerMessage)
     )
 
     ws.on('message', (message) => {
@@ -63,22 +67,20 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       clientData.delete(clientId)
-      broadcastState()
+      broadcastUpdate('HRM_UPDATE', { hrmData: Array.from(clientData.values()) })
     })
   })
 }
 
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: 'STATE_UPDATE',
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
+const broadcastUpdate = (
+  type: 'HRM_UPDATE' | 'TIMER_UPDATE' | 'SPOTIFY_UPDATE',
+  payload: {
+    hrmData?: HrmData[]
+    timerData?: TimerData
+    spotifyData?: SpotifyData
   }
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
-  )
+) => {
+  const message: ServerMessage = { type, payload }
   wssInstance.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message))
@@ -133,7 +135,7 @@ const handleIncomingMessage = (
             clientData.get(clientId)
           )
         }
-        broadcastState()
+        broadcastUpdate('HRM_UPDATE', { hrmData: Array.from(clientData.values()) })
         break
       }
 
@@ -190,4 +192,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export { initSocketManager, broadcastUpdate }
