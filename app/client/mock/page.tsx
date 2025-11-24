@@ -168,6 +168,7 @@ export default function MockPage() {
 
   return (
     <>
+<<<<<<< HEAD
       <Container maxWidth="md" sx={{ py: 3, pb: 10 }}>
         <Grid container spacing={3}>
           {/* Left Column: Controls */}
@@ -178,6 +179,73 @@ export default function MockPage() {
                 variant="h5"
                 component="h1"
                 sx={{ fontWeight: 'bold', mb: 2 }}
+=======
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+        <Card sx={{ p: 3, textAlign: 'center' }}>
+          <Science color="primary" sx={{ fontSize: 60, mb: 2 }} />
+          <Typography
+            variant="h5"
+            component="h1"
+            sx={{ fontWeight: 'bold', mb: 2 }}
+          >
+            HRM Mock Streamer
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Simulate heart rate data for testing.
+          </Typography>
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={8}>
+              <TextField
+                label="User Name"
+                placeholder="e.g., Mock User"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                label="Age"
+                placeholder="e.g., 30"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(parseInt(e.target.value, 10))}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+
+          <TextField
+            label="Current BPM"
+            placeholder="e.g., 120"
+            type="number"
+            value={hrValue}
+            onChange={handleValueChange}
+            variant="outlined"
+            fullWidth
+            size="medium"
+            disabled={isStreaming}
+            inputProps={{ 'data-testid': 'hr-input' }}
+            sx={{ mb: 3 }}
+          />
+
+          <Typography
+            variant="caption"
+            display="block"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            Select a zone to set HR:
+          </Typography>
+          <Grid container spacing={1} sx={{ mb: 3 }}>
+            <Grid item xs>
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ backgroundColor: '#9E9E9E' }}
+                onClick={() => setHrByZone('grey')}
+>>>>>>> origin/leader
               >
                 HRM Mock Streamer
               </Typography>
