@@ -134,12 +134,11 @@ test.describe('Visual Regression Tests', () => {
     await page.waitForTimeout(1000)
     await replaceIframeWithStableWorkout(page)
     
-    // Send mock HR data
+    // Send mock HR data by setting zone (which auto-sends)
     await mockPage.getByTestId('hr-input').fill('145')
-    await mockPage.getByRole('button', { name: /send/i }).click()
     
     // Wait for HR data to appear on dashboard
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(2000)
     
     await expect(page).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
@@ -163,12 +162,17 @@ test.describe('Visual Regression Tests', () => {
     await page.waitForTimeout(1000)
     await replaceIframeWithStableWorkout(page)
     
-    // Send HR data for different zones
-    const hrValues = [100, 125, 145, 165, 185]
+    // Send HR data for different zones using zone buttons
+    const zones = [
+      { name: 'Zone 1', value: '95' },
+      { name: 'Zone 2', value: '115' },
+      { name: 'Zone 3', value: '135' },
+      { name: 'Zone 4', value: '155' },
+      { name: 'Zone 5', value: '175' },
+    ]
     
-    for (const hr of hrValues) {
-      await mockPage.getByTestId('hr-input').fill(hr.toString())
-      await mockPage.getByRole('button', { name: /send/i }).click()
+    for (const zone of zones) {
+      await mockPage.getByRole('button', { name: zone.name }).click()
       await page.waitForTimeout(500)
     }
     
