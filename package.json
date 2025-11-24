@@ -24,11 +24,21 @@
     "test:unit:coverage": "cross-env NODE_ENV=test jest --coverage",
     "test:visual": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:all": "npm run test:visual && npm run test:unit",
+<<<<<<< HEAD
     "test:quick": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:ui": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --ui; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:update": "npm run build:server && bash start-test.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "cross-env NODE_ENV=test playwright test --project=chromium --headed",
     "test:visual:report": "cross-env NODE_ENV=test playwright show-report",
+=======
+    "test:quick": "npm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:ui": "playwright test --ui",
+    "test:visual:update": "npm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:headed": "playwright test --project=chromium --headed",
+    "test:visual:report": "playwright show-report",
+    "test:oauth:local": "python3 scripts/verify_oauth_local.py",
+    "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
+>>>>>>> origin/leader
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
     "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
