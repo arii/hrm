@@ -13,6 +13,15 @@ import {
 } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyData } from '../../types/websocket'
+import logger from '../../utils/logger'
+
+// Mock the logger
+jest.mock('../../utils/logger', () => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+}))
 
 // Mock the SpotifyTokenManager module
 jest.mock('../../services/spotifyTokenManager', () => {
@@ -409,15 +418,22 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.handleCommand('PLAY', 'device_id')
 
+<<<<<<< HEAD
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining(
           'Error executing Spotify command PLAY: Response body:'
         ),
         'Invalid JSON'
+=======
+      expect(logger.error).toHaveBeenCalledWith(
+        { response: 'Invalid JSON' },
+        expect.stringContaining('Error executing Spotify command PLAY: Response body:')
+>>>>>>> origin/leader
       )
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
+<<<<<<< HEAD
       // Simulate a deeply nested error that might crash text() retrieval
       const badError = {
         response: {
@@ -433,6 +449,23 @@ describe('SpotifyPolling Service', () => {
           'Error executing Spotify command PLAY: Failed to retrieve error response text:'
         ),
         expect.anything()
+=======
+       // Simulate a deeply nested error that might crash text() retrieval
+       const badError = {
+           response: {
+               text: jest.fn().mockRejectedValue(new Error('Stream closed'))
+           }
+       }
+       mockPlayer.startResumePlayback.mockRejectedValue(badError)
+
+       await spotifyService.handleCommand('PLAY', 'device_id')
+
+       expect(logger.error).toHaveBeenCalledWith(
+        { err: expect.any(Error) },
+        expect.stringContaining(
+          'Error executing Spotify command PLAY: Failed to retrieve error response text:'
+        )
+>>>>>>> origin/leader
       )
     })
 
@@ -443,12 +476,20 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.handleCommand('PLAY', 'device_id')
 
+<<<<<<< HEAD
       expect(consoleWarnSpy).toHaveBeenCalledWith(
+=======
+      expect(logger.warn).toHaveBeenCalledWith(
+>>>>>>> origin/leader
         expect.stringContaining(
           '[SpotifyPolling] Command PLAY executed, but response was not valid JSON'
         )
       )
+<<<<<<< HEAD
       expect(consoleErrorSpy).not.toHaveBeenCalled()
+=======
+      expect(logger.error).not.toHaveBeenCalled()
+>>>>>>> origin/leader
     })
   })
 })

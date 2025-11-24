@@ -19,7 +19,7 @@ type WorkerFixtures = {
 
 export const test = base.extend<PageFixtures, WorkerFixtures>({
   setupPages: [
-    async ({ browser }, applyFixture) => {
+    async ({ browser }, use) => {
       const context = await browser.newContext()
       const warmupPage = await context.newPage()
 
@@ -40,12 +40,12 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       await context.close()
       console.log('✅ Server endpoints warmed up')
 
-      await applyFixture()
+      await use()
     },
     { scope: 'worker' },
   ],
 
-  dashboardPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
+  dashboardPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
       if (!msg.text().includes('DOCS_timing')) {
@@ -53,25 +53,25 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       }
     })
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await applyFixture(page)
+    await use(page)
   },
 
-  controlPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
+  controlPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await applyFixture(page)
+    await use(page)
   },
 
-  mockPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
+  mockPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await applyFixture(page)
+    await use(page)
   },
 
-  connectPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
+  connectPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await applyFixture(page)
+    await use(page)
   },
 })
 
