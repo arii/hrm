@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '../components/BottomNavBar' // Import the new component
+import Footer from '../components/Footer'
 import Providers from '../components/Providers'
 import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -37,6 +38,7 @@ export default function RootLayout({
               <TimerSoundProvider>{children}</TimerSoundProvider>
             </ErrorBoundary>
           </Providers>
+          <Footer />
           <BottomNavBar />
         </ThemeRegistry>
       </body>

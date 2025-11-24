@@ -186,7 +186,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder="Search your playlists or browse popular playlists..."
+            placeholder="Search or browse playlists..."
             InputProps={{
               ...params.InputProps,
               startAdornment: (
@@ -291,6 +291,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -355,6 +367,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -429,6 +453,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   key={playlist.uri}
                   selected={selectedPlaylist?.uri === playlist.uri}
                   onClick={() => handlePlaylistSelect(playlist)}
+                  sx={{
+                    '&.Mui-selected': {
+                      borderLeft: (theme) =>
+                        `4px solid ${theme.palette.primary.main}`,
+                      backgroundColor: (theme) =>
+                        theme.palette.action.selected,
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.palette.action.hover,
+                      },
+                    },
+                  }}
                 >
                   {playlist.imageUrl ? (
                     <Box
