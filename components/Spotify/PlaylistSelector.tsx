@@ -5,6 +5,7 @@ import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
@@ -32,7 +33,7 @@ interface Playlist {
 }
 
 interface PlaylistSelectorProps {
-  onPlaylistSelected: (uri: string) => void
+  onPlaylistSelected: (uri: string | null) => void
 }
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
@@ -143,9 +144,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   const handlePlaylistSelect = (playlist: Playlist | null) => {
     setSelectedPlaylist(playlist)
-    if (playlist) {
-      onPlaylistSelected(playlist.uri)
-    }
+    onPlaylistSelected(playlist ? playlist.uri : null)
+  }
+
+  const handleClearSelection = () => {
+    handlePlaylistSelect(null)
   }
 
   if (loading) {
@@ -174,71 +177,80 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   return (
     <Box>
-      <Autocomplete
-        options={filteredPlaylists}
-        getOptionLabel={(option) => option.name}
-        value={selectedPlaylist}
-        onChange={(_, newValue) => handlePlaylistSelect(newValue)}
-        inputValue={searchQuery}
-        onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder="Search or browse playlists..."
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <Search sx={{ color: 'text.secondary', mr: 1 }} />
-              ),
-              endAdornment: (
-                <>
-                  {searchLoading ? (
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                  ) : searchQuery ? (
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery('')}
-                      aria-label="Clear search"
-                      sx={{ mr: 1 }}
-                    >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-        renderOption={(props, option) => (
-          <Box component="li" {...props} key={option.uri}>
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              {option.imageUrl ? (
-                <Box
-                  component="img"
-                  src={option.imageUrl}
-                  alt={option.name}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    mr: 1,
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : (
-                <MusicNote
-                  sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }}
-                />
-              )}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" noWrap>
-                  {option.name}
-                </Typography>
-                {option.trackCount !== undefined && (
-                  <Typography variant="caption" color="text.secondary">
-                    {option.trackCount} tracks
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Autocomplete
+          options={filteredPlaylists}
+          getOptionLabel={(option) => option.name}
+          value={selectedPlaylist}
+          onChange={(_, newValue) => handlePlaylistSelect(newValue)}
+          inputValue={searchQuery}
+          onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Search or select a playlist..."
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <Search sx={{ color: 'text.secondary', mr: 1 }} />
+                ),
+                endAdornment: searchLoading ? (
+                  <CircularProgress
+                    size={20}
+                    aria-label="Searching"
+                    sx={{ mr: 1 }}
+                  />
+                ) : null,
+              }}
+            />
+          )}
+          renderOption={(props, option) => (
+            <Box component="li" {...props} key={option.uri}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', width: '100%' }}
+              >
+                {option.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={option.imageUrl}
+                    alt={option.name}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      mr: 1,
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <MusicNote
+                    sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }}
+                  />
+                )}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" noWrap>
+                    {option.name}
                   </Typography>
+                  {option.trackCount !== undefined && (
+                    <Typography variant="caption" color="text.secondary">
+                      {option.trackCount} tracks
+                    </Typography>
+                  )}
+                </Box>
+                {option.isPreset && (
+                  <Chip
+                    label="Preset"
+                    size="small"
+                    sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                  />
+                )}
+                {option.isSearchResult && !option.isPreset && (
+                  <Chip
+                    label="Spotify"
+                    size="small"
+                    color="success"
+                    sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                  />
                 )}
               </Box>
               {option.isPreset && (
@@ -257,18 +269,26 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                 />
               )}
             </Box>
-          </Box>
-        )}
-        noOptionsText={
-          debouncedSearch ? (
-            // eslint-disable-next-line react/no-unescaped-entities
-            <>No playlists found matching "{debouncedSearch}"</>
-          ) : (
-            'No playlists available'
-          )
-        }
-        sx={{ mb: 2 }}
-      />
+          )}
+          noOptionsText={
+            debouncedSearch ? (
+              // eslint-disable-next-line react/no-unescaped-entities
+              <>No playlists found matching "{debouncedSearch}"</>
+            ) : (
+              'No playlists available'
+            )
+          }
+          sx={{ flex: 1 }}
+        />
+        <Button
+          onClick={handleClearSelection}
+          disabled={!selectedPlaylist}
+          sx={{ ml: 1, height: '56px' }}
+          aria-label="Clear selection"
+        >
+          Clear
+        </Button>
+      </Box>
 
       {!searchQuery && (
         <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto' }}>
