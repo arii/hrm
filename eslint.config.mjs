@@ -23,6 +23,22 @@ export default defineConfig([
   },
 
 
+  // Configure trailing comma rules for consistent code formatting
+  {
+    rules: {
+      '@typescript-eslint/comma-dangle': [
+        'error',
+        {
+          arrays: 'always-multiline',
+          objects: 'always-multiline',
+          imports: 'always-multiline',
+          exports: 'always-multiline',
+          functions: 'always-multiline',
+        },
+      ],
+    },
+  },
+
   // Next.js specific rules and configurations
   ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
   {
