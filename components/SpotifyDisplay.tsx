@@ -10,6 +10,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
+<<<<<<< HEAD
 import {
   Box,
   Button,
@@ -21,6 +22,15 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+=======
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import Slider from '@mui/material/Slider'
+import Typography from '@mui/material/Typography'
+>>>>>>> origin/leader
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -209,6 +219,7 @@ const SpotifyDisplay = () => {
           color="success"
           onClick={handleSpotifyLogin}
           sx={{ px: 4, py: 1 }}
+          data-testid="login-button"
         >
           🎵 Login with Spotify
         </Button>

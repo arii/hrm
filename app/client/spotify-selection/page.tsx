@@ -1,22 +1,32 @@
 // app/client/spotify-selection/page.tsx
 'use client'
 
-import { Pause, PlayArrow, SkipNext, SkipPrevious } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Stack,
-  Typography,
-} from '@mui/material'
+import Pause from '@mui/icons-material/Pause'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import SkipNext from '@mui/icons-material/SkipNext'
+import SkipPrevious from '@mui/icons-material/SkipPrevious'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Container from '@mui/material/Container'
+import Skeleton from '@mui/material/Skeleton'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import PlaylistSelector from '../../../components/Spotify/PlaylistSelector'
 import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
+
+const PlaylistSelector = dynamic(
+  () => import('../../../components/Spotify/PlaylistSelector'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={200} />,
+  }
+)
 
 const SpotifySelectionPage = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
