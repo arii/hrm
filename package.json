@@ -6,8 +6,14 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --no-warnings server.ts",
+<<<<<<< HEAD
     "build": "pnpm run build:server && next build",
+=======
+    "seed": "ts-node --esm scripts/seed-dev-data.ts",
+    "build": "npm run build:server && next build",
+>>>>>>> origin/leader
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
+    "analyze": "cross-env ANALYZE=true npm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:logs": "pm2 logs hrm-server",
     "pm2:stop": "pm2 stop hrm-server",
@@ -28,11 +34,22 @@
     "test:visual:update": "pnpm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
+    "test:oauth:local": "python3 scripts/verify_oauth_local.py",
+    "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
+<<<<<<< HEAD
     "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
     "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222"
+=======
+    "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
+    "test:clean:update": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual:update",
+    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+    "release:patch": "npm version patch -m \"release: patch %s\"",
+    "release:minor": "npm version minor -m \"release: minor %s\"",
+    "release:major": "npm version major -m \"release: major %s\""
+>>>>>>> origin/leader
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -40,7 +57,6 @@
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "next": "16.0.1",
     "next-auth": "^4.24.13",
@@ -51,6 +67,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
+    "@next/bundle-analyzer": "^16.0.3",
     "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
