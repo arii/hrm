@@ -1,0 +1,47 @@
+name: PR Quality Gate
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pr-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+        cache: "npm"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check PR title format
+      run: |
+        # This check is informational for manual runs.
+        # In a real PR context, you would use github.event.pull_request.title
+        echo "Note: This check is for a manual run. In a PR, it would validate the title."
+
+    - name: Check for large files
+      run: |
+        find . -type f -size +1M -not -path "./node_modules/*" -not -path "./.git/*" | while read file; do
+          echo "::warning::Large file detected: $file ($(du -h "$file" | cut -f1))"
+        done
+    
+    - name: Lint commit messages
+      run: |
+        echo "Note: This check is for a manual run. In a PR, it would lint commit messages."
+        if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+          git log --oneline HEAD~1..HEAD | while read line; do
+            if [[ ! "$line" =~ ^[a-f0-9]+\ (feat|fix|docs|style|refactor|test|chore|perf|ci)(\(.+\))?: ]]; then
+              echo "::warning::Commit message should follow conventional commits: $line"
+            fi
+          done
+        fi
+

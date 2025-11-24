@@ -1,0 +1,153 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [leader, main]
+  pull_request:
+    branches: [leader, main]
+
+jobs:
+  # 1. Fast, parallel validation for linting and unit tests
+  unit_tests:
+    runs-on: ubuntu-latest # 2-core runner is sufficient for fast tests
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: "npm"
+        
+    - name: Install Dependencies
+      # The `npm ci` is fast enough if caching is effective.
+      run: npm ci
+    
+    - name: Run Linting and Formatting Checks
+      run: |
+        npm run lint
+        npm run format:check
+    
+    - name: Run Unit Tests
+      run: npm run test:coverage
+      
+    - name: Upload Coverage (runs only once per matrix iteration)
+      uses: codecov/codecov-action@v3
+      with:
+        # Use a flag to differentiate coverage runs in Codecov UI
+        flags: node-${{ matrix.node-version }}-unittests
+        file: ./coverage/lcov.info
+
+  # 2. Sequential, resource-heavy build and E2E/visual tests (runs only once)
+  build_and_e2e:
+    needs: [unit_tests]
+    # For self-hosted or larger runners, specify here:
+    # runs-on: self-hosted-8core 
+    runs-on: ubuntu-latest # Consider upgrading this to ubuntu-latest-8-cores for speed
+    
+    # We only need the latest, validated Node version here.
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+        cache: "npm"
+        
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: 🏗️ Next.js Production Build Cache Restore
+      # This is the most critical step for performance.
+      # Utilize the Next.js cache feature for subsequent runs.
+      uses: actions/cache/restore@v3
+      with:
+        path: |
+          .next/cache
+        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/*.ts', '**/*.tsx') }}
+        restore-keys: |
+          ${{ runner.os }}-nextjs-
+    
+    - name: Execute Build
+      run: npm run build
+      
+    - name: 💾 Save Next.js Build Cache
+      uses: actions/cache/save@v3
+      with:
+        path: .next/cache
+        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/*.ts', '**/*.tsx') }}
+
+    - name: 🖼️ Run Visual Regression Tests (Playwright)
+      # This step should only run once after a successful build.
+      # You may want to configure Playwright to cache its browser binaries too.
+      run: npm run test:visual
+      
+    - name: Upload Test Artifacts on Failure
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-artifacts
+        path: |
+          tests/playwright/screenshots/
+          tests/playwright/test-results/
+
+    - name: 📦 Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-build-output
+        path: |
+          .next/
+          dist/
+          node_modules/
+          package.json
+          pnpm-lock.yaml
+          next.config.js
+          ecosystem.config.cjs
+
+  # 3. Security remains separate
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+        cache: "npm"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run security audit
+      run: npm audit --audit-level=high
+      
+    - name: Run custom security scan
+      run: ./scripts/security-audit.sh || true
+
+  # 4. Deployment now depends on the single build step
+  # deploy:
+  #   needs: [build_and_e2e, security]
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == "refs/heads/leader" && github.event_name == "push"
+    
+  #   steps:
+  #   # NOTE: You no longer need to run `npm ci` and `npm run build` here. 
+  #   # The artifact from `build_and_e2e` should be used.
+    
+  #   - name: ⬇️ Download Build Artifact
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       name: production-build-output
+  #       path: .
+        
+  #   - name: Deploy Notification
+  #     run: echo "Deployment would happen here, using the downloaded build artifact."
