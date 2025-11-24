@@ -4,8 +4,24 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
+<<<<<<< HEAD
 import { SpotifyDevice } from '@/types/index'
 import { Box, Button, Typography } from '@mui/material'
+=======
+import { VolumeUp } from '@mui/icons-material'
+import PauseIcon from '@mui/icons-material/Pause'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import SkipNextIcon from '@mui/icons-material/SkipNext'
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
+import SpeakerIcon from '@mui/icons-material/Speaker'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import Slider from '@mui/material/Slider'
+import Typography from '@mui/material/Typography'
+>>>>>>> origin/leader
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -175,6 +191,7 @@ const SpotifyDisplay = () => {
           color="success"
           onClick={handleSpotifyLogin}
           sx={{ px: 4, py: 1 }}
+          data-testid="login-button"
         >
           🎵 Login with Spotify
         </Button>
