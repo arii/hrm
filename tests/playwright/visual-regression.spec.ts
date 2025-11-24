@@ -210,9 +210,9 @@ test.describe('Visual Regression Tests', () => {
 
   test('Dashboard with mock HR data streaming', async () => {
     // Set HR to yellow zone on mock page
-    await mockPage.getByLabel('Current BPM').fill('155')
-    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
+    await mockPage.getByLabel('Target BPM').fill('155')
+    await mockPage.getByRole('button', { name: 'Z4' }).click()
+    await expect(mockPage.getByLabel('Target BPM')).toHaveValue('155')
 
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
@@ -235,10 +235,10 @@ test.describe('Visual Regression Tests', () => {
 
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming
-    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+    await mockPage.getByRole('button', { name: 'Z4' }).click()
     await mockPage.click('button:has-text("START")')
     await expect(
-      mockPage.locator('button:has-text("STOP Streaming")')
+      mockPage.locator('button:has-text("STOP Stream")')
     ).toBeVisible()
 
     // Wait for HR tiles to load on dashboard
