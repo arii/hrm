@@ -14,15 +14,15 @@ export const useTimerControls = () => {
   const [restTime, setRestTime] = useState(10)
   const debouncedWorkTime = useDebounce(workTime, 500)
   const debouncedRestTime = useDebounce(restTime, 500)
-  const latestWork = useRef<number>(workTime)
-  const latestRest = useRef<number>(restTime)
+  const latestWorkRef = useRef<number>(workTime)
+  const latestRestRef = useRef<number>(restTime)
 
   useEffect(() => {
-    latestWork.current = workTime
+    latestWorkRef.current = workTime
   }, [workTime])
 
   useEffect(() => {
-    latestRest.current = restTime
+    latestRestRef.current = restTime
   }, [restTime])
 
   useEffect(() => {
@@ -39,15 +39,15 @@ export const useTimerControls = () => {
       if (command === 'START') {
         const config: TimerConfigMessage = {
           type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
+          workDuration: latestWorkRef.current,
+          restDuration: latestRestRef.current,
         }
         sendData(config)
       }
       const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
     },
-    [sendData, latestWork, latestRest]
+    [sendData, latestWorkRef, latestRestRef]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
@@ -61,8 +61,8 @@ export const useTimerControls = () => {
     setWorkTime,
     restTime,
     setRestTime,
-    latestWork,
-    latestRest,
+    latestWorkRef,
+    latestRestRef,
     sendTimerCommand,
     sendModeCommand,
   }

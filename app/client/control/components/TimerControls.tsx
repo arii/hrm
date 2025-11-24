@@ -28,8 +28,8 @@ const TimerControls = () => {
     setWorkTime,
     restTime,
     setRestTime,
-    latestWork,
-    latestRest,
+    latestWorkRef,
+    latestRestRef,
     sendTimerCommand: sendTimerCommandInternal,
     sendModeCommand,
   } = useTimerControls()
@@ -184,7 +184,7 @@ const TimerControls = () => {
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(5, val)
-                    latestWork.current = next
+                    latestWorkRef.current = next
                     setWorkTime(next)
                   }}
                   inputProps={{
@@ -261,7 +261,7 @@ const TimerControls = () => {
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(0, val)
-                    latestRest.current = next
+                    latestRestRef.current = next
                     setRestTime(next)
                   }}
                   inputProps={{
