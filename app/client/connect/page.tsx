@@ -1,14 +1,14 @@
 'use client'
 
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-} from '@mui/material'
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
@@ -108,24 +108,24 @@ export default function ConnectPage() {
           Connect Heart Rate Monitor
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
           <TextField
             fullWidth
             label="Your Name"
+            placeholder="e.g., Jane Doe"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            sx={{ mb: 2 }}
           />
           <TextField
             fullWidth
             label="Your Age"
+            placeholder="e.g., 30"
             type="number"
             value={userAge}
             onChange={(e) => setUserAge(e.target.value)}
             inputProps={{ min: 1, max: 120 }}
-            sx={{ mb: 2 }}
           />
-        </Box>
+        </Stack>
 
         {deviceStatus.includes('Failed') && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -139,9 +139,17 @@ export default function ConnectPage() {
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Connecting')
+              }
             >
-              Connect Bluetooth HRM
+              {deviceStatus.includes('Connecting') ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Connect Bluetooth HRM'
+              )}
             </Button>
           ) : (
             <Button
@@ -194,6 +202,32 @@ export default function ConnectPage() {
         >
           WebSocket: {connectionStatus}
         </Typography>
+
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={async () => {
+              if (confirm('Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.')) {
+                try {
+                  // Clear client-side cookies
+                  document.cookie = 'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+                  const response = await fetch('/api/debug/reset', { method: 'POST' });
+                  const data = await response.json();
+                  alert(data.message);
+                } catch (error) {
+                  console.error('Error resetting server:', error);
+                  alert('Failed to reset server.');
+                }
+              }
+            }}
+          >
+            Reset Server
+          </Button>
+        </Box>
       </Container>
       <BottomNavBar />
     </>

@@ -19,8 +19,18 @@ else
   echo ".env.local already exists, skipping creation."
 fi
 
+<<<<<<< HEAD
 # Verify package-lock.json integrity and install dependencies
 echo "Installing dependencies with pnpm install --frozen-lockfile..."
 pnpm install --frozen-lockfile
+=======
+# Verify pnpm-lock.yaml integrity and install dependencies
+echo "Installing dependencies with pnpm..."
+if [ -f pnpm-lock.yaml ]; then
+  pnpm install --frozen-lockfile
+else
+  pnpm install
+fi
+>>>>>>> origin/leader
 
 echo "Setup complete."

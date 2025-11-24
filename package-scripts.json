@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "audit:security": "./scripts/security-audit.sh",
+    "audit:fix": "npm audit fix",
+    "audit:report": "npm audit --json > audit-report.json"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm audit --audit-level=high"
+    }
+  }
+}
