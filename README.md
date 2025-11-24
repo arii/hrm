@@ -74,12 +74,138 @@ pnpm dev
 
 If you are not using the DevContainer, you can set up the project manually:
 
+#### Prerequisites
+
+Before setting up the project locally, ensure you have the following installed on your system:
+
+- **Node.js** (version 18.x or higher recommended)
+  - Download from [nodejs.org](https://nodejs.org/)
+  - Verify installation: `node --version`
+
+- **pnpm** (Package Manager)
+  - Install globally: `npm install -g pnpm`
+  - Verify installation: `pnpm --version`
+
+- **Git**
+  - Download from [git-scm.com](https://git-scm.com/)
+  - Verify installation: `git --version`
+
+#### Step-by-Step Setup Instructions
+
+**1. Clone the Repository**
+
+```bash
+# Clone the repository to your local machine
+git clone https://github.com/arii/hrm.git
+
+# Navigate to the project directory
+cd hrm
+```
+
+**2. Install pnpm (if not already installed)**
+
+```bash
+# Install pnpm globally using npm
+npm install -g pnpm
+
+# Verify pnpm installation
+pnpm --version
+```
+
+**3. Install Project Dependencies**
+
+```bash
+# Install all required dependencies using pnpm
+pnpm install --frozen-lockfile
+```
+
+This will install all the Node.js packages required by the project, including Next.js, Material-UI, and other dependencies.
+
+**4. Install Playwright Browser Dependencies**
+
+```bash
+# Install Playwright browsers for testing
+npx playwright install --with-deps
+```
+
+**5. Set Up Environment Variables**
+
+```bash
+# Create your local environment file from the example
+cp .env.example .env.local
+```
+
+Then open `.env.local` and fill in the required values:
+
+```bash
+# Spotify OAuth credentials (get these from developer.spotify.com/dashboard)
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+
+# NextAuth.js configuration
+NEXTAUTH_URL=http://127.0.0.1:3000
+NEXTAUTH_SECRET=your_random_secret_here
+```
+
+To generate a secure `NEXTAUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+**6. Start the Development Server**
+
+```bash
+# Start the custom server (Next.js + WebSocket + background services)
+pnpm run dev
+```
+
+The server will start and you should see output indicating:
+- Next.js app running on http://127.0.0.1:3000
+- WebSocket server on ws://127.0.0.1:3000/ws
+- Spotify polling service initialized
+- Tabata timer service initialized
+
+**7. Verify the Setup**
+
+Open your browser and navigate to:
+- **Dashboard**: http://127.0.0.1:3000
+- **Mock HRM Client**: http://127.0.0.1:3000/mock
+- **Phone Controls**: http://127.0.0.1:3000/phone
+- **Bluetooth Connection**: http://127.0.0.1:3000/connect
+
+You should see the HRM dashboard interface load successfully.
+
+**8. (Optional) Verify Spotify Integration**
+
+```bash
+# Run the Spotify verification script
+pnpm run verify:spotify
+```
+
+This will test your Spotify credentials and connection.
+
+#### Troubleshooting Setup Issues
+
+If you encounter issues during setup:
+
+- **Port 3000 already in use**: Kill any process using port 3000, or use `pnpm run pm2:stop` if PM2 is running
+- **Module not found errors**: Ensure all dependencies are installed with `pnpm install --frozen-lockfile`
+- **Playwright errors**: Run `npx playwright install --with-deps` again
+- **Environment variable issues**: Double-check that `.env.local` exists and contains valid values
+
+For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
+
+
+> **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
+
 ```bash
 # 1. Create your environment file from the example
 cp .env.example .env.local
 
 # 2. Fill in the required values in .env.local (see "Environment Variables" section)
 
+<<<<<<< HEAD
 # 3. Install dependencies using the lockfile
 pnpm install
 
@@ -88,7 +214,22 @@ pnpm dlx playwright install --with-deps
 
 # 5. Start the development server
 pnpm dev
+=======
+# 3. Install pnpm if not already installed
+npm install -g pnpm
+
+# 4. Install dependencies using the lockfile
+pnpm install --frozen-lockfile
+
+# 5. Install Playwright's browser dependencies
+npx playwright install --with-deps
+
+# 6. Start the development server
+pnpm run dev
+>>>>>>> origin/leader
 ```
+
+> **Migration from npm**: If you accidentally run `npm install`, the project will block it and show a helpful message. Use the wrapper script `./scripts/npm-to-pnpm.sh` to automatically convert npm commands to pnpm equivalents.
 
 The server will start with:
 

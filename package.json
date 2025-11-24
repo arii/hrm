@@ -23,20 +23,34 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
+<<<<<<< HEAD
     "test:visual": "pnpm build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:all": "pnpm test:visual && pnpm test:unit",
     "test:quick": "pnpm build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:ui": "playwright test --ui",
     "test:visual:update": "pnpm build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+=======
+    "test:visual": "pnpm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:all": "pnpm run test:visual && pnpm run test:unit",
+    "test:quick": "pnpm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:ui": "playwright test --ui",
+    "test:visual:update": "pnpm run build:server && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+>>>>>>> origin/leader
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",
     "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
+<<<<<<< HEAD
     "test:clean": "pnpm kill-all && pnpm dev & sleep 5 && pnpm test:visual",
     "test:clean:update": "pnpm kill-all && pnpm dev & sleep 5 && pnpm test:visual:update",
     "mcp:chrome-devtools": "pnpm dlx chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+=======
+    "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
+    "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
+    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
+>>>>>>> origin/leader
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\""
@@ -91,10 +105,18 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
+<<<<<<< HEAD
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "prettier --write",
       "eslint --fix"
     ]
   }
+=======
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+>>>>>>> origin/leader
 }

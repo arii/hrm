@@ -1,17 +1,27 @@
 # Use the official Node.js 20 image.
 FROM mcr.microsoft.com/devcontainers/typescript-node:20-bullseye
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
+<<<<<<< HEAD
 # Install pnpm
 RUN npm install -g pnpm
 
+=======
+>>>>>>> origin/leader
 # Copy package.json and pnpm-lock.yaml to the working directory
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
+<<<<<<< HEAD
 RUN pnpm install
+=======
+RUN pnpm install --frozen-lockfile
+>>>>>>> origin/leader
 
 # Copy the rest of the application source code to the working directory
 COPY . .
