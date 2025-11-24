@@ -1,9 +1,5 @@
 // components/Spotify/VolumeControl.tsx
 import React from 'react'
-<<<<<<< HEAD
-import { Slider, Stack, Typography, Box } from '@mui/material'
-=======
->>>>>>> origin/leader
 import { VolumeUp } from '@mui/icons-material'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
