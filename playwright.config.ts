@@ -109,15 +109,7 @@ export default defineConfig({
       : []),
   ],
 
-  // Webserver configuration for auto-start
-  webServer: {
-    command: 'npm run build:server && npm run dev',
-    port: 3000,
-    timeout: 30000, // Reduced startup timeout
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+
 
   // Output configuration
   outputDir: 'test-results/',
