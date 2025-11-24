@@ -20,7 +20,7 @@ else
 fi
 
 # Verify package-lock.json integrity and install dependencies
-echo "Installing dependencies with npm ci..."
-npm ci
+echo "Installing dependencies with pnpm install --frozen-lockfile..."
+pnpm install --frozen-lockfile
 
 echo "Setup complete."
