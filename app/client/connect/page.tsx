@@ -3,6 +3,7 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
@@ -110,6 +111,7 @@ export default function ConnectPage() {
           <TextField
             fullWidth
             label="Your Name"
+            placeholder="e.g., Jane Doe"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             sx={{ mb: 2 }}
@@ -117,6 +119,7 @@ export default function ConnectPage() {
           <TextField
             fullWidth
             label="Your Age"
+            placeholder="e.g., 30"
             type="number"
             value={userAge}
             onChange={(e) => setUserAge(e.target.value)}
@@ -137,9 +140,17 @@ export default function ConnectPage() {
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Connecting')
+              }
             >
-              Connect Bluetooth HRM
+              {deviceStatus.includes('Connecting') ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Connect Bluetooth HRM'
+              )}
             </Button>
           ) : (
             <Button
