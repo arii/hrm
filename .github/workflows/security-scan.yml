@@ -1,0 +1,55 @@
+name: Dependency Security Scan
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 6 AM
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+        cache: "npm"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run comprehensive security audit
+      run: |
+        echo "## Security Audit Report - $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "### NPM Audit" >> $GITHUB_STEP_SUMMARY
+        npm audit --audit-level=low --json > audit.json || true
+        echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+        cat audit.json >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Check for security vulnerabilities
+      run: |
+        VULNERABILITIES=$(npm audit --audit-level=high --json | jq ".metadata.vulnerabilities.total")
+        echo "Found $VULNERABILITIES high+ severity vulnerabilities"
+        if [ "$VULNERABILITIES" -gt 0 ]; then
+          echo "::warning::Found $VULNERABILITIES high+ severity vulnerabilities"
+          npm audit --audit-level=high
+        fi
+    
+    - name: Create issue on security findings
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: "Security Vulnerabilities Detected - Weekly Scan",
+            body: "Automated security scan has detected vulnerabilities. Please review the audit report and update dependencies accordingly.\n\nScan date: " + new Date().toISOString(),
+            labels: ["security", "automated"]
+          })
+
