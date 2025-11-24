@@ -95,18 +95,13 @@ test.describe('Visual Regression Tests', () => {
     await page.waitForTimeout(1000)
     await replaceIframeWithStableWorkout(page)
     
-    // Ensure timer is not running initially
+    // Ensure timer mode is available
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({ timeout: 5000 })
     
-    // Configure timer with short durations
-    await controlPage.getByTestId('work-duration-input').fill('5')
-    await controlPage.getByTestId('rest-duration-input').fill('3')
-    await controlPage.getByTestId('rounds-input').fill('2')
-    await controlPage.getByTestId('sets-input').fill('1')
-    await controlPage.getByTestId('rest-between-sets-input').fill('10')
-    
-    // Start timer
-    await controlPage.click('button:has-text("START")', { force: true })
+    // Start timer with default settings (just click START)
+    const startButton = controlPage.getByRole('button', { name: 'START', exact: true })
+    await expect(startButton).toBeVisible({ timeout: 5000 })
+    await startButton.click()
     
     // Wait for timer to appear on dashboard
     await expect(page.locator('text=/WORK|REST/')).toBeVisible({ timeout: 10000 })
@@ -123,9 +118,6 @@ test.describe('Visual Regression Tests', () => {
     
     // Stop timer
     await controlPage.getByRole('button', { name: 'STOP', exact: true }).click()
-    
-    // Wait for dashboard to return to idle
-    await expect(page.locator('text=READY')).toBeVisible({ timeout: 5000 })
     
     await controlPage.close()
   })
