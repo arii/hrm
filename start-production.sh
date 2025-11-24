@@ -14,11 +14,21 @@ else
   set -a
   source .env.production
   set +a
+  
+  # Debug: Show critical env vars
+  echo "Environment: NODE_ENV=$NODE_ENV"
+  echo "NEXTAUTH_URL: $NEXTAUTH_URL"
+  echo "AUTH_TRUST_HOST: $AUTH_TRUST_HOST"
+  echo "Hostname: ${HOST:-0.0.0.0}, Port: ${PORT:-3000}"
 fi
 
 if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
-  echo "[start-production] Build artifacts missing. Running npm run build..."
-  npm run build && npm run build:server
+  echo "[start-production] Build artifacts missing. Running pnpm run build..."
+  pnpm run build && pnpm run build:server
 fi
+
+# Ensure AUTH_TRUST_HOST is set for NextAuth
+export AUTH_TRUST_HOST=true
+export NEXTAUTH_TRUST_HOST=true
 
 exec node dist/server.mjs

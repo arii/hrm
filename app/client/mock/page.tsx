@@ -1,18 +1,17 @@
 'use client'
 
-import { HeartBroken, Science } from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-} from '@mui/material'
+import HeartBroken from '@mui/icons-material/HeartBroken'
+import Science from '@mui/icons-material/Science'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
-import useWebSocket from '../../../hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { HrmInputMessage } from '../../../types/websocket'
 
 export default function MockPage() {
@@ -117,6 +116,7 @@ export default function MockPage() {
             <Grid item xs={8}>
               <TextField
                 label="User Name"
+                placeholder="e.g., Mock User"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
@@ -125,6 +125,7 @@ export default function MockPage() {
             <Grid item xs={4}>
               <TextField
                 label="Age"
+                placeholder="e.g., 30"
                 type="number"
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
@@ -135,6 +136,7 @@ export default function MockPage() {
 
           <TextField
             label="Current BPM"
+            placeholder="e.g., 120"
             type="number"
             value={hrValue}
             onChange={handleValueChange}
@@ -142,6 +144,7 @@ export default function MockPage() {
             fullWidth
             size="medium"
             disabled={isStreaming}
+            inputProps={{ 'data-testid': 'hr-input' }}
             sx={{ mb: 3 }}
           />
 

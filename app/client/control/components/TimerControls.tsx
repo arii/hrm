@@ -1,31 +1,28 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
+import logger from '@/utils/logger'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
-import {
-  Add,
-  FitnessCenter,
-  PlayArrow,
-  Remove,
-  Stop,
-  Timer,
-} from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  IconButton,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
+import Add from '@mui/icons-material/Add'
+import FitnessCenter from '@mui/icons-material/FitnessCenter'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import Remove from '@mui/icons-material/Remove'
+import Stop from '@mui/icons-material/Stop'
+import Timer from '@mui/icons-material/Timer'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import IconButton from '@mui/material/IconButton'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 const TimerControls = () => {
   const { timerData, sendData } = useWebSocket()
@@ -98,7 +95,7 @@ const TimerControls = () => {
         setSpotifyDeviceId(deviceId)
       }
       if (!deviceId) {
-        console.warn('No deviceId available, Spotify command not sent.')
+        logger.warn('No deviceId available, Spotify command not sent.')
         return
       }
       const message: SpotifyCommandMessage = {
@@ -144,7 +141,7 @@ const TimerControls = () => {
     <Card
       sx={{
         boxShadow: 6,
-        mb: 3,
+        mb: 2,
         backgroundColor: '#000000',
         color: '#EF4444',
         position: 'sticky',
@@ -153,12 +150,12 @@ const TimerControls = () => {
       }}
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography
             sx={{
               color: 'white',
               fontWeight: 'medium',
-              mb: 1.5,
+              mb: 2,
               textAlign: 'center',
             }}
           >
@@ -214,8 +211,8 @@ const TimerControls = () => {
           </Stack>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
             {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
@@ -224,7 +221,7 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={4} sx={{ mb: 4 }}>
+          <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 {' '}
@@ -234,7 +231,7 @@ const TimerControls = () => {
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={3}
+                spacing={2}
               >
                 <IconButton
                   color="primary"
@@ -311,7 +308,7 @@ const TimerControls = () => {
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={3}
+                spacing={2}
               >
                 <IconButton
                   color="primary"
@@ -382,7 +379,7 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           {!timerData.isRunning ? (
             <Button
               variant="contained"

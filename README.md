@@ -4,15 +4,39 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 **⚠️ Important:** This project uses a custom server entry (`server.ts`) that runs Next.js, a persistent WebSocket server, and background services. The server is stateful and **cannot be deployed on serverless platforms** like Vercel.
 
-## Current Status
+## Table of Contents
 
-**✅ Fully Operational** – Core features are implemented, deployed internally, and exercised daily.
-
-**Recent Updates (Nov 2025)**
-
-- ✅ Consolidated Playwright coverage into `tests/playwright/core-functionality.spec.ts` for faster baseline checks.
-- ✅ Documented Chrome DevTools MCP automation workflow and launch checklist for visual audits.
-- ✅ Refreshed deployment, testing, and troubleshooting docs ahead of production readiness review.
+- [HRM (Heart Rate Monitor) Dashboard](#hrm-heart-rate-monitor-dashboard)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Quick Start](#quick-start)
+    - [One-Click Start with DevContainer (Recommended)](#one-click-start-with-devcontainer-recommended)
+    - [Manual Setup](#manual-setup)
+    - [Production Build](#production-build)
+  - [Project Structure](#project-structure)
+  - [Available Commands](#available-commands)
+    - [Primary Scripts](#primary-scripts)
+    - [Navigation Shortcuts](#navigation-shortcuts)
+    - [Testing \& Verification](#testing--verification)
+  - [VS Code Integration](#vs-code-integration)
+  - [Environment Variables](#environment-variables)
+    - [Spotify Setup](#spotify-setup)
+    - [Audio System](#audio-system)
+  - [Documentation](#documentation)
+  - [Architecture Overview](#architecture-overview)
+    - [Custom Stateful Server](#custom-stateful-server)
+    - [Real-time Data Flow](#real-time-data-flow)
+    - [Architecture Diagram](#architecture-diagram)
+    - [Key Services](#key-services)
+  - [Development Guidelines](#development-guidelines)
+  - [Contributing](#contributing)
+  - [Production Readiness Focus](#production-readiness-focus)
+  - [Recent Architecture Improvements](#recent-architecture-improvements)
+    - [Audio System Integration](#audio-system-integration)
+    - [UI/UX Enhancements](#uiux-enhancements)
+    - [Production Readiness](#production-readiness)
+  - [License](#license)
+  - [Acknowledgments](#acknowledgments)
 
 ## Features
 
@@ -50,21 +74,151 @@ npm run dev
 
 If you are not using the DevContainer, you can set up the project manually:
 
+#### Prerequisites
+
+Before setting up the project locally, ensure you have the following installed on your system:
+
+- **Node.js** (version 18.x or higher recommended)
+  - Download from [nodejs.org](https://nodejs.org/)
+  - Verify installation: `node --version`
+
+- **pnpm** (Package Manager)
+  - Install globally: `npm install -g pnpm`
+  - Verify installation: `pnpm --version`
+
+- **Git**
+  - Download from [git-scm.com](https://git-scm.com/)
+  - Verify installation: `git --version`
+
+#### Step-by-Step Setup Instructions
+
+**1. Clone the Repository**
+
+```bash
+# Clone the repository to your local machine
+git clone https://github.com/arii/hrm.git
+
+# Navigate to the project directory
+cd hrm
+```
+
+**2. Install pnpm (if not already installed)**
+
+```bash
+# Install pnpm globally using npm
+npm install -g pnpm
+
+# Verify pnpm installation
+pnpm --version
+```
+
+**3. Install Project Dependencies**
+
+```bash
+# Install all required dependencies using pnpm
+pnpm install --frozen-lockfile
+```
+
+This will install all the Node.js packages required by the project, including Next.js, Material-UI, and other dependencies.
+
+**4. Install Playwright Browser Dependencies**
+
+```bash
+# Install Playwright browsers for testing
+npx playwright install --with-deps
+```
+
+**5. Set Up Environment Variables**
+
+```bash
+# Create your local environment file from the example
+cp .env.example .env.local
+```
+
+Then open `.env.local` and fill in the required values:
+
+```bash
+# Spotify OAuth credentials (get these from developer.spotify.com/dashboard)
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+
+# NextAuth.js configuration
+NEXTAUTH_URL=http://127.0.0.1:3000
+NEXTAUTH_SECRET=your_random_secret_here
+```
+
+To generate a secure `NEXTAUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+**6. Start the Development Server**
+
+```bash
+# Start the custom server (Next.js + WebSocket + background services)
+pnpm run dev
+```
+
+The server will start and you should see output indicating:
+- Next.js app running on http://127.0.0.1:3000
+- WebSocket server on ws://127.0.0.1:3000/ws
+- Spotify polling service initialized
+- Tabata timer service initialized
+
+**7. Verify the Setup**
+
+Open your browser and navigate to:
+- **Dashboard**: http://127.0.0.1:3000
+- **Mock HRM Client**: http://127.0.0.1:3000/mock
+- **Phone Controls**: http://127.0.0.1:3000/phone
+- **Bluetooth Connection**: http://127.0.0.1:3000/connect
+
+You should see the HRM dashboard interface load successfully.
+
+**8. (Optional) Verify Spotify Integration**
+
+```bash
+# Run the Spotify verification script
+pnpm run verify:spotify
+```
+
+This will test your Spotify credentials and connection.
+
+#### Troubleshooting Setup Issues
+
+If you encounter issues during setup:
+
+- **Port 3000 already in use**: Kill any process using port 3000, or use `pnpm run pm2:stop` if PM2 is running
+- **Module not found errors**: Ensure all dependencies are installed with `pnpm install --frozen-lockfile`
+- **Playwright errors**: Run `npx playwright install --with-deps` again
+- **Environment variable issues**: Double-check that `.env.local` exists and contains valid values
+
+For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
+
+
+> **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
+
 ```bash
 # 1. Create your environment file from the example
 cp .env.example .env.local
 
 # 2. Fill in the required values in .env.local (see "Environment Variables" section)
 
-# 3. Install dependencies using the lockfile
-npm ci
+# 3. Install pnpm if not already installed
+npm install -g pnpm
 
-# 4. Install Playwright's browser dependencies
+# 4. Install dependencies using the lockfile
+pnpm install --frozen-lockfile
+
+# 5. Install Playwright's browser dependencies
 npx playwright install --with-deps
 
-# 5. Start the development server
-npm run dev
+# 6. Start the development server
+pnpm run dev
 ```
+
+> **Migration from npm**: If you accidentally run `npm install`, the project will block it and show a helpful message. Use the wrapper script `./scripts/npm-to-pnpm.sh` to automatically convert npm commands to pnpm equivalents.
 
 The server will start with:
 
@@ -200,8 +354,6 @@ NEXTAUTH_SECRET=your_random_secret_here
 4. Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
 5. Restart the server and run `npm run verify:spotify` to test the connection.
 
-**For detailed setup instructions, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).**
-
 ### Audio System
 
 The app includes the original HRM audio feedback system:
@@ -217,7 +369,6 @@ The app includes the original HRM audio feedback system:
 - **[Front-End Improvement Plan](FRONTEND_IMPROVEMENT_PLAN.md)** – Current UI polish backlog and priorities.
 - **[Test Improvement Plan](TEST_IMPROVEMENT_PLAN.md)** – Roadmap for expanding automated coverage.
 - **[Testing Guide](TESTING.md)** – How to run and interpret the existing suites.
-- **[Troubleshooting Guide](TROUBLESHOOTING.md)** – Common issues and recovery steps.
 - **[Automation Plan](docs/automation-plan.md)** – Chrome DevTools MCP and automation scripting strategy.
 
 ## Architecture Overview
@@ -241,6 +392,42 @@ All real-time state updates are managed by the server and pushed to clients via 
 
 This ensures a single source of truth for application state, keeping all viewers and control panels perfectly in sync.
 
+### Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph "Browser"
+        A[Next.js Frontend]
+        B[WebSocket Client]
+    end
+
+    subgraph "Server"
+        C[Express Server]
+        D[Next.js Middleware]
+        E[WebSocket Server]
+        F[Tabata Timer Service]
+        G[Spotify Polling Service]
+    end
+
+    subgraph "External Services"
+        H[Spotify API]
+        I[Bluetooth HRM Device]
+    end
+
+    A -- HTTP Requests --> C
+    C -- Forwards to --> D
+    B -- WebSocket Connection --> E
+
+    E -- Broadcasts State Updates --> B
+    E -- Receives Commands --> B
+
+    F -- Updates --> E
+    G -- Updates --> E
+
+    G -- Interacts with --> H
+    A -- Interacts with --> I
+```
+
 ### Key Services
 
 - **`tabataTimer.ts`**: A state machine managing WORK/REST/IDLE phases. It broadcasts `timerData` and emits `soundToPlay` events for audio feedback.
@@ -262,6 +449,25 @@ This ensures a single source of truth for application state, keeping all viewers
 7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
 
 For more detailed guidelines, especially for AI agents, see [.github/copilot-instructions.md](.github/copilot-instructions.md).
+
+## Contributing
+
+We welcome contributions to the HRM Dashboard! Please follow these guidelines to ensure a smooth development process.
+
+### Code Style
+
+- **Formatting**: This project uses Prettier for code formatting. Please run `npm run format` before submitting a pull request.
+- **Linting**: We use ESLint for static analysis. Run `npm run lint` to check for any issues.
+
+### Commit Messages
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification for your commit messages.
+
+### Pull Request Process
+
+1.  Fork the repository and create your branch from `leader`.
+2.  Make your changes and ensure all tests pass (`npm test`).
+3.  Submit a pull request with a clear description of your changes.
 
 ## Production Readiness Focus
 
@@ -305,3 +511,56 @@ MIT
 - Material-UI for components
 - NextAuth for Spotify OAuth
 - PM2 for process management
+
+## Troubleshooting
+
+### Production Deployment
+
+#### Prerequisites
+
+- Node.js & npm
+- PM2 (`npm install -g pm2`)
+- Nginx
+- A domain name with DDNS
+- An SSL certificate (Let's Encrypt is recommended)
+
+#### Deployment Steps
+
+1.  **Build and Start**: Ensure `.env.production` exists, then run `npm run start`. The script verifies build artifacts and kicks off `npm run build` automatically when needed.
+2.  **Nginx Configuration**: Ensure Nginx is configured to proxy requests to port 3000 with WebSocket support.
+3.  **SSL Configuration**: Ensure SSL certificates are configured and renewed as needed.
+4.  **PM2 Startup**: Configure PM2 to start on boot with `pm2 startup`.
+
+### Server Bringup
+
+#### Port 3000 Already in Use
+
+- **Symptom**: `Error: listen EADDRINUSE: address already in use :::3000`
+- **Solution**: Find and kill the process using port 3000, or use `npm run pm2:stop`.
+
+#### Module Resolution Errors
+
+- **Symptom**: `Error [ERR_MODULE_NOT_FOUND]: Cannot find module ...`
+- **Solution**: Use `npm run dev` for development, and ensure your `tsconfig.json` is configured for CommonJS modules.
+
+#### TypeScript Compilation Errors
+
+- **Symptom**: `error TS2307: Cannot find module ...`
+- **Solution**: Verify the file exists, the import path is correct, and the file is included in your `tsconfig.json`.
+
+### Spotify Integration
+
+#### "Invalid Client" Error
+
+- **Cause**: Spotify doesn't recognize your credentials.
+- **Fix**: Verify your Client ID and Secret in `.env.local` and restart the server.
+
+#### "Redirect URI Mismatch" Error
+
+- **Cause**: The redirect URI in the Spotify dashboard doesn't match your NextAuth configuration.
+- **Fix**: Add the correct redirect URI to your Spotify app settings.
+
+#### Token Not Persisting
+
+- **Symptom**: You have to log in every time the server restarts.
+- **Fix**: Check that the `logs/spotify_tokens.json` file exists and is writable.

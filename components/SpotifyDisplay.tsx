@@ -2,7 +2,7 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import useWebSocket from '@/hooks/useWebSocket'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { VolumeUp } from '@mui/icons-material'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -10,15 +10,13 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
-import {
-  Box,
-  Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Slider,
-  Typography,
-} from '@mui/material'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import Slider from '@mui/material/Slider'
+import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -207,6 +205,7 @@ const SpotifyDisplay = () => {
           color="success"
           onClick={handleSpotifyLogin}
           sx={{ px: 4, py: 1 }}
+          data-testid="login-button"
         >
           🎵 Login with Spotify
         </Button>
@@ -214,14 +213,21 @@ const SpotifyDisplay = () => {
     )
   }
 
-  if (spotifyData.trackName && spotifyData.trackName !== 'Awaiting Login...') {
+  // If we are logged in, we show the player bar.
+  // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
+  // or simply showing the controls so the user can transfer playback.
+  if (spotifyLoggedIn) {
+    const isWaiting = spotifyData.trackName === 'Awaiting Login...'
+    const displayTrackName = isWaiting
+      ? 'No Active Playback'
+      : spotifyData.trackName
+    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
+
     return (
       <Box
-        aria-label={`Now playing: ${spotifyData.trackName} by ${
-          spotifyData.artist
-        }, Status: ${spotifyData.isPlaying ? 'Playing' : 'Paused'}${
-          isReady ? ', Browser player ready' : ''
-        }`}
+        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
+          spotifyData.isPlaying ? 'Playing' : 'Paused'
+        }${isReady ? ', Browser player ready' : ''}`}
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
@@ -242,7 +248,7 @@ const SpotifyDisplay = () => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {spotifyData.trackName} — {spotifyData.artist}
+            {displayTrackName} {displayArtist}
           </Typography>
           {spotifyAuthenticated && !isReady && !webPlaybackError && (
             <Typography
