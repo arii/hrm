@@ -27,12 +27,8 @@ if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
   pnpm run build && pnpm run build:server
 fi
 
-<<<<<<< HEAD
-exec NODE_ENV=production node dist/server.mjs
-=======
 # Ensure AUTH_TRUST_HOST is set for NextAuth
 export AUTH_TRUST_HOST=true
 export NEXTAUTH_TRUST_HOST=true
 
 exec node dist/server.mjs
->>>>>>> origin/leader

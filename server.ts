@@ -1,4 +1,3 @@
-console.log('[DEBUG] NODE_ENV at startup:', process.env.NODE_ENV)
 // File: server.js (Unified Next.js and WebSocket Server - Custom Entry Point)
 /**
  * Description: Custom Node.js HTTP Server that hosts the Next.js application,
@@ -51,6 +50,7 @@ const limiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: 'Too many requests from this IP, please try again after 15 minutes',
+  skip: () => process.env.TESTING === 'true',
 })
 
 // Apply the rate limiting middleware to all requests
