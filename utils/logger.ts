@@ -1,22 +1,22 @@
 // utils/logger.ts
-import pino, { type Logger as PinoLogger } from 'pino'
+import pino from 'pino'
 
 // Define a consistent logger interface
 interface Logger {
-  debug: (msg: string | object, ...args: any[]) => void
-  info: (msg: string | object, ...args: any[]) => void
-  warn: (msg: string | object, ...args: any[]) => void
-  error: (msg: string | object, ...args: any[]) => void
+  debug: (msg: string | object, ...args: unknown[]) => void
+  info: (msg: string | object, ...args: unknown[]) => void
+  warn: (msg: string | object, ...args: unknown[]) => void
+  error: (msg: string | object, ...args: unknown[]) => void
 }
 
 const createLogger = (): Logger => {
   if (typeof window !== 'undefined') {
     // Client-side logger - wrap console methods to match pino interface
     return {
-      debug: (msg: any, ...args: any[]) => console.log(msg, ...args),
-      info: (msg: any, ...args: any[]) => console.info(msg, ...args),
-      warn: (msg: any, ...args: any[]) => console.warn(msg, ...args),
-      error: (msg: any, ...args: any[]) => console.error(msg, ...args),
+      debug: (msg: unknown, ...args: unknown[]) => console.log(msg, ...args),
+      info: (msg: unknown, ...args: unknown[]) => console.info(msg, ...args),
+      warn: (msg: unknown, ...args: unknown[]) => console.warn(msg, ...args),
+      error: (msg: unknown, ...args: unknown[]) => console.error(msg, ...args),
     }
   }
 
