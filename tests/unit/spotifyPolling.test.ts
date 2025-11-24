@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
@@ -51,6 +52,9 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
+  let broadcastMock: jest.Mock<
+    (data: Partial<{ spotifyData: SpotifyData }>) => void
+  >
   let broadcastedStates: SpotifyData[]
 
   beforeEach(async () => {
@@ -68,13 +72,11 @@ describe('SpotifyPolling Service', () => {
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
     broadcastedStates = []
-    const broadcastMock = jest.fn(
-      (type: string, payload: { spotifyData?: SpotifyData }) => {
-        if (payload.spotifyData) {
-          broadcastedStates.push(payload.spotifyData)
-        }
+    broadcastMock = jest.fn((data) => {
+      if (data.spotifyData) {
+        broadcastedStates.push(data.spotifyData)
       }
-    )
+    })
 
     // Mock environment variables
     process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
@@ -82,12 +84,7 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(
-      broadcastMock as (
-        type: 'SPOTIFY_UPDATE',
-        payload: { spotifyData: SpotifyData }
-      ) => void
-    )
+    spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as unknown)['pollInterval']) {
@@ -242,7 +239,7 @@ describe('SpotifyPolling Service', () => {
       const refreshToken = 'test_refresh_token'
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService, 'initializeSdk' as unknown as string)
+        .spyOn(spotifyService, 'initializeSdk' as any)
         .mockResolvedValue(undefined)
       spotifyService.setRefreshToken(refreshToken)
       // Advance timers to allow setTimeout to run
@@ -254,12 +251,7 @@ describe('SpotifyPolling Service', () => {
     it('should not execute commands without access token', async () => {
       // Create a new service instance that hasn't gone through the full async initialization
       // This ensures its SDK is null initially
-      const newService = await SpotifyPolling.create(
-        jest.fn() as (
-          type: 'SPOTIFY_UPDATE',
-          payload: { spotifyData: SpotifyData }
-        ) => void
-      )
+      const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -382,12 +374,7 @@ describe('SpotifyPolling Service', () => {
         sdk: null, // Ensure SDK is null
       })
 
-      const newService = await SpotifyPolling.create(
-        jest.fn() as (
-          type: 'SPOTIFY_UPDATE',
-          payload: { spotifyData: SpotifyData }
-        ) => void
-      )
+      const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
