@@ -23,8 +23,8 @@ else
 fi
 
 if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
-  echo "[start-production] Build artifacts missing. Running npm run build..."
-  npm run build && npm run build:server
+  echo "[start-production] Build artifacts missing. Running pnpm run build..."
+  pnpm run build && pnpm run build:server
 fi
 
 <<<<<<< HEAD
