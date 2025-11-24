@@ -1,6 +1,7 @@
 // components/Spotify/PlaylistSelector.tsx
 import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
+import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -18,7 +19,6 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
-
 interface Playlist {
   name: string
   uri: string
@@ -33,10 +33,12 @@ interface Playlist {
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void
+  onPlaylistPlay: (uri: string) => void
 }
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   onPlaylistSelected,
+  onPlaylistPlay,
 }) => {
   const [presetPlaylists, setPresetPlaylists] = useState<Playlist[]>([])
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([])
@@ -316,6 +318,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                           : undefined
                       }
                     />
+                    <IconButton
+                      aria-label={`Play ${playlist.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent ListItemButton click
+                        onPlaylistPlay(playlist.uri)
+                      }}
+                      size="small"
+                      sx={{ ml: 1 }}
+                    >
+                      <PlayArrow />
+                    </IconButton>
                     <Chip
                       label="Preset"
                       size="small"
@@ -371,6 +384,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                             : undefined
                       }
                     />
+                    <IconButton
+                      aria-label={`Play ${playlist.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent ListItemButton click
+                        onPlaylistPlay(playlist.uri)
+                      }}
+                      size="small"
+                      sx={{ ml: 1 }}
+                    >
+                      <PlayArrow />
+                    </IconButton>
                   </ListItemButton>
                 ))}
               </>
@@ -434,6 +458,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                           : undefined
                     }
                   />
+                  <IconButton
+                    aria-label={`Play ${playlist.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent ListItemButton click
+                      onPlaylistPlay(playlist.uri)
+                    }}
+                    size="small"
+                    sx={{ ml: 1 }}
+                  >
+                    <PlayArrow />
+                  </IconButton>
                   {playlist.isPreset && (
                     <Chip
                       label="Preset"
