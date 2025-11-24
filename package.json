@@ -33,19 +33,13 @@
     "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
-<<<<<<< HEAD
-    "test:clean": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual",
-    "test:clean:update": "npm run kill-all && npm run dev & sleep 5 && npm run test:visual:update",
-    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
-    "prepare": "husky"
-=======
     "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
     "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
-    "release:major": "pnpm version major -m \"release: major %s\""
->>>>>>> origin/leader
+    "release:major": "pnpm version major -m \"release: major %s\"",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -97,19 +91,16 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
-<<<<<<< HEAD
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "prettier --write",
       "eslint --fix",
       "jest --bail --findRelatedTests --passWithNoTests"
     ]
-  }
-=======
+  },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@9.0.0"
->>>>>>> origin/leader
 }
