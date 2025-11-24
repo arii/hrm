@@ -11,7 +11,6 @@ import {
 import {
   ClientCommandMessage,
   HrmData,
-  ServerMessage,
   SpotifyData,
   TimerData,
 } from '../types/websocket'
