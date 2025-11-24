@@ -20,6 +20,8 @@ const testIgnoreList = [
   'mobile-essential.spec.ts',
   'mobile-assessment.spec.ts',
   'workflow-assessment.spec.ts',
+  // OAuth tests are excluded from regular test runs (use separate npm script)
+  'oauth/**/*.spec.ts',
 ]
 
 // Only ignore auth-dependent tests if credentials are missing

@@ -74,21 +74,28 @@ npm run dev
 
 If you are not using the DevContainer, you can set up the project manually:
 
+> **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
+
 ```bash
 # 1. Create your environment file from the example
 cp .env.example .env.local
 
 # 2. Fill in the required values in .env.local (see "Environment Variables" section)
 
-# 3. Install dependencies using the lockfile
-npm ci
+# 3. Install pnpm if not already installed
+npm install -g pnpm
 
-# 4. Install Playwright's browser dependencies
+# 4. Install dependencies using the lockfile
+pnpm install --frozen-lockfile
+
+# 5. Install Playwright's browser dependencies
 npx playwright install --with-deps
 
-# 5. Start the development server
-npm run dev
+# 6. Start the development server
+pnpm run dev
 ```
+
+> **Migration from npm**: If you accidentally run `npm install`, the project will block it and show a helpful message. Use the wrapper script `./scripts/npm-to-pnpm.sh` to automatically convert npm commands to pnpm equivalents.
 
 The server will start with:
 
