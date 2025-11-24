@@ -1,5 +1,6 @@
 'use client'
 
+<<<<<<< HEAD
 import { HeartBroken, Science } from '@mui/icons-material'
 import {
   Box,
@@ -13,6 +14,18 @@ import {
   ToggleButtonGroup,
 } from '@mui/material'
 import { useCallback, useEffect, useState, useRef } from 'react'
+=======
+import HeartBroken from '@mui/icons-material/HeartBroken'
+import Science from '@mui/icons-material/Science'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import { useCallback, useEffect, useState } from 'react'
+>>>>>>> origin/leader
 import BottomNavBar from '../../../components/BottomNavBar'
 <<<<<<< HEAD
 import HrTile from '../../../components/HrTile'

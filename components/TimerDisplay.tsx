@@ -1,6 +1,9 @@
 // File: components/TimerDisplay.tsx
 'use client'
-import { Box, Card, CardContent, Typography } from '@mui/material'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
