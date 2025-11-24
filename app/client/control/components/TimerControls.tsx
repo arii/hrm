@@ -8,27 +8,6 @@ import {
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
-<<<<<<< HEAD
-import {
-  Add,
-  FitnessCenter,
-  PlayArrow,
-  Remove,
-  Stop,
-  Timer,
-} from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  IconButton,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
-=======
 import Add from '@mui/icons-material/Add'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -39,11 +18,11 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
->>>>>>> origin/leader
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useButtonFeedback } from './useButtonFeedback'
 
