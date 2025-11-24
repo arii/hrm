@@ -10,18 +10,6 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
-<<<<<<< HEAD
-import {
-  Box,
-  Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Slider,
-  Typography,
-} from '@mui/material'
-import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
-=======
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -29,7 +17,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
->>>>>>> origin/leader
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -108,62 +96,6 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-<<<<<<< HEAD
-=======
-  const spotifyLoggedIn =
-    Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
-  console.log(
-    'spotifyLoggedIn:',
-    spotifyLoggedIn,
-    'session?.accessToken:',
-    session?.accessToken,
-    'spotifyAuthenticated:',
-    spotifyAuthenticated
-  )
-
-  useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
-      const fetchDevices = async () => {
-        try {
-          const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          const deviceArray = Array.isArray(devices) ? devices : []
-          setAvailableDevices(deviceArray)
-        } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
-        }
-      }
-      fetchDevices()
-    } else {
-      setAvailableDevices([])
-      setSelectedDeviceId('')
-    }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
-
-  useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
-    }
-    const activeDevice = availableDevices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
-    }
-  }, [availableDevices, selectedDeviceId])
-
->>>>>>> origin/leader
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
     targetDeviceId?: string

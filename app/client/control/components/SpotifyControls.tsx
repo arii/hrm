@@ -1,29 +1,5 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-<<<<<<< HEAD
-import {
-  MusicNote,
-  Pause,
-  PlayArrow,
-  SkipNext,
-  SkipPrevious,
-  VolumeUp,
-} from '@mui/icons-material'
-import {
-  Box,
-  Card,
-  CardContent,
-  FormControl,
-  IconButton,
-  MenuItem,
-  Select,
-  Slider,
-  Stack,
-  Typography,
-} from '@mui/material'
-import { useCallback, useEffect, useRef } from 'react'
-import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
-=======
 import MusicNote from '@mui/icons-material/MusicNote'
 import Pause from '@mui/icons-material/Pause'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -40,8 +16,8 @@ import Select from '@mui/material/Select'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useRef, useState } from 'react'
->>>>>>> origin/leader
+import { useCallback, useEffect, useRef } from 'react'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
