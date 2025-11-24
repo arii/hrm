@@ -144,6 +144,7 @@ export default function MockPage() {
             fullWidth
             size="medium"
             disabled={isStreaming}
+            inputProps={{ 'data-testid': 'hr-input' }}
             sx={{ mb: 3 }}
           />
 
