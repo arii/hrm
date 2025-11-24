@@ -37,15 +37,15 @@ mkdir -p logs
 
 # Build the application
 echo "📦 Building Next.js application..."
-npm run build
+pnpm run build
 
 # Stop and delete existing PM2 processes
 echo "🛑 Stopping existing PM2 processes..."
-npm run pm2:delete || true
+pnpm run pm2:delete || true
 
 # Start with production environment
 echo "▶️ Starting HRM server with PM2..."
-npm run start
+pnpm run start
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."
@@ -53,4 +53,4 @@ pm2 save
 
 echo "✅ Deployment complete!"
 echo "📊 Check status with: pm2 status"
-echo "📝 View logs with: npm run pm2:logs"
+echo "📝 View logs with: pnpm run pm2:logs"

@@ -1,14 +1,13 @@
 'use client'
 
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Grid,
-  TextField,
-  Typography,
-} from '@mui/material'
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
@@ -139,9 +138,17 @@ export default function ConnectPage() {
               variant="contained"
               size="large"
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Connecting')
+              }
             >
-              Connect Bluetooth HRM
+              {deviceStatus.includes('Connecting') ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Connect Bluetooth HRM'
+              )}
             </Button>
           ) : (
             <Button
