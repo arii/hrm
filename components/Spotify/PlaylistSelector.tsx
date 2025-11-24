@@ -1,20 +1,21 @@
 // components/Spotify/PlaylistSelector.tsx
-import { MusicNote, Search } from '@mui/icons-material'
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Chip,
-  CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  TextField,
-  Typography,
-} from '@mui/material'
+import ClearIcon from '@mui/icons-material/Clear'
+import MusicNote from '@mui/icons-material/MusicNote'
+import Search from '@mui/icons-material/Search'
+import Alert from '@mui/material/Alert'
+import Autocomplete from '@mui/material/Autocomplete'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
+import CircularProgress from '@mui/material/CircularProgress'
+import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
+import Paper from '@mui/material/Paper'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 
@@ -183,19 +184,29 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            placeholder="Search your playlists or browse popular playlists..."
+            placeholder="Search or browse playlists..."
             InputProps={{
               ...params.InputProps,
               startAdornment: (
                 <Search sx={{ color: 'text.secondary', mr: 1 }} />
               ),
-              endAdornment: searchLoading ? (
-                <CircularProgress
-                  size={20}
-                  aria-label="Searching"
-                  sx={{ mr: 1 }}
-                />
-              ) : null,
+              endAdornment: (
+                <>
+                  {searchLoading ? (
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                  ) : searchQuery ? (
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      sx={{ mr: 1 }}
+                    >
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  ) : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
             }}
           />
         )}
@@ -278,6 +289,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -331,6 +354,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -394,6 +429,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   key={playlist.uri}
                   selected={selectedPlaylist?.uri === playlist.uri}
                   onClick={() => handlePlaylistSelect(playlist)}
+                  sx={{
+                    '&.Mui-selected': {
+                      borderLeft: (theme) =>
+                        `4px solid ${theme.palette.primary.main}`,
+                      backgroundColor: (theme) =>
+                        theme.palette.action.selected,
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.palette.action.hover,
+                      },
+                    },
+                  }}
                 >
                   {playlist.imageUrl ? (
                     <Box
