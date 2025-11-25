@@ -22,17 +22,11 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
-<<<<<<< HEAD
-    "test:visual": "npm run build:server && TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
-    "test:all": "npm run test:visual && npm run test:unit",
-    "test:quick": "npm run build:server && TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 5 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
-=======
-    "test:visual": "pnpm run build && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual": "pnpm run build && TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
-    "test:quick": "pnpm run build && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
->>>>>>> origin/leader
+    "test:quick": "pnpm run build && TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:ui": "playwright test --ui",
-    "test:visual:update": "pnpm run build && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:update": "pnpm run build && TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",

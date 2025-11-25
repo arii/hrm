@@ -20,11 +20,8 @@ import { env } from './lib/env.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-<<<<<<< HEAD
-=======
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
->>>>>>> origin/leader
 
 const port = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -33,17 +30,10 @@ const hostname = env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST // Bind to
 const dev = env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
 
-<<<<<<< HEAD
-console.log(`Starting server in ${dev ? 'development' : 'production'} mode`)
-console.log(`Environment: NODE_ENV=${env.NODE_ENV}`)
-console.log(`NEXTAUTH_URL: ${env.NEXTAUTH_URL}`)
-console.log(`Hostname: ${hostname}, Port: ${port}`)
-=======
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
->>>>>>> origin/leader
 const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware

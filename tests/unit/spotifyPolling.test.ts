@@ -72,15 +72,10 @@ describe('SpotifyPolling Service', () => {
     (data: Partial<{ spotifyData: SpotifyData }>) => void
   >
   let broadcastedStates: SpotifyData[]
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>
-  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    // Spy on console methods and provide a mock implementation
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
     // Reset mockPlayer's mocks
     mockPlayer.getCurrentlyPlayingTrack.mockClear()
     mockPlayer.startResumePlayback.mockClear()
@@ -131,8 +126,6 @@ describe('SpotifyPolling Service', () => {
       spotifyService.stopPolling()
       spotifyService.cleanup()
     }
-    consoleErrorSpy.mockRestore()
-    consoleWarnSpy.mockRestore()
     jest.clearAllTimers()
     jest.useRealTimers()
   })
@@ -418,38 +411,13 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.handleCommand('PLAY', 'device_id')
 
-<<<<<<< HEAD
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Error executing Spotify command PLAY: Response body:'
-        ),
-        'Invalid JSON'
-=======
       expect(logger.error).toHaveBeenCalledWith(
         { response: 'Invalid JSON' },
         expect.stringContaining('Error executing Spotify command PLAY: Response body:')
->>>>>>> origin/leader
       )
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
-<<<<<<< HEAD
-      // Simulate a deeply nested error that might crash text() retrieval
-      const badError = {
-        response: {
-          text: jest.fn().mockRejectedValue(new Error('Stream closed')),
-        },
-      }
-      mockPlayer.startResumePlayback.mockRejectedValue(badError)
-
-      await spotifyService.handleCommand('PLAY', 'device_id')
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Error executing Spotify command PLAY: Failed to retrieve error response text:'
-        ),
-        expect.anything()
-=======
        // Simulate a deeply nested error that might crash text() retrieval
        const badError = {
            response: {
@@ -465,7 +433,6 @@ describe('SpotifyPolling Service', () => {
         expect.stringContaining(
           'Error executing Spotify command PLAY: Failed to retrieve error response text:'
         )
->>>>>>> origin/leader
       )
     })
 
@@ -476,20 +443,12 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.handleCommand('PLAY', 'device_id')
 
-<<<<<<< HEAD
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-=======
       expect(logger.warn).toHaveBeenCalledWith(
->>>>>>> origin/leader
         expect.stringContaining(
           '[SpotifyPolling] Command PLAY executed, but response was not valid JSON'
         )
       )
-<<<<<<< HEAD
-      expect(consoleErrorSpy).not.toHaveBeenCalled()
-=======
       expect(logger.error).not.toHaveBeenCalled()
->>>>>>> origin/leader
     })
   })
 })

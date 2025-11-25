@@ -53,24 +53,28 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       }
     })
     await page.setViewportSize({ width: 1920, height: 1080 })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 
   controlPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 
   mockPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 
   connectPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 })
