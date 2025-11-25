@@ -12,7 +12,7 @@ import { spotifyControlSchema } from '@/lib/validation/schemas'
 import { z } from 'zod'
 
 const handler = async (
-  req: NextRequest,
+  _req: NextRequest,
   body: z.infer<typeof spotifyControlSchema>
 ) => {
   const session = await getServerSession(authOptions)

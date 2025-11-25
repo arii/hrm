@@ -183,10 +183,14 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
         renderInput={(params) => (
           <TextField
-            {...params}
+            id={params.id}
+            disabled={params.disabled}
+            fullWidth={params.fullWidth}
+            inputProps={params.inputProps}
             placeholder="Search or browse playlists..."
             InputProps={{
-              ...params.InputProps,
+              ref: params.InputProps.ref,
+              className: params.InputProps.className,
               startAdornment: (
                 <Search sx={{ color: 'text.secondary', mr: 1 }} />
               ),

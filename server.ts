@@ -116,7 +116,7 @@ app
     // API endpoint to get available Spotify devices
     expressApp.get(
       '/api/spotify/devices',
-      async (req: Request, res: Response) => {
+      async (_req: Request, res: Response) => {
         if (!spotifyServiceInitialized || !spotifyService) {
           return res
             .status(503)

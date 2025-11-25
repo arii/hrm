@@ -8,9 +8,20 @@ export default defineConfig([
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
-  // Explicitly ignore unused variables starting with '_'
+  // Configure JavaScript unused vars to work with TypeScript
   {
     rules: {
+      'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors with TypeScript
+    },
+  },
+
+  // Next.js specific rules and configurations (includes TypeScript support)
+  ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
+
+  // Apply TypeScript rules without redefining the plugin
+  {
+    rules: {
+      // Explicitly ignore unused variables starting with '_'
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -19,15 +30,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-    },
-  },
-
-  // Apply recommended TypeScript ESLint rules
-  ...tseslint.configs.recommended,
-
-  // Configure trailing comma rules for consistent code formatting
-  {
-    rules: {
+      // Configure trailing comma rules for consistent code formatting
       '@typescript-eslint/comma-dangle': [
         'error',
         {
@@ -40,9 +43,6 @@ export default defineConfig([
       ],
     },
   },
-
-  // Next.js specific rules and configurations
-  ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
@@ -77,6 +77,10 @@ export default defineConfig([
           jsx: true,
         },
       },
+      globals: {
+        React: 'readonly',
+        NodeJS: 'readonly',
+      },
     },
     rules: {
       // TypeScript specific rules
@@ -98,13 +102,14 @@ export default defineConfig([
       },
     },
     rules: {
-      // Playwright specific rules or overrides
+      // Disable react-hooks/rules-of-hooks for Playwright fixtures (use() is not a React hook)
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
 
   // Override for Jest unit test files
   {
-    files: ['tests/unit/**/*.ts'],
+    files: ['tests/unit/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -112,6 +117,15 @@ export default defineConfig([
         ecmaFeatures: {
           jsx: true,
         },
+      },
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        jest: 'readonly',
+        NodeJS: 'readonly',
       },
     },
     rules: {

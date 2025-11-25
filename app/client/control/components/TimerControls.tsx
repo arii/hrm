@@ -88,11 +88,14 @@ const TimerControls = () => {
 
   const sendSpotifyCommand = useCallback(
     (command: 'NEXT' | 'PAUSE') => {
-      let deviceId = spotifyDeviceId
+      let deviceId: string | null = spotifyDeviceId
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
-        setSpotifyDeviceId(deviceId)
+        const firstDevice = spotifyDevices[0]
+        deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || null)
+        if (deviceId) {
+          setSpotifyDeviceId(deviceId)
+        }
       }
       if (!deviceId) {
         logger.warn('No deviceId available, Spotify command not sent.')

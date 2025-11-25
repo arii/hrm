@@ -53,24 +53,32 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       }
     })
     await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto(BASE_URL)
+    await waitForPageReady(page)
     await use(page)
   },
 
   controlPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto(`${BASE_URL}/client/control`)
+    await waitForPageReady(page)
     await use(page)
   },
 
   mockPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto(`${BASE_URL}/client/mock`)
+    await waitForPageReady(page)
     await use(page)
   },
 
   connectPage: async ({ context, setupPages: _setupPages }, use) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto(`${BASE_URL}/client/connect`)
+    await waitForPageReady(page)
     await use(page)
   },
 })

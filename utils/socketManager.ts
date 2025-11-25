@@ -90,7 +90,7 @@ const broadcastState = () => {
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
-  ws: WebSocket,
+  _ws: WebSocket,
   messageString: string,
   clientId: string
 ) => {

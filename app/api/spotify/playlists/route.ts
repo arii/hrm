@@ -61,7 +61,7 @@ export async function GET(_req: Request) {
       uri: playlist.uri,
       description: playlist.description || null,
       imageUrl:
-        playlist.images && playlist.images.length > 0
+        playlist.images && playlist.images.length > 0 && playlist.images[0]
           ? playlist.images[0].url
           : null,
       trackCount: playlist.tracks?.total || 0,

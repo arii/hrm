@@ -58,33 +58,55 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
 }
 
 // Setup function for visual regression tests
-export const setupVisualRegressionTest = async ({
-  dashboardPage,
-  controlPage,
-  mockPage,
-  connectPage,
-}: {
-  dashboardPage: Page
-  controlPage: Page
-  mockPage: Page
-  connectPage: Page
+export const setupVisualRegressionTest = async (fixtures: {
+  dashboardPage?: Page
+  controlPage?: Page
+  mockPage?: Page
+  connectPage?: Page
 }) => {
-  // Navigate all pages and wait for ready signals
-  await dashboardPage.goto(BASE_URL)
-  await controlPage.goto(`${BASE_URL}/phone`)
-  await mockPage.goto(`${BASE_URL}/mock`)
-  await connectPage.goto(`${BASE_URL}/connect`)
+  const { dashboardPage, controlPage, mockPage, connectPage } = fixtures
 
-  // Wait for all pages to signal ready
-  await Promise.all([
-    waitForPageReady(dashboardPage),
-    waitForPageReady(controlPage),
-    waitForPageReady(mockPage),
-    waitForPageReady(connectPage),
-  ])
+  // Navigate and wait for each page that was provided
+  const navigationPromises: Promise<void>[] = []
 
-  // Replace iframe with stable content for dashboard
-  await replaceIframeWithStableWorkout(dashboardPage)
+  if (dashboardPage) {
+    navigationPromises.push(
+      (async () => {
+        await dashboardPage.goto(BASE_URL)
+        await waitForPageReady(dashboardPage)
+        await replaceIframeWithStableWorkout(dashboardPage)
+      })()
+    )
+  }
+
+  if (controlPage) {
+    navigationPromises.push(
+      (async () => {
+        await controlPage.goto(`${BASE_URL}/client/control`)
+        await waitForPageReady(controlPage)
+      })()
+    )
+  }
+
+  if (mockPage) {
+    navigationPromises.push(
+      (async () => {
+        await mockPage.goto(`${BASE_URL}/client/mock`)
+        await waitForPageReady(mockPage)
+      })()
+    )
+  }
+
+  if (connectPage) {
+    navigationPromises.push(
+      (async () => {
+        await connectPage.goto(`${BASE_URL}/client/connect`)
+        await waitForPageReady(connectPage)
+      })()
+    )
+  }
+
+  await Promise.all(navigationPromises)
 }
 
 // NEW, more efficient setup function
@@ -117,9 +139,9 @@ export const setupComprehensiveTest = async ({
 
   await Promise.all([
     dashboardTab.goto(BASE_URL),
-    controlTab.goto(`${BASE_URL}/phone`),
-    mockTab.goto(`${BASE_URL}/mock`),
-    connectTab.goto(`${BASE_URL}/connect`),
+    controlTab.goto(`${BASE_URL}/client/control`),
+    mockTab.goto(`${BASE_URL}/client/mock`),
+    connectTab.goto(`${BASE_URL}/client/connect`),
   ])
 
   await Promise.all([

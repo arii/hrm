@@ -97,7 +97,7 @@ class TabataTimer {
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,
-      soundToPlay: this.state.soundToPlay,
+      ...(this.state.soundToPlay !== undefined && { soundToPlay: this.state.soundToPlay }),
       soundEventId: this.state.soundEventId,
     }
   }
@@ -180,8 +180,8 @@ class TabataTimer {
       currentPhase: 'IDLE',
       timeElapsed: 0,
       timeRemaining: this.state.mode === 'TABATA' ? this.state.workDuration : 0,
-      soundToPlay: undefined,
     }
+    delete this.state.soundToPlay
     this.resetCountdownMarker()
     this.runningTotal = 0
     this.startTime = null
@@ -274,7 +274,7 @@ class TabataTimer {
     this.state.currentPhase = 'IDLE'
     this.state.timeRemaining = mode === 'TABATA' ? this.state.workDuration : 0
     this.state.timeElapsed = 0
-    this.state.soundToPlay = undefined
+    delete this.state.soundToPlay
     this.resetCountdownMarker()
     this.broadcastState({ timerData: this.getState() })
   }

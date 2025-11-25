@@ -65,9 +65,9 @@ const SpotifySelectionPage = () => {
       const found = availableDevices.find((d) => d.id === selectedDeviceId)
       if (!found) {
         const activeDevice = availableDevices.find((d) => d.is_active)
-        setSelectedDeviceId(
-          activeDevice ? activeDevice.id : availableDevices[0].id
-        )
+        const firstDevice = availableDevices[0]
+        const deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+        setSelectedDeviceId(deviceId)
       }
     } else {
       setSelectedDeviceId('')
@@ -87,8 +87,11 @@ const SpotifySelectionPage = () => {
     let deviceId = selectedDeviceId
     if (!deviceId && availableDevices.length > 0) {
       const activeDevice = availableDevices.find((d) => d.is_active)
-      deviceId = activeDevice ? activeDevice.id : availableDevices[0].id
-      setSelectedDeviceId(deviceId)
+      const firstDevice = availableDevices[0]
+      deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+      if (deviceId) {
+        setSelectedDeviceId(deviceId)
+      }
     }
     if (!deviceId) {
       console.warn('No deviceId available, command not sent.')

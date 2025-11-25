@@ -4,12 +4,11 @@
  * Consolidated from multiple test files to reduce redundancy and improve maintainability
  */
 import { test, expect } from './fixtures'
-import { setupVisualRegressionTest, BASE_URL } from './test-helpers'
+import { replaceIframeWithStableWorkout, BASE_URL } from './test-helpers'
 
 test.describe('HRM Core Functionality', () => {
-  test.beforeEach(setupVisualRegressionTest)
-
   test('Dashboard - main interface', async ({ dashboardPage }) => {
+    await replaceIframeWithStableWorkout(dashboardPage)
     await expect(dashboardPage).toHaveScreenshot('dashboard-main.png', {
       fullPage: true,
       animations: 'disabled',
@@ -21,6 +20,7 @@ test.describe('HRM Core Functionality', () => {
     mockPage,
     dashboardPage,
   }) => {
+    await replaceIframeWithStableWorkout(dashboardPage)
     // Configure and start HR streaming
     await mockPage.getByLabel('User Name').fill('Test Athlete')
     await mockPage.getByLabel('Current BPM').fill('155')
@@ -38,12 +38,13 @@ test.describe('HRM Core Functionality', () => {
   })
 
   test('Control Panel - timer configuration', async ({ controlPage }) => {
-    // Configure timer settings
-    await controlPage.fill('input[aria-label="Work duration in seconds"]', '45')
-    await controlPage.fill('input[aria-label="Rest duration in seconds"]', '15')
-    await expect(
-      controlPage.locator('input[aria-label="Work duration in seconds"]')
-    ).toHaveValue('45')
+    // Configure timer settings - use simpler selectors
+    const workInput = controlPage.locator('[role="spinbutton"]').first()
+    const restInput = controlPage.locator('[role="spinbutton"]').nth(1)
+    
+    await workInput.fill('45')
+    await restInput.fill('15')
+    await expect(workInput).toHaveValue('45')
 
     await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
@@ -53,8 +54,11 @@ test.describe('HRM Core Functionality', () => {
 
   test('Control Panel - active workout', async ({ controlPage }) => {
     // Start timer
-    await controlPage.fill('input[aria-label="Work duration in seconds"]', '30')
-    await controlPage.fill('input[aria-label="Rest duration in seconds"]', '10')
+    const workInput = controlPage.locator('[role="spinbutton"]').first()
+    const restInput = controlPage.locator('[role="spinbutton"]').nth(1)
+    
+    await workInput.fill('30')
+    await restInput.fill('10')
     await controlPage.click('button:has-text("START")')
 
     // Wait for timer to be active
@@ -117,8 +121,10 @@ test.describe('HRM Core Functionality', () => {
     ).toBeVisible()
 
     // Configure and start timer
-    await controlTab.fill('input[aria-label="Work duration in seconds"]', '20')
-    await controlTab.fill('input[aria-label="Rest duration in seconds"]', '10')
+    const workInput = controlTab.locator('[role="spinbutton"]').first()
+    const restInput = controlTab.locator('[role="spinbutton"]').nth(1)
+    await workInput.fill('20')
+    await restInput.fill('10')
     await controlTab.click('button:has-text("START")')
 
     // Verify dashboard shows active workout
