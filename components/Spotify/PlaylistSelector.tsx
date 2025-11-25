@@ -32,7 +32,7 @@ interface Playlist {
 }
 
 interface PlaylistSelectorProps {
-  onPlaylistSelected: (uri: string) => void
+  onPlaylistSelected: (uri: string | null) => void
 }
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
@@ -143,9 +143,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   const handlePlaylistSelect = (playlist: Playlist | null) => {
     setSelectedPlaylist(playlist)
-    if (playlist) {
-      onPlaylistSelected(playlist.uri)
-    }
+    onPlaylistSelected(playlist ? playlist.uri : null)
   }
 
   if (loading) {
@@ -174,6 +172,16 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
 
   return (
     <Box>
+      {selectedPlaylist && (
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+          <Chip
+            label={`Selected: ${selectedPlaylist.name}`}
+            onDelete={() => handlePlaylistSelect(null)}
+            color="primary"
+            variant="outlined"
+          />
+        </Box>
+      )}
       <Autocomplete
         options={filteredPlaylists}
         getOptionLabel={(option) => option.name}
