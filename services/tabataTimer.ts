@@ -89,7 +89,7 @@ class TabataTimer {
 
   // Adapt getState to return the expected TimerData structure for the front-end
   public getState(): TimerData {
-    return {
+    const timerData: TimerData = {
       isRunning: this.state.isRunning,
       currentPhase: this.state.currentPhase,
       timeRemaining: this.state.timeRemaining,
@@ -97,9 +97,14 @@ class TabataTimer {
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,
-      soundToPlay: this.state.soundToPlay,
       soundEventId: this.state.soundEventId,
+    };
+
+    if (this.state.soundToPlay) {
+      timerData.soundToPlay = this.state.soundToPlay;
     }
+
+    return timerData;
   }
 
   // --- Core Timer Logic ---
@@ -174,14 +179,16 @@ class TabataTimer {
     if (this.interval) clearInterval(this.interval)
 
     // Full reset of all time and cycle variables
-    this.state = {
+    const newState: DualModeTimerState = {
       ...this.state,
       isRunning: false,
       currentPhase: 'IDLE',
       timeElapsed: 0,
       timeRemaining: this.state.mode === 'TABATA' ? this.state.workDuration : 0,
-      soundToPlay: undefined,
-    }
+      soundEventId: this.state.soundEventId + 1, // Increment to invalidate old sounds
+    };
+    delete newState.soundToPlay; // Ensure soundToPlay is fully removed
+    this.state = newState;
     this.resetCountdownMarker()
     this.runningTotal = 0
     this.startTime = null
@@ -269,14 +276,21 @@ class TabataTimer {
 
   // --- Mode Switching ---
   public setMode(mode: TimerMode) {
-    if (this.state.isRunning) this.stopTimer()
-    this.state.mode = mode
-    this.state.currentPhase = 'IDLE'
-    this.state.timeRemaining = mode === 'TABATA' ? this.state.workDuration : 0
-    this.state.timeElapsed = 0
-    this.state.soundToPlay = undefined
-    this.resetCountdownMarker()
-    this.broadcastState({ timerData: this.getState() })
+    if (this.state.isRunning) this.stopTimer();
+
+    const newState: DualModeTimerState = {
+      ...this.state,
+      mode,
+      currentPhase: 'IDLE',
+      timeRemaining: mode === 'TABATA' ? this.state.workDuration : 0,
+      timeElapsed: 0,
+      soundEventId: this.state.soundEventId + 1,
+    };
+    delete newState.soundToPlay;
+    this.state = newState;
+
+    this.resetCountdownMarker();
+    this.broadcastState({ timerData: this.getState() });
   }
 }
 

@@ -2,6 +2,7 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
+import logger from '@/utils/logger'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
@@ -90,11 +91,16 @@ const TimerControls = () => {
       let deviceId = spotifyDeviceId
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
-        setSpotifyDeviceId(deviceId)
+        const fallbackDevice = spotifyDevices[0]
+        const newDeviceId = activeDevice?.id ?? fallbackDevice?.id
+
+        if (newDeviceId) {
+          deviceId = newDeviceId
+          setSpotifyDeviceId(newDeviceId)
+        }
       }
       if (!deviceId) {
-        console.warn('No deviceId available, Spotify command not sent.')
+        logger.warn('No deviceId available, Spotify command not sent.')
         return
       }
       const message: SpotifyCommandMessage = {
@@ -140,7 +146,7 @@ const TimerControls = () => {
     <Card
       sx={{
         boxShadow: 6,
-        mb: 3,
+        mb: 2,
         backgroundColor: '#000000',
         color: '#EF4444',
         position: 'sticky',
@@ -149,12 +155,12 @@ const TimerControls = () => {
       }}
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography
             sx={{
               color: 'white',
               fontWeight: 'medium',
-              mb: 1.5,
+              mb: 2,
               textAlign: 'center',
             }}
           >
@@ -210,8 +216,8 @@ const TimerControls = () => {
           </Stack>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+        <Box sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
             {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
@@ -220,7 +226,7 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={4} sx={{ mb: 4 }}>
+          <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 {' '}
@@ -230,7 +236,7 @@ const TimerControls = () => {
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={3}
+                spacing={2}
               >
                 <IconButton
                   color="primary"
@@ -307,7 +313,7 @@ const TimerControls = () => {
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={3}
+                spacing={2}
               >
                 <IconButton
                   color="primary"
@@ -378,7 +384,7 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Stack direction="row" spacing={3} sx={{ mt: 4 }}>
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           {!timerData.isRunning ? (
             <Button
               variant="contained"

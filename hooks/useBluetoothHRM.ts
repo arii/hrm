@@ -4,7 +4,7 @@
  * It streams data using the provided sendData function (from useWebSocket).
  */
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { HrmInputMessage } from '../types/websocket'
+import { HrmInputData, HrmInputMessage } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -43,7 +43,8 @@ const getCookie = (name: string): string => {
   if (typeof document === 'undefined') return ''
   return document.cookie.split('; ').reduce((r, v) => {
     const parts = v.split('=')
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r
+    // Ensure parts[1] exists before decoding
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
   }, '')
 }
 
@@ -122,18 +123,24 @@ const useBluetoothHRM = () => {
             // --- 5. STREAM TYPED DATA TO SERVER VIA WEBSOCKET ---
             const calculatedMaxHr = userAge
               ? 220 - parseInt(userAge)
-              : MAX_HR_DEFAULT
+              : MAX_HR_DEFAULT;
+
+            const data: HrmInputData = {
+              value: heartRate,
+              maxHr: calculatedMaxHr,
+              name:
+                userName || `Bluetooth HRM (${device?.name || 'Unknown'})`,
+            };
+
+            if (userAge) {
+              data.age = parseInt(userAge);
+            }
+
             const message: HrmInputMessage = {
               type: 'HRM_INPUT',
-              data: {
-                value: heartRate,
-                maxHr: calculatedMaxHr,
-                name:
-                  userName || `Bluetooth HRM (${device?.name || 'Unknown'})`,
-                age: userAge ? parseInt(userAge) : undefined,
-              },
-            }
-            sendData(message)
+              data,
+            };
+            sendData(message);
           }
         )
 

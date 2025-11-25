@@ -146,8 +146,7 @@ export const WebSocketProvider = ({
             hrmData: message.hrmData || prev.hrmData,
             timerData: message.timerData || prev.timerData,
             spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
+            spotifyServiceInitialized: message.spotifyServiceInitialized ?? true,
           }))
         }
       } catch (e) {

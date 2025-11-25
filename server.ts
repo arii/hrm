@@ -20,6 +20,7 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
+import logger from './utils/logger.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -31,10 +32,10 @@ const hostname =
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
 
-console.log(`Starting server in ${dev ? 'development' : 'production'} mode`)
-console.log(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
-console.log(`NEXTAUTH_URL: ${getBaseURL()}`)
-console.log(`Hostname: ${hostname}, Port: ${port}`)
+logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
+logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
+logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
+logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const handle = app.getRequestHandler()
 
 // Create Express app for routing and middleware
@@ -52,7 +53,7 @@ app
     // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
-      console.log(`Serving static files from: ${staticPath}`)
+      logger.info(`Serving static files from: ${staticPath}`)
 
       expressApp.use(
         '/_next/static',
@@ -95,7 +96,7 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcastState)
     } catch (e) {
-      console.error('SpotifyPolling initialization failed:', e)
+      logger.error({ err: e }, 'SpotifyPolling initialization failed')
       spotifyServiceInitialized = false // Set to false on failure
       // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
@@ -115,7 +116,7 @@ app
     // API endpoint to get available Spotify devices
     expressApp.get(
       '/api/spotify/devices',
-      async (req: Request, res: Response) => {
+      async (_req: Request, res: Response) => {
         if (!spotifyServiceInitialized || !spotifyService) {
           return res
             .status(503)
@@ -125,7 +126,7 @@ app
           const devices = await spotifyService.getAvailableDevices()
           return res.json(devices)
         } catch (error) {
-          console.error('Error fetching Spotify devices via API:', error)
+          logger.error({ err: error }, 'Error fetching Spotify devices via API')
           return res
             .status(500)
             .json({ error: 'Failed to fetch Spotify devices.' })
@@ -181,18 +182,18 @@ app
 
     // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
-      console.error('Server error:', err)
+      logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
     // Begin listening
     server.listen(port, hostname, () => {
       // This callback only runs on successful listening
-      console.log(`> Ready on http://${hostname}:${port}`)
-      console.log(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
+      logger.info(`> Ready on http://${hostname}:${port}`)
+      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
   })
   .catch((err: Error) => {
-    console.error('Next.js preparation failed:', err.stack)
+    logger.error({ err }, 'Next.js preparation failed')
     process.exit(1)
   })

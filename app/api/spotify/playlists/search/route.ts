@@ -74,15 +74,17 @@ export async function GET(req: NextRequest) {
         // Assert the type here
         const fullPlaylist = playlist as SimplifiedPlaylist
 
+        // Add a safe access pattern for the image URL
+        const imageUrl = (fullPlaylist.images && fullPlaylist.images.length > 0 && fullPlaylist.images[0])
+          ? fullPlaylist.images[0].url
+          : null;
+
         return {
           id: fullPlaylist.id,
           name: fullPlaylist.name,
           uri: fullPlaylist.uri,
           description: fullPlaylist.description || null,
-          imageUrl:
-            fullPlaylist.images && fullPlaylist.images.length > 0
-              ? fullPlaylist.images[0].url
-              : null,
+          imageUrl,
           // This line will now work
           trackCount: fullPlaylist.tracks?.total || 0,
           owner:

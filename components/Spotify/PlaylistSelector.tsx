@@ -181,35 +181,47 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         onChange={(_, newValue) => handlePlaylistSelect(newValue)}
         inputValue={searchQuery}
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder="Search your playlists or browse popular playlists..."
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <Search sx={{ color: 'text.secondary', mr: 1 }} />
-              ),
-              endAdornment: (
-                <>
-                  {searchLoading ? (
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                  ) : searchQuery ? (
-                    <IconButton
-                      size="small"
-                      onClick={() => setSearchQuery('')}
-                      aria-label="Clear search"
-                      sx={{ mr: 1 }}
-                    >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  ) : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
+        renderInput={(params) => {
+          // This is a workaround for a subtle MUI type mismatch between Autocomplete and TextField
+          const patchedParams = {
+            ...params,
+            InputLabelProps: {
+              ...params.InputLabelProps,
+              className: params.InputLabelProps?.className || '',
+              style: params.InputLabelProps?.style || {},
+            },
+          };
+          return (
+            <TextField
+              {...patchedParams}
+              size="small"
+              placeholder="Search or browse playlists..."
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <Search sx={{ color: 'text.secondary', mr: 1 }} />
+                ),
+                endAdornment: (
+                  <>
+                    {searchLoading ? (
+                      <CircularProgress size={20} sx={{ mr: 1 }} />
+                    ) : searchQuery ? (
+                      <IconButton
+                        size="small"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear search"
+                        sx={{ mr: 1 }}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    ) : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          );
+        }}
         renderOption={(props, option) => (
           <Box component="li" {...props} key={option.uri}>
             <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -289,6 +301,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -342,6 +366,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     key={playlist.uri}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
+                    }}
                   >
                     {playlist.imageUrl ? (
                       <Box
@@ -405,6 +441,18 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   key={playlist.uri}
                   selected={selectedPlaylist?.uri === playlist.uri}
                   onClick={() => handlePlaylistSelect(playlist)}
+                  sx={{
+                    '&.Mui-selected': {
+                      borderLeft: (theme) =>
+                        `4px solid ${theme.palette.primary.main}`,
+                      backgroundColor: (theme) =>
+                        theme.palette.action.selected,
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.palette.action.hover,
+                      },
+                    },
+                  }}
                 >
                   {playlist.imageUrl ? (
                     <Box

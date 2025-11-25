@@ -61,18 +61,19 @@ const SpotifySelectionPage = () => {
   // Whenever availableDevices changes, ensure selectedDeviceId is valid
   useEffect(() => {
     if (availableDevices.length > 0) {
-      // If current selectedDeviceId is not in the list, or is empty, select active or first
-      const found = availableDevices.find((d) => d.id === selectedDeviceId)
+      const found = availableDevices.find((d) => d.id === selectedDeviceId);
       if (!found) {
-        const activeDevice = availableDevices.find((d) => d.is_active)
-        setSelectedDeviceId(
-          activeDevice ? activeDevice.id : availableDevices[0].id
-        )
+        const activeDevice = availableDevices.find((d) => d.is_active);
+        const fallbackDevice = availableDevices[0];
+        const newDeviceId = activeDevice?.id ?? fallbackDevice?.id;
+        if (newDeviceId) {
+          setSelectedDeviceId(newDeviceId);
+        }
       }
     } else {
-      setSelectedDeviceId('')
+      setSelectedDeviceId('');
     }
-  }, [availableDevices, selectedDeviceId])
+  }, [availableDevices, selectedDeviceId]);
   const { volume, setVolume } = useVolumePreference(70)
 
   const handlePlaylistSelected = (uri: string) => {
@@ -86,9 +87,14 @@ const SpotifySelectionPage = () => {
     // Always include a deviceId, fallback to active device if not set
     let deviceId = selectedDeviceId
     if (!deviceId && availableDevices.length > 0) {
-      const activeDevice = availableDevices.find((d) => d.is_active)
-      deviceId = activeDevice ? activeDevice.id : availableDevices[0].id
-      setSelectedDeviceId(deviceId)
+      const activeDevice = availableDevices.find((d) => d.is_active);
+      const fallbackDevice = availableDevices[0];
+      const newDeviceId = activeDevice?.id ?? fallbackDevice?.id;
+
+      if (newDeviceId) {
+        deviceId = newDeviceId;
+        setSelectedDeviceId(newDeviceId);
+      }
     }
     if (!deviceId) {
       console.warn('No deviceId available, command not sent.')

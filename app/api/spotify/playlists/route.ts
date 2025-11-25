@@ -3,6 +3,7 @@
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
 import { authOptions } from '@/lib/auth'
+import logger from '@/utils/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -24,7 +25,7 @@ export async function GET(_req: Request) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error('[API /playlists] No session or access token found.')
+      logger.error('[API /playlists] No session or access token found.')
       return NextResponse.json(
         { error: 'Not authenticated or token is missing.' },
         { status: 401 }
@@ -54,25 +55,29 @@ export async function GET(_req: Request) {
     ]
 
     // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
-    const userPlaylists = playlistsResponse.items.map((playlist) => ({
-      id: playlist.id,
-      name: playlist.name,
-      uri: playlist.uri,
-      description: playlist.description || null,
-      imageUrl:
-        playlist.images && playlist.images.length > 0
-          ? playlist.images[0].url
-          : null,
-      trackCount: playlist.tracks?.total || 0,
-      owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
-      public: playlist.public || false,
-    }))
+    const userPlaylists = playlistsResponse.items.map((playlist) => {
+      // Add a safe access pattern for the image URL
+      const imageUrl = (playlist.images && playlist.images.length > 0 && playlist.images[0])
+        ? playlist.images[0].url
+        : null;
+
+      return {
+        id: playlist.id,
+        name: playlist.name,
+        uri: playlist.uri,
+        description: playlist.description || null,
+        imageUrl,
+        trackCount: playlist.tracks?.total || 0,
+        owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
+        public: playlist.public || false,
+      };
+    });
 
     return NextResponse.json({ presetPlaylists, userPlaylists })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /playlists] Internal Server Error: ${message}`)
+    logger.error(`[API /playlists] Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

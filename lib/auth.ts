@@ -72,6 +72,10 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET environment variable is not set');
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
@@ -230,6 +234,6 @@ export const authOptions: AuthOptions = {
   },
   // Ensure the token can be accessed securely
   secret: process.env.NEXTAUTH_SECRET,
-}
+};
 
 export default NextAuth(authOptions)
