@@ -75,7 +75,7 @@ const SpotifySelectionPage = () => {
   }, [availableDevices, selectedDeviceId])
   const { volume, setVolume } = useVolumePreference(70)
 
-  const handlePlaylistSelected = (uri: string) => {
+  const handlePlaylistSelected = (uri: string | null) => {
     setSelectedPlaylistUri(uri)
   }
 
