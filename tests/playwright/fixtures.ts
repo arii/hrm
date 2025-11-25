@@ -82,8 +82,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(BASE_URL)
     await waitForPageReady(page)
     await use(page)
-    // Cleanup: close the page after test completes
-    await page.close().catch(() => {}) // Ignore errors if already closed
+    // Let Playwright's context cleanup handle page closing
   },
 
   controlPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -92,7 +91,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/control`)
     await waitForPageReady(page)
     await use(page)
-    await page.close().catch(() => {})
+    // Let Playwright's context cleanup handle page closing
   },
 
   mockPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -101,7 +100,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/mock`)
     await waitForPageReady(page)
     await use(page)
-    await page.close().catch(() => {})
+    // Let Playwright's context cleanup handle page closing
   },
 
   connectPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -110,7 +109,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/connect`)
     await waitForPageReady(page)
     await use(page)
-    await page.close().catch(() => {})
+    // Let Playwright's context cleanup handle page closing
   },
 })
 
