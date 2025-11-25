@@ -1,22 +1,31 @@
-# Use the official Node.js 20 image.
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-bullseye
-
-# Install pnpm globally
+# ---- Base Stage ----
+FROM node:20-alpine AS base
+WORKDIR /usr/src/app
 RUN npm install -g pnpm
 
-# Set the working directory in the container
-WORKDIR /usr/src/app
-
-# Copy package.json and pnpm-lock.yaml to the working directory
+# ---- Dependencies Stage ----
+FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
-# Install dependencies
+# ---- Build Stage ----
+FROM base AS build
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-
-# Copy the rest of the application source code to the working directory
 COPY . .
+RUN pnpm run build
 
-# Expose the port the app runs on
+# ---- Production Stage ----
+FROM base AS production
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/.next ./.next
+COPY --from=build /usr/src/app/public ./public
+COPY --from=build /usr/src/app/package.json .
+COPY --from=build /usr/src/app/ecosystem.config.cjs .
+COPY --from=build /usr/src/app/server.ts .
+
+
 EXPOSE 3000
 
-# The command to run the application will be specified in the docker-compose.yml file
+CMD ["pnpm", "start"]

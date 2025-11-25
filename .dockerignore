@@ -1,31 +1,17 @@
-# Git
 .git
-.gitignore
-.gitattributes
-
-# Dependencies
+.github
 node_modules
-
-# Build artifacts
+npm-debug.log
+Dockerfile
+.dockerignore
+.env*
+*.md
+tests
+screenshots
+oauth-test-report
+playwright-report
+.vscode
 dist
 .next
-
-# Logs
 logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev.log
-
-# Test results
-playwright-report/
-test-results/
-
-# Devcontainer
-.devcontainer/
-
-# Environment variables
-.env
-.env.local
-.env.production
-.env.test
+*.log
