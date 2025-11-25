@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // File: services/spotifyPolling.ts (Spotify Polling Service - Typed)
 /**
  * Spotify Polling Service: Handles token management, REST polling, and command execution.
@@ -8,11 +7,8 @@ import {
   AccessToken,
   SpotifyApi,
   PlaybackState,
-  PlayerDevice,
+  Device,
 } from '@spotify/web-api-ts-sdk'
-=======
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
->>>>>>> origin/leader
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
@@ -26,18 +22,15 @@ function safeParseJSON(input: string): unknown {
   }
 }
 
-<<<<<<< HEAD
 const isVerboseSpotifyLogging =
   process.env.SPOTIFY_DEBUG === 'true' || process.env.SPOTIFY_DEBUG === '1'
 
-const debugLog = (...args: any[]) => {
+const debugLog = (...args: unknown[]) => {
   if (isVerboseSpotifyLogging) {
     console.log('[SpotifyPolling]', ...args)
   }
 }
 
-=======
->>>>>>> origin/leader
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
 
@@ -54,7 +47,7 @@ type SpotifyCommand =
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 type SpotifyPlaybackState = PlaybackState
 type SpotifyError = { status?: number }
-type SpotifyDevice = PlayerDevice
+type SpotifyDevice = Device
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -165,13 +158,8 @@ export class SpotifyPolling {
   /**
    * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
-<<<<<<< HEAD
   public setRefreshToken(_token: string): void {
     debugLog('Spotify Refresh Token signal received. Reloading SDK.')
-=======
-  public setRefreshToken(_token: string) {
-    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
->>>>>>> origin/leader
     // Reset the token manager state to ensure it re-reads the file
     // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
     setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
@@ -214,11 +202,7 @@ export class SpotifyPolling {
     // We rely on background refresh or failure handling.
 
     try {
-<<<<<<< HEAD
-      const playbackState: SpotifyPlaybackState | null =
-        await this.sdk.player.getCurrentlyPlayingTrack()
-=======
-      let playbackState
+      let playbackState: SpotifyPlaybackState | null
       try {
         playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
       } catch (err: unknown) {
@@ -245,7 +229,6 @@ export class SpotifyPolling {
         }
         throw err
       }
->>>>>>> origin/leader
 
       if (!playbackState) {
         // Nothing playing or 204
@@ -349,12 +332,8 @@ export class SpotifyPolling {
       return Promise.resolve()
     }
 
-<<<<<<< HEAD
     // Wrap in async IIFE to handle promise without blocking caller
     return (async (): Promise<void> => {
-=======
-    return (async () => {
->>>>>>> origin/leader
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)

@@ -28,8 +28,17 @@ const baseTimerData: TimerData = {
 }
 
 describe('TimerControls', () => {
+  let consoleWarnSpy: jest.SpyInstance
+
   beforeEach(() => {
     jest.resetAllMocks()
+    // Suppress expected warning about missing deviceId
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    // Restore console.warn
+    consoleWarnSpy.mockRestore()
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
