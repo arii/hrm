@@ -109,7 +109,7 @@ app
     const tabataService = new TabataTimer(broadcastState)
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)
-    const cleanupSocketManager = initSocketManager(wss, { tabataService, spotifyService })
+    initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
 
@@ -196,9 +196,8 @@ app
     // Cleanup on server shutdown
     process.on('SIGINT', () => {
       console.log('Shutting down server...')
-      if (cleanupSocketManager) {
-        cleanupSocketManager()
-      }
+      tabataService.dispose()
+      spotifyService.dispose()
       server.close(() => {
         console.log('Server shut down gracefully.')
         process.exit(0)
@@ -207,9 +206,8 @@ app
 
     process.on('SIGTERM', () => {
       console.log('Shutting down server...')
-      if (cleanupSocketManager) {
-        cleanupSocketManager()
-      }
+      tabataService.dispose()
+      spotifyService.dispose()
       server.close(() => {
         console.log('Server shut down gracefully.')
         process.exit(0)

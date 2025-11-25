@@ -278,6 +278,14 @@ class TabataTimer {
     this.resetCountdownMarker()
     this.broadcastState({ timerData: this.getState() })
   }
+
+  // --- Cleanup ---
+  public dispose() {
+    if (this.interval) {
+      clearInterval(this.interval)
+      this.interval = null
+    }
+  }
 }
 
 export default TabataTimer

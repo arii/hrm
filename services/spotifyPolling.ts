@@ -164,7 +164,7 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  public dispose() {
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
