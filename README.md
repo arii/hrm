@@ -45,9 +45,9 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - **Audio Feedback** - Original HRM beep sounds for countdown (3-2-1) and phase transitions
 - **HR Zone Visualization** - Large percentage tiles with color-coded zones and user names/ages
 - **Spotify Integration** - Full playback control, device selection, volume control, and now-playing display
-- **Mock HRM Client** - Test interface with zone buttons, device ID, and noise simulation
-- **Control Panel** - Mobile-optimized UI with timer controls, Spotify controls, and configuration steppers
-- **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API
+- **Mock HRM Client** - Test interface with zone buttons, device ID, and noise simulation (available at `/client/mock`)
+- **Control Panel** - Mobile-optimized UI with timer controls, Spotify controls, and configuration steppers (available at `/client/control`)
+- **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API (available at `/client/connect`)
 - **Visual Regression Tests** - Playwright screenshot-based testing
 
 ## Quick Start
