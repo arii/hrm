@@ -188,11 +188,19 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should return false on failed volume change', async () => {
+      // Suppress console.error for this test
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+
       mockPlayer.setPlaybackVolume.mockImplementation(() =>
         Promise.reject(new Error('API Error'))
       )
       await spotifyService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
+
+      // Restore console.error
+      consoleErrorSpy.mockRestore()
     })
   })
 
@@ -258,12 +266,16 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
+      const consoleWarnSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
       // Create a new service instance that hasn't gone through the full async initialization
       // This ensures its SDK is null initially
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
+      consoleWarnSpy.mockRestore()
     })
   })
 
@@ -341,6 +353,9 @@ describe('SpotifyPolling Service', () => {
 
   describe('Error Handling', () => {
     it('should handle API errors gracefully', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
       mockPlayer.startResumePlayback.mockImplementation(() =>
         Promise.reject(new Error('Network error'))
       )
@@ -351,9 +366,13 @@ describe('SpotifyPolling Service', () => {
       ).resolves.not.toThrow()
 
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
+      consoleErrorSpy.mockRestore()
     })
 
     it('should handle 401 unauthorized responses', async () => {
+      const consoleWarnSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {})
       mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
         Promise.reject({ status: 401 })
       )
@@ -366,6 +385,7 @@ describe('SpotifyPolling Service', () => {
 
       // Should attempt to handle 401 without crashing
       expect(() => spotifyService.getState()).not.toThrow()
+      consoleWarnSpy.mockRestore()
     })
 
     it('should not execute commands without access token', async () => {
