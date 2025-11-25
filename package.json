@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 pnpm exec ts-node --env-file=.env.local --esm --transpile-only --project tsconfig.json server.ts | pnpm exec pino-pretty",
+    "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --esm --transpile-only --project tsconfig.json server.ts | pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "npm run build:server && next build",
     "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
@@ -88,7 +88,8 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.3"
   },
   "engines": {
     "node": ">=20.0.0",
