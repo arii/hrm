@@ -111,6 +111,19 @@ app
     // 3. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, { tabataService, spotifyService })
 
+    // --- Health Check Endpoints ---
+    expressApp.get('/health/live', (_req: Request, res: Response) => {
+      res.status(200).send('OK');
+    });
+
+    expressApp.get('/health/ready', (_req: Request, res: Response) => {
+      if (spotifyServiceInitialized) {
+        res.status(200).send('OK');
+      } else {
+        res.status(503).send('Service Unavailable');
+      }
+    });
+
     // --- Express Routing ---
 
     // API endpoint to get available Spotify devices
