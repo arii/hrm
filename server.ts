@@ -20,11 +20,8 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
-<<<<<<< HEAD
 import { registerService } from './utils/serviceRegistry.js'
-=======
 import logger from './utils/logger.js'
->>>>>>> origin/leader
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -121,8 +118,24 @@ app
 
     // --- Express Routing ---
 
-<<<<<<< HEAD
-=======
+    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
+    server.on(
+      'upgrade',
+      (req: IncomingMessage, socket: Socket, head: Buffer) => {
+        const { pathname } = parse(req.url || '')
+
+        // Only upgrade connections to the specific WebSocket path
+        if (pathname === '/ws') {
+          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            wss.emit('connection', ws, req)
+          })
+        }
+        // For other paths, we do nothing and let other potential upgrade handlers
+        // (like Next.js's for HMR in development) take over.
+      }
+    )
+
+    // Handle all other requests with Next.js
     // API endpoint to get available Spotify devices
     expressApp.get(
       '/api/spotify/devices',
@@ -144,9 +157,9 @@ app
       }
     )
 
->>>>>>> origin/leader
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+
     expressApp.use(async (req: Request, res: Response) => {
       // Intercept token delivery POST and force Spotify poll
       if (
@@ -169,25 +182,9 @@ app
           }
         }, 1000)
       }
+      // Pass the request to the Next.js handler
       return handle(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
-
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
-      'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
-
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
-          })
-        }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
-      }
-    )
+    })
 
     // --- Start Server ---
 
