@@ -12,6 +12,14 @@ declare module 'next-auth' {
   }
 }
 
+const spotifyClientId = process.env.SPOTIFY_CLIENT_ID
+const spotifyClientSecret = process.env.SPOTIFY_CLIENT_SECRET
+const nextAuthSecret = process.env.NEXTAUTH_SECRET
+
+if (!spotifyClientId || !spotifyClientSecret || !nextAuthSecret) {
+  throw new Error('Missing Spotify or NextAuth environment variables')
+}
+
 // A function to handle the token refresh logic
 async function refreshAccessToken(token: JWT) {
   try {
@@ -75,8 +83,8 @@ const SPOTIFY_SCOPES = [
 export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
-      clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
+      clientId: spotifyClientId,
+      clientSecret: spotifyClientSecret,
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
@@ -229,7 +237,7 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: nextAuthSecret,
 }
 
 export default NextAuth(authOptions)

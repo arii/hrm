@@ -60,10 +60,7 @@ export async function GET(_req: Request) {
       name: playlist.name,
       uri: playlist.uri,
       description: playlist.description || null,
-      imageUrl:
-        playlist.images && playlist.images.length > 0
-          ? playlist.images[0].url
-          : null,
+      imageUrl: playlist.images?.[0]?.url ?? null,
       trackCount: playlist.tracks?.total || 0,
       owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
       public: playlist.public || false,

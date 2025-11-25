@@ -1,5 +1,5 @@
 // File: components/HeartRateZones.tsx (Heart Rate Zone Display)
-import React from 'react'
+
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
@@ -18,7 +18,14 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
   ]
 
   const calculateBpmRange = (percentage: string) => {
-    const [min, max] = percentage.replace('%', '').split('-').map(Number)
+    const parts = percentage.replace('%', '').split('-').map(Number)
+    const min = parts[0]
+    const max = parts[1]
+
+    if (typeof min !== 'number' || typeof max !== 'number' || isNaN(min) || isNaN(max)) {
+      return 'N/A'
+    }
+
     const minBpm = Math.round((min / 100) * maxHr)
     const maxBpm = Math.round((max / 100) * maxHr)
     return `${minBpm}-${maxBpm} BPM`

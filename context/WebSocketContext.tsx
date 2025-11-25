@@ -34,6 +34,7 @@ const INITIAL_STATE: AppState = {
     mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
+    soundToPlay: undefined,
     soundEventId: 0,
   },
   spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
@@ -147,7 +148,9 @@ export const WebSocketProvider = ({
             timerData: message.timerData || prev.timerData,
             spotifyData: message.spotifyData || prev.spotifyData,
             spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
+              message.spotifyServiceInitialized ??
+              prev.spotifyServiceInitialized ??
+              true,
           }))
         }
       } catch (e) {

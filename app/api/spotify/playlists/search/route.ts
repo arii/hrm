@@ -79,10 +79,7 @@ export async function GET(req: NextRequest) {
           name: fullPlaylist.name,
           uri: fullPlaylist.uri,
           description: fullPlaylist.description || null,
-          imageUrl:
-            fullPlaylist.images && fullPlaylist.images.length > 0
-              ? fullPlaylist.images[0].url
-              : null,
+          imageUrl: fullPlaylist.images?.[0]?.url ?? null,
           // This line will now work
           trackCount: fullPlaylist.tracks?.total || 0,
           owner:

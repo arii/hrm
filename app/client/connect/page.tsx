@@ -25,7 +25,7 @@ const setCookie = (name: string, value: string, days = 365) => {
 const getCookie = (name: string): string => {
   return document.cookie.split('; ').reduce((r, v) => {
     const parts = v.split('=')
-    return parts[0] === name ? decodeURIComponent(parts[1]) : r
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
   }, '')
 }
 

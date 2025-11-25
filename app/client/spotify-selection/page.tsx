@@ -66,7 +66,7 @@ const SpotifySelectionPage = () => {
       if (!found) {
         const activeDevice = availableDevices.find((d) => d.is_active)
         setSelectedDeviceId(
-          activeDevice ? activeDevice.id : availableDevices[0].id
+          activeDevice ? activeDevice.id : availableDevices[0]?.id || ''
         )
       }
     } else {
@@ -87,7 +87,7 @@ const SpotifySelectionPage = () => {
     let deviceId = selectedDeviceId
     if (!deviceId && availableDevices.length > 0) {
       const activeDevice = availableDevices.find((d) => d.is_active)
-      deviceId = activeDevice ? activeDevice.id : availableDevices[0].id
+      deviceId = activeDevice ? activeDevice.id : availableDevices[0]?.id || ''
       setSelectedDeviceId(deviceId)
     }
     if (!deviceId) {

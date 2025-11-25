@@ -28,7 +28,7 @@ interface DualModeTimerState {
   timeRemaining: number // For Tabata mode
   workDuration: number // Configurable work duration
   restDuration: number // Configurable rest duration
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundToPlay: 'WORK' | 'REST' | 'COUNTDOWN' | undefined
   soundEventId: number
 }
 
@@ -47,6 +47,7 @@ class TabataTimer {
     timeRemaining: 0,
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
+    soundToPlay: undefined,
     soundEventId: 0,
   }
 

@@ -16,7 +16,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 
 interface Playlist {
@@ -181,9 +181,10 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         onChange={(_, newValue) => handlePlaylistSelect(newValue)}
         inputValue={searchQuery}
         onInputChange={(_, newInputValue) => setSearchQuery(newInputValue)}
-        renderInput={(params) => (
+        renderInput={({ InputLabelProps, ...params }) => (
           <TextField
             {...params}
+            size={params.size ? params.size : 'small'}
             placeholder="Search or browse playlists..."
             InputProps={{
               ...params.InputProps,

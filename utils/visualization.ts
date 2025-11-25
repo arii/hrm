@@ -92,12 +92,25 @@ export const getHrZoneProps = (
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone = HR_ZONES[0]
+  let zone = HR_ZONES[0] // Default to the first zone
 
   for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-    if (percentageOfMax / 100 >= HR_ZONES[i].min) {
-      zone = HR_ZONES[i]
+    const currentZone = HR_ZONES[i]
+    if (currentZone && percentageOfMax / 100 >= currentZone.min) {
+      zone = currentZone
       break
+    }
+  }
+
+  if (!zone) {
+    // This should not happen if HR_ZONES is not empty, but it satisfies the compiler
+    return {
+      zone: 'Error',
+      percentage: 0,
+      color: 'text-red-500',
+      progressColor: '#ef4444',
+      backgroundColor: '#ef4444',
+      bpm: currentHr,
     }
   }
 

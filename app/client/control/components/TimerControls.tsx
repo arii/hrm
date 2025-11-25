@@ -91,7 +91,7 @@ const TimerControls = () => {
       let deviceId = spotifyDeviceId
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0].id
+        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0]?.id || ''
         setSpotifyDeviceId(deviceId)
       }
       if (!deviceId) {

@@ -31,7 +31,7 @@ export interface TimerData {
   mode: TimerMode
   workDuration: number // seconds for Tabata work interval
   restDuration: number // seconds for Tabata rest interval
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundToPlay: 'WORK' | 'REST' | 'COUNTDOWN' | undefined
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }
 export interface SpotifyData {
