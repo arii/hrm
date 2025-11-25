@@ -83,6 +83,7 @@ export default defineConfig([
     },
     rules: {
       // Playwright specific rules or overrides
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
 
