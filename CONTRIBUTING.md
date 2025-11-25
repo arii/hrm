@@ -14,8 +14,9 @@ Please follow the [Conventional Commits](https://www.conventionalcommits.org/en/
 ## Pull Request Process
 
 1.  Fork the repository and create your branch from `leader`.
-2.  Make your changes and ensure all tests pass (`pnpm test`).
+2.  Make your changes and ensure all local tests pass (e.g., `pnpm run test`, `pnpm run lint`).
 3.  Submit a pull request with a clear description of your changes.
+4.  Once your pull request is open, please run the "Manual Verification Pipeline" workflow from the "Actions" tab to ensure all CI checks pass.
 
 ## Pre-commit Hooks
 

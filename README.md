@@ -452,11 +452,25 @@ For more detailed guidelines, especially for AI agents, see [.github/copilot-ins
 
 ## CI/CD
 
-This project uses GitHub Actions to automate the CI/CD pipeline. The workflow is defined in `.github/workflows/ci.yml` and includes the following jobs:
+This project uses a manual GitHub Actions workflow to run a comprehensive suite of verification checks. You can trigger this workflow from the "Actions" tab on the GitHub repository.
 
-- **Lint**: Checks for linting and formatting errors.
-- **Test**: Runs the unit test suite.
-- **Build**: Builds the Docker image.
+The workflow performs the following checks:
+1.  **Mergeability**: Verifies that the branch can be merged into `leader` without conflicts.
+2.  **Linting & Formatting**: Ensures the code adheres to the project's style guidelines.
+3.  **Production Build**: Confirms that the application can be built for production.
+4.  **Server Startup**: Checks that the production server starts and is healthy.
+5.  **Unit Tests**: Runs the Jest unit test suite.
+6.  **Visual Tests**: Runs the Playwright visual regression test suite.
+
+### Required Secrets
+
+For the CI workflow to run correctly with authenticated tests, you must configure the following secrets in your repository's "Settings" > "Secrets and variables" > "Actions" section:
+
+- `SPOTIFY_CLIENT_ID`
+- `SPOTIFY_CLIENT_SECRET`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `ENCRYPTION_KEY`
 
 ## Contributing
 

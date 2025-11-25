@@ -1,40 +1,162 @@
-name: CI
+name: Manual Verification Pipeline
 
 on:
-  push:
-    branches: [leader]
-  pull_request:
-    branches: [leader]
+  workflow_dispatch:
 
 jobs:
-  lint:
+  full-check:
+    name: Full Verification
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js 20
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-      - run: npm install -g pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
-      - run: pnpm run format:check
+    timeout-minutes: 25
 
-  test:
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js 20
-        uses: actions/setup-node@v3
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v4
         with:
-          node-version: 20
-      - run: npm install -g pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run test
+          fetch-depth: 0 # Required to compare with leader branch
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      - name: ⚙️ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⚙️ Setup Node.js with pnpm Cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 📦 Install Dependencies
+        id: install
+        run: pnpm install --frozen-lockfile
+
+      - name: 🖇️ 1. Check for Merge Conflicts
+        id: merge-check
+        run: |
+          # Configure git for merge command
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Fetch the target branch
+          git fetch origin leader
+
+          # Attempt a merge without creating a commit to check for conflicts
+          if git merge --no-commit --no-ff origin/leader; then
+            echo "✅ No merge conflicts with 'leader' branch."
+            git merge --abort # Clean up working directory
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Merge conflict detected with 'leader' branch."
+            git merge --abort
+            echo "status=failure" >> $GITHUB_OUTPUT
+            exit 1 # Fail the workflow immediately if conflicts exist
+          fi
+
+      - name: ✨ 2. Run Lint & Format Checks
+        id: lint
+        run: |
+          pnpm run lint
+          pnpm run format:check
+
+      - name: 📝 Create Environment File for Tests
+        run: |
+          echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}" >> .env.production
+          echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> .env.production
+          echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> .env.production
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.production
+          echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}" >> .env.production
+          echo "TESTING=true" >> .env.production
+
+      - name: 🏗️ 3. Run Production Build
+        id: build
+        run: pnpm run build
+
+      - name: 🖥️ 4. Check if Server Starts
+        id: server-start
+        run: |
+          echo "Checking server startup..."
+          pnpm run start &
+          sleep 15
+
+          # Check if the server is healthy
+          if ! curl -f http://127.0.0.1:3000/health/live; then
+            echo "❌ Server failed to start or is not healthy."
+            pnpm run pm2:logs || echo "Could not retrieve logs."
+            exit 1
+          fi
+          echo "✅ Server started successfully."
+          pnpm run pm2:stop
+
+      - name: 🧪 5. Run Unit Tests
+        id: unit-tests
+        continue-on-error: true
+        run: pnpm run test -- --ci
+
+      - name: 📸 6. Run Visual Tests
+        id: visual-tests
+        continue-on-error: true
+        run: |
+          npx playwright install --with-deps
+          pnpm run test:visual
+
+      - name: 🐳 Build Docker Image with Cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: arii/hrm:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 📊 Summarize Test Results
+        if: always() # This step runs even if previous steps fail
+        run: |
+          echo "### 🚦 CI Verification Summary" >> $GITHUB_STEP_SUMMARY
+
+          echo "**1. Mergeability:**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.merge-check.outputs.status }}" == "success" ]]; then
+            echo "- ✅ **Pass:** No merge conflicts with the 'leader' branch." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Branch has merge conflicts with 'leader'." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**2. Lint & Formatting:**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.lint.outcome }}" == "success" ]]; then
+            echo "- ✅ **Pass:** Code passes linting and formatting checks." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Code has linting or formatting errors." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**3. Production Build:**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.build.outcome }}" == "success" ]]; then
+            echo "- ✅ **Pass:** Application built successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Production build failed." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**4. Server Startup:**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.server-start.outcome }}" == "success" ]]; then
+            echo "- ✅ **Pass:** Server starts and reports as healthy." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Server failed to start." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**5. Unit Tests (Jest):**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.unit-tests.outcome }}" == "success" ]]; then
+            echo "- ✅ **Pass:** All unit tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Some unit tests failed. See logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "**6. Visual Tests (Playwright):**" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.visual-tests.outcome }}" == "success" ]]; then
+            echo "- ✅ **Pass:** All visual tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Fail:** Some visual tests failed. See logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🏁 Final Status Check
+        if: steps.lint.outcome != 'success' || steps.build.outcome != 'success' || steps.server-start.outcome != 'success' || steps.unit-tests.outcome != 'success' || steps.visual-tests.outcome != 'success'
+        run: |
+          echo "❌ One or more checks failed. Please review the logs."
+          exit 1
