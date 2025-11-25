@@ -25,20 +25,33 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
 
       console.log('🔥 Warming up server endpoints...')
 
-      // Wait for server to be ready with retries
-      let retries = 30 // 30 retries = 30 seconds max wait
+      // Poll the health check endpoint until server is ready
+      const maxAttempts = 60 // 60 attempts * 500ms = 30 seconds max
+      let attempts = 0
       let serverReady = false
-      while (retries > 0 && !serverReady) {
+      
+      while (attempts < maxAttempts && !serverReady) {
         try {
-          await warmupPage.goto(BASE_URL, { timeout: 2000 })
-          serverReady = true
+          const response = await warmupPage.goto(`${BASE_URL}/api/debug/ping`, { 
+            timeout: 1000,
+            waitUntil: 'domcontentloaded' 
+          })
+          if (response?.ok()) {
+            serverReady = true
+            console.log('✅ Server is ready')
+          }
         } catch (e) {
-          retries--
-          if (retries === 0) throw new Error(`Server not ready at ${BASE_URL} after 30 seconds`)
-          await new Promise(resolve => setTimeout(resolve, 1000))
+          attempts++
+          await new Promise(resolve => setTimeout(resolve, 500))
         }
       }
 
+      if (!serverReady) {
+        throw new Error(`Server not ready at ${BASE_URL} after ${maxAttempts * 0.5} seconds`)
+      }
+
+      // Now warm up actual endpoints
+      await warmupPage.goto(BASE_URL)
       await waitForPageReady(warmupPage)
 
       await warmupPage.goto(`${BASE_URL}/client/control`)
