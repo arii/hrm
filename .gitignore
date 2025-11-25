@@ -105,9 +105,3 @@ server.log
 test-update.log
 running_notes.md.backup
 ~/.config/
-
-# Test coverage
-coverage/
-*.lcov
-.nyc_output/
-junit.xml
