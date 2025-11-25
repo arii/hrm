@@ -1,5 +1,6 @@
 // File: components/HrTile.tsx
 'use client'
+import { useTheme } from '@mui/material/styles'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
@@ -14,6 +15,9 @@ export interface HrTileProps {
 }
 
 const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+  const theme = useTheme()
+  const textColor = theme.palette.getContrastText(background)
+
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -26,53 +30,55 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: background,
-          color: '#fff',
-          p: 2,
+          color: textColor,
           textAlign: 'center',
-          minHeight: 180,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          border: 'none',
-          borderRadius: 3,
+          borderRadius: 4, // Increased for modern look
+          border: '1px solid',
+          borderColor: 'divider',
         }}
       >
-        <CardContent sx={{ p: 0 }}>
-          {/* Giant Percentage - should dominate the tile */}
+        <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+          {/* Main Percentage Display */}
           <Typography
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
-              fontWeight: 900,
-              lineHeight: 0.85,
-              my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              fontSize: { xs: '4rem', sm: '4.5rem' }, // Scaled down for balance
+              fontWeight: 700, // Adjusted for readability
+              lineHeight: 1,
+              textShadow: '0 1px 3px rgba(0,0,0,0.2)',
             }}
           >
-            {percentMax}%
+            {`${percentMax}%`}
           </Typography>
+
+          {/* BPM */}
           <Typography
-            variant="h6"
+            variant="h5" // Increased prominence
             sx={{
               fontWeight: 600,
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
-              transition: 'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
+              opacity: 0.9,
             }}
           >
-            {bpm} BPM
+            {`${bpm} bpm`}
           </Typography>
+
+          {/* User Name */}
           {name && !/^(user|new user)$/i.test(name) && (
             <Typography
-              variant="subtitle1"
+              variant="body1" // Standard body text for name
               sx={{
-                fontWeight: 700,
-                fontSize: { xs: '1rem', sm: '1.1rem' },
+                fontWeight: 500,
                 letterSpacing: '0.05em',
-                mt: 1, // Add some margin top to separate from BPM
-                textOverflow: 'ellipsis', // Truncate with ellipsis
-                whiteSpace: 'nowrap', // Prevent wrapping
-                overflow: 'hidden', // Hide overflow content
+                mt: 1,
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                px: 1, // Padding to prevent text touching edges
+                opacity: 0.8,
               }}
             >
               {name}

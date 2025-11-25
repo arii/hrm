@@ -40,11 +40,11 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
-        {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
+        {/* This main Grid container will manage the overall page layout */}
 
-        {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        {/* Section 1: Timer. Spans full width on mobile, part on larger screens */}
+        <Grid item xs={12} lg={7}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -55,15 +55,27 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles />
-        </ErrorBoundary>
+        {/* Section 2: HR Tiles. This is a container for the HR tiles. */}
+        {/* It will stack below the timer on mobile and be a sidebar on large screens */}
+        <Grid
+          item
+          container
+          xs={12}
+          lg={5}
+          spacing={2}
+          alignContent="flex-start" // Important for nested items
+        >
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <HrmTiles />
+          </ErrorBoundary>
+        </Grid>
 
+        {/* Section 3: Google Doc Viewer. Always full width below the above content. */}
         <Grid item xs={12}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
-            height={500}
+            height={350} // Reduced height as per plan
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
