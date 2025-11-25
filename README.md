@@ -205,16 +205,6 @@ cp .env.example .env.local
 
 # 2. Fill in the required values in .env.local (see "Environment Variables" section)
 
-<<<<<<< HEAD
-# 3. Install dependencies using the lockfile
-pnpm install
-
-# 4. Install Playwright's browser dependencies
-pnpm dlx playwright install --with-deps
-
-# 5. Start the development server
-pnpm dev
-=======
 # 3. Install pnpm if not already installed
 npm install -g pnpm
 
@@ -226,7 +216,6 @@ npx playwright install --with-deps
 
 # 6. Start the development server
 pnpm run dev
->>>>>>> origin/leader
 ```
 
 > **Migration from npm**: If you accidentally run `npm install`, the project will block it and show a helpful message. Use the wrapper script `./scripts/npm-to-pnpm.sh` to automatically convert npm commands to pnpm equivalents.

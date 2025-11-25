@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 // File: tests/playwright/fixtures.ts
 /**
  * Playwright Test Fixtures: Pre-load all HRM endpoints and setup pages
