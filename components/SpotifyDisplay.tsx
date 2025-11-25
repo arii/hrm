@@ -202,9 +202,8 @@ const SpotifyDisplay = () => {
       >
         <Button
           variant="contained"
-          color="success"
+          color="primary"
           onClick={handleSpotifyLogin}
-          sx={{ px: 4, py: 1 }}
           data-testid="login-button"
         >
           🎵 Login with Spotify
@@ -396,20 +395,10 @@ const SpotifyDisplay = () => {
           </Menu>
 
           <Button
-            variant="outlined"
+            variant="contained"
+            color="secondary"
             size="small"
             onClick={handleSpotifyLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
           >
             Logout
           </Button>

@@ -54,10 +54,20 @@ export default function SpotifyDebugPage() {
         {session ? (
           <>
             <pre>{JSON.stringify(session, null, 2)}</pre>
-            <Button onClick={() => signOut()}>Sign Out</Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => signOut()}
+            >
+              Sign Out
+            </Button>
           </>
         ) : (
-          <Button onClick={() => signIn('spotify')}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => signIn('spotify')}
+          >
             Sign In with Spotify
           </Button>
         )}
