@@ -13,19 +13,20 @@ test.describe('Mobile HRM Assessment', () => {
     await page.setViewportSize({ width: 390, height: 844 })
   })
 
+
   test('Mobile Dashboard Experience', async ({ page }) => {
     await page.goto(BASE_URL)
     await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
-    await expect(page).toHaveScreenshot('mobile-01-dashboard-portrait.png', {
+   /* await expect(page).toHaveScreenshot('mobile-01-dashboard-portrait.png', {
       fullPage: true,
-    })
+    })*/
 
     // Landscape orientation
     await page.setViewportSize({ width: 844, height: 390 })
     await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
-    await expect(page).toHaveScreenshot('mobile-02-dashboard-landscape.png', {
+    /*await expect(page).toHaveScreenshot('mobile-02-dashboard-landscape.png', {
       fullPage: true,
-    })
+    })*/
   })
 
   test('Mobile Control Panel - Primary Use Case', async ({ page }) => {

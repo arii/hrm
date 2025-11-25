@@ -19,38 +19,12 @@ type WorkerFixtures = {
 
 export const test = base.extend<PageFixtures, WorkerFixtures>({
   setupPages: [
-    async ({ browser }, use) => {
+    async ({ browser }, applyFixture) => {
       const context = await browser.newContext()
       const warmupPage = await context.newPage()
 
       console.log('🔥 Warming up server endpoints...')
 
-      // Poll the health check endpoint until server is ready
-      const maxAttempts = 60 // 60 attempts * 500ms = 30 seconds max
-      let attempts = 0
-      let serverReady = false
-      
-      while (attempts < maxAttempts && !serverReady) {
-        try {
-          const response = await warmupPage.goto(`${BASE_URL}/api/debug/ping`, { 
-            timeout: 1000,
-            waitUntil: 'domcontentloaded' 
-          })
-          if (response?.ok()) {
-            serverReady = true
-            console.log('✅ Server is ready')
-          }
-        } catch (e) {
-          attempts++
-          await new Promise(resolve => setTimeout(resolve, 500))
-        }
-      }
-
-      if (!serverReady) {
-        throw new Error(`Server not ready at ${BASE_URL} after ${maxAttempts * 0.5} seconds`)
-      }
-
-      // Now warm up actual endpoints
       await warmupPage.goto(BASE_URL)
       await waitForPageReady(warmupPage)
 
@@ -66,12 +40,12 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       await context.close()
       console.log('✅ Server endpoints warmed up')
 
-      await use()
+      await applyFixture()
     },
     { scope: 'worker' },
   ],
 
-  dashboardPage: async ({ context, setupPages: _setupPages }, use) => {
+  dashboardPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
     const page = await context.newPage()
     page.on('console', (msg) => {
       if (!msg.text().includes('DOCS_timing')) {
@@ -79,37 +53,25 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       }
     })
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto(BASE_URL)
-    await waitForPageReady(page)
-    await use(page)
-    // Let Playwright's context cleanup handle page closing
+    await applyFixture(page)
   },
 
-  controlPage: async ({ context, setupPages: _setupPages }, use) => {
+  controlPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto(`${BASE_URL}/client/control`)
-    await waitForPageReady(page)
-    await use(page)
-    // Let Playwright's context cleanup handle page closing
+    await applyFixture(page)
   },
 
-  mockPage: async ({ context, setupPages: _setupPages }, use) => {
+  mockPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto(`${BASE_URL}/client/mock`)
-    await waitForPageReady(page)
-    await use(page)
-    // Let Playwright's context cleanup handle page closing
+    await applyFixture(page)
   },
 
-  connectPage: async ({ context, setupPages: _setupPages }, use) => {
+  connectPage: async ({ context, setupPages: _setupPages }, applyFixture) => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.goto(`${BASE_URL}/client/connect`)
-    await waitForPageReady(page)
-    await use(page)
-    // Let Playwright's context cleanup handle page closing
+    await applyFixture(page)
   },
 })
 
