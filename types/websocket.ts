@@ -40,28 +40,41 @@ export interface SpotifyData {
   isPlaying: boolean
 }
 
-/**
- * The single, unified state object broadcast by the server to all clients.
- */
-export interface UnifiedStateMessage {
-  type: 'STATE_UPDATE'
-  hrmData: HrmData[]
-  timerData: TimerData
-  spotifyData: SpotifyData
-  spotifyServiceInitialized?: boolean
+// --- Topic-Based Messages for Granular State Updates ---
+
+export interface InitialStateMessage {
+  type: 'INITIAL_STATE'
+  payload: {
+    hrmData: HrmData[]
+    timerData: TimerData
+    spotifyData: SpotifyData
+    spotifyServiceInitialized?: boolean
+  }
+}
+
+export interface HrmUpdateMessage {
+  type: 'HRM_UPDATE'
+  payload: HrmData[]
+}
+
+export interface TimerUpdateMessage {
+  type: 'TIMER_UPDATE'
+  payload: TimerData
+}
+
+export interface SpotifyUpdateMessage {
+  type: 'SPOTIFY_UPDATE'
+  payload: SpotifyData
 }
 
 /**
- * BroadcastData: a small, optional-shaped payload that services may send to
- * the socket broadcaster. This mirrors the ad-hoc interface previously found
- * inside the compiled `server.js` and centralizes it here for reuse.
+ * Union type for all possible messages the server can send to the client.
  */
-/**
- * BroadcastData is the shape sent by server services into the broadcaster.
- * Use the canonical UnifiedStateMessage where possible; here we expose a
- * lightweight alias so services can pass partial state updates.
- */
-export type BroadcastData = Partial<UnifiedStateMessage>
+export type ServerMessage =
+  | InitialStateMessage
+  | HrmUpdateMessage
+  | TimerUpdateMessage
+  | SpotifyUpdateMessage
 
 // --- Client Input Command Interfaces ---
 
@@ -75,6 +88,7 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
+  deviceId?: string | null
 }
 
 export interface TimerModeCommandMessage {
@@ -132,6 +146,7 @@ export const HrmInputMessageSchema = z.object({
 export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+  deviceId: z.string().nullable().optional(),
 })
 
 export const TimerModeCommandMessageSchema = z.object({

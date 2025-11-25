@@ -13,7 +13,6 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
-import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -49,8 +48,6 @@ app
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
@@ -58,7 +55,6 @@ app
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
@@ -68,37 +64,12 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // Declare spotifyServiceInitialized here
-    let spotifyServiceInitialized: boolean = true
-
-    // Function to safely broadcast state from services (Used by Tabata and Spotify services)
-    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
-      // Use the socket manager to handle the actual broadcast
-      if (wss.clients.size > 0) {
-        wss.clients.forEach((client: WebSocket) => {
-          if (client.readyState === 1) {
-            // 1 means OPEN
-            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
-            client.send(
-              JSON.stringify({
-                type: 'STATE_UPDATE',
-                spotifyServiceInitialized,
-                ...data,
-              })
-            ) // Include spotifyServiceInitialized
-          }
-        })
-      }
-    }
-
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcastState)
+      spotifyService = await SpotifyPolling.create()
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      spotifyServiceInitialized = false // Set to false on failure
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},
         stopPolling: () => {},
@@ -106,18 +77,17 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
-    const tabataService = new TabataTimer(broadcastState)
+    const tabataService = new TabataTimer()
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
+    // 3. Initialize WebSocket Manager
     initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
 
-    // API endpoint to get available Spotify devices
     expressApp.get(
       '/api/spotify/devices',
       async (_req: Request, res: Response) => {
-        if (!spotifyServiceInitialized || !spotifyService) {
+        if (!spotifyService) {
           return res
             .status(503)
             .json({ error: 'Spotify service not initialized.' })
@@ -134,22 +104,15 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
         req.url &&
         req.url.includes('/api/internal/token-delivery')
       ) {
-        // Wait a moment for token to be written
         setTimeout(async () => {
           if (spotifyService) {
-            // Signal the service to reload tokens from disk
             spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
             setTimeout(async () => {
               if (typeof spotifyService.forcePollAndBroadcast === 'function') {
                 await spotifyService.forcePollAndBroadcast()
@@ -159,36 +122,26 @@ app
         }, 1000)
       }
       return handle(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-
-        // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
 
-    // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })

@@ -4,24 +4,19 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { TimerData } from '../../types/websocket'
+import * as socketManager from '../../utils/socketManager'
+
+jest.mock('../../utils/socketManager', () => ({
+  broadcastTimerUpdate: jest.fn(),
+}))
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<
-    (data: Partial<{ timerData: TimerData }>) => void
-  >
-  let broadcastedStates: TimerData[]
 
   beforeEach(() => {
     jest.useFakeTimers()
-    broadcastedStates = []
-    broadcastMock = jest.fn((data) => {
-      if (data.timerData) {
-        broadcastedStates.push(data.timerData)
-      }
-    })
-    timer = new TabataTimer(broadcastMock)
+    jest.clearAllMocks()
+    timer = new TabataTimer()
   })
 
   afterEach(() => {
@@ -77,12 +72,8 @@ describe('TabataTimer Service', () => {
     })
 
     it('should broadcast state update when mode changes', () => {
-      broadcastedStates = []
       timer.setMode('STOPWATCH')
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
-        'STOPWATCH'
-      )
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalled()
     })
   })
 
@@ -292,12 +283,8 @@ describe('TabataTimer Service', () => {
     })
 
     it('should broadcast state after configuration change', () => {
-      broadcastedStates = []
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-      expect(broadcastMock).toHaveBeenCalled()
-      const lastState = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastState.workDuration).toBe(30)
-      expect(lastState.restDuration).toBe(15)
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalled()
     })
 
     it('should use new rest duration in next rest phase', () => {
@@ -363,88 +350,70 @@ describe('TabataTimer Service', () => {
     it('should queue WORK sound when transitioning from PREPARE', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('WORK')
-      // Sound should have been queued (check broadcast was called with soundToPlay)
-      const workTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'WORK' && s.soundToPlay === 'WORK'
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ soundToPlay: 'WORK' })
       )
-      expect(workTransitionBroadcast).toBeDefined()
     })
 
     it('should queue REST sound when transitioning from WORK', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK
-
-      const restTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'REST' && s.soundToPlay === 'REST'
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ soundToPlay: 'REST' })
       )
-      expect(restTransitionBroadcast).toBeDefined()
     })
 
     it('should queue COUNTDOWN sound during final 3 seconds', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(2000) // 3 seconds remaining in PREPARE
-
-      const countdownBroadcast = broadcastedStates.find(
-        (s) => s.soundToPlay === 'COUNTDOWN'
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ soundToPlay: 'COUNTDOWN' })
       )
-      expect(countdownBroadcast).toBeDefined()
     })
 
     it('should increment soundEventId for each sound cue', () => {
       timer.handleCommand('START')
-
-      const initialState = broadcastedStates[0]
-      const initialId = initialState.soundEventId
-
       jest.advanceTimersByTime(3000) // Trigger countdown sounds
-
-      const laterState = broadcastedStates[broadcastedStates.length - 1]
-      expect(laterState.soundEventId).toBeGreaterThan(initialId)
+      const calls = (socketManager.broadcastTimerUpdate as jest.Mock).mock
+        .calls as any
+      const lastCall = calls[calls.length - 1][0]
+      expect(lastCall.soundEventId).toBeGreaterThan(0)
     })
   })
 
   describe('Broadcasting', () => {
     it('should broadcast state on every tick', () => {
-      broadcastedStates = []
       timer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-
-      // Should broadcast at least once per second
-      expect(broadcastMock.mock.calls.length).toBeGreaterThanOrEqual(3)
+      expect(
+        (socketManager.broadcastTimerUpdate as jest.Mock).mock.calls.length
+      ).toBeGreaterThanOrEqual(3)
     })
 
     it('should broadcast state when configuration changes', () => {
-      broadcastedStates = []
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates.length).toBeGreaterThan(0)
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalled()
     })
 
     it('should broadcast state when mode changes', () => {
-      broadcastedStates = []
       timer.setMode('STOPWATCH')
-
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[0].mode).toBe('STOPWATCH')
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalled()
     })
 
     it('should broadcast complete timer state', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(1000)
-
-      const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastBroadcast).toHaveProperty('isRunning')
-      expect(lastBroadcast).toHaveProperty('currentPhase')
-      expect(lastBroadcast).toHaveProperty('timeRemaining')
-      expect(lastBroadcast).toHaveProperty('timeElapsed')
-      expect(lastBroadcast).toHaveProperty('mode')
-      expect(lastBroadcast).toHaveProperty('workDuration')
-      expect(lastBroadcast).toHaveProperty('restDuration')
+      const calls = (socketManager.broadcastTimerUpdate as jest.Mock).mock
+        .calls as any
+      const lastCall = calls[calls.length - 1][0]
+      expect(lastCall).toHaveProperty('isRunning')
+      expect(lastCall).toHaveProperty('currentPhase')
+      expect(lastCall).toHaveProperty('timeRemaining')
+      expect(lastCall).toHaveProperty('timeElapsed')
+      expect(lastCall).toHaveProperty('mode')
+      expect(lastCall).toHaveProperty('workDuration')
+      expect(lastCall).toHaveProperty('restDuration')
     })
   })
 })

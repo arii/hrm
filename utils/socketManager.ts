@@ -1,18 +1,21 @@
-// File: utils/socketManager.ts (WebSocket Manager - Typed)
+// File: utils/socketManager.ts (Refactored for Topic-Based Broadcasts)
 /**
- * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
+ * WebSocket Manager (Typed): Handles client connections, routes commands, and
+ * broadcasts granular, topic-based state updates.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
+import { z } from 'zod'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
-  UnifiedStateMessage,
+  TimerData,
+  SpotifyData,
+  ServerMessage,
+  InitialStateMessage,
 } from '../types/websocket.js'
 
-// Define service instances to be managed
 let wssInstance: WebSocketServer
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
@@ -27,7 +30,7 @@ interface Services {
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-const initSocketManager = (wss: WebSocketServer, services: Services) => {
+export const initSocketManager = (wss: WebSocketServer, services: Services) => {
   wssInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
@@ -36,25 +39,27 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     console.log(`WebSocket Client connected: ${clientId}`)
 
-    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const newClient: HrmData = {
       clientId,
       value: 0,
       maxHr: 185,
-      // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     }
     clientData.set(clientId, newClient)
 
-    // Send initial state upon connection
-    ws.send(
-      JSON.stringify({
-        type: 'STATE_UPDATE',
+    const initialState: InitialStateMessage = {
+      type: 'INITIAL_STATE',
+      payload: {
         hrmData: Array.from(clientData.values()),
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
-      } as UnifiedStateMessage)
-    )
+        spotifyServiceInitialized: spotifyServiceInstance.isReady(),
+      },
+    }
+    ws.send(JSON.stringify(initialState))
+
+    // Broadcast the updated HRM data to all clients
+    broadcastHrmUpdate()
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -63,131 +68,110 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       clientData.delete(clientId)
-      broadcastState()
+      broadcastHrmUpdate() // Notify all clients about the roster change
     })
   })
 }
 
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: 'STATE_UPDATE',
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
-  }
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
-  )
+/**
+ * Broadcasts a message to all connected and open WebSocket clients.
+ */
+const broadcast = (message: ServerMessage) => {
+  if (!wssInstance) return
+  const serializedMessage = JSON.stringify(message)
   wssInstance.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message))
+      client.send(serializedMessage)
     }
   })
 }
 
-/**
- * Handles incoming JSON messages from client applications.
- */
+export const broadcastHrmUpdate = () => {
+  broadcast({
+    type: 'HRM_UPDATE',
+    payload: Array.from(clientData.values()),
+  })
+}
+
+export const broadcastTimerUpdate = (data: TimerData) => {
+  broadcast({
+    type: 'TIMER_UPDATE',
+    payload: data,
+  })
+}
+
+export const broadcastSpotifyUpdate = (data: SpotifyData) => {
+  broadcast({
+    type: 'SPOTIFY_UPDATE',
+    payload: data,
+  })
+}
+
 const handleIncomingMessage = (
   _ws: WebSocket,
   messageString: string,
   clientId: string
 ) => {
-  console.log(
-    `[socketManager] INCOMING MESSAGE from ${clientId}:`,
-    messageString
-  )
   try {
-    // Parse and validate message type for type-safe routing
-    const parsedJson = JSON.parse(messageString)
-    console.log(`[socketManager] PARSED JSON:`, parsedJson)
-
-    const message = ClientCommandMessageSchema.parse(parsedJson) // Use Zod for parsing and validation
-
-    console.log(
-      `[socketManager] Received message from ${clientId}:`,
-      message.type
-    )
+    const message = ClientCommandMessageSchema.parse(JSON.parse(messageString))
 
     switch (message.type) {
       case 'HRM_INPUT': {
         const existingData = clientData.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingData,
-          'newValue:',
-          message.data.value
-        )
         if (existingData) {
-          // Filter out null values to avoid overwriting valid data
           const updateData = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+            Object.entries(message.data).filter(([_, v]) => v !== null)
           )
-          clientData.set(clientId, {
-            ...existingData,
-            ...updateData,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            clientData.get(clientId)
-          )
+          clientData.set(clientId, { ...existingData, ...updateData })
         }
-        broadcastState()
+        broadcastHrmUpdate()
         break
       }
 
       case 'TIMER_COMMAND': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
+        tabataServiceInstance?.handleCommand(message.command)
+        // Server-side orchestration: link timer commands to Spotify playback
+        if (message.deviceId) {
+          if (message.command === 'START') {
+            spotifyServiceInstance?.handleCommand('NEXT', message.deviceId)
+          } else if (message.command === 'STOP') {
+            spotifyServiceInstance?.handleCommand('PAUSE', message.deviceId)
+          }
         }
         break
       }
 
       case 'SET_MODE': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode)
-        }
+        tabataServiceInstance?.setMode(message.mode)
         break
       }
 
       case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
-            workDuration: message.workDuration,
-            restDuration: message.restDuration,
-          })
-        }
+        tabataServiceInstance?.setConfig({
+          workDuration: message.workDuration,
+          restDuration: message.restDuration,
+        })
         break
       }
 
       case 'SPOTIFY_COMMAND': {
-        if (spotifyServiceInstance) {
-          // message.command is already typed as SpotifyCommand, which now includes deviceId, volume, and playlistUri
-          spotifyServiceInstance.handleCommand(
-            message.command,
-            message.deviceId,
-            message.volume,
-            message.playlistUri
-          )
-        }
+        spotifyServiceInstance?.handleCommand(
+          message.command,
+          message.deviceId,
+          message.volume,
+          message.playlistUri
+        )
         break
       }
 
       default:
-        // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
-        console.warn(
-          'Unknown message type received:',
-          (message as { type: unknown }).type
-        )
+        console.warn('Unknown message type received:', (message as any).type)
     }
   } catch (e) {
-    console.error('Error processing incoming message:', e)
-    // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
       console.error('WebSocket message validation failed:', e.issues)
+    } else {
+      console.error('Error processing incoming message:', e)
     }
   }
 }
-
-export { initSocketManager }

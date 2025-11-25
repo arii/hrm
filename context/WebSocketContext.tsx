@@ -7,13 +7,14 @@ import {
   useEffect,
   useRef,
   useState,
+  useReducer,
 } from 'react'
 import {
   ClientCommandMessage,
   HrmData,
   SpotifyData,
   TimerData,
-  UnifiedStateMessage,
+  ServerMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -40,6 +41,27 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
+type Action =
+  | { type: 'INITIAL_STATE'; payload: AppState }
+  | { type: 'HRM_UPDATE'; payload: HrmData[] }
+  | { type: 'TIMER_UPDATE'; payload: TimerData }
+  | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+
+const appStateReducer = (state: AppState, action: Action): AppState => {
+  switch (action.type) {
+    case 'INITIAL_STATE':
+      return action.payload
+    case 'HRM_UPDATE':
+      return { ...state, hrmData: action.payload }
+    case 'TIMER_UPDATE':
+      return { ...state, timerData: action.payload }
+    case 'SPOTIFY_UPDATE':
+      return { ...state, spotifyData: action.payload }
+    default:
+      return state
+  }
+}
+
 interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
@@ -61,8 +83,7 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
-  // Unified State Object
-  const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
+  const [appState, dispatch] = useReducer(appStateReducer, INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -89,7 +110,10 @@ export const WebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      typeof window === 'undefined' ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return
     }
 
@@ -102,15 +126,16 @@ export const WebSocketProvider = ({
       setConnectionStatus('Connected')
 
       if (pendingActions.current.length > 0) {
-        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
-        pendingActions.current.forEach(action => {
+        console.log(
+          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
+        )
+        pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
         localStorage.setItem('pendingActions', '[]')
       }
 
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -140,21 +165,22 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-        const message: UnifiedStateMessage = JSON.parse(event.data)
-        if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => {
-            const newState: AppState = {
-              hrmData: message.hrmData || prev.hrmData,
-              timerData: message.timerData || prev.timerData,
-              spotifyData: message.spotifyData || prev.spotifyData,
-            }
-            if (message.spotifyServiceInitialized !== undefined) {
-              newState.spotifyServiceInitialized = message.spotifyServiceInitialized
-            } else if (prev.spotifyServiceInitialized !== undefined) {
-              newState.spotifyServiceInitialized = prev.spotifyServiceInitialized
-            }
-            return newState
-          })
+        const message: ServerMessage = JSON.parse(event.data)
+        switch (message.type) {
+          case 'INITIAL_STATE':
+            dispatch({ type: 'INITIAL_STATE', payload: message.payload })
+            break
+          case 'HRM_UPDATE':
+            dispatch({ type: 'HRM_UPDATE', payload: message.payload })
+            break
+          case 'TIMER_UPDATE':
+            dispatch({ type: 'TIMER_UPDATE', payload: message.payload })
+            break
+          case 'SPOTIFY_UPDATE':
+            dispatch({ type: 'SPOTIFY_UPDATE', payload: message.payload })
+            break
+          default:
+            console.warn('Unknown message type received from server:', message)
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
@@ -184,7 +210,10 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
+      localStorage.setItem(
+        'pendingActions',
+        JSON.stringify(pendingActions.current)
+      )
     }
   }, [])
 
