@@ -190,4 +190,9 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export {
+  initSocketManager,
+  wssInstance,
+  tabataServiceInstance,
+  spotifyServiceInstance,
+}

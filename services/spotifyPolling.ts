@@ -72,6 +72,13 @@ export class SpotifyPolling {
     )
   }
 
+  /**
+   * Returns true if the Spotify SDK has been initialized.
+   */
+  public isReady(): boolean {
+    return !!this.sdk
+  }
+
   public static async create(
     broadcastState: (data: Partial<UnifiedStateMessage>) => void
   ): Promise<SpotifyPolling> {
