@@ -104,7 +104,6 @@ diff.txt
 server.log
 test-update.log
 running_notes.md.backup
-<<<<<<< HEAD
 
 # Test results and recordings
 test-results/
@@ -114,6 +113,3 @@ tests/playwright/screenshots/
 tests/playwright/*-actual.png
 tests/playwright/*-diff.png
 dev.log
-=======
-~/.config/
->>>>>>> origin/leader
