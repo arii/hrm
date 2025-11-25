@@ -25,7 +25,20 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
 
       console.log('🔥 Warming up server endpoints...')
 
-      await warmupPage.goto(BASE_URL)
+      // Wait for server to be ready with retries
+      let retries = 30 // 30 retries = 30 seconds max wait
+      let serverReady = false
+      while (retries > 0 && !serverReady) {
+        try {
+          await warmupPage.goto(BASE_URL, { timeout: 2000 })
+          serverReady = true
+        } catch (e) {
+          retries--
+          if (retries === 0) throw new Error(`Server not ready at ${BASE_URL} after 30 seconds`)
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+      }
+
       await waitForPageReady(warmupPage)
 
       await warmupPage.goto(`${BASE_URL}/client/control`)
@@ -56,6 +69,8 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(BASE_URL)
     await waitForPageReady(page)
     await use(page)
+    // Cleanup: close the page after test completes
+    await page.close().catch(() => {}) // Ignore errors if already closed
   },
 
   controlPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -64,6 +79,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/control`)
     await waitForPageReady(page)
     await use(page)
+    await page.close().catch(() => {})
   },
 
   mockPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -72,6 +88,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/mock`)
     await waitForPageReady(page)
     await use(page)
+    await page.close().catch(() => {})
   },
 
   connectPage: async ({ context, setupPages: _setupPages }, use) => {
@@ -80,6 +97,7 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
     await page.goto(`${BASE_URL}/client/connect`)
     await waitForPageReady(page)
     await use(page)
+    await page.close().catch(() => {})
   },
 })
 
