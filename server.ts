@@ -113,6 +113,35 @@ app
 
     // --- Express Routing ---
 
+    // --- Health Check Endpoints ---
+    // Liveness probe - is the server running?
+    expressApp.get('/health/live', (_req: Request, res: Response) => {
+      res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
+    })
+
+    // Readiness probe - are critical services initialized?
+    expressApp.get('/health/ready', async (_req: Request, res: Response) => {
+      const spotifyReady = spotifyService ? spotifyService.isReady() : false
+      const tabataReady = tabataService
+        ? tabataService.getState().currentPhase !== undefined
+        : false
+
+      const health = {
+        status: spotifyReady && tabataReady ? 'ready' : 'unhealthy',
+        timestamp: new Date().toISOString(),
+        services: {
+          nextApp: true, // If endpoint is reachable, Next.js server part is working
+          webSocketServer: true, // If endpoint is reachable, WS server is attached
+          spotifyPollingService: spotifyReady,
+          tabataTimerService: tabataReady,
+        },
+        uptime: process.uptime(),
+      }
+
+      const httpStatus = health.status === 'ready' ? 200 : 503
+      res.status(httpStatus).json(health)
+    })
+
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {

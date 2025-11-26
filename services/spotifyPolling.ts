@@ -120,6 +120,14 @@ export class SpotifyPolling {
     return { ...this.state }
   }
 
+  /**
+   * Public method to safely check if the Spotify SDK is initialized.
+   * @returns {boolean} True if the SDK is initialized, false otherwise.
+   */
+  public isReady(): boolean {
+    return this.sdk !== null
+  }
+
   // --- Token Management (Used by NextAuth route) ---
 
   /**
