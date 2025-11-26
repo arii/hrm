@@ -4,13 +4,13 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { SpotifyPolling } from '../services/spotifyPolling'
+import TabataTimer from '../services/tabataTimer'
 import {
   ClientCommandMessageSchema,
   HrmData,
   UnifiedStateMessage,
-} from '../types/websocket.js'
+} from '../types/websocket'
 
 // Define service instances to be managed
 let wssInstance: WebSocketServer
@@ -190,4 +190,9 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export {
+  initSocketManager,
+  wssInstance,
+  tabataServiceInstance,
+  spotifyServiceInstance,
+}
