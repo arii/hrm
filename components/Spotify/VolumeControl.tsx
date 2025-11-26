@@ -28,7 +28,12 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
         size="small"
         sx={{
           color: '#1DB954',
-          '& .MuiSlider-thumb': { backgroundColor: 'white' },
+          '& .MuiSlider-thumb': {
+            backgroundColor: 'white',
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: '0px 0px 0px 8px rgba(29, 185, 84, 0.16)',
+            },
+          },
         }}
       />
       <Typography variant="caption" sx={{ color: 'grey.400', minWidth: '3ch' }}>
