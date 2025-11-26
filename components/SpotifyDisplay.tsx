@@ -34,7 +34,7 @@ const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume } = useVolumePreference(70)
+  const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,

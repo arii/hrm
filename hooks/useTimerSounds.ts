@@ -10,7 +10,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 
 export const useTimerSounds = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference(70)
+  const { volume } = useVolumePreference()
   const lastSoundEventId = useRef<number>(0)
 
   // Update audio volume when volume preference changes
