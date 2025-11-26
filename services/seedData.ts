@@ -1,4 +1,4 @@
-import { SpotifyPlaylistItem } from '../types/index'
+import { SpotifyPlaylistItem } from '../types'
 
 export const presetPlaylists: SpotifyPlaylistItem[] = [
   {

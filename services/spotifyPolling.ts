@@ -1,7 +1,7 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
-import { SpotifyTokenManager } from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+import { SpotifyTokenManager } from './spotifyTokenManager'
+import logger from '../utils/logger'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -70,6 +70,13 @@ export class SpotifyPolling {
       process.env.SPOTIFY_CLIENT_ID || '',
       process.env.SPOTIFY_CLIENT_SECRET || ''
     )
+  }
+
+  /**
+   * Returns true if the Spotify SDK has been initialized.
+   */
+  public isReady(): boolean {
+    return !!this.sdk
   }
 
   public static async create(
