@@ -38,7 +38,8 @@
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
-    "release:major": "pnpm version major -m \"release: major %s\""
+    "release:major": "pnpm version major -m \"release: major %s\"",
+    "test:infra": "playwright test tests/playwright/infrastructure.spec.ts"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
