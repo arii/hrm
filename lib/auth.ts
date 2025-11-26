@@ -155,7 +155,6 @@ export const authOptions: AuthOptions = {
     },
   },
   useSecureCookies: process.env.NODE_ENV === 'production',
-  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
