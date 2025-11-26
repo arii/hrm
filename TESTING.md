@@ -46,6 +46,14 @@ These are the most frequently used commands for testing and code quality checks.
 
 ---
 
+## Release Verification
+
+To ensure the stability and integrity of the codebase, a verification step is required before committing any source code changes. This is enforced by a pre-commit hook.
+
+- **`npm run commit:verified`**: Use this command instead of `git commit`. It runs the verification script, which generates a `test-proof.json`, and then stages and commits your changes. This ensures that no source code is modified without a corresponding proof of verification.
+
+---
+
 ## Test Structure
 
 The project uses a combination of Jest for unit tests and Playwright for end-to-end (E2E) and visual regression testing.

@@ -3,6 +3,22 @@
 
 set -e
 
+# --- SAFETY CHECK ---
+git fetch --tags
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+CURRENT_VER=$(node -p "require('./package.json').version")
+
+if [[ "v$CURRENT_VER" != "$LATEST_TAG" ]]; then
+    echo "⚠️  WARNING: Mismatch detected! Version: v$CURRENT_VER, Tag: $LATEST_TAG"
+    echo "    You are deploying untagged code."
+    read -p "    Are you sure you want to continue? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "❌ Deployment cancelled."
+        exit 1
+    fi
+fi
+
 echo "🚀 Starting HRM production deployment..."
 
 # Check for .env.production
