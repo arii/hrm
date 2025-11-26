@@ -9,9 +9,10 @@ import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
+import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
@@ -40,6 +41,15 @@ export default function ConnectPage() {
     deviceStatus,
     isConnected: bluetoothConnected,
   } = useBluetoothHRM()
+  const [startAutoConnect, setStartAutoConnect] = useState(false)
+
+  const connectFn = useCallback(() => {
+    const savedName = getCookie('hrm_user_name')
+    const savedAge = getCookie('hrm_user_age')
+    return connectAndStream(savedName, savedAge)
+  }, [connectAndStream])
+
+  useAutoConnect(connectFn, startAutoConnect)
 
   // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
@@ -55,12 +65,11 @@ export default function ConnectPage() {
       savedAge &&
       savedDeviceId &&
       connectionStatus === 'Connected' &&
-      !bluetoothConnected &&
-      !deviceStatus.includes('Connecting')
+      !bluetoothConnected
     ) {
-      connectAndStream(savedName, savedAge)
+      setStartAutoConnect(true)
     }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
+  }, [connectionStatus, bluetoothConnected, connectFn])
 
   // Signal when page is ready for testing
   useEffect(() => {
