@@ -1,8 +1,10 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
+import { getSpotifyDevices } from '@/lib/api'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyDevice } from '@/types/index'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -19,16 +21,6 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
@@ -110,13 +102,8 @@ const SpotifyDisplay = () => {
     if (spotifyLoggedIn && spotifyData.trackName) {
       const fetchDevices = async () => {
         try {
-          const response = await fetch('/api/spotify/devices')
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          const deviceArray = Array.isArray(devices) ? devices : []
-          setAvailableDevices(deviceArray)
+          const devices = await getSpotifyDevices()
+          setAvailableDevices(devices)
         } catch (error) {
           console.error('[Dashboard] Failed to fetch Spotify devices:', error)
         }
