@@ -1,7 +1,6 @@
 // components/Spotify/PlaylistSelector.tsx
 import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
-import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -20,79 +19,6 @@ import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 
-interface PlaylistItemProps {
-  playlist: Playlist
-  selected: boolean
-  onClick: () => void
-  onPlay: (event: React.MouseEvent<HTMLElement>) => void
-}
-
-const PlaylistItem: React.FC<PlaylistItemProps> = ({
-  playlist,
-  selected,
-  onClick,
-  onPlay,
-}) => (
-  <ListItem
-    key={playlist.uri}
-    divider
-    sx={{ display: 'flex', justifyContent: 'space-between' }}
-  >
-    <ListItemButton
-      selected={selected}
-      onClick={onClick}
-      sx={{ flexGrow: 1 }}
-    >
-      {playlist.imageUrl ? (
-        <Box
-          component="img"
-          src={playlist.imageUrl}
-          alt={playlist.name}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 1,
-            mr: 1.5,
-            objectFit: 'cover',
-          }}
-        />
-      ) : (
-        <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
-      )}
-      <ListItemText
-        primary={playlist.name}
-        secondary={
-          playlist.trackCount !== undefined
-            ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
-            : playlist.owner
-              ? playlist.owner
-              : undefined
-        }
-      />
-      {playlist.isPreset && (
-        <Chip
-          label="Preset"
-          size="small"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-      {playlist.isSearchResult && !playlist.isPreset && (
-        <Chip
-          label="Spotify"
-          size="small"
-          color="success"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-    </ListItemButton>
-    <Box sx={{ pl: 1 }}>
-      <IconButton edge="end" aria-label="play" onClick={onPlay}>
-        <PlayArrow />
-      </IconButton>
-    </Box>
-  </ListItem>
-)
-
 interface Playlist {
   name: string
   uri: string
@@ -107,12 +33,10 @@ interface Playlist {
 
 interface PlaylistSelectorProps {
   onPlaylistSelected: (uri: string) => void
-  onPlaylistPlay: (uri: string) => void
 }
 
 const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   onPlaylistSelected,
-  onPlaylistPlay,
 }) => {
   const [presetPlaylists, setPresetPlaylists] = useState<Playlist[]>([])
   const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([])
@@ -290,17 +214,54 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             }}
           />
         )}
-        renderOption={(_props, option) => (
-          <PlaylistItem
-            key={option.uri}
-            playlist={option}
-            selected={selectedPlaylist?.uri === option.uri}
-            onClick={() => handlePlaylistSelect(option)}
-            onPlay={(e) => {
-              e.stopPropagation()
-              onPlaylistPlay(option.uri)
-            }}
-          />
+        renderOption={(props, option) => (
+          <Box component="li" {...props} key={option.uri}>
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              {option.imageUrl ? (
+                <Box
+                  component="img"
+                  src={option.imageUrl}
+                  alt={option.name}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1,
+                    mr: 1,
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <MusicNote
+                  sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }}
+                />
+              )}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" noWrap>
+                  {option.name}
+                </Typography>
+                {option.trackCount !== undefined && (
+                  <Typography variant="caption" color="text.secondary">
+                    {option.trackCount} tracks
+                  </Typography>
+                )}
+              </Box>
+              {option.isPreset && (
+                <Chip
+                  label="Preset"
+                  size="small"
+                  sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                />
+              )}
+              {option.isSearchResult && !option.isPreset && (
+                <Chip
+                  label="Spotify"
+                  size="small"
+                  color="success"
+                  sx={{ ml: 1, height: 20, fontSize: '0.7rem' }}
+                />
+              )}
+            </Box>
+          </Box>
         )}
         noOptionsText={
           debouncedSearch ? (
@@ -328,16 +289,55 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   />
                 </ListItem>
                 {presetPlaylists.map((playlist) => (
-                  <PlaylistItem
+                  <ListItemButton
                     key={playlist.uri}
-                    playlist={playlist}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
-                    onPlay={(e) => {
-                      e.stopPropagation()
-                      onPlaylistPlay(playlist.uri)
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
                     }}
-                  />
+                  >
+                    {playlist.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={playlist.imageUrl}
+                        alt={playlist.name}
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 1,
+                          mr: 1.5,
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <MusicNote
+                        sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                      />
+                    )}
+                    <ListItemText
+                      primary={playlist.name}
+                      secondary={
+                        playlist.trackCount !== undefined
+                          ? `${playlist.trackCount} tracks`
+                          : undefined
+                      }
+                    />
+                    <Chip
+                      label="Preset"
+                      size="small"
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  </ListItemButton>
                 ))}
                 {userPlaylists.length > 0 && <Divider sx={{ my: 1 }} />}
               </>
@@ -354,16 +354,52 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                   />
                 </ListItem>
                 {userPlaylists.map((playlist) => (
-                  <PlaylistItem
+                  <ListItemButton
                     key={playlist.uri}
-                    playlist={playlist}
                     selected={selectedPlaylist?.uri === playlist.uri}
                     onClick={() => handlePlaylistSelect(playlist)}
-                    onPlay={(e) => {
-                      e.stopPropagation()
-                      onPlaylistPlay(playlist.uri)
+                    sx={{
+                      '&.Mui-selected': {
+                        borderLeft: (theme) =>
+                          `4px solid ${theme.palette.primary.main}`,
+                        backgroundColor: (theme) =>
+                          theme.palette.action.selected,
+                        '&:hover': {
+                          backgroundColor: (theme) =>
+                            theme.palette.action.hover,
+                        },
+                      },
                     }}
-                  />
+                  >
+                    {playlist.imageUrl ? (
+                      <Box
+                        component="img"
+                        src={playlist.imageUrl}
+                        alt={playlist.name}
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 1,
+                          mr: 1.5,
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <MusicNote
+                        sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                      />
+                    )}
+                    <ListItemText
+                      primary={playlist.name}
+                      secondary={
+                        playlist.trackCount !== undefined
+                          ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+                          : playlist.owner
+                            ? playlist.owner
+                            : undefined
+                      }
+                    />
+                  </ListItemButton>
                 ))}
               </>
             )}
@@ -393,16 +429,67 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           ) : filteredPlaylists.length > 0 ? (
             <List dense>
               {filteredPlaylists.map((playlist) => (
-                <PlaylistItem
+                <ListItemButton
                   key={playlist.uri}
-                  playlist={playlist}
                   selected={selectedPlaylist?.uri === playlist.uri}
                   onClick={() => handlePlaylistSelect(playlist)}
-                  onPlay={(e) => {
-                    e.stopPropagation()
-                    onPlaylistPlay(playlist.uri)
+                  sx={{
+                    '&.Mui-selected': {
+                      borderLeft: (theme) =>
+                        `4px solid ${theme.palette.primary.main}`,
+                      backgroundColor: (theme) =>
+                        theme.palette.action.selected,
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.palette.action.hover,
+                      },
+                    },
                   }}
-                />
+                >
+                  {playlist.imageUrl ? (
+                    <Box
+                      component="img"
+                      src={playlist.imageUrl}
+                      alt={playlist.name}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 1,
+                        mr: 1.5,
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <MusicNote
+                      sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }}
+                    />
+                  )}
+                  <ListItemText
+                    primary={playlist.name}
+                    secondary={
+                      playlist.trackCount !== undefined
+                        ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+                        : playlist.owner
+                          ? playlist.owner
+                          : undefined
+                    }
+                  />
+                  {playlist.isPreset && (
+                    <Chip
+                      label="Preset"
+                      size="small"
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  )}
+                  {playlist.isSearchResult && !playlist.isPreset && (
+                    <Chip
+                      label="Spotify"
+                      size="small"
+                      color="success"
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  )}
+                </ListItemButton>
               ))}
             </List>
           ) : (
