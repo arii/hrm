@@ -8,6 +8,8 @@ import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import TimerSoundProvider from '../components/TimerSoundProvider'
+import { ErrorProvider } from '@/context/ErrorContext'
+import ErrorDisplay from '@/components/ErrorDisplay'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -34,13 +36,16 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
-          <Providers>
+          <ErrorProvider>
+            <Providers>
             <UserSettingsProvider>
               <ErrorBoundary fallback={<ErrorFallback />}>
                 <TimerSoundProvider>{children}</TimerSoundProvider>
               </ErrorBoundary>
             </UserSettingsProvider>
-          </Providers>
+            </Providers>
+            <ErrorDisplay />
+          </ErrorProvider>
           <Footer />
           <BottomNavBar />
         </ThemeRegistry>

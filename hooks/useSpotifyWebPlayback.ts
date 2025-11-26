@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useError } from '@/context/ErrorContext'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -62,45 +63,50 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { error, setError } = useError()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   /**
    * Fetches the Spotify OAuth token from our secure backend API.
    * This function is passed to the Spotify Player constructor.
    */
-  const getOAuthToken = useCallback(async (cb: (token: string) => void) => {
-    try {
-      const response = await fetch('/api/spotify/access-token')
-      if (!response.ok) {
-        if (response.status === 401) {
-          // User not logged in - this is expected, don't show as error
-          console.log(
-            '[Spotify Web Playback] User not logged in, Web Playback unavailable'
+  const getOAuthToken = useCallback(
+    async (cb: (token: string) => void) => {
+      try {
+        const response = await fetch('/api/spotify/access-token')
+        if (!response.ok) {
+          if (response.status === 401) {
+            // User not logged in - this is expected, don't show as error
+            console.log(
+              '[Spotify Web Playback] User not logged in, Web Playback unavailable'
+            )
+            setIsAuthenticated(false)
+            return
+          }
+          const errorText = await response.text()
+          throw new Error(
+            `Failed to fetch Spotify access token: ${response.status} ${errorText}`
           )
-          setIsAuthenticated(false)
-          return
         }
-        const errorText = await response.text()
-        throw new Error(
-          `Failed to fetch Spotify access token: ${response.status} ${errorText}`
+        const { accessToken } = await response.json()
+        if (!accessToken) {
+          throw new Error('Access token was not found in the response.')
+        }
+        console.log(
+          '[Spotify Web Playback] Access token retrieved successfully'
         )
+        setIsAuthenticated(true)
+        cb(accessToken)
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : 'An unknown error occurred.'
+        setError(`Authentication failed: ${message}`)
+        setIsAuthenticated(false)
+        console.warn(`[Spotify Web Playback] getOAuthToken error: ${message}`)
       }
-      const { accessToken } = await response.json()
-      if (!accessToken) {
-        throw new Error('Access token was not found in the response.')
-      }
-      console.log('[Spotify Web Playback] Access token retrieved successfully')
-      setIsAuthenticated(true)
-      cb(accessToken)
-    } catch (e) {
-      const message =
-        e instanceof Error ? e.message : 'An unknown error occurred.'
-      setError(`Authentication failed: ${message}`)
-      setIsAuthenticated(false)
-      console.warn(`[Spotify Web Playback] getOAuthToken error: ${message}`)
-    }
-  }, [])
+    },
+    [setError]
+  )
 
   // Effect to load the Spotify SDK script and initialize the player
   useEffect(() => {
