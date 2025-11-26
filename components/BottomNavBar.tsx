@@ -42,18 +42,33 @@ export default function BottomNavBar() {
         icon={<DashboardIcon />}
         component={Link}
         href="/"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
       />
       <BottomNavigationAction
         label="Phone Controls"
         icon={<SettingsIcon />}
         component={Link}
         href="/client/control"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
       />
       <BottomNavigationAction
         label="Stream HR"
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
       />
     </BottomNavigation>
   )

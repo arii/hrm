@@ -41,7 +41,12 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
     <ListItemButton
       selected={selected}
       onClick={onClick}
-      sx={{ flexGrow: 1 }}
+      sx={{
+        flexGrow: 1,
+        '&:hover': {
+          backgroundColor: 'action.hover',
+        },
+      }}
     >
       {playlist.imageUrl ? (
         <Box
@@ -86,7 +91,17 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
       )}
     </ListItemButton>
     <Box sx={{ pl: 1 }}>
-      <IconButton edge="end" aria-label="play" onClick={onPlay}>
+      <IconButton
+        edge="end"
+        aria-label="play"
+        onClick={onPlay}
+        sx={{
+          '&:hover': {
+            backgroundColor: 'action.hover',
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
         <PlayArrow />
       </IconButton>
     </Box>
@@ -264,6 +279,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
             fullWidth={params.fullWidth}
             inputProps={params.inputProps}
             placeholder="Search or browse playlists..."
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                  boxShadow: `0 0 0 2px rgba(25, 118, 210, 0.2)`,
+                },
+              },
+            }}
             InputProps={{
               ref: params.InputProps.ref,
               className: params.InputProps.className,
