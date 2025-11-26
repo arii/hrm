@@ -22,6 +22,8 @@ import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
+import { apiLimiter, authLimiter } from './lib/middleware/rateLimit.js'
+import { checkWsRateLimit } from './lib/middleware/wsRateLimiter.js'
 import swaggerSpec from './lib/swagger.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -115,6 +117,10 @@ app
 
     // --- Express Routing ---
 
+    // Apply rate limiting middleware before any other routes
+    expressApp.use('/api/spotify', apiLimiter)
+    expressApp.use('/api/auth', authLimiter)
+
     // Swagger UI
     expressApp.use(
       '/api-docs',
@@ -153,6 +159,16 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
+        // Apply WebSocket rate limiting before handling the upgrade
+        if (!checkWsRateLimit(req)) {
+          // If rate limit is exceeded, destroy the socket to prevent connection
+          socket.write(
+            'HTTP/1.1 429 Too Many Requests\r\nContent-Type: text/plain\r\n\r\nToo many connection attempts. Please try again later.\r\n'
+          )
+          socket.destroy()
+          return
+        }
+
         const { pathname } = parse(req.url || '')
 
         // Only upgrade connections to the specific WebSocket path
