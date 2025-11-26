@@ -57,12 +57,12 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 This repository is configured with a VS Code DevContainer, which provides a fully automated, "one-click" setup.
 
 1.  **Prerequisites**:
-    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-    *   [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+    - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+    - [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
 2.  **Launch**:
-    *   Open the repository in VS Code.
-    *   Click the "Reopen in Container" button when prompted.
+    - Open the repository in VS Code.
+    - Click the "Reopen in Container" button when prompted.
 
 That's it. The container will build, install all dependencies (`pnpm install --frozen-lockfile` and Playwright), and create a `.env.local` file for you. Once the container is ready, you can start the development server:
 
@@ -161,6 +161,7 @@ pnpm run dev
 ```
 
 The server will start and you should see output indicating:
+
 - Next.js app running on http://127.0.0.1:3000
 - WebSocket server on ws://127.0.0.1:3000/ws
 - Spotify polling service initialized
@@ -169,6 +170,7 @@ The server will start and you should see output indicating:
 **7. Verify the Setup**
 
 Open your browser and navigate to:
+
 - **Dashboard**: http://127.0.0.1:3000
 - **Mock HRM Client**: http://127.0.0.1:3000/mock
 - **Phone Controls**: http://127.0.0.1:3000/phone
@@ -195,7 +197,6 @@ If you encounter issues during setup:
 - **Environment variable issues**: Double-check that `.env.local` exists and contains valid values
 
 For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
-
 
 > **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
 
@@ -455,6 +456,7 @@ For more detailed guidelines, especially for AI agents, see [.github/copilot-ins
 This project uses a manual GitHub Actions workflow to run a comprehensive suite of verification checks. You can trigger this workflow from the "Actions" tab on the GitHub repository.
 
 The workflow performs the following checks:
+
 1.  **Mergeability**: Verifies that the branch can be merged into `leader` without conflicts.
 2.  **Linting & Formatting**: Ensures the code adheres to the project's style guidelines.
 3.  **Production Build**: Confirms that the application can be built for production.
@@ -518,6 +520,96 @@ MIT
 - Material-UI for components
 - NextAuth for Spotify OAuth
 - PM2 for process management
+
+## Local Testing and Verification
+
+### 1. Building and Running the Docker Container
+
+These instructions will guide you through building the production Docker image and running it on your local machine.
+
+**Prerequisites:**
+
+- Docker is installed and running on your system.
+- You are in the root directory of the project.
+
+**Steps:**
+
+1.  **Create an Environment File:**
+    The Docker container requires a set of environment variables to run. Create a file named `.env.production` in the project root and populate it with the necessary values:
+
+    ```bash
+    # .env.production
+    SPOTIFY_CLIENT_ID=your_spotify_client_id
+    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+    NEXTAUTH_URL=http://127.0.0.1:3000
+    NEXTAUTH_SECRET=your_nextauth_secret
+    ENCRYPTION_KEY=your_64_char_hex_encryption_key
+    TESTING=true
+    ```
+
+2.  **Build the Docker Image:**
+    Run the following command to build the image. This will execute the multi-stage build defined in the `Dockerfile` and tag the final image as `hrm-production`.
+
+    ```bash
+    docker build -t hrm-production .
+    ```
+
+3.  **Run the Docker Container:**
+    Once the build is complete, run the following command to start a container from the image.
+
+    ```bash
+    docker run -d -p 3000:3000 --env-file .env.production --name hrm-container hrm-production
+    ```
+
+    - `-d`: Runs the container in detached mode (in the background).
+    - `-p 3000:3000`: Maps port 3000 on your host machine to port 3000 in the container.
+    - `--env-file .env.production`: Provides the environment variables from your file to the container.
+    - `--name hrm-container`: Assigns a memorable name to the container.
+
+4.  **Verify the Container:**
+    Wait about 20-30 seconds for the server to initialize, then check its health by running:
+
+    ```bash
+    curl http://127.0.0.1:3000/health/live
+    ```
+
+    If the server is running correctly, you should see `OK`.
+
+5.  **View Logs and Stop the Container:**
+    - To view the server logs: `docker logs hrm-container`
+    - To stop and remove the container: `docker stop hrm-container && docker rm hrm-container`
+
+### 2. Testing the GitHub Actions Workflow Locally with `act`
+
+You can simulate the GitHub Actions workflow on your local machine using a tool called `act`. This is a great way to debug your workflow file without having to commit and push every change.
+
+**Prerequisites:**
+
+- Docker is installed and running.
+- `act` is installed. Follow the installation guide here: [https://github.com/nektos/act#installation](https://github.com/nektos/act#installation).
+
+**Steps:**
+
+1.  **Create a Secrets File:**
+    The workflow depends on GitHub Secrets. `act` can read these from a file. Create a file named `.secrets` in the project root:
+
+    ```bash
+    # .secrets
+    SPOTIFY_CLIENT_ID=your_spotify_client_id
+    SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+    NEXTAUTH_URL=http://127.0.0.1:3000
+    NEXTAUTH_SECRET=your_nextauth_secret
+    ENCRYPTION_KEY=your_64_char_hex_encryption_key
+    ```
+
+2.  **Run the Workflow:**
+    Execute the following command in your terminal. This tells `act` to run the `workflow_dispatch` event from your `ci.yml` file.
+
+    ```bash
+    act workflow_dispatch --secret-file .secrets
+    ```
+
+    `act` will pull the necessary Docker images to simulate the GitHub Actions runner environment and then execute the jobs defined in your workflow file. You will see the output from all the steps (lint, build, test, etc.) directly in your terminal.
 
 ## Troubleshooting
 

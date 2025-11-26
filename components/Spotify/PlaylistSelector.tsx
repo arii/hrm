@@ -437,11 +437,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
                     '&.Mui-selected': {
                       borderLeft: (theme) =>
                         `4px solid ${theme.palette.primary.main}`,
-                      backgroundColor: (theme) =>
-                        theme.palette.action.selected,
+                      backgroundColor: (theme) => theme.palette.action.selected,
                       '&:hover': {
-                        backgroundColor: (theme) =>
-                          theme.palette.action.hover,
+                        backgroundColor: (theme) => theme.palette.action.hover,
                       },
                     },
                   }}

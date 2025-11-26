@@ -261,9 +261,7 @@ export class SpotifyPolling {
       }
 
       if (err?.status === 401) {
-        logger.warn(
-          'Spotify token expired during polling. Attempting refresh.'
-        )
+        logger.warn('Spotify token expired during polling. Attempting refresh.')
         this.checkAndRefreshSdkToken()
         return
       }

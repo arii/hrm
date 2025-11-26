@@ -97,7 +97,9 @@ class TabataTimer {
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,
-      ...(this.state.soundToPlay !== undefined && { soundToPlay: this.state.soundToPlay }),
+      ...(this.state.soundToPlay !== undefined && {
+        soundToPlay: this.state.soundToPlay,
+      }),
       soundEventId: this.state.soundEventId,
     }
   }

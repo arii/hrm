@@ -233,7 +233,6 @@ test.describe('Visual Regression Tests', () => {
       ],
     })*/
   })
-  
 
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming

@@ -113,16 +113,16 @@ app
 
     // --- Health Check Endpoints ---
     expressApp.get('/health/live', (_req: Request, res: Response) => {
-      res.status(200).send('OK');
-    });
+      res.status(200).send('OK')
+    })
 
     expressApp.get('/health/ready', (_req: Request, res: Response) => {
       if (spotifyServiceInitialized) {
-        res.status(200).send('OK');
+        res.status(200).send('OK')
       } else {
-        res.status(503).send('Service Unavailable');
+        res.status(503).send('Service Unavailable')
       }
-    });
+    })
 
     // --- Express Routing ---
 

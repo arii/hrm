@@ -42,16 +42,16 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          }
-        ]
-      }
+            value: 'nosniff',
+          },
+        ],
+      },
     ]
-  }
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

@@ -80,7 +80,9 @@ export async function GET(req: NextRequest) {
           uri: fullPlaylist.uri,
           description: fullPlaylist.description || null,
           imageUrl:
-            fullPlaylist.images && fullPlaylist.images.length > 0 && fullPlaylist.images[0]
+            fullPlaylist.images &&
+            fullPlaylist.images.length > 0 &&
+            fullPlaylist.images[0]
               ? fullPlaylist.images[0].url
               : null,
           // This line will now work

@@ -1,4 +1,3 @@
- 
 /**
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
@@ -404,22 +403,24 @@ describe('SpotifyPolling Service', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         { response: 'Invalid JSON' },
-        expect.stringContaining('Error executing Spotify command PLAY: Response body:')
+        expect.stringContaining(
+          'Error executing Spotify command PLAY: Response body:'
+        )
       )
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
-       // Simulate a deeply nested error that might crash text() retrieval
-       const badError = {
-           response: {
-               text: jest.fn().mockRejectedValue(new Error('Stream closed'))
-           }
-       }
-       mockPlayer.startResumePlayback.mockRejectedValue(badError)
+      // Simulate a deeply nested error that might crash text() retrieval
+      const badError = {
+        response: {
+          text: jest.fn().mockRejectedValue(new Error('Stream closed')),
+        },
+      }
+      mockPlayer.startResumePlayback.mockRejectedValue(badError)
 
-       await spotifyService.handleCommand('PLAY', 'device_id')
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
-       expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         { err: expect.any(Error) },
         expect.stringContaining(
           'Error executing Spotify command PLAY: Failed to retrieve error response text:'

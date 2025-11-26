@@ -13,37 +13,35 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next()
-  
+
   // Handle reverse proxy headers for NextAuth
   const forwardedHost = request.headers.get('x-forwarded-host')
   const forwardedProto = request.headers.get('x-forwarded-proto')
-  
+
   if (forwardedHost && forwardedProto) {
     // Set the correct host and protocol for NextAuth
     response.headers.set('x-forwarded-host', forwardedHost)
     response.headers.set('x-forwarded-proto', forwardedProto)
-    
+
     // Ensure NextAuth recognizes HTTPS
     if (forwardedProto === 'https') {
       response.headers.set('x-forwarded-ssl', 'on')
     }
   }
-  
+
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
     console.log('[Middleware] Auth request:', {
       pathname: request.nextUrl.pathname,
       host: request.headers.get('host'),
       forwardedHost,
-      forwardedProto
+      forwardedProto,
     })
   }
-  
+
   return response
 }
 
 export const config = {
-  matcher: [
-    '/api/auth/:path*'
-  ]
+  matcher: ['/api/auth/:path*'],
 }

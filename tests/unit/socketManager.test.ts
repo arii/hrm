@@ -35,21 +35,20 @@ describe('WebSocket Manager Integration', () => {
   let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
   let mockSdk: {
     player: {
-       
       getCurrentlyPlayingTrack: jest.Mock<any>
-       
+
       startResumePlayback: jest.Mock<any>
-       
+
       pausePlayback: jest.Mock<any>
-       
+
       skipToNext: jest.Mock<any>
-       
+
       skipToPrevious: jest.Mock<any>
-       
+
       transferPlayback: jest.Mock<any>
-       
+
       setPlaybackVolume: jest.Mock<any>
-       
+
       getAvailableDevices: jest.Mock<any>
     }
   }
