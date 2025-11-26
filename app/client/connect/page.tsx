@@ -115,6 +115,7 @@ export default function ConnectPage() {
             placeholder="e.g., Jane Doe"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
+            disabled={isConnected} // Disable when connected
           />
           <TextField
             fullWidth
@@ -124,6 +125,7 @@ export default function ConnectPage() {
             value={userAge}
             onChange={(e) => setUserAge(e.target.value)}
             inputProps={{ min: 1, max: 120 }}
+            disabled={isConnected} // Disable when connected
           />
         </Stack>
 
@@ -153,11 +155,10 @@ export default function ConnectPage() {
             </Button>
           ) : (
             <Button
-              variant="outlined"
+              variant="contained" // Make button more visible
               size="large"
               onClick={() => {
                 setIsConnected(false)
-                // Clear saved device to force new pairing
                 document.cookie =
                   'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
               }}
@@ -196,9 +197,12 @@ export default function ConnectPage() {
 
         <Typography
           variant="body2"
-          color="text.secondary"
           align="center"
-          sx={{ mt: 2 }}
+          sx={{
+            mt: 2,
+            color: connectionStatus === 'Connected' ? 'success.main' : 'warning.main',
+            fontWeight: 'bold',
+          }}
         >
           WebSocket: {connectionStatus}
         </Typography>

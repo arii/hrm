@@ -1,5 +1,6 @@
 // File: components/TimerDisplay.tsx
 'use client'
+import { getTimerPhaseProps } from '@/utils/visualization'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -16,8 +17,6 @@ export interface TimerDisplayProps {
   restDuration?: number
 }
 
-const pad = (n: number) => String(n).padStart(2, '0')
-
 const TimerDisplay = ({
   phase,
   timeRemaining,
@@ -26,71 +25,33 @@ const TimerDisplay = ({
   workDuration = 20,
   restDuration = 10,
 }: TimerDisplayProps) => {
-  // Determine what to display based on mode and phase
-  let displayTime: string
-  let phaseColor: string
-  let phaseLabel: string
-
-  if (phase === 'PREPARE') {
-    // PREPARE: Show countdown seconds only
-    displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
-    phaseLabel = 'GET READY'
-  } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
-    // STOPWATCH: Show elapsed time MM:SS
-    const mm = Math.floor(timeElapsed / 60)
-    const ss = timeElapsed % 60
-    displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
-    phaseLabel = 'RUNNING'
-  } else if (
-    mode === 'TABATA' &&
-    (phase === 'WORK' || phase === 'REST' || phase === 'COOLDOWN')
-  ) {
-    // TABATA: Show remaining time MM:SS
-    const mm = Math.floor(timeRemaining / 60)
-    const ss = timeRemaining % 60
-    displayTime = `${pad(mm)}:${pad(ss)}`
-
-    if (phase === 'WORK') {
-      phaseColor = '#EF4444' // Red
-      phaseLabel = 'WORK'
-    } else if (phase === 'REST') {
-      phaseColor = '#22C55E' // Green
-      phaseLabel = 'REST'
-    } else {
-      phaseColor = '#3B82F6' // Blue
-      phaseLabel = 'COOLDOWN'
-    }
-  } else {
-    // IDLE or default
-    displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
-    phaseLabel = 'READY'
-  }
+  const {
+    displayTime,
+    color,
+    label: phaseLabel,
+  } = getTimerPhaseProps(phase, timeRemaining, timeElapsed, mode)
 
   return (
     <Card
       elevation={6}
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
-        color: phaseColor, // Dynamic color based on phase
+        backgroundColor: '#000', // Revert to black background as requested
+        color: color, // Dynamic color is now handled by getTimerPhaseProps
         height: '100%',
         display: 'flex',
-        borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        borderRadius: 4,
         position: 'relative',
+        overflow: 'hidden',
+        border: '2px solid #1a1a1a',
       }}
     >
-      {/* Mode Indicator - Rotated on left side */}
+      {/* Mode Indicator - Top Left */}
       {phase !== 'IDLE' && (
         <Box
           sx={{
             position: 'absolute',
             left: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
+            top: 16,
             zIndex: 1,
           }}
         >
@@ -99,54 +60,48 @@ const TimerDisplay = ({
             sx={{
               color: '#fff',
               fontWeight: 700,
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
+              letterSpacing: 1.5,
               backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
+              px: 1.5,
               py: 0.5,
               borderRadius: 1,
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            {mode}
           </Typography>
         </Box>
       )}
 
-      {/* Tabata Durations - Rotated on right side */}
+      {/* Tabata Durations - Top Right */}
       {mode === 'TABATA' && (
         <Box
           sx={{
             position: 'absolute',
             right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
+            top: 16,
             zIndex: 1,
           }}
         >
           <Typography
-            variant="body2"
+            variant="body1" // Increase font size for readability
             sx={{
               color: '#fff',
               fontWeight: 700,
               letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
               backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
+              px: 2,
+              py: 1,
               borderRadius: 1,
             }}
           >
-            WORK:{workDuration}s REST:{restDuration}s
+            {`Work: ${workDuration}s / Rest: ${restDuration}s`}
           </Typography>
         </Box>
       )}
 
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          p: { xs: 2, sm: 3 },
           textAlign: 'center',
           flex: 1,
           display: 'flex',
@@ -155,15 +110,16 @@ const TimerDisplay = ({
           justifyContent: 'center',
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
+        {/* Phase Label */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
-            variant="h6"
+            variant="h4"
             sx={{
               mb: 1,
-              color: phaseColor,
+              color: color,
               fontWeight: 700,
               letterSpacing: 2,
+              textTransform: 'uppercase',
             }}
           >
             {phaseLabel}
@@ -178,12 +134,13 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
-            color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            fontSize: { xs: '5rem', sm: '7rem', md: '9rem' },
+            fontWeight: 700,
+            letterSpacing: '0.1rem',
+            lineHeight: 1.1,
+            color: color,
+            textShadow: (theme) =>
+              `0 0 12px ${theme.palette.mode === 'dark' ? color : 'transparent'}`,
           }}
         >
           {displayTime}

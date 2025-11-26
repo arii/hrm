@@ -223,11 +223,10 @@ const TimerControls = () => {
           </Typography>
         </Box>
 
-        {timerData.mode === 'TABATA' && (
+        {timerData.mode === 'TABATA' && !timerData.isRunning && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
-                {' '}
                 Work Duration (seconds)
               </Typography>
               <Stack
