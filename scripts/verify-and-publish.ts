@@ -112,10 +112,10 @@ async function main() {
 
   try {
     // C. Run Playwright
-    console.log('\n🧪 Running Tests and updating snapshots (this takes a moment)...');
+    console.log('\n🧪 Running Tests (this takes a moment)...');
     try {
-      // Run tests, update snapshots, and force JSON output. Ignore exit code to ensure we parse the report.
-      execSync('npx playwright test --update-snapshots --reporter=json > ' + REPORT_FILE, { stdio: 'inherit' });
+      // Run tests and force JSON output. Ignore exit code to ensure we parse the report.
+      execSync('npx playwright test --reporter=json > ' + REPORT_FILE, { stdio: 'inherit' });
     } catch (e) {
       console.log('⚠️  Tests finished with failures.');
     }
