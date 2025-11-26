@@ -1,0 +1,40 @@
+name: Integrity Check
+
+on:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  verify-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Proof Hash
+        run: |
+          if [ ! -f test-proof.json ]; then
+            echo "::error::❌ No test-proof.json found! Run 'npm run verify' locally."
+            exit 1
+          fi
+
+          # 1. Calculate the hash of the PR code (Must match local script logic)
+          ACTUAL_HASH=$(find app components context hooks lib services types utils tests -type f -name '*.*' -not -path '*/.*' | sort | xargs sha1sum | sha1sum | awk '{print $1}')
+
+          # 2. Read the proof
+          CLAIMED_HASH=$(jq -r .sourceHash test-proof.json)
+          GLOBAL_STATUS=$(jq -r .status test-proof.json)
+
+          echo "Expected Hash: $CLAIMED_HASH"
+          echo "Actual Hash:   $ACTUAL_HASH"
+
+          if [ "$ACTUAL_HASH" != "$CLAIMED_HASH" ]; then
+            echo "::error::❌ Hash Mismatch! You changed code but didn't run 'npm run verify'."
+            exit 1
+          fi
+
+          if [ "$GLOBAL_STATUS" != "success" ]; then
+             echo "::error::❌ The committed proof indicates tests failed locally."
+             exit 1
+          fi
+
+          echo "✅ Integrity Verified."
