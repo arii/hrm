@@ -1,8 +1,8 @@
 {
   "version": "1.0",
-  "timestamp": "2025-11-27T04:46:50.978Z",
-  "sourceHash": "8b20cbda2ec3407d3fa15b23a8ddbc6617c94d5b",
-  "status": "success",
+  "timestamp": "2025-11-27T05:28:00.144Z",
+  "sourceHash": "928593845b239658a8949ed2ddf4158fc4a7bb47",
+  "status": "failure",
   "details": {
     "infrastructure": {
       "total": 4,
@@ -21,8 +21,8 @@
     },
     "visual-regression": {
       "total": 6,
-      "passed": 6,
-      "failed": 0
+      "passed": 5,
+      "failed": 1
     }
   }
 }
