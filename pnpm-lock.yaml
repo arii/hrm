@@ -142,8 +142,8 @@ importers:
         specifier: ^13.1.2
         version: 13.1.2
       playwright:
-        specifier: ^1.56.1
-        version: 1.56.1
+        specifier: ^1.57.0
+        version: 1.57.0
       pm2:
         specifier: ^5.2.0
         version: 5.4.3
