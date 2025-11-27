@@ -105,6 +105,7 @@ async function main() {
   }
   const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
   const resultsByFile = {};
+  const allFailures = []; // New array to store detailed failures
 
   function processSuite(suite, fileName) {
     if (!resultsByFile[fileName]) {
@@ -118,6 +119,23 @@ async function main() {
         } else {
           resultsByFile[fileName].failed++;
           globalSuccess = false;
+
+          // Capture detailed error info
+          if (s.tests) {
+            s.tests.forEach(t => {
+              if (t.results) {
+                t.results.forEach(r => {
+                  if (r.status === 'failed' || r.status === 'timedOut') {
+                    allFailures.push({
+                      file: fileName,
+                      title: s.title,
+                      message: r.error ? r.error.message : `Status: ${r.status}`
+                    });
+                  }
+                });
+              }
+            });
+          }
         }
       });
     }
@@ -127,6 +145,19 @@ async function main() {
   }
   if (report.suites) report.suites.forEach(s => processSuite(s, path.basename(s.title, '.spec.ts')));
   else globalSuccess = false;
+
+  // Print Failures to Console
+  if (allFailures.length > 0) {
+    console.log('\n❌ Failed Tests Details:');
+    allFailures.forEach((f, index) => {
+      console.log(`\n${index + 1}. [${f.file}] ${f.title}`);
+      console.log('   Error:');
+      // Indent error message for better readability
+      const lines = f.message.split('\n');
+      lines.forEach(line => console.log(`     ${line}`));
+    });
+    console.log(''); // Empty line separator
+  }
 
   // 4. Generate & Save Proof
   const manifest = {
