@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-11-27T04:46:50.978Z",
+  "sourceHash": "8b20cbda2ec3407d3fa15b23a8ddbc6617c94d5b",
+  "status": "success",
+  "details": {
+    "infrastructure": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+    },
+    "simple-smoke": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "spotify-debug": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "visual-regression": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    }
+  }
+}
