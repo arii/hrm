@@ -1,4 +1,4 @@
-// File: app/components/dashboard/HrmTiles.tsx
+// File: components/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'

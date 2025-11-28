@@ -116,7 +116,9 @@ const useSpotifyWebPlayback = () => {
 
     // Prevent re-initialization if player already exists and is ready
     if (player && isReady) {
-      console.log('[Spotify Web Playbook] Player already initialized and ready')
+      console.log(
+        '[Spotify Web Playback] Player already initialized and ready'
+      )
       return
     }
 
