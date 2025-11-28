@@ -268,7 +268,6 @@ const TimerControls = () => {
                 </Button>
               </Stack>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
-                {' '}
                 Work Duration (seconds)
               </Typography>
               <Stack
