@@ -58,10 +58,10 @@ test.describe('Core Functionality - Desktop', () => {
     // Wait for the dynamically loaded Spotify component to be visible.
     await expect(controlPage.getByRole('heading', { name: 'Spotify' })).toBeVisible()
 
-    const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
+    const stopButton = controlPage.getByLabel('Stop Timer')
     if (await stopButton.isVisible({ timeout: 1000 })) {
       await stopButton.click()
-      await expect(controlPage.getByRole('button', { name: 'START', exact: true })).toBeVisible()
+      await expect(controlPage.getByLabel('Start Timer')).toBeVisible()
     }
     const stopStreamingButton = mockPage.getByRole('button', { name: 'STOP Streaming' })
     if (await stopStreamingButton.isVisible({ timeout: 1000 })) {
@@ -86,7 +86,7 @@ test.describe('Core Functionality - Desktop', () => {
     await mockPage.getByLabel('Current BPM').fill('150')
     await mockPage.getByRole('button', { name: 'Zone 3' }).click()
     await mockPage.getByRole('button', { name: 'START' }).click()
-    await controlPage.getByRole('button', { name: 'START' }).click()
+    await controlPage.getByLabel('Start Timer').click()
 
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
       timeout: 10000,
@@ -116,8 +116,8 @@ test.describe('Core Functionality - Mobile', () => {
 
     await expect(page).toHaveScreenshot('control-panel-mobile.png', screenshotOptions)
 
-    await page.getByRole('button', { name: 'START' }).click()
-    await expect(page.getByRole('button', { name: 'STOP', exact: true })).toBeVisible()
+    await page.getByLabel('Start Timer').click()
+    await expect(page.getByLabel('Stop Timer')).toBeVisible()
     await page.waitForTimeout(1000) // Increased delay for UI to settle
 
     await expect(page).toHaveScreenshot('control-panel-mobile-running.png', screenshotOptions)

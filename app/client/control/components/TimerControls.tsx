@@ -432,6 +432,7 @@ const TimerControls = () => {
               onClick={() => sendTimerCommand('START')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
               startIcon={<PlayArrow fontSize="large" />}
+              aria-label="Start Timer"
             >
               START
             </Button>
@@ -442,6 +443,7 @@ const TimerControls = () => {
               onClick={() => sendTimerCommand('STOP')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
               startIcon={<Stop fontSize="large" />}
+              aria-label="Stop Timer"
             >
               STOP
             </Button>
