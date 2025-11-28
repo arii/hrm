@@ -80,16 +80,68 @@ function publishStatus(sha, context, state, description) {
   });
 }
 
+// 4. Check and Publish Merge Status
+// Implements mergeability check as per user request
+async function checkAndPublishMergeStatus() {
+  const baseBranch = 'leader';
+  let featureBranch;
+  try {
+    featureBranch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+  } catch (e) {
+    console.error('❌ Could not determine current branch.');
+    process.exit(1);
+  }
+
+  const currentSha = getCommitSha();
+  const contextName = 'verifier/mergeability-check';
+
+  console.log(`Checking if ${featureBranch} can rebase onto origin/${baseBranch}...`);
+
+  let mergeSuccess = false;
+  try {
+    // 1. Fetch latest origin
+    execSync(`git fetch origin`, { stdio: 'ignore' });
+
+    // 2. Try merge (dry-run for conflicts)
+    // We use --no-commit --no-ff to create a merge state without committing.
+    // This detects conflicts.
+    execSync(`git merge origin/${baseBranch} --no-commit --no-ff`, { stdio: 'ignore' });
+    mergeSuccess = true;
+
+    // 3. Abort the merge to restore state
+    execSync(`git merge --abort`, { stdio: 'ignore' });
+
+  } catch (e) {
+    console.error('❌ Merge/Rebase check failed locally.');
+    mergeSuccess = false;
+    // Attempt abort in case we failed in the middle
+    try { execSync(`git merge --abort`, { stdio: 'ignore' }); } catch (err) {}
+  }
+
+  const state = mergeSuccess ? 'success' : 'failure';
+  const description = mergeSuccess ? 'Branch is mergeable' : 'Conflicts found. Manual rebase required.';
+
+  await publishStatus(currentSha, contextName, state, description);
+
+  if (!mergeSuccess) {
+    console.error(`❌ Please rebase your branch: git rebase origin/${baseBranch}`);
+    process.exit(1);
+  }
+}
+
 // --- Main Execution ---
 
 async function main() {
   console.log('🚀 Starting Self-Certifying Verifier...');
 
-  // 1. Cleanup & Preparation
+  // 1. Check Merge Status
+  await checkAndPublishMergeStatus();
+
+  // 2. Cleanup & Preparation
   if (fs.existsSync(REPORT_FILE)) fs.unlinkSync(REPORT_FILE);
   const sourceHash = getSourceHash();
 
-  // 2. Run Tests
+  // 3. Run Tests
   console.log('\n🧪 Running Tests...');
   let globalSuccess = true;
   try {
@@ -98,14 +150,14 @@ async function main() {
     console.log('⚠️  Tests finished with failures.');
   }
 
-  // 3. Parse Results (Existing logic)
+  // 4. Parse Results
   if (!fs.existsSync(REPORT_FILE)) {
     console.error('❌ Critical: No report generated.');
     process.exit(1);
   }
   const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
   const resultsByFile = {};
-  const allFailures = []; // New array to store detailed failures
+  const allFailures = [];
 
   function processSuite(suite, fileName) {
     if (!resultsByFile[fileName]) {
@@ -159,7 +211,7 @@ async function main() {
     console.log(''); // Empty line separator
   }
 
-  // 4. Generate & Save Proof
+  // 5. Generate & Save Proof
   const manifest = {
     version: "1.0",
     timestamp: new Date().toISOString(),
@@ -169,7 +221,7 @@ async function main() {
   };
   fs.writeFileSync(PROOF_FILE, JSON.stringify(manifest, null, 2));
 
-  // 5. Commit & Push (The Critical Fix)
+  // 6. Commit & Push
   if (globalSuccess) {
     console.log('\n💾 Committing Proof...');
     try {
@@ -178,17 +230,17 @@ async function main() {
       try { execSync('git commit -m "chore: verification proof [skip ci]"'); } catch (e) {}
 
       console.log('☁️  Pushing to origin...');
-      execSync('git push'); // <--- This ensures Error 422 doesn't happen
+      execSync('git push');
     } catch (e) {
       console.error('❌ Git Push Failed:', e.message);
       process.exit(1);
     }
   }
 
-  // 6. Get the SHA *After* the Push
+  // 7. Get the SHA *After* the Push
   const finalSha = execSync('git rev-parse HEAD').toString().trim();
 
-  // 7. Publish Status
+  // 8. Publish Status
   console.log('\n☁️  Publishing checks to GitHub...');
   const promises = [];
 
