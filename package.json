@@ -41,6 +41,13 @@
     "release:patch": "pnpm run verify && pnpm version patch -m \"release: patch %s\" && git push --follow-tags",
     "release:minor": "pnpm run verify && pnpm version minor -m \"release: minor %s\" && git push --follow-tags",
     "release:major": "pnpm run verify && pnpm version major -m \"release: major %s\" && git push --follow-tags",
+    "verify": "ts-node scripts/verify-and-publish.ts",
+    "commit:verified": "pnpm run verify && git add test-proof.json && git commit",
+    "release:patch": "pnpm run verify && pnpm version patch && git push --follow-tags",
+    "release:minor": "pnpm run verify && pnpm version minor && git push --follow-tags",
+    "release:major": "pnpm run verify && pnpm version major && git push --follow-tags"
+    "verify": "node scripts/verify-and-publish.cjs",
+    "commit:verified": "npm run verify && git add test-proof.json && git commit"
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "npm run verify && git add test-proof.json && git commit"
