@@ -100,7 +100,6 @@ const TimerDisplay = ({
           }}
         >
           <Typography
-            variant="body2"
             sx={{
               color: '#fff',
               fontWeight: 700,
@@ -131,7 +130,6 @@ const TimerDisplay = ({
           }}
         >
           <Typography
-            variant="body2"
             sx={{
               color: '#fff',
               fontWeight: 700,
@@ -178,11 +176,11 @@ const TimerDisplay = ({
         {/* Giant Timer Display */}
         <Typography
           component="div"
-          variant="h1"
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            // fontSize and fontWeight are now controlled by the h1 variant
+            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontWeight: 800,
             letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,

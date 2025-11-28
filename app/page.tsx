@@ -34,17 +34,17 @@ const Dashboard = () => {
     <Container
       maxWidth="xl"
       sx={{
-        py: { xs: 3, sm: 4 }, // Increased padding
+        py: { xs: 2, sm: 3 },
         pb: { xs: 12, sm: 14 }, // Extra bottom padding for fixed Spotify bar
         minHeight: '100vh',
         backgroundColor: 'background.default',
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6} order={{ xs: 1, lg: 1 }}>
+        <Grid item xs={12} lg={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -55,17 +55,15 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={12} lg={6} order={{ xs: 2, lg: 2 }}>
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmTiles />
-          </ErrorBoundary>
-        </Grid>
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmTiles />
+        </ErrorBoundary>
 
-        <Grid item xs={12} order={{ xs: 3, lg: 3 }}>
+        <Grid item xs={12}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
-            height={350}
+            height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
