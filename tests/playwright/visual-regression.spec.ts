@@ -166,9 +166,8 @@ test.describe('Visual Regression Tests', () => {
 
     // Ensure control panel inputs are visible
     // 1. Get the locator for the input using its test ID
-    const workInput = controlPage.getByTestId('work-duration-input')
-
-    const restInput = controlPage.getByTestId('rest-duration-input')
+    const workInput = controlPage.getByLabel('Work duration in seconds')
+    const restInput = controlPage.getByLabel('Rest duration in seconds')
 
     // 2. (Recommended) Wait for it to be visible
     // This ensures the component has rendered before you try to fill it.
@@ -180,15 +179,11 @@ test.describe('Visual Regression Tests', () => {
     await restInput.fill('5')
 
     // Start timer
-
-    await controlPage.click('button:has-text("START")', { force: true })
+    await controlPage.getByRole('button', { name: 'START' }).click()
 
     // wait for braodcast messages to propagate
     // Use the recommended, specific locator
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
+    const stopButton = controlPage.getByRole('button', { name: 'Stop Timer' })
 
     // Use this specific locator in your assertion
     await expect(stopButton).toBeVisible()

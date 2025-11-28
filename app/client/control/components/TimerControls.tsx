@@ -304,7 +304,7 @@ const TimerControls = () => {
                     min: 0,
                     step: 5,
                     style: { textAlign: 'center' },
-                    'data-testid': 'work-duration-input',
+                    'aria-label': 'Work duration in seconds',
                   }}
                   sx={{
                     width: '120px',
@@ -327,7 +327,6 @@ const TimerControls = () => {
                       },
                     },
                   }}
-                  aria-label="Work duration in seconds"
                 />
                 <IconButton
                   color="primary"
@@ -381,7 +380,7 @@ const TimerControls = () => {
                     min: 0,
                     step: 5,
                     style: { textAlign: 'center' },
-                    'data-testid': 'rest-duration-input',
+                    'aria-label': 'Rest duration in seconds',
                   }}
                   sx={{
                     width: '120px',
@@ -404,7 +403,6 @@ const TimerControls = () => {
                       },
                     },
                   }}
-                  aria-label="Rest duration in seconds"
                 />
                 <IconButton
                   color="primary"
@@ -432,6 +430,7 @@ const TimerControls = () => {
               onClick={() => sendTimerCommand('START')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
               startIcon={<PlayArrow fontSize="large" />}
+              aria-label="Start Timer"
             >
               START
             </Button>
@@ -442,6 +441,7 @@ const TimerControls = () => {
               onClick={() => sendTimerCommand('STOP')}
               sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
               startIcon={<Stop fontSize="large" />}
+              aria-label="Stop Timer"
             >
               STOP
             </Button>
