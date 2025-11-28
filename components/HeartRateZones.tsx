@@ -19,8 +19,8 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
 
   const calculateBpmRange = (percentage: string) => {
     const [min, max] = percentage.replace('%', '').split('-').map(Number)
-    const minBpm = Math.round((min / 100) * maxHr)
-    const maxBpm = Math.round((max / 100) * maxHr)
+    const minBpm = Math.round(((min || 0) / 100) * maxHr)
+    const maxBpm = Math.round(((max || 0) / 100) * maxHr)
     return `${minBpm}-${maxBpm} BPM`
   }
 

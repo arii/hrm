@@ -142,13 +142,19 @@ export const WebSocketProvider = ({
       try {
         const message: UnifiedStateMessage = JSON.parse(event.data)
         if (message.type === 'STATE_UPDATE') {
-          setAppState((prev) => ({
-            hrmData: message.hrmData || prev.hrmData,
-            timerData: message.timerData || prev.timerData,
-            spotifyData: message.spotifyData || prev.spotifyData,
-            spotifyServiceInitialized:
-              message.spotifyServiceInitialized ?? prev.spotifyServiceInitialized,
-          }))
+          setAppState((prev) => {
+            const newState: AppState = {
+              hrmData: message.hrmData || prev.hrmData,
+              timerData: message.timerData || prev.timerData,
+              spotifyData: message.spotifyData || prev.spotifyData,
+            }
+            if (message.spotifyServiceInitialized !== undefined) {
+              newState.spotifyServiceInitialized = message.spotifyServiceInitialized
+            } else if (prev.spotifyServiceInitialized !== undefined) {
+              newState.spotifyServiceInitialized = prev.spotifyServiceInitialized
+            }
+            return newState
+          })
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)

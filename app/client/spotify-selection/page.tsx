@@ -65,9 +65,9 @@ const SpotifySelectionPage = () => {
       const found = availableDevices.find((d) => d.id === selectedDeviceId)
       if (!found) {
         const activeDevice = availableDevices.find((d) => d.is_active)
-        setSelectedDeviceId(
-          activeDevice ? activeDevice.id : availableDevices[0].id
-        )
+        const firstDevice = availableDevices[0]
+        const deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+        setSelectedDeviceId(deviceId)
       }
     } else {
       setSelectedDeviceId('')
@@ -80,6 +80,12 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistUri(uri)
   }
 
+  const handlePlaylistPlay = (uri: string) => {
+    sendSpotifyCommand('PLAY', { playlistUri: uri })
+    // Also update the selected URI to reflect the playing playlist
+    setSelectedPlaylistUri(uri)
+  }
+
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
     options: { playlistUri?: string; volume?: number; token?: string } = {}
@@ -88,8 +94,11 @@ const SpotifySelectionPage = () => {
     let deviceId = selectedDeviceId
     if (!deviceId && availableDevices.length > 0) {
       const activeDevice = availableDevices.find((d) => d.is_active)
-      deviceId = activeDevice ? activeDevice.id : availableDevices[0].id
-      setSelectedDeviceId(deviceId)
+      const firstDevice = availableDevices[0]
+      deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+      if (deviceId) {
+        setSelectedDeviceId(deviceId)
+      }
     }
     if (!deviceId) {
       console.warn('No deviceId available, command not sent.')
@@ -149,6 +158,7 @@ const SpotifySelectionPage = () => {
           <Typography variant="h6" gutterBottom>
             Select a Playlist
           </Typography>
+<<<<<<< HEAD
           {selectedPlaylistUri && (
             <Typography variant="body2" color="primary" sx={{ mb: 1 }}>
               Selected: {selectedPlaylistUri.split(':').pop()} 
@@ -156,6 +166,14 @@ const SpotifySelectionPage = () => {
             </Typography>
           )}
           <PlaylistSelector onPlaylistSelected={handlePlaylistSelected} />
+||||||| 03ccf2f
+          <PlaylistSelector onPlaylistSelected={handlePlaylistSelected} />
+=======
+          <PlaylistSelector
+            onPlaylistSelected={handlePlaylistSelected}
+            onPlaylistPlay={handlePlaylistPlay}
+          />
+>>>>>>> origin/leader
         </CardContent>
       </Card>
 

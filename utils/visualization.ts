@@ -95,9 +95,21 @@ export const getHrZoneProps = (
   let zone = HR_ZONES[0]
 
   for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-    if (percentageOfMax / 100 >= HR_ZONES[i].min) {
-      zone = HR_ZONES[i]
+    const hrZone = HR_ZONES[i]
+    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
+      zone = hrZone
       break
+    }
+  }
+
+  if (!zone) {
+    return {
+      zone: 'Unknown',
+      percentage: percentageOfMax,
+      color: 'text-gray-400',
+      progressColor: '#9ca3af',
+      backgroundColor: '#9ca3af',
+      bpm: currentHr,
     }
   }
 
