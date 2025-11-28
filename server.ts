@@ -20,6 +20,8 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpec from './lib/swagger.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -84,6 +86,7 @@ app
 
     // --- Express Routing ---
 
+<<<<<<< HEAD
     expressApp.get(
       '/api/spotify/devices',
       async (_req: Request, res: Response) => {
@@ -102,6 +105,33 @@ app
             .json({ error: 'Failed to fetch Spotify devices.' })
         }
       }
+||||||| c443341
+    // API endpoint to get available Spotify devices
+    expressApp.get(
+      '/api/spotify/devices',
+      async (_req: Request, res: Response) => {
+        if (!spotifyServiceInitialized || !spotifyService) {
+          return res
+            .status(503)
+            .json({ error: 'Spotify service not initialized.' })
+        }
+        try {
+          const devices = await spotifyService.getAvailableDevices()
+          return res.json(devices)
+        } catch (error) {
+          logger.error({ err: error }, 'Error fetching Spotify devices via API')
+          return res
+            .status(500)
+            .json({ error: 'Failed to fetch Spotify devices.' })
+        }
+      }
+=======
+    // Swagger UI
+    expressApp.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec)
+>>>>>>> origin/leader
     )
 
     expressApp.use(async (req: Request, res: Response) => {
