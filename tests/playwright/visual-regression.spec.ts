@@ -164,6 +164,9 @@ test.describe('Visual Regression Tests', () => {
       timeout: 5000,
     })
 
+    // Explicitly set timer to Tabata mode to ensure controls are visible
+    await controlPage.getByRole('button', { name: 'Tabata' }).click()
+
     // Wait for Tabata controls to be visible
     await expect(
       controlPage.getByRole('button', { name: 'Tabata (20/10)' })
