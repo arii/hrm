@@ -83,133 +83,124 @@ function publishStatus(sha, context, state, description) {
 // --- Main Execution ---
 
 async function main() {
-  console.log('🚀 Starting Self-Certifying Verifier...');
+  console.log('🚀 Starting Local Verifier...');
 
-  // 1. Cleanup & Preparation
+  // A. Cleanup old reports
   if (fs.existsSync(REPORT_FILE)) fs.unlinkSync(REPORT_FILE);
-  const sourceHash = getSourceHash();
 
-  // 2. Run Tests
-  console.log('\n🧪 Running Tests...');
-  let globalSuccess = true;
+  const sha = getCommitSha();
+  const sourceHash = getSourceHash();
+  console.log(`📌 Commit: ${sha.slice(0, 7)}`);
+  console.log(`🔒 Hash:   ${sourceHash}`);
+
+  // B. Run Playwright
+  console.log('\n🧪 Running Tests (this takes a moment)...');
   try {
+    // Run tests and force JSON output. Ignore exit code to ensure we parse the report.
     execSync('npm run test:json', { stdio: 'inherit' });
   } catch (e) {
     console.log('⚠️  Tests finished with failures.');
   }
 
-  // 3. Parse Results (Existing logic)
   if (!fs.existsSync(REPORT_FILE)) {
-    console.error('❌ Critical: No report generated.');
+    console.error('❌ Critical: No test report generated.');
     process.exit(1);
   }
-  const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
-  const resultsByFile = {};
-  const allFailures = []; // New array to store detailed failures
 
+  // E. Parse Report
+  const reportJson = fs.readFileSync(REPORT_FILE, 'utf-8');
+  if (!reportJson) {
+      console.error('❌ Critical: Test report file is empty.');
+      process.exit(1);
+  }
+  const report = JSON.parse(reportJson);
+  const resultsByFile = {};
+  let globalSuccess = true;
+
+  // Helper function to recursively process suites and collect spec results
   function processSuite(suite, fileName) {
     if (!resultsByFile[fileName]) {
-      resultsByFile[fileName] = { total: 0, passed: 0, failed: 0 };
+        resultsByFile[fileName] = { total: 0, passed: 0, failed: 0 };
     }
-    if (suite.specs) {
-      suite.specs.forEach(s => {
-        resultsByFile[fileName].total++;
-        if (s.ok) {
-          resultsByFile[fileName].passed++;
-        } else {
-          resultsByFile[fileName].failed++;
-          globalSuccess = false;
+    const stats = resultsByFile[fileName];
 
-          // Capture detailed error info
-          if (s.tests) {
-            s.tests.forEach(t => {
-              if (t.results) {
-                t.results.forEach(r => {
-                  if (r.status === 'failed' || r.status === 'timedOut') {
-                    allFailures.push({
-                      file: fileName,
-                      title: s.title,
-                      message: r.error ? r.error.message : `Status: ${r.status}`
-                    });
-                  }
-                });
-              }
-            });
-          }
+    // Process specs within the current suite
+    if (suite.specs) {
+      suite.specs.forEach((spec) => {
+        stats.total++;
+        if (spec.ok) {
+          stats.passed++;
+        } else {
+          stats.failed++;
+          globalSuccess = false;
         }
       });
     }
+
+    // Recurse into nested suites
     if (suite.suites) {
-      suite.suites.forEach(s => processSuite(s, fileName));
+      suite.suites.forEach((nestedSuite) => {
+        processSuite(nestedSuite, fileName);
+      });
     }
   }
-  if (report.suites) report.suites.forEach(s => processSuite(s, path.basename(s.title, '.spec.ts')));
-  else globalSuccess = false;
 
-  // Print Failures to Console
-  if (allFailures.length > 0) {
-    console.log('\n❌ Failed Tests Details:');
-    allFailures.forEach((f, index) => {
-      console.log(`\n${index + 1}. [${f.file}] ${f.title}`);
-      console.log('   Error:');
-      // Indent error message for better readability
-      const lines = f.message.split('\n');
-      lines.forEach(line => console.log(`     ${line}`));
+  // The top-level suites in the report are the files
+  if (report.suites) {
+    report.suites.forEach((fileSuite) => {
+      const name = path.basename(fileSuite.title, '.spec.ts');
+      processSuite(fileSuite, name);
     });
-    console.log(''); // Empty line separator
+  } else {
+      console.error('❌ Critical: Report JSON is missing the "suites" property.');
+      // A report with no tests will have a suites array, so this is a genuine error.
+      globalSuccess = false;
   }
 
-  // 4. Generate & Save Proof
+  // F. Generate Proof Manifest
   const manifest = {
     version: "1.0",
     timestamp: new Date().toISOString(),
+    commit: sha,
     sourceHash: sourceHash,
     status: globalSuccess ? 'success' : 'failure',
     details: resultsByFile
   };
   fs.writeFileSync(PROOF_FILE, JSON.stringify(manifest, null, 2));
+  console.log(`\n📄 Proof Manifest saved to ${PROOF_FILE}`);
 
-  // 5. Commit & Push (The Critical Fix)
-  if (globalSuccess) {
-    console.log('\n💾 Committing Proof...');
-    try {
-      execSync(`git add ${PROOF_FILE}`);
-      // Try/Catch handles if the proof file hasn't changed
-      try { execSync('git commit -m "chore: verification proof [skip ci]"'); } catch (e) {}
-
-      console.log('☁️  Pushing to origin...');
-      execSync('git push'); // <--- This ensures Error 422 doesn't happen
-    } catch (e) {
-      console.error('❌ Git Push Failed:', e.message);
-      process.exit(1);
-    }
-  }
-
-  // 6. Get the SHA *After* the Push
-  const finalSha = execSync('git rev-parse HEAD').toString().trim();
-
-  // 7. Publish Status
+  // G. Publish Results (Parallel Requests)
   console.log('\n☁️  Publishing checks to GitHub...');
+
   const promises = [];
 
-  // Global Status
-  promises.push(publishStatus(finalSha, 'verifier/global', globalSuccess ? 'success' : 'failure', globalSuccess ? 'Verified Safe' : 'Tests Failed'));
+  // 1. Global Status
+  promises.push(publishStatus(
+    sha,
+    'verifier/global',
+    globalSuccess ? 'success' : 'failure',
+    globalSuccess ? 'All systems operational' : 'Tests failed'
+  ));
 
-  // File Statuses
+  // 2. Distinct Check for each Test File
   for (const [name, stats] of Object.entries(resultsByFile)) {
     const state = stats.failed === 0 ? 'success' : 'failure';
-    promises.push(publishStatus(finalSha, `verifier/${name}`, state, `${stats.passed}/${stats.total} passed`));
+    const desc = `${stats.passed}/${stats.total} passed`;
+    promises.push(publishStatus(sha, `verifier/${name}`, state, desc));
   }
 
   await Promise.all(promises);
-  console.log(globalSuccess ? '\n✅ Verification Complete.' : '\n❌ Verification Failed.');
 
   // Cleanup
-  if (fs.existsSync(REPORT_FILE)) {
-    fs.unlinkSync(REPORT_FILE);
-  }
+  fs.unlinkSync(REPORT_FILE);
 
-  process.exit(globalSuccess ? 0 : 1);
+  if (globalSuccess) {
+    console.log('\n✅ Verification Complete. You can now commit the proof file.');
+    process.exit(0);
+  } else {
+    console.error('\n❌ Verification Failed. Please fix tests before committing.');
+    process.exit(1);
+  }
 }
 
 main().catch(console.error);
