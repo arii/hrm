@@ -84,26 +84,6 @@ app
 
     // --- Express Routing ---
 
-    expressApp.get(
-      '/api/spotify/devices',
-      async (_req: Request, res: Response) => {
-        if (!spotifyService) {
-          return res
-            .status(503)
-            .json({ error: 'Spotify service not initialized.' })
-        }
-        try {
-          const devices = await spotifyService.getAvailableDevices()
-          return res.json(devices)
-        } catch (error) {
-          logger.error({ err: error }, 'Error fetching Spotify devices via API')
-          return res
-            .status(500)
-            .json({ error: 'Failed to fetch Spotify devices.' })
-        }
-      }
-    )
-
     expressApp.use(async (req: Request, res: Response) => {
       if (
         req.method === 'POST' &&
