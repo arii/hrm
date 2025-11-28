@@ -226,6 +226,47 @@ const TimerControls = () => {
         {timerData.mode === 'TABATA' && !timerData.isRunning && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
+                Timer Presets
+              </Typography>
+              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setWorkTime(20)
+                    setRestTime(10)
+                  }}
+                  sx={{
+                    flex: 1,
+                    color: '#EF4444',
+                    borderColor: '#EF4444',
+                    '&:hover': {
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      borderColor: '#DC2626',
+                    },
+                  }}
+                >
+                  Tabata (20/10)
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setWorkTime(60)
+                    setRestTime(60)
+                  }}
+                  sx={{
+                    flex: 1,
+                    color: '#22C55E',
+                    borderColor: '#22C55E',
+                    '&:hover': {
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                      borderColor: '#16A34A',
+                    },
+                  }}
+                >
+                  EMOM (60/60)
+                </Button>
+              </Stack>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 Work Duration (seconds)
               </Typography>
@@ -237,7 +278,7 @@ const TimerControls = () => {
               >
                 <IconButton
                   color="primary"
-                  onClick={() => setWorkTime((prev) => Math.max(5, prev - 5))}
+                  onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease work duration"
                   sx={{
                     backgroundColor: 'grey.700',
@@ -253,7 +294,8 @@ const TimerControls = () => {
                   value={workTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
-                    const next = Math.max(5, val)
+                    // Prevent negative numbers
+                    const next = Math.max(0, val)
                     latestWork.current = next
                     setWorkTime(next)
                   }}
