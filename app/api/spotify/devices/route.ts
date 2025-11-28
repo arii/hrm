@@ -1,32 +1,22 @@
-import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
-
+// File: app/api/spotify/devices/route.ts (Spotify Devices REST Handler - Refactored)
 /**
  * API route to fetch available Spotify devices for the authenticated user.
- *
- * This endpoint retrieves the list of devices from the Spotify API and returns
- * them to the client. This is used by the control panel to allow the user to
- * select which device to play music on.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the device list or an error.
  */
+import { NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth/utils'
+import logger from '@/utils/logger'
+
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session.
-    const session = await getServerSession(authOptions)
+    const session = await getCurrentUser()
 
-    // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error('[API /devices] No session or access token found.')
       return NextResponse.json(
-        { error: 'Not authenticated or token is missing.' },
+        { error: 'Authorization required' },
         { status: 401 }
       )
     }
 
-    // 3. Fetch devices from Spotify API.
     const response = await fetch(
       'https://api.spotify.com/v1/me/player/devices',
       {
@@ -38,8 +28,12 @@ export async function GET(_req: Request) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(
-        `[API /devices] Spotify API error: ${response.status} ${errorText}`
+      logger.error(
+        {
+          status: response.status,
+          error: errorText,
+        },
+        'Spotify API error fetching devices'
       )
       return NextResponse.json(
         { error: 'Failed to fetch devices from Spotify.' },
@@ -50,12 +44,27 @@ export async function GET(_req: Request) {
     const data = await response.json()
     return NextResponse.json(data.devices || [])
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /devices] Internal Server Error: ${message}`)
+    logger.error({ error }, 'Internal server error fetching devices')
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
     )
   }
+}
+
+/**
+ * Handles OPTIONS requests for CORS preflight.
+ */
+export const OPTIONS = async () => {
+  return NextResponse.json(
+    {},
+    {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    }
+  )
 }

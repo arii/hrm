@@ -43,6 +43,23 @@ export interface SpotifyData {
 /**
  * The single, unified state object broadcast by the server to all clients.
  */
+<<<<<<< HEAD
+export interface UnifiedStateMessage {
+  type: 'STATE_UPDATE'
+  hrmData?: HrmData[]
+  timerData?: TimerData
+  spotifyData?: SpotifyData
+  spotifyServiceInitialized?: boolean
+}
+||||||| 2286026
+export interface UnifiedStateMessage {
+  type: 'STATE_UPDATE'
+  hrmData: HrmData[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  spotifyServiceInitialized?: boolean
+}
+=======
 // TOPIC-BASED REAL-TIME MESSAGES
 // Use a discriminated union for type-safe message handling
 export type ServerMessage =
@@ -59,6 +76,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+>>>>>>> origin/leader
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to

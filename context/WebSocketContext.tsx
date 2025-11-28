@@ -9,6 +9,7 @@ import {
   useState,
   useReducer,
 } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   ClientCommandMessage,
   HrmData,
@@ -57,6 +58,7 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
+  const { data: session } = useSession()
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -119,6 +121,22 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
+      // --- AUTHENTICATION ---
+      // Send IDENTIFY message if the user is authenticated
+      if (session?.accessToken) {
+        console.log('[WebSocketProvider] Authenticating with server...')
+        ws.send(
+          JSON.stringify({
+            type: 'IDENTIFY',
+            token: session.accessToken,
+          })
+        )
+      } else {
+        console.warn(
+          '[WebSocketProvider] No session found. Cannot authenticate.'
+        )
+      }
+
       if (pendingActions.current.length > 0) {
         console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach(action => {
@@ -164,10 +182,13 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl])
+  }, [wsUrl, session])
 
   useEffect(() => {
-    connect()
+    // Only attempt to connect if the user session is available
+    if (session) {
+      connect()
+    }
 
     return () => {
       disconnect()

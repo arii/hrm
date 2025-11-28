@@ -17,8 +17,17 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+<<<<<<< HEAD
+import {
+  broadcastState,
+  initSocketManager,
+} from './utils/socketManager.js'
+||||||| 2286026
+import { initSocketManager } from './utils/socketManager.js'
+=======
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
+>>>>>>> origin/leader
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
@@ -70,10 +79,62 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
+<<<<<<< HEAD
+    // 3. Initialize WebSocket Manager (which now handles broadcasting)
+    initSocketManager(
+      wss,
+      {
+        tabataService: null!,
+        spotifyService: null!,
+      },
+      false
+    )
+
+    let spotifyServiceInitialized: boolean = true
+
+    // Create a wrapper for the broadcast function to inject the spotifyServiceInitialized status
+    const serviceBroadcast = (): void => {
+      broadcastState()
+    }
+
+    // 2. Initialize Persistent Services with the wrapped broadcast function
+||||||| 2286026
+    // Declare spotifyServiceInitialized here
+    let spotifyServiceInitialized: boolean = true
+
+    // Function to safely broadcast state from services (Used by Tabata and Spotify services)
+    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
+      // Use the socket manager to handle the actual broadcast
+      if (wss.clients.size > 0) {
+        wss.clients.forEach((client: WebSocket) => {
+          if (client.readyState === 1) {
+            // 1 means OPEN
+            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
+            client.send(
+              JSON.stringify({
+                type: 'STATE_UPDATE',
+                spotifyServiceInitialized,
+                ...data,
+              })
+            ) // Include spotifyServiceInitialized
+          }
+        })
+      }
+    }
+
     // 2. Initialize Persistent Services
+=======
+    // 2. Initialize Persistent Services
+>>>>>>> origin/leader
     let spotifyService: SpotifyPolling
     try {
+<<<<<<< HEAD
+      spotifyService = await SpotifyPolling.create(serviceBroadcast)
+||||||| 2286026
+      spotifyService = await SpotifyPolling.create(broadcastState)
+=======
       spotifyService = await SpotifyPolling.create(broadcast)
+>>>>>>> origin/leader
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
@@ -88,10 +149,16 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
+<<<<<<< HEAD
+    const tabataService = new TabataTimer(serviceBroadcast)
+||||||| 2286026
+    const tabataService = new TabataTimer(broadcastState)
+=======
     const tabataService = new TabataTimer(broadcast)
+>>>>>>> origin/leader
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
+    // 4. Pass the initialized services to the socket manager
+    initSocketManager(wss, { tabataService, spotifyService }, spotifyServiceInitialized)
 
     // --- Express Routing ---
 
