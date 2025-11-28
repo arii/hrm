@@ -164,6 +164,11 @@ test.describe('Visual Regression Tests', () => {
       timeout: 5000,
     })
 
+    // Wait for WebSocket connection to be established before proceeding
+    await expect(controlPage.getByText('Server: Connected')).toBeVisible({
+      timeout: 10000,
+    })
+
     // Explicitly set timer to Tabata mode to ensure controls are visible
     await controlPage.getByRole('button', { name: 'Tabata' }).click()
 
