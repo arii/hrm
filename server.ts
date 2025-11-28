@@ -24,6 +24,14 @@ import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
 
+// --- Metrics Imports ---
+import { collectDefaultMetrics } from 'prom-client'
+import {
+  registry,
+  httpRequestDurationSeconds,
+  sanitizePath,
+} from './utils/metrics.js'
+
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
@@ -49,6 +57,10 @@ app
   .prepare()
   .then(async () => {
     const server = createServer(expressApp)
+
+    // --- Metrics Setup ---
+    logger.info('Initializing Prometheus metrics...')
+    collectDefaultMetrics({ register: registry })
 
     // --- Static Asset Serving (Production Only) ---
     // In production, serve the Next.js static assets directly from the .next/static folder.
@@ -115,12 +127,35 @@ app
 
     // --- Express Routing ---
 
+    // --- Metrics Middleware ---
+    expressApp.use((req, res, next) => {
+      const end = httpRequestDurationSeconds.startTimer()
+      res.on('finish', () => {
+        // Sanitize the path to prevent cardinality explosion
+        const route = req.route
+          ? req.route.path
+          : sanitizePath(req.path)
+        end({ route, code: res.statusCode, method: req.method })
+      })
+      next()
+    })
+
     // Swagger UI
     expressApp.use(
       '/api-docs',
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec)
     )
+
+    // --- Metrics Endpoint ---
+    expressApp.get('/metrics', async (_req, res) => {
+      try {
+        res.set('Content-Type', registry.contentType)
+        res.end(await registry.metrics())
+      } catch (ex) {
+        res.status(500).end(ex)
+      }
+    })
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery

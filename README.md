@@ -49,6 +49,7 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 - **Control Panel** - Mobile-optimized UI with timer controls, Spotify controls, and configuration steppers (available at `/client/control`)
 - **Bluetooth HRM Support** - Real heart rate monitor connection via Web Bluetooth API (available at `/client/connect`)
 - **Visual Regression Tests** - Playwright screenshot-based testing
+- **Performance Monitoring** - Prometheus metrics exposed at the `/metrics` endpoint for monitoring API response times, resource utilization, and more.
 
 ## Quick Start
 
@@ -266,6 +267,42 @@ only required when you want to inspect the output ahead of time.
 - **`utils/socketManager.ts`**: Server-side WebSocket message router
 - **`types/index.ts`**: Shared UI prop types and timer enums
 - **`tests/playwright/core-functionality.spec.ts`**: Screenshot-based tests
+- **`utils/metrics.ts`**: Prometheus metrics configuration.
+
+## Monitoring
+
+The server exposes performance metrics in a Prometheus-compatible format at the `/metrics` endpoint. This allows for detailed monitoring of the application's performance.
+
+### Setting up Monitoring with Prometheus and Grafana
+
+1.  **Run Prometheus**:
+    Create a `prometheus.yml` file with the following configuration:
+
+    ```yaml
+    scrape_configs:
+      - job_name: 'hrm-dashboard'
+        scrape_interval: 5s
+        static_configs:
+          - targets: ['localhost:3000']
+    ```
+
+    Then, create a Docker network and run Prometheus and Grafana on it:
+
+    ```bash
+    # Create a Docker network for monitoring
+    docker network create monitoring
+
+    # Run Prometheus on the network
+    docker run -d --name prometheus --network monitoring -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+
+    # Run Grafana on the network
+    docker run -d --name grafana --network monitoring -p 3001:3000 grafana/grafana
+    ```
+
+2.  **Configure Grafana**:
+    - Open Grafana in your browser at `http://localhost:3001` (admin/admin).
+    - Add Prometheus as a data source. Use `http://prometheus:9090` as the URL.
+    - Import a dashboard (e.g., Node.js Application Dashboard - ID `16219`) and configure it to use your Prometheus data source.
 
 ## Available Commands
 
