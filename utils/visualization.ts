@@ -92,12 +92,24 @@ export const getHrZoneProps = (
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone = HR_ZONES[0]
+  let zone: (typeof HR_ZONES)[0] | undefined
 
   for (let i = HR_ZONES.length - 1; i >= 0; i--) {
     if (percentageOfMax / 100 >= HR_ZONES[i].min) {
       zone = HR_ZONES[i]
       break
+    }
+  }
+
+  if (!zone) {
+    // This handles percentages below the lowest zone's min threshold.
+    return {
+      zone: 'Below Zone 1',
+      percentage: percentageOfMax,
+      color: 'text-gray-400',
+      progressColor: '#9ca3af',
+      backgroundColor: '#9ca3af',
+      bpm: currentHr,
     }
   }
 
