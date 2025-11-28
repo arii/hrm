@@ -234,7 +234,7 @@ const SpotifyControls = () => {
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+              <VolumeUp sx={{ color: 'grey.400' , fontSize: 20 }} />
               <Slider
                 value={volume}
                 onChange={(_, val) => setVolume(val as number)}
