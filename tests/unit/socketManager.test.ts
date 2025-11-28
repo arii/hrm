@@ -14,7 +14,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import TabataTimer from '../../services/tabataTimer'
-import { UnifiedStateMessage } from '../../types/websocket'
+import { ServerMessage } from '../../types/websocket'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
@@ -31,8 +31,8 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 describe('WebSocket Manager Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
-  let broadcastedMessages: Partial<UnifiedStateMessage>[]
-  let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
+  let broadcastedMessages: Partial<ServerMessage>[]
+  let broadcastFn: (data: Partial<ServerMessage>) => void
   let mockSdk: {
     player: {
        
@@ -60,7 +60,7 @@ describe('WebSocket Manager Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (data: Partial<UnifiedStateMessage>) => {
+    broadcastFn = (data: Partial<ServerMessage>) => {
       broadcastedMessages.push(data)
     }
 
@@ -113,45 +113,57 @@ describe('WebSocket Manager Integration', () => {
     it('should broadcast timer state when mode changes to STOPWATCH', () => {
       broadcastedMessages = []
       tabataTimer.setMode('STOPWATCH')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.mode).toBe('STOPWATCH')
+      const timerUpdate = broadcastedMessages.find(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdate?.payload?.mode).toBe('STOPWATCH')
     })
 
     it('should broadcast timer state when mode changes to TABATA', () => {
       tabataTimer.setMode('STOPWATCH')
       broadcastedMessages = []
       tabataTimer.setMode('TABATA')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.mode).toBe('TABATA')
+      const timerUpdate = broadcastedMessages.find(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdate?.payload?.mode).toBe('TABATA')
     })
 
     it('should broadcast timer state when work duration changes', () => {
       broadcastedMessages = []
       tabataTimer.setConfig({ workDuration: 45, restDuration: 15 })
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.workDuration).toBe(45)
+      const timerUpdate = broadcastedMessages.find(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdate?.payload?.workDuration).toBe(45)
     })
 
     it('should broadcast timer state when rest duration changes', () => {
       broadcastedMessages = []
       tabataTimer.setConfig({ workDuration: 20, restDuration: 12 })
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.restDuration).toBe(12)
+      const timerUpdate = broadcastedMessages.find(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdate?.payload?.restDuration).toBe(12)
     })
 
     it('should broadcast timer state when timer starts', () => {
       broadcastedMessages = []
       tabataTimer.handleCommand('START')
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.isRunning).toBe(true)
-      expect(lastMessage?.timerData?.currentPhase).toBe('PREPARE')
+      const timerUpdate = broadcastedMessages.find(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdate?.payload?.isRunning).toBe(true)
+      expect(timerUpdate?.payload?.currentPhase).toBe('PREPARE')
     })
 
     it('should broadcast timer state during phase transitions', () => {
       broadcastedMessages = []
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(5000) // Complete PREPARE phase
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
+      const phases = broadcastedMessages
+        .filter((m) => m.type === 'TIMER_UPDATE')
+        .map((m) => m.payload?.currentPhase)
       expect(phases).toEqual(expect.arrayContaining(['PREPARE', 'WORK']))
     })
 
@@ -159,9 +171,11 @@ describe('WebSocket Manager Integration', () => {
       broadcastedMessages = []
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-      // Only check the last broadcast for isRunning
-      const lastMessage = broadcastedMessages.at(-1)
-      expect(lastMessage?.timerData?.isRunning).toBe(true)
+      const timerUpdates = broadcastedMessages.filter(
+        (msg) => msg.type === 'TIMER_UPDATE'
+      )
+      expect(timerUpdates.length).toBeGreaterThanOrEqual(3)
+      expect(timerUpdates.at(-1)?.payload?.isRunning).toBe(true)
     })
   })
 
@@ -207,12 +221,12 @@ describe('WebSocket Manager Integration', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(5000)
 
-      const broadcasts = broadcastedMessages.filter(
-        (m) => m.timerData?.soundToPlay
-      )
+      const broadcasts = broadcastedMessages
+        .filter((m) => m.type === 'TIMER_UPDATE' && m.payload?.soundToPlay)
+        .map((m) => m.payload)
 
       expect(broadcasts.length).toBeGreaterThan(0)
-      expect(broadcasts[0].timerData?.soundEventId).toBeGreaterThan(0)
+      expect(broadcasts[0]?.soundEventId).toBeGreaterThan(0)
     })
 
     it('should support Spotify volume commands', async () => {
@@ -252,7 +266,7 @@ describe('WebSocket Manager Integration', () => {
 
       tabataTimer.setMode('STOPWATCH')
       const timerBroadcast = broadcastedMessages.find(
-        (m) => m.timerData?.mode === 'STOPWATCH'
+        (m) => m.type === 'TIMER_UPDATE' && m.payload?.mode === 'STOPWATCH'
       )
 
       expect(timerBroadcast).toBeDefined()
@@ -272,7 +286,9 @@ describe('WebSocket Manager Integration', () => {
       jest.advanceTimersByTime(30000) // WORK
       jest.advanceTimersByTime(10000) // REST
 
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
+      const phases = broadcastedMessages
+        .filter((m) => m.type === 'TIMER_UPDATE')
+        .map((m) => m.payload?.currentPhase)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')
