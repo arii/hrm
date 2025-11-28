@@ -55,8 +55,8 @@ test.describe('Core Functionality - Desktop', () => {
       waitForPageReady(mockPage),
     ])
 
-    // Wait for the dynamically loaded Spotify component to be visible.
-    await expect(controlPage.getByRole('heading', { name: 'Spotify' })).toBeVisible()
+    // Wait for the UI to be interactive by checking if the start button is enabled.
+    await expect(controlPage.getByLabel('Start Timer')).toBeEnabled({ timeout: 15000 });
 
     const stopButton = controlPage.getByLabel('Stop Timer')
     if (await stopButton.isVisible({ timeout: 1000 })) {
@@ -70,7 +70,6 @@ test.describe('Core Functionality - Desktop', () => {
     }
 
     await replaceIframeWithStableWorkout(dashboardPage)
-    await dashboardPage.waitForTimeout(1000) // Increased delay for UI to settle
   })
 
   test('Initial State - Dashboard, Control Panel, and Mock Client', async () => {
@@ -91,7 +90,6 @@ test.describe('Core Functionality - Desktop', () => {
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
       timeout: 10000,
     })
-    await dashboardPage.waitForTimeout(1000) // Increased delay for UI to settle
 
     await expect(dashboardPage).toHaveScreenshot('dashboard-active-session.png', {
       ...screenshotOptions,
@@ -110,15 +108,14 @@ test.describe('Core Functionality - Mobile', () => {
   test('Mobile Viewport - Control Panel', async ({ page }) => {
     await page.goto(`${BASE_URL}/client/control`)
     await waitForPageReady(page)
-    // Wait for the dynamically loaded Spotify component to be visible.
-    await expect(page.getByRole('heading', { name: 'Spotify' })).toBeVisible()
-    await page.waitForTimeout(1000) // Increased delay for UI to settle
+
+    // Wait for the UI to be interactive by checking if the start button is enabled.
+    await expect(page.getByLabel('Start Timer')).toBeEnabled({ timeout: 15000 });
 
     await expect(page).toHaveScreenshot('control-panel-mobile.png', screenshotOptions)
 
     await page.getByLabel('Start Timer').click()
     await expect(page.getByLabel('Stop Timer')).toBeVisible()
-    await page.waitForTimeout(1000) // Increased delay for UI to settle
 
     await expect(page).toHaveScreenshot('control-panel-mobile-running.png', screenshotOptions)
   })
