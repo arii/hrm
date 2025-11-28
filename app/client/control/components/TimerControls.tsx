@@ -268,6 +268,7 @@ const TimerControls = () => {
                 </Button>
               </Stack>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+                {' '}
                 Work Duration (seconds)
               </Typography>
               <Stack
@@ -279,8 +280,7 @@ const TimerControls = () => {
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
-                  aria-label="Decrease work duration by 5 seconds"
-                  data-testid="decrease-work-duration"
+                  aria-label="Decrease work duration"
                   sx={{
                     backgroundColor: 'grey.700',
                     color: 'white',

@@ -27,7 +27,7 @@
     "test:all": "pnpm run test:visual && pnpm run test:unit",
     "test:quick": "pnpm run build && pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:ui": "playwright test --ui",
-    "test:visual:update": "pnpm run build && pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:update": "pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",
