@@ -4,10 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
     "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 ts-node --esm --transpile-only --project tsconfig.json server.ts | pino-pretty",
+||||||| c443341
+    "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 pnpm exec ts-node --env-file=.env.local --esm --transpile-only --project tsconfig.json server.ts | pnpm exec pino-pretty",
+=======
+    "dev": "cross-env NODE_ENV=development HOST=127.0.0.1 TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+>>>>>>> origin/leader
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "npm run build:server && next build",
-    "build:server": "tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
+    "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true npm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:logs": "pm2 logs hrm-server",
@@ -22,11 +28,12 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
-    "test:visual": "bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:json": "pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && npx playwright test --reporter=json > playwright-report.json; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual": "pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
-    "test:quick": "pnpm run build && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:quick": "pnpm run build && pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:ui": "playwright test --ui",
-    "test:visual:update": "pnpm run build && bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && sleep 10 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
+    "test:visual:update": "pnpm run build && pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 & echo $! > /tmp/hrm-server.pid && npx wait-on http://127.0.0.1:3000/api/debug/ping --timeout 20000 && playwright test --update-snapshots --reporter=dot; kill $(cat /tmp/hrm-server.pid) 2>/dev/null || true",
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",
@@ -38,7 +45,10 @@
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
-    "release:major": "pnpm version major -m \"release: major %s\""
+    "release:major": "pnpm version major -m \"release: major %s\"",
+    "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
+    "verify": "node scripts/verify-and-publish.cjs",
+    "commit:verified": "npm run verify && git add test-proof.json && git commit"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -53,13 +63,15 @@
     "pino": "^10.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "ws": "^8.18.3",
-    "zod": "^4.1.12"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
-    "@next/bundle-analyzer": "^16.0.3",
-    "@playwright/test": "^1.56.1",
+    "@next/bundle-analyzer": "^16.0.5",
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -71,10 +83,12 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "8.46.3",
-    "@typescript-eslint/parser": "8.46.3",
+    "@typescript-eslint/eslint-plugin": "8.48.0",
+    "@typescript-eslint/parser": "8.48.0",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
     "eslint": "9.39.1",
@@ -83,7 +97,7 @@
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "pino-pretty": "^13.1.2",
-    "playwright": "^1.56.1",
+    "playwright": "^1.57.0",
     "pm2": "^5.2.0",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.5",
