@@ -49,24 +49,14 @@ const HrmTiles = () => {
 
   return (
     <>
-      {[...Array(4)].map((_, index) => (
-        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item-skeleton" key={index}>
-          <Skeleton
-            variant="rectangular"
-            height={250}
-            sx={{
-              borderRadius: 3,
-              animation: 'fadeIn 0.5s ease-in-out',
-              '@keyframes fadeIn': {
-                '0%': { opacity: 0 },
-                '100%': { opacity: 1 },
-              },
-            }}
-          />
-        </Grid>
-      ))}
+      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
+      </Grid>
+      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
+      </Grid>
     </>
-  );
+  )
 }
 
 export default HrmTiles

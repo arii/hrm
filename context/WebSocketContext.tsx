@@ -7,14 +7,13 @@ import {
   useEffect,
   useRef,
   useState,
-  useReducer,
 } from 'react'
 import {
   ClientCommandMessage,
   HrmData,
   SpotifyData,
   TimerData,
-  ServerMessage,
+  UnifiedStateMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -62,25 +61,8 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
-  // Unified State Object managed by a reducer
-  const reducer = (state: AppState, message: ServerMessage): AppState => {
-    switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
-      case 'TIMER_UPDATE':
-        return { ...state, timerData: message.payload }
-      case 'SPOTIFY_UPDATE':
-        return { ...state, spotifyData: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      default:
-        return state
-    }
-  }
-
-  const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
+  // Unified State Object
+  const [appState, setAppState] = useState<AppState>(INITIAL_STATE)
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -158,8 +140,22 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-        const message: ServerMessage = JSON.parse(event.data)
-        dispatch(message)
+        const message: UnifiedStateMessage = JSON.parse(event.data)
+        if (message.type === 'STATE_UPDATE') {
+          setAppState((prev) => {
+            const newState: AppState = {
+              hrmData: message.hrmData || prev.hrmData,
+              timerData: message.timerData || prev.timerData,
+              spotifyData: message.spotifyData || prev.spotifyData,
+            }
+            if (message.spotifyServiceInitialized !== undefined) {
+              newState.spotifyServiceInitialized = message.spotifyServiceInitialized
+            } else if (prev.spotifyServiceInitialized !== undefined) {
+              newState.spotifyServiceInitialized = prev.spotifyServiceInitialized
+            }
+            return newState
+          })
+        }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }

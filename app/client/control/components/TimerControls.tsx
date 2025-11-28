@@ -154,7 +154,14 @@ const TimerControls = () => {
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography
+            sx={{
+              color: 'white',
+              fontWeight: 'medium',
+              mb: 2,
+              textAlign: 'center',
+            }}
+          >
             Timer Mode
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="center">
@@ -165,7 +172,6 @@ const TimerControls = () => {
               startIcon={<FitnessCenter />}
               sx={{
                 flex: 1,
-                minHeight: '48px', // Ensure touch target size
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
@@ -190,7 +196,6 @@ const TimerControls = () => {
               startIcon={<Timer />}
               sx={{
                 flex: 1,
-                minHeight: '48px', // Ensure touch target size
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
@@ -221,7 +226,7 @@ const TimerControls = () => {
         {timerData.mode === 'TABATA' && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
                 Timer Presets
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -233,7 +238,6 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
-                    minHeight: '48px', // Ensure touch target size
                     color: '#EF4444',
                     borderColor: '#EF4444',
                     '&:hover': {
@@ -252,7 +256,6 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
-                    minHeight: '48px', // Ensure touch target size
                     color: '#22C55E',
                     borderColor: '#22C55E',
                     '&:hover': {
@@ -264,7 +267,8 @@ const TimerControls = () => {
                   EMOM (60/60)
                 </Button>
               </Stack>
-              <Typography variant="body2" sx={{ mb: 2 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+                {' '}
                 Work Duration (seconds)
               </Typography>
               <Stack
@@ -342,7 +346,7 @@ const TimerControls = () => {
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ mb: 2 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 Rest Duration (seconds)
               </Typography>
               <Stack

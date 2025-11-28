@@ -133,32 +133,6 @@ export default defineConfig([
     },
   },
 
-  // Override for Jest integration test files
-  {
-    files: ['tests/integration/**/*.{ts,tsx}'],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tests/integration/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        describe: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        beforeAll: 'readonly',
-        afterAll: 'readonly',
-        jest: 'readonly',
-        NodeJS: 'readonly',
-      },
-    },
-    rules: {
-      // Jest specific rules or overrides
-    },
-  },
-
   // Override for services files to ignore unused 'fetch' import and other service-related imports/constants
   {
     files: ['services/**/*.ts'],
