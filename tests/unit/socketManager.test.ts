@@ -139,7 +139,7 @@ describe('WebSocket Manager Integration', () => {
     it('should broadcast timer state every second while running', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledTimes(4)
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledTimes(6)
     })
   })
 

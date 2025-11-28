@@ -3,7 +3,7 @@ import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
-import { broadcastSpotifyUpdate } from '@/utils/socketManager'
+import { broadcastSpotifyUpdate } from '../utils/socketManager.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {

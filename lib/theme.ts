@@ -267,17 +267,17 @@ const theme = createTheme({
         },
       },
     },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
     MuiTextField: {
       defaultProps: {
         variant: 'outlined',
         margin: 'normal',
+      },
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
+          },
+        },
       },
     },
     MuiChip: {

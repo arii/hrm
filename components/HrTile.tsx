@@ -1,10 +1,10 @@
 // File: components/HrTile.tsx
 'use client'
+import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import StyledCard from './shared/StyledCard'
 
 export interface HrTileProps {
   name: string
@@ -19,19 +19,23 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
       arrow
     >
-      <StyledCard
+      <Card
         data-testid="hr-tile-card"
+        elevation={6}
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: background,
           color: '#fff',
+          p: 2,
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          border: 'none',
+          borderRadius: 3,
         }}
       >
         <CardContent sx={{ p: 0 }}>
@@ -75,7 +79,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             </Typography>
           )}
         </CardContent>
-      </StyledCard>
+      </Card>
     </Tooltip>
   )
 }

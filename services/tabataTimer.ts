@@ -5,7 +5,7 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
-import { broadcastTimerUpdate } from '@/utils/socketManager'
+import { broadcastTimerUpdate } from '../utils/socketManager.js'
 import { TimerData, TimerMode, TimerPhase } from '../types/websocket'
 
 // --- Tabata Constants ---

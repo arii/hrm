@@ -79,12 +79,6 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistUri(uri)
   }
 
-  const handlePlaylistPlay = (uri: string) => {
-    sendSpotifyCommand('PLAY', { playlistUri: uri })
-    // Also update the selected URI to reflect the playing playlist
-    setSelectedPlaylistUri(uri)
-  }
-
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
     options: { playlistUri?: string; volume?: number; token?: string } = {}
@@ -153,10 +147,7 @@ const SpotifySelectionPage = () => {
           <Typography variant="h6" gutterBottom>
             Select a Playlist
           </Typography>
-          <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
-            onPlaylistPlay={handlePlaylistPlay}
-          />
+          <PlaylistSelector onPlaylistSelected={handlePlaylistSelected} />
         </CardContent>
       </Card>
 

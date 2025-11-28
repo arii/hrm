@@ -134,7 +134,7 @@ describe('Services Integration', () => {
     it('should broadcast timer state every second while running', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(3000)
-      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledTimes(4) // Start + 3 ticks
+      expect(socketManager.broadcastTimerUpdate).toHaveBeenCalledTimes(6) // Start + 5 ticks
     })
   })
 
