@@ -20,26 +20,7 @@ const SpotifyControls = dynamic(
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus, connect } = useWebSocket()
-
-  // Reconnect on page visibility
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        connectionStatus !== 'Connected'
-      ) {
-        console.log(
-          '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
-        )
-        connect() // Attempt to reconnect
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [connectionStatus, connect])
+  const { connectionStatus } = useWebSocket()
 
   // Signal when page is ready for testing
   useEffect(() => {
