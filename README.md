@@ -170,9 +170,9 @@ The server will start and you should see output indicating:
 
 Open your browser and navigate to:
 - **Dashboard**: http://127.0.0.1:3000
-- **Mock HRM Client**: http://127.0.0.1:3000/mock
-- **Phone Controls**: http://127.0.0.1:3000/phone
-- **Bluetooth Connection**: http://127.0.0.1:3000/connect
+- **Mock HRM Client**: http://127.0.0.1:3000/client/mock
+- **Phone Controls**: http://127.0.0.1:3000/client/control
+- **Bluetooth Connection**: http://127.0.0.1:3000/client/connect
 
 You should see the HRM dashboard interface load successfully.
 
@@ -256,7 +256,7 @@ only required when you want to inspect the output ahead of time.
 - **`services/tabataTimer.ts`**: Dual-mode timer service (Tabata/Stopwatch) with audio cues
 - **`services/spotifyPolling.ts`**: Spotify API polling and playback control service
 - **`utils/audioManager.ts`**: Audio system for timer beep sounds
-- **`hooks/useWebSocket.ts`**: Client-side WebSocket connection hook
+- **`context/WebSocketContext.tsx`**: Client-side WebSocket connection hook and context provider
 - **`hooks/useAudio.ts`**: Audio playback hook with volume control
 - **`hooks/useVolumePreference.ts`**: Synchronized volume preference across tabs
 - **`components/TimerDisplay.tsx`**: Large timer display with rotated side labels
@@ -541,7 +541,7 @@ MIT
 #### Module Resolution Errors
 
 - **Symptom**: `Error [ERR_MODULE_NOT_FOUND]: Cannot find module ...`
-- **Solution**: Use `npm run dev` for development, and ensure your `tsconfig.json` is configured for CommonJS modules.
+- **Solution**: This can happen if `pnpm install` failed or was interrupted. Run `pnpm install --frozen-lockfile` again. Ensure you are using `pnpm run dev` for development, as it correctly handles the project's ES Module setup.
 
 #### TypeScript Compilation Errors
 
