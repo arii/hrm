@@ -15,7 +15,6 @@ const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET;
 const testIgnoreList = [
   // Only ignore truly integration-heavy tests for speed
   'comprehensive-assessment.spec.ts',
-  'mobile-assessment.spec.ts',
   'workflow-assessment.spec.ts',
   // OAuth tests are excluded from regular test runs (use separate npm script)
   'oauth/**/*.spec.ts',
@@ -36,7 +35,7 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 1, // Use 1 worker for visual tests to avoid race conditions
+  workers: process.env.CI ? '75%' : 4, // Use 4 workers for local, 75% of cores on CI
   timeout: 30000, // Adjusted for potentially longer server startups
 
   // Fail build on CI if you accidentally left test.only
