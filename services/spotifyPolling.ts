@@ -1,5 +1,5 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
+import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -47,7 +47,7 @@ export class SpotifyPolling {
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
-  private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+  private broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
@@ -60,10 +60,8 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(
-    broadcastState: (data: Partial<UnifiedStateMessage>) => void
-  ) {
-    this.broadcastState = broadcastState
+  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+    this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
@@ -73,9 +71,9 @@ export class SpotifyPolling {
   }
 
   public static async create(
-    broadcastState: (data: Partial<UnifiedStateMessage>) => void
+    broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastState)
+    const instance = new SpotifyPolling(broadcastUpdate)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
@@ -206,7 +204,10 @@ export class SpotifyPolling {
             artist: '',
             isPlaying: false,
           }
-          this.broadcastState({ spotifyData: this.getState() })
+          this.broadcastUpdate({
+            type: 'SPOTIFY_UPDATE',
+            payload: this.getState(),
+          })
         }
         return
       }
@@ -249,7 +250,10 @@ export class SpotifyPolling {
           artist: artistName,
           isPlaying: isPlaying,
         }
-        this.broadcastState({ spotifyData: this.getState() })
+        this.broadcastUpdate({
+          type: 'SPOTIFY_UPDATE',
+          payload: this.getState(),
+        })
       }
     } catch (error) {
       const err = error as { status?: number }

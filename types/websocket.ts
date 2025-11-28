@@ -43,25 +43,28 @@ export interface SpotifyData {
 /**
  * The single, unified state object broadcast by the server to all clients.
  */
-export interface UnifiedStateMessage {
-  type: 'STATE_UPDATE'
-  hrmData: HrmData[]
-  timerData: TimerData
-  spotifyData: SpotifyData
-  spotifyServiceInitialized?: boolean
-}
+// TOPIC-BASED REAL-TIME MESSAGES
+// Use a discriminated union for type-safe message handling
+export type ServerMessage =
+  | {
+      type: 'INITIAL_STATE'
+      payload: {
+        hrmData: HrmData[]
+        timerData: TimerData
+        spotifyData: SpotifyData
+        spotifyServiceInitialized?: boolean
+      }
+    }
+  | { type: 'HRM_UPDATE'; payload: HrmData[] }
+  | { type: 'TIMER_UPDATE'; payload: TimerData }
+  | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
  * the socket broadcaster. This mirrors the ad-hoc interface previously found
  * inside the compiled `server.js` and centralizes it here for reuse.
  */
-/**
- * BroadcastData is the shape sent by server services into the broadcaster.
- * Use the canonical UnifiedStateMessage where possible; here we expose a
- * lightweight alias so services can pass partial state updates.
- */
-export type BroadcastData = Partial<UnifiedStateMessage>
 
 // --- Client Input Command Interfaces ---
 
