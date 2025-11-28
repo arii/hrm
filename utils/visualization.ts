@@ -1,4 +1,4 @@
-// File: utils/visualization.ts (MUI Visualization Utilities)
+// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.

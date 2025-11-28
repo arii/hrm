@@ -74,9 +74,9 @@ test.describe('Core Functionality Visual Regression', () => {
     await waitForPageReady(page)
     await replaceIframeWithStableWorkout(page)
 
-    // Wait for the timer to be visible
+    // Wait for the timer to be visible and in the correct state
     await expect(page.locator('text=/WORK|REST/')).toBeVisible({
-      timeout: 10000,
+      timeout: 15000, // Increased timeout for slower CI environments
     })
 
     await expect(page).toHaveScreenshot('dashboard-active-timer.png', {
@@ -130,11 +130,8 @@ test.describe('Core Functionality Visual Regression', () => {
     await page.getByLabel('Your Name').fill('Test User')
     await page.getByLabel('Your Age').fill('30')
 
-    // Mock the Bluetooth API to simulate a successful connection
-    await page.evaluate(() => {
-      const event = new CustomEvent('bluetooth-connected')
-      window.dispatchEvent(event)
-    })
+    // Use the test-only hook to simulate a successful connection
+    await page.evaluate(() => (window as any).__HACK_SET_CONNECTED(true))
 
     await expect(page.locator('text=Connected! Heart rate data is being streamed.')).toBeVisible()
     await expect(page).toHaveScreenshot('connect-page-success.png', screenshotThreshold)

@@ -85,15 +85,12 @@ export default function ConnectPage() {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
 
-  // Test-only hook to allow Playwright to simulate a connection
+  // Test-only hook to allow Playwright to directly set the connected state
   useEffect(() => {
-    const handleTestConnection = () => setIsConnected(true)
     if (process.env.NODE_ENV === 'development' || typeof window.__TEST_READY__ !== 'undefined') {
-      window.addEventListener('bluetooth-connected', handleTestConnection)
-    }
-    return () => {
-      if (process.env.NODE_ENV === 'development' || typeof window.__TEST_READY__ !== 'undefined') {
-        window.removeEventListener('bluetooth-connected', handleTestConnection)
+      // Expose a function on the window object for Playwright to call
+      ;(window as any).__HACK_SET_CONNECTED = (state: boolean) => {
+        setIsConnected(state)
       }
     }
   }, [])
@@ -211,6 +208,7 @@ export default function ConnectPage() {
           <Alert severity="warning" sx={{ mt: 2 }}>
             Connected but no heart rate detected. Make sure your heart rate
             monitor is properly positioned and active.
+.
           </Alert>
         )}
 
