@@ -30,6 +30,17 @@ const baseTimerData: TimerData = {
 describe('TimerControls', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+
+    // Mock the fetch call for Spotify devices to prevent console warnings
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: 'test-device-id', name: 'Test Device', is_active: true },
+          ]),
+      })
+    ) as jest.Mock
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
