@@ -38,26 +38,19 @@
     "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
     "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
     "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
-<<<<<<< HEAD
+    "release:patch": "pnpm run verify && pnpm version patch -m \"release: patch %s\" && git push --follow-tags",
+    "release:minor": "pnpm run verify && pnpm version minor -m \"release: minor %s\" && git push --follow-tags",
+    "release:major": "pnpm run verify && pnpm version major -m \"release: major %s\" && git push --follow-tags",
     "verify": "ts-node scripts/verify-and-publish.ts",
     "commit:verified": "pnpm run verify && git add test-proof.json && git commit",
     "release:patch": "pnpm run verify && pnpm version patch && git push --follow-tags",
     "release:minor": "pnpm run verify && pnpm version minor && git push --follow-tags",
     "release:major": "pnpm run verify && pnpm version major && git push --follow-tags"
-||||||| b0fc632
-    "release:patch": "pnpm version patch -m \"release: patch %s\"",
-    "release:minor": "pnpm version minor -m \"release: minor %s\"",
-    "release:major": "pnpm version major -m \"release: major %s\"",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "npm run verify && git add test-proof.json && git commit"
-=======
-    "release:patch": "pnpm version patch -m \"release: patch %s\"",
-    "release:minor": "pnpm version minor -m \"release: minor %s\"",
-    "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "npm run verify && git add test-proof.json && git commit"
->>>>>>> origin/leader
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
