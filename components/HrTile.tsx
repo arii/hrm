@@ -36,16 +36,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
       >
         <CardContent sx={{ p: 0 }}>
           {/* Giant Percentage - should dominate the tile */}
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
-              fontWeight: 900,
-              lineHeight: 0.85,
-              my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            }}
-          >
+          <Typography variant="hrPercentage">
             {percentMax}%
           </Typography>
           <Typography
@@ -60,11 +51,8 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           </Typography>
           {name && !/^(user|new user)$/i.test(name) && (
             <Typography
-              variant="subtitle1"
+              variant="hrLabel"
               sx={{
-                fontWeight: 700,
-                fontSize: { xs: '1rem', sm: '1.1rem' },
-                letterSpacing: '0.05em',
                 mt: 1, // Add some margin top to separate from BPM
                 textOverflow: 'ellipsis', // Truncate with ellipsis
                 whiteSpace: 'nowrap', // Prevent wrapping

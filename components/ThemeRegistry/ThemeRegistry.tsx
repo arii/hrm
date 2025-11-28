@@ -13,7 +13,51 @@ import { createTheme, ThemeProvider } from '@mui/material/styles'
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
 
 // --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
+const theme = createTheme({
+  typography: {
+    // Apply responsive font sizes to the h1 variant
+    h1: {
+      fontFamily: 'var(--font-roboto-mono), monospace',
+      fontSize: '4rem', // Default size
+      fontWeight: 700,
+      '@media (min-width:600px)': {
+        fontSize: '6rem', // sm
+      },
+      '@media (min-width:900px)': {
+        fontSize: '8rem', // md
+      },
+      '@media (min-width:1200px)': {
+        fontSize: '10rem', // lg
+      },
+    },
+    // Custom variant for the large HR percentage display
+    hrPercentage: {
+      fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+      fontSize: '6rem',
+      fontWeight: 600,
+      lineHeight: 0.85,
+      textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      '@media (min-width:600px)': {
+        fontSize: '7rem',
+      },
+      '@media (min-width:900px)': {
+        fontSize: '8rem',
+      },
+    },
+    // Custom variant for the HR tile label (BPM, Name)
+    hrLabel: {
+      fontSize: '1.1rem',
+      fontWeight: 500,
+      letterSpacing: '0.05em',
+    },
+    // Custom variant for control panel labels
+    controlLabel: {
+      fontSize: '0.95rem',
+      fontWeight: 500,
+      color: 'white',
+    },
+  },
+})
 // ------------------------------
 
 type ThemeRegistryProps = {

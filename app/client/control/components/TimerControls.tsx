@@ -155,6 +155,7 @@ const TimerControls = () => {
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ mb: 2 }}>
           <Typography
+	    variant="controlLabel"
             sx={{
               color: 'white',
               fontWeight: 'medium',
@@ -226,7 +227,9 @@ const TimerControls = () => {
         {timerData.mode === 'TABATA' && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
+              <Typography
+		variant="controlLabel" 
+		 sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
                 Timer Presets
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -267,7 +270,8 @@ const TimerControls = () => {
                   EMOM (60/60)
                 </Button>
               </Stack>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+              <Typography variant="controlLabel" sx={{ mb: 2 }}>
+                {' '}
                 Work Duration (seconds)
               </Typography>
               <Stack
