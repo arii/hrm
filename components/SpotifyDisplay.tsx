@@ -1,5 +1,5 @@
 'use client'
-// File: components/SpotifyDisplay.tsx
+// File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -245,8 +245,30 @@ const SpotifyDisplay = () => {
           mb: 0,
         }}
       >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* WebSocket Status Indicator */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor:
+                  connectionStatus === 'Connected'
+                    ? 'success.main'
+                    : connectionStatus === 'Connecting'
+                    ? 'warning.main'
+                    : 'error.main',
+                transition: 'background-color 0.3s ease',
+              }}
+            />
+            <Typography variant="caption" sx={{ color: 'grey.400' }}>
+              {connectionStatus}
+            </Typography>
+          </Box>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, textAlign: 'center' }}>
             {displayTrackName} {displayArtist}
           </Typography>
           {spotifyAuthenticated && !isReady && (

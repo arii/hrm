@@ -89,11 +89,7 @@ export const WebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    if (
-      typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN ||
-      wsRef.current?.readyState === WebSocket.CONNECTING
-    ) {
+    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
       return
     }
 
@@ -169,23 +165,8 @@ export const WebSocketProvider = ({
   useEffect(() => {
     connect()
 
-    // Add listeners for browser events to trigger reconnection
-    const handleConnectionEvents = () => {
-      if (wsRef.current?.readyState !== WebSocket.OPEN) {
-        console.log(
-          '[WebSocketProvider] Browser event triggered reconnect check.'
-        )
-        connect()
-      }
-    }
-
-    window.addEventListener('online', handleConnectionEvents)
-    document.addEventListener('visibilitychange', handleConnectionEvents)
-
     return () => {
       disconnect()
-      window.removeEventListener('online', handleConnectionEvents)
-      document.removeEventListener('visibilitychange', handleConnectionEvents)
     }
   }, [connect, disconnect])
 

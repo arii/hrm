@@ -69,9 +69,14 @@ const TimerDisplay = ({
     phaseLabel = 'READY'
   }
 
+  const ariaLabel = `${phaseLabel}. Time: ${displayTime}.`
+
   return (
     <Card
       elevation={6}
+      role="timer"
+      aria-live="polite"
+      aria-label={ariaLabel}
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
@@ -173,13 +178,11 @@ const TimerDisplay = ({
         {/* Giant Timer Display */}
         <Typography
           component="div"
-          role="timer"
-          aria-live="polite"
+          variant="h1"
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
+            // fontSize and fontWeight are now controlled by the h1 variant
             letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,

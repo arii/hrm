@@ -1,4 +1,4 @@
-// File: components/HrmTiles.tsx
+// File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -49,14 +49,24 @@ const HrmTiles = () => {
 
   return (
     <>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
-        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
-      </Grid>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
-        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
-      </Grid>
+      {[...Array(4)].map((_, index) => (
+        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item-skeleton" key={index}>
+          <Skeleton
+            variant="rectangular"
+            height={250}
+            sx={{
+              borderRadius: 3,
+              animation: 'fadeIn 0.5s ease-in-out',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+            }}
+          />
+        </Grid>
+      ))}
     </>
-  )
+  );
 }
 
 export default HrmTiles

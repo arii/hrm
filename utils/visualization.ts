@@ -1,4 +1,4 @@
-// File: utils/visualization.ts (MUI Visualization Utilities)
+// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
@@ -20,49 +20,39 @@ export const HR_ZONES = [
   {
     name: 'Warm-up',
     min: 0.5,
-    color: 'text-blue-400',
-    progressColor: '#3b82f6', // Darker blue
-    bgColor: '#3b82f6', // Darker blue
+    color: 'secondary',
+    progressColor: '#1976D2', // secondary.main from theme
+    bgColor: '#1976D2',
   },
   {
     name: 'Fat Burn',
     min: 0.6,
-    color: 'text-green-500',
-    progressColor: '#22c55e',
-    bgColor: '#4CAF50',
+    color: 'success',
+    progressColor: '#388E3C', // success.main from theme
+    bgColor: '#388E3C',
   },
   {
     name: 'Cardio',
     min: 0.7,
-    color: 'text-yellow-500',
-    progressColor: '#d97706', // Darker orange/yellow
-    bgColor: '#d97706', // Darker orange/yellow
+    color: 'warning',
+    progressColor: '#FBC02D', // warning.main from theme
+    bgColor: '#FBC02D',
   },
   {
     name: 'Peak',
     min: 0.85,
-    color: 'text-red-500',
-    progressColor: '#ef4444',
-    bgColor: '#F44336',
+    color: 'primary',
+    progressColor: '#D32F2F', // primary.main from theme
+    bgColor: '#D32F2F',
   },
   {
     name: 'Max',
     min: 0.95,
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
+    color: 'default',
+    progressColor: '#9333ea', // Keeping a distinct purple for Max
     bgColor: '#9C27B0',
   },
 ]
-
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: '#2196F3', // Zone 1: Warm-up
-  green: '#4CAF50', // Zone 2: Fat Burn
-  yellow: '#FFEB3B', // Zone 3: Cardio
-  red: '#F44336', // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
-}
 
 interface HrZoneProps {
   zone: string

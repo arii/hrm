@@ -18,26 +18,26 @@ const theme = createTheme({
   // Color Palette - Vibrant fitness-focused colors
   palette: {
     primary: {
-      main: '#F44336', // Red - matches Peak HR zone, high energy
-      light: '#EF5350',
-      dark: '#D32F2F',
+      main: '#D32F2F', // Red - matches Peak HR zone, high energy
+      light: '#F44336',
+      dark: '#C62828',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#2196F3', // Blue - matches Warm-up zone
-      light: '#42A5F5',
-      dark: '#1976D2',
+      main: '#1976D2', // Blue - matches Warm-up zone
+      light: '#2196F3',
+      dark: '#0D47A1',
       contrastText: '#FFFFFF',
     },
     success: {
-      main: '#4CAF50', // Green - matches Fat Burn zone
-      light: '#66BB6A',
-      dark: '#388E3C',
+      main: '#388E3C', // Green - matches Fat Burn zone
+      light: '#4CAF50',
+      dark: '#1B5E20',
     },
     warning: {
-      main: '#FFEB3B', // Yellow - matches Cardio zone
-      light: '#FFF176',
-      dark: '#FBC02D',
+      main: '#FBC02D', // Yellow - matches Cardio zone
+      light: '#FFEB3B',
+      dark: '#FFA000',
       contrastText: '#000000',
     },
     error: {
@@ -105,10 +105,10 @@ const theme = createTheme({
       lineHeight: 1.4,
     },
 
-    // Component labels
+    // Component labels (HR Label)
     h5: {
-      fontSize: '1.25rem', // 20px
-      fontWeight: 600,
+      fontSize: '1.1rem',
+      fontWeight: 500,
       lineHeight: 1.5,
     },
 
@@ -125,9 +125,10 @@ const theme = createTheme({
       lineHeight: 1.5,
     },
 
-    // Secondary body text
+    // Secondary body text (Control Labels)
     body2: {
-      fontSize: '0.875rem', // 14px
+      fontSize: '0.95rem',
+      fontWeight: 500,
       lineHeight: 1.5,
     },
 
