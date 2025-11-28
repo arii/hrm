@@ -16,12 +16,14 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+let getUnifiedStateSnapshot: (hrmData: HrmData[]) => ServerMessage
 
 const clientData = new Map<string, HrmData>()
 
 interface Services {
   tabataService: TabataTimer
   spotifyService: SpotifyPolling
+  getUnifiedStateSnapshot: (hrmData: HrmData[]) => ServerMessage
 }
 
 /**
@@ -31,6 +33,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  getUnifiedStateSnapshot = services.getUnifiedStateSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
@@ -45,17 +48,6 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
       age: 30,
     }
     clientData.set(clientId, newClient)
-
-    // Send initial state upon connection
-    const initialStateMessage: ServerMessage = {
-      type: 'INITIAL_STATE',
-      payload: {
-        hrmData: Array.from(clientData.values()),
-        timerData: tabataServiceInstance.getState(),
-        spotifyData: spotifyServiceInstance.getState(),
-      },
-    }
-    ws.send(JSON.stringify(initialStateMessage))
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -76,7 +68,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
-  _ws: WebSocket,
+  ws: WebSocket,
   messageString: string,
   clientId: string
 ) => {
@@ -158,6 +150,15 @@ const handleIncomingMessage = (
             message.deviceId,
             message.volume,
             message.playlistUri
+          )
+        }
+        break
+      }
+
+      case 'GET_STATE': {
+        if (getUnifiedStateSnapshot) {
+          ws.send(
+            JSON.stringify(getUnifiedStateSnapshot(Array.from(clientData.values())))
           )
         }
         break

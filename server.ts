@@ -19,6 +19,7 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
+import { HrmData, ServerMessage } from './types/websocket.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
@@ -91,7 +92,25 @@ app
     const tabataService = new TabataTimer(broadcast)
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
+    // NEW: Function to get the current unified state snapshot
+    const getUnifiedStateSnapshot = (
+      hrmData: HrmData[] = []
+    ): ServerMessage => {
+      // Assuming all persistent services have a public getState() method
+      return {
+        type: 'INITIAL_STATE',
+        payload: {
+          timerData: tabataService.getState(),
+          spotifyData: spotifyService.getState(),
+          hrmData: hrmData,
+        },
+      }
+    }
+    initSocketManager(wss, {
+      tabataService,
+      spotifyService,
+      getUnifiedStateSnapshot, // NEW: Pass the re-hydration function
+    })
 
     // --- Express Routing ---
 
@@ -105,6 +124,10 @@ app
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
+      if (req.url === '/api/debug/ping') {
+        res.status(200).send('pong')
+        return
+      }
       // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&

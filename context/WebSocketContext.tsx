@@ -133,6 +133,11 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+
+      // *** NEW: Initiate State Re-hydration Handshake ***
+      // Send a GET_STATE command to request the current server-side state.
+      sendData({ type: 'GET_STATE' })
+      // The state update will be received via the standard ws.onmessage handler.
     }
 
     ws.onclose = (event) => {

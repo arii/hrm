@@ -45,3 +45,8 @@ export const broadcast = (message: ServerMessage) => {
     }
   })
 }
+
+// Exported for testing purposes ONLY
+export const __TEST_ONLY_reset_wss_instance = () => {
+  wssInstance = null
+}
