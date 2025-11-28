@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+<<<<<<< HEAD
+  "timestamp": "2025-11-27T08:24:39.584Z",
+  "sourceHash": "b35a8821434fb42eac02e8e1ce38c5c3ca5514ac",
+  "status": "success",
+  "details": {
+    "infrastructure": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0
+=======
+  "timestamp": "2025-11-28T06:06:48.866Z",
+  "sourceHash": "b054c9f0c9f42ac6a70ffdeffdec0bd9c67d86d4",
+  "status": "failure",
+  "details": {
+    "infrastructure": {
+      "total": 4,
+      "passed": 2,
+      "failed": 2
+>>>>>>> 01603a1 (Apply patch /tmp/deb5b353-19be-4497-b740-6f18d11f8a0c.patch)
+    },
+    "simple-smoke": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "spotify-debug": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "visual-regression": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    }
+  }
+}
