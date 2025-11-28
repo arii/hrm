@@ -164,11 +164,16 @@ test.describe('Visual Regression Tests', () => {
       timeout: 5000,
     })
 
+    // Wait for Tabata controls to be visible
+    await expect(
+      controlPage.getByRole('button', { name: 'Tabata (20/10)' })
+    ).toBeVisible({ timeout: 10000 })
+
     // Ensure control panel inputs are visible
     // 1. Get the locator for the input using its test ID
-    const workInput = controlPage.getByTestId('work-duration-input')
+    const workInput = controlPage.getByLabel('Work duration in seconds').locator('input')
 
-    const restInput = controlPage.getByTestId('rest-duration-input')
+    const restInput = controlPage.getByLabel('Rest duration in seconds').locator('input')
 
     // 2. (Recommended) Wait for it to be visible
     // This ensures the component has rendered before you try to fill it.
@@ -180,8 +185,8 @@ test.describe('Visual Regression Tests', () => {
     await restInput.fill('5')
 
     // Start timer
+    await controlPage.getByRole('button', { name: 'START', exact: true }).click({ force: true })
 
-    await controlPage.click('button:has-text("START")', { force: true })
 
     // wait for braodcast messages to propagate
     // Use the recommended, specific locator
@@ -236,7 +241,7 @@ test.describe('Visual Regression Tests', () => {
         dashboardPage.locator('text=/\\d+s/'),
         dashboardPage.locator('text=/WORK|REST|READY|RUNNING/'),
         // Mask the entire HR tiles section (all dynamic HR data)
-        dashboardPage.locator('[data-testid="hr-tile-grid-item"]'),
+        dashboardPage.getByLabel('Heart Rate Monitor Tile'),
       ],
     })
   })
@@ -251,13 +256,11 @@ test.describe('Visual Regression Tests', () => {
     ).toBeVisible()
 
     // Wait for HR tiles to load on dashboard
-    await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
+    await expect(dashboardPage.getByLabel('Heart Rate Monitor Tile').first()).toBeVisible({
       timeout: 8000,
     })
 
-    const firstTile = dashboardPage
-      .locator('[data-testid="hr-tile-grid-item"]')
-      .first()
+    const firstTile = dashboardPage.getByLabel('Heart Rate Monitor Tile').first()
     await expect(firstTile).toHaveScreenshot('hr-tiles-section.png', {
       animations: 'disabled',
       caret: 'hide',

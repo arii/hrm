@@ -37,39 +37,39 @@ test.describe('Mobile HRM Assessment', () => {
     })
 
     // Timer Configuration
-    await page.fill('input[aria-label="Work duration in seconds"]', '45')
-    await page.fill('input[aria-label="Rest duration in seconds"]', '15')
+    await page.getByLabel('Work duration in seconds').fill('45')
+    await page.getByLabel('Rest duration in seconds').fill('15')
     await expect(
-      page.locator('input[aria-label="Work duration in seconds"]')
+      page.getByLabel('Work duration in seconds')
     ).toHaveValue('45')
     await expect(page).toHaveScreenshot('mobile-04-timer-config.png', {
       fullPage: true,
     })
 
     // Start Timer
-    await page.click('button:has-text("START")')
-    await expect(page.locator('button:has-text("PAUSE")')).toBeVisible()
+    await page.getByRole('button', { name: 'START' }).click()
+    await expect(page.getByRole('button', { name: 'PAUSE' })).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-05-timer-running.png', {
       fullPage: true,
     })
 
     // Pause Timer
-    await page.click('button:has-text("PAUSE")')
-    await expect(page.locator('button:has-text("RESUME")')).toBeVisible()
+    await page.getByRole('button', { name: 'PAUSE' }).click()
+    await expect(page.getByRole('button', { name: 'RESUME' })).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-06-timer-paused.png', {
       fullPage: true,
     })
 
     // Resume Timer
-    await page.click('button:has-text("RESUME")')
-    await expect(page.locator('button:has-text("PAUSE")')).toBeVisible()
+    await page.getByRole('button', { name: 'RESUME' }).click()
+    await expect(page.getByRole('button', { name: 'PAUSE' })).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-07-timer-resumed.png', {
       fullPage: true,
     })
 
     // Stop Timer
-    await page.click('button:has-text("STOP")')
-    await expect(page.locator('button:has-text("START")')).toBeVisible()
+    await page.getByRole('button', { name: 'STOP' }).click()
+    await expect(page.getByRole('button', { name: 'START' })).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-08-timer-stopped.png', {
       fullPage: true,
     })
@@ -114,16 +114,16 @@ test.describe('Mobile HRM Assessment', () => {
     })
 
     // Test zone buttons
-    await page.click('button:has-text("Zone 3")')
+    await page.getByRole('button', { name: 'Zone 3' }).click()
     await expect(page.locator('input[type="number"]')).toHaveValue('165')
     await expect(page).toHaveScreenshot('mobile-13-zone-selected.png', {
       fullPage: true,
     })
 
     // Start streaming
-    await page.click('button:has-text("START")')
+    await page.getByRole('button', { name: 'START' }).click()
     await expect(
-      page.locator('button:has-text("STOP Streaming")')
+      page.getByRole('button', { name: 'STOP Streaming' })
     ).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-14-streaming-active.png', {
       fullPage: true,
@@ -162,21 +162,21 @@ test.describe('Mobile HRM Assessment', () => {
     })
 
     // Navigate to Phone Controls
-    await page.click('text=Phone Controls')
+    await page.getByRole('button', { name: 'Phone Controls' }).click()
     await expect(page.locator('text=/Timer Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-19-nav-controls.png', {
       fullPage: true,
     })
 
     // Navigate to Stream HR
-    await page.click('text=Stream HR')
+    await page.getByRole('button', { name: 'Stream HR' }).click()
     await expect(page.locator('text=/Bluetooth HRM/')).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-20-nav-stream.png', {
       fullPage: true,
     })
 
     // Back to Dashboard
-    await page.click('text=Dashboard')
+    await page.getByRole('button', { name: 'Dashboard' }).click()
     await expect(page.locator('text=/WORK:|Timer/')).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-21-nav-back-dashboard.png', {
       fullPage: true,
@@ -204,13 +204,13 @@ test.describe('Mobile HRM Assessment', () => {
     }
 
     // Test mode switching
-    await page.click('text=Stopwatch')
+    await page.getByRole('button', { name: 'Stopwatch' }).click()
     await expect(page.locator('text=/Stopwatch Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-23-mode-switch.png', {
       fullPage: true,
     })
 
-    await page.click('text=Tabata')
+    await page.getByRole('button', { name: 'Tabata' }).click()
     await expect(page.locator('text=/Tabata Mode/')).toBeVisible()
     await expect(page).toHaveScreenshot('mobile-24-mode-back.png', {
       fullPage: true,

@@ -32,7 +32,7 @@ const HrmTiles = () => {
                 sm={6}
                 lg={3}
                 key={user.clientId}
-                data-testid="hr-tile-grid-item"
+                aria-label="Heart Rate Monitor Tile"
               >
                 <HrTile
                   name={user.name || ''}
@@ -49,10 +49,10 @@ const HrmTiles = () => {
 
   return (
     <>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+      <Grid item xs={12} sm={6} lg={3}>
         <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
       </Grid>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+      <Grid item xs={12} sm={6} lg={3}>
         <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
       </Grid>
     </>

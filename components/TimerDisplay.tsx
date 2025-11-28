@@ -72,6 +72,7 @@ const TimerDisplay = ({
   return (
     <Card
       elevation={6}
+      aria-label="Timer Display"
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
