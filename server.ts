@@ -13,12 +13,12 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import { UnifiedStateMessage } from './types/websocket'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
@@ -70,16 +70,36 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
+    // Declare spotifyServiceInitialized here
+    let spotifyServiceInitialized: boolean = true
+
+    // Function to safely broadcast state from services (Used by Tabata and Spotify services)
+    const broadcastState = (data: Partial<UnifiedStateMessage>): void => {
+      // Use the socket manager to handle the actual broadcast
+      if (wss.clients.size > 0) {
+        wss.clients.forEach((client: WebSocket) => {
+          if (client.readyState === 1) {
+            // 1 means OPEN
+            // Note: We use the STATE_UPDATE type defined in types/websocket.ts
+            client.send(
+              JSON.stringify({
+                type: 'STATE_UPDATE',
+                spotifyServiceInitialized,
+                ...data,
+              })
+            ) // Include spotifyServiceInitialized
+          }
+        })
+      }
+    }
+
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      spotifyService = await SpotifyPolling.create(broadcastState)
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
+      spotifyServiceInitialized = false // Set to false on failure
       // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},
@@ -88,7 +108,7 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
-    const tabataService = new TabataTimer(broadcast)
+    const tabataService = new TabataTimer(broadcastState)
 
     // 3. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, { tabataService, spotifyService })

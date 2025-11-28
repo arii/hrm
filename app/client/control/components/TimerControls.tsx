@@ -143,8 +143,10 @@ const TimerControls = () => {
   return (
     <Card
       sx={{
-        boxShadow: 3,
+        boxShadow: 6,
         mb: 2,
+        backgroundColor: '#000000',
+        color: '#EF4444',
         position: 'sticky',
         top: 16,
         zIndex: 1000,
