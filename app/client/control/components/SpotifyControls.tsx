@@ -199,7 +199,6 @@ const SpotifyControls = () => {
               sx={{ mb: 2 }}
             >
               <IconButton
-                aria-label="Previous track"
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
@@ -210,7 +209,6 @@ const SpotifyControls = () => {
                 <SkipPrevious />
               </IconButton>
               <IconButton
-                aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
                 onClick={() =>
                   sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
@@ -224,7 +222,6 @@ const SpotifyControls = () => {
                 {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
-                aria-label="Next track"
                 onClick={() => sendSpotifyCommand('NEXT')}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
@@ -239,7 +236,6 @@ const SpotifyControls = () => {
             <Stack direction="row" spacing={1} alignItems="center">
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
               <Slider
-                aria-label="Volume control"
                 value={volume}
                 onChange={(_, val) => setVolume(val as number)}
                 onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}

@@ -12,7 +12,7 @@ import {
 } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { UnifiedStateMessage } from '../../types/websocket'
+import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 
@@ -31,8 +31,8 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
-  let broadcastedMessages: Partial<UnifiedStateMessage>[]
-  let broadcastFn: (data: Partial<UnifiedStateMessage>) => void
+  let broadcastedMessages: ServerMessage[]
+  let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
     player: {
       getCurrentlyPlayingTrack: jest.Mock
@@ -52,8 +52,8 @@ describe('Services Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (data: Partial<UnifiedStateMessage>) => {
-      broadcastedMessages.push(data)
+    broadcastFn = (message: ServerMessage) => {
+      broadcastedMessages.push(message)
     }
 
     // Mock TokenManager to return a valid token
@@ -105,7 +105,11 @@ describe('Services Integration', () => {
 
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
-      expect(lastMessage.timerData?.mode).toBe('STOPWATCH')
+      if (lastMessage?.type === 'TIMER_UPDATE') {
+        expect(lastMessage.payload.mode).toBe('STOPWATCH')
+      } else {
+        expect(lastMessage?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should broadcast timer state when mode changes to TABATA', () => {
@@ -116,7 +120,11 @@ describe('Services Integration', () => {
 
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
-      expect(lastMessage.timerData?.mode).toBe('TABATA')
+      if (lastMessage?.type === 'TIMER_UPDATE') {
+        expect(lastMessage.payload.mode).toBe('TABATA')
+      } else {
+        expect(lastMessage?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should broadcast timer state when work duration changes', () => {
@@ -126,7 +134,11 @@ describe('Services Integration', () => {
 
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
-      expect(lastMessage.timerData?.workDuration).toBe(45)
+      if (lastMessage?.type === 'TIMER_UPDATE') {
+        expect(lastMessage.payload.workDuration).toBe(45)
+      } else {
+        expect(lastMessage?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should broadcast timer state when rest duration changes', () => {
@@ -136,7 +148,11 @@ describe('Services Integration', () => {
 
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
-      expect(lastMessage.timerData?.restDuration).toBe(12)
+      if (lastMessage?.type === 'TIMER_UPDATE') {
+        expect(lastMessage.payload.restDuration).toBe(12)
+      } else {
+        expect(lastMessage?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should broadcast timer state when timer starts', () => {
@@ -146,8 +162,12 @@ describe('Services Integration', () => {
 
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(true)
-      expect(lastMessage.timerData?.currentPhase).toBe('PREPARE')
+      if (lastMessage?.type === 'TIMER_UPDATE') {
+        expect(lastMessage.payload.isRunning).toBe(true)
+        expect(lastMessage.payload.currentPhase).toBe('PREPARE')
+      } else {
+        expect(lastMessage?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should broadcast timer state during phase transitions', () => {
@@ -156,7 +176,9 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(5000) // Complete PREPARE phase
 
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
+      const phases = broadcastedMessages
+        .map((m) => (m.type === 'TIMER_UPDATE' ? m.payload.currentPhase : null))
+        .filter(Boolean)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')
@@ -216,11 +238,16 @@ describe('Services Integration', () => {
       jest.advanceTimersByTime(5000)
 
       const broadcasts = broadcastedMessages.filter(
-        (m) => m.timerData?.soundToPlay
+        (m) => m.type === 'TIMER_UPDATE' && m.payload.soundToPlay
       )
 
       expect(broadcasts.length).toBeGreaterThan(0)
-      expect(broadcasts[0].timerData?.soundEventId).toBeGreaterThan(0)
+      const firstBroadcast = broadcasts[0]
+      if (firstBroadcast?.type === 'TIMER_UPDATE') {
+        expect(firstBroadcast.payload.soundEventId).toBeGreaterThan(0)
+      } else {
+        expect(firstBroadcast?.type).toBe('TIMER_UPDATE')
+      }
     })
 
     it('should support Spotify volume commands', async () => {
@@ -264,7 +291,7 @@ describe('Services Integration', () => {
 
       tabataTimer.setMode('STOPWATCH')
       const timerBroadcast = broadcastedMessages.find(
-        (m) => m.timerData?.mode === 'STOPWATCH'
+        (m) => m.type === 'TIMER_UPDATE' && m.payload.mode === 'STOPWATCH'
       )
 
       expect(timerBroadcast).toBeDefined()
@@ -284,7 +311,9 @@ describe('Services Integration', () => {
       jest.advanceTimersByTime(30000) // WORK
       jest.advanceTimersByTime(10000) // REST
 
-      const phases = broadcastedMessages.map((m) => m.timerData?.currentPhase)
+      const phases = broadcastedMessages
+        .map((m) => (m.type === 'TIMER_UPDATE' ? m.payload.currentPhase : null))
+        .filter(Boolean)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')
