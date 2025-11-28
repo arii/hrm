@@ -63,7 +63,7 @@ const useSpotifyWebPlayback = () => {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const { error, setError } = useError()
+  const { addError } = useError()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   /**
@@ -97,15 +97,15 @@ const useSpotifyWebPlayback = () => {
         )
         setIsAuthenticated(true)
         cb(accessToken)
-      } catch (e) {
+      } catch (error) {
         const message =
-          e instanceof Error ? e.message : 'An unknown error occurred.'
-        setError(`Authentication failed: ${message}`)
+          error instanceof Error ? error.message : 'An unknown error occurred.'
+        addError(`Authentication failed: ${message}`, 'persistent')
         setIsAuthenticated(false)
         console.warn(`[Spotify Web Playback] getOAuthToken error: ${message}`)
       }
     },
-    [setError]
+    [addError]
   )
 
   // Effect to load the Spotify SDK script and initialize the player
@@ -181,7 +181,8 @@ const useSpotifyWebPlayback = () => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)
         setDeviceId(device_id)
         setIsReady(true)
-        setError(null)
+        // No singular error state to clear, errors are managed in a list
+        // addError functions manages individual errors with an id
       })
 
       spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -195,17 +196,17 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
         console.error('[Spotify Web Playback] Initialization Error:', message)
-        setError(`Initialization failed: ${message}`)
+        addError(`Initialization failed: ${message}`, 'persistent')
       })
 
       spotifyPlayer.addListener('authentication_error', ({ message }) => {
         console.error('[Spotify Web Playback] Authentication Error:', message)
-        setError(`Authentication failed: ${message}`)
+        addError(`Authentication failed: ${message}`, 'persistent')
       })
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
-        setError(`Account error: ${message}. A Premium account is required.`)
+        addError(`Account error: ${message}. A Premium account is required.`, 'persistent')
       })
 
       setPlayer(spotifyPlayer)
@@ -237,7 +238,7 @@ const useSpotifyWebPlayback = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getOAuthToken])
 
-  return { player, isReady, deviceId, error, isAuthenticated }
+  return { player, isReady, deviceId, isAuthenticated }
 }
 
 export default useSpotifyWebPlayback

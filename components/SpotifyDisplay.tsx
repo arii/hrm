@@ -40,7 +40,6 @@ const SpotifyDisplay = () => {
     player,
     isReady,
     deviceId,
-    error: webPlaybackError,
     isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback()
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
@@ -250,7 +249,7 @@ const SpotifyDisplay = () => {
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {displayTrackName} {displayArtist}
           </Typography>
-          {spotifyAuthenticated && !isReady && !webPlaybackError && (
+          {spotifyAuthenticated && !isReady && (
             <Typography
               variant="caption"
               sx={{
@@ -278,21 +277,6 @@ const SpotifyDisplay = () => {
               }}
             >
               🎵 Browser Player Active
-            </Typography>
-          )}
-          {webPlaybackError && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.9,
-                backgroundColor: 'error.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              ⚠️ Player Error
             </Typography>
           )}
         </Box>
