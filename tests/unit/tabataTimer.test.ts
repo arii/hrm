@@ -4,21 +4,19 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { TimerData } from '../../types/websocket'
+import { ServerMessage, TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<
-    (data: Partial<{ timerData: TimerData }>) => void
-  >
+  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   let broadcastedStates: TimerData[]
 
   beforeEach(() => {
     jest.useFakeTimers()
     broadcastedStates = []
-    broadcastMock = jest.fn((data) => {
-      if (data.timerData) {
-        broadcastedStates.push(data.timerData)
+    broadcastMock = jest.fn((message) => {
+      if (message.type === 'TIMER_UPDATE') {
+        broadcastedStates.push(message.payload)
       }
     })
     timer = new TabataTimer(broadcastMock)

@@ -9,11 +9,11 @@ import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
-  UnifiedStateMessage,
+  ServerMessage,
 } from '../types/websocket.js'
+import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Define service instances to be managed
-let wssInstance: WebSocketServer
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 
@@ -28,11 +28,11 @@ interface Services {
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (wss: WebSocketServer, services: Services) => {
-  wssInstance = wss
+  initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
 
-  wssInstance.on('connection', (ws: WebSocket) => {
+  wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     console.log(`WebSocket Client connected: ${clientId}`)
 
@@ -47,14 +47,15 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     clientData.set(clientId, newClient)
 
     // Send initial state upon connection
-    ws.send(
-      JSON.stringify({
-        type: 'STATE_UPDATE',
+    const initialStateMessage: ServerMessage = {
+      type: 'INITIAL_STATE',
+      payload: {
         hrmData: Array.from(clientData.values()),
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
-      } as UnifiedStateMessage)
-    )
+      },
+    }
+    ws.send(JSON.stringify(initialStateMessage))
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -63,26 +64,11 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       clientData.delete(clientId)
-      broadcastState()
+      broadcast({
+        type: 'HRM_UPDATE',
+        payload: Array.from(clientData.values()),
+      })
     })
-  })
-}
-
-const broadcastState = () => {
-  const message: UnifiedStateMessage = {
-    type: 'STATE_UPDATE',
-    hrmData: Array.from(clientData.values()),
-    timerData: tabataServiceInstance.getState(),
-    spotifyData: spotifyServiceInstance.getState(),
-  }
-  console.log(
-    `[broadcastState] Broadcasting to ${wssInstance.clients.size} clients. HRM Data:`,
-    message.hrmData
-  )
-  wssInstance.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message))
-    }
   })
 }
 
@@ -133,7 +119,10 @@ const handleIncomingMessage = (
             clientData.get(clientId)
           )
         }
-        broadcastState()
+        broadcast({
+          type: 'HRM_UPDATE',
+          payload: Array.from(clientData.values()),
+        })
         break
       }
 
