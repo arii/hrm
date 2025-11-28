@@ -10,17 +10,17 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
-import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import TabataTimer from '../../services/tabata-timer'
+import { SpotifyPolling } from '../../services/spotify-polling'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import { SpotifyTokenManager } from '../../services/spotify-token-manager'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('../../services/spotify-token-manager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),

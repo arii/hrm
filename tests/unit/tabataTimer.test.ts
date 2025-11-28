@@ -3,7 +3,7 @@
  * Tests timer state transitions, mode changes, and configuration
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
-import TabataTimer from '../../services/tabataTimer'
+import TabataTimer from '../../services/tabata-timer'
 import { ServerMessage, TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {

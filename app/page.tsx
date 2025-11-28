@@ -7,12 +7,12 @@
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
-import GoogleDocViewer from '../components/GoogleDocViewer'
-import HrmTiles from '../components/HrmTiles'
-import SpotifyDisplay from '../components/SpotifyDisplay'
-import TimerDisplay from '../components/TimerDisplay'
+import ErrorBoundary from '../components/error-boundary'
+import ErrorFallback from '../components/error-fallback'
+import GoogleDocViewer from '../components/google-doc-viewer'
+import HrmTiles from '../components/hrm-tiles'
+import SpotifyDisplay from '../components/spotify-display'
+import TimerDisplay from '../components/timer-display'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const DOC_URL =

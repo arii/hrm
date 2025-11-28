@@ -1,5 +1,5 @@
-import { getPresetPlaylists } from '../../../services/spotifyPlaylistService'
-import { presetPlaylists } from '../../../services/seedData'
+import { getPresetPlaylists } from '../../../services/spotify-playlist-service'
+import { presetPlaylists } from '../../../services/seed-data'
 
 describe('Spotify Playlist Service', () => {
   it('should return the correct preset playlists', () => {

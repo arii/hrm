@@ -4,7 +4,7 @@
  * Tests Spotify commands and volume control
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyPolling } from '../../services/spotify-polling'
 import { SpotifyData } from '../../types/websocket'
 import logger from '../../utils/logger'
 
@@ -17,7 +17,7 @@ jest.mock('../../utils/logger', () => ({
 }))
 
 // Mock the SpotifyTokenManager module
-jest.mock('../../services/spotifyTokenManager', () => {
+jest.mock('../../services/spotify-token-manager', () => {
   const SpotifyTokenManager = jest.fn().mockImplementation(() => {
     return {
       getValidAccessToken: jest

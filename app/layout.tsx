@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import BottomNavBar from '@/components/BottomNavBar'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import ErrorDisplay from '@/components/ErrorDisplay'
-import ErrorFallback from '@/components/ErrorFallback'
-import Footer from '@/components/Footer'
-import Providers from '@/components/Providers'
+import BottomNavBar from '@/components/bottom-nav-bar'
+import ErrorBoundary from '@/components/error-boundary'
+import ErrorDisplay from '@/components/error-display'
+import ErrorFallback from '@/components/error-fallback'
+import Footer from '@/components/footer'
+import Providers from '@/components/providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
-import TimerSoundProvider from '@/components/TimerSoundProvider'
+import TimerSoundProvider from '@/components/timer-sound-provider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
@@ -16,7 +16,7 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-const roboto_mono = Roboto_Mono({
+const robotoMono = Roboto_Mono({
   subsets: ['latin'],
   variable: '--font-roboto-mono',
 })
@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${roboto_mono.variable}`}>
+      <body className={`${inter.variable} ${robotoMono.variable}`}>
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>

@@ -4,7 +4,7 @@
  * It listens to WebSocket state for sound cues and applies user-defined volume.
  */
 import { useCallback, useEffect, useRef } from 'react'
-import { audioManager } from '../utils/audioManager'
+import { audioManager } from '../utils/audio-manager'
 import useVolumePreference from './useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 

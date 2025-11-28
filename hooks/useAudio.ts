@@ -2,7 +2,7 @@
  * Audio hook for handling timer sound effects
  */
 import { useEffect, useRef } from 'react'
-import { audioManager } from '../utils/audioManager'
+import { audioManager } from '../utils/audio-manager'
 import { TimerData } from '../types/websocket'
 
 export const useAudio = (timerData: TimerData, volume?: number) => {

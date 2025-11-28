@@ -4,8 +4,8 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { SpotifyPolling } from '../services/spotify-polling.js'
+import TabataTimer from '../services/tabata-timer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,

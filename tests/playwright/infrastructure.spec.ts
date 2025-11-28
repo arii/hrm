@@ -56,7 +56,7 @@ test.describe('Infrastructure & Scripts', () => {
   test('npm run dev should start and listen', async () => {
     test.setTimeout(60000); // Give Next.js time to compile/boot
 
-    const PORT = 3005;
+    const PORT = 3000;
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
       stdio: 'pipe',
@@ -81,7 +81,7 @@ test.describe('Infrastructure & Scripts', () => {
   test('start-production.sh should start successfully', async () => {
      test.setTimeout(30000);
 
-     const PORT = 3006;
+     const PORT = 3000;
      // Mock env vars usually provided by .env.production
      const env = {
        ...process.env,

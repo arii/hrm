@@ -15,9 +15,9 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
+import { SpotifyPolling } from './services/spotify-polling.js'
+import TabataTimer from './services/tabata-timer.js'
+import { initSocketManager } from './utils/socket-manager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
