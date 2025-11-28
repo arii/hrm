@@ -36,8 +36,8 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 1, // Use 1 worker for visual tests to avoid race conditions
-  timeout: 30000, // Adjusted for potentially longer server startups
+  workers: process.env.CI ? '75%' : '50%', // Use a percentage of available CPUs
+  timeout: 60000, // Increased timeout for parallel execution
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,

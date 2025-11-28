@@ -53,17 +53,35 @@ const useBluetoothHRM = () => {
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
 
-  // Use a ref to track the current status to break the dependency cycle
+  // --- Refs to break dependency cycles and stabilize callbacks ---
   const statusRef = useRef(deviceStatus)
+  const connectionStatusRef = useRef(connectionStatus)
+  const sendDataRef = useRef(sendData)
+  const savedDeviceRef = useRef(savedDevice)
+
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
+
+  useEffect(() => {
+    connectionStatusRef.current = connectionStatus
+  }, [connectionStatus])
+
+  useEffect(() => {
+    sendDataRef.current = sendData
+  }, [sendData])
+
+  useEffect(() => {
+    savedDeviceRef.current = savedDevice
+  }, [savedDevice])
+  // --- End of Refs ---
 
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
       if (statusRef.current.startsWith('Connected')) return true
 
-      if (connectionStatus !== 'Connected') {
+      // Use ref to get latest connection status without being a dependency
+      if (connectionStatusRef.current !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
         return false
       }
@@ -72,7 +90,7 @@ const useBluetoothHRM = () => {
         setDeviceStatus('Connecting...') // More specific status
 
         // 1. Try to reconnect to saved device first, otherwise request new device
-        let device = savedDevice
+        let device = savedDeviceRef.current // Use ref
         if (!device) {
           const savedDeviceId = getCookie('hrm_device_id')
           if (savedDeviceId && navigator.bluetooth.getDevices) {
@@ -187,7 +205,7 @@ const useBluetoothHRM = () => {
         return false // Signal failure
       }
     },
-    [connectionStatus, sendData, savedDevice]
+    [] // No dependencies needed due to usage of refs
   )
 
   return {
