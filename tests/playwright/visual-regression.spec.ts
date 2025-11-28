@@ -138,12 +138,11 @@ test.describe('Visual Regression Tests', () => {
 
   test('Control Panel - timer and music controls', async () => {
     // Capture screenshot
-    console.log("skipping flakey test")
-    /*await expect(controlPage).toHaveScreenshot('control-panel.png', {
+    await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
       animations: 'disabled',
       caret: 'hide',
-    })*/
+    })
   })
 
   test('Mock HRM Client - test data input', async () => {

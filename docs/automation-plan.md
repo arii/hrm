@@ -1,9 +1,6 @@
 # Automation Plan for Chrome DevTools Workflows
 
-**Status**: ⚠️ **Pending Implementation**
 **Last updated:** 2025-11-10
-
-This document outlines a plan to automate end-to-end verification of the HRM application. The scripts and tools described in this plan have **not yet been implemented**. This document serves as a roadmap for future automation work.
 
 ## Goal
 
@@ -14,7 +11,7 @@ Automate end-to-end verification of the HRM application by launching the custom 
 ### Node.js / npm Ecosystem (Recommended)
 
 - **Playwright (Node)** provides first-class Chromium control, built-in screenshot APIs, video capture, and resilient waiting primitives.
-- **Chrome DevTools MCP client (TypeScript)** already exists in this repo s workflows, allowing reuse of established launch flags and VS Code tasks.
+- **Chrome DevTools MCP client (TypeScript)** already exists in this repos workflows, allowing reuse of established launch flags and VS Code tasks.
 - **Integration ease**: aligns with existing TypeScript codebase, npm scripts, and CI tooling; no cross-language dependency management.
 - **Community support**: modern ecosystem, active maintenance, fits well with Next.js stack.
 
@@ -31,7 +28,7 @@ Use **Node-based automation** (Playwright + optional Chrome DevTools MCP helpers
 ## Implementation Roadmap
 
 1. **Environment Orchestration Script**
-   - Create `scripts/automation/start-dev-with-chrome.ts` (run via ts-node) to:
+   - Create `scripts/start-dev-with-chrome.ts` (run via ts-node) to:
      - Ensure dev server (`npm run dev:clean`) is running in background.
      - Launch Chrome with required debugging flags (reusing documented flags) and record PID.
      - Optionally start the Chrome DevTools MCP server for advanced workflows.

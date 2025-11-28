@@ -92,7 +92,6 @@ web_modules/
 
 # Playwright test artifacts
 playwright-report/
-playwright-report.json
 test-results/
 test-recordings/
 tests/playwright/screenshots/
@@ -106,3 +105,13 @@ diff.txt
 server.log
 test-update.log
 running_notes.md.backup
+
+# Test results and recordings
+test-results/
+playwright-report/
+test-recordings/
+tests/playwright/screenshots/
+tests/playwright/*-actual.png
+tests/playwright/*-diff.png
+
+~/.config/
