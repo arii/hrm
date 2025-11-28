@@ -21,6 +21,8 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpec from './lib/swagger.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -113,6 +115,7 @@ app
 
     // --- Express Routing ---
 
+<<<<<<< HEAD
     // --- Health Check Endpoints ---
     // Liveness probe - is the server running?
     expressApp.get('/health/live', (_req: Request, res: Response) => {
@@ -142,6 +145,16 @@ app
       res.status(httpStatus).json(health)
     })
 
+||||||| db56f8f
+=======
+    // Swagger UI
+    expressApp.use(
+      '/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec)
+    )
+
+>>>>>>> origin/leader
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
