@@ -59,11 +59,10 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+import { ServerMessage } from '../../types/websocket'
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
-  let broadcastMock: jest.Mock<
-    (data: Partial<{ spotifyData: SpotifyData }>) => void
-  >
+  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   let broadcastedStates: SpotifyData[]
 
   beforeEach(async () => {
@@ -81,9 +80,9 @@ describe('SpotifyPolling Service', () => {
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
     broadcastedStates = []
-    broadcastMock = jest.fn((data) => {
-      if (data.spotifyData) {
-        broadcastedStates.push(data.spotifyData)
+    broadcastMock = jest.fn((message) => {
+      if (message.type === 'SPOTIFY_UPDATE') {
+        broadcastedStates.push(message.payload)
       }
     })
 
