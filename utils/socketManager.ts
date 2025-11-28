@@ -12,6 +12,9 @@ import {
   ServerMessage,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { verifyToken } from '../lib/token.js'
+import { IncomingMessage } from 'http'
+import { JWT } from 'next-auth/jwt'
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
@@ -24,6 +27,10 @@ interface Services {
   spotifyService: SpotifyPolling
 }
 
+interface AuthenticatedWebSocket extends WebSocket {
+  session?: JWT
+}
+
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
@@ -32,19 +39,44 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
 
-  wss.on('connection', (ws: WebSocket) => {
-    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    console.log(`WebSocket Client connected: ${clientId}`)
+  wss.on(
+    'connection',
+    async (ws: AuthenticatedWebSocket, req: IncomingMessage) => {
+      try {
+        const url = new URL(req.url || '', `ws://${req.headers.host}`)
+        const token = url.searchParams.get('token')
+        const session = await verifyToken(token)
+        if (!session) {
+          throw new Error('Invalid session')
+        }
+        ws.session = session
+        console.log(`WebSocket Client authenticated: ${session.sub}`)
+      } catch (error) {
+        console.error(
+          'WebSocket Authentication Error:',
+          (error as Error).message
+        )
+        ws.close(1008, 'Unauthorized')
+        return
+      }
 
-    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const newClient: HrmData = {
-      clientId,
-      value: 0,
-      maxHr: 185,
-      // name intentionally undefined until first HRM_INPUT provides one
-      age: 30,
-    }
-    clientData.set(clientId, newClient)
+      if (!ws.session) {
+        ws.close(1008, 'Unauthorized')
+        return
+      }
+
+      const clientId = ws.session.sub as string
+      console.log(`WebSocket Client connected: ${clientId}`)
+
+      // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
+      const newClient: HrmData = {
+        clientId,
+        value: 0,
+        maxHr: 185,
+        name: ws.session.name || 'Anonymous',
+        age: 30,
+      }
+      clientData.set(clientId, newClient)
 
     // Send initial state upon connection
     const initialStateMessage: ServerMessage = {

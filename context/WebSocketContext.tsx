@@ -17,6 +17,7 @@ import {
   ServerMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { useSession } from 'next-auth/react'
 
 interface AppState {
   hrmData: HrmData[]
@@ -57,7 +58,8 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const wsUrl = serverUrl || getWebSocketURL()
+  const { data: session } = useSession()
+  const [wsUrl, setWsUrl] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingActions = useRef<ClientCommandMessage[]>([])
@@ -94,6 +96,31 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  useEffect(() => {
+    const fetchTokenAndConnect = async () => {
+      if (session) {
+        try {
+          const response = await fetch('/api/auth/session-token')
+          if (response.ok) {
+            const data = await response.json()
+            const baseUrl = serverUrl || getWebSocketURL()
+            const urlWithToken = `${baseUrl}?token=${data.token}`
+            setWsUrl(urlWithToken)
+          } else {
+            setWsUrl(null)
+          }
+        } catch (error) {
+          console.error('Failed to fetch session token:', error)
+          setWsUrl(null)
+        }
+      } else {
+        setWsUrl(null)
+      }
+    }
+
+    fetchTokenAndConnect()
+  }, [session, serverUrl])
+
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
     if (reconnectTimeoutRef.current) {
@@ -107,7 +134,11 @@ export const WebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      !wsUrl ||
+      typeof window === 'undefined' ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return
     }
 
