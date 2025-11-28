@@ -1,166 +1,93 @@
 # HRM Testing Guide
 
-## Test Commands Overview
+This guide provides a comprehensive overview of the testing commands, structure, and best practices for the HRM application.
 
-### Development Testing
+## Primary Test Commands
 
-```bash
-# Start development server
-npm run dev
+These are the most frequently used commands for testing and code quality checks.
 
-# Run visual regression tests (headless)
-npm run test:visual
+| Command                  | Description                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:visual`      | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes.                               |
+| `npm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                                                |
+| `npm run test:unit`        | Executes the Jest unit test suite for testing individual components and business logic.                                                   |
+| `npm run lint`             | Runs ESLint to check for code quality and style issues.                                                                                  |
+| `npm run format`           | Formats the entire codebase using Prettier to ensure consistent styling.                                                                 |
 
-# Run tests with browser visible
-npm run test:visual:headed
+---
 
-# Update visual test snapshots after UI changes
-npm run test:visual:update
-```
+## All Test Commands
 
-### Clean Testing (Restart Server)
+### Visual & E2E Testing
 
-```bash
-# Kill all processes, start server, run tests
-npm run test:clean
+- **`npm run test:visual`**: Runs the main visual regression test suite.
+- **`npm run test:visual:headed`**: Runs the visual tests with a visible browser for debugging.
+- **`npm run test:visual:update`**: Updates the visual test snapshots.
+- **`npm run test:comprehensive`**: Runs a longer, more detailed E2E test suite covering full user journeys.
+- **`npm run test:visual:report`**: Opens a detailed web report of the last Playwright test run.
 
-# Kill all processes, start server, update snapshots
-npm run test:clean:update
+### Unit Testing
 
-# Kill all running processes manually
-npm run kill-all
-```
+- **`npm run test:unit`**: Runs all Jest unit tests.
+- **`npm run test:unit:coverage`**: Runs unit tests and generates a code coverage report.
 
-### Comprehensive Testing
+### Server & Process Management
 
-```bash
-# Run full user journey tests with progress tracking
-npm run test:comprehensive
-
-
-
-# View detailed test report in browser
-npm run test:visual:report
-```
+- **`npm run test:clean`**: Shuts down any running server instances, starts a fresh server, and runs the visual tests.
+- **`npm run kill-all`**: A utility script to find and kill all running Node.js processes related to the application, useful for clearing a stuck server.
+- **`npm run pm2:logs`**: Displays the logs from the PM2 process manager when the application is running in production mode.
 
 ### Code Quality
 
-```bash
-# Run ESLint checks
-npm run lint
+- **`npm run lint`**: Lints the codebase.
+- **`npm run lint:fix`**: Automatically fixes fixable linting errors.
+- **`npm run format`**: Formats all code with Prettier.
+- **`npm run format:check`**: Checks for formatting issues without modifying files.
 
-# Fix ESLint issues automatically
-npm run lint:fix
-
-# Format code with Prettier
-npm run format
-
-# Check code formatting
-npm run format:check
-```
-
-### Integration Testing
-
-```bash
-# Test Spotify integration
-npm run verify:spotify
-```
-
-## Test Use Cases
-
-### 1. Visual Regression Testing
-
-**Purpose**: Ensure UI changes don't break existing layouts
-**Command**: `npm run test:visual`
-**When to use**: Before committing UI changes
-
-### 2. Snapshot Updates
-
-**Purpose**: Update test snapshots after intentional UI changes
-**Command**: `npm run test:visual:update`
-**When to use**: After confirming UI changes are correct
-
-### 3. Interactive Testing
-
-**Purpose**: Debug test failures with visible browser
-**Command**: `npm run test:visual:headed`
-**When to use**: When tests fail and you need to see what's happening
-
-### 4. Clean Environment Testing
-
-**Purpose**: Test with fresh server state
-**Command**: `npm run test:clean`
-**When to use**: When tests fail due to server state issues
-
-### 5. Comprehensive Assessment
-
-**Purpose**: Full user journey testing with progress tracking
-**Command**: `npm run test:comprehensive`
-**When to use**: Before releases or major changes
-
-### 6. Process Management
-
-**Purpose**: Clean up stuck processes
-**Command**: `npm run kill-all`
-**When to use**: When tests hang or server won't start
+---
 
 ## Test Structure
 
-### Visual Regression Tests
+The project uses a combination of Jest for unit tests and Playwright for end-to-end (E2E) and visual regression testing.
 
-- **File**: `tests/playwright/visual-regression.spec.ts`
-- **Coverage**: Dashboard, control panel, mock HRM, connect page
-- **Screenshots**: Stored in `tests/playwright/screenshots/`
+### Unit Tests (`tests/unit`)
 
-### Comprehensive Assessment Tests
+- **Purpose**: To test individual functions, components, and services in isolation.
+- **Framework**: Jest with `@testing-library/react`.
+- **Location**: `tests/unit/`
+- **Configuration**: `jest.config.cjs`
 
-- **File**: `tests/playwright/comprehensive-assessment.spec.ts`
-- **Coverage**: Complete user journeys, HR zone testing, multi-device coordination
-- **Features**: Progress tracking, video recording, stable iframe content
+### E2E and Visual Tests (`tests/playwright`)
 
-## Test Configuration
+- **Purpose**: To verify complete user workflows and ensure the UI remains consistent.
+- **Framework**: Playwright.
+- **Location**: `tests/playwright/`
+- **Key Files**:
+  - `visual-regression.spec.ts`: The primary suite for screenshot-based testing of core UI components.
+  - `comprehensive-assessment.spec.ts`: Tests longer, more complex user journeys.
+  - `mobile-assessment.spec.ts`: Contains tests specifically for mobile viewports.
+- **Snapshots**: Visual snapshots are stored in a `*-snapshots` directory alongside the test file.
 
-### Playwright Config
+---
 
-- **Browser**: Chromium only (1920x1080)
-- **Workers**: 1 (prevents server race conditions)
-- **Video**: Enabled for comprehensive tests
-- **Screenshots**: On failure only
+## Future Improvements & Test Consolidation Plan
 
-### Page Ready Signals
+The current test suite has some redundancy and opportunities for optimization. The following plan is in place to improve the test suite's efficiency and maintainability.
 
-All pages implement `__TEST_READY__` signals:
+### 1. Consolidate Core Tests
 
-- **Dashboard**: 2 second delay
-- **Control Panel**: 1.5 second delay
-- **Mock HRM**: 1 second delay
+- **Goal**: Reduce the number of redundant tests and screenshots.
+- **Action**: Create a single `core-functionality.spec.ts` that covers the most critical UI components and workflows, reducing the total number of tests from ~29 to ~12.
+- **Benefit**: Faster execution time, lower maintenance overhead, and clearer test focus.
 
-## Troubleshooting
+### 2. Stabilize Unstable Tests
 
-### Common Issues
+- **Goal**: Eliminate flaky tests caused by timing issues.
+- **Action**: Replace fixed delays (`waitForTimeout`) with more resilient waiting strategies, such as waiting for specific network responses, DOM elements to be visible, or WebSocket connection statuses.
+- **Benefit**: More reliable test runs and fewer false positives.
 
-1. **Server not starting**: Run `npm run kill-all` first
-2. **Test timeouts**: Use `npm run test:clean` for fresh server
-3. **Video recording**: Set `RECORD_VIDEO=true` and use pause points
-4. **Snapshot mismatches**: Run `npm run test:visual:update` after confirming changes
+### 3. Optimize Test Performance
 
-### Debug Commands
-
-```bash
-# View test report
-npm run test:visual:report
-
-# Check server logs
-npm run pm2:logs
-
-# Restart server
-npm run pm2:restart
-```
-
-## Best Practices
-
-1. **Always run clean tests** before committing
-2. **Update snapshots carefully** - verify changes are intentional
-3. **Use headed mode** for debugging test failures
-4. **Kill processes** between test runs to avoid conflicts
-5. **Check test reports** for detailed failure information
+- **Goal**: Reduce the overall test execution time.
+- **Action**: Enable parallel test execution in `playwright.config.ts` and reduce the number of screenshots to only the most essential views.
+- **Benefit**: Faster feedback loops for developers and in the CI/CD pipeline.
