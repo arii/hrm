@@ -2,55 +2,24 @@
 // API route for the standalone Spotify playlist selection page
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
-import { authOptions } from '@/lib/auth'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
+import { SpotifyApiService } from '@/services/spotifyApi'
+import { getPresetPlaylists } from '@/services/spotifyPlaylistService'
 import { ApiError } from '@/lib/errors'
 
-/**
- * API route to fetch preset and user Spotify playlists.
- *
- * This endpoint is specifically for the standalone Spotify playlist selection page.
- * It returns both preset playlists (HIIT, Rock, Pop) and the user's personal playlists.
- * Uses the official Spotify Web API TypeScript SDK for type safety and automatic pagination.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with preset and user playlists or an error.
- */
 async function getPlaylists(_req: Request) {
-  // 1. Get the server-side session.
-  const session = await getServerSession(authOptions)
+  const spotifyApiService = SpotifyApiService.getInstance()
+  const sdk = spotifyApiService.getSdk()
 
-  // 2. Check if the session and token exist.
-  if (!session || !session.accessToken) {
-    throw new ApiError(401, 'Not authenticated or token is missing.')
+  if (!sdk) {
+    throw new ApiError(503, 'Spotify service not available')
   }
 
-  // 3. Initialize Spotify SDK with access token
-  const spotify = SpotifyApi.withAccessToken(
-    process.env.SPOTIFY_CLIENT_ID || '',
-    {
-      access_token: session.accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600, // Approximate, actual expiry handled by NextAuth
-      refresh_token: '', // Not needed for this use case
-    }
-  )
+  const playlistsResponse = await sdk.currentUser.playlists.playlists(50)
 
-  // 4. Fetch all user playlists (SDK handles pagination automatically)
-  // Correct syntax for @spotify/web-api-ts-sdk
-  const playlistsResponse = await spotify.currentUser.playlists.playlists(50)
+  const presetPlaylists = getPresetPlaylists()
 
-  // 5. Preset playlists for the standalone page
-  const presetPlaylists = [
-    { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
-    { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
-    { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
-  ]
-
-  // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
   const userPlaylists = playlistsResponse.items.map((playlist) => ({
     id: playlist.id,
     name: playlist.name,

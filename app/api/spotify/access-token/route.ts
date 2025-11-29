@@ -1,44 +1,23 @@
-import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
-import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
+import { SpotifyApiService } from '@/services/spotifyApi'
 
-/**
- * API route to securely provide the Spotify access token to the client.
- *
- * This endpoint is called by the `useSpotifyWebPlayback` hook. It retrieves the
- * access token from the user's server-side session and returns it. This is the
- * recommended way to expose the token to the client-side SDK without exposing
- * it publicly or storing it in an insecure manner.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the access token or an error.
- */
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session (NextAuth automatically refreshes tokens)
-    const session = await getServerSession(authOptions)
+    const spotifyApiService = SpotifyApiService.getInstance()
+    const tokenManager = spotifyApiService.getTokenManager()
 
-    // 2. Check if the session and token exist.
-    if (!session || !session.accessToken) {
-      console.error('[API /access-token] No session or access token found.')
+    // The token manager holds the most up-to-date token, refreshed by the backend services.
+    const accessToken = tokenManager.getSdkAccessToken()
+
+    if (!accessToken) {
       return NextResponse.json(
-        { error: 'Not authenticated or token is missing.' },
+        { error: 'Spotify token not available.' },
         { status: 401 }
       )
     }
 
-    // 3. Check for refresh errors from NextAuth
-    if (session.error === 'RefreshAccessTokenError') {
-      console.error('[API /access-token] Token refresh failed in NextAuth')
-      return NextResponse.json(
-        { error: 'Token refresh failed. Please re-authenticate.' },
-        { status: 401 }
-      )
-    }
-
-    // 4. Return the access token (already refreshed by NextAuth if needed)
     return NextResponse.json({
-      accessToken: session.accessToken,
+      accessToken: accessToken.access_token,
     })
   } catch (error) {
     const message =

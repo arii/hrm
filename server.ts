@@ -15,6 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { SpotifyApiService } from './services/spotifyApi.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -51,8 +52,6 @@ app
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
@@ -60,37 +59,33 @@ app
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
       )
     }
 
-    // 1. Initialize WebSocket Server
-    const wss = new WebSocketServer({ noServer: true })
-
-    // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
+    // 1. Initialize Singleton Services
+    const spotifyApiService = SpotifyApiService.getInstance()
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      await spotifyApiService.initialize()
+      logger.info('Spotify API Service Singleton Initialized successfully.')
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      logger.error({ err: e }, 'SpotifyApiService initialization failed')
       broadcast({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
       })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
     }
+
+    // 2. Initialize WebSocket Server
+    const wss = new WebSocketServer({ noServer: true })
+
+    // 3. Initialize Persistent Services that use the singletons
+    const spotifyService = SpotifyPolling.create(broadcast)
     const tabataService = new TabataTimer(broadcast)
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
+    // 4. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
@@ -113,17 +108,13 @@ app
       ) {
         // Wait a moment for token to be written
         setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
+          // Signal the API service to reload tokens and re-init the SDK
+          await spotifyApiService.setRefreshToken('signal')
 
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
+          // Wait a bit for reload, then force poll
+          setTimeout(() => {
+            spotifyService.forcePollAndBroadcast()
+          }, 500)
         }, 1000)
       }
       return nextRequestHandler(req, res)
@@ -141,22 +132,16 @@ app
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
 
     // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })

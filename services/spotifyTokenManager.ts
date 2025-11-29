@@ -1,7 +1,16 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling'
+import logger from '../utils/logger.js'
+
+// This response type is from the Spotify API when refreshing a token
+export interface SpotifyTokenRefreshResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+  scope: string
+  refresh_token?: string
+}
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -10,7 +19,7 @@ export interface SpotifyTokenPayload {
   refresh_token: string
   expires_in: number
   scope: string
-  obtainedAt: number
+  obtainedAt: number // Timestamp (ms) when the token was obtained
 }
 
 export interface TokenRecord {
@@ -18,45 +27,13 @@ export interface TokenRecord {
   payload: SpotifyTokenPayload
 }
 
+/**
+ * Manages the storage and raw refresh mechanics of Spotify API tokens.
+ * It does not decide WHEN to refresh, only HOW.
+ */
 export class SpotifyTokenManager {
-  /**
-   * Directly set the access token (for command injection/testing).
-   */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token created via setAccessToken.')
-    }
-  }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
 
   constructor(
     private clientId: string,
@@ -67,20 +44,33 @@ export class SpotifyTokenManager {
     this.loadTokens()
   }
 
-  private loadTokens() {
+  /**
+   * Reloads the token from the filesystem.
+   */
+  public loadTokens(): void {
     try {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        logger.info(`Loaded Spotify tokens for: ${this.currentToken.payload.sub}`)
+      } else {
+        this.currentToken = null;
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      logger.warn({ err },'Failed to load Spotify tokens')
+      this.currentToken = null
     }
   }
 
-  private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false
+  /**
+   * Attempts to refresh the access token using the stored refresh token.
+   * @returns {Promise<boolean>} - True if the refresh was successful, false otherwise.
+   */
+  public async refreshToken(): Promise<boolean> {
+    if (!this.currentToken?.payload.refresh_token) {
+      logger.warn('Cannot refresh Spotify token: No refresh token available.')
+      return false
+    }
 
     try {
       const basic = Buffer.from(
@@ -101,16 +91,11 @@ export class SpotifyTokenManager {
 
       if (!response.ok) {
         const errorBody = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errorBody}`)
+        throw new Error(`Spotify token refresh failed with HTTP ${response.status}: ${errorBody}`)
       }
 
-      const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
-      )
+      const data = (await response.json()) as SpotifyTokenRefreshResponse
+      logger.info('Spotify token refresh successful.')
 
       // Update current token with new values
       this.currentToken = {
@@ -132,57 +117,22 @@ export class SpotifyTokenManager {
         'utf8'
       )
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      logger.info(`Refreshed and saved Spotify token for: ${this.currentToken.payload.sub}`)
       return true
     } catch (err) {
-      console.error('Failed to refresh Spotify token:', err)
+      logger.error({ err }, 'Failed to refresh Spotify token')
       return false
     }
   }
 
-  async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
+  /**
+   * Returns the AccessToken object required by the SDK, if a token is present.
+   * This method does NOT check for expiration.
+   * @returns {AccessToken | null}
+   */
+  public getSdkAccessToken(): AccessToken | null {
     if (!this.currentToken) return null
 
-    // Check if token needs refresh
-    const expiresAt =
-      this.currentToken.payload.obtainedAt +
-      this.currentToken.payload.expires_in * 1000
-
-    if (Date.now() >= expiresAt - 60000) {
-      console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
-      )
-      // Refresh if within 1 minute of expiry
-      // Ensure only one refresh happens at a time
-      if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-          })
-      }
-      await this.refreshPromise
-    }
-
-    return this.currentToken.payload.access_token
-  }
-
-  getUserId(): string | null {
-    return this.currentToken?.payload.sub ?? null
-  }
-
-  getCurrentRefreshToken(): string | null {
-    return this.currentToken?.payload.refresh_token ?? null
-  }
-
-  getSdkAccessToken(): AccessToken | null {
-    if (!this.currentToken) return null
     return {
       access_token: this.currentToken.payload.access_token,
       token_type: 'Bearer',
@@ -192,5 +142,13 @@ export class SpotifyTokenManager {
         this.currentToken.payload.obtainedAt +
         this.currentToken.payload.expires_in * 1000,
     }
+  }
+
+  /**
+   * Gets the user ID (sub) from the token payload.
+   * @returns {string | null}
+   */
+  public getUserId(): string | null {
+    return this.currentToken?.payload.sub ?? null
   }
 }
