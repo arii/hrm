@@ -6,8 +6,9 @@
  */
 
 import express, { Request, Response } from 'express'
-import { createServer, IncomingMessage } from 'http'
+import { createServer, IncomingMessage, ServerResponse } from 'http'
 import { Socket } from 'net'
+import { getServerSession } from './lib/session'
 import next from 'next'
 import path from 'path'
 import { parse } from 'url'
@@ -132,17 +133,32 @@ app
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
+      async (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
 
         // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
+          // --- WebSocket Authentication ---
+          // Use a dummy response object as next-auth's getServerSession requires it.
+          const res = new ServerResponse(req)
+          const session = await getServerSession(req, res)
+
+          if (!session) {
+            logger.warn('Unauthorized WebSocket connection attempt denied.')
+            // Politely close the connection with a 401 Unauthorized status code.
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+            socket.destroy()
+            return
+          }
+
+          // If authenticated, proceed with the WebSocket upgrade.
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            // Attach session to the request for context in the 'connection' handler.
+            ;(req as any).session = session
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
+        // If not our WebSocket path, let other handlers (like Next.js) take over.
       }
     )
 
