@@ -169,23 +169,10 @@ async function main() {
   };
   fs.writeFileSync(PROOF_FILE, JSON.stringify(manifest, null, 2));
 
-  // 5. Commit & Push (The Critical Fix)
-  if (globalSuccess) {
-    console.log('\n💾 Committing Proof...');
-    try {
-      execSync(`git add ${PROOF_FILE}`);
-      // Try/Catch handles if the proof file hasn't changed
-      try { execSync('git commit -m "chore: verification proof [skip ci]"'); } catch (e) {}
+  // 5. (Skipped) Commit & Push
+  // test-proof.json is no longer committed to the repo.
 
-      console.log('☁️  Pushing to origin...');
-      execSync('git push'); // <--- This ensures Error 422 doesn't happen
-    } catch (e) {
-      console.error('❌ Git Push Failed:', e.message);
-      process.exit(1);
-    }
-  }
-
-  // 6. Get the SHA *After* the Push
+  // 6. Get the current SHA
   const finalSha = execSync('git rev-parse HEAD').toString().trim();
 
   // 7. Publish Status
