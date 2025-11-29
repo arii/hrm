@@ -327,6 +327,7 @@ const TimerControls = () => {
                       },
                     },
                   }}
+                  aria-label="Work duration in seconds"
                 />
                 <IconButton
                   color="primary"
@@ -403,6 +404,7 @@ const TimerControls = () => {
                       },
                     },
                   }}
+                  aria-label="Rest duration in seconds"
                 />
                 <IconButton
                   color="primary"

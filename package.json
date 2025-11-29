@@ -42,7 +42,7 @@
     "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
-    "commit:verified": "npm run verify"
+    "commit:verified": "npm run verify && git add test-proof.json && git commit"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -74,6 +74,7 @@
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/next": "^8.0.7",
+    "@types/next-auth": "^3.13.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.2",
