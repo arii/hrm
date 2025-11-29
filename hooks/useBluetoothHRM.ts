@@ -154,7 +154,7 @@ const useBluetoothHRM = () => {
               type: 'HRM_INPUT',
               data,
             }
-            sendData(message)
+            sendDataRef.current(message)
           }
         )
 
