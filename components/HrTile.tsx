@@ -63,7 +63,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               variant="subtitle1"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: '1rem', sm: '1.1rem' },
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
                 letterSpacing: '0.05em',
                 mt: 1, // Add some margin top to separate from BPM
                 textOverflow: 'ellipsis', // Truncate with ellipsis
