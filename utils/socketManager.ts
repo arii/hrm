@@ -2,8 +2,9 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
+import { IncomingMessage } from 'http'
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
+import { z } from 'zod'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
@@ -32,11 +33,18 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
 
-  wss.on('connection', (ws: WebSocket) => {
-    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+  wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+    const session = (req as any).session
+    if (!session || !session.user) {
+      console.error('WebSocket connection without a valid session.')
+      ws.close(1008, 'User not authenticated') // 1008: Policy Violation
+      return
+    }
+
+    const clientId = session.user.id || `user-${Math.random().toString(36).substring(2, 9)}`
     console.log(`WebSocket Client connected: ${clientId}`)
 
-    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
+    // Initialize with user data from the session
     const newClient: HrmData = {
       clientId,
       value: 0,
