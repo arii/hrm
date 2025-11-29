@@ -1,5 +1,7 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
+import { useEffect, useState } from 'react'
+import HeartRateGraph from '@/components/HeartRateGraph'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
@@ -9,6 +11,26 @@ import Skeleton from '@mui/material/Skeleton'
 
 const HrmTiles = () => {
   const { hrmData } = useWebSocket()
+  const [heartRateHistory, setHeartRateHistory] = useState<Record<string, { time: number; bpm: number }[]>>({})
+
+  useEffect(() => {
+    if (hrmData.length > 0) {
+      const now = Date.now()
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHeartRateHistory((prevHistory) => {
+        const newHistory = { ...prevHistory }
+        hrmData.forEach((user) => {
+          if (user.clientId) {
+            const userHistory = newHistory[user.clientId] || []
+            const newUserHistory = [...userHistory, { time: now, bpm: user.value }]
+            // Keep the last 50 data points
+            newHistory[user.clientId] = newUserHistory.slice(-50)
+          }
+        })
+        return newHistory
+      })
+    }
+  }, [hrmData])
 
   if (hrmData.length > 0) {
     return (
@@ -40,6 +62,7 @@ const HrmTiles = () => {
                   percentMax={hrZoneProps.percentage}
                   background={hrZoneProps.progressColor}
                 />
+                <HeartRateGraph data={heartRateHistory[user.clientId] || []} />
               </Grid>
             )
           })}
