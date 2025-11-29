@@ -19,6 +19,7 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import TrackInfo from './Spotify/TrackInfo'
 
 interface SpotifyDevice {
   id: string
@@ -216,17 +217,9 @@ const SpotifyDisplay = () => {
   // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
   // or simply showing the controls so the user can transfer playback.
   if (spotifyLoggedIn) {
-    const isWaiting = spotifyData.trackName === 'Awaiting Login...'
-    const displayTrackName = isWaiting
-      ? 'No Active Playback'
-      : spotifyData.trackName
-    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
-
     return (
       <Box
-        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.isPlaying ? 'Playing' : 'Paused'
-        }${isReady ? ', Browser player ready' : ''}`}
+        aria-label={`Spotify player bar`}
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
@@ -246,9 +239,7 @@ const SpotifyDisplay = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {displayTrackName} {displayArtist}
-          </Typography>
+          <TrackInfo />
           {spotifyAuthenticated && !isReady && (
             <Typography
               variant="caption"
