@@ -1,6 +1,14 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+<<<<<<< HEAD:services/spotify-polling.ts
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotify-token-manager.js'
+||||||| 2286026:services/spotifyPolling.ts
+import { SpotifyData, UnifiedStateMessage } from '../types/websocket'
+import { SpotifyTokenManager } from './spotifyTokenManager.js'
+=======
+import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SpotifyTokenManager } from './spotifyTokenManager.js'
+>>>>>>> origin/leader:services/spotifyPolling.ts
 import logger from '../utils/logger.js'
 
 // Utility: Safely parse JSON, fallback to text

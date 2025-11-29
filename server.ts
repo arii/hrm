@@ -15,10 +15,21 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+<<<<<<< HEAD
 import { SpotifyPolling } from './services/spotify-polling.js'
 import TabataTimer from './services/tabata-timer.js'
 import { initSocketManager } from './utils/socket-manager.js'
 import { broadcast } from './utils/broadcast.js'
+||||||| 2286026
+import { SpotifyPolling } from './services/spotifyPolling.js'
+import TabataTimer from './services/tabataTimer.js'
+import { initSocketManager } from './utils/socketManager.js'
+=======
+import { SpotifyPolling } from './services/spotifyPolling.js'
+import TabataTimer from './services/tabataTimer.js'
+import { initSocketManager } from './utils/socketManager.js'
+import { broadcast } from './utils/broadcast.js'
+>>>>>>> origin/leader
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
@@ -38,7 +49,7 @@ logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
-const handle = app.getRequestHandler()
+const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
@@ -126,7 +137,7 @@ app
           }
         }, 1000)
       }
-      return handle(req, res)
+      return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event

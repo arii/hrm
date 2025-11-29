@@ -10,9 +10,19 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
+<<<<<<< HEAD
 import TabataTimer from '../../services/tabata-timer'
 import { SpotifyPolling } from '../../services/spotify-polling'
 import { ServerMessage } from '../../types/websocket'
+||||||| 2286026
+import TabataTimer from '../../services/tabataTimer'
+import { SpotifyPolling } from '../../services/spotifyPolling'
+import { UnifiedStateMessage } from '../../types/websocket'
+=======
+import TabataTimer from '../../services/tabataTimer'
+import { SpotifyPolling } from '../../services/spotifyPolling'
+import { ServerMessage } from '../../types/websocket'
+>>>>>>> origin/leader
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotify-token-manager'
 
