@@ -18,7 +18,7 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 
-const clientData = new Map<string, HrmData>()
+const hrmClients = new Map<string, HrmData>()
 
 interface Services {
   tabataService: TabataTimer
@@ -33,6 +33,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
 
+<<<<<<< HEAD
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     const session = (req as any).session
     if (!session || !session.user) {
@@ -42,23 +43,50 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
     }
 
     const clientId = session.user.id || `user-${Math.random().toString(36).substring(2, 9)}`
+||||||| 2286026
+  wssInstance.on('connection', (ws: WebSocket) => {
+    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+=======
+  wss.on('connection', (ws: WebSocket) => {
+    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+>>>>>>> origin/leader
     console.log(`WebSocket Client connected: ${clientId}`)
 
+<<<<<<< HEAD
     // Initialize with user data from the session
     const newClient: HrmData = {
+||||||| 2286026
+    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
+    const newClient: HrmData = {
+=======
+    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
+    const defaultClientData: HrmData = {
+>>>>>>> origin/leader
       clientId,
       value: 0,
       maxHr: 185,
       // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     }
-    clientData.set(clientId, newClient)
+    hrmClients.set(clientId, defaultClientData)
 
     // Send initial state upon connection
+<<<<<<< HEAD
     const initialStateMessage: ServerMessage = {
       type: 'INITIAL_STATE',
       payload: {
         hrmData: Array.from(clientData.values()),
+||||||| 2286026
+    ws.send(
+      JSON.stringify({
+        type: 'STATE_UPDATE',
+        hrmData: Array.from(clientData.values()),
+=======
+    const initialStateMessage: ServerMessage = {
+      type: 'INITIAL_STATE',
+      payload: {
+        hrmData: Array.from(hrmClients.values()),
+>>>>>>> origin/leader
         timerData: tabataServiceInstance.getState(),
         spotifyData: spotifyServiceInstance.getState(),
       },
@@ -71,11 +99,22 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
 
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
+<<<<<<< HEAD
       clientData.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
         payload: Array.from(clientData.values()),
       })
+||||||| 2286026
+      clientData.delete(clientId)
+      broadcastState()
+=======
+      hrmClients.delete(clientId)
+      broadcast({
+        type: 'HRM_UPDATE',
+        payload: Array.from(hrmClients.values()),
+      })
+>>>>>>> origin/leader
     })
   })
 }
@@ -85,19 +124,19 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
  */
 const handleIncomingMessage = (
   _ws: WebSocket,
-  messageString: string,
+  jsonMessage: string,
   clientId: string
 ) => {
   console.log(
     `[socketManager] INCOMING MESSAGE from ${clientId}:`,
-    messageString
+    jsonMessage
   )
   try {
     // Parse and validate message type for type-safe routing
-    const parsedJson = JSON.parse(messageString)
-    console.log(`[socketManager] PARSED JSON:`, parsedJson)
+    const parsedMessage = JSON.parse(jsonMessage)
+    console.log(`[socketManager] PARSED JSON:`, parsedMessage)
 
-    const message = ClientCommandMessageSchema.parse(parsedJson) // Use Zod for parsing and validation
+    const message = ClientCommandMessageSchema.parse(parsedMessage) // Use Zod for parsing and validation
 
     console.log(
       `[socketManager] Received message from ${clientId}:`,
@@ -106,31 +145,40 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'HRM_INPUT': {
-        const existingData = clientData.get(clientId)
+        const existingClientData = hrmClients.get(clientId)
         console.log(
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingData,
+          existingClientData,
           'newValue:',
           message.data.value
         )
-        if (existingData) {
+        if (existingClientData) {
           // Filter out null values to avoid overwriting valid data
-          const updateData = Object.fromEntries(
+          const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          clientData.set(clientId, {
-            ...existingData,
-            ...updateData,
+          hrmClients.set(clientId, {
+            ...existingClientData,
+            ...updatedClientProperties,
           })
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            clientData.get(clientId)
+            hrmClients.get(clientId)
           )
         }
+<<<<<<< HEAD
         broadcast({
           type: 'HRM_UPDATE',
           payload: Array.from(clientData.values()),
         })
+||||||| 2286026
+        broadcastState()
+=======
+        broadcast({
+          type: 'HRM_UPDATE',
+          payload: Array.from(hrmClients.values()),
+        })
+>>>>>>> origin/leader
         break
       }
 

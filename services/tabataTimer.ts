@@ -34,12 +34,20 @@ interface DualModeTimerState {
 
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
+<<<<<<< HEAD
   private broadcastUpdate: (message: ServerMessage) => void
   private interval: NodeJS.Timeout | null = null
+||||||| 2286026
+  private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+  private interval: NodeJS.Timeout | null = null
+=======
+  private broadcastUpdate: (message: ServerMessage) => void
+  private timerInterval: NodeJS.Timeout | null = null
+>>>>>>> origin/leader
   private startTime: number | null = null
-  private runningTotal: number = 0 // Stored elapsed time when paused (in seconds)
+  private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
 
-  private state: DualModeTimerState = {
+  private timerState: DualModeTimerState = {
     mode: 'TABATA', // Default mode
     isRunning: false,
     currentPhase: 'IDLE',
@@ -57,8 +65,8 @@ class TabataTimer {
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
-    this.state.soundToPlay = sound
-    this.state.soundEventId += 1
+    this.timerState.soundToPlay = sound
+    this.timerState.soundEventId += 1
     // Broadcast immediately so clients can play sound
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
@@ -68,12 +76,12 @@ class TabataTimer {
   }
 
   private handleCountdownCue() {
-    const phase = this.state.currentPhase
+    const phase = this.timerState.currentPhase
     if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN') {
       return
     }
 
-    const remaining = this.state.timeRemaining
+    const remaining = this.timerState.timeRemaining
     if (remaining <= 0) {
       return
     }
@@ -90,36 +98,36 @@ class TabataTimer {
   // Adapt getState to return the expected TimerData structure for the front-end
   public getState(): TimerData {
     return {
-      isRunning: this.state.isRunning,
-      currentPhase: this.state.currentPhase,
-      timeRemaining: this.state.timeRemaining,
-      timeElapsed: this.state.timeElapsed,
-      mode: this.state.mode,
-      workDuration: this.state.workDuration,
-      restDuration: this.state.restDuration,
-      ...(this.state.soundToPlay !== undefined && { soundToPlay: this.state.soundToPlay }),
-      soundEventId: this.state.soundEventId,
+      isRunning: this.timerState.isRunning,
+      currentPhase: this.timerState.currentPhase,
+      timeRemaining: this.timerState.timeRemaining,
+      timeElapsed: this.timerState.timeElapsed,
+      mode: this.timerState.mode,
+      workDuration: this.timerState.workDuration,
+      restDuration: this.timerState.restDuration,
+      ...(this.timerState.soundToPlay !== undefined && { soundToPlay: this.timerState.soundToPlay }),
+      soundEventId: this.timerState.soundEventId,
     }
   }
 
   // --- Core Timer Logic ---
 
-  private tick = () => {
-    if (!this.state.isRunning || !this.startTime) return
+  private updateTimer = () => {
+    if (!this.timerState.isRunning || !this.startTime) return
 
     if (
-      this.state.mode === 'STOPWATCH' &&
-      this.state.currentPhase === 'RUNNING'
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase === 'RUNNING'
     ) {
       // COUNT UP (STOPWATCH)
       const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-      this.state.timeElapsed = this.runningTotal + currentDelta
+      this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
     }
 
     // This applies to TABATA and PREPARE modes (which count down)
-    if (this.state.mode === 'TABATA' || this.state.currentPhase === 'PREPARE') {
-      const nextRemaining = Math.max(0, this.state.timeRemaining - 1)
-      this.state.timeRemaining = nextRemaining
+    if (this.timerState.mode === 'TABATA' || this.timerState.currentPhase === 'PREPARE') {
+      const nextRemaining = Math.max(0, this.timerState.timeRemaining - 1)
+      this.timerState.timeRemaining = nextRemaining
 
       if (nextRemaining <= 0) {
         this.transitionPhase()
@@ -132,76 +140,84 @@ class TabataTimer {
   }
 
   private startTimer() {
-    if (this.state.isRunning) return
+    if (this.timerState.isRunning) return
 
-    this.state.isRunning = true
+    this.timerState.isRunning = true
     this.startTime = Date.now()
 
     // --- UNIVERSAL PREPARE LOGIC ---
     // If starting from IDLE, always begin with the PREPARE countdown.
-    if (this.state.currentPhase === 'IDLE') {
-      this.state.currentPhase = 'PREPARE'
-      this.state.timeRemaining = START_COUNTDOWN_DURATION
+    if (this.timerState.currentPhase === 'IDLE') {
+      this.timerState.currentPhase = 'PREPARE'
+      this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
     // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, runningTotal is used to resume count up.
+    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
 
+<<<<<<< HEAD
     this.interval = setInterval(this.tick, 1000)
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+||||||| 2286026
+    this.interval = setInterval(this.tick, 1000)
+    this.broadcastState({ timerData: this.getState() })
+=======
+    this.timerInterval = setInterval(this.updateTimer, 1000)
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+>>>>>>> origin/leader
   }
 
   private pauseTimer() {
-    if (!this.state.isRunning || !this.startTime) return
+    if (!this.timerState.isRunning || !this.startTime) return
 
     if (
-      this.state.mode === 'STOPWATCH' &&
-      this.state.currentPhase === 'RUNNING'
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase === 'RUNNING'
     ) {
-      this.runningTotal = this.state.timeElapsed // Save elapsed time
-      this.state.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+      this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
+      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
     }
 
-    this.state.isRunning = false
-    if (this.interval) clearInterval(this.interval)
-    this.interval = null
+    this.timerState.isRunning = false
+    if (this.timerInterval) clearInterval(this.timerInterval)
+    this.timerInterval = null
     this.startTime = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private stopTimer() {
-    if (this.interval) clearInterval(this.interval)
+    if (this.timerInterval) clearInterval(this.timerInterval)
 
     // Full reset of all time and cycle variables
-    this.state = {
-      ...this.state,
+    this.timerState = {
+      ...this.timerState,
       isRunning: false,
       currentPhase: 'IDLE',
       timeElapsed: 0,
-      timeRemaining: this.state.mode === 'TABATA' ? this.state.workDuration : 0,
+      timeRemaining: this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
     }
-    delete this.state.soundToPlay
+    delete this.timerState.soundToPlay
     this.resetCountdownMarker()
-    this.runningTotal = 0
+    this.pausedElapsedTime = 0
     this.startTime = null
-    this.interval = null
+    this.timerInterval = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   // --- Configuration ---
   public setConfig(config: { workDuration: number; restDuration: number }) {
-    const sanitizedWork = Math.max(1, Math.floor(config.workDuration))
-    const sanitizedRest = Math.max(0, Math.floor(config.restDuration))
+    const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
+    const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
 
-    this.state.workDuration = sanitizedWork
-    this.state.restDuration = sanitizedRest
+    this.timerState.workDuration = sanitizedWorkDuration
+    this.timerState.restDuration = sanitizedRestDuration
 
     // If the timer is not running, update timeRemaining to reflect the new work duration.
     // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
-    if (!this.state.isRunning && this.state.mode === 'TABATA') {
-      this.state.timeRemaining = sanitizedWork
+    if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
+      this.timerState.timeRemaining = sanitizedWorkDuration
     }
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
@@ -211,34 +227,34 @@ class TabataTimer {
 
   private transitionPhase() {
     this.resetCountdownMarker()
-    switch (this.state.currentPhase) {
+    switch (this.timerState.currentPhase) {
       case 'PREPARE': // Transition from 5s countdown
         this.queueSound('WORK') // Long beep when starting
-        if (this.state.mode === 'STOPWATCH') {
+        if (this.timerState.mode === 'STOPWATCH') {
           // Start Stopwatch counting up
-          this.state.currentPhase = 'RUNNING'
-          this.state.timeElapsed = 0
-          this.runningTotal = 0
+          this.timerState.currentPhase = 'RUNNING'
+          this.timerState.timeElapsed = 0
+          this.pausedElapsedTime = 0
           this.startTime = Date.now() // Reset start time for accurate count up
         } else {
           // Start Tabata WORK phase
-          this.state.currentPhase = 'WORK'
-          this.state.timeRemaining = this.state.workDuration
+          this.timerState.currentPhase = 'WORK'
+          this.timerState.timeRemaining = this.timerState.workDuration
         }
         break
 
       case 'WORK':
         // Infinite loop: WORK -> REST
         this.queueSound('REST')
-        this.state.currentPhase = 'REST'
-        this.state.timeRemaining = this.state.restDuration
+        this.timerState.currentPhase = 'REST'
+        this.timerState.timeRemaining = this.timerState.restDuration
         break
 
       case 'REST':
         // Infinite loop: REST -> WORK
         this.queueSound('WORK')
-        this.state.currentPhase = 'WORK'
-        this.state.timeRemaining = this.state.workDuration
+        this.timerState.currentPhase = 'WORK'
+        this.timerState.timeRemaining = this.timerState.workDuration
         break
 
       case 'IDLE':
@@ -269,12 +285,12 @@ class TabataTimer {
 
   // --- Mode Switching ---
   public setMode(mode: TimerMode) {
-    if (this.state.isRunning) this.stopTimer()
-    this.state.mode = mode
-    this.state.currentPhase = 'IDLE'
-    this.state.timeRemaining = mode === 'TABATA' ? this.state.workDuration : 0
-    this.state.timeElapsed = 0
-    delete this.state.soundToPlay
+    if (this.timerState.isRunning) this.stopTimer()
+    this.timerState.mode = mode
+    this.timerState.currentPhase = 'IDLE'
+    this.timerState.timeRemaining = mode === 'TABATA' ? this.timerState.workDuration : 0
+    this.timerState.timeElapsed = 0
+    delete this.timerState.soundToPlay
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
