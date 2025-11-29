@@ -40,11 +40,13 @@ export default function ConnectPage() {
     connectAndStream,
     deviceStatus,
     isConnected: bluetoothConnected,
-  } = useBluetoothHRM(userName, userAge)
+  } = useBluetoothHRM()
   const [startAutoConnect, setStartAutoConnect] = useState(false)
 
   const connectFn = useCallback(() => {
-    return connectAndStream()
+    const savedName = getCookie('hrm_user_name')
+    const savedAge = getCookie('hrm_user_age')
+    return connectAndStream(savedName, savedAge)
   }, [connectAndStream])
 
   useAutoConnect(connectFn, startAutoConnect)
@@ -85,16 +87,6 @@ export default function ConnectPage() {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
 
-  // Test-only hook to allow Playwright to directly set the connected state
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' || typeof window.__TEST_READY__ !== 'undefined') {
-      // Expose a function on the window object for Playwright to call
-      ;(window as any).__HACK_SET_CONNECTED = (state: boolean) => {
-        setIsConnected(state)
-      }
-    }
-  }, [])
-
   const handleConnect = async () => {
     if (!userName.trim()) {
       alert('Please enter your name')
@@ -107,7 +99,7 @@ export default function ConnectPage() {
     // Save to cookies
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
-    await connectAndStream()
+    await connectAndStream(userName, userAge)
   }
 
   // Find current user's heart rate data from WebSocket
@@ -185,7 +177,7 @@ export default function ConnectPage() {
           )}
         </Box>
 
-        {isConnected && (
+        {isConnected && bluetoothConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
           </Alert>
@@ -208,7 +200,6 @@ export default function ConnectPage() {
           <Alert severity="warning" sx={{ mt: 2 }}>
             Connected but no heart rate detected. Make sure your heart rate
             monitor is properly positioned and active.
-.
           </Alert>
         )}
 

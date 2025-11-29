@@ -47,7 +47,7 @@ const getCookie = (name: string): string => {
   }, '')
 }
 
-const useBluetoothHRM = (userName?: string, userAge?: string) => {
+const useBluetoothHRM = () => {
   // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
@@ -60,7 +60,7 @@ const useBluetoothHRM = (userName?: string, userAge?: string) => {
   }, [deviceStatus])
 
   const connectAndStream = useCallback(
-    async (): Promise<boolean> => {
+    async (userName?: string, userAge?: string): Promise<boolean> => {
       if (statusRef.current.startsWith('Connected')) return true
 
       if (connectionStatus !== 'Connected') {
@@ -187,7 +187,7 @@ const useBluetoothHRM = (userName?: string, userAge?: string) => {
         return false // Signal failure
       }
     },
-    [connectionStatus, sendData, savedDevice, userName, userAge]
+    [connectionStatus, sendData, savedDevice]
   )
 
   return {

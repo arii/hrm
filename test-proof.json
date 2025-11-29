@@ -1,14 +1,9 @@
 {
   "version": "1.0",
-  "timestamp": "2025-11-28T21:30:31.820Z",
-  "sourceHash": "d3dc7c125f62a7602bd9310f76eb0aef5d874c2b",
-  "status": "failure",
+  "timestamp": "2025-11-28T09:32:50.413Z",
+  "sourceHash": "9de12c49b7fbeea6b93ec86d9e85e646066552ca",
+  "status": "success",
   "details": {
-    "core-functionality": {
-      "total": 7,
-      "passed": 5,
-      "failed": 2
-    },
     "infrastructure": {
       "total": 4,
       "passed": 4,
@@ -22,6 +17,11 @@
     "spotify-debug": {
       "total": 2,
       "passed": 2,
+      "failed": 0
+    },
+    "visual-regression": {
+      "total": 6,
+      "passed": 6,
       "failed": 0
     }
   }

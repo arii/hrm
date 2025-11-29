@@ -1,20 +1,34 @@
 #!/bin/bash
-# start-production.sh - HRM Production Start Script
-# This script is the single entry point for running the application in a production environment.
 
-# Set the working directory to the project root
-cd "$(dirname "$0")"
+set -e
 
-# Load production environment variables if the file exists
-if [ -f ".env.production" ]; then
-  echo "[start-production] Loading environment variables from .env.production"
-  export $(grep -v '^#' .env.production | xargs)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+export NODE_ENV=production
+
+if [ ! -f ".env.production" ]; then
+  echo "[start-production] Warning: .env.production not found. Running without secrets (Spotify features disabled)." >&2
+else
+  # Export all variables defined in .env.production to child processes
+  set -a
+  source .env.production
+  set +a
+
+  # Debug: Show critical env vars
+  echo "Environment: NODE_ENV=$NODE_ENV"
+  echo "NEXTAUTH_URL: $NEXTAUTH_URL"
+  echo "AUTH_TRUST_HOST: $AUTH_TRUST_HOST"
+  echo "Hostname: ${HOST:-0.0.0.0}, Port: ${PORT:-3000}"
 fi
 
-# Use the PORT environment variable if it's set, otherwise default to 3000
-APP_PORT=${PORT:-3000}
+if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
+  echo "[start-production] Build artifacts missing. Running pnpm run build..."
+  pnpm run build && pnpm run build:server
+fi
 
-echo "[start-production] Starting server on port $APP_PORT..."
+# Ensure AUTH_TRUST_HOST is set for NextAuth
+export AUTH_TRUST_HOST=true
+export NEXTAUTH_TRUST_HOST=true
 
-# Start the application directly with Node
-node dist/server.mjs --port $APP_PORT
+exec node dist/server.mjs
