@@ -172,15 +172,13 @@ const TimerDisplay = ({
 
         {/* Giant Timer Display */}
         <Typography
+          variant="timerDisplay"
           component="div"
           role="timer"
           aria-live="polite"
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,
             textShadow: `0 0 20px ${phaseColor}80`,

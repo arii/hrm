@@ -6,15 +6,13 @@ import * as React from 'react'
 
 // --- ADD THESE IMPORTS ---
 import CssBaseline from '@mui/material/CssBaseline'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
 // --- END OF NEW IMPORTS ---
 
 // This implementation is taken directly from the MUI official docs:
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
 
-// --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
-// ------------------------------
+import theme from './theme';
 
 type ThemeRegistryProps = {
   options: { key: string }

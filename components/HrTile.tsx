@@ -37,10 +37,9 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
         <CardContent sx={{ p: 0 }}>
           {/* Giant Percentage - should dominate the tile */}
           <Typography
+            variant="hrPercentage"
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
-              fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
               textShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -49,10 +48,8 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             {percentMax}%
           </Typography>
           <Typography
-            variant="h6"
+            variant="hrLabel"
             sx={{
-              fontWeight: 600,
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
               transition: 'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
             }}
           >
