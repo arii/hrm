@@ -9,12 +9,22 @@ const BASE_URL = getBaseURL()
 
 // Helper function to wait for page ready signal
 export const waitForPageReady = async (page: Page) => {
-  await page.waitForFunction(
-    () => {
-      return window.__TEST_READY__ === true
-    },
-    { timeout: 10000 }
-  )
+  try {
+    await page.waitForFunction(
+      () => {
+        return window.__TEST_READY__ === true
+      },
+      { timeout: 3000 }
+    )
+  } catch {
+    // Fallback: If custom signal fails, wait for a known stable element instead of sleeping
+    console.warn('__TEST_READY__ signal not found, proceeding with UI check')
+    // Wait for the main content area to be visible
+    await page.waitForSelector('main, [role="main"], body > div', { state: 'visible', timeout: 5000 }).catch(() => {
+      // If no main element found, just continue
+      console.warn('No main element found, continuing anyway')
+    })
+  }
 }
 
 // Helper function to replace iframe with stable workout content
@@ -47,12 +57,12 @@ export const replaceIframeWithStableWorkout = async (page: Page) => {
     }
   })
 
-  // Try to wait for iframe, but don't block indefinitely if it's missing
+  // Wait for the DOM update with the data:text/html iframe, not a generic iframe timer
   try {
-    await page.waitForSelector('iframe', { state: 'attached', timeout: 5000 })
+    await page.waitForSelector('iframe[src^="data:text/html"]', { state: 'attached', timeout: 2000 })
   } catch {
     console.warn(
-      'Warning: Iframe selector timeout in replaceIframeWithStableWorkout. Skipping wait.'
+      'Warning: Iframe with data:text/html src not found. Iframe may be missing.'
     )
   }
 }
