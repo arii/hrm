@@ -6,21 +6,26 @@ import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
+import { useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData } = useWebSocket()
 
-  if (hrmData.length > 0) {
+  const filteredData = useMemo(
+    () =>
+      hrmData.filter((user) => {
+        const isZero = user.value === 0
+        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+        const hasNoIdentity = user.name == null
+        return !(isZero || isPlaceholderName || hasNoIdentity)
+      }),
+    [hrmData]
+  )
+
+  if (filteredData.length > 0) {
     return (
       <>
-        {hrmData
-          .filter((user) => {
-            const isZero = user.value === 0
-            const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-            const hasNoIdentity = user.name == null
-            return !(isZero || isPlaceholderName || hasNoIdentity)
-          })
-          .map((user) => {
+        {filteredData.map((user) => {
             const hrZoneProps = getHrZoneProps(
               user.value,
               user.maxHr || MAX_HR_DEFAULT
