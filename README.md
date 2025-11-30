@@ -531,6 +531,54 @@ MIT
 3.  **SSL Configuration**: Ensure SSL certificates are configured and renewed as needed.
 4.  **PM2 Startup**: Configure PM2 to start on boot with `pm2 startup`.
 
+#### Nginx Reverse Proxy Configuration
+
+When deploying in production, using Nginx as a reverse proxy is essential for TLS termination (HTTPS) and load balancing. Configuring Nginx for a unified HTTP/WebSocket backend requires specific header settings to upgrade the connection successfully.
+
+Below is the recommended Nginx configuration. This assumes:
+- Nginx is listening on port 443 (HTTPS).
+- Your HRM application is running internally on `http://127.0.0.1:3000`.
+
+```nginx
+server {
+    # Public HTTPS Listener
+    listen 443 ssl;
+    server_name your.hrm.domain.com;
+
+    # --- TLS/SSL Configuration (Must be customized) ---
+    ssl_certificate /etc/letsencrypt/live/your.hrm.domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your.hrm.domain.com/privkey.pem;
+
+    # --- Standard Proxy Headers ---
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme; # Tells NextAuth/Node if original request was HTTPS
+
+    # --- WebSocket Specific Headers (CRITICAL) ---
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    # Long-lived connections need a generous timeout (default is 60s)
+    proxy_read_timeout 86400s;
+
+    location / {
+        # Pass all requests (HTTP and WS) to the Next.js/Node backend
+        proxy_pass http://127.0.0.1:3000;
+    }
+}
+
+# Optional: Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name your.hrm.domain.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+The `Upgrade` and `Connection` headers are critical for the WebSocket handshake. Nginx, being a hop-by-hop proxy, strips these headers by default. The configuration above ensures they are passed to your Node.js server, allowing the protocol switch to succeed.
+
 ### Server Bringup
 
 #### Port 3000 Already in Use
