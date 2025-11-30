@@ -33,39 +33,49 @@ const HrmTiles = () => {
   }, [hrmData])
 
   if (hrmData.length > 0) {
+    const filteredUsers = hrmData.filter((user) => {
+      const isZero = user.value === 0
+      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const hasNoIdentity = user.name == null
+      return !(isZero || isPlaceholderName || hasNoIdentity)
+    })
+
+    const primaryUser = filteredUsers.length > 0 ? filteredUsers[0] : null
+
     return (
       <>
-        {hrmData
-          .filter((user) => {
-            const isZero = user.value === 0
-            const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-            const hasNoIdentity = user.name == null
-            return !(isZero || isPlaceholderName || hasNoIdentity)
-          })
-          .map((user) => {
-            const hrZoneProps = getHrZoneProps(
-              user.value,
-              user.maxHr || MAX_HR_DEFAULT
-            )
-            return (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                lg={3}
-                key={user.clientId}
-                data-testid="hr-tile-grid-item"
-              >
-                <HrTile
-                  name={user.name || ''}
-                  bpm={user.value}
-                  percentMax={hrZoneProps.percentage}
-                  background={hrZoneProps.progressColor}
-                />
-                <HeartRateGraph data={heartRateHistory[user.clientId] || []} />
-              </Grid>
-            )
-          })}
+        {filteredUsers.map((user) => {
+          const hrZoneProps = getHrZoneProps(
+            user.value,
+            user.maxHr || MAX_HR_DEFAULT
+          )
+          return (
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              lg={3}
+              key={user.clientId}
+              data-testid="hr-tile-grid-item"
+            >
+              <HrTile
+                name={user.name || ''}
+                bpm={user.value}
+                percentMax={hrZoneProps.percentage}
+                background={hrZoneProps.progressColor}
+              />
+            </Grid>
+          )
+        })}
+        {primaryUser && (
+          <Grid item xs={12} mt={2}>
+            <HeartRateGraph
+              data={heartRateHistory[primaryUser.clientId] || []}
+              width={1200}
+              height={300}
+            />
+          </Grid>
+        )}
       </>
     )
   }
