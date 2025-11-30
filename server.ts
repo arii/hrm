@@ -19,7 +19,6 @@ import { initServices } from './services/serviceManager.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
@@ -32,15 +31,6 @@ const hostname =
     : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
-
-// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
-// ===========================================
-
 const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
@@ -82,23 +72,8 @@ app
     // 2. Initialize Persistent Services using the Service Manager
     const services = await initServices(broadcast)
 
-<<<<<<< HEAD
     // 3. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, services)
-||||||| 0b51af0
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
-=======
-    // 3. State Snapshot Function
-    const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
-    })
-
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
->>>>>>> origin/leader
 
     // --- Express Routing ---
 

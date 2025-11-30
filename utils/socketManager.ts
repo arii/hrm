@@ -9,17 +9,13 @@ import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
-  InitialStateSnapshotPayload,
   ServerMessage,
-  StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
-// New: Define a function to get the state snapshot
-let getUnifiedStateSnapshot: () => StateSnapshot
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -31,15 +27,10 @@ interface Services {
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-const initSocketManager = (
-  wss: WebSocketServer,
-  services: Services,
-  getSnapshot: () => StateSnapshot
-) => {
+const initSocketManager = (wss: WebSocketServer, services: Services) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
-  getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
@@ -54,6 +45,17 @@ const initSocketManager = (
       age: 30,
     }
     hrmClients.set(clientId, defaultClientData)
+
+    // Send initial state upon connection
+    const initialStateMessage: ServerMessage = {
+      type: 'INITIAL_STATE',
+      payload: {
+        hrmData: Array.from(hrmClients.values()),
+        timerData: tabataServiceInstance.getState(),
+        spotifyData: spotifyServiceInstance.getState(),
+      },
+    }
+    ws.send(JSON.stringify(initialStateMessage))
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -74,7 +76,7 @@ const initSocketManager = (
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
-  ws: WebSocket,
+  _ws: WebSocket,
   jsonMessage: string,
   clientId: string
 ) => {
@@ -95,24 +97,6 @@ const handleIncomingMessage = (
     )
 
     switch (message.type) {
-      case 'GET_STATE': {
-        // The client is requesting the full current state.
-        const stateSnapshot = getUnifiedStateSnapshot()
-
-        // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
-        const payload: InitialStateSnapshotPayload = {
-          ...stateSnapshot,
-          hrmData: Array.from(hrmClients.values()),
-        };
-
-        const initialStateMessage: ServerMessage = {
-          type: 'INITIAL_STATE',
-          payload: payload,
-        }
-        ws.send(JSON.stringify(initialStateMessage))
-        break
-      }
-
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
         console.log(
@@ -168,7 +152,7 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
-          // message.command is already typed as Spotify_COMMAND, which now includes deviceId, volume, and playlistUri
+          // message.command is already typed as SpotifyCommand, which now includes deviceId, volume, and playlistUri
           spotifyServiceInstance.handleCommand(
             message.command,
             message.deviceId,
