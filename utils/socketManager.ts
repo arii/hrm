@@ -16,6 +16,8 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+// New: Define a function to get the state snapshot
+let getUnifiedStateSnapshot: () => Omit<ServerMessage['payload'], 'hrmData'>
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -27,10 +29,15 @@ interface Services {
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-const initSocketManager = (wss: WebSocketServer, services: Services) => {
+const initSocketManager = (
+  wss: WebSocketServer,
+  services: Services,
+  getSnapshot: () => Omit<ServerMessage['payload'], 'hrmData'>
+) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
@@ -45,17 +52,6 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
       age: 30,
     }
     hrmClients.set(clientId, defaultClientData)
-
-    // Send initial state upon connection
-    const initialStateMessage: ServerMessage = {
-      type: 'INITIAL_STATE',
-      payload: {
-        hrmData: Array.from(hrmClients.values()),
-        timerData: tabataServiceInstance.getState(),
-        spotifyData: spotifyServiceInstance.getState(),
-      },
-    }
-    ws.send(JSON.stringify(initialStateMessage))
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -76,7 +72,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
-  _ws: WebSocket,
+  ws: WebSocket,
   jsonMessage: string,
   clientId: string
 ) => {
@@ -97,6 +93,20 @@ const handleIncomingMessage = (
     )
 
     switch (message.type) {
+      case 'GET_STATE': {
+        // The client is requesting the full current state.
+        const stateSnapshot = getUnifiedStateSnapshot()
+        const initialStateMessage: ServerMessage = {
+          type: 'INITIAL_STATE',
+          payload: {
+            ...stateSnapshot,
+            hrmData: Array.from(hrmClients.values()),
+          },
+        }
+        ws.send(JSON.stringify(initialStateMessage))
+        break
+      }
+
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
         console.log(

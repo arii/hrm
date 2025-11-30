@@ -106,6 +106,10 @@ export interface SpotifyCommandMessage {
   token?: string // Optional: for passing access token
 }
 
+export interface GetStateMessage {
+  type: 'GET_STATE'
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -115,6 +119,7 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | SpotifyCommandMessage
   | TimerConfigMessage
+  | GetStateMessage
 
 import { z } from 'zod'
 
@@ -164,10 +169,15 @@ export const SpotifyCommandMessageSchema = z.object({
   token: z.string().optional(), // Optional: for passing access token
 })
 
+export const GetStateMessageSchema = z.object({
+  type: z.literal('GET_STATE'),
+})
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
+  GetStateMessageSchema,
 ])
