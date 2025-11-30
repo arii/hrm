@@ -12,15 +12,31 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
+import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 
 const SpotifyControls = dynamic(
   () => import('./components/SpotifyControls'),
-  { loading: () => <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 1, mb: 2 }}/> }
+  {
+    loading: () => (
+      <Skeleton
+        variant="rectangular"
+        height={280}
+        sx={{ borderRadius: 1, mb: 2 }}
+      />
+    ),
+  }
 )
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect } = useWebSocket()
+  const router = useRouter()
+
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: () => router.push('/client/connect'),
+    onSwipeRight: () => router.push('/'),
+  })
 
   // Reconnect on page visibility
   useEffect(() => {
@@ -70,6 +86,7 @@ const ControlPanel = () => {
           minHeight: '100vh',
           backgroundColor: 'background.default',
         }}
+        {...swipeHandlers}
       >
         {/* Connection Status */}
         <Box sx={{ mb: 2, textAlign: 'center' }}>
