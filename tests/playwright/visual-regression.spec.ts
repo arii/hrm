@@ -33,7 +33,7 @@ test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(60000)
+    test.setTimeout(120000)
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
