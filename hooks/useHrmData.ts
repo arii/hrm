@@ -15,9 +15,9 @@ export const useHrmData = (): HrmData[] => {
   // Memoize the hrmData array based on its content.
   // By using JSON.stringify, we create a stable dependency that only changes
   // when the actual data inside the array changes.
-  const memoizedHrmData = useMemo(() => {
-    return hrmData
-  }, [JSON.stringify(hrmData)])
+  const hrmDataString = JSON.stringify(hrmData)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedHrmData = useMemo(() => hrmData, [hrmDataString])
 
   return memoizedHrmData
 }
