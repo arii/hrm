@@ -1,24 +1,34 @@
+// File: app/api/debug/reset/route.ts
+/**
+ * API Route: /api/debug/reset
+ * Description: Resets the server's in-memory state.
+ * Environment: Test-only.
+ */
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { resetState } from '../../../../utils/socketManager'
 
 export async function POST() {
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ message: 'This feature is only available in development mode.' }, { status: 403 });
+  if (process.env.TESTING !== 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Endpoint only available in testing environment (`TESTING=true`)',
+      },
+      { status: 403 }
+    )
   }
 
-  const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
-
   try {
-    if (fs.existsSync(tokenFile)) {
-      fs.unlinkSync(tokenFile)
-      console.log('Spotify token file deleted.')
-    } else {
-      console.log('Spotify token file not found, nothing to delete.')
-    }
-    return NextResponse.json({ message: 'Server reset successful' })
+    resetState()
+    return NextResponse.json({
+      success: true,
+      message: 'Server state reset successfully.',
+    })
   } catch (error) {
-    console.error('Error resetting server:', error)
-    return NextResponse.json({ message: 'Error resetting server' }, { status: 500 })
+    console.error('Failed to reset server state:', error)
+    return NextResponse.json(
+      { success: false, message: 'An error occurred during state reset.' },
+      { status: 500 }
+    )
   }
 }

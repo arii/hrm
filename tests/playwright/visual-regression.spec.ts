@@ -31,9 +31,13 @@ let context: BrowserContext
 
 test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser, request }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
     test.setTimeout(60000)
+
+    // Reset server state before starting any tests
+    const response = await request.post(`${BASE_URL}/api/debug/reset`)
+    expect(response.ok()).toBeTruthy()
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
@@ -61,37 +65,12 @@ test.describe('Visual Regression Tests', () => {
       waitForPageReady(mockPage),
     ])
 
-    // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
-
-    try {
-      // If timer is running, stop it
-      if (await stopButton.isVisible({ timeout: 2000 })) {
-        await stopButton.click()
-        // Wait for START button to confirm timer stopped on control page
-        await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: 5000 })
-
-        // Wait for dashboard to clear timer display (return to READY state)
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: 5000,
-        })
-      }
-    } catch (error) {
-      // Timer not running or failed to stop, log and continue
-      console.warn('Timer check/stop encountered an issue (ignoring):', error)
-    }
-
     // Replace iframe with stable content for dashboard
-    // Adding a timeout to prevent indefinite hanging if iframe is missing
     try {
-      // Wait a moment for dashboard to settle before replacing
-      await dashboardPage.waitForTimeout(1000)
+      // Wait for a specific element in the dashboard to be visible before proceeding
+      await expect(
+        dashboardPage.locator('text=HRM')
+      ).toBeVisible({ timeout: 10000 })
       await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
       console.warn(
@@ -99,6 +78,12 @@ test.describe('Visual Regression Tests', () => {
         e
       )
     }
+  })
+
+  // Reset state before each test to ensure isolation
+  test.beforeEach(async ({ request }) => {
+    const response = await request.post(`${BASE_URL}/api/debug/reset`)
+    expect(response.ok()).toBeTruthy()
   })
 
   // Clean up after all tests
@@ -119,8 +104,10 @@ test.describe('Visual Regression Tests', () => {
       // Timer might already be idle, continue
     }
 
-    // Wait a bit for any animations to settle
-    await dashboardPage.waitForTimeout(1000)
+    // Wait for the timer to be in a stable, idle state
+    await expect(dashboardPage.locator('text=00:00')).toBeVisible({
+      timeout: 5000,
+    })
 
     // Capture full-page screenshot - mask timer numbers in case cleanup didn't work
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
@@ -138,13 +125,17 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Control Panel - timer and music controls', async () => {
+    // Wait for a key element to be visible to ensure the page is loaded
+    await expect(controlPage.locator('text=Timer Mode')).toBeVisible({
+      timeout: 10000,
+    })
+
     // Capture screenshot
-    console.log('skipping flakey test')
-    /*await expect(controlPage).toHaveScreenshot('control-panel.png', {
+    await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
       animations: 'disabled',
       caret: 'hide',
-    })*/
+    })
   })
 
   test('Mock HRM Client - test data input', async () => {

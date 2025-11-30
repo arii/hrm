@@ -16,6 +16,7 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+let wssInstance: WebSocketServer | null = null
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -31,6 +32,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  wssInstance = wss
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
@@ -179,4 +181,45 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+/**
+ * Resets the state of all services and clients.
+ * - Resets the Tabata timer.
+ * - Clears all HRM clients.
+ * - Terminates all active WebSocket connections.
+ */
+export const resetState = () => {
+  if (process.env.TESTING !== 'true') {
+    console.warn(
+      'resetState was called outside of a testing environment (`TESTING=true`). Aborting.'
+    )
+    return
+  }
+
+  // 1. Reset Tabata Timer
+  if (tabataServiceInstance) {
+    tabataServiceInstance.handleCommand('STOP')
+  }
+
+  // 2. Clear HRM Clients
+  hrmClients.clear()
+  broadcast({
+    type: 'HRM_UPDATE',
+    payload: [],
+  })
+
+  // 3. Terminate all WebSocket connections
+  if (wssInstance) {
+    for (const client of wssInstance.clients) {
+      client.terminate()
+    }
+  }
+
+  console.log('Server state has been reset for testing.')
+}
+
+export {
+  initSocketManager,
+  tabataServiceInstance,
+  spotifyServiceInstance,
+  wssInstance,
+}
