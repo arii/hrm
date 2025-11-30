@@ -1,8 +1,4 @@
-import {
-  AccessToken,
-  SpotifyApi,
-  NO_BACKGROUND_REFRESH,
-} from '@spotify/web-api-ts-sdk'
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import fs from 'fs/promises'
 import path from 'path'
 import logger from '../../utils/logger'
@@ -23,31 +19,19 @@ export class SpotifyClient {
   private sdk: SpotifyApi
   private currentToken: AccessToken | null = null
   private refreshPromise: Promise<void> | null = null
+  private clientId: string
+  private clientSecret: string
 
   private constructor(clientId: string, clientSecret: string) {
-    this.sdk = SpotifyApi.withClientCredentials(
-      clientId,
-      clientSecret,
-      [],
-      {
-        // Disable the SDK's built-in background refresh mechanism.
-        // We will manage token persistence and refresh manually to ensure
-        // it coordinates with our application's lifecycle and persistence layer.
-        tokenRefreshStrategy: NO_BACKGROUND_REFRESH,
-      }
-    )
+    this.clientId = clientId
+    this.clientSecret = clientSecret
+    this.sdk = SpotifyApi.withClientCredentials(clientId, clientSecret)
+
     this.loadToken().catch((error) => {
       logger.warn({ err: error }, 'Failed to load initial Spotify token.')
     })
   }
 
-  /**
-   * Gets the singleton instance of the SpotifyClient.
-   *
-   * @param {string} clientId - The Spotify client ID.
-   * @param {string} clientSecret - The Spotify client secret.
-   * @returns {SpotifyClient} The singleton instance.
-   */
   public static getInstance(
     clientId: string,
     clientSecret: string
@@ -58,70 +42,49 @@ export class SpotifyClient {
     return SpotifyClient.instance
   }
 
-  /**
-   * Retrieves the underlying Spotify SDK instance, ensuring it is authenticated.
-   *
-   * If the current token is expired, it will attempt to refresh it before
-   * returning the SDK instance.
-   *
-   * @returns {Promise<SpotifyApi>} A promise that resolves to the authenticated SDK instance.
-   */
   public async getSdk(): Promise<SpotifyApi> {
+    if (!this.currentToken) {
+      await this.loadToken()
+    }
+
     if (this.isTokenExpired() && this.currentToken?.refresh_token) {
       await this.refreshToken()
     }
     return this.sdk
   }
 
-  /**
-   * Checks if the current access token is expired or close to expiring.
-   *
-   * @returns {boolean} True if the token is expired, false otherwise.
-   */
   public isTokenExpired(): boolean {
     if (!this.currentToken) return true
-    // Consider the token expired if it's within 60 seconds of its expiry time.
-    return Date.now() >= (this.currentToken.expires ?? 0) - 60 * 1000
+    const expires = this.currentToken.expires || 0
+    return Date.now() >= expires - 60 * 1000
   }
 
-  /**
-   * Sets a new access token and persists it to the file system.
-   * This method is the primary way the application provides new tokens
-   * (e.g., from an OAuth callback) to the client.
-   *
-   * @param {AccessToken} token - The new access token.
-   */
   public async setToken(token: AccessToken): Promise<void> {
     this.currentToken = token
-    this.sdk.setAccessToken(token)
+    this.sdk = SpotifyApi.withAccessToken(this.clientId, token)
     await this.saveToken()
   }
 
-  /**
-   * Loads the access token from the file system and initializes the SDK with it.
-   */
   private async loadToken(): Promise<void> {
     try {
       if (shouldPersistSpotifyTokens()) {
         const data = await fs.readFile(TOKEN_FILE_PATH, 'utf8')
         const token = JSON.parse(data) as AccessToken
         this.currentToken = token
-        this.sdk.setAccessToken(token)
+        this.sdk = SpotifyApi.withAccessToken(this.clientId, token)
         logger.info('Successfully loaded Spotify token from persistence.')
       } else {
-        logger.info('Spotify token persistence is disabled. Skipping token load.')
+        logger.info(
+          'Spotify token persistence is disabled. Skipping token load.'
+        )
       }
     } catch (error) {
-      // It's normal for the file not to exist on the first run.
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         logger.error({ err: error }, 'Error loading Spotify token from file.')
       }
     }
   }
 
-  /**
-   * Saves the current access token to the file system if persistence is enabled.
-   */
   private async saveToken(): Promise<void> {
     if (this.currentToken && shouldPersistSpotifyTokens()) {
       try {
@@ -137,10 +100,6 @@ export class SpotifyClient {
     }
   }
 
-  /**
-   * Refreshes the current access token using the refresh token.
-   * This method is synchronized to prevent multiple refresh attempts from occurring simultaneously.
-   */
   private async refreshToken(): Promise<void> {
     if (this.refreshPromise) {
       return this.refreshPromise
@@ -153,13 +112,39 @@ export class SpotifyClient {
         }
 
         logger.info('Refreshing Spotify access token...')
-        const refreshedToken = await this.sdk.refreshAccessToken()
-        this.currentToken = refreshedToken
-        await this.saveToken()
+        const response = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${Buffer.from(
+              `${this.clientId}:${this.clientSecret}`
+            ).toString('base64')}`,
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: this.currentToken.refresh_token,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`Token refresh failed with status ${response.status}`)
+        }
+
+        const refreshed = (await response.json()) as Omit<
+          AccessToken,
+          'expires'
+        >
+        const refreshedToken: AccessToken = {
+          ...refreshed,
+          refresh_token:
+            refreshed.refresh_token ?? this.currentToken.refresh_token,
+          expires: Date.now() + refreshed.expires_in * 1000,
+        }
+
+        await this.setToken(refreshedToken)
         logger.info('Successfully refreshed and persisted Spotify token.')
       } catch (error) {
         logger.error({ err: error }, 'Failed to refresh Spotify token.')
-        // Clear the token to force re-authentication if refresh fails.
         this.currentToken = null
       } finally {
         this.refreshPromise = null

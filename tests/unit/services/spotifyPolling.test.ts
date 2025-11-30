@@ -11,7 +11,7 @@ import {
 } from '@jest/globals'
 import { SpotifyPolling } from '../../../services/spotifyPolling'
 import { SpotifyClient } from '../../../services/spotify/spotifyClient'
-import { SpotifyData, ServerMessage } from '../../../types/websocket'
+import { ServerMessage } from '../../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger to keep test output clean

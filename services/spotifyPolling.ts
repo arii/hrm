@@ -1,7 +1,7 @@
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import logger from '../utils/logger'
 import { SpotifyClient } from './spotify/spotifyClient'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi, Track } from '@spotify/web-api-ts-sdk'
 
 type SpotifyCommand =
   | 'PLAY'
@@ -11,6 +11,10 @@ type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'PAUSE'
+
+function isTrack(item: any): item is Track {
+  return item && item.type === 'track'
+}
 
 /**
  * A service that polls the Spotify API for the currently playing track
@@ -40,22 +44,14 @@ export class SpotifyPolling {
     logger.debug('Spotify Polling Service Initialized.')
   }
 
-  /**
-   * Starts the polling process.
-   * @param {number} intervalMs - The polling interval in milliseconds.
-   */
   public startPolling(intervalMs: number = 3000): void {
     if (this.isPolling) return
     this.isPolling = true
     this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
     logger.info('Spotify polling started.')
-    // Initial poll
     this.getCurrentlyPlaying()
   }
 
-  /**
-   * Stops the polling process.
-   */
   public stopPolling(): void {
     if (!this.isPolling) return
     this.isPolling = false
@@ -66,16 +62,10 @@ export class SpotifyPolling {
     logger.info('Spotify polling stopped.')
   }
 
-  /**
-   * Cleans up the service by stopping the polling.
-   */
   public cleanup(): void {
     this.stopPolling()
   }
 
-  /**
-   * Forces an immediate poll for the currently playing track and broadcasts an update.
-   */
   public forcePollAndBroadcast(): void {
     this.getCurrentlyPlaying()
   }
@@ -89,7 +79,7 @@ export class SpotifyPolling {
       const sdk = await this.spotifyClient.getSdk()
       const playbackState = await sdk.player.getCurrentlyPlayingTrack()
 
-      if (!playbackState) {
+      if (!playbackState || !playbackState.item) {
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
           this.state = {
@@ -105,14 +95,15 @@ export class SpotifyPolling {
         return
       }
 
-      if (playbackState.currently_playing_type !== 'track') {
-        return
+      const item = playbackState.item
+      let trackName = 'Unknown Title'
+      let artistName = 'Unknown Artist'
+
+      if (isTrack(item)) {
+        trackName = item.name
+        artistName = item.artists.map((a) => a.name).join(', ')
       }
 
-      const item = playbackState.item
-      const trackName = item?.name || 'Unknown Track'
-      const artistName =
-        item?.artists.map((a) => a.name).join(', ') || 'Unknown Artist'
       const isPlaying = playbackState.is_playing
 
       if (
@@ -129,7 +120,9 @@ export class SpotifyPolling {
       }
     } catch (error) {
       if ((error as any)?.status === 401) {
-        logger.warn('Spotify token expired during polling. Refresh is being handled by SpotifyClient.')
+        logger.warn(
+          'Spotify token expired during polling. Refresh is being handled by SpotifyClient.'
+        )
       } else {
         logger.error({ err: error }, 'Error fetching currently playing track.')
       }
@@ -155,8 +148,13 @@ export class SpotifyPolling {
   ): Promise<void> {
     try {
       const sdk = await this.spotifyClient.getSdk()
-      await this.executeSpotifyCommand(sdk, command, deviceId, volume, playlistUri)
-      // Schedule a poll in 500ms to get the updated state quickly.
+      await this.executeSpotifyCommand(
+        sdk,
+        command,
+        deviceId,
+        volume,
+        playlistUri
+      )
       setTimeout(() => this.getCurrentlyPlaying(), 500)
     } catch (error) {
       logger.error({ err: error, command }, 'Error executing Spotify command.')
@@ -178,7 +176,10 @@ export class SpotifyPolling {
 
     switch (command) {
       case 'PLAY':
-        await sdk.player.startResumePlayback(deviceId!, playlistUri)
+        await sdk.player.startResumePlayback(
+          deviceId!,
+          playlistUri
+        )
         break
       case 'PAUSE':
         await sdk.player.pausePlayback(deviceId!)
@@ -197,7 +198,7 @@ export class SpotifyPolling {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await sdk.player.setPlaybackVolume(clampedVolume, { device_id: deviceId })
+          await sdk.player.setPlaybackVolume(clampedVolume, deviceId)
         }
         break
       default:

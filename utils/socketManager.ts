@@ -184,3 +184,20 @@ const handleIncomingMessage = (
 }
 
 export { initSocketManager }
+
+/**
+ * Returns the singleton instance of the SpotifyClient.
+ * This allows other parts of the application, like API routes, to access the
+ * authenticated client instance managed by the main server.
+ *
+ * @returns {SpotifyClient} The initialized SpotifyClient instance.
+ * @throws {Error} If the client has not been initialized yet.
+ */
+export function getSpotifyClient(): SpotifyClient {
+  if (!spotifyClientInstance) {
+    throw new Error(
+      'SpotifyClient has not been initialized. The service may be starting up.'
+    )
+  }
+  return spotifyClientInstance
+}

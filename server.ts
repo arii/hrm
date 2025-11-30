@@ -97,7 +97,9 @@ app
             return res.status(400).send('Invalid or missing token payload.')
           }
 
-          logger.info('Received new Spotify token via internal delivery endpoint.')
+          logger.info(
+            'Received new Spotify token via internal delivery endpoint.'
+          )
           await spotifyClient.setToken(token)
 
           // Ensure polling is active now that we have a token.
@@ -105,10 +107,10 @@ app
           // Trigger an immediate poll to refresh the UI with the latest track.
           spotifyService.forcePollAndBroadcast()
 
-          res.status(200).send('Token received and service updated.')
+          return res.status(200).send('Token received and service updated.')
         } catch (error) {
           logger.error({ err: error }, 'Error processing token delivery.')
-          res.status(500).send('Internal Server Error')
+          return res.status(500).send('Internal Server Error')
         }
       }
     )
