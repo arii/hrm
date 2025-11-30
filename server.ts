@@ -99,8 +99,16 @@ app
     }
     const tabataService = new TabataTimer(broadcast)
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
+    // 3. State Snapshot Function
+    const getUnifiedStateSnapshot = () => ({
+      hrmData: [], // HRM data is managed within socketManager, so it's initialized as empty here
+      timerData: tabataService.getState(),
+      spotifyData: spotifyService.getState(),
+      spotifyServiceInitialized: spotifyService.isReady(),
+    })
+
+    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
 
