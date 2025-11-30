@@ -30,5 +30,6 @@ fi
 # Ensure AUTH_TRUST_HOST is set for NextAuth
 export AUTH_TRUST_HOST=true
 export NEXTAUTH_TRUST_HOST=true
+export PORT=${PORT:-3000}
 
 exec node dist/server.mjs
