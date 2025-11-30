@@ -23,6 +23,7 @@ import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
+import { OpenApiValidator } from 'express-openapi-validator'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -103,6 +104,25 @@ app
     initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
+    // Middleware for parsing JSON bodies, which is a prerequisite for the validator
+    expressApp.use(express.json())
+    new OpenApiValidator({
+      apiSpec: swaggerSpec,
+      validateRequests: true,
+      validateResponses: true,
+    }).install(expressApp)
+    /**
+     * @swagger
+     * /health:
+     *   get:
+     *     description: Returns the server's status
+     *     responses:
+     *       200:
+     *         description: The server is running
+     */
+    expressApp.get('/health', (req, res) => {
+      res.status(200).send({ status: 'ok' })
+    })
 
     // Swagger UI
     expressApp.use(
