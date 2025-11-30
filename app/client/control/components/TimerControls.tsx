@@ -24,6 +24,26 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+const actionButtonSx = {
+  flex: 1,
+  fontWeight: 'bold',
+  py: 1.5,
+  minHeight: '64px',
+  transition: 'transform 0.1s ease-in-out',
+  '&:active': {
+    transform: 'scale(0.95)',
+  },
+}
+
+const stepperButtonSx = {
+  backgroundColor: 'grey.700',
+  color: 'white',
+  '&:hover': { backgroundColor: 'grey.600' },
+  width: 56,
+  height: 56,
+}
+
 const TimerControls = () => {
   const { timerData, sendData } = useWebSocket()
   // Local state is source of truth for editing
@@ -281,12 +301,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease work duration"
-                  sx={{
-                    backgroundColor: 'grey.700',
-                    color: 'white',
-                    '&:hover': { backgroundColor: 'grey.600' },
-                    p: 2,
-                  }}
+                  sx={stepperButtonSx}
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -333,12 +348,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setWorkTime((prev) => prev + 5)}
                   aria-label="Increase work duration"
-                  sx={{
-                    backgroundColor: 'grey.700',
-                    color: 'white',
-                    '&:hover': { backgroundColor: 'grey.600' },
-                    p: 2,
-                  }}
+                  sx={stepperButtonSx}
                 >
                   <Add fontSize="large" />
                 </IconButton>
@@ -359,12 +369,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease rest duration"
-                  sx={{
-                    backgroundColor: 'grey.700',
-                    color: 'white',
-                    '&:hover': { backgroundColor: 'grey.600' },
-                    p: 2,
-                  }}
+                  sx={stepperButtonSx}
                 >
                   <Remove fontSize="large" />
                 </IconButton>
@@ -410,12 +415,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setRestTime((prev) => prev + 5)}
                   aria-label="Increase rest duration"
-                  sx={{
-                    backgroundColor: 'grey.700',
-                    color: 'white',
-                    '&:hover': { backgroundColor: 'grey.600' },
-                    p: 2,
-                  }}
+                  sx={stepperButtonSx}
                 >
                   <Add fontSize="large" />
                 </IconButton>
@@ -430,7 +430,7 @@ const TimerControls = () => {
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+              sx={actionButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
             >
               START
@@ -440,7 +440,7 @@ const TimerControls = () => {
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}
-              sx={{ flex: 1, fontWeight: 'bold', py: 1.5 }}
+              sx={actionButtonSx}
               startIcon={<Stop fontSize="large" />}
             >
               STOP
