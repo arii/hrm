@@ -13,22 +13,12 @@ import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
-import Skeleton from '@mui/material/Skeleton'
 
-const SpotifyDisplay = dynamic(
-  () => import('../components/SpotifyDisplay'),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={80} sx={{ position: 'fixed', bottom: 56, left: 0, right: 0, zIndex: 1100 }} />
-  }
-)
+const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
+  ssr: false,
+})
 
-const GoogleDocViewer = dynamic(
-  () => import('../components/GoogleDocViewer'),
-  {
-    loading: () => <Skeleton variant="rectangular" height={500} />
-  }
-)
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'))
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
