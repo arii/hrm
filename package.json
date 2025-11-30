@@ -42,7 +42,8 @@
     "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
-    "commit:verified": "npm run verify"
+    "commit:verified": "npm run verify",
+    "depcheck": "depcheck"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
@@ -64,13 +65,13 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@jest/globals": "^30.2.0",
     "@next/bundle-analyzer": "^16.0.5",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/eslint": "^9.6.1",
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/next": "^8.0.7",
@@ -81,10 +82,9 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "8.48.0",
-    "@typescript-eslint/parser": "8.48.0",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
+    "depcheck": "^1.4.7",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.1",
     "eslint-config-prettier": "^10.1.8",
@@ -97,11 +97,19 @@
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
     "wait-on": "^9.0.3"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "depcheck": {
+    "ignores": [
+      "@types/web-bluetooth",
+      "cross-env",
+      "jest-environment-jsdom"
+    ]
+  }
 }
