@@ -52,9 +52,146 @@ export class SpotifyPolling {
     this.getCurrentlyPlaying()
   }
 
+<<<<<<< HEAD
   public stopPolling(): void {
     if (!this.isPolling) return
     this.isPolling = false
+||||||| f3159e8
+  private async initializeSdk() {
+    const token = await this.tokenManager.getValidAccessToken() // Triggers refresh if needed
+    if (token) {
+      const sdkToken = this.tokenManager.getSdkAccessToken()
+      if (sdkToken) {
+        this.setupSdk(sdkToken)
+        logger.debug(
+          'Loaded existing Spotify tokens from file. Starting polling.'
+        )
+        this.startPolling()
+      }
+    }
+  }
+
+  private setupSdk(accessToken: AccessToken) {
+    this.sdk = SpotifyApi.withAccessToken(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      accessToken
+    )
+  }
+
+  private async checkAndRefreshSdkToken() {
+    // Force Manager to check validity and refresh if needed
+    const newTokenString = await this.tokenManager.getValidAccessToken()
+    if (newTokenString && this.sdk) {
+      const sdkToken = this.tokenManager.getSdkAccessToken()
+      if (sdkToken) {
+        this.setupSdk(sdkToken)
+      }
+    }
+  }
+
+  public getState(): SpotifyData {
+    return { ...this.state }
+  }
+
+  // --- Token Management (Used by NextAuth route) ---
+
+  /**
+   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   */
+  public setRefreshToken(_token: string) {
+    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
+    // Reset the token manager state to ensure it re-reads the file
+    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
+    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+  }
+
+  // --- Polling Logic ---
+
+  // Expose start/stop polling publicly (used by server to control lifecycle)
+  public startPolling(intervalMs: number = 3000) {
+    if (this.pollInterval) return
+    // Poll every `intervalMs` for low-latency updates
+    this.pollInterval = setInterval(
+      () => this.getCurrentlyPlaying(),
+      intervalMs
+    )
+    logger.debug('Spotify polling started.')
+  }
+
+  public stopPolling() {
+=======
+  private async initializeSdk() {
+    const token = await this.tokenManager.getValidAccessToken() // Triggers refresh if needed
+    if (token) {
+      const sdkToken = this.tokenManager.getSdkAccessToken()
+      if (sdkToken) {
+        this.setupSdk(sdkToken)
+        logger.debug(
+          'Loaded existing Spotify tokens from file. Starting polling.'
+        )
+        this.startPolling()
+      }
+    }
+  }
+
+  private setupSdk(accessToken: AccessToken) {
+    this.sdk = SpotifyApi.withAccessToken(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      accessToken
+    )
+  }
+
+  private async checkAndRefreshSdkToken() {
+    // Force Manager to check validity and refresh if needed
+    const newTokenString = await this.tokenManager.getValidAccessToken()
+    if (newTokenString && this.sdk) {
+      const sdkToken = this.tokenManager.getSdkAccessToken()
+      if (sdkToken) {
+        this.setupSdk(sdkToken)
+      }
+    }
+  }
+
+  public getState(): SpotifyData {
+    return { ...this.state }
+  }
+
+  /**
+   * Public method to safely check if the SDK has been initialized.
+   * @returns {boolean} True if the SDK is ready, false otherwise.
+   */
+  public isReady(): boolean {
+    return this.sdk !== null
+  }
+
+  // --- Token Management (Used by NextAuth route) ---
+
+  /**
+   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   */
+  public setRefreshToken(_token: string) {
+    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
+    // Reset the token manager state to ensure it re-reads the file
+    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
+    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+  }
+
+  // --- Polling Logic ---
+
+  // Expose start/stop polling publicly (used by server to control lifecycle)
+  public startPolling() {
+    if (this.pollInterval) return
+
+    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
+      : 3000
+    // Poll every `intervalMs` for low-latency updates
+    this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
+    logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
+  }
+
+  public stopPolling() {
+>>>>>>> origin/leader
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
