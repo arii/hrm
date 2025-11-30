@@ -81,7 +81,7 @@ test.describe('Infrastructure & Scripts', () => {
   test('start-production.sh should start successfully', async () => {
      test.setTimeout(30000);
 
-     const PORT = 3006;
+     const PORT = 3000;
      // Mock env vars usually provided by .env.production
      const env = {
        ...process.env,
