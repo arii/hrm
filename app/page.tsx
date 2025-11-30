@@ -13,13 +13,11 @@ import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
 import TimerDisplay from '../components/TimerDisplay'
-import { useWebSocket } from '@/context/WebSocketContext'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
 
   // Signal when page is ready for testing
@@ -45,14 +43,7 @@ const Dashboard = () => {
 
         {/* 1. TABATA TIMER - Componentized */}
         <Grid item xs={12} lg={6}>
-          <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-          />
+          <TimerDisplay />
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
