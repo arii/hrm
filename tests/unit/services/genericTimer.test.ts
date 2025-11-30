@@ -97,7 +97,7 @@ describe('GenericTimer', () => {
       expect(timer.getState().phase).toBe('RUNNING')
 
       jest.advanceTimersByTime(3000)
-      let state = timer.getState()
+      const state = timer.getState()
       expect(state.remainingMs).toBeLessThanOrEqual(7000)
       expect(state.remainingMs).toBeGreaterThan(6900)
       expect(state.elapsedMs).toBeGreaterThanOrEqual(3000)

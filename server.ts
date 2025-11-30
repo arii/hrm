@@ -20,6 +20,7 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
+import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
@@ -91,8 +92,15 @@ app
     }
     const tabataService = new TabataTimer(broadcast)
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
+    // 3. State Snapshot Function
+    const getUnifiedStateSnapshot = (): StateSnapshot => ({
+      timerData: tabataService.getState(),
+      spotifyData: spotifyService.getState(),
+      spotifyServiceInitialized: spotifyService.isReady(),
+    })
+
+    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
     // Middleware for parsing JSON bodies, which is a prerequisite for the validator
