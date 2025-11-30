@@ -11,9 +11,18 @@ export interface HrTileProps {
   bpm: number
   percentMax: number // 0-100
   background: string // hex color
+  gradient: string // CSS linear-gradient string for text
+  glow: string // CSS box-shadow for card glow
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  gradient,
+  glow,
+}: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -32,6 +41,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          boxShadow: glow, // Apply the glow effect here
         }}
       >
         <CardContent sx={{ p: 0 }}>
@@ -43,6 +53,9 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
+              background: gradient, // Apply gradient background
+              WebkitBackgroundClip: 'text', // Clip text to background
+              WebkitTextFillColor: 'transparent', // Make text transparent
               textShadow: '0 2px 4px rgba(0,0,0,0.2)',
             }}
           >
