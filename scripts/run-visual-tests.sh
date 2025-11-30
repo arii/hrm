@@ -1,56 +1,43 @@
 #!/bin/bash
+# scripts/run-visual-tests.sh
+# Test runner for Playwright visual regression tests.
+# This script handles server setup, execution, and teardown.
+
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/.."
+# Default host and port if not set externally
+export HOST="${HOST:-127.0.0.1}"
+export PORT="${PORT:-3000}"
+WAIT_URL="http://${HOST}:${PORT}/api/debug/ping"
 
-# Check if server is already running on port 3000
-if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo "✅ Server already running on port 3000, using existing instance"
-    SERVER_WAS_RUNNING=true
-else
-    echo "🚀 Starting production server for tests..."
-    SERVER_WAS_RUNNING=false
-    
-    # Build if needed
-    if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
-        echo "📦 Building application..."
-        pnpm run build:server
-    fi
-    
-    # Start server in background
-    bash start-production.sh > /tmp/hrm-server-test.log 2>&1 &
-    SERVER_PID=$!
-    echo $SERVER_PID > /tmp/hrm-server-test.pid
-    
-    # Wait for server to be ready
-    echo "⏳ Waiting for server to start..."
-    for i in {1..30}; do
-        if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-            echo "✅ Server is ready!"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            echo "❌ Server failed to start within 30 seconds"
-            cat /tmp/hrm-server-test.log
-            exit 1
-        fi
-        sleep 1
-    done
-fi
+echo "Running visual tests against ${WAIT_URL}"
 
-# Run Playwright tests
-echo "🧪 Running visual regression tests..."
-npx playwright test "$@"
-TEST_EXIT_CODE=$?
+# 1. Clean up previous runs
+echo "Cleaning up old processes..."
+bash "$(dirname "$0")/kill-all.sh"
 
-# Cleanup: Only kill server if we started it
-if [ "$SERVER_WAS_RUNNING" = false ]; then
-    echo "🧹 Stopping test server..."
-    if [ -f /tmp/hrm-server-test.pid ]; then
-        kill $(cat /tmp/hrm-server-test.pid) 2>/dev/null || true
-        rm /tmp/hrm-server-test.pid
-    fi
-fi
+# 2. Start the server in the background
+echo "Starting server..."
+# Ensure TESTING env var is set for the server
+pnpm exec cross-env TESTING=true bash start-production.sh > /tmp/hrm-server.log 2>&1 &
+SERVER_PID=$!
+echo "Server started with PID: ${SERVER_PID}"
 
-exit $TEST_EXIT_CODE
+# Create a file to store the PID for later cleanup
+echo "${SERVER_PID}" > /tmp/hrm-server.pid
+
+# 3. Wait for the server to be ready
+echo "Waiting for server to be ready at ${WAIT_URL}..."
+npx wait-on "${WAIT_URL}" --timeout 20000
+
+# 4. Run Playwright tests
+# The '|| true' ensures that the script continues to the cleanup step even if tests fail
+echo "Running Playwright tests..."
+playwright test "$@" || true
+
+# 5. Clean up the server process
+echo "Cleaning up server process..."
+kill "${SERVER_PID}" 2>/dev/null || true
+rm /tmp/hrm-server.pid 2>/dev/null || true
+
+echo "Test run complete."

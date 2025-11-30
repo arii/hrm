@@ -17,7 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
+import { initSocketManager, resetState } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
@@ -105,6 +105,23 @@ app
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
+      // --- Custom Route Interception ---
+
+      // Intercept the /api/debug/reset call and handle it directly
+      if (req.method === 'POST' && req.url === '/api/debug/reset') {
+        if (process.env.TESTING !== 'true') {
+          return res.status(403).json({
+            success: false,
+            message:
+              'Endpoint only available in testing environment (`TESTING=true`)',
+          })
+        }
+        resetState()
+        return res
+          .status(200)
+          .json({ success: true, message: 'Server state reset.' })
+      }
+
       // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
