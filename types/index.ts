@@ -13,6 +13,7 @@ export interface HeartRateZonesProps {
 }
 
 import { TimerMode, TimerPhase } from './websocket'
+export type { TimerMode, TimerPhase }
 
 export interface TimerDisplayProps {
   phase: TimerPhase
