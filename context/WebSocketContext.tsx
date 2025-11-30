@@ -119,9 +119,6 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Explicitly request initial state from the server
-      ws.send(JSON.stringify({ type: 'GET_STATE' }))
-
       if (pendingActions.current.length > 0) {
         console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach(action => {
