@@ -36,6 +36,7 @@ export interface SpotifyTokenResponse {
 }
 
 export class SpotifyPolling {
+  private static instance: SpotifyPolling | null = null
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -73,13 +74,46 @@ export class SpotifyPolling {
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
-    return instance
+    if (!SpotifyPolling.instance) {
+      const instance = new SpotifyPolling(broadcastUpdate)
+      await instance.initializeSdk()
+      instance.tokenRefreshInterval = setInterval(
+        () => instance.checkAndRefreshSdkToken(),
+        1000 * 60 * 5
+      ) // Check every 5 minutes if we need to re-sync
+      SpotifyPolling.instance = instance
+    }
+    return SpotifyPolling.instance
+  }
+
+  /**
+   * Resets the singleton instance.
+   * NOTE: This should only be used in a test environment.
+   */
+  public static resetInstanceForTesting(): void {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        'resetInstanceForTesting should only be called in a test environment.'
+      )
+      return
+    }
+    if (SpotifyPolling.instance) {
+      SpotifyPolling.instance.cleanup()
+    }
+    SpotifyPolling.instance = null
+  }
+
+  public static getInstance(): SpotifyPolling {
+    if (!SpotifyPolling.instance) {
+      throw new Error(
+        'SpotifyPolling service has not been initialized. Call create() first.'
+      )
+    }
+    return SpotifyPolling.instance
+  }
+
+  public getTokenManager(): SpotifyTokenManager {
+    return this.tokenManager
   }
 
   private async initializeSdk() {

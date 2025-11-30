@@ -2,7 +2,9 @@
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import { getAPIURL, getSpotifyCallbackURL } from '../utils/urls'
+import { getSpotifyCallbackURL } from '../utils/urls'
+import { SpotifyPolling } from '@/services/spotifyPolling'
+import { SpotifyTokenInputPayload } from '@/services/spotifyTokenManager'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -167,10 +169,12 @@ export const authOptions: AuthOptions = {
           refreshToken: account.refresh_token,
         }
 
-        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
+        // Securely deliver the token to the singleton service instance
+        if (account.refresh_token && account.access_token) {
           try {
-            const tokenPayload = {
+            const tokenManager =
+              SpotifyPolling.getInstance().getTokenManager()
+            const tokenPayload: SpotifyTokenInputPayload = {
               provider: account.provider,
               sub: account.providerAccountId,
               access_token: account.access_token,
@@ -179,32 +183,16 @@ export const authOptions: AuthOptions = {
                 ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
                 : 3600,
               scope: account.scope || '',
-              obtainedAt: Date.now(),
             }
+            tokenManager.setToken(tokenPayload)
 
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tokenPayload),
-            })
-            const responseBody = await response.text()
-            if (response.ok) {
-              console.log(
-                'Internal token delivery successful. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            } else {
-              console.error(
-                'Internal token delivery failed. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            }
+            // Signal the polling service to re-initialize its SDK with the new token
+            SpotifyPolling.getInstance().setRefreshToken('signal')
           } catch (e) {
-            console.error('Internal token delivery failed:', e)
+            console.error(
+              '[AUTH] Failed to deliver token to SpotifyTokenManager:',
+              e
+            )
           }
         }
 
@@ -219,7 +207,36 @@ export const authOptions: AuthOptions = {
 
       // 3. Token is expired - try to refresh it
       console.log('[AUTH] Access token expired, refreshing...')
-      return await refreshAccessToken(token)
+      const refreshedToken = await refreshAccessToken(token)
+
+      // 4. If refresh was successful, update the persistent token
+      if (!refreshedToken.error) {
+        try {
+          const tokenManager = SpotifyPolling.getInstance().getTokenManager()
+          const tokenPayload: SpotifyTokenInputPayload = {
+            provider: 'spotify', // Assuming spotify, may need adjustment
+            sub: token.sub || '', // `sub` should exist on the JWT
+            access_token: refreshedToken.accessToken as string,
+            refresh_token: refreshedToken.refreshToken as string,
+            expires_in: refreshedToken.accessTokenExpires
+              ? Math.floor(
+                  (refreshedToken.accessTokenExpires - Date.now()) / 1000
+                )
+              : 3600,
+            scope: (token.scope as string) || '', // Scope might not be on refreshed token, carry over
+          }
+          tokenManager.setToken(tokenPayload)
+          // Signal the polling service to re-initialize its SDK
+          SpotifyPolling.getInstance().setRefreshToken('signal')
+        } catch (e) {
+          console.error(
+            '[AUTH] Failed to deliver refreshed token to SpotifyTokenManager:',
+            e
+          )
+        }
+      }
+
+      return refreshedToken
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object

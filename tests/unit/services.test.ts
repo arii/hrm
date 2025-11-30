@@ -49,9 +49,11 @@ describe('Services Integration', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    broadcastedMessages = []
 
-    // Create broadcast function that collects messages
+    // Reset the singleton instance before each test
+    SpotifyPolling.resetInstanceForTesting()
+
+    broadcastedMessages = []
     broadcastFn = (message: ServerMessage) => {
       broadcastedMessages.push(message)
     }
@@ -65,8 +67,6 @@ describe('Services Integration', () => {
         expires_in: 3600,
         refresh_token: 'refresh_token',
       }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
     }))
 
     // Mock SDK instance
@@ -93,8 +93,6 @@ describe('Services Integration', () => {
 
   afterEach(() => {
     jest.useRealTimers()
-    spotifyService.stopPolling()
-    spotifyService.cleanup()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

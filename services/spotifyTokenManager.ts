@@ -18,40 +18,34 @@ export interface TokenRecord {
   payload: SpotifyTokenPayload
 }
 
+export type SpotifyTokenInputPayload = Omit<SpotifyTokenPayload, 'obtainedAt'>
+
 export class SpotifyTokenManager {
   /**
-   * Directly set the access token (for command injection/testing).
+   * Overwrites the current token file with the provided payload.
+   * This is the new primary method for updating the server's token.
    */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token created via setAccessToken.')
+  public setToken(tokenPayload: SpotifyTokenInputPayload): void {
+    const record: TokenRecord = {
+      receivedAt: Date.now(),
+      payload: {
+        ...tokenPayload,
+        obtainedAt: Date.now(),
+      },
+    }
+    this.currentToken = record
+    fs.writeFileSync(this.tokenFile, JSON.stringify(record, null, 2), 'utf8')
+    console.log('Spotify token file updated for:', record.payload.sub)
+  }
+
+  /**
+   * Deletes the token file, effectively logging the server out.
+   */
+  public clearToken(): void {
+    if (fs.existsSync(this.tokenFile)) {
+      fs.unlinkSync(this.tokenFile)
+      this.currentToken = null
+      console.log('Spotify token file deleted.')
     }
   }
   private tokenFile: string

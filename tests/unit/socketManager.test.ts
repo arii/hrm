@@ -57,9 +57,11 @@ describe('WebSocket Manager Integration', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    broadcastedMessages = []
 
-    // Create broadcast function that collects messages
+    // Reset the singleton instance before each test
+    SpotifyPolling.resetInstanceForTesting()
+
+    broadcastedMessages = []
     broadcastFn = (data: Partial<ServerMessage>) => {
       broadcastedMessages.push(data)
     }
@@ -75,8 +77,6 @@ describe('WebSocket Manager Integration', () => {
         expires_in: 3600,
         refresh_token: 'refresh_token',
       }) as jest.Mock,
-      stopPolling: jest.fn() as jest.Mock,
-      cleanup: jest.fn() as jest.Mock,
     }))
 
     // Mock SDK instance
@@ -103,10 +103,6 @@ describe('WebSocket Manager Integration', () => {
 
   afterEach(() => {
     jest.useRealTimers()
-    if (spotifyService) {
-      spotifyService.stopPolling()
-      spotifyService.cleanup()
-    }
   })
 
   describe('Dashboard Updates with Timer Changes', () => {
