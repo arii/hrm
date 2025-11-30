@@ -1,0 +1,57 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - leader
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment-package
+          cp -r .next deployment-package/
+          cp package.json deployment-package/
+          cp pnpm-lock.yaml deployment-package/
+          cp ecosystem.config.cjs deployment-package/
+          cp start-production.sh deployment-package/
+
+      - name: ⚙️ Setup SSH and Known Hosts
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Rsync and PM2 Deployment
+        run: |
+          # Create the deployment directory if it doesn't exist
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_HOST }} "mkdir -p ${{ secrets.DEPLOY_PATH }}"
+
+          # Rsync the validated build artifact to the server
+          rsync -avz --delete ./deployment-package/ ${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
+
+          # Install production dependencies and reload the app
+          ssh ${{ secrets.DEPLOY_HOST }} "cd ${{ secrets.DEPLOY_PATH }} && chmod +x start-production.sh && pnpm install --prod && pm2 reload ecosystem.config.cjs --env production"
+
+      - name: Deployment Success
+        run: echo "Deployment to production server complete and PM2 reloaded."

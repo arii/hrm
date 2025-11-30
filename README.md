@@ -512,24 +512,27 @@ MIT
 - NextAuth for Spotify OAuth
 - PM2 for process management
 
+## Automated Deployment
+
+This project uses a GitHub Actions workflow to automate deployment. When code is pushed to the `leader` branch, the workflow will automatically deploy the latest version to the production server.
+
+### Prerequisites
+
+- **SSH Key**: The private SSH key for the deployment server must be added as a secret to the GitHub repository with the name `SSH_PRIVATE_KEY`.
+- **Deployment Host**: The deployment host (e.g., `user@123.45.67.89`) must be added as a secret with the name `DEPLOY_HOST`.
+- **Deployment Path**: The path on the server where the application will be deployed (e.g., `/var/www/hrm-app`) must be added as a secret with the name `DEPLOY_PATH`.
+
+### Deployment Process
+
+The deployment process is defined in `.github/workflows/deploy.yml` and consists of the following steps:
+
+1.  **Checkout Code**: The workflow checks out the latest code from the `leader` branch.
+2.  **Setup SSH**: The SSH key is configured to allow access to the deployment server.
+3.  **Rsync and PM2 Deployment**:
+    - The `rsync` command is used to synchronize the build artifacts to the deployment server.
+    - The `pm2 reload` command is executed on the server to restart the application with zero downtime.
+
 ## Troubleshooting
-
-### Production Deployment
-
-#### Prerequisites
-
-- Node.js & npm
-- PM2 (`npm install -g pm2`)
-- Nginx
-- A domain name with DDNS
-- An SSL certificate (Let's Encrypt is recommended)
-
-#### Deployment Steps
-
-1.  **Build and Start**: Ensure `.env.production` exists, then run `npm run start`. The script verifies build artifacts and kicks off `npm run build` automatically when needed.
-2.  **Nginx Configuration**: Ensure Nginx is configured to proxy requests to port 3000 with WebSocket support.
-3.  **SSL Configuration**: Ensure SSL certificates are configured and renewed as needed.
-4.  **PM2 Startup**: Configure PM2 to start on boot with `pm2 startup`.
 
 #### Nginx Reverse Proxy Configuration
 
