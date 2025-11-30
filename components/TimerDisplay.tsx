@@ -172,6 +172,7 @@ const TimerDisplay = ({
 
         {/* Giant Timer Display */}
         <Typography
+          data-testid="timer-countdown"
           component="div"
           role="timer"
           aria-live="polite"

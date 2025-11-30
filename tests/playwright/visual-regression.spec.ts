@@ -131,8 +131,7 @@ test.describe('Visual Regression Tests', () => {
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
         // Mask timer countdown numbers that might persist from previous runs
-        dashboardPage.locator('text=/^\\d+$/'),
-        dashboardPage.locator('text=/\\d+s/'),
+        dashboardPage.locator('[data-testid="timer-countdown"]'),
       ],
     })
   })
@@ -207,9 +206,7 @@ test.describe('Visual Regression Tests', () => {
       maxDiffPixelRatio: 0.02,
       mask: [
         // Mask the large timer countdown numbers (e.g., "04", "03")
-        dashboardPage.locator('text=/^\\d+$/'),
-        // Mask any time displays with seconds (e.g., "15s", "5s")
-        dashboardPage.locator('text=/\\d+s/'),
+        dashboardPage.locator('[data-testid="timer-countdown"]'),
       ],
     })
   })
@@ -232,11 +229,10 @@ test.describe('Visual Regression Tests', () => {
       maxDiffPixelRatio: 0.04, // Robustness for dynamic content
       mask: [
         // Mask the entire timer display area (countdown numbers and phase labels)
-        dashboardPage.locator('text=/^\\d+$/'),
-        dashboardPage.locator('text=/\\d+s/'),
-        dashboardPage.locator('text=/WORK|REST|READY|RUNNING/'),
+        dashboardPage.locator('[data-testid="timer-countdown"]'),
         // Mask the entire HR tiles section (all dynamic HR data)
-        dashboardPage.locator('[data-testid="hr-tile-grid-item"]'),
+        dashboardPage.locator('[data-testid="live-hr-value"]'),
+        dashboardPage.locator('[data-testid="live-hr-percent"]'),
       ],
     })
   })
