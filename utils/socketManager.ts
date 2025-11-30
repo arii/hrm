@@ -5,6 +5,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
+import { SpotifyClient } from '../services/spotify/spotifyClient.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
@@ -16,12 +17,14 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+let spotifyClientInstance: SpotifyClient
 
 const hrmClients = new Map<string, HrmData>()
 
 interface Services {
   tabataService: TabataTimer
   spotifyService: SpotifyPolling
+  spotifyClient: SpotifyClient
 }
 
 /**
@@ -31,6 +34,7 @@ const initSocketManager = (wss: WebSocketServer, services: Services) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  spotifyClientInstance = services.spotifyClient
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`

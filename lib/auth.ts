@@ -3,6 +3,7 @@ import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL, getSpotifyCallbackURL } from '../utils/urls'
+import type { AccessToken } from '@spotify/web-api-ts-sdk'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -170,16 +171,14 @@ export const authOptions: AuthOptions = {
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
           try {
-            const tokenPayload = {
-              provider: account.provider,
-              sub: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
-              obtainedAt: Date.now(),
+            // This is the standard AccessToken object from the Spotify SDK
+            const tokenPayload: AccessToken = {
+              access_token: account.access_token!,
+              token_type: 'Bearer',
+              expires_in: account.expires_in!,
+              refresh_token: account.refresh_token!,
+              scope: account.scope!,
+              expires: (account.expires_at ?? 0) * 1000,
             }
 
             const response = await fetch(getAPIURL('internal/token-delivery'), {

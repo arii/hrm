@@ -1,52 +1,37 @@
 // File: services/spotifyPlaylistService.ts
 /**
- * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
- * This service is used by the standalone playlist selection page.
+ * Spotify Playlist Service: Handles playlist-related operations.
+ * This service now uses the centralized SpotifyClient for all API interactions.
  */
-import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
 import { presetPlaylists } from './seedData'
+import { SpotifyClient } from './spotify/spotifyClient'
+import logger from '../utils/logger'
 
 // Re-export types for backward compatibility
 export type { SpotifyPlaylistItem, SpotifyPlaylist }
 
 /**
  * Returns a list of preset workout playlists.
+ * @returns {SpotifyPlaylistItem[]} A list of preset playlists.
  */
 export function getPresetPlaylists(): SpotifyPlaylistItem[] {
   return presetPlaylists
 }
 
 /**
- * Fetches user playlists from Spotify API.
- * This is used by the standalone Spotify playlist selection page.
+ * Fetches the current user's playlists from the Spotify API.
+ * This function relies on the SpotifyClient to provide an authenticated SDK instance.
+ *
+ * @param {SpotifyClient} spotifyClient - The centralized Spotify client instance.
+ * @returns {Promise<SpotifyPlaylistItem[]>} A promise that resolves to a list of the user's playlists.
  */
 export async function getUserPlaylists(
-  accessToken: string
+  spotifyClient: SpotifyClient
 ): Promise<SpotifyPlaylistItem[]> {
-  if (!accessToken) {
-    console.warn('Cannot get user playlists: Access token is missing.')
-    return []
-  }
   try {
-    // We need to construct an AccessToken object for the SDK
-    // Since we only have the string, we assume it's valid and expiration is handled by caller or ignored for this one-shot call.
-    // The SDK requires the full object structure.
-    const tokenObject: AccessToken = {
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600, // Dummy value, as we likely won't refresh inside this short-lived instance
-      refresh_token: '',
-      expires: Date.now() + 3600 * 1000,
-    }
-
-    const sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || 'client_id_placeholder', // Client ID is needed even if we have token? Yes, usually.
-      tokenObject
-    )
-
-    // Fetch playlists
-    const response = await sdk.currentUser.playlists.playlists(50)
+    const sdk = await spotifyClient.getSdk()
+    const response = await sdk.currentUser.playlists.playlists(50) // Fetch up to 50 playlists
 
     return response.items.map((item) => ({
       id: item.id,
@@ -54,7 +39,7 @@ export async function getUserPlaylists(
       uri: item.uri,
     }))
   } catch (error) {
-    console.error('Error fetching user playlists:', error)
+    logger.error({ err: error }, 'Error fetching user playlists.')
     return []
   }
 }

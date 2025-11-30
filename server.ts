@@ -1,20 +1,16 @@
-// File: server.js (Unified Next.js and WebSocket Server - Custom Entry Point)
-/**
- * Description: Custom Node.js HTTP Server that hosts the Next.js application,
- * attaches the persistent WebSocket server, and manages service initialization
- * and internal data endpoints (like NextAuth token delivery).
- */
-
+// File: server.ts (Unified Next.js and WebSocket Server - Custom Entry Point)
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
 import { parse } from 'url'
-import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import type { WebSocket } from 'ws'
+import { AccessToken } from '@spotify/web-api-ts-sdk'
 
-// Service Imports (Node loads these .ts files via transpilation)
+// Service Imports
+import { SpotifyClient } from './services/spotify/spotifyClient.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -24,76 +20,64 @@ import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
+const port: number = process.env.PORT ? +process.env.PORT : 3000
 const hostname =
   process.env.NODE_ENV === 'production'
     ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
+    : process.env.HOST || '127.0.0.1'
 
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
+const nextRequestHandler = app.getRequestHandler()
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
-const nextRequestHandler = app.getRequestHandler()
-
-// Create Express app for routing and middleware
-const expressApp = express()
-
-// --- Main Application Setup ---
 
 app
   .prepare()
   .then(async () => {
+    const expressApp = express()
     const server = createServer(expressApp)
 
-    // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
-      logger.info(`Serving static files from: ${staticPath}`)
-
       expressApp.use(
         '/_next/static',
-        express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
-          immutable: true,
-          maxAge: '365d',
-        })
+        express.static(staticPath, { immutable: true, maxAge: '365d' })
       )
     }
 
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
-    try {
-      spotifyService = await SpotifyPolling.create(broadcast)
-    } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
-    }
+    // 2. Initialize Persistent Services using the new SpotifyClient singleton
+    const spotifyClient = SpotifyClient.getInstance(
+      process.env.SPOTIFY_CLIENT_ID!,
+      process.env.SPOTIFY_CLIENT_SECRET!
+    )
+    const spotifyService = new SpotifyPolling(broadcast, spotifyClient)
     const tabataService = new TabataTimer(broadcast)
 
-    // 3. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService })
+    // Start polling immediately if a valid token was loaded from persistence.
+    if (!spotifyClient.isTokenExpired()) {
+      logger.info(
+        'Valid Spotify token found on startup, starting polling immediately.'
+      )
+      spotifyService.startPolling()
+    } else {
+      logger.info(
+        'No valid Spotify token on startup. Polling will start after login.'
+      )
+    }
+
+    // 3. Initialize WebSocket Manager (pass singleton instances)
+    initSocketManager(wss, { tabataService, spotifyService, spotifyClient })
 
     // --- Express Routing ---
+    // Add middleware to parse JSON request bodies.
+    expressApp.use(express.json())
 
     // Swagger UI
     expressApp.use(
@@ -102,61 +86,58 @@ app
       swaggerUi.setup(swaggerSpec)
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes('/api/internal/token-delivery')
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
+    // Override Next.js handler for the token delivery route to ensure immediate,
+    // in-process token updates without relying on file system signals.
+    expressApp.post(
+      '/api/internal/token-delivery',
+      async (req: Request, res: Response) => {
+        try {
+          const token = req.body as AccessToken
+          if (!token || typeof token.access_token !== 'string') {
+            return res.status(400).send('Invalid or missing token payload.')
           }
-        }, 1000)
-      }
-      return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
+          logger.info('Received new Spotify token via internal delivery endpoint.')
+          await spotifyClient.setToken(token)
+
+          // Ensure polling is active now that we have a token.
+          spotifyService.startPolling()
+          // Trigger an immediate poll to refresh the UI with the latest track.
+          spotifyService.forcePollAndBroadcast()
+
+          res.status(200).send('Token received and service updated.')
+        } catch (error) {
+          logger.error({ err: error }, 'Error processing token delivery.')
+          res.status(500).send('Internal Server Error')
+        }
+      }
+    )
+
+    // Handle all other requests with the Next.js handler.
+    expressApp.all('*', (req: Request, res: Response) => {
+      return nextRequestHandler(req, res)
+    })
+
+    // --- HTTP/WS Upgrade Handling ---
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-
-        // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
 
     // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
