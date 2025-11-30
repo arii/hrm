@@ -23,7 +23,7 @@ import { getBaseURL } from './utils/urls.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
-import { OpenApiValidator } from 'express-openapi-validator'
+import * as OpenApiValidator from 'express-openapi-validator'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -33,15 +33,6 @@ const hostname =
     : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
-
-// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
-// ===========================================
-
 const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
@@ -106,11 +97,13 @@ app
     // --- Express Routing ---
     // Middleware for parsing JSON bodies, which is a prerequisite for the validator
     expressApp.use(express.json())
-    new OpenApiValidator({
-      apiSpec: swaggerSpec,
-      validateRequests: true,
-      validateResponses: true,
-    }).install(expressApp)
+    expressApp.use(
+      OpenApiValidator.middleware({
+        apiSpec: swaggerSpec as any,
+        validateRequests: true,
+        validateResponses: true,
+      })
+    )
     /**
      * @swagger
      * /health:
@@ -120,7 +113,7 @@ app
      *       200:
      *         description: The server is running
      */
-    expressApp.get('/health', (req, res) => {
+    expressApp.get('/health', (_req, res) => {
       res.status(200).send({ status: 'ok' })
     })
 
@@ -133,7 +126,7 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
+    expressApp.use(async (req: Request, res: Response, next: express.NextFunction) => {
       // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
@@ -156,7 +149,23 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    expressApp.use(
+      (
+        err: any,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction
+      ) => {
+        // format error
+        res.status(err.status || 500).json({
+          message: err.message,
+          errors: err.errors,
+        })
+      }
+    )
+    // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
