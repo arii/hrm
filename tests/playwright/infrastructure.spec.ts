@@ -35,10 +35,15 @@ test.describe('Infrastructure & Scripts', () => {
     try {
       // stdio: 'pipe' allows us to capture output if it fails
       execSync('npm run lint', { stdio: 'pipe' });
-    } catch (error: any) {
-      console.error('Lint Output:', error.stdout?.toString());
-      console.error('Lint Errors:', error.stderr?.toString());
-      throw new Error(`Linting failed with status ${error.status}`);
+    } catch (error: unknown) {
+      const execError = error as {
+        status: number;
+        stdout: Buffer;
+        stderr: Buffer;
+      };
+      console.error('Lint Output:', execError.stdout?.toString());
+      console.error('Lint Errors:', execError.stderr?.toString());
+      throw new Error(`Linting failed with status ${execError.status}`);
     }
   });
 
