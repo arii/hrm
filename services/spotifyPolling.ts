@@ -133,14 +133,15 @@ export class SpotifyPolling {
   // --- Polling Logic ---
 
   // Expose start/stop polling publicly (used by server to control lifecycle)
-  public startPolling(intervalMs: number = 3000) {
+  public startPolling() {
     if (this.pollInterval) return
+
+    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
+      : 3000
     // Poll every `intervalMs` for low-latency updates
-    this.pollInterval = setInterval(
-      () => this.getCurrentlyPlaying(),
-      intervalMs
-    )
-    logger.debug('Spotify polling started.')
+    this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
+    logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
   public stopPolling() {

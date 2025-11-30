@@ -89,6 +89,7 @@ describe('SpotifyPolling Service', () => {
     // Mock environment variables
     process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
     process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
+    process.env.SPOTIFY_POLLING_INTERVAL_MS = '100' // Use a short interval for testing
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
@@ -282,7 +283,7 @@ describe('SpotifyPolling Service', () => {
         Promise.resolve(mockPlayback)
       )
 
-      spotifyService.startPolling(100)
+      spotifyService.startPolling()
       jest.advanceTimersByTime(150)
       await Promise.resolve()
       await Promise.resolve()
@@ -298,7 +299,7 @@ describe('SpotifyPolling Service', () => {
         Promise.resolve(null)
       )
 
-      spotifyService.startPolling(100)
+      spotifyService.startPolling()
       jest.advanceTimersByTime(150)
       await Promise.resolve()
       await Promise.resolve()
