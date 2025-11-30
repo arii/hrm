@@ -1,4 +1,8 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import {
+  IStatefulService,
+  IWebSocketService,
+} from '../types/service'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
@@ -35,7 +39,9 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling
+  implements IWebSocketService, IStatefulService<SpotifyData>
+{
   /**
    * Public method to force a poll and broadcast current track state.
    */

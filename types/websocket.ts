@@ -59,6 +59,13 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | {
+      type: 'SERVICE_ERROR'
+      payload: {
+        service: 'spotify' | 'timer' | 'system'
+        message: string
+      }
+    }
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
