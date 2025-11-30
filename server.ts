@@ -20,6 +20,7 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
+import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
@@ -100,8 +101,7 @@ app
     const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
-    const getUnifiedStateSnapshot = () => ({
-      hrmData: [], // HRM data is managed within socketManager, so it's initialized as empty here
+    const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),

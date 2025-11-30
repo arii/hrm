@@ -9,7 +9,9 @@ import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
+  InitialStateSnapshotPayload,
   ServerMessage,
+  StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
@@ -17,7 +19,7 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
-let getUnifiedStateSnapshot: () => Omit<ServerMessage['payload'], 'hrmData'>
+let getUnifiedStateSnapshot: () => StateSnapshot
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -32,7 +34,7 @@ interface Services {
 const initSocketManager = (
   wss: WebSocketServer,
   services: Services,
-  getSnapshot: () => Omit<ServerMessage['payload'], 'hrmData'>
+  getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
   tabataServiceInstance = services.tabataService
@@ -96,12 +98,16 @@ const handleIncomingMessage = (
       case 'GET_STATE': {
         // The client is requesting the full current state.
         const stateSnapshot = getUnifiedStateSnapshot()
+
+        // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
+        const payload: InitialStateSnapshotPayload = {
+          ...stateSnapshot,
+          hrmData: Array.from(hrmClients.values()),
+        };
+
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
-          payload: {
-            ...stateSnapshot,
-            hrmData: Array.from(hrmClients.values()),
-          },
+          payload: payload,
         }
         ws.send(JSON.stringify(initialStateMessage))
         break
@@ -162,7 +168,7 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
-          // message.command is already typed as SpotifyCommand, which now includes deviceId, volume, and playlistUri
+          // message.command is already typed as Spotify_COMMAND, which now includes deviceId, volume, and playlistUri
           spotifyServiceInstance.handleCommand(
             message.command,
             message.deviceId,
