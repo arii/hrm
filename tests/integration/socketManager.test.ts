@@ -87,7 +87,7 @@ describe('WebSocket Full Integration Test', () => {
       ws.send(JSON.stringify(hrmInput));
       await new Promise(resolve => setTimeout(resolve, 500));
       let lastMessage = receivedMessages[receivedMessages.length - 1];
-      const clientData = lastMessage.hrmData?.find(c => c.name === 'Workflow Test');
+      let clientData = lastMessage.hrmData?.find(c => c.name === 'Workflow Test');
       expect(clientData).toBeDefined();
       expect(clientData?.value).toBe(135);
 

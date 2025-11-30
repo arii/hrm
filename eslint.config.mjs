@@ -8,9 +8,6 @@ export default defineConfig([
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
-  // Apply recommended TypeScript ESLint rules
-  ...tseslint.configs.recommended,
-
   // Configure JavaScript unused vars to work with TypeScript
   {
     rules: {

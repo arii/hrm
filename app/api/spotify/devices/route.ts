@@ -3,17 +3,6 @@ import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
- * @swagger
- * /api/spotify/devices:
- *   get:
- *     description: Returns the user's available Spotify devices
- *     responses:
- *       200:
- *         description: A list of the user's available Spotify devices
- *       401:
- *         description: Not authenticated or token is missing
- */
-/**
  * API route to fetch available Spotify devices for the authenticated user.
  *
  * This endpoint retrieves the list of devices from the Spotify API and returns

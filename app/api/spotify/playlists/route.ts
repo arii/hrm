@@ -10,17 +10,6 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 
 /**
- * @swagger
- * /api/spotify/playlists:
- *   get:
- *     description: Returns the user's Spotify playlists
- *     responses:
- *       200:
- *         description: A list of the user's Spotify playlists
- *       401:
- *         description: Not authenticated or token is missing
- */
-/**
  * API route to fetch preset and user Spotify playlists.
  *
  * This endpoint is specifically for the standalone Spotify playlist selection page.

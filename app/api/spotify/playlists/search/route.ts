@@ -8,26 +8,6 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * @swagger
- * /api/spotify/playlists/search:
- *   get:
- *     description: Returns a list of Spotify playlists based on a search query
- *     parameters:
- *       - name: q
- *         in: query
- *         required: true
- *         description: The search query
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: A list of Spotify playlists
- *       400:
- *         description: Search query too long
- *       401:
- *         description: Not authenticated or token is missing
- */
-/**
  * API route to search for public Spotify playlists.
  *
  * This endpoint searches Spotify's public playlist catalog and returns results

@@ -20,11 +20,9 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
-import * as OpenApiValidator from 'express-openapi-validator'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -92,38 +90,10 @@ app
     }
     const tabataService = new TabataTimer(broadcast)
 
-    // 3. State Snapshot Function
-    const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
-    })
-
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
+    // 3. Initialize WebSocket Manager (to handle commands and connections)
+    initSocketManager(wss, { tabataService, spotifyService })
 
     // --- Express Routing ---
-    // Middleware for parsing JSON bodies, which is a prerequisite for the validator
-    expressApp.use(express.json())
-    expressApp.use(
-      OpenApiValidator.middleware({
-        apiSpec: swaggerSpec as any,
-        validateRequests: true,
-        validateResponses: true,
-      })
-    )
-    /**
-     * @swagger
-     * /health:
-     *   get:
-     *     description: Returns the server's status
-     *     responses:
-     *       200:
-     *         description: The server is running
-     */
-    expressApp.get('/health', (_req, res) => {
-      res.status(200).send({ status: 'ok' })
-    })
 
     // Swagger UI
     expressApp.use(
@@ -134,7 +104,7 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response, next: express.NextFunction) => {
+    expressApp.use(async (req: Request, res: Response) => {
       // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
@@ -157,23 +127,7 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    })
-
-    expressApp.use(
-      (
-        err: any,
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction
-      ) => {
-        // format error
-        res.status(err.status || 500).json({
-          message: err.message,
-          errors: err.errors,
-        })
-      }
-    )
-    // --- HTTP/WS Upgrade Handling ---
+    }) // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(

@@ -35,14 +35,22 @@ describe('WebSocket Manager Integration', () => {
   let broadcastFn: (data: Partial<ServerMessage>) => void
   let mockSdk: {
     player: {
-      getCurrentlyPlayingTrack: jest.Mock<Promise<null>>
-      startResumePlayback: jest.Mock<Promise<void>>
-      pausePlayback: jest.Mock<Promise<void>>
-      skipToNext: jest.Mock<Promise<void>>
-      skipToPrevious: jest.Mock<Promise<void>>
-      transferPlayback: jest.Mock<Promise<void>>
-      setPlaybackVolume: jest.Mock<Promise<void>>
-      getAvailableDevices: jest.Mock<Promise<{ devices: unknown[] }>>
+
+      getCurrentlyPlayingTrack: jest.Mock<any>
+
+      startResumePlayback: jest.Mock<any>
+
+      pausePlayback: jest.Mock<any>
+
+      skipToNext: jest.Mock<any>
+
+      skipToPrevious: jest.Mock<any>
+
+      transferPlayback: jest.Mock<any>
+
+      setPlaybackVolume: jest.Mock<any>
+
+      getAvailableDevices: jest.Mock<any>
     }
   }
 

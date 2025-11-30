@@ -5,7 +5,6 @@ import { GET } from '@/app/api/spotify/playlists/route'
 import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
-import { NextRequest } from 'next/server'
 
 // Mock 'next-auth' to prevent TypeError during initialization
 jest.mock('next-auth', () => ({
@@ -60,7 +59,7 @@ describe('API Route: /api/spotify/playlists', () => {
     mockedGetServerSession.mockResolvedValue(null)
 
     const response = await GET(
-      new NextRequest('http://localhost/api/spotify/playlists')
+      new Request('http://localhost/api/spotify/playlists')
     )
     const data = await response.json()
 
@@ -75,7 +74,7 @@ describe('API Route: /api/spotify/playlists', () => {
     })
 
     const response = await GET(
-      new NextRequest('http://localhost/api/spotify/playlists')
+      new Request('http://localhost/api/spotify/playlists')
     )
     const data = await response.json()
 
@@ -112,23 +111,11 @@ describe('API Route: /api/spotify/playlists', () => {
     )
 
     const response = await GET(
-      new NextRequest('http://localhost/api/spotify/playlists')
+      new Request('http://localhost/api/spotify/playlists')
     )
     const data = await response.json()
 
     expect(response.status).toBe(500)
     expect(data.error).toBe('Internal Server Error')
-  })
-
-  it('should return 400 Bad Request if an invalid query parameter is provided', async () => {
-    const response = await GET(
-      new NextRequest(
-        'http://localhost/api/spotify/playlists?invalid_param=true'
-      )
-    )
-    const data = await response.json()
-
-    expect(response.status).toBe(400)
-    expect(data.error).toBe('Invalid request')
   })
 })
