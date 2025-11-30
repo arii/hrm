@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 import { ApiError } from '@/lib/errors';
 import logger from '@/utils/logger';
 
-type ApiHandler = (req: Request, ...args: any[]) => Promise<NextResponse>;
+type ApiHandler = (
+  req: Request,
+  ...args: unknown[]
+) => Promise<NextResponse>;
 
 /**
  * Wraps an API route handler to provide centralized error handling.
@@ -15,7 +18,7 @@ type ApiHandler = (req: Request, ...args: any[]) => Promise<NextResponse>;
  * @returns A new handler with error handling.
  */
 export function withErrorHandler(handler: ApiHandler): ApiHandler {
-  return async (req: Request, ...args: any[]) => {
+  return async (req: Request, ...args: unknown[]) => {
     try {
       return await handler(req, ...args);
     } catch (error) {
