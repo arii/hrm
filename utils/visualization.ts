@@ -23,6 +23,8 @@ export const HR_ZONES = [
     color: 'text-blue-400',
     progressColor: '#3b82f6', // Darker blue
     bgColor: '#3b82f6', // Darker blue
+    gradient: 'linear-gradient(45deg, #2196F3, #64B5F6)',
+    glow: '0 0 20px #2196F3',
   },
   {
     name: 'Fat Burn',
@@ -30,6 +32,8 @@ export const HR_ZONES = [
     color: 'text-green-500',
     progressColor: '#22c55e',
     bgColor: '#4CAF50',
+    gradient: 'linear-gradient(45deg, #4CAF50, #81C784)',
+    glow: '0 0 20px #4CAF50',
   },
   {
     name: 'Cardio',
@@ -37,6 +41,8 @@ export const HR_ZONES = [
     color: 'text-yellow-500',
     progressColor: '#d97706', // Darker orange/yellow
     bgColor: '#d97706', // Darker orange/yellow
+    gradient: 'linear-gradient(45deg, #FFEB3B, #FFF176)',
+    glow: '0 0 25px #FFEB3B',
   },
   {
     name: 'Peak',
@@ -44,6 +50,8 @@ export const HR_ZONES = [
     color: 'text-red-500',
     progressColor: '#ef4444',
     bgColor: '#F44336',
+    gradient: 'linear-gradient(45deg, #F44336, #E57373)',
+    glow: '0 0 30px #F44336',
   },
   {
     name: 'Max',
@@ -51,6 +59,8 @@ export const HR_ZONES = [
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
+    gradient: 'linear-gradient(45deg, #9C27B0, #BA68C8)',
+    glow: '0 0 35px #9C27B0',
   },
 ]
 
@@ -71,6 +81,8 @@ interface HrZoneProps {
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   bpm: number
+  gradient: string
+  glow: string
 }
 
 /**
@@ -88,6 +100,8 @@ export const getHrZoneProps = (
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
       bpm: 0,
+      gradient: 'linear-gradient(45deg, #9E9E9E, #BDBDBD)',
+      glow: 'none',
     }
   }
 
@@ -110,6 +124,8 @@ export const getHrZoneProps = (
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
       bpm: currentHr,
+      gradient: 'linear-gradient(45deg, #9E9E9E, #BDBDBD)',
+      glow: 'none',
     }
   }
 
@@ -120,6 +136,8 @@ export const getHrZoneProps = (
     progressColor: zone.progressColor,
     backgroundColor: zone.bgColor,
     bpm: currentHr,
+    gradient: zone.gradient,
+    glow: zone.glow,
   }
 }
 

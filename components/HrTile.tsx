@@ -11,9 +11,18 @@ export interface HrTileProps {
   bpm: number
   percentMax: number // 0-100
   background: string // hex color
+  gradient: string
+  glow: string
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  gradient,
+  glow,
+}: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -44,7 +53,10 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              textShadow: glow,
+              background: gradient,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
             {percentMax}%
@@ -89,7 +101,9 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.background === nextProps.background &&
-    prevProps.percentMax === nextProps.percentMax
+    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.gradient === nextProps.gradient &&
+    prevProps.glow === nextProps.glow
   )
 }
 
