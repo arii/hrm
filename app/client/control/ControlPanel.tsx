@@ -20,7 +20,15 @@ const SpotifyControls = dynamic(
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
-  const { connectionStatus, connect } = useWebSocket()
+  const { connectionStatus, connect, sendData } = useWebSocket()
+
+  // Register this client as a controller
+  useEffect(() => {
+    if (connectionStatus === 'Connected') {
+      console.log('[ControlPanel] Registering as controller')
+      sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
+    }
+  }, [connectionStatus, sendData])
 
   // Reconnect on page visibility
   useEffect(() => {

@@ -34,11 +34,24 @@ export interface TimerData {
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }
+// 1. Update SpotifyData to include the device list
+export interface SpotifyDevice {
+  id: string
+  is_active: boolean
+  is_private_session: boolean
+  is_restricted: boolean
+  name: string
+  type: string
+  volume_percent: number
+}
+
 export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
+  devices: SpotifyDevice[] // <--- ADDED: Synced device list
 }
+
 
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.
@@ -71,6 +84,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | SpotifyExecutionMessage
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
@@ -112,10 +126,10 @@ export interface SpotifyCommandMessage {
     | 'PREVIOUS'
     | 'TRANSFER_PLAYBACK'
     | 'SET_VOLUME'
-  deviceId?: string // Optional: for TRANSFER_PLAYBACK command
-  volume?: number // Optional: for SET_VOLUME command (0-100)
-  playlistUri?: string // Optional: for PLAY command
-  token?: string // Optional: for passing access token
+    | 'GET_DEVICES' // <--- ADDED
+  deviceId?: string
+  volume?: number
+  playlistUri?: string
 }
 
 export interface GetStateMessage {
@@ -125,6 +139,16 @@ export interface GetStateMessage {
 /**
  * Union type for all possible messages the client can send to the server.
  */
+export interface ClientRegistrationMessage {
+  type: 'REGISTER_CLIENT'
+  role: 'dashboard' | 'controller'
+}
+
+export interface SpotifyExecutionMessage {
+  type: 'EXECUTE_SPOTIFY'
+  payload: SpotifyCommandMessage
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
@@ -132,6 +156,7 @@ export type ClientCommandMessage =
   | SpotifyCommandMessage
   | TimerConfigMessage
   | GetStateMessage
+  | ClientRegistrationMessage
 
 import { z } from 'zod'
 
@@ -174,15 +199,20 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
+    z.literal('GET_DEVICES'), // <--- ADDED
   ]),
-  deviceId: z.string().optional(), // Optional: for TRANSFER_PLAYBACK command
-  volume: z.number().min(0).max(100).optional(), // Optional: for SET_VOLUME command (0-100)
-  playlistUri: z.string().optional(), // Optional: for PLAY command
-  token: z.string().optional(), // Optional: for passing access token
+  deviceId: z.string().optional(),
+  volume: z.number().min(0).max(100).optional(),
+  playlistUri: z.string().optional(),
 })
 
 export const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),
+})
+
+export const ClientRegistrationMessageSchema = z.object({
+  type: z.literal('REGISTER_CLIENT'),
+  role: z.union([z.literal('dashboard'), z.literal('controller')]),
 })
 
 export const ClientCommandMessageSchema = z.union([
@@ -192,4 +222,5 @@ export const ClientCommandMessageSchema = z.union([
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
+  ClientRegistrationMessageSchema,
 ])

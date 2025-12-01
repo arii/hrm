@@ -15,6 +15,8 @@ export interface TimerDisplayProps {
   mode: TimerMode
   workDuration?: number
   restDuration?: number
+  soundEventId?: number // Sound cue trigger
+  volume?: number // Master volume
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -28,6 +30,7 @@ const TimerDisplay = ({
   restDuration = 10,
 }: TimerDisplayProps) => {
   const { connectionStatus } = useWebSocket()
+
   // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string
@@ -74,6 +77,7 @@ const TimerDisplay = ({
   return (
     <Card
       elevation={6}
+      data-testid="timer-display-container"
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
@@ -197,7 +201,7 @@ const TimerDisplay = ({
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
-            data-testid="timer-phase-label"
+            data-testid="timer-phase"
             variant="h6"
             aria-live="polite"
             sx={{

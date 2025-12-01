@@ -1,5 +1,5 @@
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
+import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
+import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -23,6 +23,7 @@ type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'PAUSE'
+  | 'GET_DEVICES'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -56,6 +57,7 @@ export class SpotifyPolling {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
+    devices: [], // <--- ADDED
   }
 
   private sdk: SpotifyApi | null = null
@@ -209,6 +211,7 @@ export class SpotifyPolling {
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
           this.state = {
+            ...this.state,
             trackName: 'Nothing is currently playing.',
             artist: '',
             isPlaying: false,
@@ -255,6 +258,7 @@ export class SpotifyPolling {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
         this.state = {
+          ...this.state,
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
@@ -287,17 +291,34 @@ export class SpotifyPolling {
 
   // --- Command Handling (Used by socketManager) ---
 
-  public async getAvailableDevices() {
+  public async refreshDevices(): Promise<void> {
     if (!this.sdk) {
       logger.warn('Cannot get devices: SDK not initialized.')
-      return []
+      return
     }
     try {
       const response = await this.sdk.player.getAvailableDevices()
-      return response.devices
+      // FIX: Filter and map to ensure type safety (Device -> SpotifyDevice)
+      const validDevices: SpotifyDevice[] = (response.devices || [])
+        .filter((d: Device) => d.id !== null)
+        .map((d: Device) => ({
+          id: d.id as string,
+          is_active: d.is_active,
+          is_private_session: d.is_private_session,
+          is_restricted: d.is_restricted,
+          name: d.name,
+          type: d.type,
+          volume_percent: d.volume_percent ?? 0
+        }))
+
+      this.state.devices = validDevices
+      this.broadcastUpdate({
+        type: 'SPOTIFY_UPDATE',
+        payload: this.getState(),
+      })
+      logger.debug('Devices refreshed:', this.state.devices.length)
     } catch (error) {
       logger.error({ err: error }, 'Error fetching Spotify devices')
-      return []
     }
   }
 
@@ -307,9 +328,14 @@ export class SpotifyPolling {
     volume?: number,
     playlistUri?: string
   ) {
-    if (!this.sdk) {
+    if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
+    }
+    
+    if (command === 'GET_DEVICES') {
+      this.refreshDevices()
+      return
     }
 
     return (async () => {

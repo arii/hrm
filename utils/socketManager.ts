@@ -8,6 +8,9 @@ import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
+  ClientRegistrationMessage,
+  SpotifyCommandMessage,
+  SpotifyExecutionMessage,
   HrmData,
   InitialStateSnapshotPayload,
   ServerMessage,
@@ -15,11 +18,19 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
+// Extend WebSocket to track client role
+interface ExtWebSocket extends WebSocket {
+  isAlive?: boolean
+  clientType?: 'dashboard' | 'controller'
+}
+
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
+// Store WebSocket server reference for command relay
+let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -37,13 +48,19 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
+  wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
+    const extWs = ws as ExtWebSocket
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+    extWs.isAlive = true
     console.log(`WebSocket Client connected: ${clientId}`)
+
+    // Heartbeat
+    extWs.on('pong', () => { extWs.isAlive = true })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const defaultClientData: HrmData = {
@@ -55,11 +72,11 @@ const initSocketManager = (
     }
     hrmClients.set(clientId, defaultClientData)
 
-    ws.on('message', (message) => {
-      handleIncomingMessage(ws, message.toString(), clientId)
+    extWs.on('message', (message) => {
+      handleIncomingMessage(extWs, message.toString(), clientId)
     })
 
-    ws.on('close', () => {
+    extWs.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       hrmClients.delete(clientId)
       broadcast({
@@ -68,13 +85,25 @@ const initSocketManager = (
       })
     })
   })
+
+  // Keep-alive pinger (runs every 30s)
+  const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      const extWs = ws as ExtWebSocket
+      if (extWs.isAlive === false) return ws.terminate()
+      extWs.isAlive = false
+      ws.ping()
+    })
+  }, 30000)
+
+  wss.on('close', () => clearInterval(interval))
 }
 
 /**
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (
-  ws: WebSocket,
+  ws: ExtWebSocket,
   jsonMessage: string,
   clientId: string
 ) => {
@@ -95,6 +124,13 @@ const handleIncomingMessage = (
     )
 
     switch (message.type) {
+      case 'REGISTER_CLIENT': {
+        // Role Registration - Dashboard identifies itself as the executor
+        ws.clientType = (message as ClientRegistrationMessage).role
+        console.log(`[WS] Client registered as: ${ws.clientType}`)
+        break
+      }
+
       case 'GET_STATE': {
         // The client is requesting the full current state.
         const stateSnapshot = getUnifiedStateSnapshot()
@@ -167,13 +203,29 @@ const handleIncomingMessage = (
       }
 
       case 'SPOTIFY_COMMAND': {
+        const commandMsg = message as SpotifyCommandMessage
+        console.log(`[WS Relay] Forwarding command: ${commandMsg.command}`)
+        
+        // Broadcast ONLY to connected Dashboards for remote execution
+        wsServerInstance.clients.forEach((client: WebSocket) => {
+          const target = client as ExtWebSocket
+          // Only forward to the Dashboard, not other controllers
+          if (target.readyState === WebSocket.OPEN && target.clientType === 'dashboard') {
+            const executionMessage: SpotifyExecutionMessage = {
+              type: 'EXECUTE_SPOTIFY',
+              payload: commandMsg
+            }
+            target.send(JSON.stringify(executionMessage))
+          }
+        })
+        
+        // Also handle locally for backward compatibility
         if (spotifyServiceInstance) {
-          // message.command is already typed as Spotify_COMMAND, which now includes deviceId, volume, and playlistUri
           spotifyServiceInstance.handleCommand(
-            message.command,
-            message.deviceId,
-            message.volume,
-            message.playlistUri
+            commandMsg.command,
+            commandMsg.deviceId,
+            commandMsg.volume,
+            commandMsg.playlistUri
           )
         }
         break

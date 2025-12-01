@@ -8,7 +8,7 @@ import { audioManager } from '../utils/audioManager'
 import useVolumePreference from './useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 
-export const useTimerSounds = () => {
+export const useTimerSounds = (isMuted: boolean = false) => {
   const { timerData } = useWebSocket()
   const { volume } = useVolumePreference()
   const lastSoundEventId = useRef<number>(0)
@@ -20,6 +20,7 @@ export const useTimerSounds = () => {
 
   // Effect to play sound based on timer data from WebSocket
   useEffect(() => {
+    if (isMuted) return;
     // Ensure we have a new, valid sound event to play
     if (
       timerData.soundToPlay &&
@@ -41,7 +42,7 @@ export const useTimerSounds = () => {
           break
       }
     }
-  }, [timerData.soundToPlay, timerData.soundEventId])
+  }, [timerData.soundToPlay, timerData.soundEventId, isMuted])
 
   // Expose a stable function to initialize audio on first user interaction.
   // useCallback ensures consumers can safely include it in dependency arrays

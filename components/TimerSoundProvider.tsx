@@ -6,6 +6,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTimerSounds } from '../hooks/useTimerSounds'
 
 interface TimerSoundProviderProps {
@@ -13,7 +14,9 @@ interface TimerSoundProviderProps {
 }
 
 const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
-  const { initializeAudio } = useTimerSounds()
+  const pathname = usePathname()
+  const isController = pathname.startsWith('/client')
+  const { initializeAudio } = useTimerSounds(isController)
 
   useEffect(() => {
     const handleFirstInteraction = () => {
