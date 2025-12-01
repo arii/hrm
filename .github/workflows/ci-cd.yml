@@ -71,7 +71,7 @@ jobs:
     - name: 🏗️ Next.js Production Build Cache Restore
       # This is the most critical step for performance.
       # Utilize the Next.js cache feature for subsequent runs.
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: |
           .next/cache
@@ -83,7 +83,7 @@ jobs:
       run: npm run build
       
     - name: 💾 Save Next.js Build Cache
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: .next/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/*.ts', '**/*.tsx') }}
