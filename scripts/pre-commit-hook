@@ -1,0 +1,18 @@
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# 1. Check if we are modifying source code
+STAGED_SRC=$(git diff --cached --name-only | grep -E "^(app/|components/|lib/|hooks/|services/|tests/|server\.ts)")
+
+if [ -n "$STAGED_SRC" ]; then
+    # 2. Check if test-proof.json is ALSO staged
+    STAGED_PROOF=$(git diff --cached --name-only | grep "test-proof.json")
+
+    if [ -z "$STAGED_PROOF" ]; then
+        echo "⛔️  STOP! You are modifying source code but 'test-proof.json' is not updated."
+        echo "    The CI Integrity Guard will reject this commit."
+        echo ""
+        echo "👉  Solution: Run 'npm run commit:verified' instead of 'git commit'."
+        exit 1
+    fi
+fi

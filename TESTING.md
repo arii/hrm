@@ -16,6 +16,16 @@ These are the most frequently used commands for testing and code quality checks.
 
 ---
 
+## Release Verification
+
+To ensure that no unverified code reaches the main branch, a pre-commit hook is in place. If you modify any source code, you must generate a `test-proof.json` file by running the verification script.
+
+- **`npm run commit:verified`**: Use this command instead of `git commit`. It runs the verifier, stages the resulting `test-proof.json`, and then opens the commit message editor.
+
+This command is the standard way to commit changes and ensures that all commits are compliant with the repository's safety standards.
+
+---
+
 ## All Test Commands
 
 ### Visual & E2E Testing

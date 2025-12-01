@@ -2,6 +2,19 @@
 
 This file contains notes and action items related to the ongoing development of the HRM application.
 
+## Current Workflow
+
+To maintain repository integrity and prevent unverified code from being committed, all developers are required to use the new verified commit process.
+
+- **DO NOT** use `git commit` directly for changes involving source code.
+- **DO** use `npm run commit:verified` to ensure your changes are tested and accompanied by a valid `test-proof.json`.
+
+This workflow is enforced by a pre-commit hook. To install it, run the following command from the root of the repository:
+
+`ln -s ../../scripts/pre-commit-hook .git/hooks/pre-commit`
+
+Direct commits that modify source code without updating the proof will be blocked.
+
 ## Current Focus
 
 The primary focus of ongoing development is to enhance the user experience and improve the long-term maintainability of the application. Key priorities include:
