@@ -1,7 +1,7 @@
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { spotifyApi } from './spotifyApi'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -12,9 +12,6 @@ function safeParseJSON(input: string): unknown {
   }
 }
 
-// API endpoint constants (mostly managed by SDK now)
-// TOKEN_URL is handled by TokenManager or SDK
-
 type SpotifyCommand =
   | 'PLAY'
   | 'NEXT'
@@ -23,9 +20,6 @@ type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'PAUSE'
-
-// We use SDK types now, but keep internal state types as needed.
-// Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -42,117 +36,67 @@ export class SpotifyPolling {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
-  private tokenManager: SpotifyTokenManager
+
   private pollInterval: NodeJS.Timeout | null = null
-  private tokenRefreshInterval: NodeJS.Timeout | null = null
-
-  // Internal auth/state values
   private broadcastUpdate: (message: ServerMessage) => void
-
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
-
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
   }
 
-  private sdk: SpotifyApi | null = null
-
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
-
-    this.tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
-    )
   }
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
     const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
+    if (spotifyApi.isReady()) {
+      logger.debug(
+        'Spotify API is ready. Starting polling immediately.'
+      )
+      instance.startPolling()
+    } else {
+      logger.debug(
+        'Spotify API not ready. Polling will start after token delivery.'
+      )
+    }
     return instance
-  }
-
-  private async initializeSdk() {
-    const token = await this.tokenManager.getValidAccessToken() // Triggers refresh if needed
-    if (token) {
-      const sdkToken = this.tokenManager.getSdkAccessToken()
-      if (sdkToken) {
-        this.setupSdk(sdkToken)
-        logger.debug(
-          'Loaded existing Spotify tokens from file. Starting polling.'
-        )
-        this.startPolling()
-      }
-    }
-  }
-
-  private setupSdk(accessToken: AccessToken) {
-    this.sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      accessToken
-    )
-  }
-
-  private async checkAndRefreshSdkToken() {
-    // Force Manager to check validity and refresh if needed
-    const newTokenString = await this.tokenManager.getValidAccessToken()
-    if (newTokenString && this.sdk) {
-      const sdkToken = this.tokenManager.getSdkAccessToken()
-      if (sdkToken) {
-        this.setupSdk(sdkToken)
-      }
-    }
   }
 
   public getState(): SpotifyData {
     return { ...this.state }
   }
 
-  /**
-   * Public method to safely check if the SDK has been initialized.
-   * @returns {boolean} True if the SDK is ready, false otherwise.
-   */
   public isReady(): boolean {
-    return this.sdk !== null
+    return spotifyApi.isReady()
   }
 
-  // --- Token Management (Used by NextAuth route) ---
-
-  /**
-   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
-   */
-  public setRefreshToken(_token: string) {
+  public async setRefreshToken(_token: string): Promise<void> {
     logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+    await spotifyApi.signalTokenRefresh()
+    if (!this.pollInterval) {
+      this.startPolling()
+    }
   }
 
-  // --- Polling Logic ---
-
-  // Expose start/stop polling publicly (used by server to control lifecycle)
-  public startPolling() {
+  public startPolling(): void {
     if (this.pollInterval) return
 
     const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
       : 3000
-    // Poll every `intervalMs` for low-latency updates
+
     this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
     logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
-  public stopPolling() {
+  public stopPolling(): void {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
@@ -160,52 +104,16 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  public cleanup(): void {
     this.stopPolling()
-    if (this.tokenRefreshInterval) {
-      clearInterval(this.tokenRefreshInterval)
-      this.tokenRefreshInterval = null
-      logger.debug('Token refresh interval cleared.')
-    }
   }
 
   private getCurrentlyPlaying = async () => {
-    if (!this.sdk) return
-
-    // Ensure token is valid before call?
-    // We rely on background refresh or failure handling.
-
     try {
-      let playbackState
-      try {
-        playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
-      } catch (err: unknown) {
-        // If response is not JSON, fallback to text
-        if (
-          typeof err === 'object' &&
-          err !== null &&
-          'response' in err &&
-          typeof (err as { response?: unknown }).response === 'object' &&
-          (err as { response?: { text?: unknown } }).response &&
-          'text' in (err as { response: { text?: unknown } }).response &&
-          typeof (err as { response: { text?: unknown } }).response.text ===
-            'function'
-        ) {
-          const text = await (
-            err as { response: { text: () => Promise<string> } }
-          ).response.text()
-          const parsed = safeParseJSON(text)
-          if (typeof parsed === 'object' && parsed !== null) {
-            logger.error({ response: parsed }, 'Spotify API response (parsed)')
-          } else {
-            logger.error({ response: text }, 'Spotify API response (not JSON)')
-          }
-        }
-        throw err
-      }
+      const sdk = await spotifyApi.getSdk()
+      const playbackState = await sdk.player.getCurrentlyPlayingTrack()
 
       if (!playbackState) {
-        // Nothing playing or 204
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
           this.state = {
@@ -221,55 +129,39 @@ export class SpotifyPolling {
         return
       }
 
-      // Check if it's a track or episode
       if (
         playbackState.currently_playing_type !== 'track' &&
         playbackState.currently_playing_type !== 'episode'
       ) {
-        // Unknown type
         return
       }
 
-      // item can be null if it's private session or unknown
       const item = playbackState.item
-
-      // We need to handle Track vs Episode. SDK types are union.
-      // For simplicity, we access common fields or check type.
       const trackName = item?.name || 'Unknown Content'
-      // Artists exists on Track, not necessarily Episode in the same way?
-      // SDK `Track` has artists, `Episode` has show.
       let artistName = 'Unknown Artist'
       if (item && 'artists' in item) {
         artistName = item.artists.map((a) => a.name).join(', ')
       } else if (item && 'show' in item) {
         artistName = item.show.name
       }
-
       const isPlaying = playbackState.is_playing
 
-      // Only broadcast if track ID or playback state has changed
       if (
         item?.id !== this.lastTrackId ||
         isPlaying !== this.lastPlaybackState
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
-        this.state = {
-          trackName: trackName,
-          artist: artistName,
-          isPlaying: isPlaying,
-        }
+        this.state = { trackName, artist: artistName, isPlaying }
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
           payload: this.getState(),
         })
       }
     } catch (error) {
-      const err = error as { status?: number }
-      // Handle 429 specifically
+      const err = error as { status?: number; reason?: string }
       if (err?.status === 429) {
         logger.warn('Spotify API Rate Limited. Backing off...')
-        // Maybe stop polling for a bit?
         return
       }
 
@@ -277,7 +169,7 @@ export class SpotifyPolling {
         logger.warn(
           'Spotify token expired during polling. Attempting refresh.'
         )
-        this.checkAndRefreshSdkToken()
+        await spotifyApi.signalTokenRefresh()
         return
       }
 
@@ -285,15 +177,10 @@ export class SpotifyPolling {
     }
   }
 
-  // --- Command Handling (Used by socketManager) ---
-
   public async getAvailableDevices() {
-    if (!this.sdk) {
-      logger.warn('Cannot get devices: SDK not initialized.')
-      return []
-    }
     try {
-      const response = await this.sdk.player.getAvailableDevices()
+      const sdk = await spotifyApi.getSdk()
+      const response = await sdk.player.getAvailableDevices()
       return response.devices
     } catch (error) {
       logger.error({ err: error }, 'Error fetching Spotify devices')
@@ -301,75 +188,58 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
-    if (!this.sdk) {
-      logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
+  ): Promise<void> {
+    try {
+      const sdk = await spotifyApi.getSdk()
+      await this.executeSpotifyCommand(
+        sdk,
+        command,
+        deviceId,
+        volume,
+        playlistUri
+      )
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
+    } catch (error) {
+      this.logSpotifyCommandError(command, error)
     }
-
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        this.logSpotifyCommandError(command, error)
-      }
-    })()
   }
 
   private async executeSpotifyCommand(
+    sdk: SpotifyApi,
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
-    // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
-    // This triggers the action on the currently active device.
-
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const targetDevice = (deviceId || undefined) as any
     switch (command) {
       case 'PLAY':
-        if (playlistUri) {
-          // If deviceId is undefined, SDK targets active device
-          // Type assertion needed because SDK types incorrectly require string
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string,
-            playlistUri
-          )
-        } else {
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string
-          )
-        }
+        await sdk.player.startResumePlayback(targetDevice, playlistUri)
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(
-          (deviceId || undefined) as unknown as string
-        )
+        await sdk.player.pausePlayback(targetDevice)
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(
-          (deviceId || undefined) as unknown as string
-        )
+        await sdk.player.skipToNext(targetDevice)
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(
-          (deviceId || undefined) as unknown as string
-        )
+        await sdk.player.skipToPrevious(targetDevice)
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {
-          await this.sdk!.player.transferPlayback([deviceId], true)
+          await sdk.player.transferPlayback([deviceId], true)
         }
         break
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          await sdk.player.setPlaybackVolume(clampedVolume, targetDevice)
         }
         break
       case 'LOGIN':
