@@ -6,6 +6,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    TESTING: process.env.TESTING,
+  },
   async redirects() {
     return [
       {

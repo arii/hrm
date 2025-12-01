@@ -15,15 +15,23 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
-  TEST_READY: 3000,
+  TEST_READY: 2000,
   /** Default timeout for WebSocket connection */
-  WEBSOCKET: 10000,
+  WEBSOCKET: 5000,
   /** Default timeout for element visibility */
-  ELEMENT_VISIBLE: 5000,
+  ELEMENT_VISIBLE: 3000,
   /** Default timeout for network idle */
-  NETWORK_IDLE: 10000,
+  NETWORK_IDLE: 5000,
   /** Default timeout for navigation */
-  NAVIGATION: 15000,
+  NAVIGATION: 8000,
+  /** Short timeout for quick checks */
+  SHORT: 1000,
+  /** Medium timeout for normal operations */
+  MEDIUM: 3000,
+  /** Long timeout for complex operations */
+  LONG: 8000,
+  /** Infrastructure/server startup timeout */
+  INFRASTRUCTURE: 10000,
 } as const
 
 /**
