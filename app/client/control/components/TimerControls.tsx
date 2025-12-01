@@ -2,7 +2,6 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
-import logger from '@/utils/logger'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
@@ -128,14 +127,16 @@ const TimerControls = () => {
           setSpotifyDeviceId(deviceId)
         }
       }
-      if (!deviceId) {
+      /*if (!deviceId) {
         logger.warn('No deviceId available, Spotify command not sent.')
         return
-      }
+      }*/
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        deviceId,
+        // FIX: Use spread to omit the key entirely if deviceId is null/undefined
+        ...(deviceId ? { deviceId } : {}), //
+       // deviceId: deviceId || '', 
       }
       sendData(message)
     },

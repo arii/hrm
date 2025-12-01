@@ -198,7 +198,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Device Management', () => {
-    it('should get available devices', async () => {
+    it('should refresh and broadcast available devices', async () => {
       const mockDevices = [
         {
           id: 'device1',
@@ -225,10 +225,14 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
-      const devices = await spotifyService.getAvailableDevices()
-      expect(devices).toHaveLength(2)
-      expect(devices[0].id).toBe('device1')
-      expect(devices[1].id).toBe('device2')
+      await spotifyService.refreshDevices()
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'SPOTIFY_UPDATE',
+        payload: expect.objectContaining({
+          devices: mockDevices,
+        }),
+      })
     })
 
     it('should transfer playback to device', async () => {

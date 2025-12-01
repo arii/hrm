@@ -313,6 +313,12 @@ export async function configureTimer(
   workDuration: number,
   restDuration: number,
 ): Promise<void> {
+  // Ensure Tabata mode is active so inputs are visible
+  await controlPage.getByTestId('tabata-mode-button').click();
+  
+  // Explicitly wait for the work input to become visible after mode change
+  await controlPage.waitForSelector('[data-testid="work-duration-input"]', { timeout: 5000 });
+
   const workInput = controlPage.getByTestId('work-duration-input')
   const restInput = controlPage.getByTestId('rest-duration-input')
 

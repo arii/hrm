@@ -12,8 +12,14 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
-import TimerDisplay from '../components/TimerDisplay'
+const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
+})
 import { useWebSocket } from '@/context/WebSocketContext'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -34,6 +40,13 @@ const GoogleDocViewer = dynamic(
 const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const { volume } = useVolumePreference() // Get volume state
+
+  // Initialize Spotify Web Playback SDK
+  const { player } = useSpotifyWebPlayback()
+  
+  // Enable remote Spotify control from controllers
+  useSpotifyRemoteExecution(player)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -65,6 +78,8 @@ const Dashboard = () => {
             mode={timerData.mode}
             workDuration={timerData.workDuration}
             restDuration={timerData.restDuration}
+            soundEventId={timerData.soundEventId}
+            volume={volume}
           />
         </Grid>
 

@@ -23,27 +23,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
 
 const SpotifyControls = () => {
   const router = useRouter()
+  // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
+  const { devices = [] } = spotifyData; // Default to empty array if undefined
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [devicesLoading, setDevicesLoading] = useState(false)
-  const [_devicesError, setDevicesError] = useState<string | null>(null)
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection');
@@ -54,66 +42,42 @@ const SpotifyControls = () => {
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
+  // 3. Request devices on mount or connection
   useEffect(() => {
-    if (hasSpotifyData) {
-      const fetchDevices = async () => {
-        setDevicesLoading(true)
-        setDevicesError(null)
-        try {
-          const response = await fetch(API_SPOTIFY_DEVICES)
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          setAvailableDevices(Array.isArray(devices) ? devices : [])
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to load devices.'
-          console.error('Failed to fetch Spotify devices:', error)
-          setDevicesError(errorMessage)
-        } finally {
-          setDevicesLoading(false)
-        }
-      }
-      fetchDevices()
-    } else {
-      setAvailableDevices([])
-      setSelectedDeviceId('')
-      setDevicesLoading(false)
-      setDevicesError(null)
+    if (connectionStatus === 'Connected') {
+      sendData({
+        type: 'SPOTIFY_COMMAND',
+        command: 'GET_DEVICES'
+      })
     }
-  }, [hasSpotifyData])
+  }, [connectionStatus, sendData])
 
+  // 4. Update selection logic to use the prop 'devices' instead of local state
   useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        setSelectedDeviceId('')
-      }
-      return
+    const activeDevice = devices.find((d) => d.is_active);
+    const selectedStillExists = devices.some((d) => d.id === selectedDeviceId);
+
+    // If the selected device is no longer in the list, auto-select the new active one.
+    if (selectedDeviceId && !selectedStillExists) {
+      setSelectedDeviceId(activeDevice?.id ?? '');
     }
-
-    const activeDevice = availableDevices.find((device) => device.is_active)
-
+    
+    // If there's no selection yet, but there is an active device, select it.
     if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      return
+      setSelectedDeviceId(activeDevice.id);
     }
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devices]);
 
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      setSelectedDeviceId(activeDevice?.id ?? '')
-    }
-  }, [availableDevices, selectedDeviceId])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
       return selectedDeviceId
     }
-    const activeDevice = availableDevices.find((device) => device.is_active)
+    const activeDevice = devices.find((device) => device.is_active)
     return activeDevice?.id
-  }, [availableDevices, selectedDeviceId])
+  }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
     (
@@ -169,6 +133,7 @@ const SpotifyControls = () => {
 
   return (
     <Card
+      data-testid="spotify-controls-card"
       sx={{
         mb: 3,
         color: 'white',
@@ -212,6 +177,7 @@ const SpotifyControls = () => {
             >
               <IconButton
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
+                data-testid="spotify-prev-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -224,6 +190,7 @@ const SpotifyControls = () => {
                 onClick={() =>
                   sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
+                data-testid="spotify-play-pause-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -235,6 +202,7 @@ const SpotifyControls = () => {
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}
+                data-testid="spotify-next-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -266,7 +234,7 @@ const SpotifyControls = () => {
                 {volume}
               </Typography>
             </Stack>
-            {availableDevices.length > 0 && (
+            {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
                   Device
@@ -282,7 +250,7 @@ const SpotifyControls = () => {
                       }
                     }}
                     disabled={
-                      connectionStatus !== 'Connected' || devicesLoading
+                      connectionStatus !== 'Connected'
                     }
                     sx={{
                       color: 'white',
@@ -294,7 +262,7 @@ const SpotifyControls = () => {
                       },
                     }}
                   >
-                    {availableDevices.map((device) => (
+                    {devices.map((device) => (
                       <MenuItem key={device.id} value={device.id}>
                         {device.name} {device.is_active && '(Active)'}
                       </MenuItem>

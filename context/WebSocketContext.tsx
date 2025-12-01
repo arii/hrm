@@ -38,7 +38,7 @@ const INITIAL_STATE: AppState = {
     restDuration: 10,
     soundEventId: 0,
   },
-  spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
+  spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false, devices: [] },
   spotifyServiceInitialized: true,
 }
 
@@ -76,6 +76,10 @@ export const WebSocketProvider = ({
         return { ...state, spotifyData: message.payload }
       case 'SPOTIFY_SERVICE_INIT_UPDATE':
         return { ...state, spotifyServiceInitialized: message.payload }
+      case 'EXECUTE_SPOTIFY':
+        // This message type is handled by useSpotifyRemoteExecution hook
+        // We don't need to update state here, just pass it through
+        return state
       default:
         return state
     }
@@ -171,6 +175,16 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
+        
+        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
+        if (message.type === 'EXECUTE_SPOTIFY') {
+          // Dispatch a custom event that the remote execution hook can listen to
+          window.dispatchEvent(new CustomEvent('spotify-remote-command', { 
+            detail: message 
+          }))
+          return
+        }
+        
         // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
