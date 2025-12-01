@@ -61,7 +61,13 @@ export const WebSocketProvider = ({
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
+
+  // Configuration for exponential backoff
+  const MAX_RECONNECT_ATTEMPTS = 10
+  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+  const JITTER_FACTOR = 0.2 // 20% jitter
 
   // Unified State Object managed by a reducer
   const reducer = (state: AppState, message: ServerMessage): AppState => {
@@ -138,6 +144,9 @@ export const WebSocketProvider = ({
         localStorage.setItem('pendingActions', '[]')
       }
 
+      // Reset reconnect attempts on successful connection
+      reconnectAttempts.current = 0
+
       // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
@@ -152,18 +161,35 @@ export const WebSocketProvider = ({
         event.reason
       )
       setConnectionStatus('Disconnected')
-      
-      // Reset test flag
+
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
       }
-      
-      if (shouldReconnect.current && !reconnectTimeoutRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[WebSocketProvider] Attempting to reconnect...')
-          setConnectionStatus('Reconnecting...')
-          connectRef.current()
-        }, 3000)
+
+      if (shouldReconnect.current) {
+        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts.current++
+          const delay =
+            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
+          const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
+          const reconnectDelay = delay + jitter
+
+          console.log(
+            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
+          )
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            setConnectionStatus('Reconnecting...')
+            connectRef.current()
+          }, reconnectDelay)
+        } else {
+          console.error(
+            '[WebSocketProvider] Max reconnection attempts reached.'
+          )
+          setConnectionStatus(
+            'Failed to connect. Please check your connection and refresh the page.'
+          )
+        }
       }
     }
 
