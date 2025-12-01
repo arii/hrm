@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
+import { getAPIURL } from '@/utils/urls'
 
 interface ServerTokenStatus {
   status: string
@@ -25,7 +26,7 @@ export default function SpotifyDebugPage() {
   const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
 
   const fetchServerToken = async () => {
-    const res = await fetch('/api/debug/spotify-token')
+    const res = await fetch(getAPIURL('debug/spotify-token'))
     if (res.ok) {
       const data = await res.json()
       setServerToken(data.token)

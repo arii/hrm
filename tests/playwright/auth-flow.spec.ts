@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
+import { getBaseURL, API_PREFIX } from '../../utils/urls'
 
 const BASE = getBaseURL()
 
 test.describe('Spotify Authentication', () => {
   test('auth check endpoint responds', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/debug/auth-check`)
+    const res = await request.get(`${BASE}${API_PREFIX}debug/auth-check`)
     expect(res.ok()).toBeTruthy()
     const data = await res.json()
     expect(data).toHaveProperty('spotifyConfigured', true)

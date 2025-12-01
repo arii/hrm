@@ -6,6 +6,7 @@
 set -e
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:3000}"
+API_PREFIX="/api"
 BOLD="\033[1m"
 GREEN="\033[0;32m"
 RED="\033[0;31m"
@@ -18,7 +19,7 @@ echo ""
 
 # Check if server is running
 echo -e "${BOLD}1. Server Status${RESET}"
-if curl -s --connect-timeout 2 "${BASE_URL}/api/debug/ping" > /dev/null 2>&1; then
+if curl -s --connect-timeout 2 "${BASE_URL}${API_PREFIX}/debug/ping" > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Server is running${RESET}"
 else
     echo -e "${RED}✗ Server is not responding at ${BASE_URL}${RESET}"
@@ -29,7 +30,7 @@ echo ""
 
 # Check auth configuration
 echo -e "${BOLD}2. Auth Configuration${RESET}"
-AUTH_CHECK=$(curl -s "${BASE_URL}/api/debug/auth-check")
+AUTH_CHECK=$(curl -s "${BASE_URL}${API_PREFIX}/debug/auth-check")
 NEXT_AUTH=$(echo "$AUTH_CHECK" | jq -r '.nextAuthConfigured')
 SPOTIFY_CONFIG=$(echo "$AUTH_CHECK" | jq -r '.spotifyConfigured')
 CLIENT_ID=$(echo "$AUTH_CHECK" | jq -r '.clientId')
@@ -60,11 +61,11 @@ fi
 
 # Validate callback URL format
 if [ "$REDIRECT_URI" != "null" ] && [ "$REDIRECT_URI" != "" ]; then
-    if [[ "$REDIRECT_URI" == */api/auth/callback/spotify ]]; then
+    if [[ "$REDIRECT_URI" == *"${API_PREFIX}/auth/callback/spotify" ]]; then
         echo -e "${GREEN}✓ Callback URL format is correct${RESET}"
     else
         echo -e "${RED}✗ Callback URL format is incorrect${RESET}"
-        echo "  Expected: .../api/auth/callback/spotify"
+        echo "  Expected: ...${API_PREFIX}/auth/callback/spotify"
         echo "  Current: ${REDIRECT_URI}"
     fi
     
@@ -82,7 +83,7 @@ echo ""
 
 # Check token status
 echo -e "${BOLD}3. Token Status${RESET}"
-TOKEN_STATUS=$(curl -s "${BASE_URL}/api/debug/spotify-token-status")
+TOKEN_STATUS=$(curl -s "${BASE_URL}${API_PREFIX}/debug/spotify-token-status")
 HAS_ACCESS=$(echo "$TOKEN_STATUS" | jq -r '.hasAccessToken')
 HAS_REFRESH=$(echo "$TOKEN_STATUS" | jq -r '.hasRefreshToken')
 USER_ID=$(echo "$TOKEN_STATUS" | jq -r '.userId')
@@ -146,7 +147,7 @@ echo ""
 
 # Check session (if logged in)
 echo -e "${BOLD}4. Session Status${RESET}"
-SESSION=$(curl -s "${BASE_URL}/api/debug/session")
+SESSION=$(curl -s "${BASE_URL}${API_PREFIX}/debug/session")
 SESSION_EXISTS=$(echo "$SESSION" | jq -r '.user.email' 2>/dev/null)
 
 if [ "$SESSION_EXISTS" != "null" ] && [ "$SESSION_EXISTS" != "" ]; then
@@ -167,12 +168,12 @@ if [[ "$REDIRECT_URI" == https://* ]]; then
     echo "Testing OAuth cookie configuration for HTTPS..."
     
     # Make a test request to the NextAuth provider configuration
-    PROVIDER_TEST=$(curl -s -H "Accept: application/json" "${BASE_URL}/api/auth/providers" 2>/dev/null)
+    PROVIDER_TEST=$(curl -s -H "Accept: application/json" "${BASE_URL}${API_PREFIX}/auth/providers" 2>/dev/null)
     if echo "$PROVIDER_TEST" | jq -e '.spotify' > /dev/null 2>&1; then
         echo -e "${GREEN}✓ OAuth provider endpoint accessible${RESET}"
         
         # Check if we can access the signin page without errors
-        SIGNIN_TEST=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/api/auth/signin/spotify")
+        SIGNIN_TEST=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}${API_PREFIX}/auth/signin/spotify")
         if [ "$SIGNIN_TEST" = "200" ]; then
             echo -e "${GREEN}✓ Spotify signin endpoint accessible${RESET}"
         else
@@ -180,7 +181,7 @@ if [[ "$REDIRECT_URI" == https://* ]]; then
         fi
         
         # Test CSRF token generation (this validates cookie setup)
-        CSRF_TEST=$(curl -s "${BASE_URL}/api/auth/csrf" | jq -r '.csrfToken' 2>/dev/null)
+        CSRF_TEST=$(curl -s "${BASE_URL}${API_PREFIX}/auth/csrf" | jq -r '.csrfToken' 2>/dev/null)
         if [ "$CSRF_TEST" != "null" ] && [ "$CSRF_TEST" != "" ]; then
             echo -e "${GREEN}✓ CSRF token generation working${RESET}"
         else
@@ -245,7 +246,7 @@ fi
 
 # Check for callback URL issues
 if [ "$REDIRECT_URI" != "null" ] && [ "$REDIRECT_URI" != "" ]; then
-    if [[ "$REDIRECT_URI" != */api/auth/callback/spotify ]]; then
+    if [[ "$REDIRECT_URI" != *"${API_PREFIX}/auth/callback/spotify" ]]; then
         ERRORS=$((ERRORS + 1))
     fi
 fi
@@ -280,7 +281,7 @@ else
     echo -e "${RED}✗ Configuration errors detected.${RESET}"
     echo ""
     echo "Common OAuth issues:"
-    echo "• Callback URL format: must end with /api/auth/callback/spotify"
+    echo "• Callback URL format: must end with ${API_PREFIX}/auth/callback/spotify"
     echo "• HTTPS required: production URLs must use HTTPS"
     echo "• Environment variables: check SPOTIFY_CALLBACK_URL vs SPOTIFY_REDIRECT_URI"
     echo "• Spotify app settings: callback URL must match exactly"

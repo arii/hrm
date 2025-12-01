@@ -1,4 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer'
+import { API_PREFIX } from './utils/urls.js'
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -38,20 +39,20 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/api/auth/:path*',
+        source: `${API_PREFIX}auth/:path*`,
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          }
-        ]
-      }
+            value: 'nosniff',
+          },
+        ],
+      },
     ]
-  }
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

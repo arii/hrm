@@ -24,6 +24,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getAPIURL } from '@/utils/urls'
 
 const actionButtonSx = {
   flex: 1,
@@ -90,7 +91,7 @@ const TimerControls = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('/api/spotify/devices')
+        const response = await fetch(getAPIURL('spotify/devices'))
         if (!response.ok) throw new Error('Failed to fetch devices')
         const devices: SpotifyDevice[] = await response.json()
         setSpotifyDevices(Array.isArray(devices) ? devices : [])
@@ -112,7 +113,7 @@ const TimerControls = () => {
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
         const firstDevice = spotifyDevices[0]
-        deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || null)
+        deviceId = activeDevice ? activeDevice.id : firstDevice?.id || null
         if (deviceId) {
           setSpotifyDeviceId(deviceId)
         }

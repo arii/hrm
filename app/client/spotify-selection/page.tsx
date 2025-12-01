@@ -19,6 +19,7 @@ import VolumeControl from '../../../components/Spotify/VolumeControl' // I will 
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
+import { getAPIURL } from '@/utils/urls'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -47,7 +48,7 @@ const SpotifySelectionPage = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('/api/spotify/devices')
+        const response = await fetch(getAPIURL('spotify/devices'))
         if (!response.ok) throw new Error('Failed to fetch devices')
         const devices: SpotifyDevice[] = await response.json()
         setAvailableDevices(Array.isArray(devices) ? devices : [])
@@ -66,7 +67,8 @@ const SpotifySelectionPage = () => {
       if (!found) {
         const activeDevice = availableDevices.find((d) => d.is_active)
         const firstDevice = availableDevices[0]
-        const deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+        const deviceId =
+          activeDevice ? activeDevice.id : firstDevice?.id || ''
         setSelectedDeviceId(deviceId)
       }
     } else {
@@ -94,7 +96,7 @@ const SpotifySelectionPage = () => {
     if (!deviceId && availableDevices.length > 0) {
       const activeDevice = availableDevices.find((d) => d.is_active)
       const firstDevice = availableDevices[0]
-      deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || '')
+      deviceId = activeDevice ? activeDevice.id : firstDevice?.id || ''
       if (deviceId) {
         setSelectedDeviceId(deviceId)
       }

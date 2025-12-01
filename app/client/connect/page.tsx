@@ -16,11 +16,14 @@ import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
+import { getAPIURL } from '@/utils/urls'
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+  document.cookie = `${name}=${encodeURIComponent(
+    value
+  )}; expires=${expires}; path=/`
 }
 
 const getCookie = (name: string): string => {
@@ -217,19 +220,28 @@ export default function ConnectPage() {
             variant="outlined"
             color="warning"
             onClick={async () => {
-              if (confirm('Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.')) {
+              if (
+                confirm(
+                  'Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.'
+                )
+              ) {
                 try {
                   // Clear client-side cookies
-                  document.cookie = 'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                  document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                  document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie =
+                    'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+                  document.cookie =
+                    'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+                  document.cookie =
+                    'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
-                  const response = await fetch('/api/debug/reset', { method: 'POST' });
-                  const data = await response.json();
-                  alert(data.message);
+                  const response = await fetch(getAPIURL('debug/reset'), {
+                    method: 'POST',
+                  })
+                  const data = await response.json()
+                  alert(data.message)
                 } catch (error) {
-                  console.error('Error resetting server:', error);
-                  alert('Failed to reset server.');
+                  console.error('Error resetting server:', error)
+                  alert('Failed to reset server.')
                 }
               }
             }}

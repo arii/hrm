@@ -19,6 +19,7 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getAPIURL } from '@/utils/urls'
 
 interface SpotifyDevice {
   id: string
@@ -109,7 +110,7 @@ const SpotifyDisplay = () => {
     if (spotifyLoggedIn && spotifyData.trackName) {
       const fetchDevices = async () => {
         try {
-          const response = await fetch('/api/spotify/devices')
+          const response = await fetch(getAPIURL('spotify/devices'))
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
           }

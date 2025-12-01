@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
+import { getAPIURL } from '@/utils/urls'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -73,7 +74,7 @@ const useSpotifyWebPlayback = () => {
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
       try {
-        const response = await fetch('/api/spotify/access-token')
+        const response = await fetch(getAPIURL('spotify/access-token'))
         if (!response.ok) {
           if (response.status === 401) {
             // User not logged in - this is expected, don't show as error
@@ -121,7 +122,7 @@ const useSpotifyWebPlayback = () => {
     }
 
     // Check if user has active session before initializing
-    fetch('/api/spotify/access-token')
+    fetch(getAPIURL('spotify/access-token'))
       .then((response) => {
         if (!response.ok) {
           console.log(
@@ -206,7 +207,10 @@ const useSpotifyWebPlayback = () => {
 
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('[Spotify Web Playback] Account Error:', message)
-        addError(`Account error: ${message}. A Premium account is required.`, 'persistent')
+        addError(
+          `Account error: ${message}. A Premium account is required.`,
+          'persistent'
+        )
       })
 
       setPlayer(spotifyPlayer)

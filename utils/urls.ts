@@ -29,20 +29,27 @@ export const getWebSocketURL = (): string => {
   return `${wsProtocol}//${host}/ws`
 }
 
+// === QUICK WIN 3: API CONSTANT EXTRACTION ===
+export const API_PREFIX = '/api/' // Define the standardized prefix once
+// ============================================
+
 export const getAPIURL = (endpoint: string): string => {
+  // Normalize endpoint to remove leading slash
+  const cleanEndpoint = endpoint.replace(/^\//, '')
+
   if (typeof window !== 'undefined') {
-    // Client-side: use current origin (allows localhost access in production)
-    return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`
+    // Client-side: use current origin
+    return `${window.location.origin}${API_PREFIX}${cleanEndpoint}`
   }
 
   // Server-side: use environment variable for internal API calls
   const baseUrl = getBaseURL()
-  return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
+  return `${baseUrl}${API_PREFIX}${cleanEndpoint}`
 }
 
 export const getSpotifyCallbackURL = (): string => {
   return (
     process.env.SPOTIFY_CALLBACK_URL ||
-    `${getBaseURL()}/api/auth/callback/spotify`
+    `${getBaseURL()}${API_PREFIX}auth/callback/spotify`
   )
 }

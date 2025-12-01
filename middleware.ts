@@ -5,10 +5,11 @@
  */
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { API_PREFIX } from './utils/urls'
 
 export function middleware(request: NextRequest) {
   // Only handle auth routes
-  if (!request.nextUrl.pathname.startsWith('/api/auth/')) {
+  if (!request.nextUrl.pathname.startsWith(`${API_PREFIX}auth/`)) {
     return NextResponse.next()
   }
 
@@ -44,6 +45,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/auth/:path*'
+    `${API_PREFIX}auth/:path*`
   ]
 }

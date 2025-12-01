@@ -19,6 +19,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
+import { getAPIURL } from '@/utils/urls'
 
 interface PlaylistItemProps {
   playlist: Playlist
@@ -68,7 +69,9 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
         primary={playlist.name}
         secondary={
           playlist.trackCount !== undefined
-            ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+            ? `${playlist.trackCount} tracks${
+                playlist.owner ? ` • ${playlist.owner}` : ''
+              }`
             : playlist.owner
               ? playlist.owner
               : undefined
@@ -147,7 +150,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch('/api/spotify/playlists')
+        const response = await fetch(getAPIURL('spotify/playlists'))
         if (!response.ok) {
           throw new Error('Failed to fetch playlists')
         }
@@ -186,7 +189,9 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setSearchLoading(true)
       try {
         const response = await fetch(
-          `/api/spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+          getAPIURL(
+            `spotify/playlists/search?q=${encodeURIComponent(debouncedSearch)}`
+          )
         )
         if (!response.ok) {
           throw new Error('Failed to search playlists')
