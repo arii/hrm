@@ -7,7 +7,12 @@ cd "$SCRIPT_DIR"
 
 export NODE_ENV=production
 
-if [ ! -f ".env.production" ]; then
+if [ "$TESTING" = "true" ] && [ -f ".env.test" ]; then
+  echo "[start-production] Loading .env.test for testing."
+  set -a
+  source .env.test
+  set +a
+elif [ ! -f ".env.production" ]; then
   echo "[start-production] Warning: .env.production not found. Running without secrets (Spotify features disabled)." >&2
 else
   # Export all variables defined in .env.production to child processes
