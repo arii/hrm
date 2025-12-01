@@ -9,7 +9,7 @@ const options: swaggerJsdoc.Options = {
       description: 'API documentation for the HRM application',
     },
   },
-  apis: ['./app/api/**/*.ts', './server.ts'], // files containing annotations as above
+  apis: ['./app/api/**/*.ts', './server.ts', './lib/api-contract.ts'], // files containing annotations as above
 }
 
 const swaggerSpec = swaggerJsdoc(options)

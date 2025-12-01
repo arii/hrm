@@ -10,14 +10,33 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 
 /**
- * API route to fetch preset and user Spotify playlists.
- *
- * This endpoint is specifically for the standalone Spotify playlist selection page.
- * It returns both preset playlists (HIIT, Rock, Pop) and the user's personal playlists.
- * Uses the official Spotify Web API TypeScript SDK for type safety and automatic pagination.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with preset and user playlists or an error.
+ * @openapi
+ * /api/spotify/playlists:
+ *   get:
+ *     summary: Retrieve Spotify playlists
+ *     description: Fetches preset and user-saved Spotify playlists for the standalone selection page. Requires authentication.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       '200':
+ *         description: A successful response containing preset and user playlists.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 presetPlaylists:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/SpotifyPlaylist'
+ *                 userPlaylists:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/SpotifyPlaylist'
+ *       '401':
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       '500':
+ *         $ref: '#/components/responses/InternalServerError'
  */
 async function getPlaylists(_req: Request) {
   // 1. Get the server-side session.

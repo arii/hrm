@@ -14,3 +14,8 @@ export const spotifyControlSchema = z.object({
   deviceId: z.string().optional(),
   playlistUri: z.string().optional(),
 })
+
+export const spotifyControlResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+})

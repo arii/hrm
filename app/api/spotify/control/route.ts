@@ -9,20 +9,71 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
 import { withValidation } from '@/lib/middleware/validation'
-import { spotifyControlSchema } from '@/lib/validation/schemas'
+import {
+  spotifyControlSchema,
+  spotifyControlResponseSchema,
+} from '@/lib/validation/schemas'
 import { z } from 'zod'
 
-const handler = async (
-  _req: NextRequest,
-  body: z.infer<typeof spotifyControlSchema>
-) => {
+/**
+ * @openapi
+ * /api/spotify/control:
+ *   post:
+ *     summary: Send a playback control command to Spotify
+ *     description: Executes a playback command (e.g., PLAY, PAUSE, NEXT) on the user's active Spotify device. Requires authentication.
+ *     tags:
+ *       - Spotify
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - command
+ *             properties:
+ *               command:
+ *                 type: string
+ *                 enum: [PLAY, PAUSE, NEXT, PREVIOUS, SET_VOLUME, TRANSFER_PLAYBACK]
+ *               volume:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 100
+ *                 description: Required for SET_VOLUME command.
+ *               deviceId:
+ *                 type: string
+ *                 description: Required for TRANSFER_PLAYBACK command.
+ *     responses:
+ *       '200':
+ *         description: The command was successfully executed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       '400':
+ *         description: Validation failed for the request body.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       '500':
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+const handler = async (req: NextRequest & { parsedBody: z.infer<typeof spotifyControlSchema> }) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
     throw new ApiError(401, 'Authorization required')
   }
 
-  const { command } = body
+  const { command } = req.parsedBody
 
   try {
     const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player'
@@ -86,4 +137,8 @@ const handler = async (
   }
 }
 
-export const POST = withValidation(spotifyControlSchema, handler)
+export const POST = withValidation(
+  spotifyControlSchema,
+  spotifyControlResponseSchema,
+  handler
+)
