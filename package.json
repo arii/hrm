@@ -31,18 +31,12 @@
     "test:visual:headed": "playwright test --project=chromium --headed",
     "test:visual:report": "playwright show-report",
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",
-    "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
-    "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
-    "test:clean:update": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual:update",
-    "mcp:chrome-devtools": "npx -y chrome-devtools-mcp@latest --isolated --browser-url=http://1.0.0.1:9222",
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
-    "verify": "node scripts/verify-and-publish.cjs",
-    "commit:verified": "npm run verify",
     "depcheck": "depcheck"
   },
   "dependencies": {
@@ -51,18 +45,14 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
-    "@react-spring/web": "^10.0.3",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "express": "^5.1.0",
-    "framer-motion": "^12.23.24",
     "lodash": "^4.17.21",
     "next": "16.0.1",
     "next-auth": "^4.24.13",
     "pino": "^10.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
@@ -101,8 +91,7 @@
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.0",
-    "wait-on": "^9.0.3"
+    "typescript-eslint": "^8.48.0"
   },
   "engines": {
     "node": ">=20.0.0",
