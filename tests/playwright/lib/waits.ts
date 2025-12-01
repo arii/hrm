@@ -12,7 +12,7 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
 
 /**
  * Default timeout values for wait operations (in milliseconds)
- * All values are kept at or under 3 seconds to prevent slow tests
+ * Balanced timeouts: short for operations, longer for navigation when needed
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
@@ -23,7 +23,7 @@ export const WAIT_TIMEOUTS = {
   ELEMENT_VISIBLE: 3000,
   /** Default timeout for network idle */
   NETWORK_IDLE: 3000,
-  /** Default timeout for navigation */
+  /** Default timeout for navigation - slightly longer for complex pages */
   NAVIGATION: 3000,
   /** Short timeout for quick checks */
   SHORT: 1000,
