@@ -1,4 +1,5 @@
 'use client'
+import throttle from 'lodash/throttle'
 import {
   createContext,
   ReactNode,
@@ -82,6 +83,12 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
+  const throttledDispatch = useRef(
+    throttle((message: ServerMessage) => {
+      dispatch(message)
+    }, 100)
+  ).current
+
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
@@ -162,7 +169,13 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
-        dispatch(message)
+        // Throttle high-frequency messages
+        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
+          throttledDispatch(message)
+        } else {
+          // Dispatch critical messages immediately
+          dispatch(message)
+        }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
