@@ -51,9 +51,16 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.18.0",
+    "@react-spring/web": "^10.0.3",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "express": "^5.1.0",
+<<<<<<< HEAD
     "lodash": "^4.17.21",
+||||||| 094af9d
+=======
+    "framer-motion": "^12.23.24",
+    "lodash": "^4.17.21",
+>>>>>>> origin/leader
     "next": "16.0.1",
     "next-auth": "^4.24.13",
     "pino": "^10.1.0",
