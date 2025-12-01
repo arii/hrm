@@ -53,6 +53,7 @@
     "@mui/material": "^5.18.0",
     "@react-spring/web": "^10.0.3",
     "@spotify/web-api-ts-sdk": "^1.2.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "framer-motion": "^12.23.24",
     "lodash": "^4.17.21",
