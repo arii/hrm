@@ -35,20 +35,32 @@ describe('Services Integration', () => {
   let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
     player: {
-      getCurrentlyPlayingTrack: jest.Mock
-      startResumePlayback: jest.Mock
-      pausePlayback: jest.Mock
-      skipToNext: jest.Mock
-      skipToPrevious: jest.Mock
-      transferPlayback: jest.Mock
-      setPlaybackVolume: jest.Mock
-      getAvailableDevices: jest.Mock
+
+      getCurrentlyPlayingTrack: jest.Mock<any>
+
+      startResumePlayback: jest.Mock<any>
+
+      pausePlayback: jest.Mock<any>
+
+      skipToNext: jest.Mock<any>
+
+      skipToPrevious: jest.Mock<any>
+
+      transferPlayback: jest.Mock<any>
+
+      setPlaybackVolume: jest.Mock<any>
+
+      getAvailableDevices: jest.Mock<any>
     }
   }
 
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+
+    // Reset the singleton instance before each test
+    SpotifyPolling.resetInstanceForTesting()
+
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
@@ -57,16 +69,18 @@ describe('Services Integration', () => {
     }
 
     // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
+    ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementation(() => ({
+      getValidAccessToken: jest
+        .fn()
+        .mockResolvedValue('test_access_token') as jest.Mock,
       getSdkAccessToken: jest.fn().mockReturnValue({
         access_token: 'test_access_token',
         token_type: 'Bearer',
         expires_in: 3600,
         refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
+      }) as jest.Mock,
+      stopPolling: jest.fn() as jest.Mock,
+      cleanup: jest.fn() as jest.Mock,
     }))
 
     // Mock SDK instance
@@ -94,7 +108,6 @@ describe('Services Integration', () => {
   afterEach(() => {
     jest.useRealTimers()
     spotifyService.stopPolling()
-    spotifyService.cleanup()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

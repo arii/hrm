@@ -103,5 +103,19 @@
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "depcheck": {
+    "ignores": [
+      "pino-pretty",
+      "ts-node",
+      "pm2",
+      "cross-env",
+      "wait-on"
+    ]
+  }
 }
