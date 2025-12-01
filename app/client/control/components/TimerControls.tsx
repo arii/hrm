@@ -34,14 +34,24 @@ const actionButtonSx = {
   '&:active': {
     transform: 'scale(0.95)',
   },
+  background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
+  },
 }
 
 const stepperButtonSx = {
-  backgroundColor: 'grey.700',
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
   color: 'white',
-  '&:hover': { backgroundColor: 'grey.600' },
-  width: 56,
-  height: 56,
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  '&:hover': {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+  },
+  width: 64,
+  height: 64,
 }
 
 const TimerControls = () => {
@@ -163,13 +173,16 @@ const TimerControls = () => {
   return (
     <Card
       sx={{
-        boxShadow: 6,
         mb: 2,
-        backgroundColor: '#000000',
         color: '#EF4444',
         position: 'sticky',
         top: 16,
         zIndex: 1000,
+        background: 'rgba(30, 41, 59, 0.7)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: 3,
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
