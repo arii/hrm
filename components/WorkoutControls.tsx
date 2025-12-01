@@ -12,7 +12,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 
 const actionButtonSx = {
   flex: 1,
@@ -27,21 +27,6 @@ const actionButtonSx = {
 
 const WorkoutControls = () => {
   const { timerData, sendData, isConnected } = useWebSocket()
-  const [elapsedTime, setElapsedTime] = useState(0)
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (timerData.isRunning) {
-      // Initialize elapsedTime based on the data from WebSocket
-      setElapsedTime(timerData.timeElapsed)
-      interval = setInterval(() => {
-        setElapsedTime((prevTime) => prevTime + 1)
-      }, 1000)
-    } else {
-      setElapsedTime(0)
-    }
-    return () => clearInterval(interval)
-  }, [timerData.isRunning, timerData.timeElapsed])
 
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60)
@@ -74,7 +59,7 @@ const WorkoutControls = () => {
               Workout Timer
             </Typography>
             <Typography variant="h4" color="text.primary" sx={{ fontFamily: 'monospace' }}>
-              {formatTime(elapsedTime)}
+              {formatTime(timerData.timeElapsed)}
             </Typography>
           </Box>
           <Stack direction="row" spacing={2}>
