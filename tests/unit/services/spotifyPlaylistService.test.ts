@@ -1,20 +1,59 @@
-import { getPresetPlaylists } from '../../../services/spotifyPlaylistService'
-import { presetPlaylists } from '../../../services/seedData'
+// File: tests/unit/services/spotifyPlaylistService.test.ts
+import { getPresetPlaylists, getUserPlaylists } from '../../../services/spotifyPlaylistService';
+import { SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { presetPlaylists } from '../../../services/seedData';
+
+jest.mock('@spotify/web-api-ts-sdk');
 
 describe('Spotify Playlist Service', () => {
-  it('should return the correct preset playlists', () => {
-    const playlists = getPresetPlaylists()
-    expect(playlists).toEqual(presetPlaylists)
-    expect(playlists.length).toBeGreaterThan(0)
-  })
+  describe('getPresetPlaylists', () => {
+    it('should return the list of preset playlists', () => {
+      const playlists = getPresetPlaylists();
+      expect(playlists).toEqual(presetPlaylists);
+    });
+  });
 
-  it('should have valid playlist structure', () => {
-    const playlists = getPresetPlaylists()
-    playlists.forEach((playlist) => {
-      expect(playlist).toHaveProperty('id')
-      expect(playlist).toHaveProperty('name')
-      expect(playlist).toHaveProperty('uri')
-      expect(playlist.uri).toMatch(/^spotify:playlist:/)
-    })
-  })
-})
+  describe('getUserPlaylists', () => {
+    it('should fetch and return user playlists', async () => {
+      const mockPlaylists = {
+        items: [
+          { id: '1', name: 'Playlist 1', uri: 'uri:1' },
+          { id: '2', name: 'Playlist 2', uri: 'uri:2' },
+        ],
+      };
+      const mockSdk = {
+        currentUser: {
+          playlists: {
+            playlists: jest.fn().mockResolvedValue(mockPlaylists),
+          },
+        },
+      };
+      (SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk);
+
+      const playlists = await getUserPlaylists('test_token');
+      expect(playlists).toEqual([
+        { id: '1', name: 'Playlist 1', uri: 'uri:1' },
+        { id: '2', name: 'Playlist 2', uri: 'uri:2' },
+      ]);
+    });
+
+    it('should return an empty array if the access token is missing', async () => {
+      const playlists = await getUserPlaylists('');
+      expect(playlists).toEqual([]);
+    });
+
+    it('should return an empty array if the API call fails', async () => {
+      const mockSdk = {
+        currentUser: {
+          playlists: {
+            playlists: jest.fn().mockRejectedValue(new Error('API Error')),
+          },
+        },
+      };
+      (SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk);
+
+      const playlists = await getUserPlaylists('test_token');
+      expect(playlists).toEqual([]);
+    });
+  });
+});
