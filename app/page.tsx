@@ -14,6 +14,7 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
 import { useWebSocket } from '@/context/WebSocketContext'
+import DataWidget from '../components/widgets/DataWidget'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -68,6 +69,9 @@ const Dashboard = () => {
           />
         </Grid>
 
+        <Grid item xs={12} sm={6} md={4} lg={3}>
+          <DataWidget title="Avg. Heart Rate" value="145" unit="bpm" />
+        </Grid>
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
