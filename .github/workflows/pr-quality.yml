@@ -156,7 +156,9 @@ jobs:
           echo "NEXTAUTH_SECRET=ci-secret" >> .env.local
 
       - name: Run Visual Tests
-        run: pnpm run test:json
+        run: |
+          pnpm run test:json || true
+          python3 scripts/analyze-playwright-report.py playwright-report.json
 
       - name: Upload Report on Failure
         if: failure()
