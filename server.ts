@@ -24,6 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -126,7 +127,7 @@ app
       if (
         req.method === 'POST' &&
         req.url &&
-        req.url.includes('/api/internal/token-delivery')
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
         // Wait a moment for token to be written
         setTimeout(async () => {

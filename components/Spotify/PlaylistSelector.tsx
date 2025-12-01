@@ -19,6 +19,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
+import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 
 interface PlaylistItemProps {
   playlist: Playlist
@@ -147,7 +148,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch('/api/spotify/playlists')
+        const response = await fetch(API_SPOTIFY_PLAYLISTS)
         if (!response.ok) {
           throw new Error('Failed to fetch playlists')
         }

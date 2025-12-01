@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
+import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -73,7 +74,7 @@ const useSpotifyWebPlayback = () => {
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
       try {
-        const response = await fetch('/api/spotify/access-token')
+        const response = await fetch(API_SPOTIFY_ACCESS_TOKEN)
         if (!response.ok) {
           if (response.status === 401) {
             // User not logged in - this is expected, don't show as error
@@ -121,7 +122,7 @@ const useSpotifyWebPlayback = () => {
     }
 
     // Check if user has active session before initializing
-    fetch('/api/spotify/access-token')
+    fetch(API_SPOTIFY_ACCESS_TOKEN)
       .then((response) => {
         if (!response.ok) {
           console.log(

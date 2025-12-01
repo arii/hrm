@@ -6,9 +6,12 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// Base path for auth routes
+const API_AUTH_BASE = '/api/auth/'
+
 export function middleware(request: NextRequest) {
   // Only handle auth routes
-  if (!request.nextUrl.pathname.startsWith('/api/auth/')) {
+  if (!request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
     return NextResponse.next()
   }
 
@@ -43,6 +46,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Note: matcher must be static strings for Next.js static analysis
   matcher: [
     '/api/auth/:path*'
   ]

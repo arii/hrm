@@ -4,6 +4,7 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -110,7 +111,7 @@ const SpotifyDisplay = () => {
     if (spotifyLoggedIn && spotifyData.trackName) {
       const fetchDevices = async () => {
         try {
-          const response = await fetch('/api/spotify/devices')
+          const response = await fetch(API_SPOTIFY_DEVICES)
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
           }
