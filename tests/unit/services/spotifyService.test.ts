@@ -26,8 +26,16 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   },
 }))
 
+interface MockSpotifyService {
+  initialize: jest.Mock<() => Promise<void>>;
+  forcePollAndBroadcast: jest.Mock<() => Promise<void>>;
+  getValidAccessToken: jest.Mock<() => Promise<string | null>>;
+  handleCommand: jest.Mock<(...args: (string | number | undefined)[]) => Promise<void>>;
+  cleanup: jest.Mock<() => void>;
+}
+
 describe('SpotifyService', () => {
-  let spotifyService: any
+  let spotifyService: MockSpotifyService
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
