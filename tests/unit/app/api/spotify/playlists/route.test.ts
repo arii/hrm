@@ -51,6 +51,10 @@ jest.mock('@spotify/web-api-ts-sdk', () => {
 const mockedGetServerSession = getServerSession as jest.Mock
 
 describe('API Route: /api/spotify/playlists', () => {
+  beforeAll(() => {
+    process.env.SPOTIFY_CLIENT_ID = 'test-client-id'
+  })
+
   afterEach(() => {
     jest.clearAllMocks()
   })
@@ -64,7 +68,7 @@ describe('API Route: /api/spotify/playlists', () => {
     const data = await response.json()
 
     expect(response.status).toBe(401)
-    expect(data.error).toBe('Not authenticated or token is missing.')
+    expect(data.error.message).toBe('No session found')
     expect(getServerSession).toHaveBeenCalledWith(authOptions)
   })
 
@@ -85,7 +89,7 @@ describe('API Route: /api/spotify/playlists', () => {
     expect(data.userPlaylists.length).toBe(1)
     expect(data.userPlaylists[0].name).toBe('User Playlist 1')
     expect(SpotifyApi.withAccessToken).toHaveBeenCalledWith(
-      expect.any(String),
+      'test-client-id',
       expect.objectContaining({
         access_token: 'fake-access-token',
       })
@@ -116,6 +120,6 @@ describe('API Route: /api/spotify/playlists', () => {
     const data = await response.json()
 
     expect(response.status).toBe(500)
-    expect(data.error).toBe('Internal Server Error')
+    expect(data.error.message).toBe('An internal server error occurred')
   })
 })

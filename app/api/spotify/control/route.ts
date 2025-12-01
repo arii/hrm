@@ -1,88 +1,36 @@
-// File: app/api/spotify/control/route.ts (Spotify Control REST Handler - Fallback)
-/**
- * Spotify Control REST Handler - Fallback/Demonstration Endpoint
- * This route serves as a secure REST endpoint for external control or testing
- * but the primary control commands are sent via WebSocket.
- */
-import { getServerSession } from 'next-auth/next'
-import { NextRequest, NextResponse } from 'next/server'
-import { authOptions } from '@/lib/auth'
-import { ApiError } from '@/lib/errors'
+// File: app/api/spotify/control/route.ts
+import { validateSession } from '@/lib/api/session'
+import { getSpotifyClient } from '@/lib/api/spotify'
+import { successResponse, errorResponse } from '@/lib/api/response'
 import { withValidation } from '@/lib/middleware/validation'
 import { spotifyControlSchema } from '@/lib/validation/schemas'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-const handler = async (
+async function handler(
   _req: NextRequest,
   body: z.infer<typeof spotifyControlSchema>
-) => {
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.accessToken) {
-    throw new ApiError(401, 'Authorization required')
-  }
-
-  const { command } = body
-
+) {
   try {
-    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player'
-    let endpoint = ''
-    let method = ''
+    const session = await validateSession()
+    const spotify = getSpotifyClient(session)
+    const { command } = body
 
-    // Map the simple command to the correct Spotify API endpoint and method
     switch (command) {
       case 'PLAY':
-        endpoint = 'play'
-        method = 'PUT' // Resumes playback
+        await spotify.player.startResumePlayback()
         break
       case 'NEXT':
-        endpoint = 'next'
-        method = 'POST' // Skips to next
+        await spotify.player.skipToNext()
         break
       case 'PREVIOUS':
-        endpoint = 'previous'
-        method = 'POST' // Skips to previous
+        await spotify.player.skipToPrevious()
         break
     }
 
-    // Make the actual call to the Spotify API
-    const response = await fetch(`${SPOTIFY_API_BASE}/${endpoint}`, {
-      method: method,
-      headers: {
-        // Use the user's access token from the session
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    // Spotify returns 204 No Content on a successful player command
-    if (response.status === 204) {
-      return NextResponse.json({
-        success: true,
-        message: `Command '${command}' executed.`,
-      })
-    }
-
-    // If it's not 204, something went wrong (e.g., no active device, premium required)
-    const errorData = await response.json()
-    return NextResponse.json(
-      {
-        error: 'Spotify API error',
-        details: errorData.error?.message || 'Unknown Spotify error',
-      },
-      { status: response.status }
-    )
+    return successResponse({ message: `Command '${command}' executed.` })
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
-    }
-    console.error('REST control failed:', error)
-    return NextResponse.json(
-      { error: 'Internal server error processing command.' },
-      { status: 500 }
-    )
+    return errorResponse(error)
   }
 }
 

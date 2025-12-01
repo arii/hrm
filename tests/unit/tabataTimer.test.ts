@@ -202,6 +202,17 @@ describe('TabataTimer Service', () => {
       expect(state.timeRemaining).toBe(10) // Default rest duration
     })
 
+    it('should transition from REST to WORK phase', () => {
+      timer.handleCommand('START')
+      jest.advanceTimersByTime(5000) // PREPARE
+      jest.advanceTimersByTime(20000) // WORK
+      jest.advanceTimersByTime(10000) // REST
+
+      const state = timer.getState()
+      expect(state.currentPhase).toBe('WORK')
+      expect(state.timeRemaining).toBe(20) // Default work duration
+    })
+
     it('should loop indefinitely between WORK and REST', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE

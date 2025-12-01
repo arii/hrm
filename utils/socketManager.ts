@@ -195,4 +195,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export { initSocketManager, handleIncomingMessage }
