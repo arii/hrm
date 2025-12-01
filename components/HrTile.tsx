@@ -5,6 +5,7 @@ import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import { HR_ZONES } from '../utils/visualization'
 import StyledCard from './shared/StyledCard'
 
 export interface HrTileProps {
@@ -15,6 +16,15 @@ export interface HrTileProps {
 }
 
 const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+  // Find the correct HR zone based on the percentage of max HR
+  const zone =
+    HR_ZONES.slice()
+      .reverse()
+      .find((z) => percentMax / 100 >= z.min) || HR_ZONES[0]
+
+  const gradient = zone?.gradient || 'none'
+  const glow = zone?.glow || 'none'
+
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -46,7 +56,10 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              textShadow: glow,
+              background: gradient,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
             {percentMax}%
