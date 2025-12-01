@@ -9,7 +9,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
-  const { hrmData } = useWebSocket()
+  const { hrmData, connectionStatus } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -44,20 +44,32 @@ const HrmTiles = () => {
       })
   }, [hrmData])
 
-  if (filteredTiles.length > 0) {
-    return <>{filteredTiles}</>
+  const isLoading =
+    connectionStatus === 'Connecting...' ||
+    connectionStatus === 'Reconnecting...'
+
+  if (isLoading || filteredTiles.length === 0) {
+    return (
+      <>
+        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+          <Skeleton
+            variant="rectangular"
+            height={250}
+            sx={{ borderRadius: 3 }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+          <Skeleton
+            variant="rectangular"
+            height={250}
+            sx={{ borderRadius: 3 }}
+          />
+        </Grid>
+      </>
+    )
   }
 
-  return (
-    <>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
-        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
-      </Grid>
-      <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
-        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
-      </Grid>
-    </>
-  )
+  return <>{filteredTiles}</>
 }
 
 export default HrmTiles
