@@ -31,7 +31,7 @@ interface SpotifyDevice {
 
 const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { volume, setVolume } = useVolumePreference()
+  const { volume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
