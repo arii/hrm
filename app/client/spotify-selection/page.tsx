@@ -15,10 +15,10 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
-import useVolumePreference from '../../../hooks/useVolumePreference'
+import VolumeControl from '@/components/Spotify/VolumeControl' // I will recreate this temporarily
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '../../../types/websocket'
+import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 
 const PlaylistSelector = dynamic(

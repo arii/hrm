@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
+import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
@@ -48,10 +49,19 @@ export default defineConfig([
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
+    plugins: {
+      'no-relative-import-paths': noRelativeImportPaths,
+    },
     rules: {
-      // You can override or add Next.js specific rules here
-      // For example:
-      // '@next/next/no-html-link-for-pages': 'off',
+      // Enforce using path aliases for imports instead of relative paths
+      'no-relative-import-paths/no-relative-import-paths': [
+        'warn',
+        {
+          allowSameFolder: true,
+          rootDir: '.',
+          prefix: '@',
+        },
+      ],
     },
   },
 

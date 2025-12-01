@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useTimerSounds } from '../hooks/useTimerSounds'
+import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode
