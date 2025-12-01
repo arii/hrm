@@ -11,7 +11,7 @@ on:
         default: 'leader'
 
 concurrency:
-  group: pr-workflow-concurrency
+  group: pr-quality-workflow-queue
   cancel-in-progress: false
 
 env:
