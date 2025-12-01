@@ -1,19 +1,28 @@
+// app/api/spotify/devices/route.ts
+
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
+import { withValidation } from '@/lib/middleware/validation'
+import { spotifyDevicesSchema } from '@/lib/validation/schemas'
 import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 /**
- * API route to fetch available Spotify devices for the authenticated user.
+ * Validated API route handler to fetch available Spotify devices.
  *
- * This endpoint retrieves the list of devices from the Spotify API and returns
- * them to the client. This is used by the control panel to allow the user to
- * select which device to play music on.
+ * This handler retrieves the list of devices from the Spotify API and returns
+ * them to the client. The withValidation middleware ensures no unexpected
+ * query parameters are passed.
  *
  * @param _req The incoming Next.js API request (unused).
+ * @param _validatedData The validated data object (empty for this route).
  * @returns A NextResponse object with the device list or an error.
  */
-export async function GET(_req: Request) {
+const devicesHandler = async (
+  _req: NextRequest,
+  _validatedData: z.infer<typeof spotifyDevicesSchema>
+) => {
   try {
     // 1. Get the server-side session.
     const session = await getServerSession(authOptions)
@@ -62,3 +71,6 @@ export async function GET(_req: Request) {
     )
   }
 }
+
+// Wrap the handler with the validation middleware and the corresponding schema
+export const GET = withValidation(spotifyDevicesSchema, devicesHandler)
