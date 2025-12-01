@@ -50,7 +50,7 @@ jobs:
           pnpm config set side-effects-cache true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20.x"
       # ---------------------------------
@@ -89,7 +89,7 @@ jobs:
       # We still set up pnpm/node just to ensure the binaries are in PATH
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
 
       - name: Lint Code
@@ -115,7 +115,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
 
       - name: Configure Envs
@@ -147,7 +147,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with: { run_install: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
 
       - name: Configure Envs
