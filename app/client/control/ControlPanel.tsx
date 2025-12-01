@@ -68,7 +68,7 @@ const ControlPanel = () => {
           py: { xs: 2, sm: 3 },
           px: { xs: 2, sm: 3 },
           minHeight: '100vh',
-          backgroundColor: 'background.default',
+          background: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
         }}
       >
         {/* Connection Status */}

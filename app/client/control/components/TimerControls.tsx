@@ -39,7 +39,10 @@ const actionButtonSx = {
 const stepperButtonSx = {
   backgroundColor: 'grey.700',
   color: 'white',
-  '&:hover': { backgroundColor: 'grey.600' },
+  '&:hover': {
+    backgroundColor: 'grey.600',
+    transform: 'scale(1.05)',
+  },
   width: 56,
   height: 56,
 }
@@ -163,16 +166,19 @@ const TimerControls = () => {
   return (
     <Card
       sx={{
-        boxShadow: 6,
+        background: 'rgba(30, 41, 59, 0.8)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 3, // 24px
         mb: 2,
-        backgroundColor: '#000000',
         color: '#EF4444',
         position: 'sticky',
         top: 16,
         zIndex: 1000,
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+      <CardContent sx={{ p: 3 }}>
         <Box sx={{ mb: 2 }}>
           <Typography
             sx={{
@@ -430,7 +436,19 @@ const TimerControls = () => {
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              sx={actionButtonSx}
+              sx={{
+                ...actionButtonSx,
+                background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+                boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                py: 2,
+                px: 4,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
+                },
+              }}
               startIcon={<PlayArrow fontSize="large" />}
             >
               START
