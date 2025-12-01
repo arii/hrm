@@ -40,6 +40,9 @@ cleanup() {
 # Trap signals for cleanup
 trap cleanup EXIT INT TERM
 
+# Ensure all previous processes are killed
+bash "$(dirname "$0")/kill-all.sh"
+
 # Export environment variable for testing
 export TESTING=true
 
