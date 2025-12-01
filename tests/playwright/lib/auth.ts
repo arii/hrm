@@ -10,6 +10,7 @@
 import type { BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
+import { WAIT_TIMEOUTS } from './waits'
 
 /**
  * Authentication endpoints used in testing
@@ -89,7 +90,7 @@ export async function waitForAuthRedirect(
   page: Page,
   options: { timeout?: number } = {},
 ): Promise<void> {
-  const { timeout = 30000 } = options
+  const { timeout = WAIT_TIMEOUTS.NAVIGATION } = options
   const baseUrl = getBaseURL()
 
   // Wait for redirect back to the application

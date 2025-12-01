@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import { WAIT_TIMEOUTS } from './lib/waits';
 
 /**
  * HELPER: Waits for a port to be actively listening.
  * Used to verify servers (dev or prod) have actually started.
  */
-const waitForPort = (port: number, timeout = 10000) => {
+const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now();
     const interval = setInterval(() => {
@@ -59,7 +60,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
   test('npm run dev should start and listen', async () => {
-    test.setTimeout(60000); // Give Next.js time to compile/boot
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2); // Server startup timeout
 
     const PORT = 3005;
     const devServer = spawn('npm', ['run', 'dev'], {
@@ -84,7 +85,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-     test.setTimeout(30000);
+     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2);
 
      const PORT = 3006;
      // Mock env vars usually provided by .env.production
