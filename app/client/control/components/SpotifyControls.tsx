@@ -5,7 +5,6 @@ import Pause from '@mui/icons-material/Pause'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import SkipNext from '@mui/icons-material/SkipNext'
 import SkipPrevious from '@mui/icons-material/SkipPrevious'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -13,7 +12,6 @@ import FormControl from '@mui/material/FormControl'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
-import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -233,27 +231,6 @@ const SpotifyControls = () => {
               </IconButton>
             </Stack>
 
-            <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
-              <Slider
-                value={volume}
-                onChange={(_, val) => setVolume(val as number)}
-                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-                min={0}
-                max={100}
-                size="small"
-                sx={{
-                  color: '#1DB954',
-                  '& .MuiSlider-thumb': { backgroundColor: 'white' },
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ color: 'grey.400', minWidth: '3ch' }}
-              >
-                {volume}
-              </Typography>
-            </Stack>
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>

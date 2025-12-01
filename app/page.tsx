@@ -7,8 +7,11 @@
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import { useEffect, useState } from 'react'
+import SettingsIcon from '@mui/icons-material/Settings'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
+import SettingsPanel from '../components/SettingsPanel'
+import { Box, Fab } from '@mui/material'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
 import SpotifyDisplay from '../components/SpotifyDisplay'
@@ -21,6 +24,7 @@ const DOC_URL =
 const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -73,6 +77,21 @@ const Dashboard = () => {
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
+
+      <Box sx={{ position: 'fixed', bottom: 120, right: 24 }}>
+        <Fab
+          color="primary"
+          aria-label="settings"
+          onClick={() => setSettingsOpen(true)}
+        >
+          <SettingsIcon />
+        </Fab>
+      </Box>
     </Container>
   )
 }
