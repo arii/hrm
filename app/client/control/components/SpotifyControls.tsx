@@ -6,7 +6,9 @@ import PlayArrow from '@mui/icons-material/PlayArrow'
 import SkipNext from '@mui/icons-material/SkipNext'
 import SkipPrevious from '@mui/icons-material/SkipPrevious'
 import VolumeUp from '@mui/icons-material/VolumeUp'
+import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
@@ -16,6 +18,7 @@ import Select from '@mui/material/Select'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -32,6 +35,7 @@ interface SpotifyDevice {
 }
 
 const SpotifyControls = () => {
+  const router = useRouter()
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -39,6 +43,10 @@ const SpotifyControls = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [devicesLoading, setDevicesLoading] = useState(false)
   const [_devicesError, setDevicesError] = useState<string | null>(null)
+
+  const handleBrowseClick = () => {
+    router.push('/client/spotify-selection');
+  };
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
@@ -291,14 +299,18 @@ const SpotifyControls = () => {
                 </FormControl>
               </Box>
             )}
+            <Button
+                variant="outlined"
+                size="small"
+                startIcon={<LibraryMusic />}
+                onClick={handleBrowseClick}
+                sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+              >
+                Select Playlist
+            </Button>
           </>
         ) : (
-          <Typography
-            variant="body2"
-            sx={{ color: 'grey.400', textAlign: 'center' }}
-          >
-            Login to Spotify on the main dashboard
-          </Typography>
+          <Button onClick={handleBrowseClick}>Select Music</Button>
         )}
       </CardContent>
     </Card>
