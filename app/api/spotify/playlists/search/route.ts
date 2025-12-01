@@ -3,6 +3,7 @@
 // This endpoint is used by the PlaylistSelector component to search for popular playlists
 
 import { authOptions } from '@/lib/auth'
+import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -23,11 +24,7 @@ export async function GET(req: NextRequest) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error('[API /playlists/search] No session or access token found.')
-      return NextResponse.json(
-        { error: 'Not authenticated or token is missing.' },
-        { status: 401 }
-      )
+      throw new ApiError(401, 'Not authenticated or token is missing.')
     }
 
     // 3. Get search query from URL parameters
@@ -57,10 +54,6 @@ export async function GET(req: NextRequest) {
     )
 
     // 5. Search for playlists using the SDK
-    // The search method searches across tracks, albums, artists, and playlists
-    // Method signature: search(query: string, types: SearchType[], limit?: number, market?: string)
-    // const searchResponse = await spotify.search(query, ['playlist'], 20)
-    // Pass 'undefined' for the 3rd parameter (market) to set the 4th (limit)
     const searchResponse = await spotify.search(
       query,
       ['playlist'],
@@ -97,6 +90,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: searchResults })
   } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
     console.error(`[API /playlists/search] Internal Server Error: ${message}`)
