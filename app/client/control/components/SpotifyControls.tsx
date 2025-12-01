@@ -23,6 +23,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 
 interface SpotifyDevice {
   id: string
@@ -59,7 +60,7 @@ const SpotifyControls = () => {
         setDevicesLoading(true)
         setDevicesError(null)
         try {
-          const response = await fetch('/api/spotify/devices')
+          const response = await fetch(API_SPOTIFY_DEVICES)
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
           }

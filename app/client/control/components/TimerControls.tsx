@@ -9,6 +9,7 @@ import {
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import Add from '@mui/icons-material/Add'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -90,7 +91,7 @@ const TimerControls = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('/api/spotify/devices')
+        const response = await fetch(API_SPOTIFY_DEVICES)
         if (!response.ok) throw new Error('Failed to fetch devices')
         const devices: SpotifyDevice[] = await response.json()
         setSpotifyDevices(Array.isArray(devices) ? devices : [])

@@ -19,6 +19,7 @@ import VolumeControl from '../../../components/Spotify/VolumeControl' // I will 
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -47,7 +48,7 @@ const SpotifySelectionPage = () => {
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const response = await fetch('/api/spotify/devices')
+        const response = await fetch(API_SPOTIFY_DEVICES)
         if (!response.ok) throw new Error('Failed to fetch devices')
         const devices: SpotifyDevice[] = await response.json()
         setAvailableDevices(Array.isArray(devices) ? devices : [])

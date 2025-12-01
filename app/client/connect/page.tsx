@@ -16,6 +16,7 @@ import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
+import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
@@ -224,7 +225,7 @@ export default function ConnectPage() {
                   document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                   document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-                  const response = await fetch('/api/debug/reset', { method: 'POST' });
+                  const response = await fetch(API_DEBUG_RESET, { method: 'POST' });
                   const data = await response.json();
                   alert(data.message);
                 } catch (error) {
