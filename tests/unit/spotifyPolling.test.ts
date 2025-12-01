@@ -70,20 +70,17 @@ describe('SpotifyPolling Service', () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
     // Reset mockPlayer's mocks
-    mockPlayer.getCurrentlyPlayingTrack.mockClear()
-    mockPlayer.startResumePlayback.mockClear()
-    mockPlayer.pausePlayback.mockClear()
-    mockPlayer.skipToNext.mockClear()
-    mockPlayer.skipToPrevious.mockClear()
-    mockPlayer.transferPlayback.mockClear()
-    mockPlayer.setPlaybackVolume.mockClear()
-    mockPlayer.getAvailableDevices.mockClear()
+    for (const key in mockPlayer) {
+      if (Object.prototype.hasOwnProperty.call(mockPlayer, key)) {
+        mockPlayer[key].mockClear();
+      }
+    }
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
     broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
-      if (message.type === 'SPOTIFY_UPDATE') {
-        broadcastedStates.push(message.payload)
+    broadcastMock = jest.fn((message: ServerMessage) => {
+      if (message.type === 'SPOTIFY_UPDATE' && typeof message.payload === 'object' && message.payload !== null && 'trackName' in message.payload) {
+        broadcastedStates.push(message.payload as SpotifyData)
       }
     })
 
@@ -97,18 +94,15 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
-      clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
-      )
-      ;(spotifyService as unknown)['pollInterval'] = null
+    const serviceWithPrivates = spotifyService as { pollInterval: NodeJS.Timeout | null, tokenRefreshInterval: NodeJS.Timeout | null };
+    if (serviceWithPrivates.pollInterval) {
+      clearInterval(serviceWithPrivates.pollInterval);
+      serviceWithPrivates.pollInterval = null;
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
-      clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
-      )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+    if (serviceWithPrivates.tokenRefreshInterval) {
+      clearInterval(serviceWithPrivates.tokenRefreshInterval);
+      serviceWithPrivates.tokenRefreshInterval = null;
     }
   })
 
@@ -249,8 +243,8 @@ describe('SpotifyPolling Service', () => {
       const refreshToken = 'test_refresh_token'
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
-        .mockResolvedValue(undefined)
+        .spyOn(spotifyService as unknown as { initializeSdk: () => Promise<void> }, 'initializeSdk')
+        .mockResolvedValue(undefined as never)
       spotifyService.setRefreshToken(refreshToken)
       // Advance timers to allow setTimeout to run
       jest.advanceTimersByTime(1000)
@@ -298,7 +292,10 @@ describe('SpotifyPolling Service', () => {
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Test Track')
+      expect(lastState).toBeDefined()
+      if (lastState) {
+        expect(lastState.trackName).toBe('Test Track')
+      }
     })
 
     it('should handle 204 No Content response', async () => {
@@ -314,7 +311,10 @@ describe('SpotifyPolling Service', () => {
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+      expect(lastState).toBeDefined()
+      if (lastState) {
+        expect(lastState.trackName).toBe('Nothing is currently playing.')
+      }
     })
   })
 
@@ -379,7 +379,7 @@ describe('SpotifyPolling Service', () => {
       // Mock SpotifyPolling.create to return an instance with a null SDK
       const originalSpotifyPollingCreate = SpotifyPolling.create
       SpotifyPolling.create = jest.fn().mockResolvedValue({
-        handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
+        handleCommand: jest.fn(() => Promise.resolve()),
         getState: jest.fn(),
         stopPolling: jest.fn(),
         cleanup: jest.fn(),
@@ -387,8 +387,10 @@ describe('SpotifyPolling Service', () => {
         setRefreshToken: jest.fn(),
         startPolling: jest.fn(),
         getAvailableDevices: jest.fn(),
-        sdk: null, // Ensure SDK is null
-      })
+        isReady: jest.fn(() => false),
+        forcePollAndBroadcast: jest.fn(),
+        sdk: null,
+      } as unknown as SpotifyPolling)
 
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('SET_VOLUME', undefined, 50)

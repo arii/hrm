@@ -14,6 +14,7 @@ import {
   StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import logger from './logger.js'
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
@@ -43,7 +44,7 @@ const initSocketManager = (
 
   wss.on('connection', (ws: WebSocket) => {
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    console.log(`WebSocket Client connected: ${clientId}`)
+    logger.info({ clientId }, 'WebSocket client connected')
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const defaultClientData: HrmData = {
@@ -60,7 +61,7 @@ const initSocketManager = (
     })
 
     ws.on('close', () => {
-      console.log(`WebSocket Client disconnected: ${clientId}`)
+      logger.info({ clientId }, 'WebSocket client disconnected')
       hrmClients.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
@@ -78,21 +79,12 @@ const handleIncomingMessage = (
   jsonMessage: string,
   clientId: string
 ) => {
-  console.log(
-    `[socketManager] INCOMING MESSAGE from ${clientId}:`,
-    jsonMessage
-  )
   try {
-    // Parse and validate message type for type-safe routing
     const parsedMessage = JSON.parse(jsonMessage)
-    console.log(`[socketManager] PARSED JSON:`, parsedMessage)
+    const message = ClientCommandMessageSchema.parse(parsedMessage)
 
-    const message = ClientCommandMessageSchema.parse(parsedMessage) // Use Zod for parsing and validation
+    logger.info({ clientId, messageType: message.type, messageData: message }, 'Processing WebSocket message')
 
-    console.log(
-      `[socketManager] Received message from ${clientId}:`,
-      message.type
-    )
 
     switch (message.type) {
       case 'GET_STATE': {
@@ -115,12 +107,6 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
           // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
@@ -130,10 +116,6 @@ const handleIncomingMessage = (
             ...existingClientData,
             ...updatedClientProperties,
           })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -181,16 +163,16 @@ const handleIncomingMessage = (
 
       default:
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
-        console.warn(
-          'Unknown message type received:',
-          (message as { type: unknown }).type
+        logger.warn(
+          { clientId, messageType: (message as { type: unknown }).type },
+          'Unknown message type received'
         )
     }
   } catch (e) {
-    console.error('Error processing incoming message:', e)
+    logger.error({ error: e, clientId, rawMessage: jsonMessage }, 'Error processing incoming message')
     // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
-      console.error('WebSocket message validation failed:', e.issues)
+      logger.error({ error: e.issues, clientId }, 'WebSocket message validation failed')
     }
   }
 }
