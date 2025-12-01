@@ -2,6 +2,10 @@ import fs from 'fs'
 import { NextResponse } from 'next/server'
 import path from 'path'
 
+if (process.env.NODE_ENV !== 'development') {
+  throw new Error('This endpoint is not available in production')
+}
+
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {

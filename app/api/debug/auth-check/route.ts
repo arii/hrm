@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
 
+if (process.env.NODE_ENV !== 'development') {
+  throw new Error('This endpoint is not available in production')
+}
+
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.
  * This helps diagnose "Invalid Client" and redirect URI issues.

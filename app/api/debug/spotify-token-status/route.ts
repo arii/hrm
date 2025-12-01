@@ -2,6 +2,10 @@
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
 
+if (process.env.NODE_ENV !== 'development') {
+  throw new Error('This endpoint is not available in production')
+}
+
 export async function GET() {
   try {
     const tokenManager = new SpotifyTokenManager(

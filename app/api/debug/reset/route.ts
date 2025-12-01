@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 
-export async function POST() {
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ message: 'This feature is only available in development mode.' }, { status: 403 });
-  }
+if (process.env.NODE_ENV !== 'development') {
+  throw new Error('This endpoint is not available in production')
+}
 
+export async function POST() {
   const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
 
   try {
