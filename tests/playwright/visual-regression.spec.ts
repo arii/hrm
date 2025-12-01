@@ -4,19 +4,21 @@
  * with the original HRM site design. Run these tests after layout changes to detect
  * unexpected visual regressions.
  *
- * KNOWN ISSUE: These tests can be flaky due to incomplete server state cleanup.
- * The timer state from previous test runs may persist on the server, causing the
- * first test to capture a screenshot with an active timer instead of the idle state.
- *
- * TODO: Implement proper server state reset endpoint or mechanism to ensure clean
- * server state before tests start. This would eliminate the flakiness by guaranteeing
- * all WebSocket clients and server-side timer state are fully reset.
+ * DETERMINISTIC CAPTURE STRATEGY:
+ * - Network and DOM idle synchronization before snapshots
+ * - Font loading guarantees for consistent rendering
+ * - Precise masking of dynamic content using data-testid selectors
+ * - Element isolation for scoped component screenshots
  */
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 import {
   BASE_URL,
+  getDynamicContentMasks,
+  getHrMasks,
+  getTimerMasks,
   replaceIframeWithStableWorkout,
+  waitForFontsLoaded,
   waitForPageReady,
 } from './test-helpers'
 
@@ -54,11 +56,18 @@ test.describe('Visual Regression Tests', () => {
       mockPage.goto(`${BASE_URL}/client/mock`),
     ])
 
-    // Wait for all pages to be ready in parallel
+    // Wait for all pages to be ready in parallel (includes networkidle)
     await Promise.all([
       waitForPageReady(dashboardPage),
       waitForPageReady(controlPage),
       waitForPageReady(mockPage),
+    ])
+
+    // Wait for fonts to load on all pages to eliminate font-related shifts
+    await Promise.all([
+      waitForFontsLoaded(dashboardPage),
+      waitForFontsLoaded(controlPage),
+      waitForFontsLoaded(mockPage),
     ])
 
     // Ensure timer is stopped before tests start
@@ -109,6 +118,9 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
+    // Wait for fonts to be fully loaded for consistent rendering
+    await waitForFontsLoaded(dashboardPage)
+
     // Extra verification: ensure timer is NOT in active state (no WORK/REST)
     // Wait for any existing timer display to settle or disappear
     try {
@@ -122,7 +134,7 @@ test.describe('Visual Regression Tests', () => {
     // Wait for a stable UI element instead of arbitrary timeout
     await expect(dashboardPage.locator('body')).toBeVisible()
 
-    // Capture full-page screenshot - mask timer numbers in case cleanup didn't work
+    // Capture full-page screenshot - mask dynamic content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
       animations: 'disabled',
@@ -130,9 +142,8 @@ test.describe('Visual Regression Tests', () => {
       threshold: 0.2, // Allow for minor rendering differences
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
-        // Mask timer countdown numbers that might persist from previous runs
-        dashboardPage.locator('text=/^\\d+$/'),
-        dashboardPage.locator('text=/\\d+s/'),
+        // Use precise data-testid selectors for dynamic content masking
+        ...getTimerMasks(dashboardPage),
       ],
     })
   })
@@ -183,7 +194,7 @@ test.describe('Visual Regression Tests', () => {
 
     await controlPage.click('button:has-text("START")', { force: true })
 
-    // wait for braodcast messages to propagate
+    // wait for broadcast messages to propagate
     // Use the recommended, specific locator
     const stopButton = controlPage.getByRole('button', {
       name: 'STOP',
@@ -198,7 +209,10 @@ test.describe('Visual Regression Tests', () => {
       timeout: 10000,
     })
 
-    // Capture screenshot with running timer - mask dynamic timer numbers
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
+
+    // Capture screenshot with running timer - mask dynamic timer content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-active-timer.png', {
       fullPage: true,
       animations: 'disabled',
@@ -206,10 +220,8 @@ test.describe('Visual Regression Tests', () => {
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
       mask: [
-        // Mask the large timer countdown numbers (e.g., "04", "03")
-        dashboardPage.locator('text=/^\\d+$/'),
-        // Mask any time displays with seconds (e.g., "15s", "5s")
-        dashboardPage.locator('text=/\\d+s/'),
+        // Use precise data-testid selectors for timer masking
+        ...getTimerMasks(dashboardPage),
       ],
     })
   })
@@ -223,6 +235,9 @@ test.describe('Visual Regression Tests', () => {
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
+
     // Capture screenshot with HR data displayed while masking dynamic content
     await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
@@ -231,16 +246,13 @@ test.describe('Visual Regression Tests', () => {
       threshold: 0.2,
       maxDiffPixelRatio: 0.04, // Robustness for dynamic content
       mask: [
-        // Mask the entire timer display area (countdown numbers and phase labels)
-        dashboardPage.locator('text=/^\\d+$/'),
-        dashboardPage.locator('text=/\\d+s/'),
-        dashboardPage.locator('text=/WORK|REST|READY|RUNNING/'),
-        // Mask the entire HR tiles section (all dynamic HR data)
-        dashboardPage.locator('[data-testid="hr-tile-grid-item"]'),
+        // Use precise data-testid selectors for all dynamic content masking
+        ...getDynamicContentMasks(dashboardPage),
+        // Also mask the entire HR tiles section for complete coverage
+        ...getHrMasks(dashboardPage),
       ],
     })
   })
-  
 
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming
@@ -255,6 +267,10 @@ test.describe('Visual Regression Tests', () => {
       timeout: 8000,
     })
 
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
+
+    // Use element isolation: scope snapshot to specific component
     const firstTile = dashboardPage
       .locator('[data-testid="hr-tile-grid-item"]')
       .first()
@@ -263,6 +279,11 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide',
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
+      // Mask the dynamic HR values within the tile
+      mask: [
+        firstTile.locator('[data-testid="live-hr-value"]'),
+        firstTile.locator('[data-testid="live-hr-percent"]'),
+      ],
     })
   })
 })
