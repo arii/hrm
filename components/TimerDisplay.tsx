@@ -160,6 +160,8 @@ const TimerDisplay = ({
           <Typography
             data-testid="timer-phase-label"
             variant="h6"
+            aria-live="polite"
+            aria-atomic="true"
             sx={{
               mb: 1,
               color: phaseColor,
