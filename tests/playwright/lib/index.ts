@@ -126,4 +126,9 @@ export type { Page, BrowserContext, Locator } from '@playwright/test'
 // ============================================================================
 // Re-export URL utilities
 // ============================================================================
-export { getBaseURL, getWebSocketURL, getAPIURL } from '../../../utils/urls'
+export {
+  getBaseURL,
+  getWebSocketURL,
+  getAPIURL,
+  BASE_URL,
+} from '../../../utils/urls'

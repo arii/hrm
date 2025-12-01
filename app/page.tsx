@@ -13,6 +13,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
+import WorkoutControls from '../components/WorkoutControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const DOC_URL =
@@ -66,6 +67,10 @@ const Dashboard = () => {
             workDuration={timerData.workDuration}
             restDuration={timerData.restDuration}
           />
+        </Grid>
+
+        <Grid item xs={12} lg={6}>
+          <WorkoutControls />
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>

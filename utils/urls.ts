@@ -15,6 +15,8 @@ export const getBaseURL = (): string => {
   )
 }
 
+export const BASE_URL = getBaseURL()
+
 export const getWebSocketURL = (): string => {
   if (typeof window !== 'undefined') {
     // Client-side: use current host with appropriate protocol

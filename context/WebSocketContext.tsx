@@ -125,6 +125,10 @@ export const WebSocketProvider = ({
     ws.onopen = () => {
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
+      if (typeof window !== 'undefined') {
+        window.__TEST_WEBSOCKET_READY__ = true
+        window.dispatchEvent(new Event('websocket-ready'))
+      }
 
       // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
