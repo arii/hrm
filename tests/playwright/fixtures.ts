@@ -4,7 +4,9 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
-import { BASE_URL, waitForPageReady } from './test-helpers'
+import { getBaseURL, waitForPageReady } from './lib'
+
+const BASE_URL = getBaseURL()
 
 type PageFixtures = {
   dashboardPage: Page
