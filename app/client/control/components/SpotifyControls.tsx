@@ -225,6 +225,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: '#1DB954',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   '&:hover': {
                     backgroundColor: 'rgba(29, 185, 84, 0.2)',
                     boxShadow: '0 0 15px 5px rgba(29, 185, 84, 0.5)',
@@ -240,6 +242,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   backgroundColor: '#1DB954',
                   '&:hover': {
                     backgroundColor: '#169944',
@@ -254,6 +258,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: '#1DB954',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   '&:hover': {
                     backgroundColor: 'rgba(29, 185, 84, 0.2)',
                     boxShadow: '0 0 15px 5px rgba(29, 185, 84, 0.5)',

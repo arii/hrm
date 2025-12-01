@@ -210,6 +210,8 @@ const TimerControls = () => {
               startIcon={<FitnessCenter />}
               sx={{
                 flex: 1,
+                minWidth: '56px',
+                minHeight: '56px',
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
@@ -234,6 +236,8 @@ const TimerControls = () => {
               startIcon={<Timer />}
               sx={{
                 flex: 1,
+                minWidth: '56px',
+                minHeight: '56px',
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
@@ -276,6 +280,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
+                    minWidth: '56px',
+                    minHeight: '56px',
                     color: '#EF4444',
                     borderColor: '#EF4444',
                     '&:hover': {
@@ -294,6 +300,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
+                    minWidth: '56px',
+                    minHeight: '56px',
                     color: '#22C55E',
                     borderColor: '#22C55E',
                     '&:hover': {
