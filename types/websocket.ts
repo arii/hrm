@@ -122,6 +122,12 @@ export interface GetStateMessage {
   type: 'GET_STATE'
 }
 
+export interface RegisterPlayerMessage {
+  type: 'REGISTER_PLAYER'
+  name: string
+  age: number
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -132,6 +138,7 @@ export type ClientCommandMessage =
   | SpotifyCommandMessage
   | TimerConfigMessage
   | GetStateMessage
+  | RegisterPlayerMessage
 
 import { z } from 'zod'
 
@@ -185,6 +192,12 @@ export const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),
 })
 
+export const RegisterPlayerMessageSchema = z.object({
+  type: z.literal('REGISTER_PLAYER'),
+  name: z.string(),
+  age: z.number(),
+})
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
@@ -192,4 +205,5 @@ export const ClientCommandMessageSchema = z.union([
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
+  RegisterPlayerMessageSchema,
 ])

@@ -208,6 +208,15 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  useEffect(() => {
+    // Expose sendData for testing purposes
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      window.sendSocketData = sendData
+    }
+  }, [])
+
   const contextValue = {
     ...appState,
     connectionStatus,

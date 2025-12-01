@@ -113,6 +113,23 @@ const handleIncomingMessage = (
         break
       }
 
+      case 'REGISTER_PLAYER': {
+        const existingClientData = hrmClients.get(clientId)
+        if (existingClientData) {
+          hrmClients.set(clientId, {
+            ...existingClientData,
+            name: message.name,
+            age: message.age,
+            maxHr: 220 - message.age,
+          })
+        }
+        broadcast({
+          type: 'HRM_UPDATE',
+          payload: Array.from(hrmClients.values()),
+        })
+        break
+      }
+
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
         console.log(

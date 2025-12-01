@@ -112,6 +112,13 @@ const useBluetoothHRM = () => {
         // 4. Start notifications to receive real-time data
         await characteristic.startNotifications()
 
+        // --- NEW: Register the player with the server immediately ---
+        sendData({
+          type: 'REGISTER_PLAYER',
+          name: userName || `Bluetooth HRM (${device?.name || 'Unknown'})`,
+          age: parseInt(userAge || '30'),
+        })
+
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event) => {
