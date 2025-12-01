@@ -23,8 +23,8 @@ export const WAIT_TIMEOUTS = {
   ELEMENT_VISIBLE: 3000,
   /** Default timeout for network idle */
   NETWORK_IDLE: 3000,
-  /** Default timeout for navigation - slightly longer for complex pages */
-  NAVIGATION: 3000,
+  /** Default timeout for navigation - allow time for compilation */
+  NAVIGATION: 10000,
   /** Short timeout for quick checks */
   SHORT: 1000,
   /** Short duration timeout */

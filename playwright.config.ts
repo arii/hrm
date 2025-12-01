@@ -59,7 +59,7 @@ export default defineConfig({
     // Base URL for all tests
     baseURL: getBaseURL(),
     actionTimeout: 3000, // Fails clicks/fills after 3s if element isn't found
-    navigationTimeout: 3000, // Navigation timeout reduced
+    navigationTimeout: 15000, // Navigation timeout - allow time for initial compilation
     headless: true,
 
     // Screenshot settings

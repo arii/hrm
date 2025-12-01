@@ -24,6 +24,9 @@ test.describe('Core HRM Functionality', () => {
   let mockPage: Page;
 
   test.beforeAll(async ({ browser }) => {
+    // Allow extra time for initial compilation
+    test.setTimeout(20000)
+    
     context = await browser.newContext();
     dashboardPage = await context.newPage();
     controlPage = await context.newPage();
