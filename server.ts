@@ -97,6 +97,7 @@ app
         stopPolling: () => {},
         startPolling: () => {},
         setRefreshToken: () => {},
+        forcePollAndBroadcast: () => Promise.resolve(),
         getState: () => ({
           trackName: 'Spotify Service Failed to Initialize',
           artist: '',

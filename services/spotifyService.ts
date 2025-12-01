@@ -1,6 +1,6 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { ServerMessage, SpotifyData } from '../types/websocket';
-import logger from '../utils/logger';
+import { ServerMessage, SpotifyData } from '../types/websocket.js';
+import logger from '../utils/logger.js';
 import fs from 'fs';
 import * as path from 'path';
 
@@ -13,7 +13,7 @@ function safeParseJSON(input: string): unknown {
   }
 }
 
-type SpotifyCommand =
+export type SpotifyCommand =
   | 'PLAY'
   | 'NEXT'
   | 'PREVIOUS'
@@ -45,7 +45,7 @@ export interface TokenRecord {
   payload: SpotifyTokenPayload;
 }
 
-class SpotifyService {
+export class SpotifyService {
   private broadcastUpdate: (message: ServerMessage) => void;
   private sdk: SpotifyApi | null = null;
   private pollInterval: NodeJS.Timeout | null = null;
@@ -112,6 +112,41 @@ class SpotifyService {
 
   public isReady(): boolean {
     return this.sdk !== null;
+  }
+
+  /**
+   * Gets token debug information for the debug endpoint.
+   * Returns null if no token is found.
+   */
+  public getTokenDebugInfo(): {
+    userId: string;
+    accessTokenPrefix: string;
+    refreshTokenMasked: string;
+    expiresIn: number;
+    obtainedAt: string;
+    expiresAt: string;
+    isExpired: boolean;
+    willExpireSoon: boolean;
+  } | null {
+    if (!this.currentToken) return null;
+
+    const maskedRefreshToken = this.currentToken.payload.refresh_token
+      ? `${this.currentToken.payload.refresh_token.substring(0, 5)}...${this.currentToken.payload.refresh_token.substring(this.currentToken.payload.refresh_token.length - 5)}`
+      : 'N/A';
+
+    const expiresAt =
+      this.currentToken.payload.obtainedAt + this.currentToken.payload.expires_in * 1000;
+
+    return {
+      userId: this.currentToken.payload.sub,
+      accessTokenPrefix: `${this.currentToken.payload.access_token.substring(0, 5)}...`,
+      refreshTokenMasked: maskedRefreshToken,
+      expiresIn: this.currentToken.payload.expires_in,
+      obtainedAt: new Date(this.currentToken.payload.obtainedAt).toISOString(),
+      expiresAt: new Date(expiresAt).toISOString(),
+      isExpired: Date.now() >= expiresAt,
+      willExpireSoon: Date.now() >= expiresAt - 60000,
+    };
   }
 
   public setRefreshToken(_token: string) {
@@ -484,10 +519,6 @@ class SpotifyService {
       return true;
     } catch (err) {
       logger.error('Failed to refresh Spotify token:', err);
-      this.broadcastUpdate({
-        type: 'SPOTIFY_NEEDS_REAUTH',
-        payload: { message: 'Failed to refresh Spotify token. Please log in again.' },
-      });
       return false;
     }
   }
@@ -550,4 +581,15 @@ export const getSpotifyService = () => {
     throw new Error('Spotify service not initialized');
   }
   return spotifyServiceInstance;
+};
+
+/**
+ * Resets the spotify service singleton for testing purposes.
+ * Only call this in test teardown.
+ */
+export const resetSpotifyService = () => {
+  if (spotifyServiceInstance) {
+    spotifyServiceInstance.cleanup();
+  }
+  spotifyServiceInstance = undefined as unknown as SpotifyService;
 };

@@ -10,7 +10,7 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
-import { initializeSpotifyService } from '../../../services/spotifyService'
+import { initializeSpotifyService, resetSpotifyService } from '../../../services/spotifyService'
 import { ServerMessage } from '../../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
@@ -117,7 +117,7 @@ describe('SpotifyService', () => {
 
   afterEach(() => {
     jest.useRealTimers()
-    spotifyService.cleanup()
+    resetSpotifyService()
   })
 
   describe('Initialization', () => {

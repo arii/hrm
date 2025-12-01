@@ -4,7 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
+import { SpotifyCommand, SpotifyService } from '../services/spotifyService.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
@@ -15,9 +15,20 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
+// Define the interface for the Spotify service used by the socket manager
+interface SpotifyServiceInterface {
+  handleCommand: (
+    command: SpotifyCommand,
+    deviceId?: string,
+    volume?: number,
+    playlistUri?: string
+  ) => Promise<void> | void
+  getState: () => { trackName: string; artist: string; isPlaying: boolean }
+}
+
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+let spotifyServiceInstance: SpotifyServiceInterface
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 
@@ -25,7 +36,7 @@ const hrmClients = new Map<string, HrmData>()
 
 interface Services {
   tabataService: TabataTimer
-  spotifyService: SpotifyPolling
+  spotifyService: SpotifyServiceInterface | SpotifyService
 }
 
 /**
