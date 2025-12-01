@@ -41,7 +41,7 @@ jobs:
       run: npm run test:coverage
       
     - name: Upload Coverage (runs only once per matrix iteration)
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         # Use a flag to differentiate coverage runs in Codecov UI
         flags: node-${{ matrix.node-version }}-unittests
