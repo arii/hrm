@@ -58,6 +58,13 @@ update_branch() {
     
     print_status "[$CURRENT/$TOTAL_BRANCHES] Updating branch: $BRANCH"
     
+    # Check if remote branch exists
+    if ! git ls-remote --heads origin $BRANCH | grep -q $BRANCH; then
+        print_warning "  Remote branch $BRANCH does not exist, skipping..."
+        FAILED=$((FAILED + 1))
+        return 1
+    fi
+    
     # Check if branch exists locally
     if ! git show-ref --verify --quiet refs/heads/$BRANCH; then
         print_status "  Creating local branch $BRANCH from remote"
