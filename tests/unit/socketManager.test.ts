@@ -13,7 +13,7 @@ import {
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import TabataTimer from '../../services/tabataTimer'
+import TabataTimer from '../../services/timer/tabataTimer'
 import { ServerMessage } from '../../types/websocket'
 
 // Mock fetch globally

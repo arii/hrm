@@ -13,10 +13,12 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+import rateLimit from 'express-rate-limit'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
+import TabataTimer from './services/timer/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
@@ -52,6 +54,24 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+
+// --- Security Middleware ---
+// Apply a general rate limit to all incoming requests to prevent abuse.
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for test environments
+  skip: () => process.env.TESTING === 'true',
+})
+expressApp.use(limiter)
+
+// Rate Limiter for WebSocket connections
+const wsRateLimiter = new RateLimiterMemory({
+  points: 10, // 10 connection attempts
+  duration: 60, // per 60 seconds per IP
+})
 
 // --- Main Application Setup ---
 
@@ -149,14 +169,41 @@ app
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
+      async (req: IncomingMessage, socket: Socket, head: Buffer) => {
+        try {
+          // --- WebSocket Rate Limiting ---
+          const ip = req.socket.remoteAddress || 'unknown'
+          await wsRateLimiter.consume(ip)
 
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
+          // --- WebSocket Origin Validation ---
+          const origin = req.headers.origin
+          const serverBaseUrl = getBaseURL()
+
+          if (origin !== serverBaseUrl) {
+            logger.warn(
+              `WebSocket connection rejected from invalid origin: ${origin}`
+            )
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+            socket.destroy()
+            return
+          }
+
+          const { pathname } = parse(req.url || '')
+
+          // Only upgrade connections to the specific WebSocket path
+          if (pathname === '/ws') {
+            wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+              wss.emit('connection', ws, req)
+            })
+          }
+        } catch (_rejRes) {
+          logger.warn({
+            ip: req.socket.remoteAddress,
+            reason: 'WebSocket rate limit exceeded',
           })
+          socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
+          socket.destroy()
+          return
         }
         // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
         // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
