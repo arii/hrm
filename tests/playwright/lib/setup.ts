@@ -170,7 +170,8 @@ export async function setupVisualRegressionTest(pages: {
   const baseUrl = getBaseURL()
 
   // Navigate all pages in parallel
-  // Note: Uses legacy routes for backward compatibility with existing tests
+  // Note: Uses LEGACY_ROUTES for control/mock/connect for backward compatibility with existing tests.
+  // Dashboard uses HRM_ROUTES.DASHBOARD since it's just '/'.
   await Promise.all([
     dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
     controlPage.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
@@ -227,6 +228,8 @@ export async function setupComprehensiveTest(options: {
   const mockTab = await context.newPage()
   const connectTab = await context.newPage()
 
+  // Note: Uses LEGACY_ROUTES for control/mock/connect for backward compatibility with existing tests.
+  // Dashboard uses HRM_ROUTES.DASHBOARD since it's just '/'.
   await Promise.all([
     dashboardTab.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
     controlTab.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
@@ -345,14 +348,17 @@ export async function setupMockHrStreaming(
 ): Promise<void> {
   const { bpm = 155, zone = 4 } = options
 
+  // Get the BPM input element
+  const bpmInput = mockPage.getByLabel('Current BPM')
+
   // Set HR value
-  await mockPage.getByLabel('Current BPM').fill(String(bpm))
+  await bpmInput.fill(String(bpm))
 
   // Set zone
   await mockPage.getByRole('button', { name: `Zone ${zone}` }).click()
 
   // Verify BPM is set
-  await expect(mockPage.getByLabel('Current BPM')).toHaveValue(String(bpm))
+  await expect(bpmInput).toHaveValue(String(bpm))
 }
 
 /**

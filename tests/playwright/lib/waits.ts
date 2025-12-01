@@ -8,9 +8,7 @@
  * - WebSocket connection verification
  * - Font loading guarantees
  */
-import type { Page } from '@playwright/test'
-
-import type { Response as PlaywrightResponse } from '@playwright/test'
+import type { Page, Response as PlaywrightResponse } from '@playwright/test'
 
 /**
  * Default timeout values for wait operations (in milliseconds)
