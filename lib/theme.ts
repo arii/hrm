@@ -116,12 +116,31 @@ const theme = createTheme({
   },
 
   shadows: [
-    'none',
-    '0px 0px 8px rgba(41, 182, 246, 0.2)', // primary.main glow
-    '0px 0px 12px rgba(76, 175, 80, 0.25)', // active.main glow
-    '0px 0px 12px rgba(255, 202, 40, 0.25)', // warning.main glow
-    '0px 0px 12px rgba(244, 67, 54, 0.3)', // critical.main glow
-    ...Array(20).fill('none'),
+    'none', // 0
+    '0px 0px 8px rgba(41, 182, 246, 0.2)', // 1 (primary.main glow)
+    '0px 0px 12px rgba(76, 175, 80, 0.25)', // 2 (active.main glow)
+    '0px 0px 12px rgba(255, 202, 40, 0.25)', // 3 (warning.main glow)
+    '0px 0px 12px rgba(244, 67, 54, 0.3)', // 4 (critical.main glow)
+    'none', // 5
+    'none', // 6
+    'none', // 7
+    'none', // 8
+    'none', // 9
+    'none', // 10
+    'none', // 11
+    'none', // 12
+    'none', // 13
+    'none', // 14
+    'none', // 15
+    'none', // 16
+    'none', // 17
+    'none', // 18
+    'none', // 19
+    'none', // 20
+    'none', // 21
+    'none', // 22
+    'none', // 23
+    'none', // 24
   ],
 
   components: {
