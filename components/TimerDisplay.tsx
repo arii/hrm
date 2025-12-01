@@ -158,6 +158,7 @@ const TimerDisplay = ({
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
+            data-testid="timer-phase-label"
             variant="h6"
             sx={{
               mb: 1,
@@ -172,6 +173,7 @@ const TimerDisplay = ({
 
         {/* Giant Timer Display */}
         <Typography
+          data-testid="timer-countdown"
           component="div"
           role="timer"
           aria-live="polite"

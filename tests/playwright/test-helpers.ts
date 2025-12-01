@@ -1,14 +1,25 @@
 // File: tests/playwright/test-helpers.ts
 /**
  * Shared Test Helpers: Reusable functions for consistent test setup
+ *
+ * This module provides deterministic capture strategies for visual regression tests:
+ * - Network and DOM idle synchronization
+ * - Font loading guarantees
+ * - Masking selectors for dynamic content
  */
 import type { BrowserContext, Page } from '@playwright/test'
 import { getBaseURL } from '../../utils/urls'
 
 const BASE_URL = getBaseURL()
 
-// Helper function to wait for page ready signal
+/**
+ * Wait for page to be in a stable state for visual regression testing.
+ * Ensures network activity and DOM updates have ceased.
+ */
 export const waitForPageReady = async (page: Page) => {
+  // Wait for network idle to ensure all async operations complete
+  await page.waitForLoadState('networkidle')
+
   try {
     await page.waitForFunction(
       () => {
@@ -20,12 +31,74 @@ export const waitForPageReady = async (page: Page) => {
     // Fallback: If custom signal fails, wait for a known stable element instead of sleeping
     console.warn('__TEST_READY__ signal not found, proceeding with UI check')
     // Wait for the main content area to be visible
-    await page.waitForSelector('main, [role="main"], body > div', { state: 'visible', timeout: 5000 }).catch(() => {
-      // If no main element found, just continue
-      console.warn('No main element found, continuing anyway')
-    })
+    await page
+      .waitForSelector('main, [role="main"], body > div', {
+        state: 'visible',
+        timeout: 5000,
+      })
+      .catch(() => {
+        // If no main element found, just continue
+        console.warn('No main element found, continuing anyway')
+      })
   }
 }
+
+/**
+ * Wait for all fonts to be fully loaded before taking snapshots.
+ * This eliminates font-related layout shifts in visual regression tests.
+ */
+export const waitForFontsLoaded = async (page: Page) => {
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+}
+
+/**
+ * Mask selectors for dynamic content that should be hidden during VRT snapshots.
+ * These selectors target elements that contain live/streaming data.
+ */
+export const VRT_MASK_SELECTORS = {
+  // Live heart rate data
+  liveHrValue: '[data-testid="live-hr-value"]',
+  liveHrPercent: '[data-testid="live-hr-percent"]',
+  hrTileGridItem: '[data-testid="hr-tile-grid-item"]',
+  // Timer countdown
+  timerCountdown: '[data-testid="timer-countdown"]',
+  timerPhaseLabel: '[data-testid="timer-phase-label"]',
+} as const
+
+/**
+ * Get an array of Playwright locators for masking dynamic content in screenshots.
+ * @param page The Playwright Page object
+ * @returns Array of locators for dynamic elements that should be masked
+ */
+export const getDynamicContentMasks = (page: Page) => [
+  page.locator(VRT_MASK_SELECTORS.liveHrValue),
+  page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+  page.locator(VRT_MASK_SELECTORS.timerCountdown),
+  page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+]
+
+/**
+ * Get an array of Playwright locators for masking HR tile content.
+ * @param page The Playwright Page object
+ * @returns Array of locators for HR-related dynamic elements
+ */
+export const getHrMasks = (page: Page) => [
+  page.locator(VRT_MASK_SELECTORS.liveHrValue),
+  page.locator(VRT_MASK_SELECTORS.liveHrPercent),
+  page.locator(VRT_MASK_SELECTORS.hrTileGridItem),
+]
+
+/**
+ * Get an array of Playwright locators for masking timer content.
+ * @param page The Playwright Page object
+ * @returns Array of locators for timer-related dynamic elements
+ */
+export const getTimerMasks = (page: Page) => [
+  page.locator(VRT_MASK_SELECTORS.timerCountdown),
+  page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+]
 
 // Helper function to replace iframe with stable workout content
 export const replaceIframeWithStableWorkout = async (page: Page) => {
