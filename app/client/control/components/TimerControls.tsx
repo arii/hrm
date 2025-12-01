@@ -30,7 +30,8 @@ const actionButtonSx = {
   flex: 1,
   fontWeight: 'bold',
   py: 1.5,
-  minHeight: '64px',
+  minWidth: '56px',
+  minHeight: '56px',
   transition: 'transform 0.1s ease-in-out',
   '&:active': {
     transform: 'scale(0.95)',
@@ -51,8 +52,8 @@ const stepperButtonSx = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
   },
-  width: 64,
-  height: 64,
+  minWidth: '56px',
+  minHeight: '56px',
 }
 
 const TimerControls = () => {
