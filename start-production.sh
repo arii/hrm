@@ -20,6 +20,9 @@ else
   # Debug: Show critical env vars
   echo "Environment: NODE_ENV=$NODE_ENV"
   echo "NEXTAUTH_URL: $NEXTAUTH_URL"
+  if [ -n "$SPOTIFY_CALLBACK_URL" ]; then
+    echo "SPOTIFY_CALLBACK_URL: $SPOTIFY_CALLBACK_URL"
+  fi
   echo "AUTH_TRUST_HOST: $AUTH_TRUST_HOST"
   echo "Hostname: ${HOST:-0.0.0.0}, Port: ${PORT:-3000}"
 fi

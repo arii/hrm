@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { ApiError } from '@/lib/errors'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
@@ -19,11 +20,7 @@ export async function GET(_req: Request) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error('[API /devices] No session or access token found.')
-      return NextResponse.json(
-        { error: 'Not authenticated or token is missing.' },
-        { status: 401 }
-      )
+      throw new ApiError(401, 'Not authenticated or token is missing.')
     }
 
     // 3. Fetch devices from Spotify API.
@@ -50,6 +47,12 @@ export async function GET(_req: Request) {
     const data = await response.json()
     return NextResponse.json(data.devices || [])
   } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
     console.error(`[API /devices] Internal Server Error: ${message}`)

@@ -7,6 +7,7 @@
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import { ApiError } from '@/lib/errors'
 import { withValidation } from '@/lib/middleware/validation'
 import { spotifyControlSchema } from '@/lib/validation/schemas'
 import { z } from 'zod'
@@ -18,10 +19,7 @@ const handler = async (
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
-    return NextResponse.json(
-      { error: 'Authorization required' },
-      { status: 401 }
-    )
+    throw new ApiError(401, 'Authorization required')
   }
 
   const { command } = body
@@ -74,6 +72,12 @@ const handler = async (
       { status: response.status }
     )
   } catch (error) {
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      )
+    }
     console.error('REST control failed:', error)
     return NextResponse.json(
       { error: 'Internal server error processing command.' },

@@ -66,11 +66,25 @@ test.describe('Visual Regression Tests', () => {
     ])
 
     // Replace iframe with stable content for dashboard
+<<<<<<< HEAD
+||||||| dfe03eb
+    // Adding a timeout to prevent indefinite hanging if iframe is missing
+=======
+    // Wait for dashboard to settle before replacing
+>>>>>>> origin/leader
     try {
+<<<<<<< HEAD
       // Wait for a specific element in the dashboard to be visible before proceeding
       await expect(
         dashboardPage.locator('text=HRM')
       ).toBeVisible({ timeout: 10000 })
+||||||| dfe03eb
+      // Wait a moment for dashboard to settle before replacing
+      await dashboardPage.waitForTimeout(1000)
+=======
+      // Wait for a known stable element instead of arbitrary timeout
+      await expect(dashboardPage.locator('body')).toBeVisible({ timeout: 2000 })
+>>>>>>> origin/leader
       await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
       console.warn(
@@ -104,10 +118,18 @@ test.describe('Visual Regression Tests', () => {
       // Timer might already be idle, continue
     }
 
+<<<<<<< HEAD
     // Wait for the timer to be in a stable, idle state
     await expect(dashboardPage.locator('text=00:00')).toBeVisible({
       timeout: 5000,
     })
+||||||| dfe03eb
+    // Wait a bit for any animations to settle
+    await dashboardPage.waitForTimeout(1000)
+=======
+    // Wait for a stable UI element instead of arbitrary timeout
+    await expect(dashboardPage.locator('body')).toBeVisible()
+>>>>>>> origin/leader
 
     // Capture full-page screenshot - mask timer numbers in case cleanup didn't work
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
