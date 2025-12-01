@@ -5,15 +5,8 @@ import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { TimerData } from '../types/websocket'
 
-export const useAudio = (timerData: TimerData, volume?: number) => {
+export const useAudio = (timerData: TimerData) => {
   const lastSoundEventId = useRef<number>(0)
-
-  // Update audio volume when volume changes
-  useEffect(() => {
-    if (volume !== undefined) {
-      audioManager.setVolume(volume)
-    }
-  }, [volume])
 
   useEffect(() => {
     // Only play sound if we have a new sound event

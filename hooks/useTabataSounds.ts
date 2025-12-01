@@ -3,7 +3,7 @@
 // respect the shared volume preference and we debounce duplicate events.
 
 import { useEffect, useRef } from 'react'
-import { volumeToScalar } from './useVolumePreference'
+import { volumeToScalar } from './useVolume'
 
 type TabataCue = 'WORK' | 'REST' | 'COUNTDOWN'
 type AudioKey = 'LONG' | 'SHORT'

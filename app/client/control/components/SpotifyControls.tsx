@@ -20,7 +20,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolume, { clampVolume } from '@/hooks/useVolume'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -38,7 +38,7 @@ interface SpotifyDevice {
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume } = useVolume()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
+import useVolume, { volumeToScalar } from './useVolume'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -66,6 +67,7 @@ const useSpotifyWebPlayback = () => {
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const { addError } = useError()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { volume, syncSpotifyVolume } = useVolume()
 
   /**
    * Fetches the Spotify OAuth token from our secure backend API.
@@ -173,7 +175,7 @@ const useSpotifyWebPlayback = () => {
       const spotifyPlayer = new window.Spotify.Player({
         name: 'HRM Web Player',
         getOAuthToken,
-        volume: 0.5,
+        volume: volumeToScalar(volume),
       })
 
       // --- Player Event Listeners ---
@@ -182,8 +184,8 @@ const useSpotifyWebPlayback = () => {
         console.log('[Spotify Web Playback] Ready with Device ID', device_id)
         setDeviceId(device_id)
         setIsReady(true)
-        // No singular error state to clear, errors are managed in a list
-        // addError functions manages individual errors with an id
+        // Sync volume with player on ready
+        syncSpotifyVolume(spotifyPlayer)
       })
 
       spotifyPlayer.addListener('not_ready', ({ device_id }) => {
