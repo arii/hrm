@@ -7,6 +7,8 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
+    // Note: All `source` and `destination` paths MUST begin with a leading `/`.
+    // This is a mandatory convention to ensure consistency and prevent routing errors.
     return [
       {
         source: '/phone',
