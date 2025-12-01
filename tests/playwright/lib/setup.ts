@@ -279,16 +279,16 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
  * @param dashboardPage - The dashboard Page object (optional)
  */
 export async function stopTimer(controlPage: Page, dashboardPage?: Page): Promise<void> {
-  const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
+  const stopButton = controlPage.getByRole('button', { name: 'Stop', exact: true })
 
   try {
     // If timer is running, stop it
     if (await stopButton.isVisible({ timeout: 2000 })) {
       await stopButton.click()
 
-      // Wait for START button to confirm timer stopped
+      // Wait for Start button to confirm timer stopped
       await expect(
-        controlPage.getByRole('button', { name: 'START', exact: true }),
+        controlPage.getByRole('button', { name: 'Start', exact: true }),
       ).toBeVisible({ timeout: 5000 })
 
       // Wait for dashboard to clear timer display if provided
@@ -329,10 +329,10 @@ export async function configureTimer(
  * @param controlPage - The control panel Page object
  */
 export async function startTimer(controlPage: Page): Promise<void> {
-  await controlPage.click('button:has-text("START")', { force: true })
+  await controlPage.click('button:has-text("Start")', { force: true })
 
   // Verify timer started
-  const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
+  const stopButton = controlPage.getByRole('button', { name: 'Stop', exact: true })
   await expect(stopButton).toBeVisible()
 }
 

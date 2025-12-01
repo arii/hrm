@@ -82,7 +82,8 @@ test.describe('Core HRM Functionality', () => {
     await startTimer(controlPage);
 
     // 3. Verify the dashboard reflects the changes
-    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible();
+    // Wait longer than PREPARE phase (5s)
+    await expect(dashboardPage.locator('text=/Work|Rest/')).toBeVisible({ timeout: 10000 });
     
     // Check for Spotify login button (no tokens present)
     await expect(dashboardPage.locator('[data-testid="login-button"]')).toBeVisible();

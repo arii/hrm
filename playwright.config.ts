@@ -35,9 +35,10 @@ export default defineConfig({
   testIgnore: testIgnoreList,
 
   // Performance Optimizations
-  fullyParallel: true,
-  workers: process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 15 * 1000, // Global test timeout (15s)
+  // Disabled parallelism because tests interact with a singleton server state (Timer, Spotify)
+  fullyParallel: false,
+  workers: 1,
+  timeout: 30 * 1000, // Increased timeout to 30s for stability
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,

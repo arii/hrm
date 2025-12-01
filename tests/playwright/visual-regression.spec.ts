@@ -72,9 +72,9 @@ test.describe('Visual Regression Tests', () => {
     ])
 
     // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
+    // Check if Stop button exists (timer is running)
     const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
+      name: 'Stop',
       exact: true,
     })
 
@@ -82,9 +82,9 @@ test.describe('Visual Regression Tests', () => {
       // If timer is running, stop it
       if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
         await stopButton.click()
-        // Wait for START button to confirm timer stopped on control page
+        // Wait for Start button to confirm timer stopped on control page
         await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
+          controlPage.getByRole('button', { name: 'Start', exact: true })
         ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
         // Wait for dashboard to clear timer display (return to READY state)
@@ -193,12 +193,12 @@ test.describe('Visual Regression Tests', () => {
 
     // Start timer
 
-    await controlPage.click('button:has-text("START")', { force: true })
+    await controlPage.click('button:has-text("Start")', { force: true })
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
     const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
+      name: 'Stop',
       exact: true,
     })
 
@@ -206,7 +206,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(stopButton).toBeVisible()
 
     // Wait for timer to appear on dashboard
-    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
+    await expect(dashboardPage.locator('text=/Work|Rest/')).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
