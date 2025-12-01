@@ -1,5 +1,5 @@
 // components/shared/StyledCard.tsx
-import Card, { CardProps } from '@mui/material/Card';
+import Card, { type CardProps } from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 
 const StyledCard = styled(Card)<CardProps>(({ theme }) => ({

@@ -1,7 +1,7 @@
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import type { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling'
+import type { SpotifyTokenResponse } from '../types/index'
 
 export interface SpotifyTokenPayload {
   provider: string

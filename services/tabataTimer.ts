@@ -6,10 +6,10 @@
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
 import {
-  ServerMessage,
-  TimerData,
-  TimerMode,
-  TimerPhase,
+  type ServerMessage,
+  type TimerData,
+  type TimerMode,
+  type TimerPhase,
 } from '../types/websocket'
 
 // --- Tabata Constants ---

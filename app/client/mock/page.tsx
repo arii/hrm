@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HrmInputMessage } from '../../../types/websocket'
+import type { HrmInputMessage } from '../../../types/websocket'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()

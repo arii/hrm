@@ -5,7 +5,7 @@ import React,
   createContext,
   useState,
   useContext,
-  ReactNode,
+  type ReactNode,
   useCallback
 } from 'react'
 import { v4 as uuidv4 } from 'uuid'

@@ -3,8 +3,8 @@
  * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
  * This service is used by the standalone playlist selection page.
  */
-import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
-import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
+import { SpotifyApi, type AccessToken } from '@spotify/web-api-ts-sdk'
+import type { SpotifyPlaylistItem, SpotifyPlaylist } from '../types'
 import { presetPlaylists } from './seedData'
 
 // Re-export types for backward compatibility

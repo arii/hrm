@@ -5,8 +5,8 @@
  */
 
 import {
-  GenericTimerState,
-  TimerMode,
+  type GenericTimerState,
+  type TimerMode,
 } from '../types/genericTimer'
 
 /**

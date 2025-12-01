@@ -1,7 +1,7 @@
 'use client'
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -10,11 +10,11 @@ import {
   useReducer,
 } from 'react'
 import {
-  ClientCommandMessage,
-  HrmData,
-  SpotifyData,
-  TimerData,
-  ServerMessage,
+  type ClientCommandMessage,
+  type HrmData,
+  type SpotifyData,
+  type TimerData,
+  type ServerMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 

@@ -3,7 +3,7 @@
 // This endpoint is used by the PlaylistSelector component to search for popular playlists
 
 import { authOptions } from '@/lib/auth'
-import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { type SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 

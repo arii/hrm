@@ -4,10 +4,10 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
 import logger from '@/utils/logger'
 import {
-  SpotifyCommandMessage,
-  TimerCommandMessage,
-  TimerConfigMessage,
-  TimerModeCommandMessage,
+  type SpotifyCommandMessage,
+  type TimerCommandMessage,
+  type TimerConfigMessage,
+  type TimerModeCommandMessage,
 } from '@/types/websocket'
 import Add from '@mui/icons-material/Add'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'

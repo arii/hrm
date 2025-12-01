@@ -12,7 +12,7 @@ export interface HeartRateZonesProps {
   maxHr: number
 }
 
-import { TimerMode, TimerPhase } from './websocket'
+import type { TimerMode, TimerPhase } from './websocket'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
@@ -38,6 +38,14 @@ export interface SpotifyPlaylistItem {
   id: string
   name: string
   uri: string
+}
+
+export interface SpotifyTokenResponse {
+  access_token: string
+  token_type: string
+  expires_in: number
+  refresh_token: string
+  scope: string
 }
 
 export interface SpotifyPlaylist {

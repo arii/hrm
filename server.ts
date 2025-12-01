@@ -5,7 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
-import express, { Request, Response } from 'express'
+import express, { type Request, type Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'

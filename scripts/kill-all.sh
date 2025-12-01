@@ -17,7 +17,7 @@ pkill -f "next dev" 2>/dev/null || true
 
 # Kill Playwright processes
 echo "Killing Playwright processes..."
-pkill -f "playwright" 2>/dev/null || true
+pkill -f "node_modules/.bin/playwright" 2>/dev/null || true
 pkill -f "chromium" 2>/dev/null || true
 
 # Kill Chrome DevTools MCP

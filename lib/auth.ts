@@ -1,6 +1,6 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
-import { JWT } from 'next-auth/jwt'
+import NextAuth, { type Account, type AuthOptions, type Session } from 'next-auth'
+import type { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL, getSpotifyCallbackURL } from '../utils/urls'
 
