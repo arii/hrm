@@ -93,6 +93,8 @@ export default defineConfig({
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
+            // Hide scrollbars for consistent VRT snapshots
+            '--hide-scrollbars',
           ],
         },
         viewport: { width: 1920, height: 1080 },
@@ -107,7 +109,11 @@ export default defineConfig({
       ? [
           {
             name: 'Mobile Chrome',
-            use: { ...devices['Pixel 5'] },
+            use: {
+              ...devices['Pixel 5'],
+              // Ensure consistent viewport for mobile VRT
+              viewport: devices['Pixel 5'].viewport,
+            },
           },
         ]
       : []),
