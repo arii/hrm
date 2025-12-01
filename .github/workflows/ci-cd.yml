@@ -6,6 +6,18 @@ on:
   pull_request:
     branches: [leader]
 
+<<<<<<< HEAD
+||||||| 249a6ea
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+=======
+concurrency:
+  group: pr-workflow-concurrency
+  cancel-in-progress: true
+
+>>>>>>> origin/leader
 jobs:
   # 1. Fast, parallel validation for linting and unit tests
   unit_tests:

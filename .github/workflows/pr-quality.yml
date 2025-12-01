@@ -10,6 +10,18 @@ on:
         required: true
         default: 'leader'
 
+<<<<<<< HEAD
+||||||| 249a6ea
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+=======
+concurrency:
+  group: pr-workflow-concurrency
+  cancel-in-progress: true
+
+>>>>>>> origin/leader
 env:
   FORCE_COLOR: 1
   # Browsers are installed INSIDE the workspace so they persist with clean: false
