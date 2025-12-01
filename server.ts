@@ -15,7 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
+import { spotifyService } from './services/spotifyService.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
@@ -82,23 +82,7 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
-    try {
-      spotifyService = await SpotifyPolling.create(broadcast)
-    } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
-    }
+    // spotifyService is now a singleton, imported and initialized automatically.
     const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
@@ -129,19 +113,14 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
+        // Wait a moment for token to be written to disk by the API route
+        setTimeout(() => {
+          // Signal the service to reload tokens and re-initialize the SDK
+          spotifyService.setRefreshToken('signal')
+          // Wait a bit for reload, then force a poll to get immediate feedback
+          setTimeout(() => {
+            spotifyService.forcePollAndBroadcast()
+          }, 1500)
         }, 1000)
       }
       return nextRequestHandler(req, res)

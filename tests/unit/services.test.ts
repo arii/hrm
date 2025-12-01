@@ -11,40 +11,34 @@ import {
   afterEach,
 } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { spotifyService } from '../../services/spotifyService'
 import { ServerMessage } from '../../types/websocket'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-
-// Mock fetch globally
-global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
-jest.mock('@spotify/web-api-ts-sdk', () => ({
-  SpotifyApi: {
-    withAccessToken: jest.fn(),
+jest.mock('../../services/spotifyService', () => ({
+  spotifyService: {
+    handleCommand: jest.fn(),
+    startPolling: jest.fn(),
+    stopPolling: jest.fn(),
+    setRefreshToken: jest.fn(),
+    getState: jest.fn(() => ({
+      trackName: 'Mock Track',
+      artist: 'Mock Artist',
+      isPlaying: false,
+    })),
+    isReady: jest.fn(() => true),
+    forcePollAndBroadcast: jest.fn(),
+    getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
+    cleanup: jest.fn(),
   },
-  AccessToken: jest.fn(),
 }))
+
+const mockSpotifyService = spotifyService as jest.Mocked<typeof spotifyService>
 
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
-  let spotifyService: SpotifyPolling
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
-  let mockSdk: {
-    player: {
-      getCurrentlyPlayingTrack: jest.Mock
-      startResumePlayback: jest.Mock
-      pausePlayback: jest.Mock
-      skipToNext: jest.Mock
-      skipToPrevious: jest.Mock
-      transferPlayback: jest.Mock
-      setPlaybackVolume: jest.Mock
-      getAvailableDevices: jest.Mock
-    }
-  }
 
   beforeEach(async () => {
     jest.useFakeTimers()
@@ -56,45 +50,13 @@ describe('Services Integration', () => {
       broadcastedMessages.push(message)
     }
 
-    // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'test_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
-    }))
-
-    // Mock SDK instance
-    mockSdk = {
-      player: {
-        getCurrentlyPlayingTrack: jest.fn().mockResolvedValue(null),
-        startResumePlayback: jest.fn().mockResolvedValue(undefined),
-        pausePlayback: jest.fn().mockResolvedValue(undefined),
-        skipToNext: jest.fn().mockResolvedValue(undefined),
-        skipToPrevious: jest.fn().mockResolvedValue(undefined),
-        transferPlayback: jest.fn().mockResolvedValue(undefined),
-        setPlaybackVolume: jest.fn().mockResolvedValue(undefined),
-        getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
-      },
-    }
-
-    // Mock SpotifyApi.withAccessToken to return our mock SDK
-    ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
-
     tabataTimer = new TabataTimer(broadcastFn)
-    // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
   })
 
   afterEach(() => {
     jest.useRealTimers()
-    spotifyService.stopPolling()
-    spotifyService.cleanup()
+    mockSpotifyService.stopPolling()
+    mockSpotifyService.cleanup()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {
@@ -251,12 +213,15 @@ describe('Services Integration', () => {
     })
 
     it('should support Spotify volume commands', async () => {
-      // The service now manages SDK internally, no need to set accessToken manually if mocks are set up
-
-      spotifyService.handleCommand('SET_VOLUME', undefined, 75)
+      await mockSpotifyService.handleCommand('SET_VOLUME', undefined, 75, undefined)
 
       // Verify mock called
-      expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()
+      expect(mockSpotifyService.handleCommand).toHaveBeenCalledWith(
+        'SET_VOLUME',
+        undefined,
+        75,
+        undefined
+      )
     })
   })
 
@@ -266,7 +231,7 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
 
       const timerState = tabataTimer.getState()
-      const spotifyState = spotifyService.getState()
+      const spotifyState = mockSpotifyService.getState()
 
       expect(timerState.mode).toBe('STOPWATCH')
       expect(timerState.isRunning).toBe(true)
@@ -279,11 +244,16 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
 
       // Spotify command
-      await spotifyService.handleCommand('PLAY', 'test_device_id')
+      await mockSpotifyService.handleCommand('PLAY', 'test_device_id', undefined, undefined)
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
-      expect(mockSdk.player.startResumePlayback).toHaveBeenCalled()
+      expect(mockSpotifyService.handleCommand).toHaveBeenCalledWith(
+        'PLAY',
+        'test_device_id',
+        undefined,
+        undefined
+      )
     })
 
     it('should broadcast updates from both services', () => {
@@ -339,11 +309,16 @@ describe('Services Integration', () => {
     it('should support timer start with Spotify skip command', async () => {
       // Simulate timer start triggering Spotify next
       tabataTimer.handleCommand('START')
-      await spotifyService.handleCommand('NEXT', 'test_device_id')
+      await mockSpotifyService.handleCommand('NEXT', 'test_device_id', undefined, undefined)
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
-      expect(mockSdk.player.skipToNext).toHaveBeenCalled()
+      expect(mockSpotifyService.handleCommand).toHaveBeenCalledWith(
+        'NEXT',
+        'test_device_id',
+        undefined,
+        undefined
+      )
     })
 
     it('should support timer stop with Spotify pause command', async () => {
@@ -351,11 +326,16 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
       tabataTimer.handleCommand('STOP')
-      await spotifyService.handleCommand('PAUSE', 'test_device_id')
+      await mockSpotifyService.handleCommand('PAUSE', 'test_device_id', undefined, undefined)
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(false)
-      expect(mockSdk.player.pausePlayback).toHaveBeenCalled()
+      expect(mockSpotifyService.handleCommand).toHaveBeenCalledWith(
+        'PAUSE',
+        'test_device_id',
+        undefined,
+        undefined
+      )
     })
   })
 })
