@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import logger from '@/utils/logger'
 
 export async function POST() {
   if (process.env.NODE_ENV !== 'development') {
@@ -12,13 +13,13 @@ export async function POST() {
   try {
     if (fs.existsSync(tokenFile)) {
       fs.unlinkSync(tokenFile)
-      console.log('Spotify token file deleted.')
+      logger.info('Spotify token file deleted.')
     } else {
-      console.log('Spotify token file not found, nothing to delete.')
+      logger.info('Spotify token file not found, nothing to delete.')
     }
     return NextResponse.json({ message: 'Server reset successful' })
   } catch (error) {
-    console.error('Error resetting server:', error)
+    logger.error('Error resetting server:', error)
     return NextResponse.json({ message: 'Error resetting server' }, { status: 500 })
   }
 }

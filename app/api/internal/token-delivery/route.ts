@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/errors'
 import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
+import logger from '@/utils/logger'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
@@ -32,7 +33,10 @@ export async function POST(req: NextRequest) {
     }
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
-    console.log('Received token-delivery:', payload.sub ?? payload.provider)
+    logger.info(
+      { subject: payload.sub ?? payload.provider },
+      'Received token-delivery'
+    )
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest) {
         { status: err.statusCode }
       )
     }
-    console.error('token-delivery error:', err)
+    logger.error('token-delivery error:', err)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 }
