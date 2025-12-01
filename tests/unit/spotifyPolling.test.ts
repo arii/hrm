@@ -10,7 +10,7 @@ import { SpotifyData } from '@/types/websocket'
 import logger from '@/utils/logger'
 
 // Mock the logger
-jest.mock('../../utils/logger', () => ({
+jest.mock('@/utils/logger', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock('../../utils/logger', () => ({
 }))
 
 // Mock the SpotifyTokenManager module
-jest.mock('../../services/spotifyTokenManager', () => {
+jest.mock('@/services/spotifyTokenManager', () => {
   const SpotifyTokenManager = jest.fn().mockImplementation(() => {
     return {
       getValidAccessToken: jest

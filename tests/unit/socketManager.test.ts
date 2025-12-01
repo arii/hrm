@@ -20,7 +20,7 @@ import { ServerMessage } from '@/types/websocket'
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('@/services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
