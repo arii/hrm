@@ -95,6 +95,7 @@ export {
 export {
   // Constants
   HRM_ROUTES,
+  LEGACY_ROUTES,
   // Warmup and page creation
   warmupEndpoints,
   createTestPage,
