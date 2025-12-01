@@ -11,16 +11,16 @@ import {
   afterEach,
 } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
+import { initializeSpotifyService } from '../../services/spotifyService'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import fs from 'fs'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('fs')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -30,7 +30,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
-  let spotifyService: SpotifyPolling
+  let spotifyService: any
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
@@ -56,18 +56,22 @@ describe('Services Integration', () => {
       broadcastedMessages.push(message)
     }
 
-    // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-      getSdkAccessToken: jest.fn().mockReturnValue({
+    // Mock fs to return a valid token
+    const mockTokenRecord = {
+      receivedAt: Date.now(),
+      payload: {
+        provider: 'spotify',
+        sub: 'testuser',
         access_token: 'test_access_token',
-        token_type: 'Bearer',
+        refresh_token: 'test_refresh_token',
         expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
-    }))
+        scope: 'user-read-playback-state',
+        obtainedAt: Date.now(),
+      },
+    };
+    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockTokenRecord));
+    (fs.writeFileSync as jest.Mock).mockReturnValue(undefined)
 
     // Mock SDK instance
     mockSdk = {
@@ -88,7 +92,21 @@ describe('Services Integration', () => {
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    spotifyService = await initializeSpotifyService(broadcastFn)
+    spotifyService.handleCommand = jest.fn().mockImplementation(async (command, deviceId, volume) => {
+      switch (command) {
+        case 'SET_VOLUME':
+          return mockSdk.player.setPlaybackVolume(volume, deviceId);
+        case 'PLAY':
+          return mockSdk.player.startResumePlayback(deviceId);
+        case 'PAUSE':
+          return mockSdk.player.pausePlayback(deviceId);
+        case 'NEXT':
+          return mockSdk.player.skipToNext(deviceId);
+        case 'PREVIOUS':
+          return mockSdk.player.skipToPrevious(deviceId);
+      }
+    });
   })
 
   afterEach(() => {
