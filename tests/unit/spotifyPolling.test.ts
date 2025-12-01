@@ -115,8 +115,7 @@ describe('SpotifyPolling Service', () => {
   afterEach(() => {
     // Ensure polling is stopped and all timers are cleared
     if (spotifyService) {
-      spotifyService.stopPolling()
-      spotifyService.cleanup()
+      spotifyService.stop()
     }
     jest.clearAllTimers()
     jest.useRealTimers()
@@ -381,8 +380,7 @@ describe('SpotifyPolling Service', () => {
       SpotifyPolling.create = jest.fn().mockResolvedValue({
         handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
         getState: jest.fn(),
-        stopPolling: jest.fn(),
-        cleanup: jest.fn(),
+        stop: jest.fn(),
         initializeSdk: jest.fn(),
         setRefreshToken: jest.fn(),
         startPolling: jest.fn(),

@@ -1,63 +1,66 @@
-import { authOptions } from '@/lib/auth'
-import { ApiError } from '@/lib/errors'
-import { getServerSession } from 'next-auth/next'
+// File: app/api/spotify/devices/route.ts
+/**
+ * @file Next.js API Route for fetching available Spotify devices.
+ * This endpoint retrieves a list of the user's available playback devices
+ * from the Spotify API. It requires a valid session.
+ */
+
 import { NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
+import { serviceContainer } from '../../../services/registry'
 
 /**
- * API route to fetch available Spotify devices for the authenticated user.
- *
- * This endpoint retrieves the list of devices from the Spotify API and returns
- * them to the client. This is used by the control panel to allow the user to
- * select which device to play music on.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the device list or an error.
+ * @swagger
+ * /api/spotify/devices:
+ *   get:
+ *     summary: Get Spotify Devices
+ *     description: Retrieves a list of available Spotify playback devices for the authenticated user.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       200:
+ *         description: A list of Spotify devices.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   type:
+ *                     type: string
+ *                   is_active:
+ *                     type: boolean
+ *       401:
+ *         description: Unauthorized. User is not authenticated.
+ *       500:
+ *         description: Internal Server Error. Spotify service may not be available.
  */
-export async function GET(_req: Request) {
-  try {
-    // 1. Get the server-side session.
-    const session = await getServerSession(authOptions)
+export async function GET(req: Request) {
+  const token = await getToken({ req })
 
-    // 2. Check if the session and token exist.
-    if (!session || !session.accessToken) {
-      throw new ApiError(401, 'Not authenticated or token is missing.')
-    }
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-    // 3. Fetch devices from Spotify API.
-    const response = await fetch(
-      'https://api.spotify.com/v1/me/player/devices',
-      {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(
-        `[API /devices] Spotify API error: ${response.status} ${errorText}`
-      )
-      return NextResponse.json(
-        { error: 'Failed to fetch devices from Spotify.' },
-        { status: response.status }
-      )
-    }
-
-    const data = await response.json()
-    return NextResponse.json(data.devices || [])
-  } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
-    }
-    const message =
-      error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /devices] Internal Server Error: ${message}`)
+  if (!serviceContainer || !serviceContainer.spotifyService.isReady()) {
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Spotify service not available' },
+      { status: 500 }
+    )
+  }
+
+  try {
+    const devices = await serviceContainer.spotifyService.getAvailableDevices()
+    return NextResponse.json(devices)
+  } catch (error) {
+    console.error('Error fetching Spotify devices:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch Spotify devices' },
       { status: 500 }
     )
   }

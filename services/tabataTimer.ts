@@ -5,12 +5,15 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
+import { ITimerService } from '../types/service'
 import {
   ServerMessage,
   TimerData,
   TimerMode,
   TimerPhase,
+  TimerCommand,
 } from '../types/websocket'
+import logger from '../utils/logger'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -32,7 +35,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TabataTimer implements ITimerService {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
@@ -129,6 +132,18 @@ class TabataTimer {
     }
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  }
+
+  // --- IService Implementation ---
+  public async start(): Promise<void> {
+    // TabataTimer is passive and starts in IDLE, so no specific startup logic
+    // is needed here. It waits for commands.
+    logger.info('TabataTimer service started.')
+  }
+
+  public stop() {
+    this.stopTimer() // Use the existing stop logic
+    logger.info('TabataTimer service stopped.')
   }
 
   private startTimer() {

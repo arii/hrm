@@ -4,8 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { ServiceContainer } from '../services/registry.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
@@ -16,29 +15,22 @@ import {
 import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+let services: ServiceContainer
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 
 const hrmClients = new Map<string, HrmData>()
-
-interface Services {
-  tabataService: TabataTimer
-  spotifyService: SpotifyPolling
-}
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  services: Services,
+  serviceContainer: ServiceContainer,
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
-  tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
+  services = serviceContainer // Store the whole container
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -143,22 +135,22 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
+        if (services.timerService) {
+          services.timerService.handleCommand(message.command)
         }
         break
       }
 
       case 'SET_MODE': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode)
+        if (services.timerService) {
+          services.timerService.setMode(message.mode)
         }
         break
       }
 
       case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
+        if (services.timerService) {
+          services.timerService.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
           })
@@ -167,9 +159,9 @@ const handleIncomingMessage = (
       }
 
       case 'SPOTIFY_COMMAND': {
-        if (spotifyServiceInstance) {
+        if (services.spotifyService) {
           // message.command is already typed as Spotify_COMMAND, which now includes deviceId, volume, and playlistUri
-          spotifyServiceInstance.handleCommand(
+          services.spotifyService.handleCommand(
             message.command,
             message.deviceId,
             message.volume,

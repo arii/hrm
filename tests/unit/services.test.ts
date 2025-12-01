@@ -65,8 +65,7 @@ describe('Services Integration', () => {
         expires_in: 3600,
         refresh_token: 'refresh_token',
       }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
+      stop: jest.fn(),
     }))
 
     // Mock SDK instance
@@ -93,8 +92,7 @@ describe('Services Integration', () => {
 
   afterEach(() => {
     jest.useRealTimers()
-    spotifyService.stopPolling()
-    spotifyService.cleanup()
+    spotifyService.stop()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

@@ -1,5 +1,6 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
+import { ISpotifyService } from '../types/service'
+import { ServerMessage, SpotifyData, SpotifyCommand } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -35,13 +36,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
-  /**
-   * Public method to force a poll and broadcast current track state.
-   */
-  public forcePollAndBroadcast() {
-    return this.getCurrentlyPlaying()
-  }
+export class SpotifyPolling implements ISpotifyService {
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
@@ -62,7 +57,7 @@ export class SpotifyPolling {
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
-    logger.debug('Spotify Polling Service Initialized.')
+    logger.debug('Spotify Polling Service Constructed.')
 
     this.tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
@@ -72,13 +67,9 @@ export class SpotifyPolling {
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
-  ): Promise<SpotifyPolling> {
+  ): Promise<ISpotifyService> {
     const instance = new SpotifyPolling(broadcastUpdate)
     await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
     return instance
   }
 
@@ -88,10 +79,7 @@ export class SpotifyPolling {
       const sdkToken = this.tokenManager.getSdkAccessToken()
       if (sdkToken) {
         this.setupSdk(sdkToken)
-        logger.debug(
-          'Loaded existing Spotify tokens from file. Starting polling.'
-        )
-        this.startPolling()
+        logger.debug('Spotify SDK initialized with existing tokens.')
       }
     }
   }
@@ -160,13 +148,32 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  // --- IService Implementation ---
+
+  public async start(): Promise<void> {
+    logger.info('SpotifyPolling service started.')
+    this.startPolling()
+    this.tokenRefreshInterval = setInterval(
+      () => this.checkAndRefreshSdkToken(),
+      1000 * 60 * 5
+    ) // Check every 5 minutes
+  }
+
+  public stop() {
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
       this.tokenRefreshInterval = null
       logger.debug('Token refresh interval cleared.')
     }
+    logger.info('SpotifyPolling service stopped.')
+  }
+
+  /**
+   * Public method to force a poll and broadcast current track state.
+   */
+  public forcePollAndBroadcast() {
+    return this.getCurrentlyPlaying()
   }
 
   private getCurrentlyPlaying = async () => {
