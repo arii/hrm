@@ -7,6 +7,9 @@ import { authOptions } from '@/lib/auth'
  * Useful to confirm tokens/refresh tokens are present in the session.
  */
 export async function GET(_req: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse('Not Found', { status: 404 })
+  }
   try {
     const session = await getServerSession(authOptions)
     return NextResponse.json({ ok: true, session: session ?? null })

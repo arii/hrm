@@ -5,6 +5,9 @@ import path from 'path'
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse('Not Found', { status: 404 })
+  }
   try {
     let token = null
     if (fs.existsSync(TOKEN_FILE)) {
