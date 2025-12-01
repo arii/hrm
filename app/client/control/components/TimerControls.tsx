@@ -19,11 +19,19 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import { keyframes } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+const shineAnimation = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`
 
 const actionButtonSx = {
   flex: 1,
@@ -184,54 +192,63 @@ const TimerControls = () => {
           >
             Timer Mode
           </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
-              onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
-              startIcon={<FitnessCenter />}
+          <ToggleButtonGroup
+            value={timerData.mode}
+            exclusive
+            onChange={(_event, newMode) =>
+              newMode && sendModeCommand(newMode)
+            }
+            disabled={timerData.isRunning}
+            aria-label="Timer Mode"
+            sx={{
+              width: '100%',
+              background: 'rgba(15, 23, 42, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <ToggleButton
+              value="TABATA"
+              aria-label="Tabata Mode"
               sx={{
                 flex: 1,
-                color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
-                backgroundColor:
-                  timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
-                borderColor: '#EF4444',
-                '&:hover': {
-                  backgroundColor:
-                    timerData.mode === 'TABATA'
-                      ? '#DC2626'
-                      : 'rgba(239, 68, 68, 0.1)',
-                  borderColor: '#DC2626',
+                color: 'white',
+                '&.Mui-selected': {
+                  background:
+                    'linear-gradient(to right, #EF4444, #DC2626)',
+                  boxShadow: '0 0 15px rgba(239, 68, 68, 0.5)',
+                  color: 'white',
+                },
+                '&.Mui-selected:hover': {
+                  background:
+                    'linear-gradient(to right, #DC2626, #EF4444)',
                 },
               }}
             >
+              <FitnessCenter sx={{ mr: 1 }} />
               Tabata
-            </Button>
-            <Button
-              variant={
-                timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
-              }
-              onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
-              startIcon={<Timer />}
+            </ToggleButton>
+            <ToggleButton
+              value="STOPWATCH"
+              aria-label="Stopwatch Mode"
               sx={{
                 flex: 1,
-                color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
-                backgroundColor:
-                  timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
-                borderColor: '#EF4444',
-                '&:hover': {
-                  backgroundColor:
-                    timerData.mode === 'STOPWATCH'
-                      ? '#DC2626'
-                      : 'rgba(239, 68, 68, 0.1)',
-                  borderColor: '#DC2626',
+                color: 'white',
+                '&.Mui-selected': {
+                  background:
+                    'linear-gradient(to right, #3B82F6, #2563EB)',
+                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)',
+                  color: 'white',
+                },
+                '&.Mui-selected:hover': {
+                  background:
+                    'linear-gradient(to right, #2563EB, #3B82F6)',
                 },
               }}
             >
+              <Timer sx={{ mr: 1 }} />
               Stopwatch
-            </Button>
-          </Stack>
+            </ToggleButton>
+          </ToggleButtonGroup>
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: 2 }}>
@@ -260,9 +277,22 @@ const TimerControls = () => {
                     flex: 1,
                     color: '#EF4444',
                     borderColor: '#EF4444',
+                    position: 'relative',
+                    overflow: 'hidden',
                     '&:hover': {
                       backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       borderColor: '#DC2626',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        background:
+                          'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%)',
+                        animation: `${shineAnimation} 3s infinite linear`,
+                      },
                     },
                   }}
                 >
@@ -278,9 +308,22 @@ const TimerControls = () => {
                     flex: 1,
                     color: '#22C55E',
                     borderColor: '#22C55E',
+                    position: 'relative',
+                    overflow: 'hidden',
                     '&:hover': {
                       backgroundColor: 'rgba(34, 197, 94, 0.1)',
                       borderColor: '#16A34A',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        background:
+                          'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%)',
+                        animation: `${shineAnimation} 3s infinite linear`,
+                      },
                     },
                   }}
                 >
@@ -305,9 +348,24 @@ const TimerControls = () => {
                 >
                   <Remove fontSize="large" />
                 </IconButton>
-                <TextField
-                  type="number"
-                  value={workTime}
+                <Box sx={{ position: 'relative', width: 120, height: 80 }}>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '150%',
+                      height: '150%',
+                      background:
+                        'radial-gradient(circle, rgba(244, 63, 94, 0.3) 0%, transparent 70%)',
+                      filter: 'blur(20px)',
+                      zIndex: 1,
+                    }}
+                  />
+                  <TextField
+                    type="number"
+                    value={workTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     // Prevent negative numbers
@@ -323,6 +381,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     width: '120px',
+                    position: 'relative',
+                    zIndex: 2,
                     '& .MuiInputBase-input': {
                       color: '#EF4444',
                       fontWeight: 'bold',
@@ -344,6 +404,7 @@ const TimerControls = () => {
                   }}
                   aria-label="Work duration in seconds"
                 />
+                </Box>
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => prev + 5)}
@@ -373,9 +434,24 @@ const TimerControls = () => {
                 >
                   <Remove fontSize="large" />
                 </IconButton>
-                <TextField
-                  type="number"
-                  value={restTime}
+                <Box sx={{ position: 'relative', width: 120, height: 80 }}>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '150%',
+                      height: '150%',
+                      background:
+                        'radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, transparent 70%)',
+                      filter: 'blur(20px)',
+                      zIndex: 1,
+                    }}
+                  />
+                  <TextField
+                    type="number"
+                    value={restTime}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(0, val)
@@ -390,6 +466,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     width: '120px',
+                    position: 'relative',
+                    zIndex: 2,
                     '& .MuiInputBase-input': {
                       color: '#22C55E',
                       fontWeight: 'bold',
@@ -411,6 +489,7 @@ const TimerControls = () => {
                   }}
                   aria-label="Rest duration in seconds"
                 />
+                </Box>
                 <IconButton
                   color="primary"
                   onClick={() => setRestTime((prev) => prev + 5)}
