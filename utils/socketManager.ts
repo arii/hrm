@@ -16,6 +16,7 @@ import {
 import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Define service instances to be managed
+let wssInstance: WebSocketServer | null = null
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
@@ -37,6 +38,7 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
+  wssInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
@@ -195,4 +197,9 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export {
+  initSocketManager,
+  wssInstance,
+  tabataServiceInstance,
+  spotifyServiceInstance,
+}
