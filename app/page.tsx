@@ -6,8 +6,12 @@
 'use client'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
+import SettingsPanel from '@/components/SettingsPanel'
 import ErrorFallback from '../components/ErrorFallback'
 import GoogleDocViewer from '../components/GoogleDocViewer'
 import HrmTiles from '../components/HrmTiles'
@@ -21,6 +25,7 @@ const DOC_URL =
 const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -40,6 +45,16 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
+      <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1200 }}>
+        <IconButton
+          onClick={() => setSettingsOpen(true)}
+          color="primary"
+          aria-label="Settings"
+        >
+          <SettingsIcon />
+        </IconButton>
+      </Box>
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 

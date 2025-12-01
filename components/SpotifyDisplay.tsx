@@ -1,10 +1,9 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -15,10 +14,9 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface SpotifyDevice {
   id: string
@@ -31,11 +29,10 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, sendData } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume } = useVolumePreference()
-  const lastSentVolumeRef = useRef<string | null>(null)
+  const { volume } = useVolumePreference()
   const {
     player,
     isReady,
@@ -48,41 +45,6 @@ const SpotifyDisplay = () => {
     null
   )
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
-
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-      lastSentVolumeRef.current = messageKey
-    },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
-  )
-
-  useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
 
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return
@@ -318,28 +280,7 @@ const SpotifyDisplay = () => {
           </IconButton>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
-          <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-            min={0}
-            max={100}
-            size="small"
-            sx={{
-              width: 80,
-              color: '#1DB954',
-              '& .MuiSlider-thumb': {
-                backgroundColor: 'white',
-                width: 12,
-                height: 12,
-              },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': { height: 3 },
-            }}
-          />
-
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: '1', justifyContent: 'flex-end' }}>
           <IconButton
             size="small"
             onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
