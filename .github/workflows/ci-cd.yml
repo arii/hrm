@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [leader]
 
+concurrency:
+  group: pr-workflow-concurrency
+  cancel-in-progress: true
+
 jobs:
   # 1. Fast, parallel validation for linting and unit tests
   unit_tests:
