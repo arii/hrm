@@ -5,17 +5,17 @@
  */
 import { useCallback, useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
-import useVolumePreference from './useVolumePreference'
+import useVolume, { volumeToScalar } from './useVolume'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 export const useTimerSounds = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference()
+  const { volume } = useVolume()
   const lastSoundEventId = useRef<number>(0)
 
   // Update audio volume when volume preference changes
   useEffect(() => {
-    audioManager.setVolume(volume)
+    audioManager.setVolume(volumeToScalar(volume))
   }, [volume])
 
   // Effect to play sound based on timer data from WebSocket

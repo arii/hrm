@@ -4,15 +4,15 @@
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { TimerData } from '../types/websocket'
+import useVolume, { volumeToScalar } from './useVolume'
 
-export const useAudio = (timerData: TimerData, volume?: number) => {
+export const useAudio = (timerData: TimerData) => {
+  const { volume } = useVolume()
   const lastSoundEventId = useRef<number>(0)
 
   // Update audio volume when volume changes
   useEffect(() => {
-    if (volume !== undefined) {
-      audioManager.setVolume(volume)
-    }
+    audioManager.setVolume(volumeToScalar(volume))
   }, [volume])
 
   useEffect(() => {
@@ -43,7 +43,6 @@ export const useAudio = (timerData: TimerData, volume?: number) => {
 
   return {
     initializeAudio,
-    setVolume: audioManager.setVolume.bind(audioManager),
     toggleMute: audioManager.toggleMute.bind(audioManager),
     setMuted: audioManager.setMuted.bind(audioManager),
     getMuted: audioManager.getMuted.bind(audioManager),

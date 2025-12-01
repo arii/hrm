@@ -16,7 +16,6 @@ import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
-import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -74,7 +73,6 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume, setVolume } = useVolumePreference()
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
@@ -197,14 +195,7 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
-            <VolumeControl
-              volume={volume}
-              onVolumeChange={setVolume}
-              onVolumeChangeCommitted={(newVolume) =>
-                hasActiveDevice &&
-                sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
-              }
-            />
+            <VolumeControl />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2, minWidth: 200 }}>
