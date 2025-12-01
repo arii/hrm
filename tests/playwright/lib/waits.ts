@@ -12,26 +12,35 @@ import type { Page, Response as PlaywrightResponse } from '@playwright/test'
 
 /**
  * Default timeout values for wait operations (in milliseconds)
+ * All values are kept at or under 3 seconds to prevent slow tests
  */
 export const WAIT_TIMEOUTS = {
   /** Default timeout for test readiness signal */
   TEST_READY: 2000,
   /** Default timeout for WebSocket connection */
-  WEBSOCKET: 5000,
+  WEBSOCKET: 3000,
   /** Default timeout for element visibility */
   ELEMENT_VISIBLE: 3000,
   /** Default timeout for network idle */
-  NETWORK_IDLE: 5000,
+  NETWORK_IDLE: 3000,
   /** Default timeout for navigation */
-  NAVIGATION: 8000,
+  NAVIGATION: 3000,
   /** Short timeout for quick checks */
   SHORT: 1000,
+  /** Short duration timeout */
+  SHORT_DURATION: 1000,
   /** Medium timeout for normal operations */
-  MEDIUM: 3000,
+  MEDIUM: 2000,
+  /** Medium duration timeout */
+  MEDIUM_DURATION: 2000,
   /** Long timeout for complex operations */
-  LONG: 8000,
+  LONG: 3000,
+  /** Long duration timeout */
+  LONG_DURATION: 3000,
   /** Infrastructure/server startup timeout */
-  INFRASTRUCTURE: 10000,
+  INFRASTRUCTURE: 3000,
+  /** Infrastructure long timeout for build operations */
+  INFRASTRUCTURE_LONG: 3000,
 } as const
 
 /**
