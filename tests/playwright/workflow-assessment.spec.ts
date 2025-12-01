@@ -360,6 +360,7 @@ test.describe('HRM Workflow Assessment', () => {
     // Clean up - stop timer
     await page.goto(`${BASE_URL}/client/control`)
     await page.click('button:has-text("STOP")')
-    await page.waitForTimeout(500)
+    // Wait for START button to confirm timer stopped instead of arbitrary timeout
+    await expect(page.locator('button:has-text("START")')).toBeVisible()
   })
 })

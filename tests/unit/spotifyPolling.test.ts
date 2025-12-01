@@ -5,6 +5,7 @@
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
 import logger from '../../utils/logger'
 
@@ -257,8 +258,14 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Create a new service instance that hasn't gone through the full async initialization
-      // This ensures its SDK is null initially
+      // Override the mock to return null token for this test to ensure SDK is not initialized
+      ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
+        () => ({
+          getValidAccessToken: jest.fn().mockResolvedValue(null),
+          getSdkAccessToken: jest.fn().mockReturnValue(null),
+        })
+      )
+
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')
       // Should not make API call without token

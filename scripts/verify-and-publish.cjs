@@ -86,14 +86,41 @@ async function main() {
   console.log('🚀 Starting Self-Certifying Verifier...');
 
   // 1. Cleanup & Preparation
-  if (fs.existsSync(REPORT_FILE)) fs.unlinkSync(REPORT_FILE);
+  console.log('🧹 Cleaning build artifacts for fresh results...');
+  
+  // Remove build artifacts
+  if (fs.existsSync('.next')) {
+    execSync('rm -rf .next', { stdio: 'inherit' });
+    console.log('   Removed .next directory');
+  }
+  if (fs.existsSync('dist')) {
+    execSync('rm -rf dist', { stdio: 'inherit' });
+    console.log('   Removed dist directory');
+  }
+  
+  // Remove test report
+  if (fs.existsSync(REPORT_FILE)) {
+    fs.unlinkSync(REPORT_FILE);
+    console.log('   Removed previous test report');
+  }
+  
   const sourceHash = getSourceHash();
 
-  // 2. Run Tests
+  // 2. Build Phase
+  console.log('\n🔨 Building project...');
+  try {
+    execSync('npm run build', { stdio: 'inherit', timeout: 60000 }); // 1 minute for build
+    console.log('✅ Build completed successfully');
+  } catch (e) {
+    console.error('❌ Build failed');
+    process.exit(1);
+  }
+
+  // 3. Run Tests
   console.log('\n🧪 Running Tests...');
   let globalSuccess = true;
   try {
-    execSync('npm run test:json', { stdio: 'inherit' });
+    execSync('npm run test:json', { stdio: 'inherit', timeout: 60000 }); // 1 minute for tests
   } catch (e) {
     console.log('⚠️  Tests finished with failures.');
   }
@@ -103,7 +130,19 @@ async function main() {
     console.error('❌ Critical: No report generated.');
     process.exit(1);
   }
-  const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
+  
+  let report;
+  try {
+    const reportContent = fs.readFileSync(REPORT_FILE, 'utf-8').trim();
+    if (!reportContent) {
+      console.error('❌ Critical: Report file is empty.');
+      process.exit(1);
+    }
+    report = JSON.parse(reportContent);
+  } catch (error) {
+    console.error('❌ Critical: Failed to parse test report JSON:', error.message);
+    process.exit(1);
+  }
   const resultsByFile = {};
   const allFailures = []; // New array to store detailed failures
 

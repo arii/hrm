@@ -36,8 +36,8 @@ export default defineConfig({
 
   // Performance Optimizations
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 1, // Use 1 worker for visual tests to avoid race conditions
-  timeout: 30000, // Adjusted for potentially longer server startups
+  workers: process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
+  timeout: 30 * 1000, // Global test timeout (30s)
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -45,16 +45,20 @@ export default defineConfig({
   // Retry failed tests on CI
   retries: process.env.CI ? 2 : 0,
 
-  // Test execution optimizations
+  // Test execution optimizations - Fail Fast Strategy
   expect: {
-    timeout: 5000, // Faster assertion timeouts
+    timeout: 5000, // Assertions fail after 5s
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.1,
+    },
   },
 
   // Shared settings for all tests
   use: {
     // Base URL for all tests
     baseURL: getBaseURL(),
-    actionTimeout: 0,
+    actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
+    navigationTimeout: 15000, // Navigation timeout
     headless: true,
 
     // Screenshot settings

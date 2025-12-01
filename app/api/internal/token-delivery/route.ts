@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/errors'
 import fs from 'fs'
 import { getServices } from '../../../../services/serviceManager.js'
 import { NextRequest, NextResponse } from 'next/server'
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
     if (expected && secretHeader !== expected) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+      throw new ApiError(401, 'Unauthorized')
     }
 
     const payload = await req.json()
@@ -60,6 +61,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.statusCode }
+      )
+    }
     console.error('token-delivery error:', err)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }

@@ -325,28 +325,38 @@ export class SpotifyPolling
     volume?: number,
     playlistUri?: string
   ) {
-    if (['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS'].includes(command) && !deviceId) {
-      logger.warn(
-        `[SpotifyPolling] ${command} command ignored: no deviceId provided.`
-      )
-      return
-    }
+    // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
+    // This triggers the action on the currently active device.
+
     switch (command) {
       case 'PLAY':
         if (playlistUri) {
-          await this.sdk!.player.startResumePlayback(deviceId!, playlistUri)
+          // If deviceId is undefined, SDK targets active device
+          // Type assertion needed because SDK types incorrectly require string
+          await this.sdk!.player.startResumePlayback(
+            (deviceId || undefined) as unknown as string,
+            playlistUri
+          )
         } else {
-          await this.sdk!.player.startResumePlayback(deviceId!)
+          await this.sdk!.player.startResumePlayback(
+            (deviceId || undefined) as unknown as string
+          )
         }
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(deviceId!)
+        await this.sdk!.player.pausePlayback(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(deviceId!)
+        await this.sdk!.player.skipToNext(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(deviceId!)
+        await this.sdk!.player.skipToPrevious(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {
