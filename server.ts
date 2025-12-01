@@ -15,7 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
+import { initializeSpotifyService } from './services/spotifyService.js';
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
@@ -82,11 +82,11 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
+    let spotifyService
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      spotifyService = await initializeSpotifyService(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      logger.error({ err: e }, 'SpotifyService initialization failed')
       broadcast({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
@@ -97,7 +97,13 @@ app
         stopPolling: () => {},
         startPolling: () => {},
         setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
+        getState: () => ({
+          trackName: 'Spotify Service Failed to Initialize',
+          artist: '',
+          isPlaying: false,
+        }),
+        isReady: () => false,
+      }
     }
     const tabataService = new TabataTimer(broadcast)
 
