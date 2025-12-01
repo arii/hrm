@@ -1,5 +1,6 @@
 // File: components/HrTile.tsx
 'use client'
+import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
@@ -34,10 +35,11 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           justifyContent: 'center',
         }}
       >
-        <CardContent sx={{ p: 0 }}>
-          {/* Giant Percentage - should dominate the tile */}
-          <Typography
-            data-testid="live-hr-percent"
+        <Box aria-live="polite" aria-atomic="true">
+          <CardContent sx={{ p: 0 }}>
+            {/* Giant Percentage - should dominate the tile */}
+            <Typography
+              data-testid="live-hr-percent"
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
               fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
@@ -77,6 +79,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             </Typography>
           )}
         </CardContent>
+        </Box>
       </StyledCard>
     </Tooltip>
   )
