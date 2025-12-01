@@ -9,6 +9,7 @@ import {
   useState,
   useReducer,
 } from 'react'
+import throttle from 'lodash/throttle'
 import {
   ClientCommandMessage,
   HrmData,
@@ -159,10 +160,21 @@ export const WebSocketProvider = ({
       setConnectionStatus('Error')
     }
 
+    const throttledDispatch = throttle(
+      (message: ServerMessage) => dispatch(message),
+      100,
+      { leading: true, trailing: true }
+    )
+
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
-        dispatch(message)
+        // Throttle high-frequency messages, but let critical messages through immediately
+        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
+          throttledDispatch(message)
+        } else {
+          dispatch(message)
+        }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
