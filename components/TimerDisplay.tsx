@@ -1,5 +1,6 @@
 // File: components/TimerDisplay.tsx
 'use client'
+import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -26,6 +27,7 @@ const TimerDisplay = ({
   workDuration = 20,
   restDuration = 10,
 }: TimerDisplayProps) => {
+  const { connectionStatus } = useWebSocket()
   // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string
@@ -80,8 +82,45 @@ const TimerDisplay = ({
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
+        animation:
+          phase === 'WORK' || phase === 'REST'
+            ? 'pulse-opacity 1.5s infinite'
+            : 'none',
       }}
     >
+      {/* Status Indicator */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          zIndex: 2,
+        }}
+      >
+        <Typography variant="caption" sx={{ color: '#fff' }}>
+          {connectionStatus}
+        </Typography>
+        <Box
+          sx={{
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            backgroundColor:
+              connectionStatus === 'Connected'
+                ? '#10B981'
+                : connectionStatus === 'Reconnecting...'
+                ? '#F59E0B'
+                : '#EF4444',
+            animation:
+              connectionStatus === 'Connected'
+                ? 'pulse 2s infinite'
+                : 'none',
+          }}
+        />
+      </Box>
       {/* Mode Indicator - Rotated on left side */}
       {phase !== 'IDLE' && (
         <Box
