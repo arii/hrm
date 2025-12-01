@@ -33,6 +33,15 @@ const hostname =
     : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
+
+// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
+if (!dev && !process.env.NEXTAUTH_SECRET) {
+  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
+  console.error('This is mandatory for production security. Shutting down.')
+  process.exit(1)
+}
+// ===========================================
+
 const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)

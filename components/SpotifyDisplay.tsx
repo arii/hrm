@@ -2,7 +2,6 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyData } from '@/hooks/useSpotifyData'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import VolumeUp from '@mui/icons-material/VolumeUp'
@@ -19,7 +18,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, memo } from 'react'
 
 interface SpotifyDevice {
   id: string
@@ -32,8 +31,7 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { sendData, connectionStatus } = useWebSocket()
-  const spotifyData = useSpotifyData()
+  const { spotifyData, sendData } = useSpotifyData()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference()
@@ -53,7 +51,6 @@ const SpotifyDisplay = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
       const targetDeviceId =
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
@@ -73,18 +70,12 @@ const SpotifyDisplay = () => {
       sendData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
+    [availableDevices, selectedDeviceId, sendData]
   )
 
   useEffect(() => {
     sendVolumeCommand(volume)
   }, [volume, sendVolumeCommand])
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
 
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return

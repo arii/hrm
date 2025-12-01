@@ -6,6 +6,7 @@ import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
+import { memo } from 'react'
 
 const HrmTiles = () => {
   const hrmData = useHrmData()
@@ -59,4 +60,4 @@ const HrmTiles = () => {
   )
 }
 
-export default HrmTiles
+export default memo(HrmTiles)

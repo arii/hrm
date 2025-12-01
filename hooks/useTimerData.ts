@@ -1,33 +1,41 @@
-// File: hooks/useTimerData.ts
 'use client'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useMemo } from 'react'
+import { TimerData } from '@/types/websocket'
 
-/**
- * @description A hook to extract memoized Timer data from the WebSocket context.
- * This hook ensures that consumers only re-render when the specific timerData values change.
- * @returns {object} An object containing the timer data.
- */
-export const useTimerData = () => {
+export const useTimerData = (): TimerData => {
   const { timerData } = useWebSocket()
+  const {
+    isRunning,
+    currentPhase,
+    timeRemaining,
+    timeElapsed,
+    mode,
+    workDuration,
+    restDuration,
+    soundEventId,
+  } = timerData
 
-  const memoizedTimerData = useMemo(() => {
-    return {
-      phase: timerData.phase,
-      timeRemaining: timerData.timeRemaining,
-      timeElapsed: timerData.timeElapsed,
-      mode: timerData.mode,
-      workDuration: timerData.workDuration,
-      restDuration: timerData.restDuration,
-    }
-  }, [
-    timerData.phase,
-    timerData.timeRemaining,
-    timerData.timeElapsed,
-    timerData.mode,
-    timerData.workDuration,
-    timerData.restDuration,
-  ])
-
-  return memoizedTimerData
+  return useMemo(
+    () => ({
+      isRunning,
+      currentPhase,
+      timeRemaining,
+      timeElapsed,
+      mode,
+      workDuration,
+      restDuration,
+      soundEventId,
+    }),
+    [
+      isRunning,
+      currentPhase,
+      timeRemaining,
+      timeElapsed,
+      mode,
+      workDuration,
+      restDuration,
+      soundEventId,
+    ]
+  )
 }

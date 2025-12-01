@@ -1,33 +1,49 @@
-// File: hooks/useSpotifyData.ts
 'use client'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
+import { ClientCommandMessage, SpotifyData } from '@/types/websocket'
 
-/**
- * @description A hook to extract memoized Spotify data from the WebSocket context.
- * This hook ensures that consumers only re-render when the specific spotifyData values change.
- * @returns {object} An object containing the Spotify data.
- */
-export const useSpotifyData = () => {
-  const { spotifyData } = useWebSocket()
+export const useSpotifyData = (): {
+  spotifyData: SpotifyData
+  sendData: (data: ClientCommandMessage) => void
+} => {
+  const { spotifyData, sendData } = useWebSocket()
+  const {
+    trackName,
+    artist,
+    isPlaying,
+    progressMs,
+    durationMs,
+    albumArtUrl,
+  } = spotifyData
 
-  const memoizedSpotifyData = useMemo(() => {
-    return {
-      trackName: spotifyData.trackName,
-      artist: spotifyData.artist,
-      isPlaying: spotifyData.isPlaying,
-      albumArtUrl: spotifyData.albumArtUrl,
-      durationMs: spotifyData.durationMs,
-      progressMs: spotifyData.progressMs,
-    }
-  }, [
-    spotifyData.trackName,
-    spotifyData.artist,
-    spotifyData.isPlaying,
-    spotifyData.albumArtUrl,
-    spotifyData.durationMs,
-    spotifyData.progressMs,
-  ])
+  const stableSendData = useCallback(
+    (data: ClientCommandMessage) => {
+      sendData(data)
+    },
+    [sendData]
+  )
 
-  return memoizedSpotifyData
+  return useMemo(
+    () => ({
+      spotifyData: {
+        trackName,
+        artist,
+        isPlaying,
+        progressMs,
+        durationMs,
+        albumArtUrl,
+      },
+      sendData: stableSendData,
+    }),
+    [
+      trackName,
+      artist,
+      isPlaying,
+      progressMs,
+      durationMs,
+      albumArtUrl,
+      stableSendData,
+    ]
+  )
 }
