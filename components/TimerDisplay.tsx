@@ -75,14 +75,12 @@ const TimerDisplay = ({
     <Card
       elevation={6}
       sx={{
-        background: 'rgba(30, 41, 59, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: 3, // 24px
+        backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
+        borderRadius: 2,
+        border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
         animation:
           phase === 'WORK' || phase === 'REST'
@@ -102,14 +100,7 @@ const TimerDisplay = ({
           zIndex: 2,
         }}
       >
-        <Typography
-          variant="caption"
-          sx={{
-            color: '#10B981',
-            textShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
-            fontWeight: 600,
-          }}
-        >
+        <Typography variant="caption" sx={{ color: '#fff' }}>
           {connectionStatus}
         </Typography>
         <Box
