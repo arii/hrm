@@ -7,23 +7,17 @@ cd "$SCRIPT_DIR"
 
 export NODE_ENV=production
 
-if [ ! -f ".env.production" ]; then
-  echo "[start-production] Warning: .env.production not found. Running without secrets (Spotify features disabled)." >&2
-else
-  # Export all variables defined in .env.production to child processes
-  set -a
-  source .env.production
-  set +a
-
-  # Debug: Show critical env vars
-  echo "Environment: NODE_ENV=$NODE_ENV"
-  echo "NEXTAUTH_URL: $NEXTAUTH_URL"
-  if [ -n "$SPOTIFY_CALLBACK_URL" ]; then
-    echo "SPOTIFY_CALLBACK_URL: $SPOTIFY_CALLBACK_URL"
+# Only source the .env file if critical variables aren't already set
+if [ -z "$NEXTAUTH_SECRET" ]; then
+  if [ ! -f ".env.production" ]; then
+    echo "[start-production] Warning: .env.production not found and NEXTAUTH_SECRET not set. Running without secrets." >&2
+  else
+    set -a
+    source .env.production
+    set +a
   fi
-  echo "AUTH_TRUST_HOST: $AUTH_TRUST_HOST"
-  echo "Hostname: ${HOST:-0.0.0.0}, Port: ${PORT:-3000}"
 fi
+
 
 if [ ! -f "dist/server.mjs" ] || [ ! -d ".next" ]; then
   echo "[start-production] Build artifacts missing. Running pnpm run build..."
