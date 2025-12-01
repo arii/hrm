@@ -22,8 +22,12 @@ describe('WebSocket Manager', () => {
 
   beforeEach(() => {
     ws = new WebSocket('')
-    tabataService = new mockedTabataTimer({} as any)
-    spotifyService = new mockedSpotifyPolling({} as any)
+    tabataService = new mockedTabataTimer(
+      {} as unknown as (message: import('../../types/websocket').ServerMessage) => void
+    )
+    spotifyService = new mockedSpotifyPolling(
+      {} as unknown as (message: import('../../types/websocket').ServerMessage) => void
+    )
 
     const getSnapshot = () => ({
       timerData: {

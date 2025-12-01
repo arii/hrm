@@ -9,6 +9,7 @@ import {
 import { getServerSession } from 'next-auth/next'
 import { UnauthorizedError, HttpError } from '@/lib/errors'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { Session } from 'next-auth'
 
 // Mock next-auth
 jest.mock('next-auth/next')
@@ -37,13 +38,13 @@ describe('API Utility Functions', () => {
   describe('getSpotifyClient', () => {
     it('should return a SpotifyApi instance when a valid session with an access token is provided', () => {
       const mockSession = { accessToken: 'test-token' }
-      const client = getSpotifyClient(mockSession as any)
+      const client = getSpotifyClient(mockSession as unknown as Session)
       expect(client).toBeInstanceOf(SpotifyApi)
     })
 
     it('should throw an UnauthorizedError when the session is missing an access token', () => {
       const mockSession = {}
-      expect(() => getSpotifyClient(mockSession as any)).toThrow(
+      expect(() => getSpotifyClient(mockSession as unknown as Session)).toThrow(
         UnauthorizedError
       )
     })
