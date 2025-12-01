@@ -3,330 +3,204 @@
 import { createTheme } from '@mui/material/styles'
 
 /**
- * HRM Application Design System
+ * HRM Application Design System V2: Glassmorphism & Semantic Colors
  *
- * Goals:
- * - Consistent 8px spacing grid
- * - Clear typography hierarchy
- * - Cohesive color palette with proper contrast
- * - Standard shadows and elevation
- * - Unified border radius
- * - Mobile-first with accessible touch targets (48px min)
+ * This theme implements a "Glassmorphism" aesthetic with a dark mode default.
+ * Key features:
+ * - Dark, vibrant color palette
+ * - Semantic color states (active, warning, critical, rest)
+ * - "Glowing" shadow effects
+ * - Frosted glass effect on Card and Paper components using backdrop-filter
  */
 
+// Define semantic color tokens for reuse
+const paletteColors = {
+  // Brand & Accent
+  active: '#00F5D4', // A vibrant, energetic turquoise for primary actions
+  // Semantic States
+  warning: '#FFC700', // Bright yellow for cautionary states
+  critical: '#FF3B30', // Strong red for critical alerts
+  rest: '#03A9F4', // Calming blue for rest/idle states
+  // Greyscale & Background
+  darkGradientStart: 'rgba(10, 25, 47, 0.9)',
+  darkGradientEnd: 'rgba(23, 42, 69, 0.9)',
+  glassyWhite: 'rgba(255, 255, 255, 0.1)',
+  borderWhite: 'rgba(255, 255, 255, 0.2)',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B0C4DE', // Light steel blue for secondary text
+}
+
 const theme = createTheme({
-  // Color Palette - Vibrant fitness-focused colors
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#F44336', // Red - matches Peak HR zone, high energy
-      light: '#EF5350',
-      dark: '#D32F2F',
-      contrastText: '#FFFFFF',
+      main: paletteColors.active,
     },
     secondary: {
-      main: '#2196F3', // Blue - matches Warm-up zone
-      light: '#42A5F5',
-      dark: '#1976D2',
-      contrastText: '#FFFFFF',
-    },
-    success: {
-      main: '#4CAF50', // Green - matches Fat Burn zone
-      light: '#66BB6A',
-      dark: '#388E3C',
-    },
-    warning: {
-      main: '#FFEB3B', // Yellow - matches Cardio zone
-      light: '#FFF176',
-      dark: '#FBC02D',
-      contrastText: '#000000',
+      main: paletteColors.rest,
     },
     error: {
-      main: '#F44336', // Red - matches Peak zone
-      light: '#EF5350',
-      dark: '#D32F2F',
+      main: paletteColors.critical,
     },
-    info: {
-      main: '#2196F3', // Blue
+    warning: {
+      main: paletteColors.warning,
     },
-    // Background colors
+    success: {
+      main: '#34D399', // A clear green for success states
+    },
     background: {
-      default: '#F5F5F5', // Light grey for main background
-      paper: '#FFFFFF',
+      default: '#0A192F', // Deep navy background, essential for the glass effect
+      paper: paletteColors.darkGradientStart, // Cards will use this as part of their gradient
     },
-    // Text colors
     text: {
-      primary: '#212121',
-      secondary: '#757575',
-      disabled: '#BDBDBD',
+      primary: paletteColors.textPrimary,
+      secondary: paletteColors.textSecondary,
     },
-    // Dividers
-    divider: '#E0E0E0',
-  },
-
-  // Typography - Clear hierarchy
-  typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
-
-    // Large display numbers (HR values, timer)
-    h1: {
-      fontSize: '4rem', // 64px
-      fontWeight: 700,
-      lineHeight: 1.2,
-      letterSpacing: '-0.02em',
-    },
-
-    // Section headings
-    h2: {
-      fontSize: '2.5rem', // 40px
-      fontWeight: 600,
-      lineHeight: 1.3,
-      letterSpacing: '-0.01em',
-    },
-
-    // Card titles
-    h3: {
-      fontSize: '2rem', // 32px
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-
-    // Subsection headings
-    h4: {
-      fontSize: '1.5rem', // 24px
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-
-    // Component labels
-    h5: {
-      fontSize: '1.25rem', // 20px
-      fontWeight: 600,
-      lineHeight: 1.5,
-    },
-
-    // Small headings
-    h6: {
-      fontSize: '1rem', // 16px
-      fontWeight: 600,
-      lineHeight: 1.5,
-    },
-
-    // Body text
-    body1: {
-      fontSize: '1rem', // 16px
-      lineHeight: 1.5,
-    },
-
-    // Secondary body text
-    body2: {
-      fontSize: '0.875rem', // 14px
-      lineHeight: 1.5,
-    },
-
-    // Button text
-    button: {
-      fontSize: '0.875rem', // 14px
-      fontWeight: 600,
-      textTransform: 'none', // Don't force uppercase
-      letterSpacing: '0.02em',
-    },
-
-    // Captions
-    caption: {
-      fontSize: '0.75rem', // 12px
-      lineHeight: 1.5,
-    },
-
-    // Overlines (labels above content)
-    overline: {
-      fontSize: '0.75rem', // 12px
-      fontWeight: 600,
-      textTransform: 'uppercase',
-      letterSpacing: '0.08em',
+    // Custom semantic colors
+    custom: {
+      active: paletteColors.active,
+      warning: paletteColors.warning,
+      critical: paletteColors.critical,
+      rest: paletteColors.rest,
     },
   },
 
-  // Spacing - 8px grid system
-  spacing: 8, // Base unit = 8px, theme.spacing(1) = 8px, theme.spacing(2) = 16px, etc.
-
-  // Shape - Consistent border radius
-  shape: {
-    borderRadius: 8, // 8px rounded corners for cards, buttons
-  },
-
-  // Shadows - Consistent elevation
+  // Glowing Shadows
   shadows: [
     'none',
-    '0 1px 2px 0 rgba(0, 0, 0, 0.05)', // elevation 1
-    '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // elevation 2
-    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // elevation 3
-    '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // elevation 4
-    '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // elevation 5
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 6
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 7
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 8
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 9
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 10
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 11
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 12
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 13
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 14
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 15
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 16
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 17
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 18
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 19
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 20
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 21
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 22
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 23
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 24
+    `0 0 8px 0 ${paletteColors.active}`, // elevation 1 (Active Glow)
+    `0 0 12px 2px ${paletteColors.warning}`, // elevation 2 (Warning Glow)
+    `0 0 12px 2px ${paletteColors.critical}`, // elevation 3 (Critical Glow)
+    `0 0 12px 2px ${paletteColors.rest}`, // elevation 4 (Rest Glow)
+    '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // 5
+    '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // 6
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 7
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 8
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 9
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 10
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 11
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 12
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 13
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 14
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 15
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 16
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 17
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 18
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 19
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 20
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 21
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 22
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 23
+    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // 24
   ],
 
-  // Component-specific overrides
+  typography: {
+    fontFamily: ['"Inter"', 'sans-serif'].join(','),
+    h1: {
+      fontSize: '3.5rem',
+      fontWeight: 700,
+      letterSpacing: '-0.02em',
+      background: `linear-gradient(45deg, ${paletteColors.active}, ${paletteColors.textPrimary})`,
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+    },
+    h2: { fontSize: '2.5rem', fontWeight: 600 },
+    h3: { fontSize: '2rem', fontWeight: 600 },
+    h4: { fontSize: '1.5rem', fontWeight: 600 },
+    h5: { fontSize: '1.25rem', fontWeight: 600 },
+    h6: { fontSize: '1rem', fontWeight: 600 },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+  },
+
+  shape: {
+    borderRadius: 16,
+  },
+
   components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          padding: '10px 24px',
-          minHeight: 48, // Accessible touch target
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          textTransform: 'none',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          },
-        },
-        contained: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-          '&:hover': {
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          },
-        },
-        sizeLarge: {
-          padding: '12px 32px',
-          fontSize: '1rem',
-          minHeight: 56,
-        },
-        sizeSmall: {
-          padding: '6px 16px',
-          fontSize: '0.8125rem',
-          minHeight: 40,
-        },
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          minWidth: 48, // Accessible touch target
-          minHeight: 48,
-        },
-      },
-    },
+    // Base components for Glassmorphism
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12, // Slightly more rounded for cards
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          backdropFilter: 'blur(10px)',
+          backgroundColor: paletteColors.glassyWhite,
+          backgroundImage: `linear-gradient(135deg, ${paletteColors.darkGradientStart}, ${paletteColors.darkGradientEnd})`,
+          border: `1px solid ${paletteColors.borderWhite}`,
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
-        rounded: {
+        root: {
+          backdropFilter: 'blur(10px)',
+          backgroundColor: paletteColors.glassyWhite,
+          backgroundImage: `linear-gradient(135deg, ${paletteColors.darkGradientStart}, ${paletteColors.darkGradientEnd})`,
+          border: `1px solid ${paletteColors.borderWhite}`,
+        },
+      },
+    },
+
+    // Component adjustments for the new theme
+    MuiButton: {
+      styleOverrides: {
+        root: {
           borderRadius: 12,
+          padding: '10px 24px',
+          minHeight: 48,
+          transition: 'all 0.3s ease-in-out',
         },
-        elevation1: {
-          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        },
-        elevation2: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        },
-        elevation3: {
-          boxShadow:
-            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        },
-        elevation4: {
-          boxShadow:
-            '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiTextField: {
-      defaultProps: {
-        variant: 'outlined',
-        margin: 'normal',
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-          fontWeight: 600,
+        containedPrimary: {
+          boxShadow: `0 0 8px 0 ${paletteColors.active}`,
+          '&:hover': {
+            boxShadow: `0 0 16px 4px ${paletteColors.active}`,
+            transform: 'translateY(-2px)',
+          },
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          backgroundColor: 'transparent', // Make AppBar transparent for glass effect
+          backdropFilter: 'blur(12px)',
+          boxShadow: 'none',
+          borderBottom: `1px solid ${paletteColors.borderWhite}`,
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundImage: `linear-gradient(180deg, ${paletteColors.darkGradientEnd} 0%, #0A192F 100%)`,
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
         },
       },
     },
   },
-
-  // Breakpoints for responsive design
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 960,
-      lg: 1280,
-      xl: 1920,
-    },
-  },
-
-  // Transitions - Consistent animation timing
-  transitions: {
-    duration: {
-      shortest: 150,
-      shorter: 200,
-      short: 250,
-      standard: 300,
-      complex: 375,
-      enteringScreen: 225,
-      leavingScreen: 195,
-    },
-    easing: {
-      easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      easeOut: 'cubic-bezier(0.0, 0, 0.2, 1)',
-      easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
-      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
-    },
-  },
 })
+
+// Extend Theme interface for custom colors
+declare module '@mui/material/styles' {
+  interface Palette {
+    custom: {
+      active: string
+      warning: string
+      critical: string
+      rest: string
+    }
+  }
+  interface PaletteOptions {
+    custom?: {
+      active: string
+      warning: string
+      critical: string
+      rest: string
+    }
+  }
+}
 
 export default theme
