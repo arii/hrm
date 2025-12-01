@@ -28,7 +28,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           backgroundColor: background,
           color: '#fff',
           textAlign: 'center',
-          minHeight: 180,
+          minHeight: 280,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -42,7 +42,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               data-testid="live-hr-percent"
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
+              fontSize: { xs: '8rem', sm: '10rem', md: '12rem' },
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
@@ -56,7 +56,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             variant="h6"
             sx={{
               fontWeight: 600,
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
               transition: 'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
             }}
           >
@@ -67,7 +67,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
               variant="subtitle1"
               sx={{
                 fontWeight: 700,
-                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                fontSize: { xs: '3rem', sm: '4.5rem', md: '5.5rem' },
                 letterSpacing: '0.05em',
                 mt: 1, // Add some margin top to separate from BPM
                 textOverflow: 'ellipsis', // Truncate with ellipsis
