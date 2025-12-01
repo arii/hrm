@@ -97,7 +97,7 @@
     "playwright": "^1.57.0",
     "pm2": "^5.2.0",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.5",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.0",
