@@ -40,6 +40,23 @@ export interface SpotifyPlaylistItem {
   uri: string
 }
 
+export interface RawHeartRateData {
+  value: number;
+  timestamp: number;
+}
+
+export interface HeartRateZoneData {
+  zone: string;
+  time: number; // in seconds
+}
+
+export interface HeartRateAnalytics {
+  average: number;
+  min: number;
+  max: number;
+  zones: HeartRateZoneData[];
+}
+
 export interface SpotifyPlaylist {
   name: string
   uri: string

@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import HeartRateService from '../services/heartRateService.js';
 import {
   ClientCommandMessageSchema,
   HrmData,
@@ -22,6 +23,7 @@ let spotifyServiceInstance: SpotifyPolling
 let getUnifiedStateSnapshot: () => StateSnapshot
 
 const hrmClients = new Map<string, HrmData>()
+const heartRateServices = new Map<string, HeartRateService>();
 
 interface Services {
   tabataService: TabataTimer
@@ -54,6 +56,7 @@ const initSocketManager = (
       age: 30,
     }
     hrmClients.set(clientId, defaultClientData)
+    heartRateServices.set(clientId, new HeartRateService());
 
     ws.on('message', (message) => {
       handleIncomingMessage(ws, message.toString(), clientId)
@@ -62,6 +65,7 @@ const initSocketManager = (
     ws.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       hrmClients.delete(clientId)
+      heartRateServices.delete(clientId);
       broadcast({
         type: 'HRM_UPDATE',
         payload: Array.from(hrmClients.values()),
@@ -121,7 +125,11 @@ const handleIncomingMessage = (
           'newValue:',
           message.data.value
         )
-        if (existingClientData) {
+        if (existingClientData && message.data.value != null) {
+          const clientHeartRateService = heartRateServices.get(clientId);
+          if (clientHeartRateService) {
+            clientHeartRateService.addData(message.data.value);
+          }
           // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
@@ -179,12 +187,37 @@ const handleIncomingMessage = (
         break
       }
 
+      case 'WORKOUT_COMMAND': {
+        const clientHeartRateService = heartRateServices.get(clientId);
+        if (clientHeartRateService) {
+          if (message.command === 'START_WORKOUT') {
+            clientHeartRateService.reset();
+            console.log(`[socketManager] Started workout for ${clientId}`);
+          } else if (message.command === 'STOP_WORKOUT') {
+            const clientData = hrmClients.get(clientId);
+            if (clientData) {
+              const analytics = clientHeartRateService.getAnalytics(clientData.maxHr);
+              if (analytics) {
+                // Send analytics only to the client that requested it
+                ws.send(JSON.stringify({
+                  type: 'HRM_ANALYTICS',
+                  payload: analytics,
+                }));
+                console.log(`[socketManager] Sent analytics for ${clientId}`);
+              }
+            }
+          }
+        }
+        break;
+      }
       default:
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
         console.warn(
           'Unknown message type received:',
           (message as { type: unknown }).type
         )
+        break;
+      }
     }
   } catch (e) {
     console.error('Error processing incoming message:', e)

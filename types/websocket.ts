@@ -71,6 +71,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | { type: 'HRM_ANALYTICS', payload: HeartRateAnalytics }
 
 /**
  * BroadcastData: a small, optional-shaped payload that services may send to
@@ -122,6 +123,11 @@ export interface GetStateMessage {
   type: 'GET_STATE'
 }
 
+export interface WorkoutCommandMessage {
+  type: 'WORKOUT_COMMAND';
+  command: 'START_WORKOUT' | 'STOP_WORKOUT';
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -132,8 +138,10 @@ export type ClientCommandMessage =
   | SpotifyCommandMessage
   | TimerConfigMessage
   | GetStateMessage
+  | WorkoutCommandMessage
 
 import { z } from 'zod'
+import { HeartRateAnalytics } from ".";
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
@@ -185,6 +193,11 @@ export const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),
 })
 
+export const WorkoutCommandMessageSchema = z.object({
+  type: z.literal('WORKOUT_COMMAND'),
+  command: z.union([z.literal('START_WORKOUT'), z.literal('STOP_WORKOUT')]),
+});
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
@@ -192,4 +205,5 @@ export const ClientCommandMessageSchema = z.union([
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
+  WorkoutCommandMessageSchema,
 ])
