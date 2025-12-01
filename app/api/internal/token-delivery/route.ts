@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { getServices } from '../../../../services/serviceManager'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 
@@ -32,6 +33,31 @@ export async function POST(req: NextRequest) {
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
     console.log('Received token-delivery:', payload.sub ?? payload.provider)
+
+    // After successfully writing the token, signal the running Spotify service to reload.
+    // This replaces the custom logic that was previously in server.ts.
+    try {
+      const { spotifyService } = getServices()
+      if (spotifyService) {
+        // Signal the service to re-initialize its SDK with the new token from disk
+        spotifyService.setRefreshToken('signal')
+
+        // Asynchronously force a poll to get immediate feedback
+        setTimeout(async () => {
+          if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+            await spotifyService.forcePollAndBroadcast()
+          }
+        }, 1500)
+      }
+    } catch (serviceError) {
+      console.error(
+        'token-delivery: Failed to get services or signal Spotify service:',
+        serviceError
+      )
+      // Do not fail the request, as the token was still delivered.
+      // The service will pick it up on its next scheduled poll.
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('token-delivery error:', err)

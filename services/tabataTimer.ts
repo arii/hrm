@@ -6,11 +6,15 @@
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
 import {
+  IStatefulService,
+  IWebSocketService,
+} from '../types/service.js'
+import {
   ServerMessage,
   TimerData,
   TimerMode,
   TimerPhase,
-} from '../types/websocket'
+} from '../types/websocket.js'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -32,7 +36,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TabataTimer implements IWebSocketService, IStatefulService<TimerData> {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
@@ -170,7 +174,7 @@ class TabataTimer {
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
-  private stopTimer() {
+  public cleanup() {
     if (this.timerInterval) clearInterval(this.timerInterval)
 
     // Full reset of all time and cycle variables
@@ -244,7 +248,7 @@ class TabataTimer {
       case 'IDLE':
       case 'COOLDOWN':
       case 'RUNNING':
-        this.stopTimer()
+        this.cleanup()
         break
     }
   }
@@ -260,7 +264,7 @@ class TabataTimer {
         this.pauseTimer()
         break
       case 'STOP':
-        this.stopTimer()
+        this.cleanup()
         break
       default:
         console.warn(`Unknown timer command: ${command}`)
@@ -269,7 +273,7 @@ class TabataTimer {
 
   // --- Mode Switching ---
   public setMode(mode: TimerMode) {
-    if (this.timerState.isRunning) this.stopTimer()
+    if (this.timerState.isRunning) this.cleanup()
     this.timerState.mode = mode
     this.timerState.currentPhase = 'IDLE'
     this.timerState.timeRemaining = mode === 'TABATA' ? this.timerState.workDuration : 0

@@ -2,14 +2,14 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [leader, main]
+    branches: [leader]
   pull_request:
-    branches: [leader, main]
+    branches: [leader]
 
 jobs:
   # 1. Fast, parallel validation for linting and unit tests
   unit_tests:
-    runs-on: ubuntu-latest # 2-core runner is sufficient for fast tests
+    runs-on: self-hosted# 2-core runner is sufficient for fast tests
     strategy:
       matrix:
         node-version: [18.x, 20.x]
@@ -48,7 +48,7 @@ jobs:
     needs: [unit_tests]
     # For self-hosted or larger runners, specify here:
     # runs-on: self-hosted-8core 
-    runs-on: ubuntu-latest # Consider upgrading this to ubuntu-latest-8-cores for speed
+    runs-on: self-hosted # Consider upgrading this to ubuntu-latest-8-cores for speed
     
     # We only need the latest, validated Node version here.
     steps:
@@ -113,7 +113,7 @@ jobs:
 
   # 3. Security remains separate
   security:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - name: Checkout code
       uses: actions/checkout@v4

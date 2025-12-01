@@ -1,5 +1,9 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData } from '../types/websocket'
+import {
+  IStatefulService,
+  IWebSocketService,
+} from '../types/service.js'
+import { ServerMessage, SpotifyData } from '../types/websocket.js'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -35,7 +39,9 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling
+  implements IWebSocketService, IStatefulService<SpotifyData>
+{
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -118,6 +124,14 @@ export class SpotifyPolling {
     return { ...this.state }
   }
 
+  /**
+   * Public method to safely check if the SDK has been initialized.
+   * @returns {boolean} True if the SDK is ready, false otherwise.
+   */
+  public isReady(): boolean {
+    return this.sdk !== null
+  }
+
   // --- Token Management (Used by NextAuth route) ---
 
   /**
@@ -133,14 +147,15 @@ export class SpotifyPolling {
   // --- Polling Logic ---
 
   // Expose start/stop polling publicly (used by server to control lifecycle)
-  public startPolling(intervalMs: number = 3000) {
+  public startPolling() {
     if (this.pollInterval) return
+
+    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
+      : 3000
     // Poll every `intervalMs` for low-latency updates
-    this.pollInterval = setInterval(
-      () => this.getCurrentlyPlaying(),
-      intervalMs
-    )
-    logger.debug('Spotify polling started.')
+    this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
+    logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
   public stopPolling() {

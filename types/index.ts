@@ -12,7 +12,7 @@ export interface HeartRateZonesProps {
   maxHr: number
 }
 
-import { TimerMode, TimerPhase } from './websocket'
+import { TimerMode, TimerPhase } from './websocket.js'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
