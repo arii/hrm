@@ -8,7 +8,7 @@ on:
 
 concurrency:
   group: pr-workflow-concurrency
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # 1. Fast, parallel validation for linting and unit tests
