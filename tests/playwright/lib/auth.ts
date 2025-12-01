@@ -154,19 +154,26 @@ export async function verifySpotifyTokenStatus(
  * Create an authenticated browser context with stored credentials.
  * Useful for tests that require pre-authenticated state.
  *
+ * Note: This function provides a foundation for custom auth state management.
+ * For production use, implement storage state handling with context.storageState().
+ *
  * @param context - The Playwright BrowserContext object
- * @param storageState - Optional path to saved storage state
- * @returns The configured context
+ * @param _storageState - Reserved for future storage state path parameter
+ * @returns The configured context (passthrough for now)
+ * @example
+ * ```typescript
+ * // Save authenticated state
+ * await context.storageState({ path: 'auth.json' })
+ *
+ * // Create context with saved state
+ * const context = await browser.newContext({ storageState: 'auth.json' })
+ * ```
  */
 export async function createAuthenticatedContext(
   context: BrowserContext,
   _storageState?: string,
 ): Promise<BrowserContext> {
-  // If storage state is provided, apply it
-  // Note: This is a placeholder for custom auth state management
-  // In practice, you would use context.storageState() to save and restore
-
-  // For now, just return the context as-is
+  // Returns context as-is - implement storage state handling as needed
   return context
 }
 
