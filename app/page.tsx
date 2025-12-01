@@ -13,6 +13,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
+import WorkoutControls from '../components/WorkoutControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const DOC_URL =
@@ -54,6 +55,11 @@ const Dashboard = () => {
       }}
     >
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+        {/* --------------------- WORKOUT CONTROLS --------------------- */}
+        <Grid item xs={12}>
+          <WorkoutControls />
+        </Grid>
+
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
