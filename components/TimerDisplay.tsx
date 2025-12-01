@@ -36,14 +36,14 @@ const TimerDisplay = ({
   if (phase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = 'warning.main'
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = 'info.main'
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -55,19 +55,19 @@ const TimerDisplay = ({
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (phase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = 'error.main'
       phaseLabel = 'WORK'
     } else if (phase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = 'success.main'
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = 'info.main'
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
+    phaseColor = 'text.secondary'
     phaseLabel = 'READY'
   }
 
@@ -75,8 +75,7 @@ const TimerDisplay = ({
     <Card
       elevation={6}
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
-        color: phaseColor, // Dynamic color based on phase
+        backgroundColor: 'background.paper',
         height: '100%',
         display: 'flex',
         borderRadius: 2,
@@ -100,7 +99,7 @@ const TimerDisplay = ({
           zIndex: 2,
         }}
       >
-        <Typography variant="caption" sx={{ color: '#fff' }}>
+        <Typography variant="caption" className="text-glow" sx={{ color: '#fff' }}>
           {connectionStatus}
         </Typography>
         <Box
@@ -218,14 +217,13 @@ const TimerDisplay = ({
           role="timer"
           aria-live="polite"
           aria-atomic="true"
+          variant="h2"
           sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontSize: { xs: '3rem', md: '4rem' },
             fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
-            color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            background: 'linear-gradient(135deg, #F43F5E, #EC4899)',
+            backgroundClip: 'text',
+            color: 'transparent',
           }}
         >
           {displayTime}
