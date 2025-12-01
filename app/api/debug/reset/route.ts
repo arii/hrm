@@ -3,8 +3,9 @@ import fs from 'fs'
 import path from 'path'
 
 export async function POST() {
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ message: 'This feature is only available in development mode.' }, { status: 403 });
+  // CRITICAL: This endpoint should not be available in production
+  if (process.env.NODE_ENV === 'production') {
+    return new Response(null, { status: 404 })
   }
 
   const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')

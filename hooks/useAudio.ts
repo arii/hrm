@@ -4,15 +4,15 @@
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { TimerData } from '../types/websocket'
+import useVolumePreference from './useVolumePreference' // Import the hook
 
-export const useAudio = (timerData: TimerData, volume?: number) => {
+export const useAudio = (timerData: TimerData) => { // Remove volume prop
   const lastSoundEventId = useRef<number>(0)
+  const { volume } = useVolumePreference() // Get volume from the single source of truth
 
   // Update audio volume when volume changes
   useEffect(() => {
-    if (volume !== undefined) {
-      audioManager.setVolume(volume)
-    }
+    audioManager.setVolume(volume)
   }, [volume])
 
   useEffect(() => {

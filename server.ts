@@ -24,7 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
-
+import rateLimit from 'express-rate-limit'
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
@@ -52,6 +52,19 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+
+// --- Middleware Setup ---
+// Configure rate limiting to prevent abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: () => process.env.TESTING === 'true', // Disable for tests
+})
+
+// Apply the rate limiter to all API routes
+expressApp.use('/api/', apiLimiter)
 
 // --- Main Application Setup ---
 

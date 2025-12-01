@@ -1,5 +1,4 @@
 'use client'
-import throttle from 'lodash/throttle'
 import {
   createContext,
   ReactNode,
@@ -61,6 +60,7 @@ export const WebSocketProvider = ({
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectAttemptsRef = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
   // Unified State Object managed by a reducer
@@ -82,12 +82,6 @@ export const WebSocketProvider = ({
   }
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
-
-  const throttledDispatch = useRef(
-    throttle((message: ServerMessage) => {
-      dispatch(message)
-    }, 100)
-  ).current
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
@@ -125,6 +119,7 @@ export const WebSocketProvider = ({
     ws.onopen = () => {
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
+      reconnectAttemptsRef.current = 0 // Reset on successful connection
 
       // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
@@ -152,12 +147,24 @@ export const WebSocketProvider = ({
         event.reason
       )
       setConnectionStatus('Disconnected')
-      if (shouldReconnect.current && !reconnectTimeoutRef.current) {
+
+      if (shouldReconnect.current) {
+        if (reconnectAttemptsRef.current >= 5) {
+          console.error('[WebSocketProvider] Max reconnection attempts reached. Giving up.')
+          setConnectionStatus('Failed to connect')
+          return
+        }
+
+        reconnectAttemptsRef.current++
+        // Exponential backoff: 2s, 4s, 8s, 16s, 30s
+        const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, 30000)
+
+        console.log(`[WebSocketProvider] Attempting to reconnect in ${delay / 1000}s (Attempt ${reconnectAttemptsRef.current})`)
+        setConnectionStatus(`Reconnecting... (Attempt ${reconnectAttemptsRef.current})`)
+
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[WebSocketProvider] Attempting to reconnect...')
-          setConnectionStatus('Reconnecting...')
           connect()
-        }, 3000)
+        }, delay)
       }
     }
 
@@ -169,13 +176,7 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
-        // Throttle high-frequency messages
-        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
-          throttledDispatch(message)
-        } else {
-          // Dispatch critical messages immediately
-          dispatch(message)
-        }
+        dispatch(message)
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
