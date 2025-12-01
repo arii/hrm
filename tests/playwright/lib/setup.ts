@@ -29,6 +29,19 @@ export const HRM_ROUTES = {
 } as const
 
 /**
+ * Legacy routes for backward compatibility
+ * @deprecated Use HRM_ROUTES instead for new code
+ */
+export const LEGACY_ROUTES = {
+  /** @deprecated Use HRM_ROUTES.CONTROL instead */
+  PHONE: '/phone',
+  /** @deprecated Use HRM_ROUTES.MOCK instead */
+  MOCK: '/mock',
+  /** @deprecated Use HRM_ROUTES.CONNECT instead */
+  CONNECT: '/connect',
+} as const
+
+/**
  * Warmup server endpoints to ensure fast subsequent requests.
  * Useful for parallel test execution.
  *
@@ -157,11 +170,12 @@ export async function setupVisualRegressionTest(pages: {
   const baseUrl = getBaseURL()
 
   // Navigate all pages in parallel
+  // Note: Uses legacy routes for backward compatibility with existing tests
   await Promise.all([
-    dashboardPage.goto(baseUrl),
-    controlPage.goto(`${baseUrl}/phone`),
-    mockPage.goto(`${baseUrl}/mock`),
-    connectPage.goto(`${baseUrl}/connect`),
+    dashboardPage.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlPage.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
+    mockPage.goto(`${baseUrl}${LEGACY_ROUTES.MOCK}`),
+    connectPage.goto(`${baseUrl}${LEGACY_ROUTES.CONNECT}`),
   ])
 
   // Wait for all pages to signal ready
@@ -214,10 +228,10 @@ export async function setupComprehensiveTest(options: {
   const connectTab = await context.newPage()
 
   await Promise.all([
-    dashboardTab.goto(baseUrl),
-    controlTab.goto(`${baseUrl}/phone`),
-    mockTab.goto(`${baseUrl}/mock`),
-    connectTab.goto(`${baseUrl}/connect`),
+    dashboardTab.goto(`${baseUrl}${HRM_ROUTES.DASHBOARD}`),
+    controlTab.goto(`${baseUrl}${LEGACY_ROUTES.PHONE}`),
+    mockTab.goto(`${baseUrl}${LEGACY_ROUTES.MOCK}`),
+    connectTab.goto(`${baseUrl}${LEGACY_ROUTES.CONNECT}`),
   ])
 
   await Promise.all([

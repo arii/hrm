@@ -10,6 +10,8 @@
  */
 import type { Page } from '@playwright/test'
 
+import type { Response as PlaywrightResponse } from '@playwright/test'
+
 /**
  * Default timeout values for wait operations (in milliseconds)
  */
@@ -176,7 +178,7 @@ export async function waitForApiResponse(
   page: Page,
   urlPattern: string | RegExp,
   options: { timeout?: number } = {},
-): Promise<Response | null> {
+): Promise<PlaywrightResponse | null> {
   const { timeout = WAIT_TIMEOUTS.NETWORK_IDLE } = options
 
   const response = await page.waitForResponse(
@@ -190,7 +192,7 @@ export async function waitForApiResponse(
     { timeout },
   )
 
-  return response as unknown as Response
+  return response
 }
 
 /**
