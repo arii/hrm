@@ -82,4 +82,15 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   )
 }
 
-export default memo(HrTile)
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
+  // Re-render only if display data (name, BPM, or zone-derived props) changes.
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.bpm === nextProps.bpm &&
+    prevProps.background === nextProps.background &&
+    prevProps.percentMax === nextProps.percentMax
+  )
+}
+
+export default memo(HrTile, arePropsEqual)
