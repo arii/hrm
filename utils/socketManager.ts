@@ -15,11 +15,11 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
-// Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
-// New: Define a function to get the state snapshot
-let getUnifiedStateSnapshot: () => StateSnapshot
+// Module-level state to hold service instances for access by health checks
+let wssInstance: WebSocketServer | null = null
+let tabataServiceInstance: TabataTimer | null = null
+let spotifyServiceInstance: SpotifyPolling | null = null
+let getUnifiedStateSnapshot: (() => StateSnapshot) | null = null
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -37,6 +37,8 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
+  // Store instances for health checks
+  wssInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
@@ -195,4 +197,13 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+/**
+ * Exports service instances for use in other parts of the application,
+ * like API routes for health checks.
+ */
+export {
+  initSocketManager,
+  wssInstance,
+  tabataServiceInstance,
+  spotifyServiceInstance,
+}
