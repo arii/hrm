@@ -28,9 +28,16 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+interface MockSpotifyService {
+  handleCommand: jest.Mock<(...args: (string | number | undefined)[]) => Promise<void>>;
+  stopPolling: jest.Mock<() => void>;
+  cleanup: jest.Mock<() => void>;
+  getState: jest.Mock<() => { trackName: string; isPlaying: boolean }>;
+}
+
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
-  let spotifyService: any
+  let spotifyService: MockSpotifyService
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
