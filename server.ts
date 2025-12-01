@@ -24,28 +24,19 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
+import { env } from './lib/env.js'
+import config from './lib/config.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
-
-const dev = process.env.NODE_ENV !== 'production'
-
-// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
-// ===========================================
+const port = env.PORT
+const hostname = config.isProduction ? '0.0.0.0' : env.HOST
+const dev = !config.isProduction
 
 const app = next({ dev, hostname, port })
 
-logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
-logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
+logger.info(
+  `Starting server in ${config.isDevelopment ? 'development' : 'production'} mode`
+)
+logger.info(`Environment: NODE_ENV=${env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
@@ -53,24 +44,23 @@ const nextRequestHandler = app.getRequestHandler()
 // Create Express app for routing and middleware
 const expressApp = express()
 
-// --- Main Application Setup ---
-
-app
-  .prepare()
-  .then(async () => {
+/**
+ * Main application setup and server start.
+ * This function initializes the Next.js app, creates an HTTP server,
+ * attaches middleware, sets up the WebSocket server, and starts listening for requests.
+ */
+const startServer = async () => {
+  try {
+    await app.prepare()
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
-    if (!dev) {
+    if (config.isProduction) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
-
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
@@ -90,7 +80,6 @@ app
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
       })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},
         stopPolling: () => {},
@@ -107,34 +96,43 @@ app
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
+    // 4. Initialize WebSocket Manager
+    initSocketManager(
+      wss,
+      { tabataService, spotifyService },
+      getUnifiedStateSnapshot
+    )
 
     // --- Express Routing ---
-
-    // Swagger UI
     expressApp.use(
       '/api-docs',
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec)
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    // --- Health Check Endpoints ---
+    expressApp.get('/health/live', (req, res) => {
+      res.status(200).send('OK')
+    })
+
+    expressApp.get('/health/ready', (req, res) => {
+      const spotifyReady = spotifyService?.isReady() ?? false
+      if (spotifyReady) {
+        res.status(200).send('OK')
+      } else {
+        res.status(503).send('Service Unavailable')
+      }
+    })
+
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
         req.url &&
         req.url.includes('/api/internal/token-delivery')
       ) {
-        // Wait a moment for token to be written
         setTimeout(async () => {
           if (spotifyService) {
-            // Signal the service to reload tokens from disk
             spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
             setTimeout(async () => {
               if (typeof spotifyService.forcePollAndBroadcast === 'function') {
                 await spotifyService.forcePollAndBroadcast()
@@ -144,41 +142,35 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
+    // --- HTTP/WS Upgrade Handling ---
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-
-        // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
 
     // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
-  })
-  .catch((err: Error) => {
+  } catch (err) {
     logger.error({ err }, 'Next.js preparation failed')
     process.exit(1)
-  })
+  }
+}
+
+startServer()
