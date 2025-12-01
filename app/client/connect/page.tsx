@@ -191,6 +191,7 @@ export default function ConnectPage() {
                 bpm={currentHR}
                 percentMax={hrZoneProps.percentage}
                 background={hrZoneProps.progressColor}
+                  gradient={hrZoneProps.gradient}
               />
             </Grid>
           </Grid>
