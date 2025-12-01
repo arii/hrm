@@ -23,6 +23,8 @@ export const HR_ZONES = [
     color: 'text-blue-400',
     progressColor: '#3b82f6', // Darker blue
     bgColor: '#3b82f6', // Darker blue
+    gradient: 'from-blue-400 to-blue-500',
+    glow: '#3b82f6',
   },
   {
     name: 'Fat Burn',
@@ -30,6 +32,8 @@ export const HR_ZONES = [
     color: 'text-green-500',
     progressColor: '#22c55e',
     bgColor: '#4CAF50',
+    gradient: 'from-green-400 to-green-500',
+    glow: '#22c55e',
   },
   {
     name: 'Cardio',
@@ -37,6 +41,8 @@ export const HR_ZONES = [
     color: 'text-yellow-500',
     progressColor: '#d97706', // Darker orange/yellow
     bgColor: '#d97706', // Darker orange/yellow
+    gradient: 'from-yellow-400 to-yellow-500',
+    glow: '#d97706',
   },
   {
     name: 'Peak',
@@ -44,6 +50,8 @@ export const HR_ZONES = [
     color: 'text-red-500',
     progressColor: '#ef4444',
     bgColor: '#F44336',
+    gradient: 'from-red-400 to-red-500',
+    glow: '#ef4444',
   },
   {
     name: 'Max',
@@ -51,6 +59,8 @@ export const HR_ZONES = [
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
+    gradient: 'from-purple-500 to-purple-600',
+    glow: '#9333ea',
   },
 ]
 
@@ -70,6 +80,8 @@ interface HrZoneProps {
   color: string // Tailwind text color class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
+  gradient: string // Tailwind gradient classes
+  glow: string // Tailwind shadow/glow class
   bpm: number
 }
 
@@ -87,6 +99,8 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
+      gradient: 'from-gray-400 to-gray-500',
+      glow: '#9ca3af',
       bpm: 0,
     }
   }
@@ -109,6 +123,8 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
+      gradient: 'from-gray-400 to-gray-500',
+      glow: '#9ca3af',
       bpm: currentHr,
     }
   }
@@ -119,6 +135,8 @@ export const getHrZoneProps = (
     color: zone.color,
     progressColor: zone.progressColor,
     backgroundColor: zone.bgColor,
+    gradient: zone.gradient,
+    glow: zone.glow,
     bpm: currentHr,
   }
 }
