@@ -2,6 +2,7 @@ import { test, expect, chromium, BrowserContext } from '@playwright/test';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import { WAIT_TIMEOUTS } from '../lib/waits';
 
 /**
  * Local OAuth Verification Test
@@ -60,7 +61,7 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       await loginButton.click();
       
       // Wait for potential redirects (Spotify -> Callback -> App)
-      await page.waitForURL(`${BASE_URL}/**`, { timeout: 30000, waitUntil: 'networkidle' });
+      await page.waitForURL(`${BASE_URL}/**`, { timeout: WAIT_TIMEOUTS.LONG_DURATION, waitUntil: 'networkidle' });
     } else {
       console.log('ℹ️  No login button found. Assuming already authenticated.');
     }

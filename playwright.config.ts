@@ -38,7 +38,7 @@ export default defineConfig({
   // Disabled parallelism because tests interact with a singleton server state (Timer, Spotify)
   fullyParallel: false,
   workers: 1,
-  timeout: 30 * 1000, // Increased timeout to 30s for stability
+  timeout: 5 * 1000, // Global test timeout reduced to 5s
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -58,8 +58,8 @@ export default defineConfig({
   use: {
     // Base URL for all tests
     baseURL: getBaseURL(),
-    actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
-    navigationTimeout: 15000, // Navigation timeout
+    actionTimeout: 3000, // Fails clicks/fills after 3s if element isn't found
+    navigationTimeout: 3000, // Navigation timeout reduced
     headless: true,
 
     // Screenshot settings

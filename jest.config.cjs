@@ -30,7 +30,7 @@ const config = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
-  testTimeout: 10000,
+  testTimeout: 3000,
 }
 
 module.exports = config

@@ -174,7 +174,7 @@ export async function assertWebSocketConnected(
   page: Page,
   options: { timeout?: number } = {},
 ): Promise<void> {
-  const { timeout = 10000 } = options
+  const { timeout = WAIT_TIMEOUTS.LONG_DURATION } = options
 
   const isConnected = await page.evaluate(
     (t) => {

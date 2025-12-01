@@ -267,7 +267,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     () => {
       return window.__TEST_WEBSOCKET_READY__ === true
     },
-    { timeout: 10000 },
+    { timeout: WAIT_TIMEOUTS.LONG_DURATION },
   )
 }
 

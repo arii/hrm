@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import http from 'http';
 import { UnifiedStateMessage, TimerCommandMessage, HrmInputMessage } from '../../types/websocket';
 
-jest.setTimeout(60000); // 60s timeout for server start and tests
+jest.setTimeout(3000); // Reduced timeout to 3s
 
 describe('WebSocket Full Integration Test', () => {
   let serverProcess: ChildProcess;
