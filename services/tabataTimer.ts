@@ -87,7 +87,10 @@ class TabataTimer {
     }
   }
 
-  // Adapt getState to return the expected TimerData structure for the front-end
+  /**
+   * Returns the current state of the timer.
+   * @returns {TimerData} The current state of the timer.
+   */
   public getState(): TimerData {
     return {
       isRunning: this.timerState.isRunning,
@@ -190,8 +193,13 @@ class TabataTimer {
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
-  // --- Configuration ---
-  public setConfig(config: { workDuration: number; restDuration: number }) {
+  /**
+   * Sets the work and rest durations for the Tabata timer.
+   * @param {object} config - The timer configuration.
+   * @param {number} config.workDuration - The duration of the work phase in seconds.
+   * @param {number} config.restDuration - The duration of the rest phase in seconds.
+   */
+  public setConfig(config: { workDuration: number; restDuration: number }): void {
     const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
     const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
 
@@ -249,8 +257,11 @@ class TabataTimer {
     }
   }
 
-  // --- Command Handler (Used by socketManager) ---
-  public handleCommand(command: TimerCommand) {
+  /**
+   * Handles timer commands.
+   * @param {TimerCommand} command - The command to handle.
+   */
+  public handleCommand(command: TimerCommand): void {
     switch (command) {
       case 'START':
         // START now triggers PREPARE if in IDLE
@@ -267,8 +278,11 @@ class TabataTimer {
     }
   }
 
-  // --- Mode Switching ---
-  public setMode(mode: TimerMode) {
+  /**
+   * Sets the timer mode.
+   * @param {TimerMode} mode - The timer mode to set.
+   */
+  public setMode(mode: TimerMode): void {
     if (this.timerState.isRunning) this.stopTimer()
     this.timerState.mode = mode
     this.timerState.currentPhase = 'IDLE'
@@ -277,6 +291,10 @@ class TabataTimer {
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  }
+
+  public isReady(): boolean {
+    return true
   }
 }
 

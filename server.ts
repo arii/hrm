@@ -24,8 +24,9 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
+import { env } from './lib/env.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = env.PORT || 3000
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
@@ -33,14 +34,6 @@ const hostname =
     : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
-
-// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
-// ===========================================
 
 const app = next({ dev, hostname, port })
 
@@ -55,9 +48,9 @@ const expressApp = express()
 
 // --- Main Application Setup ---
 
-app
-  .prepare()
-  .then(async () => {
+const startServer = async (): Promise<void> => {
+  try {
+    await app.prepare()
     const server = createServer(expressApp)
 
     // --- Static Asset Serving (Production Only) ---
@@ -81,6 +74,10 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
+    /**
+     * The SpotifyPolling service instance.
+     * @type {SpotifyPolling}
+     */
     let spotifyService: SpotifyPolling
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
@@ -98,9 +95,17 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
+    /**
+     * The TabataTimer service instance.
+     * @type {TabataTimer}
+     */
     const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
+    /**
+     * Gathers the current state from all services to send to new clients.
+     * @returns {StateSnapshot} The current state of the application.
+     */
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
@@ -118,6 +123,24 @@ app
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec)
     )
+
+    /**
+     * Health check endpoint to verify that all services are running.
+     * @name /health/ready
+     * @function
+     * @memberof module:server
+     * @inner
+     * @param {Request} _req - The express request object.
+     * @param {Response} res - The express response object.
+     */
+    expressApp.get('/health/ready', (_req: Request, res: Response) => {
+      const servicesReady = spotifyService.isReady() && tabataService.isReady();
+      if (servicesReady) {
+        res.status(200).send('OK');
+      } else {
+        res.status(503).send('Service Unavailable');
+      }
+    });
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
@@ -177,8 +200,10 @@ app
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
-  })
-  .catch((err: Error) => {
+  } catch (err) {
     logger.error({ err }, 'Next.js preparation failed')
     process.exit(1)
-  })
+  }
+}
+
+startServer()

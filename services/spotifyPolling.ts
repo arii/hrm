@@ -2,6 +2,7 @@ import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { SpotifyDevice } from '../types/index.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -70,6 +71,11 @@ export class SpotifyPolling {
     )
   }
 
+  /**
+   * Creates a new instance of the SpotifyPolling service.
+   * @param {function} broadcastUpdate - The function to call to broadcast updates to clients.
+   * @returns {Promise<SpotifyPolling>} A new instance of the SpotifyPolling service.
+   */
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
@@ -114,6 +120,10 @@ export class SpotifyPolling {
     }
   }
 
+  /**
+   * Returns the current state of the Spotify service.
+   * @returns {SpotifyData} The current state of the Spotify service.
+   */
   public getState(): SpotifyData {
     return { ...this.state }
   }
@@ -126,22 +136,21 @@ export class SpotifyPolling {
     return this.sdk !== null
   }
 
-  // --- Token Management (Used by NextAuth route) ---
-
   /**
-   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   * Sets the refresh token for the Spotify API.
+   * @param {string} _token - The refresh token.
    */
-  public setRefreshToken(_token: string) {
+  public setRefreshToken(_token: string): void {
     logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
     // Reset the token manager state to ensure it re-reads the file
     // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
     setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
-  // --- Polling Logic ---
-
-  // Expose start/stop polling publicly (used by server to control lifecycle)
-  public startPolling() {
+  /**
+   * Starts polling the Spotify API for the currently playing track.
+   */
+  public startPolling(): void {
     if (this.pollInterval) return
 
     const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
@@ -152,7 +161,10 @@ export class SpotifyPolling {
     logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
-  public stopPolling() {
+  /**
+   * Stops polling the Spotify API.
+   */
+  public stopPolling(): void {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
@@ -160,7 +172,10 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  /**
+   * Cleans up the service by stopping polling and clearing intervals.
+   */
+  public cleanup(): void {
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
@@ -285,9 +300,11 @@ export class SpotifyPolling {
     }
   }
 
-  // --- Command Handling (Used by socketManager) ---
-
-  public async getAvailableDevices() {
+  /**
+   * Gets the available devices for the current user.
+   * @returns {Promise<SpotifyDevice[]>} A list of available devices.
+   */
+  public async getAvailableDevices(): Promise<SpotifyDevice[]> {
     if (!this.sdk) {
       logger.warn('Cannot get devices: SDK not initialized.')
       return []
@@ -301,12 +318,19 @@ export class SpotifyPolling {
     }
   }
 
+  /**
+   * Handles a command for the Spotify service.
+   * @param {SpotifyCommand} command - The command to handle.
+   * @param {string} [deviceId] - The ID of the device to control.
+   * @param {number} [volume] - The volume to set.
+   * @param {string} [playlistUri] - The URI of the playlist to play.
+   */
   public handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk) {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
