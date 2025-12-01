@@ -68,11 +68,6 @@ const ControlPanel = () => {
           py: { xs: 2, sm: 3 },
           px: { xs: 2, sm: 3 },
           minHeight: '100vh',
-          background: 'rgba(30, 41, 59, 0.8)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 3,
         }}
       >
         {/* Connection Status */}

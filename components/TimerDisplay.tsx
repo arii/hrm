@@ -79,7 +79,8 @@ const TimerDisplay = ({
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: '1px solid',
+        borderColor: 'divider',
         position: 'relative',
         animation:
           phase === 'WORK' || phase === 'REST'
@@ -99,7 +100,7 @@ const TimerDisplay = ({
           zIndex: 2,
         }}
       >
-        <Typography variant="caption" className="text-glow" sx={{ color: '#fff' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           {connectionStatus}
         </Typography>
         <Box
@@ -135,12 +136,12 @@ const TimerDisplay = ({
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: 'text.primary',
               fontWeight: 700,
               letterSpacing: 2,
               whiteSpace: 'nowrap',
               fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: 'action.selected',
               px: 1,
               py: 0.5,
               borderRadius: 1,
@@ -166,12 +167,12 @@ const TimerDisplay = ({
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: 'text.primary',
               fontWeight: 700,
               letterSpacing: 1,
               whiteSpace: 'nowrap',
               fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: 'action.selected',
               px: 1,
               py: 0.5,
               borderRadius: 1,

@@ -50,7 +50,6 @@ const Dashboard = () => {
         py: { xs: 2, sm: 3 },
         pb: { xs: 12, sm: 14 }, // Extra bottom padding for fixed Spotify bar
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #0F172A 0%, #1E293B 100%)',
       }}
     >
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>

@@ -47,12 +47,13 @@ const actionButtonSx = {
 }
 
 const stepperButtonSx = {
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  color: 'white',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  backgroundColor: 'action.hover',
+  color: 'text.primary',
+  border: '1px solid',
+  borderColor: 'divider',
   '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'action.selected',
+    borderColor: 'text.secondary',
   },
   width: 64,
   height: 64,
@@ -178,14 +179,14 @@ const TimerControls = () => {
     <Card
       sx={{
         mb: 2,
-        color: '#EF4444',
+        color: 'text.primary',
         position: 'sticky',
         top: 16,
         zIndex: 1000,
-        background: 'rgba(30, 41, 59, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(10px)',
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: 3,
         borderRadius: 3,
         transition: 'all 0.2s ease',
       }}
@@ -194,7 +195,7 @@ const TimerControls = () => {
         <Box sx={{ mb: 2 }}>
           <Typography
             sx={{
-              color: 'white',
+              color: 'text.primary',
               fontWeight: 'medium',
               mb: 2,
               textAlign: 'center',
@@ -253,10 +254,10 @@ const TimerControls = () => {
         </Box>
 
         <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: 'text.primary', mb: 2 }}>
             {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#EF4444' }}>
+          <Typography variant="body2" sx={{ color: 'error.main' }}>
             {timerData.currentPhase}
           </Typography>
         </Box>
@@ -264,7 +265,7 @@ const TimerControls = () => {
         {timerData.mode === 'TABATA' && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
+              <Typography sx={{ color: 'text.primary', fontWeight: 'medium', mb: 1 }}>
                 Timer Presets
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
@@ -305,7 +306,7 @@ const TimerControls = () => {
                   EMOM (60/60)
                 </Button>
               </Stack>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+              <Typography sx={{ color: 'text.primary', fontWeight: 'medium', mb: 2 }}>
                 {' '}
                 Work Duration (Seconds)
               </Typography>
@@ -374,7 +375,7 @@ const TimerControls = () => {
             </Box>
 
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+              <Typography sx={{ color: 'text.primary', fontWeight: 'medium', mb: 2 }}>
                 Rest Duration (Seconds)
               </Typography>
               <Stack

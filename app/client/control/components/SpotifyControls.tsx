@@ -172,12 +172,12 @@ const SpotifyControls = () => {
       sx={{
         position: 'relative', // Ensure card is a positioning context for the ::before pseudo-element
         mb: 3,
-        color: 'white',
-        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: 'text.primary',
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
         borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: 3,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -209,7 +209,7 @@ const SpotifyControls = () => {
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
                 {spotifyData.trackName}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'grey.400' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {spotifyData.artist}
               </Typography>
             </Box>
@@ -265,7 +265,7 @@ const SpotifyControls = () => {
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+              <VolumeUp sx={{ color: 'text.secondary', fontSize: 20 }} />
               <Slider
                 value={volume}
                 onChange={(_, val) => setVolume(val as number)}
@@ -280,14 +280,14 @@ const SpotifyControls = () => {
               />
               <Typography
                 variant="caption"
-                sx={{ color: 'grey.400', minWidth: '3ch' }}
+                sx={{ color: 'text.secondary', minWidth: '3ch' }}
               >
                 {volume}
               </Typography>
             </Stack>
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                   Device
                 </Typography>
                 <FormControl fullWidth size="small">
@@ -304,12 +304,12 @@ const SpotifyControls = () => {
                       connectionStatus !== 'Connected' || devicesLoading
                     }
                     sx={{
-                      color: 'white',
+                      color: 'text.primary',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'grey.600',
+                        borderColor: 'divider',
                       },
                       '& .MuiSvgIcon-root': {
-                        color: 'white',
+                        color: 'text.secondary',
                       },
                     }}
                   >
@@ -327,7 +327,7 @@ const SpotifyControls = () => {
                 size="small"
                 startIcon={<LibraryMusic />}
                 onClick={handleBrowseClick}
-                sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+                sx={{ mt: 2, borderColor: 'divider', color: 'text.secondary' }}
               >
                 Select Playlist
             </Button>

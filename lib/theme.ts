@@ -16,7 +16,7 @@ import { createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
       main: '#F43F5E', // Rose
     },
@@ -36,15 +36,15 @@ const theme = createTheme({
       main: '#3B82F6', // Blue
     },
     background: {
-      default: '#0F172A', // Deep Slate
-      paper: '#1E293B', // Elevated Background
+      default: '#F8FAFC', // Slate 50
+      paper: '#FFFFFF',   // White
     },
     text: {
-      primary: '#ededed',
-      secondary: 'rgba(237, 237, 237, 0.7)',
-      disabled: 'rgba(237, 237, 237, 0.5)',
+      primary: '#0F172A', // Slate 900
+      secondary: '#64748B', // Slate 500
+      disabled: '#94A3B8', // Slate 400
     },
-    divider: 'rgba(237, 237, 237, 0.12)',
+    divider: '#E2E8F0', // Slate 200
   },
 
   // Typography - Clear hierarchy
