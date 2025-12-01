@@ -19,19 +19,34 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import { styled } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
-import { keyframes } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const shineAnimation = keyframes`
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-`
+const ShineButton = styled(Button)(({ theme }) => ({
+  position: 'relative',
+  overflow: 'hidden',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: '-150%',
+    width: '100%',
+    height: '100%',
+    background:
+      'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+    transition: 'transform 0.5s',
+    transform: 'skewX(-25deg)',
+  },
+  '&:hover::after': {
+    transform: 'translateX(250%) skewX(-25deg)',
+  },
+}))
 
 const actionButtonSx = {
   flex: 1,
@@ -195,15 +210,17 @@ const TimerControls = () => {
           <ToggleButtonGroup
             value={timerData.mode}
             exclusive
-            onChange={(_event, newMode) =>
-              newMode && sendModeCommand(newMode)
-            }
-            disabled={timerData.isRunning}
+            onChange={(_event, newMode) => {
+              if (newMode) sendModeCommand(newMode)
+            }}
             aria-label="Timer Mode"
+            disabled={timerData.isRunning}
             sx={{
               width: '100%',
-              background: 'rgba(15, 23, 42, 0.6)',
+              background: 'rgba(15, 23, 42, 0.6)', // slate-900 with 60% opacity
               border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              overflow: 'hidden',
             }}
           >
             <ToggleButton
@@ -212,15 +229,22 @@ const TimerControls = () => {
               sx={{
                 flex: 1,
                 color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                textTransform: 'none',
+                fontWeight: 'bold',
                 '&.Mui-selected': {
                   background:
-                    'linear-gradient(to right, #EF4444, #DC2626)',
-                  boxShadow: '0 0 15px rgba(239, 68, 68, 0.5)',
+                    'linear-gradient(to right, #EF4444, #F87171)',
                   color: 'white',
+                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                  '&:hover': {
+                    background:
+                      'linear-gradient(to right, #DC2626, #EF4444)',
+                  },
                 },
-                '&.Mui-selected:hover': {
-                  background:
-                    'linear-gradient(to right, #DC2626, #EF4444)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 },
               }}
             >
@@ -233,15 +257,22 @@ const TimerControls = () => {
               sx={{
                 flex: 1,
                 color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                textTransform: 'none',
+                fontWeight: 'bold',
                 '&.Mui-selected': {
                   background:
-                    'linear-gradient(to right, #3B82F6, #2563EB)',
-                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)',
+                    'linear-gradient(to right, #3B82F6, #60A5FA)',
                   color: 'white',
+                  boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
+                  '&:hover': {
+                    background:
+                      'linear-gradient(to right, #2563EB, #3B82F6)',
+                  },
                 },
-                '&.Mui-selected:hover': {
-                  background:
-                    'linear-gradient(to right, #2563EB, #3B82F6)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 },
               }}
             >
@@ -267,7 +298,7 @@ const TimerControls = () => {
                 Timer Presets
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <Button
+                <ShineButton
                   variant="outlined"
                   onClick={() => {
                     setWorkTime(20)
@@ -277,28 +308,15 @@ const TimerControls = () => {
                     flex: 1,
                     color: '#EF4444',
                     borderColor: '#EF4444',
-                    position: 'relative',
-                    overflow: 'hidden',
                     '&:hover': {
                       backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       borderColor: '#DC2626',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        background:
-                          'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%)',
-                        animation: `${shineAnimation} 3s infinite linear`,
-                      },
                     },
                   }}
                 >
                   Tabata (20/10)
-                </Button>
-                <Button
+                </ShineButton>
+                <ShineButton
                   variant="outlined"
                   onClick={() => {
                     setWorkTime(60)
@@ -308,27 +326,14 @@ const TimerControls = () => {
                     flex: 1,
                     color: '#22C55E',
                     borderColor: '#22C55E',
-                    position: 'relative',
-                    overflow: 'hidden',
                     '&:hover': {
                       backgroundColor: 'rgba(34, 197, 94, 0.1)',
                       borderColor: '#16A34A',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        background:
-                          'linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%)',
-                        animation: `${shineAnimation} 3s infinite linear`,
-                      },
                     },
                   }}
                 >
                   EMOM (60/60)
-                </Button>
+                </ShineButton>
               </Stack>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 {' '}
@@ -360,7 +365,7 @@ const TimerControls = () => {
                       background:
                         'radial-gradient(circle, rgba(244, 63, 94, 0.3) 0%, transparent 70%)',
                       filter: 'blur(20px)',
-                      zIndex: 1,
+                      zIndex: 0,
                     }}
                   />
                   <TextField
@@ -380,25 +385,26 @@ const TimerControls = () => {
                     'data-testid': 'work-duration-input',
                   }}
                   sx={{
-                    width: '120px',
+                    width: '100%',
                     position: 'relative',
-                    zIndex: 2,
+                    zIndex: 1,
                     '& .MuiInputBase-input': {
                       color: '#EF4444',
                       fontWeight: 'bold',
                       fontSize: '3rem',
                       textAlign: 'center',
                       padding: '8px',
+                      backgroundColor: 'transparent',
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: '#EF4444',
+                        border: 'none',
                       },
                       '&:hover fieldset': {
-                        borderColor: '#DC2626',
+                        border: 'none',
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#EF4444',
+                        border: 'none',
                       },
                     },
                   }}
@@ -446,7 +452,7 @@ const TimerControls = () => {
                       background:
                         'radial-gradient(circle, rgba(34, 197, 94, 0.3) 0%, transparent 70%)',
                       filter: 'blur(20px)',
-                      zIndex: 1,
+                      zIndex: 0,
                     }}
                   />
                   <TextField
@@ -465,25 +471,26 @@ const TimerControls = () => {
                     'data-testid': 'rest-duration-input',
                   }}
                   sx={{
-                    width: '120px',
+                    width: '100%',
                     position: 'relative',
-                    zIndex: 2,
+                    zIndex: 1,
                     '& .MuiInputBase-input': {
                       color: '#22C55E',
                       fontWeight: 'bold',
                       fontSize: '3rem',
                       textAlign: 'center',
                       padding: '8px',
+                      backgroundColor: 'transparent',
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
-                        borderColor: '#22C55E',
+                        border: 'none',
                       },
                       '&:hover fieldset': {
-                        borderColor: '#16A34A',
+                        border: 'none',
                       },
                       '&.Mui-focused fieldset': {
-                        borderColor: '#22C55E',
+                        border: 'none',
                       },
                     },
                   }}

@@ -41,7 +41,7 @@ jobs:
       run: npm run test:coverage
       
     - name: Upload Coverage (runs only once per matrix iteration)
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         # Use a flag to differentiate coverage runs in Codecov UI
         flags: node-${{ matrix.node-version }}-unittests
@@ -71,7 +71,7 @@ jobs:
     - name: 🏗️ Next.js Production Build Cache Restore
       # This is the most critical step for performance.
       # Utilize the Next.js cache feature for subsequent runs.
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: |
           .next/cache
@@ -83,7 +83,7 @@ jobs:
       run: npm run build
       
     - name: 💾 Save Next.js Build Cache
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         path: .next/cache
         key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/*.ts', '**/*.tsx') }}
@@ -94,7 +94,7 @@ jobs:
       run: npm run test:visual
       
     - name: Upload Test Artifacts on Failure
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: failure()
       with:
         name: test-artifacts
@@ -103,7 +103,7 @@ jobs:
           tests/playwright/test-results/
 
     - name: 📦 Upload Build Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: production-build-output
         path: |
