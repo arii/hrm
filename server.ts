@@ -50,10 +50,24 @@ logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
 
+import rateLimit from 'express-rate-limit'
+
 // Create Express app for routing and middleware
 const expressApp = express()
 
 // --- Main Application Setup ---
+
+// Rate limiting - apply to all requests
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting in test environment
+  skip: () => process.env.TESTING === 'true',
+})
+
+expressApp.use(limiter)
 
 app
   .prepare()
@@ -151,6 +165,14 @@ app
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
+        const origin = req.headers.origin
+
+        // Validate the origin to prevent cross-site WebSocket hijacking
+        if (origin !== getBaseURL()) {
+          logger.warn(`Rejected WebSocket connection from untrusted origin: ${origin}`)
+          socket.destroy()
+          return
+        }
 
         // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {

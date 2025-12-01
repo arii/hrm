@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling'
+import { encrypt, decrypt } from '../utils/encryption'
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -22,13 +23,15 @@ export class SpotifyTokenManager {
   /**
    * Directly set the access token (for command injection/testing).
    */
-  public setAccessToken(token: string) {
+  public async setAccessToken(token: string) {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
+      const tokenData = JSON.stringify(this.currentToken, null, 2);
+      const encryptedData = process.env.ENCRYPTION_KEY ? await encrypt(tokenData, process.env.ENCRYPTION_KEY) : tokenData;
       fs.writeFileSync(
         this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
+        encryptedData,
         'utf8'
       )
       console.log('Access token updated via setAccessToken.')
@@ -46,9 +49,11 @@ export class SpotifyTokenManager {
           obtainedAt: Date.now(),
         },
       }
+      const tokenData = JSON.stringify(this.currentToken, null, 2);
+      const encryptedData = process.env.ENCRYPTION_KEY ? await encrypt(tokenData, process.env.ENCRYPTION_KEY) : tokenData;
       fs.writeFileSync(
         this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
+        encryptedData,
         'utf8'
       )
       console.log('Access token created via setAccessToken.')
@@ -67,15 +72,19 @@ export class SpotifyTokenManager {
     this.loadTokens()
   }
 
-  private loadTokens() {
+  private async loadTokens() {
+    if (!process.env.ENCRYPTION_KEY) {
+      console.warn('ENCRYPTION_KEY not set. Tokens will be stored in plain text.');
+    }
     try {
       if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        const data = fs.readFileSync(this.tokenFile, 'utf8');
+        const decrypted = process.env.ENCRYPTION_KEY ? await decrypt(data, process.env.ENCRYPTION_KEY) : data;
+        this.currentToken = JSON.parse(decrypted) as TokenRecord;
+        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub);
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      console.warn('Failed to load Spotify tokens:', err);
     }
   }
 
@@ -126,9 +135,11 @@ export class SpotifyTokenManager {
       }
 
       // Save updated token
+      const tokenData = JSON.stringify(this.currentToken, null, 2);
+      const encryptedData = process.env.ENCRYPTION_KEY ? await encrypt(tokenData, process.env.ENCRYPTION_KEY) : tokenData;
       fs.writeFileSync(
         this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
+        encryptedData,
         'utf8'
       )
 
@@ -142,7 +153,7 @@ export class SpotifyTokenManager {
 
   async getValidAccessToken(): Promise<string | null> {
     // Always reload the token file before returning the access token
-    this.loadTokens()
+    await this.loadTokens()
     if (!this.currentToken) return null
 
     // Check if token needs refresh

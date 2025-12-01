@@ -107,18 +107,16 @@ class TabataTimer {
   private updateTimer = () => {
     if (!this.timerState.isRunning || !this.startTime) return
 
-    if (
-      this.timerState.mode === 'STOPWATCH' &&
-      this.timerState.currentPhase === 'RUNNING'
-    ) {
-      // COUNT UP (STOPWATCH)
-      const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-      this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+    const elapsed = Date.now() - this.startTime
+    const elapsedSeconds = Math.floor(elapsed / 1000)
+
+    if (this.timerState.mode === 'STOPWATCH' && this.timerState.currentPhase === 'RUNNING') {
+      this.timerState.timeElapsed = this.pausedElapsedTime + elapsedSeconds
     }
 
-    // This applies to TABATA and PREPARE modes (which count down)
     if (this.timerState.mode === 'TABATA' || this.timerState.currentPhase === 'PREPARE') {
-      const nextRemaining = Math.max(0, this.timerState.timeRemaining - 1)
+      const totalDuration = this.timerState.currentPhase === 'PREPARE' ? START_COUNTDOWN_DURATION : (this.timerState.currentPhase === 'WORK' ? this.timerState.workDuration : this.timerState.restDuration);
+      const nextRemaining = Math.max(0, totalDuration - elapsedSeconds)
       this.timerState.timeRemaining = nextRemaining
 
       if (nextRemaining <= 0) {
@@ -129,6 +127,11 @@ class TabataTimer {
     }
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+
+    if (this.timerState.isRunning) {
+      const nextTick = 1000 - (elapsed % 1000)
+      this.timerInterval = setTimeout(this.updateTimer, nextTick)
+    }
   }
 
   private startTimer() {
@@ -147,7 +150,7 @@ class TabataTimer {
     // If resuming after PAUSE, restore previous state (no PREPARE)
     // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
 
-    this.timerInterval = setInterval(this.updateTimer, 1000)
+    this.timerInterval = setTimeout(this.updateTimer, 1000)
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
@@ -163,7 +166,7 @@ class TabataTimer {
     }
 
     this.timerState.isRunning = false
-    if (this.timerInterval) clearInterval(this.timerInterval)
+    if (this.timerInterval) clearTimeout(this.timerInterval)
     this.timerInterval = null
     this.startTime = null
 
@@ -171,7 +174,7 @@ class TabataTimer {
   }
 
   private stopTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval)
+    if (this.timerInterval) clearTimeout(this.timerInterval)
 
     // Full reset of all time and cycle variables
     this.timerState = {

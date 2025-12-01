@@ -121,6 +121,18 @@ export default defineConfig({
 
 
 
+  // Web Server Configuration
+  webServer: {
+    // The command to start the development server
+    command: 'pnpm run build && pnpm exec cross-env TESTING=true bash start-production.sh',
+    // The URL to wait for before starting the tests
+    url: 'http://127.0.0.1:3000/api/debug/ping',
+    // Timeout for the server to start
+    timeout: 30 * 1000,
+    // Reuse the server if it's already running (useful for local development)
+    reuseExistingServer: !process.env.CI,
+  },
+
   // Output configuration
   outputDir: 'test-results/',
   reporter: [

@@ -11,14 +11,11 @@ pm2 delete all 2>/dev/null || true
 
 # Kill Node.js processes (including dev server)
 echo "Killing Node.js processes..."
-pkill -f "node.*server.ts" 2>/dev/null || true
-pkill -f "ts-node.*server.ts" 2>/dev/null || true
-pkill -f "next dev" 2>/dev/null || true
+pkill -f "node.*dist/server.mjs" 2>/dev/null || true
 
 # Kill Playwright processes
 echo "Killing Playwright processes..."
 pkill -f "playwright" 2>/dev/null || true
-pkill -f "chromium" 2>/dev/null || true
 
 # Kill Chrome DevTools MCP
 echo "Killing Chrome DevTools MCP..."

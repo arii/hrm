@@ -96,6 +96,12 @@ test.describe('Visual Regression Tests', () => {
       console.warn('Timer check/stop encountered an issue (ignoring):', error)
     }
 
+    // Wait for the custom 'test-ready' event to be fired from the control panel
+    await controlPage.waitForEvent('custom', {
+      predicate: (event) => event.type === 'test-ready',
+      timeout: 15000, // Increased timeout for robustness
+    })
+
     // Replace iframe with stable content for dashboard
     // Wait for dashboard to settle before replacing
     try {
