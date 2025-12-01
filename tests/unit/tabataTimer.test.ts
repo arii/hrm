@@ -14,9 +14,9 @@ describe('TabataTimer Service', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
-      if (message.type === 'TIMER_UPDATE') {
-        broadcastedStates.push(message.payload)
+    broadcastMock = jest.fn((message: ServerMessage) => {
+      if (message.type === 'TIMER_UPDATE' && typeof message.payload === 'object' && message.payload !== null && 'isRunning' in message.payload) {
+        broadcastedStates.push(message.payload as TimerData)
       }
     })
     timer = new TabataTimer(broadcastMock)
@@ -78,9 +78,11 @@ describe('TabataTimer Service', () => {
       broadcastedStates = []
       timer.setMode('STOPWATCH')
       expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
-        'STOPWATCH'
-      )
+      const lastState = broadcastedStates[broadcastedStates.length - 1]
+      expect(lastState).toBeDefined()
+      if (lastState) {
+        expect(lastState.mode).toBe('STOPWATCH')
+      }
     })
   })
 
@@ -294,8 +296,11 @@ describe('TabataTimer Service', () => {
       timer.setConfig({ workDuration: 30, restDuration: 15 })
       expect(broadcastMock).toHaveBeenCalled()
       const lastState = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastState.workDuration).toBe(30)
-      expect(lastState.restDuration).toBe(15)
+      expect(lastState).toBeDefined()
+      if (lastState) {
+        expect(lastState.workDuration).toBe(30)
+        expect(lastState.restDuration).toBe(15)
+      }
     })
 
     it('should use new rest duration in next rest phase', () => {
@@ -396,12 +401,17 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
 
       const initialState = broadcastedStates[0]
+      expect(initialState).toBeDefined()
+      if (!initialState) return
       const initialId = initialState.soundEventId
 
       jest.advanceTimersByTime(3000) // Trigger countdown sounds
 
       const laterState = broadcastedStates[broadcastedStates.length - 1]
-      expect(laterState.soundEventId).toBeGreaterThan(initialId)
+      expect(laterState).toBeDefined()
+      if (laterState) {
+        expect(laterState.soundEventId).toBeGreaterThan(initialId)
+      }
     })
   })
 
@@ -428,7 +438,11 @@ describe('TabataTimer Service', () => {
       timer.setMode('STOPWATCH')
 
       expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[0].mode).toBe('STOPWATCH')
+      const firstState = broadcastedStates[0]
+      expect(firstState).toBeDefined()
+      if (firstState) {
+        expect(firstState.mode).toBe('STOPWATCH')
+      }
     })
 
     it('should broadcast complete timer state', () => {
@@ -436,8 +450,11 @@ describe('TabataTimer Service', () => {
       jest.advanceTimersByTime(1000)
 
       const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastBroadcast).toHaveProperty('isRunning')
-      expect(lastBroadcast).toHaveProperty('currentPhase')
+      expect(lastBroadcast).toBeDefined()
+      if (lastBroadcast) {
+        expect(lastBroadcast).toHaveProperty('isRunning')
+        expect(lastBroadcast).toHaveProperty('currentPhase')
+      }
       expect(lastBroadcast).toHaveProperty('timeRemaining')
       expect(lastBroadcast).toHaveProperty('timeElapsed')
       expect(lastBroadcast).toHaveProperty('mode')

@@ -1,5 +1,6 @@
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
+import { SpotifyDevice } from '../types/index.js'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -37,9 +38,9 @@ export interface SpotifyTokenResponse {
 
 export class SpotifyPolling {
   /**
-   * Public method to force a poll and broadcast current track state.
+   * Forces an immediate poll of the Spotify API for the currently playing track and broadcasts the state.
    */
-  public forcePollAndBroadcast() {
+  public forcePollAndBroadcast(): Promise<void> {
     return this.getCurrentlyPlaying()
   }
   private tokenManager: SpotifyTokenManager
@@ -114,10 +115,6 @@ export class SpotifyPolling {
     }
   }
 
-  public getState(): SpotifyData {
-    return { ...this.state }
-  }
-
   /**
    * Public method to safely check if the SDK has been initialized.
    * @returns {boolean} True if the SDK is ready, false otherwise.
@@ -126,12 +123,21 @@ export class SpotifyPolling {
     return this.sdk !== null
   }
 
+  /**
+   * Returns a copy of the current Spotify playback state.
+   * @returns {SpotifyData} The current Spotify playback state.
+   */
+  public getState(): SpotifyData {
+    return { ...this.state }
+  }
+
   // --- Token Management (Used by NextAuth route) ---
 
   /**
-   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   * Signals the service to re-initialize the SDK with a new refresh token.
+   * @param {string} _token - The new refresh token (currently unused, as the token is read from a file).
    */
-  public setRefreshToken(_token: string) {
+  public setRefreshToken(_token: string): void {
     logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
     // Reset the token manager state to ensure it re-reads the file
     // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
@@ -140,8 +146,10 @@ export class SpotifyPolling {
 
   // --- Polling Logic ---
 
-  // Expose start/stop polling publicly (used by server to control lifecycle)
-  public startPolling() {
+  /**
+   * Starts the Spotify polling service.
+   */
+  public startPolling(): void {
     if (this.pollInterval) return
 
     const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
@@ -152,7 +160,10 @@ export class SpotifyPolling {
     logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
-  public stopPolling() {
+  /**
+   * Stops the Spotify polling service.
+   */
+  public stopPolling(): void {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
@@ -160,7 +171,10 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  /**
+   * Cleans up all intervals and stops the polling service.
+   */
+  public cleanup(): void {
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
@@ -287,7 +301,11 @@ export class SpotifyPolling {
 
   // --- Command Handling (Used by socketManager) ---
 
-  public async getAvailableDevices() {
+  /**
+   * Fetches the available Spotify connect devices.
+   * @returns {Promise<SpotifyDevice[]>} A list of available devices.
+   */
+  public async getAvailableDevices(): Promise<SpotifyDevice[]> {
     if (!this.sdk) {
       logger.warn('Cannot get devices: SDK not initialized.')
       return []
@@ -301,12 +319,19 @@ export class SpotifyPolling {
     }
   }
 
+  /**
+   * Handles Spotify commands from clients.
+   * @param {SpotifyCommand} command - The command to execute.
+   * @param {string} [deviceId] - The ID of the device to target.
+   * @param {number} [volume] - The volume to set (0-100).
+   * @param {string} [playlistUri] - The URI of the playlist to play.
+   */
   public handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk) {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()

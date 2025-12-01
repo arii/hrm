@@ -4,7 +4,7 @@
  * attaches the persistent WebSocket server, and manages service initialization
  * and internal data endpoints (like NextAuth token delivery).
  */
-
+import { env } from './lib/env.js'
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
@@ -25,22 +25,13 @@ import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
+const port: number = env.PORT ?? 3000
 const hostname =
-  process.env.NODE_ENV === 'production'
+  env.NODE_ENV === 'production'
     ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
+    : env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
-const dev = process.env.NODE_ENV !== 'production'
-
-// === QUICK WIN 1: CRITICAL SECURITY CHECK ===
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
-// ===========================================
+const dev = env.NODE_ENV !== 'production'
 
 const app = next({ dev, hostname, port })
 
@@ -118,6 +109,18 @@ app
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec)
     )
+
+    expressApp.get('/health/ready', (_req: Request, res: Response) => {
+      const spotifyReady = spotifyService?.isReady() ?? false
+      const tabataReady = tabataService?.isReady() ?? false
+      const healthy = spotifyReady && tabataReady
+
+      if (healthy) {
+        res.status(200).send('OK')
+      } else {
+        res.status(503).send('Service Unavailable')
+      }
+    })
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery

@@ -87,7 +87,10 @@ class TabataTimer {
     }
   }
 
-  // Adapt getState to return the expected TimerData structure for the front-end
+  /**
+   * Returns a snapshot of the current timer state.
+   * @returns {TimerData} The current state of the timer.
+   */
   public getState(): TimerData {
     return {
       isRunning: this.timerState.isRunning,
@@ -100,6 +103,14 @@ class TabataTimer {
       ...(this.timerState.soundToPlay !== undefined && { soundToPlay: this.timerState.soundToPlay }),
       soundEventId: this.timerState.soundEventId,
     }
+  }
+
+  /**
+   * Checks if the timer service is ready.
+   * @returns {boolean} Always returns true for this service.
+   */
+  public isReady(): boolean {
+    return true
   }
 
   // --- Core Timer Logic ---
@@ -191,7 +202,13 @@ class TabataTimer {
   }
 
   // --- Configuration ---
-  public setConfig(config: { workDuration: number; restDuration: number }) {
+  /**
+   * Sets the work and rest durations for the Tabata timer.
+   * @param {object} config - The timer configuration.
+   * @param {number} config.workDuration - The duration of the work phase in seconds.
+   * @param {number} config.restDuration - The duration of the rest phase in seconds.
+   */
+  public setConfig(config: { workDuration: number; restDuration: number }): void {
     const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
     const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
 
@@ -250,7 +267,11 @@ class TabataTimer {
   }
 
   // --- Command Handler (Used by socketManager) ---
-  public handleCommand(command: TimerCommand) {
+  /**
+   * Handles timer commands from clients.
+   * @param {TimerCommand} command - The command to execute (START, PAUSE, STOP).
+   */
+  public handleCommand(command: TimerCommand): void {
     switch (command) {
       case 'START':
         // START now triggers PREPARE if in IDLE
@@ -268,7 +289,11 @@ class TabataTimer {
   }
 
   // --- Mode Switching ---
-  public setMode(mode: TimerMode) {
+  /**
+   * Sets the timer mode.
+   * @param {TimerMode} mode - The timer mode to set (TABATA or STOPWATCH).
+   */
+  public setMode(mode: TimerMode): void {
     if (this.timerState.isRunning) this.stopTimer()
     this.timerState.mode = mode
     this.timerState.currentPhase = 'IDLE'
