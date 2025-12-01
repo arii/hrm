@@ -11,9 +11,18 @@ export interface HrTileProps {
   bpm: number
   percentMax: number // 0-100
   background: string // hex color
+  gradient: string
+  glow: string
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  gradient,
+  glow,
+}: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -38,13 +47,14 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           {/* Giant Percentage - should dominate the tile */}
           <Typography
             data-testid="live-hr-percent"
+            className={`bg-gradient-to-r ${gradient} text-transparent bg-clip-text`}
             sx={{
               fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
               fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
               fontWeight: 900,
               lineHeight: 0.85,
               my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              textShadow: `0 0 20px ${glow}`,
             }}
           >
             {percentMax}%
@@ -82,4 +92,15 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   )
 }
 
-export default memo(HrTile)
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
+  // Re-render only if display data (name, BPM, or zone-derived props) changes.
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.bpm === nextProps.bpm &&
+    prevProps.background === nextProps.background &&
+    prevProps.percentMax === nextProps.percentMax
+  )
+}
+
+export default memo(HrTile, arePropsEqual)
