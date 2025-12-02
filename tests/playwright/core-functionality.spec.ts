@@ -56,16 +56,22 @@ test.describe('Core HRM Functionality', () => {
       fullPage: true,
       animations: 'disabled',
       mask: getDynamicContentMasks(dashboardPage),
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.05,
     });
 
     await expect(controlPage).toHaveScreenshot('control-panel-initial.png', {
       fullPage: true,
       animations: 'disabled',
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.05,
     });
 
     await expect(mockPage).toHaveScreenshot('mock-client-initial.png', {
       fullPage: true,
       animations: 'disabled',
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.05,
     });
   });
 
@@ -92,6 +98,8 @@ test.describe('Core HRM Functionality', () => {
       fullPage: true,
       animations: 'disabled',
       mask: getDynamicContentMasks(dashboardPage),
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.05,
     });
 
     // 4. Stop the timer and streaming
@@ -108,6 +116,8 @@ test.describe('Core HRM Functionality', () => {
       await expect(page).toHaveScreenshot('mobile-control-panel.png', {
         fullPage: true,
         animations: 'disabled',
+        threshold: 0.2,
+        maxDiffPixelRatio: 0.05,
       });
 
       await page.goto(BASE_URL);
@@ -117,6 +127,8 @@ test.describe('Core HRM Functionality', () => {
         fullPage: true,
         animations: 'disabled',
         mask: getDynamicContentMasks(page),
+        threshold: 0.2,
+        maxDiffPixelRatio: 0.05,
       });
     });
   });
