@@ -35,8 +35,8 @@ export default defineConfig({
   testIgnore: testIgnoreList,
 
   // Performance Optimizations
-  fullyParallel: true,
-  workers: process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
+  fullyParallel: false,
+  workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
   timeout: 15 * 1000, // Global test timeout (15s)
 
   // Fail build on CI if you accidentally left test.only
@@ -125,8 +125,9 @@ export default defineConfig({
   outputDir: 'test-results/',
   reporter: [
     ['list'],
+    ['blob'],
+    ['junit', { outputFile: 'test-results/results.xml' }],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
-    ...(process.env.CI ? [['github']] : []),
   ],
 });

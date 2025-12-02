@@ -32,7 +32,8 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 1. LINT CHECK
   // Ensures you never commit code that violates ESLint rules.
-  test('npm run lint should pass', () => {
+  // Skipping since npm build is already running in ci
+  test.skip('npm run lint should pass', () => {
     try {
       // stdio: 'pipe' allows us to capture output if it fails
       execSync('npm run lint', { stdio: 'pipe' });
@@ -50,7 +51,7 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 2. BUILD VERIFICATION
   // Verifies the server compilation step (TS -> JS) works.
-  test('build:server should compile successfully', () => {
+  test.skip('build:server should compile successfully', () => {
     const start = Date.now();
     // Using ignore for stdio to keep test logs clean unless it throws
     execSync('npm run build:server', { stdio: 'ignore' });
