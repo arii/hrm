@@ -307,7 +307,7 @@ const TimerControls = () => {
               </Stack>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
                 {' '}
-                Work Duration (Seconds)
+                Work Duration (seconds)
               </Typography>
               <Stack
                 direction="row"
@@ -375,7 +375,7 @@ const TimerControls = () => {
 
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
-                Rest Duration (Seconds)
+                Rest Duration (seconds)
               </Typography>
               <Stack
                 direction="row"
@@ -451,7 +451,7 @@ const TimerControls = () => {
               sx={actionButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
             >
-              Start
+              START
             </Button>
           ) : (
             <Button
@@ -461,7 +461,7 @@ const TimerControls = () => {
               sx={actionButtonSx}
               startIcon={<Stop fontSize="large" />}
             >
-              Stop
+              STOP
             </Button>
           )}
         </Stack>

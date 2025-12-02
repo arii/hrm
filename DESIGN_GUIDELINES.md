@@ -24,10 +24,6 @@ A complete design system has been established to address all identified UI consi
 
 A clear hierarchy from h1 (4rem/64px) down to caption (0.75rem/12px) has been established.
 
-#### **Capitalization**
-
-- **Buttons & Headings**: All UI buttons and major headings should use Title Case (e.g., "Start Workout", "Spotify Controls"). This ensures a consistent and clean appearance throughout the application.
-
 #### **Spacing System**
 
 - **8px grid**: All spacing uses multiples of 8px (`theme.spacing(1) = 8px`).
