@@ -1,8 +1,9 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    branches: [ "leader" ]
+  # Disabled - use pr-quality-standalone.yml instead
+  # pull_request:
+  #   branches: [ "leader" ]
   workflow_dispatch:
     inputs:
       branch:
