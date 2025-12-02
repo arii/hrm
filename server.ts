@@ -15,10 +15,8 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
+import { initServices } from './services/serviceRegistry.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
@@ -81,35 +79,25 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
-    try {
-      spotifyService = await SpotifyPolling.create(broadcast)
-    } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
-    }
-    const tabataService = new TabataTimer(broadcast)
+    // 2. Initialize Persistent Services using the Service Registry
+    const services = await initServices()
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
+      timerData: services.tabataService.getState(),
+      spotifyData: services.spotifyService.getState(),
+      spotifyServiceInitialized: services.spotifyService.isReady(),
     })
 
     // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
+    initSocketManager(
+      wss,
+      {
+        tabataService: services.tabataService,
+        spotifyService: services.spotifyService,
+      },
+      getUnifiedStateSnapshot
+    )
 
     // --- Express Routing ---
 
@@ -131,14 +119,17 @@ app
       ) {
         // Wait a moment for token to be written
         setTimeout(async () => {
-          if (spotifyService) {
+          if (services.spotifyService) {
             // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
+            services.spotifyService.setRefreshToken('signal')
 
             // Wait a bit for reload, then force poll
             setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
+              if (
+                typeof services.spotifyService.forcePollAndBroadcast ===
+                'function'
+              ) {
+                await services.spotifyService.forcePollAndBroadcast()
               }
             }, 1500)
           }

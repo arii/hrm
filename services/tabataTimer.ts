@@ -5,6 +5,7 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
+import { IWebSocketService } from '@/types/service'
 import {
   ServerMessage,
   TimerData,
@@ -32,7 +33,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TabataTimer implements IWebSocketService {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
@@ -54,6 +55,23 @@ class TabataTimer {
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+  }
+
+  // --- IService Implementation ---
+
+  public async init(): Promise<void> {
+    // TabataTimer has no async initialization, so we resolve immediately.
+    return Promise.resolve()
+  }
+
+  public stop(): void {
+    // The existing stopTimer method handles all cleanup.
+    this.stopTimer()
+  }
+
+  public isReady(): boolean {
+    // TabataTimer is always ready as it has no external dependencies.
+    return true
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {

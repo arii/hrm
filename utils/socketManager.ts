@@ -15,9 +15,11 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
-// Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+// Define service instances to be managed and EXPORT them
+// This makes them accessible to other parts of the application, like API routes,
+// after they have been initialized by the main server process.
+export let tabataServiceInstance: TabataTimer
+export let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 

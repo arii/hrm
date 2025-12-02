@@ -1,3 +1,4 @@
+import { IWebSocketService } from '@/types/service'
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
@@ -35,7 +36,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements IWebSocketService {
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -74,12 +75,22 @@ export class SpotifyPolling {
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
     const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
+    await instance.init()
     return instance
+  }
+
+  // --- IService Implementation ---
+
+  public async init(): Promise<void> {
+    await this.initializeSdk()
+    this.tokenRefreshInterval = setInterval(
+      () => this.checkAndRefreshSdkToken(),
+      1000 * 60 * 5 // Check every 5 minutes
+    )
+  }
+
+  public stop(): void {
+    this.cleanup()
   }
 
   private async initializeSdk() {
@@ -284,6 +295,8 @@ export class SpotifyPolling {
       logger.error({ err: error }, 'Error fetching currently playing track')
     }
   }
+
+  // --- Command Handling (Used by socketManager) ---
 
   // --- Command Handling (Used by socketManager) ---
 
