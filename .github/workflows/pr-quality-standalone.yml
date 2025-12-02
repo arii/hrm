@@ -25,6 +25,8 @@ env:
   FORCE_COLOR: 1
   # Unique session identifier for concurrent runs
   SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  # Maximum bytes to include from each log file in failure comments
+  LOG_TRUNCATE_BYTES: 20000
 
 jobs:
   # ===========================================================================
@@ -128,7 +130,7 @@ jobs:
         run: |
           set -o pipefail
           PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee test-results/infra-output.log
-        # Use continue-on-error if you want subsequent steps to run even if tests fail
+        # continue-on-error allows subsequent steps to run for failure reporting
         continue-on-error: true
 
       - name: Publish Infra Test Results to GitHub Checks
@@ -212,59 +214,58 @@ jobs:
             exit 0
           fi
 
-          # 2. Build the list of failed checks and their logs
+          # 2. Build the list of failed checks and collect logs to temp files
           FAILED_CHECKS=""
-          LOG_CONTENT=""
+
+          # Create a temporary file for the comment body
+          COMMENT_FILE=$(mktemp)
+
+          # Function to safely append log content
+          append_log() {
+            local log_file="$1"
+            local test_name="$2"
+            if [ -f "$log_file" ]; then
+              echo "" >> "$COMMENT_FILE"
+              echo "### ${test_name} Log" >> "$COMMENT_FILE"
+              echo '```' >> "$COMMENT_FILE"
+              tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" >> "$COMMENT_FILE"
+              echo '```' >> "$COMMENT_FILE"
+            fi
+          }
 
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
-            if [ -f "test-results/infra-output.log" ]; then
-              LOG_CONTENT="${LOG_CONTENT}
-
-          ### Infrastructure Tests Log
-          \`\`\`
-          $(tail -c 20000 test-results/infra-output.log)
-          \`\`\`"
-            fi
+            append_log "test-results/infra-output.log" "Infrastructure Tests"
           fi
 
           if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
-            if [ -f "test-results/unit-output.log" ]; then
-              LOG_CONTENT="${LOG_CONTENT}
-
-          ### Unit Tests Log
-          \`\`\`
-          $(tail -c 20000 test-results/unit-output.log)
-          \`\`\`"
-            fi
+            append_log "test-results/unit-output.log" "Unit Tests"
           fi
 
           if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
-            if [ -f "test-results/visual-output.log" ]; then
-              LOG_CONTENT="${LOG_CONTENT}
-
-          ### Visual Tests Log
-          \`\`\`
-          $(tail -c 20000 test-results/visual-output.log)
-          \`\`\`"
-            fi
+            append_log "test-results/visual-output.log" "Visual Tests"
           fi
 
           # Remove trailing comma and space
           FAILED_CHECKS="${FAILED_CHECKS%, }"
 
-          # 3. Construct the Comment Body
-          COMMENT_BODY="@jules fix ${FAILED_CHECKS}
+          # 3. Construct the final comment body
+          {
+            echo "@jules fix ${FAILED_CHECKS}"
+            echo ""
+            echo "<details>"
+            echo "<summary><strong>Failed Test Report Log</strong></summary>"
+            cat "$COMMENT_FILE"
+            echo "</details>"
+          } > "${COMMENT_FILE}.final"
 
-          <details>
-          <summary><strong>Failed Test Report Log</strong></summary>
-          ${LOG_CONTENT}
-          </details>"
+          # 4. Post the Comment using file input to avoid shell escaping issues
+          gh pr comment "$PR_NUMBER" --body-file "${COMMENT_FILE}.final"
 
-          # 4. Post the Comment
-          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+          # Cleanup
+          rm -f "$COMMENT_FILE" "${COMMENT_FILE}.final"
 
       - name: Checkout
         uses: actions/checkout@v6
