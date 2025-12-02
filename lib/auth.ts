@@ -181,27 +181,25 @@ export const authOptions: AuthOptions = {
               obtainedAt: Date.now(),
             }
 
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
+            fetch(getAPIURL('internal/token-delivery'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(tokenPayload),
             })
-            const responseBody = await response.text()
-            if (response.ok) {
-              console.log(
-                'Internal token delivery successful. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            } else {
-              console.error(
-                'Internal token delivery failed. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            }
+              .then(async (response) => {
+                if (!response.ok) {
+                  const responseBody = await response.text();
+                  console.error(
+                    'Internal token delivery failed. Status:',
+                    response.status,
+                    'Body:',
+                    responseBody
+                  );
+                }
+              })
+              .catch((e) => {
+                console.error('Internal token delivery failed:', e)
+              });
           } catch (e) {
             console.error('Internal token delivery failed:', e)
           }
