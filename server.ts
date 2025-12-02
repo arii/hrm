@@ -24,6 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
+import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -119,6 +120,18 @@ app
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec)
     )
+
+    // Health Check Endpoints
+    expressApp.get('/api/health', (_req: Request, res: Response) => {
+      res.status(200).json({ status: 'ok' });
+    });
+
+    expressApp.get('/api/health/ready', async (_req: Request, res: Response) => {
+      const healthStatus = await performHealthCheck(wss, spotifyService, tabataService);
+      const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
+      res.status(statusCode).json(healthStatus);
+    });
+
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
