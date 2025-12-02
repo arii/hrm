@@ -18,7 +18,8 @@ permissions:
   contents: read
   checks: write # Required for dorny/test-reporter
   actions: read # Required for artifact downloads
-  pull-requests: write # Optional: if you want the action to comment on PRs
+  pull-requests: write # Required for gh pr comment
+  issues: write # Required for posting comments
 
 env:
   FORCE_COLOR: 1
@@ -122,8 +123,11 @@ jobs:
         run: pnpm run build
 
       - name: Run Infrastructure Tests and Generate JUnit Report
-        # Run tests and output the report file to a specific path
-        run: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit
+        id: infra_tests
+        # Run tests and output the report file to a specific path, capture output
+        run: |
+          set -o pipefail
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee test-results/infra-output.log
         # Use continue-on-error if you want subsequent steps to run even if tests fail
         continue-on-error: true
 
@@ -138,7 +142,11 @@ jobs:
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
       - name: Run Unit Tests
-        run: pnpm run test:unit
+        id: unit_tests
+        run: |
+          set -o pipefail
+          pnpm run test:unit 2>&1 | tee test-results/unit-output.log
+        continue-on-error: true
 
       - name: Publish Unit Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
@@ -151,8 +159,12 @@ jobs:
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
       - name: Run Visual Tests
-        run: pnpm  run test:visual
+        id: visual_tests
+        run: |
+          set -o pipefail
+          pnpm run test:visual 2>&1 | tee test-results/visual-output.log
         # NOTE: This generates files in the default ./blob-report directory
+        continue-on-error: true
 
       - name: Publish Visual Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
@@ -180,8 +192,83 @@ jobs:
             test-results/
           retention-days: 7
 
+      # Post comment on PR when tests fail
+      - name: Report Failure to Jules
+        if: always() && (steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Identify the PR Number
+          # Try getting it from the event (pull_request)
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+
+          # If triggered by workflow_dispatch, find the PR associated with this branch
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
+          fi
+
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            echo "::warning::No Pull Request found for this branch. Skipping comment."
+            exit 0
+          fi
+
+          # 2. Build the list of failed checks and their logs
+          FAILED_CHECKS=""
+          LOG_CONTENT=""
+
+          if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
+            if [ -f "test-results/infra-output.log" ]; then
+              LOG_CONTENT="${LOG_CONTENT}
+
+          ### Infrastructure Tests Log
+          \`\`\`
+          $(tail -c 20000 test-results/infra-output.log)
+          \`\`\`"
+            fi
+          fi
+
+          if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
+            if [ -f "test-results/unit-output.log" ]; then
+              LOG_CONTENT="${LOG_CONTENT}
+
+          ### Unit Tests Log
+          \`\`\`
+          $(tail -c 20000 test-results/unit-output.log)
+          \`\`\`"
+            fi
+          fi
+
+          if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
+            if [ -f "test-results/visual-output.log" ]; then
+              LOG_CONTENT="${LOG_CONTENT}
+
+          ### Visual Tests Log
+          \`\`\`
+          $(tail -c 20000 test-results/visual-output.log)
+          \`\`\`"
+            fi
+          fi
+
+          # Remove trailing comma and space
+          FAILED_CHECKS="${FAILED_CHECKS%, }"
+
+          # 3. Construct the Comment Body
+          COMMENT_BODY="@jules fix ${FAILED_CHECKS}
+
+          <details>
+          <summary><strong>Failed Test Report Log</strong></summary>
+          ${LOG_CONTENT}
+          </details>"
+
+          # 4. Post the Comment
+          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+
       - name: Checkout
         uses: actions/checkout@v6
+        if: always()
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
@@ -189,6 +276,7 @@ jobs:
           clean: false
 
       - name: Clean Workspace (Preserve Cache)
+        if: always()
         run: |
           # Delete everything EXCEPT .next and node_modules
           find . -maxdepth 1 -mindepth 1 \
@@ -201,3 +289,10 @@ jobs:
           # Reset git state to ensure code is fresh
           git reset --hard HEAD
           git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
+
+      # Fail the job if any tests failed (must be at the very end)
+      - name: Fail Workflow on Test Failures
+        if: always() && (steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
+        run: |
+          echo "One or more tests failed. Failing the workflow."
+          exit 1
