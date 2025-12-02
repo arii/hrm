@@ -51,11 +51,9 @@ test.describe('Visual Regression Tests', () => {
     ])
 
     // Navigate all pages in parallel
-    await Promise.all([
-      dashboardPage.goto(BASE_URL),
-      controlPage.goto(`${BASE_URL}/client/control`),
-      mockPage.goto(`${BASE_URL}/client/mock`),
-    ])
+    await dashboardPage.goto(BASE_URL);
+    await controlPage.goto(`${BASE_URL}/client/control`);
+    await mockPage.goto(`${BASE_URL}/client/mock`);
 
     // Wait for all pages to be ready in parallel (includes networkidle)
     await Promise.all([
@@ -188,12 +186,14 @@ test.describe('Visual Regression Tests', () => {
     await expect(restInput).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
     // Configure timer (15 work, 5s rest)
-    await workInput.fill('15')
-    await restInput.fill('5')
+    await workInput.fill('15');
+    await restInput.fill('5');
+
+    // Wait for the page to be ready before clicking
+    await waitForPageReady(controlPage);
 
     // Start timer
-
-    await controlPage.click('button:has-text("START")', { force: true })
+    await controlPage.click('button:has-text("Start")', { force: true });
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
@@ -258,9 +258,9 @@ test.describe('Visual Regression Tests', () => {
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await mockPage.click('button:has-text("START")')
+    await mockPage.click('button:has-text("Start Continuous Stream")')
     await expect(
-      mockPage.locator('button:has-text("STOP Streaming")')
+      mockPage.locator('button:has-text("Stop Streaming")')
     ).toBeVisible()
 
     // Wait for HR tiles to load on dashboard
