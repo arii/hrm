@@ -37,7 +37,7 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: true,
   workers: process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 30 * 1000, // Global test timeout (30s)
+  timeout: 15 * 1000, // Global test timeout (15s)
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -58,7 +58,7 @@ export default defineConfig({
     // Base URL for all tests
     baseURL: getBaseURL(),
     actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
-    navigationTimeout: 30000, // Navigation timeout
+    navigationTimeout: 15000, // Navigation timeout
     headless: true,
 
     // Screenshot settings
@@ -74,7 +74,7 @@ export default defineConfig({
     },
 
     // Trace settings
-    trace: 'on',
+    trace: 'on-first-retry',
 
     // Browser context options
     viewport: { width: 1920, height: 1080 },

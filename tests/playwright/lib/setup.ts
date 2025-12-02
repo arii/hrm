@@ -329,11 +329,11 @@ export async function configureTimer(
  * @param controlPage - The control panel Page object
  */
 export async function startTimer(controlPage: Page): Promise<void> {
-  await controlPage.click('button:has-text("Start")', { force: true })
+  await controlPage.click('button:has-text("START")', { force: true })
 
   // Verify timer started
   const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
-  await expect(stopButton).toBeVisible({ timeout: 10000 })
+  await expect(stopButton).toBeVisible()
 }
 
 /**
@@ -367,8 +367,8 @@ export async function setupMockHrStreaming(
  * @param mockPage - The mock client Page object
  */
 export async function startMockHrStreaming(mockPage: Page): Promise<void> {
-  await mockPage.click('button:has-text("Start Continuous Stream")')
-  await expect(mockPage.locator('button:has-text("Stop Streaming")')).toBeVisible()
+  await mockPage.click('button:has-text("START")')
+  await expect(mockPage.locator('button:has-text("STOP Streaming")')).toBeVisible()
 }
 
 /**
