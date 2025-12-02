@@ -42,6 +42,8 @@ trap cleanup EXIT INT TERM
 
 # Export environment variable for testing
 export TESTING=true
+export NEXTAUTH_SECRET="test-secret-for-ci"
+export NEXTAUTH_URL="http://127.0.0.1:3000"
 
 # Clean up any stale processes
 if [ -f "$PID_FILE" ]; then
@@ -70,4 +72,15 @@ log "✅ Server is ready. Executing test command: $@"
 log "---------------------------------------------------"
 
 # Execute the passed command
+log "🎯 Executing command: $*"
 "$@"
+TEST_EXIT_CODE=$?
+
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+  log "⚠️ Test command failed with exit code: $TEST_EXIT_CODE"
+  log "📋 Last 20 lines of test output may be in stdout above"
+else
+  log "✅ Test command completed successfully"
+fi
+
+exit $TEST_EXIT_CODE
