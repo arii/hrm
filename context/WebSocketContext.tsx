@@ -92,6 +92,9 @@ export const WebSocketProvider = ({
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
 
+  // Ref to hold the connect function, ensuring it's always up-to-date
+  const connectRef = useRef<() => void>(() => {})
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')
@@ -99,18 +102,6 @@ export const WebSocketProvider = ({
         pendingActions.current = JSON.parse(savedActions)
       }
     }
-  }, [])
-
-  const disconnect = useCallback(() => {
-    shouldReconnect.current = false
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    if (wsRef.current) {
-      wsRef.current.close()
-    }
-    console.log('[useWebSocket] Manually disconnected.')
   }, [])
 
   const connect = useCallback(() => {
@@ -167,7 +158,7 @@ export const WebSocketProvider = ({
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('[WebSocketProvider] Attempting to reconnect...')
           setConnectionStatus('Reconnecting...')
-          connect()
+          connectRef.current()
         }, 3000)
       }
     }
@@ -191,9 +182,22 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl])
+  }, [wsUrl, throttledDispatch])
+
+  const disconnect = useCallback(() => {
+    shouldReconnect.current = false
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    if (wsRef.current) {
+      wsRef.current.close()
+    }
+    console.log('[useWebSocket] Manually disconnected.')
+  }, [])
 
   useEffect(() => {
+    connectRef.current = connect
     connect()
 
     return () => {
