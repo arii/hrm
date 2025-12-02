@@ -63,8 +63,25 @@ echo $SERVER_PID > "$PID_FILE"
 log "✅ Server process started (PID: $SERVER_PID)"
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
-if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
-    log "❌ Server failed to respond within timeout."
+
+# Convert timeout from ms to seconds for the loop
+timeout_seconds=$((TIMEOUT / 1000))
+end_time=$((SECONDS + timeout_seconds))
+server_ready=false
+
+while [ $SECONDS -lt $end_time ]; do
+    # Use curl to check if the server is responding
+    if curl --silent --fail "${HEALTH_CHECK_URL}" > /dev/null; then
+        log "✅ Server responded."
+        server_ready=true
+        break
+    fi
+    # Wait for 1 second before trying again
+    sleep 1
+done
+
+if [ "$server_ready" = false ]; then
+    log "❌ Server failed to respond within ${timeout_seconds} seconds."
     exit 1
 fi
 

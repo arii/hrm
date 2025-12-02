@@ -1,17 +1,11 @@
-import swaggerJsdoc from 'swagger-jsdoc'
+import yaml from 'js-yaml';
+import fs from 'fs';
+import path from 'path';
+import { JsonObject } from 'swagger-ui-express';
 
-const options: swaggerJsdoc.Options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'HRM API',
-      version: '1.0.0',
-      description: 'API documentation for the HRM application',
-    },
-  },
-  apis: ['./app/api/**/*.ts', './server.ts'], // files containing annotations as above
-}
+const openApiPath = path.join(process.cwd(), 'lib/openapi.yaml');
+const swaggerSpec = yaml.load(
+  fs.readFileSync(openApiPath, 'utf8')
+) as JsonObject;
 
-const swaggerSpec = swaggerJsdoc(options)
-
-export default swaggerSpec
+export default swaggerSpec;

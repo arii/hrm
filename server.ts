@@ -5,7 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
-import express, { Request, Response } from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
@@ -13,6 +13,7 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import * as OpenApiValidator from 'express-openapi-validator'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -120,6 +121,14 @@ app
       swaggerUi.setup(swaggerSpec)
     )
 
+    // Add OpenAPI Validator middleware
+    const openApiValidator = OpenApiValidator.middleware({
+      apiSpec: path.join(process.cwd(), 'lib/openapi.yaml'),
+      validateRequests: true,
+      validateResponses: false,
+    })
+    expressApp.use('/api/debug/ping', openApiValidator)
+
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
@@ -145,7 +154,25 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    // OpenAPI Validator error handler
+    type OpenApiError = {
+      status: number
+      message: string
+      errors: Array<{ path: string; message: string }>
+    }
+    expressApp.use(
+      (err: OpenApiError, _req: Request, res: Response, _next: NextFunction) => {
+        // format error
+        res.status(err.status || 500).json({
+          message: err.message,
+          errors: err.errors,
+        })
+      }
+    )
+
+    // --- HTTP/WS Upgrade Handling ---
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
