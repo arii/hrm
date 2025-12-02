@@ -50,7 +50,7 @@ test.describe('Core HRM Functionality', () => {
     await context.close();
   });
 
-  test.skip('should render the main dashboard, control panel, and mock client correctly', async () => {
+  test('should render the main dashboard, control panel, and mock client correctly', async () => {
     await replaceIframeWithStableWorkout(dashboardPage);
     await expect(dashboardPage).toHaveScreenshot('dashboard-initial.png', {
       fullPage: true,
@@ -102,7 +102,7 @@ test.describe('Core HRM Functionality', () => {
   test.describe('Mobile Experience', () => {
     test.use({ viewport: { width: 390, height: 844 } }); // iPhone 12 Pro
 
-    test.skip('should render the control panel and dashboard correctly on mobile', async ({ page }) => {
+    test('should render the control panel and dashboard correctly on mobile', async ({ page }) => {
       await page.goto(`${BASE_URL}/client/control`);
       await waitForPageReady(page);
       await expect(page).toHaveScreenshot('mobile-control-panel.png', {
