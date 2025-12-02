@@ -8,13 +8,13 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
-import { withValidation } from '@/lib/middleware/validation'
+import { withBodyValidation } from '@/lib/middleware/validation'
 import { spotifyControlSchema } from '@/lib/validation/schemas'
 import { z } from 'zod'
 
 const handler = async (
   _req: NextRequest,
-  body: z.infer<typeof spotifyControlSchema>
+  { body }: { body: z.infer<typeof spotifyControlSchema> }
 ) => {
   const session = await getServerSession(authOptions)
 
@@ -86,4 +86,4 @@ const handler = async (
   }
 }
 
-export const POST = withValidation(spotifyControlSchema, handler)
+export const POST = withBodyValidation(spotifyControlSchema, handler)

@@ -1,14 +1,16 @@
 import { ApiError } from '@/lib/errors'
 import * as fs from 'fs'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import * as path from 'path'
 import logger from '@/utils/logger'
+import { withBodyValidation } from '@/lib/middleware/validation'
+import { clearTokenSchema } from '@/lib/validation/schemas'
+import { z } from 'zod'
 
-/**
- * API route to clear the persisted Spotify token file.
- * This is called during logout to ensure a fresh authentication flow.
- */
-export async function POST(_req: Request) {
+const handler = async (
+  req: NextRequest,
+  { body }: { body: z.infer<typeof clearTokenSchema> }
+) => {
   try {
     const tokenFilePath = path.join(
       process.cwd(),
@@ -16,7 +18,8 @@ export async function POST(_req: Request) {
       'spotify_tokens.json'
     )
 
-    // Check if file exists before attempting to delete
+    // The 'token' from the body is validated but not used in the logic.
+    // This endpoint simply clears the token file if it exists.
     if (fs.existsSync(tokenFilePath)) {
       fs.unlinkSync(tokenFilePath)
       logger.info('[API /clear-token] Deleted spotify_tokens.json')
@@ -49,3 +52,5 @@ export async function POST(_req: Request) {
     )
   }
 }
+
+export const POST = withBodyValidation(clearTokenSchema, handler)
