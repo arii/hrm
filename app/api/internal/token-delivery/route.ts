@@ -10,9 +10,14 @@ import { z } from 'zod'
 const LOG_DIR = path.resolve(process.cwd(), 'logs')
 const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
 
+type TokenDeliveryBody = z.infer<typeof tokenDeliverySchema> & {
+  sub?: string
+  provider?: string
+}
+
 const handler = async (
   req: NextRequest,
-  { body }: { body: z.infer<typeof tokenDeliverySchema> }
+  { body }: { body: TokenDeliveryBody }
 ) => {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
@@ -30,7 +35,7 @@ const handler = async (
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
     logger.info(
-      { subject: (body as any).sub ?? (body as any).provider },
+      { subject: body.sub ?? body.provider },
       'Received token-delivery'
     )
     return NextResponse.json({ ok: true })

@@ -8,8 +8,8 @@ import { clearTokenSchema } from '@/lib/validation/schemas'
 import { z } from 'zod'
 
 const handler = async (
-  req: NextRequest,
-  { body }: { body: z.infer<typeof clearTokenSchema> }
+  _req: NextRequest,
+  { body: _body }: { body: z.infer<typeof clearTokenSchema> }
 ) => {
   try {
     const tokenFilePath = path.join(
