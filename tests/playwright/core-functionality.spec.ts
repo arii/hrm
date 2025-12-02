@@ -24,15 +24,16 @@ test.describe('Core HRM Functionality', () => {
   let mockPage: Page;
 
   test.beforeAll(async ({ browser }) => {
-    test.setTimeout(60 * 1000);
     context = await browser.newContext();
     dashboardPage = await context.newPage();
     controlPage = await context.newPage();
     mockPage = await context.newPage();
 
-    await dashboardPage.goto(BASE_URL);
-    await controlPage.goto(`${BASE_URL}/client/control`);
-    await mockPage.goto(`${BASE_URL}/client/mock`);
+    await Promise.all([
+      dashboardPage.goto(BASE_URL),
+      controlPage.goto(`${BASE_URL}/client/control`),
+      mockPage.goto(`${BASE_URL}/client/mock`),
+    ]);
 
     await Promise.all([
       waitForPageReady(dashboardPage),
