@@ -15,36 +15,52 @@ import { createTheme } from '@mui/material/styles'
  */
 
 const theme = createTheme({
+  // Color Palette - Vibrant fitness-focused colors
   palette: {
-    mode: 'dark',
     primary: {
-      main: '#F43F5E', // Rose
+      main: '#F44336', // Red - matches Peak HR zone, high energy
+      light: '#EF5350',
+      dark: '#D32F2F',
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#10B981', // Emerald
+      main: '#2196F3', // Blue - matches Warm-up zone
+      light: '#42A5F5',
+      dark: '#1976D2',
+      contrastText: '#FFFFFF',
     },
     success: {
-      main: '#10B981', // Emerald
+      main: '#4CAF50', // Green - matches Fat Burn zone
+      light: '#66BB6A',
+      dark: '#388E3C',
     },
     warning: {
-      main: '#F59E0B', // Amber
+      main: '#FFEB3B', // Yellow - matches Cardio zone
+      light: '#FFF176',
+      dark: '#FBC02D',
+      contrastText: '#000000',
     },
     error: {
-      main: '#EF4444', // Red
+      main: '#F44336', // Red - matches Peak zone
+      light: '#EF5350',
+      dark: '#D32F2F',
     },
     info: {
-      main: '#3B82F6', // Blue
+      main: '#2196F3', // Blue
     },
+    // Background colors
     background: {
-      default: '#0F172A', // Deep Slate
-      paper: '#1E293B', // Elevated Background
+      default: '#F5F5F5', // Light grey for main background
+      paper: '#FFFFFF',
     },
+    // Text colors
     text: {
-      primary: '#ededed',
-      secondary: 'rgba(237, 237, 237, 0.7)',
-      disabled: 'rgba(237, 237, 237, 0.5)',
+      primary: '#212121',
+      secondary: '#757575',
+      disabled: '#BDBDBD',
     },
-    divider: 'rgba(237, 237, 237, 0.12)',
+    // Dividers
+    divider: '#E0E0E0',
   },
 
   // Typography - Clear hierarchy
