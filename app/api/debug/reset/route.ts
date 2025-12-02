@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import logger from '@/utils/logger'
+import { isProduction } from '@/utils/environment'
 
 export async function POST() {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction()) {
     return new NextResponse('Not Found', { status: 404 })
   }
 

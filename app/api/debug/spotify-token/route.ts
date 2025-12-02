@@ -1,11 +1,12 @@
 import fs from 'fs'
 import { NextResponse } from 'next/server'
 import path from 'path'
+import { isProduction } from '@/utils/environment'
 
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction()) {
     return new NextResponse('Not Found', { status: 404 })
   }
   try {

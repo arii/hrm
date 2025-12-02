@@ -1,9 +1,10 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { isProduction } from '@/utils/environment'
 
 export async function GET() {
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction()) {
     return new NextResponse('Not Found', { status: 404 })
   }
   try {

@@ -1,12 +1,15 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background-primary: #0F172A;      /* Deep slate */
+  --background-elevated: #1E293B;     /* Card backgrounds */
+  --accent-primary: #F43F5E;          /* Rose */
+  --accent-secondary: #10B981;        /* Emerald */
+  --gradient-primary: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%);
+  --foreground: #ededed;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* The dark theme is now the default, so no overrides are needed here. */
   }
 }
 
@@ -66,4 +69,9 @@ a {
   100% {
     opacity: 1;
   }
+}
+
+.text-glow {
+  color: #fff;
+  text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px var(--accent-primary), 0 0 20px var(--accent-primary), 0 0 25px var(--accent-primary), 0 0 30px var(--accent-primary), 0 0 35px var(--accent-primary);
 }

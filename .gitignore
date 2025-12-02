@@ -11,15 +11,9 @@
 !.yarn/versions
 package-lock.json
 
-# lint
-.eslintcache
-.eslint
-.eslintignore
-
 # testing
 /coverage
-/test-reports
-/blob-report
+
 # next.js
 /.next/
 /out/
