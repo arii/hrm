@@ -31,5 +31,5 @@ export interface IWebSocketService extends IService {
    * @param command The command to handle.
    * @param args Additional arguments for the command.
    */
-  handleCommand(command: string, ...args: any[]): void;
+  handleCommand(command: string, ...args: unknown[]): void;
 }
