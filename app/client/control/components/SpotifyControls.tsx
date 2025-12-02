@@ -170,13 +170,23 @@ const SpotifyControls = () => {
   return (
     <Card
       sx={{
+        position: 'relative', // Ensure card is a positioning context for the ::before pseudo-element
         mb: 3,
         color: 'white',
-        background: 'rgba(30, 41, 59, 0.7)',
-        backdropFilter: 'blur(20px) saturate(180%)',
+        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: 3,
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: 'linear-gradient(90deg, #1DB954 0%, transparent 100%)',
+        },
       }}
     >
       <CardContent sx={{ p: 2 }}>
@@ -214,8 +224,11 @@ const SpotifyControls = () => {
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
+                  color: '#1DB954',
+                  '&:hover': {
+                    backgroundColor: 'rgba(29, 185, 84, 0.2)',
+                    boxShadow: '0 0 15px 5px rgba(29, 185, 84, 0.5)',
+                  },
                 }}
               >
                 <SkipPrevious />
@@ -228,7 +241,10 @@ const SpotifyControls = () => {
                 sx={{
                   color: 'white',
                   backgroundColor: '#1DB954',
-                  '&:hover': { backgroundColor: '#169944' },
+                  '&:hover': {
+                    backgroundColor: '#169944',
+                    boxShadow: '0 0 15px 5px rgba(29, 185, 84, 0.5)',
+                  },
                 }}
               >
                 {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
@@ -237,8 +253,11 @@ const SpotifyControls = () => {
                 onClick={() => sendSpotifyCommand('NEXT')}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
+                  color: '#1DB954',
+                  '&:hover': {
+                    backgroundColor: 'rgba(29, 185, 84, 0.2)',
+                    boxShadow: '0 0 15px 5px rgba(29, 185, 84, 0.5)',
+                  },
                 }}
               >
                 <SkipNext />
