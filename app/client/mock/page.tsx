@@ -220,8 +220,8 @@ export default function MockPage() {
             sx={{ mb: 3 }}
           >
             {isStreaming
-              ? `STOP Streaming HR: ${hrValue} BPM`
-              : 'START Continuous Stream'}
+              ? `Stop Streaming HR: ${hrValue} BPM`
+              : 'Start Continuous Stream'}
           </Button>
 
           <Box

@@ -36,15 +36,15 @@ const TimerDisplay = ({
   if (phase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = 'warning.main'
-    phaseLabel = 'GET READY'
+    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseLabel = 'Get Ready'
   } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = 'info.main'
-    phaseLabel = 'RUNNING'
+    phaseColor = '#2563EB' // Blue/Primary
+    phaseLabel = 'Running'
   } else if (
     mode === 'TABATA' &&
     (phase === 'WORK' || phase === 'REST' || phase === 'COOLDOWN')
@@ -55,20 +55,20 @@ const TimerDisplay = ({
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (phase === 'WORK') {
-      phaseColor = 'error.main'
-      phaseLabel = 'WORK'
+      phaseColor = '#EF4444' // Red
+      phaseLabel = 'Work'
     } else if (phase === 'REST') {
-      phaseColor = 'success.main'
-      phaseLabel = 'REST'
+      phaseColor = '#22C55E' // Green
+      phaseLabel = 'Rest'
     } else {
-      phaseColor = 'info.main'
-      phaseLabel = 'COOLDOWN'
+      phaseColor = '#3B82F6' // Blue
+      phaseLabel = 'Cooldown'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = 'text.secondary'
-    phaseLabel = 'READY'
+    phaseColor = '#6B7280' // Gray
+    phaseLabel = 'Ready'
   }
 
   return (
@@ -146,7 +146,7 @@ const TimerDisplay = ({
               borderRadius: 1,
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            {mode === 'STOPWATCH' ? 'Stopwatch' : 'Tabata'}
           </Typography>
         </Box>
       )}
@@ -177,7 +177,7 @@ const TimerDisplay = ({
               borderRadius: 1,
             }}
           >
-            WORK:{workDuration}s REST:{restDuration}s
+            Work:{workDuration}s Rest:{restDuration}s
           </Typography>
         </Box>
       )}
