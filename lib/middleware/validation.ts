@@ -4,21 +4,21 @@ import { NextRequest, NextResponse } from 'next/server'
 
 type RouteHandler = (
   req: NextRequest,
-  ...args: any[]
+  ...args: unknown[]
 ) => Promise<NextResponse>
 
 export const withValidation =
-  (
-    requestSchema: z.ZodSchema<any>,
-    responseSchema: z.ZodSchema<any>,
+  <TRequest, TResponse>(
+    requestSchema: z.ZodSchema<TRequest>,
+    responseSchema: z.ZodSchema<TResponse>,
     handler: RouteHandler
   ) =>
-  async (req: NextRequest, ...args: any[]) => {
+  async (req: NextRequest, ...args: unknown[]) => {
     try {
       // 1. Validate Request Body
       const body = await req.json()
       const parsedBody = requestSchema.parse(body)
-      ;(req as any).parsedBody = parsedBody
+      ;(req as NextRequest & { parsedBody: TRequest }).parsedBody = parsedBody
     } catch (error) {
       if (error instanceof SyntaxError) {
         return new NextResponse(
