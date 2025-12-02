@@ -28,8 +28,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const actionButtonSx = {
   flex: 1,
-  py: 2,
-  px: 4,
+  fontWeight: 'bold',
+  py: 1.5,
   minHeight: '64px',
   transition: 'transform 0.1s ease-in-out',
   '&:active': {
@@ -37,13 +37,10 @@ const actionButtonSx = {
   },
   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
   boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
-  fontSize: '1.125rem',
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
   },
-  textTransform: 'none',
-  fontWeight: 700,
 }
 
 const stepperButtonSx = {
@@ -182,15 +179,14 @@ const TimerControls = () => {
         position: 'sticky',
         top: 16,
         zIndex: 1000,
-        background: 'rgba(30, 41, 59, 0.8)',
+        background: 'rgba(30, 41, 59, 0.7)',
+        backdropFilter: 'blur(20px) saturate(180%)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(10px)',
         borderRadius: 3,
-        transition: 'all 0.2s ease',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ mb: 2 }}>
           <Typography
             sx={{
