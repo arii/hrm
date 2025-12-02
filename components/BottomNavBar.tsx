@@ -78,6 +78,6 @@ export default function BottomNavBar() {
           },
         }}
       />
-    </BottomNavigation>
+    </StyledBottomNavigation>
   )
 }
