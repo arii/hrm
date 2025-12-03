@@ -11,6 +11,7 @@ import {
   TimerMode,
   TimerPhase,
 } from '../types/websocket'
+import { ITimerService } from '../types/service'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -32,7 +33,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TabataTimer implements ITimerService {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
@@ -277,6 +278,33 @@ class TabataTimer {
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  }
+
+  // --- IService Lifecycle Methods ---
+
+  /**
+   * Initializes the TabataTimer service.
+   * This service has no async setup, so it resolves immediately.
+   * @returns {Promise<void>}
+   */
+  public init(): Promise<void> {
+    // No async initialization required for this service
+    return Promise.resolve()
+  }
+
+  /**
+   * Stops the timer and cleans up resources.
+   * Implements the IService interface.
+   */
+  public stop(): void {
+    this.stopTimer() // Use the existing stop logic
+  }
+
+  /**
+   * A named alias for stop() for clearer disposal patterns if needed.
+   */
+  public dispose(): void {
+    this.stop()
   }
 }
 

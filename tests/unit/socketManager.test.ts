@@ -90,7 +90,8 @@ describe('WebSocket Manager Integration', () => {
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    spotifyService = new SpotifyPolling(broadcastFn)
+    await spotifyService.init()
   })
 
   afterEach(() => {

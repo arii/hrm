@@ -2,6 +2,7 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { ISpotifyService } from '../types/service'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -36,7 +37,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements ISpotifyService {
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -62,9 +63,9 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
-    logger.debug('Spotify Polling Service Initialized.')
+    logger.debug('Spotify Polling Service Constructed.')
 
     this.tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
@@ -72,16 +73,25 @@ export class SpotifyPolling {
     )
   }
 
-  public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
-  ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
-    return instance
+  /**
+   * Initializes the SpotifyPolling service by setting up the SDK.
+   * Implements the IService interface.
+   * @returns {Promise<void>}
+   */
+  public async init(): Promise<void> {
+    await this.initializeSdk()
+    this.tokenRefreshInterval = setInterval(
+      () => this.checkAndRefreshSdkToken(),
+      1000 * 60 * 5 // Check every 5 minutes
+    )
+  }
+
+  /**
+   * Stops the polling and cleanup resources.
+   * Implements the IService interface.
+   */
+  public stop(): void {
+    this.cleanup()
   }
 
   private async initializeSdk() {
