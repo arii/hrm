@@ -119,10 +119,18 @@ jobs:
             ${{ runner.os }}-nextjs-
 
       - name: Lint Code
-        run: pnpm run lint
+        id: lint
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          pnpm run lint 2>&1 | tee test-results/lint-output.log
 
       - name: Verify Build
-        run: pnpm run build
+        id: build
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          pnpm run build 2>&1 | tee test-results/build-output.log
 
       - name: Run Infrastructure Tests and Generate JUnit Report
         id: infra_tests
@@ -136,7 +144,7 @@ jobs:
       - name: Publish Infra Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
         uses: dorny/test-reporter@v1
-        if: always() # Ensures the report is published even if tests failed
+        if: always() && steps.infra_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
         with:
           name: Infrastructure Tests Report # The name of the check run
           path: test-results/infra-results.xml # Path to the generated XML file
@@ -153,7 +161,7 @@ jobs:
       - name: Publish Unit Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
         uses: dorny/test-reporter@v1
-        if: always() # Ensures the report is published even if tests failed
+        if: always() && steps.unit_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
         with:
           name: Unit Tests Report # The name of the check run
           path: test-results/unit-results.xml # Path to the generated XML file
@@ -171,7 +179,7 @@ jobs:
       - name: Publish Visual Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
         uses: dorny/test-reporter@v1
-        if: always() # Ensures the report is published even if tests failed
+        if: always() && steps.visual_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
         with:
           name: Visual Tests Report # The name of the check run
           path: test-results/results.xml # Path to the generated XML file
@@ -179,7 +187,7 @@ jobs:
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
       - name: Merge Playwright Reports
-        if: always()
+        if: always() && steps.visual_tests.outcome != 'skipped'
         run: npx playwright merge-reports --reporter html ./blob-report
         # The command now correctly points to the default directory containing blob reports
 
@@ -196,7 +204,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -232,6 +240,16 @@ jobs:
               echo '```' >> "$COMMENT_FILE"
             fi
           }
+
+          if [ "${{ steps.lint.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Lint, "
+            append_log "test-results/lint-output.log" "Lint"
+          fi
+
+          if [ "${{ steps.build.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Build, "
+            append_log "test-results/build-output.log" "Build"
+          fi
 
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
@@ -293,7 +311,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
