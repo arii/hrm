@@ -24,7 +24,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
     
     // Wait for both components to be ready
     await expect(page.getByTestId('spotify-controls-card')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('timer-mode-heading')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('tabata-mode-button')).toBeVisible({ timeout: 10000 });
 
     // 3. Verify GET_DEVICES
     await expect.poll(() => sentMessages, { timeout: 10000 }).toContainEqual(

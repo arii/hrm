@@ -49,7 +49,7 @@ interface WebSocketContextType extends AppState {
   disconnect: () => void
 }
 
-const WebSocketContext = createContext<WebSocketContextType | null>(null)
+export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
   children,

@@ -1,12 +1,22 @@
 'use client'
 
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
+import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
+import BottomNavBar from '../../../components/BottomNavBar'
+import HrTile from '../../../components/HrTile'
 import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
-import ConnectView from './ConnectView'
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
@@ -29,9 +39,7 @@ export default function ConnectPage() {
 
   const {
     connectAndStream,
-    disconnect,
     deviceStatus,
-    batteryLevel,
     isConnected: bluetoothConnected,
   } = useBluetoothHRM()
   const [startAutoConnect, setStartAutoConnect] = useState(false)
@@ -95,33 +103,6 @@ export default function ConnectPage() {
     await connectAndStream(userName, userAge)
   }
 
-  const handleDisconnect = () => {
-    setIsConnected(false)
-    disconnect()
-  }
-
-  const handleResetServer = async () => {
-      if (confirm('Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.')) {
-        try {
-          // Clear client-side cookies
-          document.cookie = 'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-          // Also clear local storage if used
-          localStorage.clear();
-
-          const response = await fetch(API_DEBUG_RESET, { method: 'POST' });
-          const data = await response.json();
-          alert(data.message);
-          window.location.reload(); // Reload to reflect changes
-        } catch (error) {
-          console.error('Error resetting server:', error);
-          alert('Failed to reset server.');
-        }
-      }
-  }
-
   // Find current user's heart rate data from WebSocket
   const currentUserData = hrmData.find(
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
@@ -131,21 +112,134 @@ export default function ConnectPage() {
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   return (
-    <ConnectView
-       userName={userName}
-       setUserName={setUserName}
-       userAge={userAge}
-       setUserAge={setUserAge}
-       isConnected={isConnected}
-       deviceStatus={deviceStatus}
-       batteryLevel={batteryLevel}
-       onConnect={handleConnect}
-       onDisconnect={handleDisconnect}
-       onResetServer={handleResetServer}
-       currentHR={currentHR}
-       hrZoneProps={hrZoneProps}
-       connectionStatus={connectionStatus}
-       bluetoothConnected={bluetoothConnected}
-    />
+    <>
+      <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Connect Heart Rate Monitor
+        </Typography>
+
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            label="Your Name"
+            placeholder="e.g., Jane Doe"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            label="Your Age"
+            placeholder="e.g., 30"
+            type="number"
+            value={userAge}
+            onChange={(e) => setUserAge(e.target.value)}
+            inputProps={{ min: 1, max: 120 }}
+          />
+        </Stack>
+
+        {deviceStatus.includes('Failed') && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {deviceStatus}
+          </Alert>
+        )}
+
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          {!isConnected ? (
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleConnect}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Connecting')
+              }
+            >
+              {deviceStatus.includes('Connecting') ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Connect Bluetooth HRM'
+              )}
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => {
+                setIsConnected(false)
+                // Clear saved device to force new pairing
+                document.cookie =
+                  'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+              }}
+              color="error"
+            >
+              Disconnect
+            </Button>
+          )}
+        </Box>
+
+        {isConnected && bluetoothConnected && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Connected! Heart rate data is being streamed.
+          </Alert>
+        )}
+
+        {isConnected && currentHR > 0 && (
+          <Grid container spacing={2} sx={{ mt: 2 }}>
+            <Grid item xs={12}>
+              <HrTile
+                name={userName}
+                bpm={currentHR}
+                percentMax={hrZoneProps.percentage}
+                background={hrZoneProps.progressColor}
+              />
+            </Grid>
+          </Grid>
+        )}
+
+        {isConnected && currentHR === 0 && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Connected but no heart rate detected. Make sure your heart rate
+            monitor is properly positioned and active.
+          </Alert>
+        )}
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
+          WebSocket: {connectionStatus}
+        </Typography>
+
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={async () => {
+              if (confirm('Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.')) {
+                try {
+                  // Clear client-side cookies
+                  document.cookie = 'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+                  const response = await fetch(API_DEBUG_RESET, { method: 'POST' });
+                  const data = await response.json();
+                  alert(data.message);
+                } catch (error) {
+                  console.error('Error resetting server:', error);
+                  alert('Failed to reset server.');
+                }
+              }
+            }}
+          >
+            Reset Server
+          </Button>
+        </Box>
+      </Container>
+      <BottomNavBar />
+    </>
   )
 }

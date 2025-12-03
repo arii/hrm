@@ -172,7 +172,7 @@ test.describe('Visual Regression Tests', () => {
 
   test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
-    await expect(controlPage.getByText('Timer Mode')).toBeVisible({
+    await expect(controlPage.getByTestId('tabata-mode-button')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
@@ -279,7 +279,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.05, // Increased tolerance for rendering variability
+      maxDiffPixelRatio: 0.02,
       // Mask the dynamic HR values within the tile
       mask: [
         firstTile.locator('[data-testid="live-hr-value"]'),

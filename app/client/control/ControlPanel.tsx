@@ -73,8 +73,8 @@ const ControlPanel = () => {
       <Container
         maxWidth="xs"
         sx={{
-          py: { xs: 2, sm: 3 },
-          px: { xs: 2, sm: 3 },
+          py: 1,
+          px: 1,
           minHeight: '100vh',
           background: 'rgba(30, 41, 59, 0.7)',
           backdropFilter: 'blur(20px) saturate(180%)',

@@ -25,7 +25,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const actionButtonSx = {
+const baseActionSx = {
   flex: 1,
   fontWeight: 'bold',
   py: 1.5,
@@ -34,11 +34,28 @@ const actionButtonSx = {
   '&:active': {
     transform: 'scale(0.95)',
   },
+  '&:hover': {
+    transform: 'translateY(-2px)',
+  },
+}
+
+const startButtonSx = {
+  ...baseActionSx,
   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
   boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
   '&:hover': {
-    transform: 'translateY(-2px)',
+    ...baseActionSx['&:hover'],
     boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
+  },
+}
+
+const stopButtonSx = {
+  ...baseActionSx,
+  background: 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)',
+  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)',
+  '&:hover': {
+    ...baseActionSx['&:hover'],
+    boxShadow: '0 12px 32px rgba(239, 68, 68, 0.5)',
   },
 }
 
@@ -55,7 +72,7 @@ const stepperButtonSx = {
 }
 
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+  const { timerData, sendData, connectionStatus } = useWebSocket()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -175,10 +192,10 @@ const TimerControls = () => {
   return (
     <Card
       sx={{
-        mb: 2,
+        mb: 1,
         color: '#EF4444',
         position: 'sticky',
-        top: 16,
+        top: 8,
         zIndex: 1000,
         background: 'rgba(30, 41, 59, 0.7)',
         backdropFilter: 'blur(20px) saturate(180%)',
@@ -187,25 +204,13 @@ const TimerControls = () => {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ mb: 2 }}>
-          <Typography
-            variant="h6"
-            data-testid="timer-mode-heading"
-            sx={{
-              color: 'white',
-              fontWeight: 'medium',
-              mb: 2,
-              textAlign: 'center',
-            }}
-          >
-            Timer Mode
-          </Typography>
+      <CardContent sx={{ p: 1.5 }}>
+        <Box sx={{ mb: 1.5 }}>
           <Stack direction="row" spacing={2} justifyContent="center">
             <Button
               variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
               onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
+              disabled={timerData.isRunning || connectionStatus !== 'Connected'}
               startIcon={<FitnessCenter />}
               data-testid="tabata-mode-button"
               sx={{
@@ -230,7 +235,7 @@ const TimerControls = () => {
                 timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
               }
               onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
+              disabled={timerData.isRunning || connectionStatus !== 'Connected'}
               startIcon={<Timer />}
               data-testid="stopwatch-mode-button"
               sx={{
@@ -262,7 +267,7 @@ const TimerControls = () => {
           </Typography>
         </Box>
 
-        {timerData.mode === 'TABATA' && (
+        {timerData.mode === 'TABATA' && !timerData.isRunning && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
@@ -450,7 +455,8 @@ const TimerControls = () => {
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              sx={actionButtonSx}
+              sx={startButtonSx}
+              disabled={connectionStatus !== 'Connected'}
               startIcon={<PlayArrow fontSize="large" />}
             >
               START
@@ -461,7 +467,8 @@ const TimerControls = () => {
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}
-              sx={actionButtonSx}
+              sx={stopButtonSx}
+              disabled={connectionStatus !== 'Connected'}
               startIcon={<Stop fontSize="large" />}
             >
               STOP
