@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
+import Box from '@mui/material/Box'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -50,7 +51,11 @@ export default function RootLayout({
             <Providers>
             <UserSettingsProvider>
               <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
+                <TimerSoundProvider>
+                  <Box sx={{ paddingBottom: '56px' }}>
+                    {children}
+                  </Box>
+                </TimerSoundProvider>
               </ErrorBoundary>
             </UserSettingsProvider>
             </Providers>
