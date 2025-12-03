@@ -1,7 +1,8 @@
 // File: tests/playwright/remote-capabilities.spec.ts
 import { test, expect } from '@playwright/test'
+import { getBaseURL } from '../../utils/urls'
 
-const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:3000'
+const BASE_URL = getBaseURL()
 
 test.describe('Remote Capabilities & Command Relay', () => {
   test('Controller sends commands via WebSocket', async ({ page }) => {
