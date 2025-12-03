@@ -27,7 +27,10 @@
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
-    "depcheck": "depcheck"
+    "depcheck": "depcheck",
+    "kill-all": "./scripts/kill-all.sh",
+    "verify": "node scripts/verify-and-publish.cjs",
+    "commit:verified": "npm run verify"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
