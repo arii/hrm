@@ -13,6 +13,7 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import rateLimit from 'express-rate-limit'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -53,6 +54,7 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+expressApp.set('trust proxy', 1)
 
 // --- Main Application Setup ---
 
@@ -60,6 +62,27 @@ app
   .prepare()
   .then(async () => {
     const server = createServer(expressApp)
+
+    // --- Rate Limiting ---
+    const spotifyApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 30, // Limit each IP to 30 requests per windowMs
+      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+      message:
+        'Too many requests to Spotify API from this IP, please try again after a minute',
+    })
+
+    const internalApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 100, // Limit each IP to 100 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: false,
+      message:
+        'Too many requests to internal API from this IP, please try again after a minute',
+    })
+    expressApp.use('/api/spotify', spotifyApiLimiter)
+    expressApp.use('/api/internal', internalApiLimiter)
 
     // --- Static Asset Serving (Production Only) ---
     // In production, serve the Next.js static assets directly from the .next/static folder.
@@ -80,6 +103,10 @@ app
 
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
+
+    // Custom WebSocket connection limiting
+    const wsConnections = new Map<string, number>()
+    const MAX_WS_CONNECTIONS_PER_IP = 5
 
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
@@ -151,11 +178,33 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+
+        if (ip) {
+          const currentConnections = wsConnections.get(ip as string) || 0
+          if (currentConnections >= MAX_WS_CONNECTIONS_PER_IP) {
+            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
+            socket.destroy()
+            return
+          }
+        }
+
         const { pathname } = parse(req.url || '')
 
         // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+            if (ip) {
+              wsConnections.set(ip, (wsConnections.get(ip) || 0) + 1)
+              ws.on('close', () => {
+                const count = (wsConnections.get(ip) || 1) - 1
+                if (count === 0) {
+                  wsConnections.delete(ip)
+                } else {
+                  wsConnections.set(ip, count)
+                }
+              })
+            }
             wss.emit('connection', ws, req)
           })
         }
