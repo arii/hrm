@@ -1,26 +1,42 @@
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
- * API route to fetch available Spotify devices for the authenticated user.
+ * API route to fetch available Spotify devices.
  *
- * This endpoint retrieves the list of devices from the Spotify API and returns
- * them to the client. This is used by the control panel to allow the user to
- * select which device to play music on.
+ * This endpoint retrieves the list of devices from the Spotify API. It first
+ * attempts to use the user's session token. If no session exists, it falls
+ * back to a system-level token managed by SpotifyTokenManager, allowing
+ * unauthenticated clients on the local network to view and control playback.
  *
  * @param _req The incoming Next.js API request (unused).
  * @returns A NextResponse object with the device list or an error.
  */
 export async function GET(_req: Request) {
   try {
-    // 1. Get the server-side session.
     const session = await getServerSession(authOptions)
+    let accessToken = session?.accessToken
 
-    // 2. Check if the session and token exist.
-    if (!session || !session.accessToken) {
-      throw new ApiError(401, 'Not authenticated or token is missing.')
+    // Fallback to system token if no user session is found
+    if (!accessToken) {
+      console.log(
+        '[API /devices] No user session, attempting fallback to System Token...'
+      )
+      const tokenManager = new SpotifyTokenManager(
+        process.env.SPOTIFY_CLIENT_ID || '',
+        process.env.SPOTIFY_CLIENT_SECRET || ''
+      )
+      const systemToken = await tokenManager.getValidAccessToken()
+      if (systemToken) {
+        accessToken = systemToken
+      }
+    }
+
+    if (!accessToken) {
+      throw new ApiError(401, 'Not authenticated and no system token available.')
     }
 
     // 3. Fetch devices from Spotify API.
@@ -28,7 +44,7 @@ export async function GET(_req: Request) {
       'https://api.spotify.com/v1/me/player/devices',
       {
         headers: {
-          Authorization: `Bearer ${session.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     )

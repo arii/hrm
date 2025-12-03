@@ -24,9 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './lib/swagger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
-import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -62,41 +60,6 @@ app
   .prepare()
   .then(async () => {
     const server = createServer(expressApp)
-
-    // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
-    if (process.env.TESTING !== 'true') {
-      const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: 'Too many requests to Spotify API, please try again later.' },
-      })
-
-      const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: 'Too many requests to internal API, please try again later.' },
-      })
-      const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: 'Too many requests, please try again later.' },
-        skip: (req: Request) =>
-          req.path.startsWith('/api/spotify') ||
-          req.path.startsWith('/api/internal'),
-      })
-
-      // Apply the rate limiters to specific routes
-      expressApp.use('/api/spotify/', spotifyApiLimiter)
-      expressApp.use('/api/internal/', internalApiLimiter)
-      expressApp.use('/api/', generalApiLimiter)
-    }
 
     // --- Static Asset Serving (Production Only) ---
     // In production, serve the Next.js static assets directly from the .next/static folder.
@@ -157,18 +120,6 @@ app
       swaggerUi.setup(swaggerSpec)
     )
 
-    // Health Check Endpoints
-    expressApp.get('/api/health', (_req: Request, res: Response) => {
-      res.status(200).json({ status: 'ok' });
-    });
-
-    expressApp.get('/api/health/ready', async (_req: Request, res: Response) => {
-      const healthStatus = await performHealthCheck(wss, spotifyService, tabataService);
-      const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
-      res.status(statusCode).json(healthStatus);
-    });
-
-
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
@@ -196,32 +147,11 @@ app
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
-    const wsConnections = new Map<string, number>()
-    const WS_MAX_CONNECTIONS = 5
-
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-        const ip = (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() || req.socket.remoteAddress
-
-        if (process.env.TESTING !== 'true' && ip) {
-          const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS) {
-            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
-            socket.destroy()
-            return
-          }
-          wsConnections.set(ip, count + 1)
-
-          socket.on('close', () => {
-            const currentCount = wsConnections.get(ip) || 0
-            if (currentCount > 0) {
-              wsConnections.set(ip, currentCount - 1)
-            }
-          })
-        }
 
         // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
