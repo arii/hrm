@@ -29,7 +29,8 @@ const actionButtonSx = {
   flex: 1,
   fontWeight: 'bold',
   py: 1.5,
-  minHeight: '64px',
+  minHeight: '56px',
+  minWidth: '56px',
   transition: 'transform 0.1s ease-in-out',
   '&:active': {
     transform: 'scale(0.95)',
@@ -52,6 +53,8 @@ const stepperButtonSx = {
   },
   width: 64,
   height: 64,
+  minWidth: '56px',
+  minHeight: '56px',
 }
 
 const TimerControls = () => {
@@ -210,6 +213,8 @@ const TimerControls = () => {
               data-testid="tabata-mode-button"
               sx={{
                 flex: 1,
+                minWidth: '56px',
+                minHeight: '56px',
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
@@ -235,6 +240,8 @@ const TimerControls = () => {
               data-testid="stopwatch-mode-button"
               sx={{
                 flex: 1,
+                minWidth: '56px',
+                minHeight: '56px',
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
                 backgroundColor:
                   timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
@@ -277,6 +284,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
+                    minWidth: '56px',
+                    minHeight: '56px',
                     color: '#EF4444',
                     borderColor: '#EF4444',
                     '&:hover': {
@@ -295,6 +304,8 @@ const TimerControls = () => {
                   }}
                   sx={{
                     flex: 1,
+                    minWidth: '56px',
+                    minHeight: '56px',
                     color: '#22C55E',
                     borderColor: '#22C55E',
                     '&:hover': {

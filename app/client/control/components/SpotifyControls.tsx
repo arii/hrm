@@ -181,6 +181,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   '&:hover': { backgroundColor: 'grey.700' },
                 }}
               >
@@ -194,6 +196,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   backgroundColor: '#1DB954',
                   '&:hover': { backgroundColor: '#169944' },
                 }}
@@ -206,6 +210,8 @@ const SpotifyControls = () => {
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
+                  minWidth: '56px',
+                  minHeight: '56px',
                   '&:hover': { backgroundColor: 'grey.700' },
                 }}
               >
@@ -276,13 +282,24 @@ const SpotifyControls = () => {
                 size="small"
                 startIcon={<LibraryMusic />}
                 onClick={handleBrowseClick}
-                sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+                sx={{
+                  mt: 2,
+                  borderColor: 'grey.600',
+                  color: 'grey.300',
+                  minWidth: '56px',
+                  minHeight: '56px',
+                }}
               >
                 Select Playlist
             </Button>
           </>
         ) : (
-          <Button onClick={handleBrowseClick}>Select Music</Button>
+          <Button
+            onClick={handleBrowseClick}
+            sx={{ minWidth: '56px', minHeight: '56px' }}
+          >
+            Select Music
+          </Button>
         )}
       </CardContent>
     </Card>

@@ -34,7 +34,10 @@ export default function BottomNavBar() {
         left: 0,
         right: 0,
         zIndex: 1000,
-        boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
+        background:
+          'linear-gradient(to top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8))',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
       <BottomNavigationAction
@@ -43,8 +46,12 @@ export default function BottomNavBar() {
         component={Link}
         href="/"
         sx={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          '&.Mui-selected': {
+            color: '#F43F5E',
+          },
           '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
           },
         }}
       />
@@ -54,8 +61,12 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/control"
         sx={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          '&.Mui-selected': {
+            color: '#F43F5E',
+          },
           '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
           },
         }}
       />
@@ -65,8 +76,12 @@ export default function BottomNavBar() {
         component={Link}
         href="/client/connect"
         sx={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          '&.Mui-selected': {
+            color: '#F43F5E',
+          },
           '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
           },
         }}
       />
