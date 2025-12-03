@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
+import FooterControls from '@/components/FooterControls'
 import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
@@ -48,16 +48,16 @@ export default function RootLayout({
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
             <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
+              <UserSettingsProvider>
+                <ErrorBoundary fallback={<ErrorFallback />}>
+                  <TimerSoundProvider>{children}</TimerSoundProvider>
+                </ErrorBoundary>
+                <FooterControls />
+              </UserSettingsProvider>
             </Providers>
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />
-          <BottomNavBar />
         </ThemeRegistry>
       </body>
     </html>

@@ -1,3 +1,4 @@
+// UI Refactor
 // File: app/page.tsx (Main Viewer Dashboard)
 /**
  * Main Viewer Dashboard: The primary output page for the trainer or viewer.
@@ -17,18 +18,12 @@ const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 import { useWebSocket } from '@/context/WebSocketContext'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 // Lazy-load heavy components
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={80} />,
-})
 const GoogleDocViewer = dynamic(
   () => import('../components/GoogleDocViewer'),
   {
@@ -41,12 +36,6 @@ const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const { volume } = useVolumePreference() // Get volume state
-
-  // Initialize Spotify Web Playback SDK
-  const { player } = useSpotifyWebPlayback()
-  
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -61,7 +50,6 @@ const Dashboard = () => {
       maxWidth="xl"
       sx={{
         py: { xs: 2, sm: 3 },
-        pb: { xs: 12, sm: 14 }, // Extra bottom padding for fixed Spotify bar
         minHeight: '100vh',
         backgroundColor: 'background.default',
       }}
@@ -91,16 +79,12 @@ const Dashboard = () => {
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
-            height={500}
+            height={400}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
         </Grid>
       </Grid>
-
-      <ErrorBoundary fallback={<ErrorFallback />}>
-        <SpotifyDisplay />
-      </ErrorBoundary>
     </Container>
   )
 }
