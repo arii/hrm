@@ -370,7 +370,8 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
         Promise.reject({ status: 401 })
       )
-      const refreshSpy = jest.spyOn(spotifyService as any, 'checkAndRefreshSdkToken');
+      // @ts-expect-error - Testing private method
+      const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken');
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
       await Promise.resolve() // Flush promises
