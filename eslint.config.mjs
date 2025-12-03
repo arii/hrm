@@ -3,6 +3,7 @@ import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+import pathsPlugin from 'eslint-plugin-paths'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -15,6 +16,16 @@ export default defineConfig([
   {
     rules: {
       'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors with TypeScript
+    },
+  },
+
+  // Enforce path aliases
+  {
+    plugins: {
+      paths: pathsPlugin,
+    },
+    rules: {
+      'paths/alias': 'error',
     },
   },
 
