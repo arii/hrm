@@ -8,7 +8,7 @@ import {
   type SpotifyControlBody,
 } from '@/lib/validation/schemas'
 
-async function handler(req: NextRequest, data: SpotifyControlBody) {
+async function handler(_req: NextRequest, data: SpotifyControlBody) {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {

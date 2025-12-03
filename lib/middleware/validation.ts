@@ -22,7 +22,7 @@ export function withValidation<T>(
         return NextResponse.json(
           {
             error: 'Validation failed',
-            issues: error.errors.map((e) => ({
+            issues: error.issues.map((e) => ({
               path: e.path.join('.'),
               message: e.message,
             })),
