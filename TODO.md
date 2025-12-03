@@ -4,9 +4,9 @@ This document outlines the remaining tasks to complete the GitHub Pages site and
 
 ## GitHub Pages Site
 
-- [ ] **Replace Placeholder Images:** In `index.html`, replace the placeholder images with actual screenshots of the HRM dashboard from the `hrm/leader` or `nov_6_refactor` branches.
-- [ ] **Update Privacy Policy:** Review and update `privacy.html` to ensure it is fully compliant with Strava's API requirements and any applicable laws. You can find the Strava API legal requirements in the `docs` directory.
-- [ ] **Update Terms of Service:** Review and update `terms.html` to ensure it is fully compliant with Strava's API requirements and any applicable laws.
+- [x] **Replace Placeholder Images:** In `index.html`, replace the placeholder images with actual screenshots of the HRM dashboard from the `hrm/leader` or `nov_6_refactor` branches.
+- [x] **Update Privacy Policy:** Review and update `privacy.html` to ensure it is fully compliant with Strava's API requirements and any applicable laws. You can find the Strava API legal requirements in the `docs` directory.
+- [x] **Update Terms of Service:** Review and update `terms.html` to ensure it is fully compliant with Strava's API requirements and any applicable laws.
 
 ## Strava API Integration (Main Application)
 

@@ -3,36 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - HRM Fitness Training Dashboard</title>
+    <title>Privacy Policy - HRM Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>HRM Fitness Training Dashboard</h1>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="terms.html">Terms of Service</a>
-        </nav>
+        <div class="container header-container">
+            <h1>HRM Dashboard</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="privacy.html" class="active">Privacy</a>
+                <a href="terms.html">Terms</a>
+            </nav>
+        </div>
     </header>
-    <main>
+
+    <main class="container doc-container">
+        <h1>Privacy Policy</h1>
+        <p class="meta">Last Updated: December 3, 2025</p>
+
         <section>
-            <h2>Privacy Policy</h2>
-            <p><em>(Note: This is a template and should be updated to be fully compliant with Strava's API requirements and any applicable laws.)</em></p>
-            <h3>Information We Collect</h3>
-            <p>We do not collect or store any personal heart rate data on our servers. Heart rate data is streamed live for visualization during your workout and is not saved.</p>
-            <p>When you connect your Strava account, we may access your Strava profile information in order to sync your workout data. This information is used solely for the purpose of integrating with the Strava API and is handled in accordance with Strava's API agreement.</p>
-            <h3>How We Use Your Information</h3>
-            <p>The information accessed from your Strava account is used to sync your workout data, including heart rate, to your private Strava account. We do not use this information for any other purpose.</p>
-            <h3>Data Security</h3>
-            <p>We are committed to ensuring that your information is secure. We use HTTPS encryption to protect data transmitted between your device and our servers.</p>
-            <h3>Contact Us</h3>
-            <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a>.</p>
+            <h2>1. Introduction</h2>
+            <p>The HRM Dashboard ("we", "us") is designed to prioritize your privacy. We process your health data locally on your device.</p>
+        </section>
+
+        <section>
+            <h2>2. Data Collection & Usage</h2>
+            <ul>
+                <li><strong>Heart Rate Data:</strong> Streamed via Bluetooth for real-time visualization. This data is processed in your browser's memory and is not stored on our servers.</li>
+                <li><strong>Strava Profile:</strong> If you connect with Strava, we access your public profile and heart rate configuration to personalize your zones.</li>
+            </ul>
+            <p><strong>We do not sell, license, or share your data with third parties or advertisers.</strong></p>
+        </section>
+
+        <section class="highlight-box">
+            <h2>3. Strava Platform Disclosure</h2>
+            <p><em>The following disclosure is required by the Strava API Agreement:</em></p>
+            <p>Strava may monitor and collect certain usage data and information related to your use of the Strava API Materials, and Strava Platform in connection with this Application, and Strava may use such Usage Data for any business purpose, internal or external, including, without limitation, providing enhancements to the Strava API Materials or Strava Platform, providing developer or user support, or ensuring compliance.</p>
+        </section>
+
+        <section>
+            <h2>4. Data Retention</h2>
+            <p>We practice data minimization. Health data is discarded immediately after your session ends unless you explicitly choose to upload it to Strava.</p>
+        </section>
+
+        <section>
+            <h2>5. Contact & Support</h2>
+            <p>For privacy inquiries or to request data deletion, please contact:</p>
+            <p><a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a></p>
         </section>
     </main>
+
     <footer>
-        <p>&copy; 2025 Ariel Anders</p>
+        <div class="container footer-content">
+            <div class="brand-compliance">
+                <span>Powered by</span>
+                <span class="strava-logo-text">STRAVA</span>
+            </div>
+            <p class="copyright">&copy; 2025 Ariel Anders.</p>
+        </div>
     </footer>
 </body>
 </html>

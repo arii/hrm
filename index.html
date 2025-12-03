@@ -3,35 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HRM Fitness Training Dashboard</title>
+    <title>HRM Fitness Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico">
 </head>
 <body>
     <header>
-        <h1>HRM Fitness Training Dashboard</h1>
-        <nav>
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="terms.html">Terms of Service</a>
-        </nav>
+        <div class="container header-container">
+            <h1>HRM Dashboard</h1>
+            <nav>
+                <a href="index.html" class="active">Home</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
+            </nav>
+        </div>
     </header>
+
     <main>
-        <section>
-            <h2>About the Project</h2>
-            <p>The HRM dashboard allows users to stream their live heart rate from a bluetooth device to a web interface. This data is visualized during the workout but is not stored on the server to ensure user privacy. The dashboard also integrates with the Strava API to sync workout data, including heart rate, to the user's private Strava account.</p>
+        <section class="hero">
+            <div class="container">
+                <h2>Real-Time Heart Rate Zones</h2>
+                <p class="hero-sub">Stream Bluetooth Low Energy (BLE) devices directly to your browser. No server storage. 100% Privacy.</p>
+                <a href="https://your-app-url.com/client/connect" class="cta-button">Launch Dashboard</a>
+
+                <div class="hero-image-wrapper">
+                    <img src="assets/screenshots/hero-streaming.png" alt="Live Heart Rate Dashboard with Zones" class="screenshot-hero">
+                </div>
+            </div>
         </section>
-        <section>
-            <h2>Dashboard Preview</h2>
-            <p><em>(Note: These are placeholder images and will be replaced with actual screenshots from the <code>hrm/leader</code> or <code>nov_6_refactor</code> branches of the main application.)</em></p>
-            <h3>Dashboard View</h3>
-            <img src="https://via.placeholder.com/600x300.png?text=HRM+Dashboard" alt="Dashboard Preview">
-            <h3>Leaderboard</h3>
-            <img src="https://via.placeholder.com/600x300.png?text=Leaderboard+View" alt="Leaderboard Preview">
+
+        <section class="tutorial">
+            <div class="container">
+                <h2>How It Works</h2>
+
+                <div class="tutorial-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Open Connection Hub</h3>
+                        <p>Open the app in a Chrome-based browser. Enter your name and age to calculate your Max HR zones automatically.</p>
+                        <img src="assets/screenshots/tutorial-01-connect.png" alt="Connection Screen" class="screenshot-step">
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Pair Device</h3>
+                        <p>Click "Connect Bluetooth HRM". Select your Heart Rate Monitor from the browser's pairing menu. Status will turn green.</p>
+                        <img src="assets/screenshots/tutorial-02-pair.png" alt="Device Pairing Success" class="screenshot-step">
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Sync & Track</h3>
+                        <p>View real-time zones while you run. When finished, use "Connect with Strava" to upload your activity analysis.</p>
+                        <img src="assets/screenshots/tutorial-03-sync.png" alt="Strava Sync Integration" class="screenshot-step">
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
+
     <footer>
-        <p>&copy; 2025 Ariel Anders</p>
+        <div class="container footer-content">
+            <div class="brand-compliance">
+                <span>Powered by</span>
+                <span class="strava-logo-text">STRAVA</span>
+            </div>
+
+            <div class="legal-nav">
+                <a href="privacy.html">Privacy Policy</a>
+                <span class="separator">|</span>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+
+            <p class="copyright">&copy; 2025 Ariel Anders. This app is not created or endorsed by Strava.</p>
+        </div>
     </footer>
 </body>
 </html>
