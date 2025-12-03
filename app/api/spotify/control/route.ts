@@ -2,36 +2,23 @@
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import { withValidation } from '@/lib/middleware/validation'
+import { spotifyControlSchema } from '@/lib/validation/schemas'
 
-export async function POST(req: NextRequest) {
+const handler = async (req: NextRequest, body: any) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
     return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
   }
 
-  // Parse body safely
-  let body
-  try {
-    body = await req.json()
-  } catch (_e) {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
-  
   const { command, volume, deviceId } = body
 
-  // Allowed commands
-  const VALID_COMMANDS = ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS', 'SET_VOLUME', 'TRANSFER_PLAYBACK']
-  if (!VALID_COMMANDS.includes(command)) {
-    return NextResponse.json({ error: `Invalid command: ${command}` }, { status: 400 })
-  }
-
   try {
-    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player' // Corrected Base URL
+    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player'
     let url = ''
     let method = ''
     
-    // Construct Query Parameters if needed (e.g. device_id)
     const queryParams = deviceId ? `?device_id=${deviceId}` : ''
 
     switch (command) {
@@ -52,20 +39,15 @@ export async function POST(req: NextRequest) {
         method = 'POST'
         break
       case 'SET_VOLUME':
-        // Volume requires a query param 'volume_percent'
-        if (volume === undefined) throw new Error('Volume required for SET_VOLUME')
         url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
         method = 'PUT'
         break
-       case 'TRANSFER_PLAYBACK':
-         if (!deviceId) throw new Error('Device ID required for TRANSFER_PLAYBACK')
-         url = `${SPOTIFY_API_BASE}`
-         method = 'PUT'
-         // Transfer requires a specific body structure
-         break
+      case 'TRANSFER_PLAYBACK':
+        url = `${SPOTIFY_API_BASE}`
+        method = 'PUT'
+        break
     }
 
-    // Special handling for Transfer Playback body
     const fetchOptions: RequestInit = {
       method: method,
       headers: {
@@ -80,13 +62,10 @@ export async function POST(req: NextRequest) {
 
     const response = await fetch(url, fetchOptions)
 
-    // Handle 204 No Content (Success) explicitly
     if (response.status === 204) {
       return NextResponse.json({ success: true, message: `Command '${command}' executed.` })
     }
 
-    // Handle other statuses
-    // Attempt to parse JSON only if content-type is json or text exists
     const text = await response.text()
     if (!response.ok) {
         let errorDetails = text
@@ -113,3 +92,5 @@ export async function POST(req: NextRequest) {
     )
   }
 }
+
+export const POST = withValidation(spotifyControlSchema, handler)
