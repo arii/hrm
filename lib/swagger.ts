@@ -1,4 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc'
+import { zodToJsonSchema } from 'zod-to-json-schema'
+import { spotifyControlSchema } from './validation/schemas'
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -8,8 +10,13 @@ const options: swaggerJsdoc.Options = {
       version: '1.0.0',
       description: 'API documentation for the HRM application',
     },
+    components: {
+      schemas: {
+        SpotifyControl: zodToJsonSchema(spotifyControlSchema),
+      },
+    },
   },
-  apis: ['./app/api/**/*.ts', './server.ts'], // files containing annotations as above
+  apis: ['./app/api/**/*.ts', './server.ts'],
 }
 
 const swaggerSpec = swaggerJsdoc(options)

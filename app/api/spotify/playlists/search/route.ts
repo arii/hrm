@@ -1,48 +1,57 @@
-// app/api/spotify/playlists/search/route.ts
-// API route to search for public Spotify playlists
-// This endpoint is used by the PlaylistSelector component to search for popular playlists
-
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const searchSchema = z.object({
+  q: z.string().min(1).max(100),
+})
 
 /**
- * API route to search for public Spotify playlists.
- *
- * This endpoint searches Spotify's public playlist catalog and returns results
- * that can be combined with user playlists in the PlaylistSelector component.
- *
- * @param req The incoming Next.js API request containing a 'q' query parameter.
- * @returns A NextResponse object with search results or an error.
+ * @openapi
+ * /api/spotify/playlists/search:
+ *   get:
+ *     summary: Search for Spotify playlists
+ *     description: Searches for public playlists on Spotify based on a query.
+ *     tags:
+ *       - Spotify
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The search query.
+ *     responses:
+ *       200:
+ *         description: A list of playlists matching the query.
+ *       400:
+ *         description: Invalid or missing query parameter.
+ *       401:
+ *         description: Unauthorized.
+ *       500:
+ *         description: Internal Server Error.
  */
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Get the server-side session.
     const session = await getServerSession(authOptions)
-
-    // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
       throw new ApiError(401, 'Not authenticated or token is missing.')
     }
 
-    // 3. Get search query from URL parameters
     const searchParams = req.nextUrl.searchParams
     const query = searchParams.get('q')
 
-    if (!query || query.trim().length === 0) {
-      return NextResponse.json({ items: [] })
-    }
-
-    // Enforce a maximum length for the search query to prevent abuse
-    if (query.length > 100) {
+    const validation = searchSchema.safeParse({ q: query })
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Search query too long' },
+        { error: 'Invalid query', details: validation.error.flatten() },
         { status: 400 }
       )
     }
-    // 4. Initialize Spotify SDK with access token
+
     const spotify = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID || '',
       {

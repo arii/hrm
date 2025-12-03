@@ -1,19 +1,46 @@
-import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
- * API route to securely provide the Spotify access token to the client.
- *
- * This endpoint is called by the `useSpotifyWebPlayback` hook. It retrieves the
- * access token from the user's server-side session and returns it. This is the
- * recommended way to expose the token to the client-side SDK without exposing
- * it publicly or storing it in an insecure manner.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the access token or an error.
+ * @openapi
+ * /api/spotify/access-token:
+ *   get:
+ *     summary: Retrieve Spotify Access Token
+ *     description: Fetches the Spotify access token from the user's session for client-side SDK initialization.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the access token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: The Spotify access token.
+ *       401:
+ *         description: Unauthorized. The user is not authenticated or the token is missing/invalid.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
-export async function GET(_req: Request) {
+export async function GET(_req: Request): Promise<NextResponse> {
   try {
     // 1. Get the server-side session (NextAuth automatically refreshes tokens)
     const session = await getServerSession(authOptions)
