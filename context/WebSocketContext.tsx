@@ -61,7 +61,12 @@ export const WebSocketProvider = ({
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectAttemptsRef = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
+
+  const MAX_RECONNECT_ATTEMPTS = 10
+  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+  const RECONNECT_JITTER = 500 // 0.5 seconds
 
   // Unified State Object managed by a reducer
   const reducer = (state: AppState, message: ServerMessage): AppState => {
@@ -143,6 +148,7 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+      reconnectAttemptsRef.current = 0
     }
 
     ws.onclose = (event) => {
@@ -152,18 +158,36 @@ export const WebSocketProvider = ({
         event.reason
       )
       setConnectionStatus('Disconnected')
-      
-      // Reset test flag
+
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
       }
-      
+
       if (shouldReconnect.current && !reconnectTimeoutRef.current) {
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('[WebSocketProvider] Attempting to reconnect...')
-          setConnectionStatus('Reconnecting...')
-          connectRef.current()
-        }, 3000)
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay =
+            Math.pow(2, reconnectAttemptsRef.current) * INITIAL_RECONNECT_DELAY +
+            Math.random() * RECONNECT_JITTER
+          console.log(
+            `[WebSocketProvider] Reconnect attempt ${
+              reconnectAttemptsRef.current + 1
+            } in ${delay.toFixed(0)}ms`
+          )
+          reconnectTimeoutRef.current = setTimeout(() => {
+            setConnectionStatus(
+              `Reconnecting... (Attempt ${reconnectAttemptsRef.current + 1})`
+            )
+            connectRef.current()
+          }, delay)
+          reconnectAttemptsRef.current++
+        } else {
+          console.error(
+            '[WebSocketProvider] Max reconnect attempts reached. Giving up.'
+          )
+          setConnectionStatus(
+            'Failed to connect. Please refresh the page.'
+          )
+        }
       }
     }
 
