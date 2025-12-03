@@ -47,7 +47,13 @@ export interface IWebSocketService<TState, TCommand> extends IService {
 
 // --- Type Aliases for specific WebSocket services ---
 
-export type ITimerService = IWebSocketService<TimerData, 'START' | 'PAUSE' | 'STOP'>
+export type ITimerService = IWebSocketService<
+  TimerData,
+  'START' | 'PAUSE' | 'STOP'
+> & {
+  setMode(mode: 'TABATA' | 'STOPWATCH'): void
+  setConfig(config: { workDuration: number; restDuration: number }): void
+}
 export type ISpotifyService = IWebSocketService<
   SpotifyData,
   | 'PLAY'
@@ -58,7 +64,11 @@ export type ISpotifyService = IWebSocketService<
   | 'SET_VOLUME'
   | 'PAUSE'
   | 'GET_DEVICES'
->
+> & {
+  isReady(): boolean
+  setRefreshToken(token: string): void
+  forcePollAndBroadcast(): void
+}
 
 /**
  * A map to hold all registered WebSocket services.

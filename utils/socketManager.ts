@@ -4,8 +4,11 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import {
+  ServiceMap,
+  ITimerService,
+  ISpotifyService,
+} from '../types/service.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -25,8 +28,8 @@ interface ExtWebSocket extends WebSocket {
 }
 
 // Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+let tabataServiceInstance: ITimerService
+let spotifyServiceInstance: ISpotifyService
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -34,17 +37,12 @@ let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
 
-interface Services {
-  tabataService: TabataTimer
-  spotifyService: SpotifyPolling
-}
-
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  services: Services,
+  services: ServiceMap,
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
