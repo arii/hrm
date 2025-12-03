@@ -30,7 +30,9 @@
     "depcheck": "depcheck",
     "kill-all": "./scripts/kill-all.sh",
     "verify": "node scripts/verify-and-publish.cjs",
-    "commit:verified": "npm run verify"
+    "commit:verified": "npm run verify",
+    "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
+    "test:json": "scripts/test-json-with-server.sh"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
