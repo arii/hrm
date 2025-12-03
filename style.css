@@ -143,6 +143,6 @@ footer {
 
 .brand-compliance { margin-bottom: 1rem; }
 .strava-logo-text { color: var(--strava-orange); font-weight: bold; font-family: sans-serif; }
-.legal-nav a { color: #888; text-decoration: none; }
-.legal-nav a:hover { color: var(--white); }
-.separator { margin: 0 8px; }
+.legal-nav a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
+.legal-nav a:hover { color: var(--white); text-decoration: underline; }
+.separator { margin: 0 8px; color: #888; }
