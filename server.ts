@@ -15,17 +15,17 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
-import logger from './utils/logger.js'
+import { SpotifyPolling } from '@/services/spotifyPolling.js'
+import TabataTimer from '@/services/tabataTimer.js'
+import { initSocketManager } from '@/utils/socketManager.js'
+import { broadcast } from '@/utils/broadcast.js'
+import { getBaseURL } from '@/utils/urls.js'
+import { StateSnapshot } from '@/types/websocket.js'
+import logger from '@/utils/logger.js'
 import swaggerUi from 'swagger-ui-express'
-import swaggerSpec from './lib/swagger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import swaggerSpec from '@/lib/swagger.js'
+import { performHealthCheck } from '@/lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from '@/constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number

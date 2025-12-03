@@ -7,7 +7,7 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { useTimerSounds } from '../hooks/useTimerSounds'
+import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode

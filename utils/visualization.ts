@@ -3,7 +3,7 @@
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
-import { TimerData } from '../types/websocket'
+import { TimerData } from '@/types/websocket'
 
 // Define types for MUI color props
 type MuiColor =

@@ -16,8 +16,8 @@ import {
   SpotifyData,
   TimerData,
   ServerMessage,
-} from '../types/websocket'
-import { getWebSocketURL } from '../utils/urls'
+} from '@/types/websocket'
+import { getWebSocketURL } from '@/utils/urls'
 
 interface AppState {
   hrmData: HrmData[]

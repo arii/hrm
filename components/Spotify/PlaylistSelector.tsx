@@ -18,8 +18,8 @@ import Paper from '@mui/material/Paper'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useDebounce } from '../../hooks/useDebounce'
-import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
+import { useDebounce } from '@/hooks/useDebounce'
+import { API_SPOTIFY_PLAYLISTS } from '@/constants/apiEndpoints'
 
 interface PlaylistItemProps {
   playlist: Playlist
