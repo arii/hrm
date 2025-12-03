@@ -120,6 +120,7 @@ describe('SpotifyPolling Service', () => {
     }
     jest.clearAllTimers()
     jest.useRealTimers()
+    jest.restoreAllMocks();
   })
 
   describe('Initialization', () => {
@@ -194,6 +195,7 @@ describe('SpotifyPolling Service', () => {
       )
       await spotifyService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
+      expect(logger.error).toHaveBeenCalled();
     })
   })
 
@@ -355,20 +357,20 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.startResumePlayback.mockImplementation(() =>
         Promise.reject(new Error('Network error'))
       )
-
       // Should not throw
       await expect(
         spotifyService.handleCommand('PLAY', 'test_device_id')
       ).resolves.not.toThrow()
 
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
+      expect(logger.error).toHaveBeenCalled();
     })
 
     it('should handle 401 unauthorized responses', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
         Promise.reject({ status: 401 })
       )
-
+      const refreshSpy = jest.spyOn(spotifyService as any, 'checkAndRefreshSdkToken');
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
       await Promise.resolve() // Flush promises
@@ -377,6 +379,10 @@ describe('SpotifyPolling Service', () => {
 
       // Should attempt to handle 401 without crashing
       expect(() => spotifyService.getState()).not.toThrow()
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Spotify token expired during polling. Attempting refresh.'
+      );
+      expect(refreshSpy).toHaveBeenCalled();
     })
 
     it('should not execute commands without access token', async () => {
