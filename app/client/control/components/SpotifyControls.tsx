@@ -19,8 +19,8 @@ import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useCallback, useEffect, useState } from 'react'
+import { useVolume } from '@/hooks/useVolume'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
@@ -29,8 +29,8 @@ const SpotifyControls = () => {
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { devices = [] } = spotifyData; // Default to empty array if undefined
-  const { volume, setVolume } = useVolumePreference()
-  const lastSentVolumeRef = useRef<string | null>(null)
+  const { volume, setVolume } = useVolume()
+  const [sliderValue, setSliderValue] = useState(volume)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
 
   const handleBrowseClick = () => {
@@ -98,38 +98,9 @@ const SpotifyControls = () => {
     [resolveTargetDeviceId, sendData]
   )
 
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId = resolveTargetDeviceId()
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
-      lastSentVolumeRef.current = messageKey
-    },
-    [connectionStatus, resolveTargetDeviceId, sendData]
-  )
-
   useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
-
-  useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
+    setSliderValue(volume)
+  }, [volume])
 
   return (
     <Card
@@ -216,9 +187,9 @@ const SpotifyControls = () => {
             <Stack direction="row" spacing={1} alignItems="center">
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
               <Slider
-                value={volume}
-                onChange={(_, val) => setVolume(val as number)}
-                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
+                value={sliderValue}
+                onChange={(_, val) => setSliderValue(val as number)}
+                onChangeCommitted={(_, val) => setVolume(val as number)}
                 min={0}
                 max={100}
                 size="small"
@@ -231,7 +202,7 @@ const SpotifyControls = () => {
                 variant="caption"
                 sx={{ color: 'grey.400', minWidth: '3ch' }}
               >
-                {volume}
+                {sliderValue}
               </Typography>
             </Stack>
             {devices.length > 0 && (

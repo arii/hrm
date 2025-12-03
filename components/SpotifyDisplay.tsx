@@ -1,7 +1,7 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useVolume } from '@/hooks/useVolume'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -36,8 +36,9 @@ const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume } = useVolumePreference()
-  const lastSentVolumeRef = useRef<string | null>(null)
+  const { volume, setVolume, clampVolume } = useVolume()
+  const [sliderValue, setSliderValue] = useState(volume)
+
   const {
     player,
     isReady,
@@ -51,40 +52,9 @@ const SpotifyDisplay = () => {
   )
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
-  const sendVolumeCommand = useCallback(
-    (value: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-      lastSentVolumeRef.current = messageKey
-    },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
-  )
-
   useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
-
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
-    }
-  }, [connectionStatus])
+    setSliderValue(volume)
+  }, [volume])
 
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return
@@ -323,9 +293,9 @@ const SpotifyDisplay = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
           <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
+            value={sliderValue}
+            onChange={(_, val) => setSliderValue(val as number)}
+            onChangeCommitted={(_, val) => setVolume(val as number)}
             min={0}
             max={100}
             size="small"
