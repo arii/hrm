@@ -50,6 +50,13 @@ jobs:
         # This expands $HOME (e.g., /home/ari) and saves it to the workflow env
         run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
 
+      - name: Sanitize SESSION_ID
+        shell: bash
+        run: |
+          # Replace / with - in SESSION_ID to prevent invalid artifact names
+          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
+          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
+
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4
