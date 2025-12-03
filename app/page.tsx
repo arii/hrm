@@ -7,11 +7,13 @@
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
+import Stack from '@mui/material/Stack'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
+import WorkoutControls from '../components/WorkoutControls'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -71,16 +73,19 @@ const Dashboard = () => {
 
         {/* 1. TABATA TIMER - Componentized */}
         <Grid item xs={12} lg={6}>
-          <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-            soundEventId={timerData.soundEventId}
-            volume={volume}
-          />
+          <Stack spacing={2}>
+            <TimerDisplay
+              phase={timerData.currentPhase}
+              timeRemaining={timerData.timeRemaining}
+              timeElapsed={timerData.timeElapsed}
+              mode={timerData.mode}
+              workDuration={timerData.workDuration}
+              restDuration={timerData.restDuration}
+              soundEventId={timerData.soundEventId}
+              volume={volume}
+            />
+            <WorkoutControls />
+          </Stack>
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
