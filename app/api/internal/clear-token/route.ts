@@ -5,8 +5,35 @@ import * as path from 'path'
 import logger from '@/utils/logger'
 
 /**
- * API route to clear the persisted Spotify token file.
- * This is called during logout to ensure a fresh authentication flow.
+ * @openapi
+ * /api/internal/clear-token:
+ *   post:
+ *     summary: Clear Persisted Spotify Token
+ *     description: >
+ *       Deletes the persisted Spotify token file (`spotify_tokens.json`) from the server's filesystem.
+ *       This is typically called during a logout flow to ensure a clean re-authentication next time.
+ *     tags:
+ *       - Internal
+ *     responses:
+ *       200:
+ *         description: The token file was successfully cleared or did not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Token file cleared"
+ *       500:
+ *         description: An error occurred while trying to delete the file.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function POST(_req: Request) {
   try {

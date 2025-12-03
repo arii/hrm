@@ -9,13 +9,50 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * API route to search for public Spotify playlists.
- *
- * This endpoint searches Spotify's public playlist catalog and returns results
- * that can be combined with user playlists in the PlaylistSelector component.
- *
- * @param req The incoming Next.js API request containing a 'q' query parameter.
- * @returns A NextResponse object with search results or an error.
+ * @openapi
+ * /api/spotify/playlists/search:
+ *   get:
+ *     summary: Search for Public Playlists
+ *     description: Searches Spotify's public playlist catalog based on a query.
+ *     tags:
+ *       - Spotify
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The search query.
+ *     responses:
+ *       200:
+ *         description: A list of playlists matching the search query.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/SpotifyUserPlaylist'
+ *       400:
+ *         description: Bad Request (e.g., missing query or query too long).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(req: NextRequest) {
   try {

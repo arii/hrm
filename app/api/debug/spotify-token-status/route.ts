@@ -2,6 +2,36 @@
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
 
+/**
+ * @openapi
+ * /api/debug/spotify-token-status:
+ *   get:
+ *     summary: Get Spotify Token Status
+ *     description: >
+ *       A debug endpoint to check the status of the persisted Spotify token,
+ *       including whether it's expired or close to expiring.
+ *     tags:
+ *       - Debug
+ *     responses:
+ *       200:
+ *         description: The current status of the persisted token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - $ref: '#/components/schemas/SpotifyTokenStatus'
+ *                 - type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: no_token_found
+ *       500:
+ *         description: An error occurred while checking the token status.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export async function GET() {
   try {
     const tokenManager = new SpotifyTokenManager(

@@ -3,28 +3,92 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 
-export async function POST(req: NextRequest) {
+/**
+ * @openapi
+ * /api/spotify/control:
+ *   post:
+ *     summary: Control Spotify Playback
+ *     description: >
+ *       Sends playback commands to the Spotify API on behalf of the user.
+ *       Requires an active session.
+ *     tags:
+ *       - Spotify
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command:
+ *                 type: string
+ *                 description: The playback command to execute.
+ *                 enum: [PLAY, PAUSE, NEXT, PREVIOUS, SET_VOLUME, TRANSFER_PLAYBACK]
+ *               volume:
+ *                 type: integer
+ *                 description: The volume percentage (0-100). Required for SET_VOLUME.
+ *                 minimum: 0
+ *                 maximum: 100
+ *               deviceId:
+ *                 type: string
+ *                 description: The ID of the device to target. Required for TRANSFER_PLAYBACK.
+ *             required:
+ *               - command
+ *           examples:
+ *             play:
+ *               summary: Play music
+ *               value:
+ *                 command: "PLAY"
+ *                 deviceId: "your_device_id"
+ *             set_volume:
+ *               summary: Set volume
+ *               value:
+ *                 command: "SET_VOLUME"
+ *                 volume: 80
+ *     responses:
+ *       200:
+ *         description: Command executed successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Command 'PLAY' executed."
+ *       400:
+ *         description: Bad Request (e.g., invalid command or missing parameters).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authorization required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+import { withValidation } from '@/lib/middleware/validation'
+import { spotifyControlSchema } from '@/lib/validation/schemas'
+
+export const POST = withValidation(spotifyControlSchema, async (req, body) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
     return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
   }
-
-  // Parse body safely
-  let body
-  try {
-    body = await req.json()
-  } catch (_e) {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
   
   const { command, volume, deviceId } = body
-
-  // Allowed commands
-  const VALID_COMMANDS = ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS', 'SET_VOLUME', 'TRANSFER_PLAYBACK']
-  if (!VALID_COMMANDS.includes(command)) {
-    return NextResponse.json({ error: `Invalid command: ${command}` }, { status: 400 })
-  }
 
   try {
     const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player' // Corrected Base URL
@@ -112,4 +176,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

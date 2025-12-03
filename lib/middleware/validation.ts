@@ -1,38 +1,30 @@
-import { z } from 'zod'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
-type NextApiHandlerWithBody<T> = (
-  req: NextRequest,
-  body: T
-) => Promise<NextResponse>
+type ValidatedData<T extends z.ZodTypeAny> = z.infer<T>;
 
-export const withValidation = <T>(
-  schema: z.ZodSchema<T>,
-  handler: NextApiHandlerWithBody<T>
-) => {
+export function withValidation<T extends z.ZodTypeAny>(
+  schema: T,
+  handler: (req: NextRequest, data: ValidatedData<T>) => Promise<NextResponse>
+) {
   return async (req: NextRequest) => {
     try {
-      const body = await req.json()
-      const parsedBody = await schema.parseAsync(body)
-      return handler(req, parsedBody)
+      const body = await req.json();
+      const parsed = schema.safeParse(body);
+
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Validation failed', details: parsed.error.errors },
+          { status: 400 }
+        );
+      }
+
+      return handler(req, parsed.data);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: 'Invalid request body', details: error.issues },
-          { status: 400 }
-        )
-      }
-      if (error instanceof SyntaxError) {
-        return NextResponse.json(
-          { error: 'Invalid JSON body' },
-          { status: 400 }
-        )
-      }
-      console.error('Unhandled error in validation middleware:', error)
       return NextResponse.json(
-        { error: 'Internal Server Error' },
-        { status: 500 }
-      )
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      );
     }
-  }
+  };
 }

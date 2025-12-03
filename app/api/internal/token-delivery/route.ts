@@ -5,23 +5,65 @@ import path from 'path'
 import logger from '@/utils/logger'
 
 /**
- * Internal endpoint for NextAuth to post refresh tokens.
- * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * @openapi
+ * /api/internal/token-delivery:
+ *   post:
+ *     summary: Deliver Spotify Token for Persistence
+ *     description: >
+ *       An internal endpoint used by the authentication service (NextAuth) to deliver
+ *       refreshed Spotify tokens. The server then persists this token to the filesystem
+ *       so the `SpotifyPolling` service can use it.
+ *     tags:
+ *       - Internal
+ *     parameters:
+ *       - in: header
+ *         name: x-internal-token-secret
+ *         schema:
+ *           type: string
+ *         description: An optional secret to authorize the request, configured via INTERNAL_TOKEN_DELIVERY_SECRET.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SpotifyTokenPayload'
+ *     responses:
+ *       200:
+ *         description: Token successfully received and persisted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized. The provided secret was invalid.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: An error occurred while persisting the token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-
 const LOG_DIR = path.resolve(process.cwd(), 'logs')
 const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
 
-export async function POST(req: NextRequest) {
+import { withValidation } from '@/lib/middleware/validation'
+import { spotifyTokenDeliverySchema } from '@/lib/validation/schemas'
+
+export const POST = withValidation(spotifyTokenDeliverySchema, async (req, payload) => {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
     if (expected && secretHeader !== expected) {
       throw new ApiError(401, 'Unauthorized')
     }
-
-    const payload = await req.json()
 
     // ensure logs dir
     if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })

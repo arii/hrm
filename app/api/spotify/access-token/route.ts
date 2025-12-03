@@ -3,15 +3,38 @@ import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
- * API route to securely provide the Spotify access token to the client.
- *
- * This endpoint is called by the `useSpotifyWebPlayback` hook. It retrieves the
- * access token from the user's server-side session and returns it. This is the
- * recommended way to expose the token to the client-side SDK without exposing
- * it publicly or storing it in an insecure manner.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the access token or an error.
+ * @openapi
+ * /api/spotify/access-token:
+ *   get:
+ *     summary: Get Spotify Access Token
+ *     description: >
+ *       Retrieves the Spotify access token from the user's server-side session.
+ *       This is a secure way to expose the token to the client-side Spotify SDK.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the access token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: The Spotify access token.
+ *       401:
+ *         description: Not authenticated or token is missing/expired.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(_req: Request) {
   try {

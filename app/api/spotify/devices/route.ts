@@ -4,14 +4,34 @@ import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
- * API route to fetch available Spotify devices for the authenticated user.
- *
- * This endpoint retrieves the list of devices from the Spotify API and returns
- * them to the client. This is used by the control panel to allow the user to
- * select which device to play music on.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the device list or an error.
+ * @openapi
+ * /api/spotify/devices:
+ *   get:
+ *     summary: Get Spotify Devices
+ *     description: Fetches the list of available Spotify playback devices for the authenticated user.
+ *     tags:
+ *       - Spotify
+ *     responses:
+ *       200:
+ *         description: A list of available devices.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/SpotifyDevice'
+ *       401:
+ *         description: Not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(_req: Request) {
   try {

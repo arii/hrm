@@ -158,10 +158,52 @@ app
     )
 
     // Health Check Endpoints
+    /**
+     * @openapi
+     * /api/health:
+     *   get:
+     *     summary: Liveness Probe
+     *     description: Checks if the server is running and responsive.
+     *     tags:
+     *       - Health
+     *     responses:
+     *       200:
+     *         description: Server is alive.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   example: ok
+     */
     expressApp.get('/api/health', (_req: Request, res: Response) => {
       res.status(200).json({ status: 'ok' });
     });
 
+    /**
+     * @openapi
+     * /api/health/ready:
+     *   get:
+     *     summary: Readiness Probe
+     *     description: Checks if the server and its critical services (WebSocket, Spotify, Timer) are initialized and ready to accept traffic.
+     *     tags:
+     *       - Health
+     *     responses:
+     *       200:
+     *         description: All services are ready.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HealthStatus'
+     *       503:
+     *         description: One or more services are not ready.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HealthStatus'
+     */
     expressApp.get('/api/health/ready', async (_req: Request, res: Response) => {
       const healthStatus = await performHealthCheck(wss, spotifyService, tabataService);
       const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
