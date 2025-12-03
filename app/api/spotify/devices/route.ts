@@ -5,22 +5,15 @@ import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 /**
-<<<<<<< HEAD
- * API route to fetch available Spotify devices.
- *
- * This endpoint retrieves the list of devices from the Spotify API.
- * It prioritizes the authenticated user's session token. If no session
- * exists (e.g., for external controllers), it falls back to a system-level
- * token for authorized access.
- *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the device list or an error.
-=======
  * @openapi
  * /api/spotify/devices:
  *   get:
  *     summary: Fetch available Spotify devices
- *     description: Retrieves a list of the user's available devices on Spotify.
+ *     description: |
+ *       Retrieves the list of devices from the Spotify API.
+ *       It prioritizes the authenticated user's session token. If no session
+ *       exists (e.g., for external controllers), it falls back to a system-level
+ *       token for authorized access.
  *     tags:
  *       - Spotify
  *     responses:
@@ -45,14 +38,10 @@ import { NextResponse } from 'next/server'
  *         description: Unauthorized.
  *       500:
  *         description: Internal Server Error.
->>>>>>> 05d5f4b (Apply patch /tmp/30dc32df-69e4-410a-9171-beddf3a4d6cf.patch)
  */
 export async function GET(_req: Request): Promise<NextResponse> {
   try {
-<<<<<<< HEAD
     let accessToken: string | null = null
-=======
->>>>>>> 05d5f4b (Apply patch /tmp/30dc32df-69e4-410a-9171-beddf3a4d6cf.patch)
     const session = await getServerSession(authOptions)
 
     if (session?.accessToken) {
