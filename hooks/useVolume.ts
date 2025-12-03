@@ -39,13 +39,14 @@ export const useVolume = () => {
 
   // Sync with Spotify volume changes
   useEffect(() => {
-    if (spotifyData?.device?.volume_percent !== undefined) {
-      const spotifyVolume = spotifyData.device.volume_percent
+    const activeDevice = spotifyData?.devices?.find(device => device.is_active)
+    if (activeDevice?.volume_percent !== undefined) {
+      const spotifyVolume = activeDevice.volume_percent
       if (spotifyVolume !== volume) {
         setVolume(spotifyVolume, 'spotify')
       }
     }
-  }, [spotifyData?.device?.volume_percent, volume, setVolume])
+  }, [spotifyData?.devices, volume, setVolume])
 
   // Update local audio manager volume
   useEffect(() => {
