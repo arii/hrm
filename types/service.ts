@@ -40,9 +40,9 @@ export interface IWebSocketService<TState, TCommand> extends IService {
   /**
    * Handles a command received from a WebSocket client.
    * @param {TCommand} command The command to be processed.
-   * @param {any[]} args Additional arguments for the command.
+   * @param {unknown[]} args Additional arguments for the command.
    */
-  handleCommand(command: TCommand, ...args: any[]): void
+  handleCommand(command: TCommand, ...args: unknown[]): void
 }
 
 // --- Type Aliases for specific WebSocket services ---
