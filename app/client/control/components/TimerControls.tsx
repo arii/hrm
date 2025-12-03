@@ -190,6 +190,8 @@ const TimerControls = () => {
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
         <Box sx={{ mb: 2 }}>
           <Typography
+            variant="h6"
+            data-testid="timer-mode-heading"
             sx={{
               color: 'white',
               fontWeight: 'medium',
@@ -205,6 +207,7 @@ const TimerControls = () => {
               onClick={() => sendModeCommand('TABATA')}
               disabled={timerData.isRunning}
               startIcon={<FitnessCenter />}
+              data-testid="tabata-mode-button"
               sx={{
                 flex: 1,
                 color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
@@ -229,6 +232,7 @@ const TimerControls = () => {
               onClick={() => sendModeCommand('STOPWATCH')}
               disabled={timerData.isRunning}
               startIcon={<Timer />}
+              data-testid="stopwatch-mode-button"
               sx={{
                 flex: 1,
                 color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
@@ -442,6 +446,7 @@ const TimerControls = () => {
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           {!timerData.isRunning ? (
             <Button
+              data-testid="start-timer-button"
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
@@ -452,6 +457,7 @@ const TimerControls = () => {
             </Button>
           ) : (
             <Button
+              data-testid="stop-timer-button"
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}

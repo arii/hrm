@@ -7,6 +7,6 @@ test.describe('Simple Smoke Test', () => {
     page,
   }) => {
     await page.goto(BASE_URL)
-    await expect(page).toHaveTitle(/HRM/)
+    await expect(page).toHaveTitle(/HRM | Real-Time Heart Rate Monitor/)
   })
 })
