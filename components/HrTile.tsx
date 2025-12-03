@@ -10,11 +10,20 @@ import StyledCard from './shared/StyledCard'
 export interface HrTileProps {
   name: string
   bpm: number
-  percentMax: number // 0-100
-  background: string // hex color
+  percentMax: number
+  background: string
+  gradient: string
+  glow: string
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  gradient,
+  glow,
+}: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -40,15 +49,18 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             {/* Giant Percentage - should dominate the tile */}
             <Typography
               data-testid="live-hr-percent"
-            sx={{
-              fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-              fontSize: { xs: '8rem', sm: '10rem', md: '12rem' },
-              fontWeight: 900,
-              lineHeight: 0.85,
-              my: 0.5,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            }}
-          >
+              sx={{
+                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+                fontSize: { xs: '8rem', sm: '10rem', md: '12rem' },
+                fontWeight: 900,
+                lineHeight: 0.85,
+                my: 0.5,
+                background: gradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: `0 2px 20px ${glow}`,
+              }}
+            >
             {percentMax}%
           </Typography>
           <Typography
@@ -92,7 +104,9 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.background === nextProps.background &&
-    prevProps.percentMax === nextProps.percentMax
+    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.gradient === nextProps.gradient &&
+    prevProps.glow === nextProps.glow
   )
 }
 

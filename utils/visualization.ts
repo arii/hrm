@@ -21,8 +21,10 @@ export const HR_ZONES = [
     name: 'Warm-up',
     min: 0.5,
     color: 'text-blue-400',
-    progressColor: '#3b82f6', // Darker blue
-    bgColor: '#3b82f6', // Darker blue
+    progressColor: '#3b82f6',
+    bgColor: '#3b82f6',
+    gradient: 'linear-gradient(145deg, #60a5fa 0%, #2563eb 100%)',
+    glow: '0 0 20px #2563eb',
   },
   {
     name: 'Fat Burn',
@@ -30,13 +32,17 @@ export const HR_ZONES = [
     color: 'text-green-500',
     progressColor: '#22c55e',
     bgColor: '#4CAF50',
+    gradient: 'linear-gradient(145deg, #4ade80 0%, #16a34a 100%)',
+    glow: '0 0 20px #16a34a',
   },
   {
     name: 'Cardio',
     min: 0.7,
     color: 'text-yellow-500',
-    progressColor: '#d97706', // Darker orange/yellow
-    bgColor: '#d97706', // Darker orange/yellow
+    progressColor: '#d97706',
+    bgColor: '#d97706',
+    gradient: 'linear-gradient(145deg, #fde047 0%, #f59e0b 100%)',
+    glow: '0 0 20px #f59e0b',
   },
   {
     name: 'Peak',
@@ -44,6 +50,8 @@ export const HR_ZONES = [
     color: 'text-red-500',
     progressColor: '#ef4444',
     bgColor: '#F44336',
+    gradient: 'linear-gradient(145deg, #f87171 0%, #dc2626 100%)',
+    glow: '0 0 20px #dc2626',
   },
   {
     name: 'Max',
@@ -51,6 +59,8 @@ export const HR_ZONES = [
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
+    gradient: 'linear-gradient(145deg, #c084fc 0%, #7e22ce 100%)',
+    glow: '0 0 20px #7e22ce',
   },
 ]
 
@@ -67,10 +77,12 @@ export const ZONE_COLORS = {
 interface HrZoneProps {
   zone: string
   percentage: number
-  color: string // Tailwind text color class
-  progressColor: string // Hex color for MUI components
-  backgroundColor: string // Hex color for background
+  color: string
+  progressColor: string
+  backgroundColor: string
   bpm: number
+  gradient: string
+  glow: string
 }
 
 /**
@@ -88,6 +100,8 @@ export const getHrZoneProps = (
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
       bpm: 0,
+      gradient: 'linear-gradient(145deg, #9ca3af 0%, #6b7280 100%)',
+      glow: 'none',
     }
   }
 
@@ -110,6 +124,8 @@ export const getHrZoneProps = (
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
       bpm: currentHr,
+      gradient: 'linear-gradient(145deg, #9ca3af 0%, #6b7280 100%)',
+      glow: 'none',
     }
   }
 
@@ -120,6 +136,8 @@ export const getHrZoneProps = (
     progressColor: zone.progressColor,
     backgroundColor: zone.bgColor,
     bpm: currentHr,
+    gradient: zone.gradient,
+    glow: zone.glow,
   }
 }
 
