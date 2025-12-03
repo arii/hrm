@@ -4,6 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
+
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
@@ -16,6 +17,7 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
+
 import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Extend WebSocket to track client role

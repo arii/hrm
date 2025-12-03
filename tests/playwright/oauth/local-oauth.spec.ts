@@ -1,7 +1,8 @@
-import { test, expect, chromium, BrowserContext } from '@playwright/test';
-import path from 'path';
-import os from 'os';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+import { test, expect, chromium, BrowserContext } from '@playwright/test';
 
 /**
  * Local OAuth Verification Test

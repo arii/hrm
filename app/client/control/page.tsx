@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+
 import ControlPanel from './ControlPanel'
 
 export const metadata: Metadata = {

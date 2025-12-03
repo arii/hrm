@@ -5,26 +5,27 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
-import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
-import next from 'next'
 import path from 'path'
 import { parse } from 'url'
+
+import express, { Request, Response } from 'express'
+import next from 'next'
+import swaggerUi from 'swagger-ui-express'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import swaggerSpec from './lib/swagger.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
+import { broadcast } from './utils/broadcast.js'
 import logger from './utils/logger.js'
-import swaggerUi from 'swagger-ui-express'
-import swaggerSpec from './lib/swagger.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import { initSocketManager } from './utils/socketManager.js'
+import { getBaseURL } from './utils/urls.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers

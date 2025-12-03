@@ -2,9 +2,43 @@ import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import importX from 'eslint-plugin-import-x'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
+  {
+    plugins: {
+      'import-x': importX,
+    },
+    rules: {
+      'import-x/no-relative-parent-imports': 'error',
+      'import-x/order': [
+        'error',
+        {
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+          ],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+    },
+    settings: {
+      'import-x/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
+    },
+  },
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 

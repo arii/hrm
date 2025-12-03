@@ -4,7 +4,9 @@
  * This service is used by the standalone playlist selection page.
  */
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
-import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
+
+import { SpotifyPlaylistItem, SpotifyPlaylist } from '@/types/index'
+
 import { presetPlaylists } from './seedData'
 
 // Re-export types for backward compatibility

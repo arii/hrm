@@ -10,13 +10,15 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
-import HrTile from '../../../components/HrTile'
-import useAutoConnect from '../../../hooks/useAutoConnect'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
+
+import BottomNavBar from '@/components/BottomNavBar'
+import HrTile from '@/components/HrTile'
 import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
+import { useWebSocket } from '@/context/WebSocketContext'
+import useAutoConnect from '@/hooks/useAutoConnect'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { getHrZoneProps } from '@/utils/visualization'
+
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {

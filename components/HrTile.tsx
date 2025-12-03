@@ -5,7 +5,8 @@ import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import StyledCard from './shared/StyledCard'
+
+import StyledCard from '@/components/shared/StyledCard'
 
 export interface HrTileProps {
   name: string

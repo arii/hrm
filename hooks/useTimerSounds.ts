@@ -4,9 +4,11 @@
  * It listens to WebSocket state for sound cues and applies user-defined volume.
  */
 import { useCallback, useEffect, useRef } from 'react'
-import { audioManager } from '../utils/audioManager'
-import useVolumePreference from './useVolumePreference'
+
 import { useWebSocket } from '@/context/WebSocketContext'
+import { audioManager } from '@/utils/audioManager'
+
+import useVolumePreference from './useVolumePreference'
 
 export const useTimerSounds = (isMuted: boolean = false) => {
   const { timerData } = useWebSocket()

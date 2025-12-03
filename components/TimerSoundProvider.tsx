@@ -5,9 +5,10 @@
  */
 'use client'
 
-import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { useTimerSounds } from '../hooks/useTimerSounds'
+import { useEffect } from 'react'
+
+import { useTimerSounds } from '@/hooks/useTimerSounds'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode

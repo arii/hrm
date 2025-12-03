@@ -9,28 +9,30 @@ import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
-import HrmTiles from '../components/HrmTiles'
-const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
+
+import ErrorBoundary from '@/components/ErrorBoundary'
+import ErrorFallback from '@/components/ErrorFallback'
+import HrmTiles from '@/components/HrmTiles'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import useVolumePreference from '@/hooks/useVolumePreference'
+
+const TimerDisplay = dynamic(() => import('@/components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
-import { useWebSocket } from '@/context/WebSocketContext'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolumePreference from '@/hooks/useVolumePreference'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 // Lazy-load heavy components
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
+const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
 const GoogleDocViewer = dynamic(
-  () => import('../components/GoogleDocViewer'),
+  () => import('@/components/GoogleDocViewer'),
   {
     ssr: false,
     loading: () => <Skeleton variant="rectangular" height={500} />,

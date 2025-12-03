@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 type NextApiHandlerWithBody<T> = (
   req: NextRequest,

@@ -1,7 +1,8 @@
 // File: tests/unit/services/spotifyTokenManager.test.ts
-import { SpotifyTokenManager, TokenRecord } from '../../../services/spotifyTokenManager';
 import fs from 'fs';
 import path from 'path';
+
+import { SpotifyTokenManager, TokenRecord } from '../../../services/spotifyTokenManager';
 
 jest.mock('fs');
 

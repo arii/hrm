@@ -1,16 +1,11 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
+import VolumeUp from '@mui/icons-material/VolumeUp'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -20,7 +15,13 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
+import { useWebSocket } from '@/context/WebSocketContext'
+import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { login, logout } from '@/services/authService'
+import { SpotifyCommandMessage } from '@/types/websocket'
 
 interface SpotifyDevice {
   id: string

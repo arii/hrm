@@ -10,14 +10,15 @@ import {
   useState,
   useReducer,
 } from 'react'
+
 import {
   ClientCommandMessage,
   HrmData,
   SpotifyData,
   TimerData,
   ServerMessage,
-} from '../types/websocket'
-import { getWebSocketURL } from '../utils/urls'
+} from '@/types/websocket'
+import { getWebSocketURL } from '@/utils/urls'
 
 interface AppState {
   hrmData: HrmData[]

@@ -4,9 +4,10 @@
  * It streams data using the provided sendData function (from useWebSocket).
  */
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { HrmInputMessage, HrmInputData } from '../types/websocket'
-import { MAX_HR_DEFAULT } from '../utils/constants'
+
 import { useWebSocket } from '@/context/WebSocketContext'
+import { HrmInputMessage, HrmInputData } from '@/types/websocket'
+import { MAX_HR_DEFAULT } from '@/utils/constants'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'

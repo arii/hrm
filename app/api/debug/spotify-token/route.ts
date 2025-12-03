@@ -1,6 +1,7 @@
 import fs from 'fs'
-import { NextResponse } from 'next/server'
 import path from 'path'
+
+import { NextResponse } from 'next/server'
 
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
