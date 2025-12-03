@@ -19,7 +19,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { login, logout } from '@/services/authService'
 
 interface SpotifyDevice {
@@ -33,10 +33,10 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, sendData } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume, clampVolume } = useVolume()
+  const { volume, setVolume } = useVolume()
   const [sliderValue, setSliderValue] = useState(volume)
 
   const {
