@@ -225,10 +225,39 @@ jobs:
           # 2. Build the list of failed checks and collect logs to temp files
           FAILED_CHECKS=""
 
-          # Create a temporary file for the comment body
-          COMMENT_FILE=$(mktemp)
+          # Define comment file path in workspace
+          COMMENT_FILE="test-results/pr-comment.md"
+          # Ensure test-results exists (it should, but safety first)
+          mkdir -p test-results
 
-          # Function to safely append log content
+          # Initialize the comment file with header
+          # We construct the content directly into the final file to avoid temp file issues
+
+          # 1. Collect failed checks
+          if [ "${{ steps.lint.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Lint, "
+          fi
+          if [ "${{ steps.build.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Build, "
+          fi
+          if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
+          fi
+          if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
+          fi
+          if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
+          fi
+          FAILED_CHECKS="${FAILED_CHECKS%, }"
+
+          # 2. Write Header
+          echo "@jules fix ${FAILED_CHECKS}" > "$COMMENT_FILE"
+          echo "" >> "$COMMENT_FILE"
+          echo "<details>" >> "$COMMENT_FILE"
+          echo "<summary><strong>Failed Test Report Log</strong></summary>" >> "$COMMENT_FILE"
+
+          # 3. Append Logs
           append_log() {
             local log_file="$1"
             local test_name="$2"
@@ -238,52 +267,39 @@ jobs:
               echo '```' >> "$COMMENT_FILE"
               tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" >> "$COMMENT_FILE"
               echo '```' >> "$COMMENT_FILE"
+            else
+              echo "" >> "$COMMENT_FILE"
+              echo "### ${test_name} Log" >> "$COMMENT_FILE"
+              echo "_Log file not found: ${log_file}_" >> "$COMMENT_FILE"
             fi
           }
 
           if [ "${{ steps.lint.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Lint, "
             append_log "test-results/lint-output.log" "Lint"
           fi
-
           if [ "${{ steps.build.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Build, "
             append_log "test-results/build-output.log" "Build"
           fi
-
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
             append_log "test-results/infra-output.log" "Infrastructure Tests"
           fi
-
           if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
             append_log "test-results/unit-output.log" "Unit Tests"
           fi
-
           if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
             append_log "test-results/visual-output.log" "Visual Tests"
           fi
 
-          # Remove trailing comma and space
-          FAILED_CHECKS="${FAILED_CHECKS%, }"
+          # 4. Close Details
+          echo "</details>" >> "$COMMENT_FILE"
 
-          # 3. Construct the final comment body
-          {
-            echo "@jules fix ${FAILED_CHECKS}"
-            echo ""
-            echo "<details>"
-            echo "<summary><strong>Failed Test Report Log</strong></summary>"
-            cat "$COMMENT_FILE"
-            echo "</details>"
-          } > "${COMMENT_FILE}.final"
-
-          # 4. Post the Comment using file input to avoid shell escaping issues
-          gh pr comment "$PR_NUMBER" --body-file "${COMMENT_FILE}.final"
-
-          # Cleanup
-          rm -f "$COMMENT_FILE" "${COMMENT_FILE}.final"
+          # 5. Post the Comment
+          if [ -s "$COMMENT_FILE" ]; then
+            gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"
+          else
+            echo "::error::Comment file is empty, skipping comment."
+            exit 1
+          fi
 
       - name: Checkout
         uses: actions/checkout@v6
