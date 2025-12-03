@@ -2,32 +2,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z, ZodError } from 'zod'
 
-type NextHandler<T> = (req: NextRequest, data: T) => Promise<NextResponse>
+type NextHandler<T> = (
+  req: NextRequest,
+  data: T
+) => Promise<NextResponse>
 
 /**
  * A higher-order function to wrap Next.js API route handlers with Zod validation.
  *
  * @param schema - The Zod schema to validate the request data against.
  * @param handler - The original API route handler to execute on successful validation.
- * @param type - The type of data to validate ('body' or 'query').
+ * @param type - The type of data to validate ('body' or 'query'). Defaults to 'body'.
  * @returns A new route handler that performs validation before calling the original handler.
  */
-export function withValidation<T extends z.ZodType<any, any>>(
+export function withValidation<T extends z.ZodType>(
   schema: T,
   handler: NextHandler<z.infer<T>>,
   type: 'body' | 'query' = 'body'
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest): Promise<NextResponse> => {
     try {
-      let data: any;
+      let data: unknown
       if (type === 'body') {
-        data = await req.json();
+        data = await req.json()
       } else {
-        const searchParams = req.nextUrl.searchParams;
-        data = Object.fromEntries(searchParams.entries());
+        const searchParams = req.nextUrl.searchParams
+        data = Object.fromEntries(searchParams.entries())
       }
 
-      const parsedData = schema.parse(data)
+      const parsedData = schema.parse(data) as z.infer<T>
       return handler(req, parsedData)
     } catch (error) {
       if (error instanceof ZodError) {

@@ -6,8 +6,11 @@ import { playlistSearchSchema } from '@/lib/validation/schemas'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-const handler = async (req: NextRequest, data: any) => {
+type PlaylistSearchQuery = z.infer<typeof playlistSearchSchema>
+
+const handler = async (req: NextRequest, data: PlaylistSearchQuery) => {
   try {
     const session = await getServerSession(authOptions)
 

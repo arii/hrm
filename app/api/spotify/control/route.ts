@@ -4,8 +4,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { withValidation } from '@/lib/middleware/validation'
 import { spotifyControlSchema } from '@/lib/validation/schemas'
+import { z } from 'zod'
 
-const handler = async (req: NextRequest, body: any) => {
+type SpotifyControlBody = z.infer<typeof spotifyControlSchema>
+
+const handler = async (req: NextRequest, body: SpotifyControlBody) => {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.accessToken) {
