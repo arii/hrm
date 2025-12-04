@@ -40,20 +40,15 @@ cleanup() {
 # Trap signals for cleanup
 trap cleanup EXIT INT TERM
 
+# Force kill any process that might be lingering on our port
+log "🧹 Clearing port 3000 to prevent EADDRINUSE error..."
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+sleep 1 # Give the OS a moment to release the port
+
 # Export environment variable for testing
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:3000"
-
-# Clean up any stale processes
-if [ -f "$PID_FILE" ]; then
-    PID=$(cat "$PID_FILE")
-    if ps -p $PID > /dev/null; then
-        log "⚠️  Killing existing server (PID: $PID)..."
-        kill $PID 2>/dev/null || true
-    fi
-    rm "$PID_FILE"
-fi
 
 log "🚀 Starting server..."
 # Start server in background, redirecting output to log file
