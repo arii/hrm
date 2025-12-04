@@ -46,6 +46,29 @@ export default defineConfig([
       ],
     },
   },
+  // Enforce Layered Architecture: Prevent direct service imports in UI components
+  {
+    files: ['components/**/*.{ts,tsx}', 'app/**/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/services/*'],
+              message:
+                'Violation of Layered Architecture: UI Components cannot import Services directly. Please access logic via a custom Hook or Context.',
+            },
+            {
+              group: ['../services/*'],
+              message:
+                'Violation of Layered Architecture: UI Components cannot import Services directly. Please access logic via a custom Hook or Context.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {

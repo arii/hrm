@@ -94,7 +94,7 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
+    spotifyService = await SpotifyPolling.getInstance(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as unknown)['pollInterval']) {
@@ -118,6 +118,7 @@ describe('SpotifyPolling Service', () => {
       spotifyService.stopPolling()
       spotifyService.cleanup()
     }
+    SpotifyPolling._resetInstanceForTest()
     jest.clearAllTimers()
     jest.useRealTimers()
   })
@@ -263,6 +264,7 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
+      SpotifyPolling._resetInstanceForTest()
       // Override the mock to return null token for this test to ensure SDK is not initialized
       ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
         () => ({
@@ -271,7 +273,7 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.getInstance(broadcastMock)
       await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -380,9 +382,10 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Mock SpotifyPolling.create to return an instance with a null SDK
-      const originalSpotifyPollingCreate = SpotifyPolling.create
-      SpotifyPolling.create = jest.fn().mockResolvedValue({
+      // Mock SpotifyPolling.getInstance to return an instance with a null SDK
+      const originalSpotifyPollingCreate = SpotifyPolling.getInstance
+      // @ts-expect-error - Mocking a static method for test
+      SpotifyPolling.getInstance = jest.fn().mockResolvedValue({
         handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
         getState: jest.fn(),
         stopPolling: jest.fn(),
@@ -394,12 +397,12 @@ describe('SpotifyPolling Service', () => {
         sdk: null, // Ensure SDK is null
       })
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.getInstance(broadcastMock)
       await newService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
-      // Restore original SpotifyPolling.create
-      SpotifyPolling.create = originalSpotifyPollingCreate
+      // Restore original SpotifyPolling.getInstance
+      SpotifyPolling.getInstance = originalSpotifyPollingCreate
     })
 
     it('should handle SyntaxError during error logging gracefully', async () => {

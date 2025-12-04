@@ -20,7 +20,7 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { login, logout } from '@/services/authService'
+import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
 interface SpotifyDevice {
   id: string
@@ -171,6 +171,8 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
   }
+
+  const { login, logout } = useSpotifyAuth()
 
   const handleSpotifyLogin = () => {
     login()

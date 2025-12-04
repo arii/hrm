@@ -62,6 +62,8 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
+  private static instance: SpotifyPolling | null = null
+
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
@@ -72,16 +74,28 @@ export class SpotifyPolling {
     )
   }
 
-  public static async create(
+  public static async getInstance(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
-    return instance
+    if (!SpotifyPolling.instance) {
+      SpotifyPolling.instance = new SpotifyPolling(broadcastUpdate)
+      await SpotifyPolling.instance.initializeSdk()
+      SpotifyPolling.instance.tokenRefreshInterval = setInterval(
+        () => SpotifyPolling.instance!.checkAndRefreshSdkToken(),
+        1000 * 60 * 5
+      ) // Check every 5 minutes if we need to re-sync
+    }
+    return SpotifyPolling.instance
+  }
+
+  /**
+   * For testing purposes only. Resets the singleton instance.
+   */
+  public static _resetInstanceForTest() {
+    if (SpotifyPolling.instance) {
+      SpotifyPolling.instance.cleanup()
+      SpotifyPolling.instance = null
+    }
   }
 
   private async initializeSdk() {

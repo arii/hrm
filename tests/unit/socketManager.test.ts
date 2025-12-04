@@ -90,15 +90,12 @@ describe('WebSocket Manager Integration', () => {
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    spotifyService = await SpotifyPolling.getInstance(broadcastFn)
   })
 
   afterEach(() => {
     jest.useRealTimers()
-    if (spotifyService) {
-      spotifyService.stopPolling()
-      spotifyService.cleanup()
-    }
+    SpotifyPolling._resetInstanceForTest()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

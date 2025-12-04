@@ -121,7 +121,7 @@ app
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      spotifyService = await SpotifyPolling.getInstance(broadcast)
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
