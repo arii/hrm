@@ -1,7 +1,7 @@
 // File: hooks/useVolumePreference.ts
 // Provides a shared volume preference persisted via the UserSettingsContext.
 import { useCallback } from 'react'
-import { useUserSettings } from '@/context/UserSettingsContext'
+import { useUserSettings } from '../context/UserSettingsContext'
 
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))

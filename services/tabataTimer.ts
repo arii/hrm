@@ -10,7 +10,7 @@ import {
   TimerData,
   TimerMode,
   TimerPhase,
-} from '@/types/websocket'
+} from '../types/websocket'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds

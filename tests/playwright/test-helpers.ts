@@ -15,7 +15,7 @@
  * } from './lib'
  * ```
  */
-import { getBaseURL } from '@/utils/urls'
+import { getBaseURL } from '../../utils/urls'
 
 // Re-export all utilities from the new library for backward compatibility
 export {

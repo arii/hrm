@@ -7,7 +7,7 @@
 import {
   GenericTimerState,
   TimerMode,
-} from '@/types/genericTimer'
+} from '../types/genericTimer'
 
 /**
  * @callback TimerUpdateCallback

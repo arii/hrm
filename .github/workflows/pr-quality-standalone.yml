@@ -50,13 +50,6 @@ jobs:
         # This expands $HOME (e.g., /home/ari) and saves it to the workflow env
         run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
 
-      - name: Sanitize SESSION_ID
-        shell: bash
-        run: |
-          # Replace / with - in SESSION_ID to prevent invalid artifact names
-          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
-          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
-
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -128,21 +121,23 @@ jobs:
       - name: Lint Code
         id: lint
         run: |
+          mkdir -p test-results
           set -o pipefail
-          pnpm run lint 2>&1 | tee logs/lint-output.log
+          pnpm run lint 2>&1 | tee test-results/lint-output.log
 
       - name: Verify Build
         id: build
         run: |
+          mkdir -p test-results
           set -o pipefail
-          pnpm run build 2>&1 | tee logs/build-output.log
+          pnpm run build 2>&1 | tee test-results/build-output.log
 
       - name: Run Infrastructure Tests and Generate JUnit Report
         id: infra_tests
         # Run tests and output the report file to a specific path, capture output
         run: |
           set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee logs/infra-output.log
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee test-results/infra-output.log
         # continue-on-error allows subsequent steps to run for failure reporting
         continue-on-error: true
 
@@ -160,7 +155,7 @@ jobs:
         id: unit_tests
         run: |
           set -o pipefail
-          pnpm run test:unit 2>&1 | tee logs/unit-output.log
+          pnpm run test:unit 2>&1 | tee test-results/unit-output.log
         continue-on-error: true
 
       - name: Publish Unit Test Results to GitHub Checks
@@ -177,7 +172,7 @@ jobs:
         id: visual_tests
         run: |
           set -o pipefail
-          pnpm run test:visual 2>&1 | tee logs/visual-output.log
+          pnpm run test:visual 2>&1 | tee test-results/visual-output.log
         # NOTE: This generates files in the default ./blob-report directory
         continue-on-error: true
 
@@ -205,14 +200,13 @@ jobs:
             coverage/
             playwright-report/
             test-results/
-            logs/
           retention-days: 7
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
         if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 1. Identify the PR Number
           # Try getting it from the event (pull_request)
@@ -281,19 +275,19 @@ jobs:
           }
 
           if [ "${{ steps.lint.outcome }}" == "failure" ]; then
-            append_log "logs/lint-output.log" "Lint"
+            append_log "test-results/lint-output.log" "Lint"
           fi
           if [ "${{ steps.build.outcome }}" == "failure" ]; then
-            append_log "logs/build-output.log" "Build"
+            append_log "test-results/build-output.log" "Build"
           fi
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
-            append_log "logs/infra-output.log" "Infrastructure Tests"
+            append_log "test-results/infra-output.log" "Infrastructure Tests"
           fi
           if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
-            append_log "logs/unit-output.log" "Unit Tests"
+            append_log "test-results/unit-output.log" "Unit Tests"
           fi
           if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
-            append_log "logs/visual-output.log" "Visual Tests"
+            append_log "test-results/visual-output.log" "Visual Tests"
           fi
 
           # 4. Close Details

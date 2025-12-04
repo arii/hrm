@@ -11,10 +11,10 @@ import {
   jest,
 } from '@jest/globals'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyPolling } from '@/services/spotifyPolling'
-import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
-import TabataTimer from '@/services/tabataTimer'
-import { ServerMessage } from '@/types/websocket'
+import { SpotifyPolling } from '../../services/spotifyPolling'
+import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import TabataTimer from '../../services/tabataTimer'
+import { ServerMessage } from '../../types/websocket'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>

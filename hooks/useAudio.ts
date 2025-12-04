@@ -2,8 +2,8 @@
  * Audio hook for handling timer sound effects
  */
 import { useEffect, useRef } from 'react'
-import { audioManager } from '@/utils/audioManager'
-import { TimerData } from '@/types/websocket'
+import { audioManager } from '../utils/audioManager'
+import { TimerData } from '../types/websocket'
 
 export const useAudio = (timerData: TimerData, volume?: number) => {
   const lastSoundEventId = useRef<number>(0)

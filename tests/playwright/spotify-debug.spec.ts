@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { getBaseURL } from '@/utils/urls'
+import { getBaseURL } from '../../utils/urls'
 
 const BASE = getBaseURL()
 

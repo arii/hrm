@@ -2,7 +2,7 @@
 import { spawn, ChildProcess, execSync } from 'child_process';
 import WebSocket from 'ws';
 import http from 'http';
-import { UnifiedStateMessage, TimerCommandMessage, HrmInputMessage } from '@/types/websocket';
+import { UnifiedStateMessage, TimerCommandMessage, HrmInputMessage } from '../../types/websocket';
 
 jest.setTimeout(60000); // 60s timeout for server start and tests
 

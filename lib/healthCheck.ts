@@ -2,8 +2,8 @@
 import {promises as fs} from 'fs';
 import path from 'path';
 import { WebSocketServer } from 'ws';
-import { SpotifyPolling } from '@/services/spotifyPolling';
-import TabataTimer from '@/services/tabataTimer';
+import { SpotifyPolling } from '../services/spotifyPolling';
+import TabataTimer from '../services/tabataTimer';
 
 interface HealthCheckStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
