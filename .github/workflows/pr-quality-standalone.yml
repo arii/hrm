@@ -50,6 +50,13 @@ jobs:
         # This expands $HOME (e.g., /home/ari) and saves it to the workflow env
         run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
 
+      - name: Sanitize SESSION_ID
+        shell: bash
+        run: |
+          # Replace / with - in SESSION_ID to prevent invalid artifact names
+          SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
+          echo "SESSION_ID=$SAFE_SESSION_ID" >> $GITHUB_ENV
+
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -205,7 +212,7 @@ jobs:
       - name: Report Failure to Jules
         if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure')
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
           # 1. Identify the PR Number
           # Try getting it from the event (pull_request)
