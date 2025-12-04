@@ -63,6 +63,8 @@ const useBluetoothHRM = () => {
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Ref to hold the connectToGatt function to break dependency cycles
+  const connectToGattRef = useRef<((device: BluetoothDevice) => Promise<boolean>) | null>(null)
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -70,13 +72,14 @@ const useBluetoothHRM = () => {
 
   // Cleanup on unmount
   useEffect(() => {
+    const timeoutHandle = reconnectTimeoutRef.current
     return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (timeoutHandle) clearTimeout(timeoutHandle)
       if (deviceRef.current && deviceRef.current.gatt?.connected) {
         deviceRef.current.gatt.disconnect()
       }
     }
-  }, [])
+  }, []) // Empty dependency array means this runs on unmount
 
   // Watchdog for stale data
   useEffect(() => {
@@ -110,13 +113,39 @@ const useBluetoothHRM = () => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
-    // Clear cookie to prevent immediate auto-reconnect on refresh if desired,
-    // but typically we might want to keep it. The user pressed "Disconnect", so maybe we should.
-    // The original code cleared it.
     setCookie('hrm_device_id', '', -1)
   }, [])
 
-  const connectToGatt = async (device: BluetoothDevice) => {
+  const handleConnectionError = useCallback((error: unknown) => {
+    let userFriendlyMessage = 'An unknown error occurred during Bluetooth connection.'
+    if (error instanceof DOMException) {
+       userFriendlyMessage = `Bluetooth error: ${error.name}`
+       if (error.name === 'NotFoundError') userFriendlyMessage = 'No device found/selected.'
+    } else if (error instanceof Error) {
+      userFriendlyMessage = `Error: ${error.message}`
+    }
+    setDeviceStatus(`Failed: ${userFriendlyMessage}`)
+  }, [])
+
+  const onDisconnected = useCallback(() => {
+    setBatteryLevel(null)
+
+    if (!isManualDisconnect.current && deviceRef.current) {
+      console.log('Attempting auto-reconnect...')
+      setDeviceStatus('Signal Lost. Retrying connection...')
+
+      const deviceToReconnect = deviceRef.current
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (connectToGattRef.current) {
+          connectToGattRef.current(deviceToReconnect)
+        }
+      }, 2000)
+    } else {
+      setDeviceStatus('Disconnected (Signal Lost)')
+    }
+  }, [])
+
+  const connectToGatt = useCallback(async (device: BluetoothDevice) => {
     try {
       deviceRef.current = device
       setDeviceStatus(`Connecting to: ${device.name}...`)
@@ -183,37 +212,12 @@ const useBluetoothHRM = () => {
       handleConnectionError(error)
       return false
     }
-  }
+  }, [handleConnectionError, onDisconnected, sendData])
 
-  const onDisconnected = () => {
-    setDeviceStatus('Disconnected (Signal Lost)')
-    setBatteryLevel(null)
-
-    if (!isManualDisconnect.current && deviceRef.current) {
-      console.log('Attempting auto-reconnect...')
-      setDeviceStatus('Signal Lost. Retrying connection...')
-
-      // Simple exponential backoff or just a retry
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (deviceRef.current) {
-          connectToGatt(deviceRef.current)
-        }
-      }, 2000)
-    }
-  }
-
-  const handleConnectionError = (error: unknown) => {
-    let userFriendlyMessage = 'An unknown error occurred during Bluetooth connection.'
-    if (error instanceof DOMException) {
-       // ... (Keep existing error mapping)
-       userFriendlyMessage = `Bluetooth error: ${error.name}`
-       if (error.name === 'NotFoundError') userFriendlyMessage = 'No device found/selected.'
-    } else if (error instanceof Error) {
-      userFriendlyMessage = `Error: ${error.message}`
-    }
-    setDeviceStatus(`Failed: ${userFriendlyMessage}`)
-    // Do not clear savedDevice here allows retry
-  }
+  // Update the ref whenever connectToGatt changes
+  useEffect(() => {
+    connectToGattRef.current = connectToGatt
+  }, [connectToGatt])
 
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
@@ -262,7 +266,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [connectionStatus, sendData, savedDevice] // Dependencies
+    [connectionStatus, savedDevice, connectToGatt, handleConnectionError] // Dependencies
   )
 
   return {
