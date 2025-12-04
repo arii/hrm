@@ -42,14 +42,14 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
-interface WebSocketContextType extends AppState {
+export interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
 }
 
-const WebSocketContext = createContext<WebSocketContextType | null>(null)
+export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
   children,

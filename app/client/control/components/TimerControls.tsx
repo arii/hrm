@@ -25,20 +25,34 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const actionButtonSx = {
+const actionButtonBaseSx = {
   flex: 1,
   fontWeight: 'bold',
-  py: 1.5,
-  minHeight: '64px',
+  py: 1,
+  minHeight: '48px',
   transition: 'transform 0.1s ease-in-out',
   '&:active': {
     transform: 'scale(0.95)',
   },
+}
+
+const startButtonSx = {
+  ...actionButtonBaseSx,
   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
   boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
+  },
+}
+
+const stopButtonSx = {
+  ...actionButtonBaseSx,
+  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 12px 32px rgba(239, 68, 68, 0.5)',
   },
 }
 
@@ -50,12 +64,12 @@ const stepperButtonSx = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
   },
-  width: 64,
-  height: 64,
+  width: 48,
+  height: 48,
 }
 
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+  const { timerData, sendData, connectionStatus } = useWebSocket()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -145,6 +159,8 @@ const TimerControls = () => {
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
+      if (connectionStatus !== 'Connected') return
+
       // When starting, ensure the server receives the latest configuration immediately
       if (command === 'START') {
         // Prefer reading the current ref values to avoid stale React state
@@ -164,21 +180,24 @@ const TimerControls = () => {
         sendSpotifyCommand('PAUSE')
       }
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
+    [sendData, latestWork, latestRest, sendSpotifyCommand, connectionStatus]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
+    if (connectionStatus !== 'Connected') return
     const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
     sendData(message)
   }
 
+  const controlsDisabled = timerData.isRunning || connectionStatus !== 'Connected'
+
   return (
     <Card
       sx={{
-        mb: 2,
+        mb: 0,
         color: '#EF4444',
         position: 'sticky',
-        top: 16,
+        top: 8,
         zIndex: 1000,
         background: 'rgba(30, 41, 59, 0.7)',
         backdropFilter: 'blur(20px) saturate(180%)',
@@ -187,25 +206,25 @@ const TimerControls = () => {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ mb: 2 }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Box sx={{ mb: 1.5 }}>
           <Typography
-            variant="h6"
+            variant="subtitle1"
             data-testid="timer-mode-heading"
             sx={{
               color: 'white',
               fontWeight: 'medium',
-              mb: 2,
+              mb: 1,
               textAlign: 'center',
             }}
           >
             Timer Mode
           </Typography>
-          <Stack direction="row" spacing={2} justifyContent="center">
+          <Stack direction="row" spacing={1} justifyContent="center">
             <Button
               variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
               onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
+              disabled={controlsDisabled}
               startIcon={<FitnessCenter />}
               data-testid="tabata-mode-button"
               sx={{
@@ -230,7 +249,7 @@ const TimerControls = () => {
                 timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
               }
               onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
+              disabled={controlsDisabled}
               startIcon={<Timer />}
               data-testid="stopwatch-mode-button"
               sx={{
@@ -253,8 +272,8 @@ const TimerControls = () => {
           </Stack>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+        <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 0.5 }}>
             {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
@@ -263,18 +282,19 @@ const TimerControls = () => {
         </Box>
 
         {timerData.mode === 'TABATA' && (
-          <Stack spacing={2} sx={{ mb: 2 }}>
+          <Stack spacing={1.5} sx={{ mb: 2 }}>
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
                 Timer Presets
               </Typography>
-              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                 <Button
                   variant="outlined"
                   onClick={() => {
                     setWorkTime(20)
                     setRestTime(10)
                   }}
+                  disabled={controlsDisabled}
                   sx={{
                     flex: 1,
                     color: '#EF4444',
@@ -293,6 +313,7 @@ const TimerControls = () => {
                     setWorkTime(60)
                     setRestTime(60)
                   }}
+                  disabled={controlsDisabled}
                   sx={{
                     flex: 1,
                     color: '#22C55E',
@@ -306,7 +327,7 @@ const TimerControls = () => {
                   EMOM (60/60)
                 </Button>
               </Stack>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
                 {' '}
                 Work Duration (seconds)
               </Typography>
@@ -314,12 +335,13 @@ const TimerControls = () => {
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={2}
+                spacing={1}
               >
                 <IconButton
                   color="primary"
                   onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease work duration"
+                  disabled={controlsDisabled}
                   sx={stepperButtonSx}
                 >
                   <Remove fontSize="large" />
@@ -327,6 +349,7 @@ const TimerControls = () => {
                 <TextField
                   type="number"
                   value={workTime}
+                  disabled={controlsDisabled}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     // Prevent negative numbers
@@ -341,13 +364,13 @@ const TimerControls = () => {
                     'data-testid': 'work-duration-input',
                   }}
                   sx={{
-                    width: '120px',
+                    width: '100px',
                     '& .MuiInputBase-input': {
                       color: '#EF4444',
                       fontWeight: 'bold',
-                      fontSize: '3rem',
+                      fontSize: '2rem',
                       textAlign: 'center',
-                      padding: '8px',
+                      padding: '4px',
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
@@ -367,6 +390,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setWorkTime((prev) => prev + 5)}
                   aria-label="Increase work duration"
+                  disabled={controlsDisabled}
                   sx={stepperButtonSx}
                 >
                   <Add fontSize="large" />
@@ -375,19 +399,20 @@ const TimerControls = () => {
             </Box>
 
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 2 }}>
+              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
                 Rest Duration (seconds)
               </Typography>
               <Stack
                 direction="row"
                 alignItems="center"
                 justifyContent="center"
-                spacing={2}
+                spacing={1}
               >
                 <IconButton
                   color="primary"
                   onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
                   aria-label="Decrease rest duration"
+                  disabled={controlsDisabled}
                   sx={stepperButtonSx}
                 >
                   <Remove fontSize="large" />
@@ -395,6 +420,7 @@ const TimerControls = () => {
                 <TextField
                   type="number"
                   value={restTime}
+                  disabled={controlsDisabled}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0
                     const next = Math.max(0, val)
@@ -408,13 +434,13 @@ const TimerControls = () => {
                     'data-testid': 'rest-duration-input',
                   }}
                   sx={{
-                    width: '120px',
+                    width: '100px',
                     '& .MuiInputBase-input': {
                       color: '#22C55E',
                       fontWeight: 'bold',
-                      fontSize: '3rem',
+                      fontSize: '2rem',
                       textAlign: 'center',
-                      padding: '8px',
+                      padding: '4px',
                     },
                     '& .MuiOutlinedInput-root': {
                       '& fieldset': {
@@ -434,6 +460,7 @@ const TimerControls = () => {
                   color="primary"
                   onClick={() => setRestTime((prev) => prev + 5)}
                   aria-label="Increase rest duration"
+                  disabled={controlsDisabled}
                   sx={stepperButtonSx}
                 >
                   <Add fontSize="large" />
@@ -450,7 +477,8 @@ const TimerControls = () => {
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              sx={actionButtonSx}
+              disabled={connectionStatus !== 'Connected'}
+              sx={startButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
             >
               START
@@ -461,7 +489,8 @@ const TimerControls = () => {
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}
-              sx={actionButtonSx}
+              disabled={connectionStatus !== 'Connected'}
+              sx={stopButtonSx}
               startIcon={<Stop fontSize="large" />}
             >
               STOP

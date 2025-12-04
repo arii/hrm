@@ -73,8 +73,8 @@ const ControlPanel = () => {
       <Container
         maxWidth="xs"
         sx={{
-          py: { xs: 2, sm: 3 },
-          px: { xs: 2, sm: 3 },
+          py: 1,
+          px: 1,
           minHeight: '100vh',
           background: 'rgba(30, 41, 59, 0.7)',
           backdropFilter: 'blur(20px) saturate(180%)',
@@ -84,15 +84,15 @@ const ControlPanel = () => {
         }}
       >
         {/* Connection Status */}
-        <Box sx={{ mb: 2, textAlign: 'center' }}>
+        <Box sx={{ mb: 1, textAlign: 'center' }}>
           <Typography
-            variant="body2"
+            variant="caption"
             sx={{
               color: connectionStatus === 'Connected' ? 'green' : 'orange',
               fontWeight: 'bold',
               backgroundColor: 'rgba(0,0,0,0.1)',
-              px: 2,
-              py: 1,
+              px: 1,
+              py: 0.5,
               borderRadius: 1,
               display: 'inline-block',
             }}
@@ -102,6 +102,7 @@ const ControlPanel = () => {
         </Box>
 
         <TimerControls />
+        <Box sx={{ height: 8 }} />
         <SpotifyControls />
       </Container>
     </>
