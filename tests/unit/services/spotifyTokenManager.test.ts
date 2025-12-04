@@ -15,6 +15,11 @@ describe('SpotifyTokenManager', () => {
     (fs.existsSync as jest.Mock).mockReturnValue(false);
     (fs.readFileSync as jest.Mock).mockClear();
     (fs.writeFileSync as jest.Mock).mockClear();
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should load tokens from file on initialization', () => {
