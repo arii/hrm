@@ -275,7 +275,7 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
-      // @ts-expect-error
+      // @ts-expect-error: Accessing private static for test reset
       SpotifyPolling.instance = undefined
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')
