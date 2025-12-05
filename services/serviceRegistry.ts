@@ -38,11 +38,11 @@ class ServiceRegistry {
           devices: [],
         }),
         isReady: () => false,
-        handleCommand: () => {},
+        handleCommand: () => Promise.resolve(),
         startPolling: () => {},
         stopPolling: () => {},
         setRefreshToken: () => {},
-        forcePollAndBroadcast: () => {},
+        forcePollAndBroadcast: () => Promise.resolve(),
       };
     }
   }
