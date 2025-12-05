@@ -28,6 +28,8 @@ export {
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
+  // Auth utilities
+  createAuthenticatedContext,
   // Setup utilities
   replaceIframeWithStableWorkout,
   setupVisualRegressionTest,
