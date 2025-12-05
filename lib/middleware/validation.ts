@@ -53,7 +53,7 @@ export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
         if (error instanceof z.ZodError) {
           return NextResponse.json(
             {
-              errors: error.errors.map((e) => ({
+              errors: error.issues.map((e) => ({
                 path: e.path.join('.'),
                 message: e.message,
               })),
