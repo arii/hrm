@@ -1,13 +1,11 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useTimer } from '@/hooks/useTimer'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import logger from '@/utils/logger'
 import {
   SpotifyCommandMessage,
-  TimerCommandMessage,
-  TimerConfigMessage,
-  TimerModeCommandMessage,
 } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import Add from '@mui/icons-material/Add'
@@ -56,7 +54,16 @@ const stepperButtonSx = {
 }
 
 const TimerControls = () => {
-  const { timerData, sendData } = useWebSocket()
+  const {
+    isRunning,
+    currentPhase,
+    mode,
+    startTimer,
+    stopTimer,
+    setTimerMode,
+    setTimerConfig,
+  } = useTimer()
+  const { sendData } = useConnectionManager()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -78,13 +85,8 @@ const TimerControls = () => {
 
   // Send settings update to server when local state changes
   useEffect(() => {
-    const message: TimerConfigMessage = {
-      type: 'TIMER_CONFIG',
-      workDuration: debouncedWorkTime,
-      restDuration: debouncedRestTime,
-    }
-    sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
+    setTimerConfig(debouncedWorkTime, debouncedRestTime)
+  }, [debouncedWorkTime, debouncedRestTime, setTimerConfig])
 
   // Get deviceId from SpotifyControls context or fallback to active device
   interface SpotifyDevice {
@@ -142,33 +144,14 @@ const TimerControls = () => {
     [sendData, spotifyDeviceId, spotifyDevices]
   )
 
-  const sendTimerCommand = useCallback(
-    (command: 'START' | 'PAUSE' | 'STOP') => {
-      // When starting, ensure the server receives the latest configuration immediately
-      if (command === 'START') {
-        // Prefer reading the current ref values to avoid stale React state
-        const config: TimerConfigMessage = {
-          type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
-        }
-        sendData(config)
-      }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
+  const handleStart = () => {
+    startTimer()
+    sendSpotifyCommand('NEXT')
+  }
 
-      if (command === 'START') {
-        sendSpotifyCommand('NEXT')
-      } else if (command === 'STOP') {
-        sendSpotifyCommand('PAUSE')
-      }
-    },
-    [sendData, latestWork, latestRest, sendSpotifyCommand]
-  )
-
-  const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
-    const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
-    sendData(message)
+  const handleStop = () => {
+    stopTimer()
+    sendSpotifyCommand('PAUSE')
   }
 
   return (
@@ -200,19 +183,19 @@ const TimerControls = () => {
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="center">
             <Button
-              variant={timerData.mode === 'TABATA' ? 'contained' : 'outlined'}
-              onClick={() => sendModeCommand('TABATA')}
-              disabled={timerData.isRunning}
+              variant={mode === 'TABATA' ? 'contained' : 'outlined'}
+              onClick={() => setTimerMode('TABATA')}
+              disabled={isRunning}
               startIcon={<FitnessCenter />}
               sx={{
                 flex: 1,
-                color: timerData.mode === 'TABATA' ? 'white' : '#EF4444',
+                color: mode === 'TABATA' ? 'white' : '#EF4444',
                 backgroundColor:
-                  timerData.mode === 'TABATA' ? '#EF4444' : 'transparent',
+                  mode === 'TABATA' ? '#EF4444' : 'transparent',
                 borderColor: '#EF4444',
                 '&:hover': {
                   backgroundColor:
-                    timerData.mode === 'TABATA'
+                    mode === 'TABATA'
                       ? '#DC2626'
                       : 'rgba(239, 68, 68, 0.1)',
                   borderColor: '#DC2626',
@@ -223,20 +206,20 @@ const TimerControls = () => {
             </Button>
             <Button
               variant={
-                timerData.mode === 'STOPWATCH' ? 'contained' : 'outlined'
+                mode === 'STOPWATCH' ? 'contained' : 'outlined'
               }
-              onClick={() => sendModeCommand('STOPWATCH')}
-              disabled={timerData.isRunning}
+              onClick={() => setTimerMode('STOPWATCH')}
+              disabled={isRunning}
               startIcon={<Timer />}
               sx={{
                 flex: 1,
-                color: timerData.mode === 'STOPWATCH' ? 'white' : '#EF4444',
+                color: mode === 'STOPWATCH' ? 'white' : '#EF4444',
                 backgroundColor:
-                  timerData.mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
+                  mode === 'STOPWATCH' ? '#EF4444' : 'transparent',
                 borderColor: '#EF4444',
                 '&:hover': {
                   backgroundColor:
-                    timerData.mode === 'STOPWATCH'
+                    mode === 'STOPWATCH'
                       ? '#DC2626'
                       : 'rgba(239, 68, 68, 0.1)',
                   borderColor: '#DC2626',
@@ -250,14 +233,14 @@ const TimerControls = () => {
 
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
-            {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
+            {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
-            {timerData.currentPhase}
+            {currentPhase}
           </Typography>
         </Box>
 
-        {timerData.mode === 'TABATA' && (
+        {mode === 'TABATA' && (
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box>
               <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 1 }}>
@@ -439,11 +422,11 @@ const TimerControls = () => {
         )}
 
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          {!timerData.isRunning ? (
+          {!isRunning ? (
             <Button
               variant="contained"
               color="success"
-              onClick={() => sendTimerCommand('START')}
+              onClick={handleStart}
               sx={actionButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
             >
@@ -453,7 +436,7 @@ const TimerControls = () => {
             <Button
               variant="contained"
               color="error"
-              onClick={() => sendTimerCommand('STOP')}
+              onClick={handleStop}
               sx={actionButtonSx}
               startIcon={<Stop fontSize="large" />}
             >

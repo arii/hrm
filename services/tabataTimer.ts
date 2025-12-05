@@ -11,6 +11,7 @@ import {
   TimerMode,
   TimerPhase,
 } from '../types/websocket'
+import { IWebSocketService } from '../types/service'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -32,7 +33,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TimerService implements IWebSocketService {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
@@ -54,6 +55,14 @@ class TabataTimer {
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+  }
+
+  public init() {
+    // No-op for now, but here to satisfy the interface
+  }
+
+  public stop() {
+    this.stopTimer()
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
@@ -250,8 +259,8 @@ class TabataTimer {
   }
 
   // --- Command Handler (Used by socketManager) ---
-  public handleCommand(command: TimerCommand) {
-    switch (command) {
+  public handleCommand(command: { command: TimerCommand }) {
+    switch (command.command) {
       case 'START':
         // START now triggers PREPARE if in IDLE
         this.startTimer()
@@ -263,7 +272,7 @@ class TabataTimer {
         this.stopTimer()
         break
       default:
-        console.warn(`Unknown timer command: ${command}`)
+        console.warn(`Unknown timer command: ${command.command}`)
     }
   }
 
@@ -280,4 +289,4 @@ class TabataTimer {
   }
 }
 
-export default TabataTimer
+export default TimerService

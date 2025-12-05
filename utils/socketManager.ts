@@ -4,8 +4,6 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   HrmData,
@@ -14,31 +12,29 @@ import {
   StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { IWebSocketService } from '../types/service.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TimerService from '../services/tabataTimer.js'
 
 // Define service instances to be managed
-let tabataServiceInstance: TabataTimer
+let tabataServiceInstance: TimerService
 let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 
 const hrmClients = new Map<string, HrmData>()
 
-interface Services {
-  tabataService: TabataTimer
-  spotifyService: SpotifyPolling
-}
-
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  services: Services,
+  services: Map<string, IWebSocketService>,
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
-  tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
+  tabataServiceInstance = services.get('timer') as TimerService
+  spotifyServiceInstance = services.get('spotify') as SpotifyPolling
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -144,7 +140,7 @@ const handleIncomingMessage = (
 
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
+          tabataServiceInstance.handleCommand({ command: message.command })
         }
         break
       }
@@ -168,13 +164,7 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         if (spotifyServiceInstance) {
-          // message.command is already typed as Spotify_COMMAND, which now includes deviceId, volume, and playlistUri
-          spotifyServiceInstance.handleCommand(
-            message.command,
-            message.deviceId,
-            message.volume,
-            message.playlistUri
-          )
+          spotifyServiceInstance.handleCommand(message.command)
         }
         break
       }

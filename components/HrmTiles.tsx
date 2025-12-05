@@ -1,7 +1,8 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useHrmState } from '@/hooks/useHrmState'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
@@ -9,7 +10,8 @@ import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus } = useWebSocket()
+  const { hrmData } = useHrmState()
+  const { connectionStatus } = useConnectionManager()
 
   const filteredTiles = useMemo(() => {
     return hrmData

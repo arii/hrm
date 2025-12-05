@@ -15,8 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
+import { ServiceManager } from './services/serviceManager.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
@@ -78,38 +77,24 @@ app
       )
     }
 
-    // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
-    try {
-      spotifyService = await SpotifyPolling.create(broadcast)
-    } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
-    }
-    const tabataService = new TabataTimer(broadcast)
+    // 1. Initialize Service Manager
+    const serviceManager = new ServiceManager(broadcast)
+    await serviceManager.init()
+    const services = serviceManager.getServices()
+    const spotifyService = services.get('spotify') as SpotifyPolling
+    const tabataService = services.get('timer') as TabataTimer
 
-    // 3. State Snapshot Function
+    // 2. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
+    // 3. Initialize WebSocket Manager (to handle commands and connections)
+    initSocketManager(wss, services, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
 
@@ -146,7 +131,7 @@ app
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
-
+    
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',

@@ -10,7 +10,7 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import dynamic from 'next/dynamic'
 
 const SpotifyControls = dynamic(

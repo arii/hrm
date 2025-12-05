@@ -21,8 +21,8 @@ import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { useSpotify } from '@/hooks/useSpotify'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 
 interface SpotifyDevice {
@@ -37,7 +37,18 @@ interface SpotifyDevice {
 
 const SpotifyControls = () => {
   const router = useRouter()
-  const { spotifyData, connectionStatus, sendData } = useWebSocket()
+  const {
+    trackName,
+    artist,
+    isPlaying,
+    play,
+    pause,
+    next,
+    previous,
+    transferPlayback,
+    setVolume: setSpotifyVolume,
+  } = useSpotify()
+  const { connectionStatus } = useConnectionManager()
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
@@ -46,13 +57,11 @@ const SpotifyControls = () => {
   const [_devicesError, setDevicesError] = useState<string | null>(null)
 
   const handleBrowseClick = () => {
-    router.push('/client/spotify-selection');
-  };
+    router.push('/client/spotify-selection')
+  }
 
   const hasSpotifyData =
-    spotifyData.trackName !== 'Awaiting Login...' &&
-    spotifyData.trackName !== '' &&
-    spotifyData.trackName !== 'No Track Playing'
+    trackName !== 'Awaiting Login...' && trackName !== '' && trackName !== 'No Track Playing'
 
   useEffect(() => {
     if (hasSpotifyData) {
@@ -82,7 +91,7 @@ const SpotifyControls = () => {
       setDevicesLoading(false)
       setDevicesError(null)
     }
-  }, [hasSpotifyData])
+  }, [hasSpotifyData, trackName])
 
   useEffect(() => {
     if (availableDevices.length === 0) {
@@ -115,25 +124,6 @@ const SpotifyControls = () => {
     return activeDevice?.id
   }, [availableDevices, selectedDeviceId])
 
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
-    ) => {
-      const targetDeviceId =
-        overriddenDeviceId !== undefined
-          ? overriddenDeviceId
-          : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
-    },
-    [resolveTargetDeviceId, sendData]
-  )
-
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
@@ -145,16 +135,10 @@ const SpotifyControls = () => {
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
+      setSpotifyVolume(sanitized)
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus, resolveTargetDeviceId, setSpotifyVolume]
   )
 
   useEffect(() => {
@@ -197,10 +181,10 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyData.trackName}
+                {trackName}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyData.artist}
+                {artist}
               </Typography>
             </Box>
 
@@ -211,7 +195,7 @@ const SpotifyControls = () => {
               sx={{ mb: 2 }}
             >
               <IconButton
-                onClick={() => sendSpotifyCommand('PREVIOUS')}
+                onClick={previous}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -221,9 +205,7 @@ const SpotifyControls = () => {
                 <SkipPrevious />
               </IconButton>
               <IconButton
-                onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
-                }
+                onClick={isPlaying ? pause : play}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -231,10 +213,10 @@ const SpotifyControls = () => {
                   '&:hover': { backgroundColor: '#169944' },
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
-                onClick={() => sendSpotifyCommand('NEXT')}
+                onClick={next}
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -278,7 +260,7 @@ const SpotifyControls = () => {
                       const deviceId = e.target.value
                       setSelectedDeviceId(deviceId)
                       if (deviceId) {
-                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
+                        transferPlayback(deviceId)
                       }
                     }}
                     disabled={

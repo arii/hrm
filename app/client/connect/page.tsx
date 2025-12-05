@@ -14,7 +14,8 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useConnectionManager } from '@/context/ConnectionContext'
+import { useHrmState } from '@/hooks/useHrmState'
 import { getHrZoneProps } from '../../../utils/visualization'
 import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
 
@@ -35,7 +36,8 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const { connectionStatus, hrmData } = useWebSocket()
+  const { connectionStatus } = useConnectionManager()
+  const { hrmData } = useHrmState()
 
   const {
     connectAndStream,

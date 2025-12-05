@@ -13,7 +13,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useTimer } from '@/hooks/useTimer'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -59,12 +59,7 @@ const Dashboard = () => {
         {/* 1. TABATA TIMER - Componentized */}
         <Grid item xs={12} lg={6}>
           <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
+            timerData={timerData}
           />
         </Grid>
 

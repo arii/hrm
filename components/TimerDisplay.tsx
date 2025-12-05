@@ -1,6 +1,6 @@
 // File: components/TimerDisplay.tsx
 'use client'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -9,25 +9,15 @@ import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
 export interface TimerDisplayProps {
-  phase: TimerPhase
-  timeRemaining: number // seconds (for countdown)
-  timeElapsed: number // seconds (for stopwatch)
-  mode: TimerMode
-  workDuration?: number
-  restDuration?: number
+  timerData: TimerData;
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const TimerDisplay = ({
-  phase,
-  timeRemaining,
-  timeElapsed,
-  mode,
-  workDuration = 20,
-  restDuration = 10,
+  timerData: { currentPhase: phase, timeRemaining, timeElapsed, mode, workDuration = 20, restDuration = 10 },
 }: TimerDisplayProps) => {
-  const { connectionStatus } = useWebSocket()
+  const { connectionStatus } = useConnectionManager()
   // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string

@@ -11,11 +11,11 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useConnectionManager } from '@/context/ConnectionContext'
 import { HrmInputMessage } from '../../../types/websocket'
 
 export default function MockPage() {
-  const { sendData, connectionStatus } = useWebSocket()
+  const { sendData, connectionStatus } = useConnectionManager()
   const [hrValue, setHrValue] = useState(100)
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)

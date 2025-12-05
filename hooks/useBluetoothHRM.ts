@@ -6,7 +6,7 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage, HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
-import { useWebSocket } from '@/context/WebSocketContext'
+import { useConnectionManager } from '@/context/ConnectionContext'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -49,7 +49,7 @@ const getCookie = (name: string): string => {
 
 const useBluetoothHRM = () => {
   // We assume the useWebSocket hook is available and provides the sendData function
-  const { sendData, connectionStatus } = useWebSocket()
+  const { sendData, connectionStatus } = useConnectionManager()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
 

@@ -2,6 +2,7 @@ import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { IWebSocketService } from '../types/service.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -35,7 +36,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements IWebSocketService {
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -60,7 +61,7 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
@@ -70,16 +71,12 @@ export class SpotifyPolling {
     )
   }
 
-  public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
-  ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
+  public async init() {
+    await this.initializeSdk()
+    this.tokenRefreshInterval = setInterval(
+      () => this.checkAndRefreshSdkToken(),
       1000 * 60 * 5
     ) // Check every 5 minutes if we need to re-sync
-    return instance
   }
 
   private async initializeSdk() {
@@ -160,7 +157,7 @@ export class SpotifyPolling {
     }
   }
 
-  public cleanup() {
+  public stop() {
     this.stopPolling()
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
@@ -301,12 +298,12 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
-    command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
+  public handleCommand(command: {
+    command: SpotifyCommand
+    deviceId?: string
+    volume?: number
     playlistUri?: string
-  ) {
+  }) {
     if (!this.sdk) {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
@@ -314,10 +311,15 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        await this.executeSpotifyCommand(
+          command.command,
+          command.deviceId,
+          command.volume,
+          command.playlistUri
+        )
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
-        this.logSpotifyCommandError(command, error)
+        this.logSpotifyCommandError(command.command, error)
       }
     })()
   }
