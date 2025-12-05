@@ -32,6 +32,8 @@ const SpotifyControls = () => {
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [isDragging, setIsDragging] = useState(false)
+  const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection');
@@ -52,23 +54,39 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData])
 
-  // 4. Update selection logic to use the prop 'devices' instead of local state
+  // 4. Update selection logic and volume sync
   useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active);
-    const selectedStillExists = devices.some((d) => d.id === selectedDeviceId);
-
-    // If the selected device is no longer in the list, auto-select the new active one.
-    if (selectedDeviceId && !selectedStillExists) {
-      setSelectedDeviceId(activeDevice?.id ?? '');
-    }
+    const activeDevice = devices.find((d) => d.is_active)
+    const activeId = activeDevice?.id
     
-    // If there's no selection yet, but there is an active device, select it.
-    if (!selectedDeviceId && activeDevice) {
-      setSelectedDeviceId(activeDevice.id);
+    // Sync Selected Device
+    if (prevActiveIdRef.current === undefined && activeId) {
+       // Initial sync
+       setSelectedDeviceId(activeId)
+    } else if (activeId && activeId !== prevActiveIdRef.current) {
+       // Active device changed externally, update selection
+       setSelectedDeviceId(activeId)
+    } else {
+       // Check if selected device is still valid
+       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
+       if (selectedDeviceId && !selectedStillExists) {
+          setSelectedDeviceId(activeId ?? '')
+       }
+       if (!selectedDeviceId && activeId) {
+          setSelectedDeviceId(activeId)
+       }
+    }
+    prevActiveIdRef.current = activeId
+
+    // Sync Volume (if not dragging)
+    if (!isDragging && activeDevice && typeof activeDevice.volume_percent === 'number') {
+        if (activeDevice.volume_percent !== volume) {
+             setVolume(activeDevice.volume_percent)
+        }
     }
     
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]);
+  }, [devices]); // Rely on devices update to trigger sync
 
 
   const resolveTargetDeviceId = useCallback(() => {
@@ -217,8 +235,14 @@ const SpotifyControls = () => {
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
               <Slider
                 value={volume}
-                onChange={(_, val) => setVolume(val as number)}
-                onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
+                onChange={(_, val) => {
+                   setIsDragging(true)
+                   setVolume(val as number)
+                }}
+                onChangeCommitted={(_, val) => {
+                   setIsDragging(false)
+                   sendVolumeCommand(val as number)
+                }}
                 min={0}
                 max={100}
                 size="small"
