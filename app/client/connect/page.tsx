@@ -119,8 +119,8 @@ export default function ConnectPage() {
         localStorage.clear()
 
         const response = await fetch(API_DEBUG_RESET, { method: 'POST' })
-        const data = await response.json()
-        alert(data.message)
+        const remoteData = await response.json()
+        alert(remoteData.message)
         window.location.reload() // Reload to reflect changes
       } catch (error) {
         console.error('Error resetting server:', error)

@@ -99,10 +99,10 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       const debugAuthResponse = await page.request.get(
         `${BASE_URL}/api/debug/auth-check`
       )
-      const debugJson = await debugAuthResponse.json()
+      const remoteDebugJson = await debugAuthResponse.json()
 
-      console.log('Auth Debug Info:', debugJson)
-      expect(debugJson.userId).toBe(EXPECTED_USER)
+      console.log('Auth Debug Info:', remoteDebugJson)
+      expect(remoteDebugJson.userId).toBe(EXPECTED_USER)
     }
 
     // 6. Check Token Validity via API
@@ -110,16 +110,16 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       `${BASE_URL}/api/debug/spotify-token-status`
     )
     expect(tokenResponse.status()).toBe(200)
-    const tokenData = await tokenResponse.json()
-    expect(tokenData.status, '❌ No valid token status found on server').toBe(
+    const remoteTokenData = await tokenResponse.json()
+    expect(remoteTokenData.status, '❌ No valid token status found on server').toBe(
       'token_found'
     )
     expect(
-      tokenData.accessToken,
+      remoteTokenData.accessToken,
       '❌ No Access Token found on server'
     ).toBeTruthy()
     expect(
-      tokenData.refreshToken,
+      remoteTokenData.refreshToken,
       '❌ No Refresh Token found on server'
     ).toBeTruthy()
 

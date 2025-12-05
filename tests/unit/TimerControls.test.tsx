@@ -16,7 +16,7 @@ const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
   () => UseWebSocketReturn
 >
 
-const baseTimerData: TimerData = {
+const remoteBaseTimerData: TimerData = {
   isRunning: false,
   currentPhase: 'IDLE',
   timeRemaining: 20,
@@ -44,15 +44,15 @@ describe('TimerControls', () => {
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
-    const sendData = jest.fn()
+    const sendRemoteData = jest.fn()
 
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
-      timerData: { ...baseTimerData },
+      timerData: { ...remoteBaseTimerData },
       spotifyData: { trackName: '', artist: '', isPlaying: false },
       spotifyServiceInitialized: true,
       connectionStatus: 'Connected',
-      sendData,
+      sendData: sendRemoteData,
     } as unknown as UseWebSocketReturn)
 
     render(<TimerControls />)
@@ -80,7 +80,7 @@ describe('TimerControls', () => {
     await user.click(screen.getByRole('button', { name: /start/i }))
 
     // Verify that TIMER_CONFIG was sent with the updated values
-    expect(sendData).toHaveBeenCalledWith(
+    expect(sendRemoteData).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'TIMER_CONFIG',
         workDuration: 45,

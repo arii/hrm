@@ -50,8 +50,8 @@ const getCookie = (name: string): string => {
 }
 
 const useBluetoothHRM = () => {
-  // We assume the useWebSocket hook is available and provides the sendData function
-  const { sendData, connectionStatus } = useWebSocket()
+  // We assume the useWebSocket hook is available and provides the sendRemoteData function
+  const { sendData: sendRemoteData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -203,19 +203,19 @@ const useBluetoothHRM = () => {
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
 
-            const data: HrmInputData = {
+            const remoteData: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
             }
             if (age) {
-              data.age = parseInt(age)
+              remoteData.age = parseInt(age)
             }
             const message: HrmInputMessage = {
               type: 'HRM_INPUT',
-              data,
+              data: remoteData,
             }
-            sendData(message)
+            sendRemoteData(message)
           }
         )
 
@@ -231,7 +231,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [handleConnectionError, onDisconnected, sendData]
+    [handleConnectionError, onDisconnected, sendRemoteData]
   )
 
   // Update the ref whenever connectToGatt changes

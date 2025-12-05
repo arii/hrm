@@ -26,9 +26,9 @@ import { SpotifyCommandMessage } from '@/types/websocket'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  // 1. Destructure devices directly from spotifyData
-  const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
+  // 1. Destructure devices directly from remoteSpotifyData
+  const { spotifyData: remoteSpotifyData, connectionStatus, sendData } = useWebSocket()
+  const { devices = [] } = remoteSpotifyData // Default to empty array if undefined
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
@@ -40,9 +40,9 @@ const SpotifyControls = () => {
   }
 
   const hasSpotifyData =
-    spotifyData.trackName !== 'Awaiting Login...' &&
-    spotifyData.trackName !== '' &&
-    spotifyData.trackName !== 'No Track Playing'
+    remoteSpotifyData.trackName !== 'Awaiting Login...' &&
+    remoteSpotifyData.trackName !== '' &&
+    remoteSpotifyData.trackName !== 'No Track Playing'
 
   // 3. Request devices on mount or connection
   useEffect(() => {
@@ -183,10 +183,10 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {spotifyData.trackName}
+                {remoteSpotifyData.trackName}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {spotifyData.artist}
+                {remoteSpotifyData.artist}
               </Typography>
             </Box>
 
@@ -209,7 +209,7 @@ const SpotifyControls = () => {
               </IconButton>
               <IconButton
                 onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
+                  sendSpotifyCommand(remoteSpotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
                 data-testid="spotify-play-pause-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}
@@ -219,7 +219,7 @@ const SpotifyControls = () => {
                   '&:hover': { backgroundColor: '#169944' },
                 }}
               >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {remoteSpotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}

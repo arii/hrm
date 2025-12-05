@@ -96,7 +96,7 @@ export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
-  data: HrmInputData
+  remoteData: HrmInputData
 }
 
 export interface TimerCommandMessage {
