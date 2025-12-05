@@ -27,7 +27,11 @@ import { SpotifyCommandMessage } from '@/types/websocket'
 const SpotifyControls = () => {
   const router = useRouter()
   // 1. Destructure devices directly from remoteSpotifyData
-  const { spotifyData: remoteSpotifyData, connectionStatus, sendData } = useWebSocket()
+  const {
+    spotifyData: remoteSpotifyData,
+    connectionStatus,
+    sendData: sendRemoteData,
+  } = useWebSocket()
   const { devices = [] } = remoteSpotifyData // Default to empty array if undefined
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -47,12 +51,12 @@ const SpotifyControls = () => {
   // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected') {
-      sendData({
+      sendRemoteData({
         type: 'SPOTIFY_COMMAND',
         command: 'GET_DEVICES',
       })
     }
-  }, [connectionStatus, sendData])
+  }, [connectionStatus, sendRemoteData])
 
   // 4. Update selection logic and volume sync
   useEffect(() => {
@@ -114,9 +118,9 @@ const SpotifyControls = () => {
         command,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
-      sendData(message)
+      sendRemoteData(message)
     },
-    [resolveTargetDeviceId, sendData]
+    [resolveTargetDeviceId, sendRemoteData]
   )
 
   const sendVolumeCommand = useCallback(
@@ -136,10 +140,10 @@ const SpotifyControls = () => {
         volume: sanitized,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
-      sendData(message)
+      sendRemoteData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus, resolveTargetDeviceId, sendRemoteData]
   )
 
   useEffect(() => {
@@ -209,7 +213,9 @@ const SpotifyControls = () => {
               </IconButton>
               <IconButton
                 onClick={() =>
-                  sendSpotifyCommand(remoteSpotifyData.isPlaying ? 'PAUSE' : 'PLAY')
+                  sendSpotifyCommand(
+                    remoteSpotifyData.isPlaying ? 'PAUSE' : 'PLAY'
+                  )
                 }
                 data-testid="spotify-play-pause-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}

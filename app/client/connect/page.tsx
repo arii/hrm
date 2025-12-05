@@ -25,7 +25,7 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const { connectionStatus, hrmData } = useWebSocket()
+  const { connectionStatus, hrmData: remoteHrmData } = useWebSocket()
 
   const {
     connectAndStream,
@@ -130,7 +130,7 @@ export default function ConnectPage() {
   }
 
   // Find current user's heart rate data from WebSocket
-  const currentUserData = hrmData.find(
+  const currentUserData = remoteHrmData.find(
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
   )
   const currentHR = currentUserData?.value || 0

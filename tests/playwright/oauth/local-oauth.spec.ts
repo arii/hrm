@@ -111,9 +111,10 @@ test.describe('Spotify OAuth Integration (Local)', () => {
     )
     expect(tokenResponse.status()).toBe(200)
     const remoteTokenData = await tokenResponse.json()
-    expect(remoteTokenData.status, '❌ No valid token status found on server').toBe(
-      'token_found'
-    )
+    expect(
+      remoteTokenData.status,
+      '❌ No valid token status found on server'
+    ).toBe('token_found')
     expect(
       remoteTokenData.accessToken,
       '❌ No Access Token found on server'
