@@ -45,8 +45,12 @@ export async function createAuthenticatedContext(browser: Browser): Promise<Brow
     expires: new Date(Date.now() + 3600 * 1000).toISOString(),
   }
 
-  // Use the same secret as the test-with-server.sh script
-  const secretString = 'test-secret-for-ci';
+  // A secret key for signing the JWT. In a real test suite, this should
+  // be loaded from a test-specific environment variable.
+  const secretString = process.env.NEXTAUTH_SECRET;
+  if (!secretString) {
+    throw new Error('NEXTAUTH_SECRET is not defined in the test environment');
+  }
   const secret = createHash('sha256').update(secretString).digest();
 
   const token = await new jose.EncryptJWT(mockSession)
