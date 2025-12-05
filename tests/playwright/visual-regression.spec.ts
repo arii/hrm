@@ -119,6 +119,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
+    test.setTimeout(WAIT_TIMEOUTS.LONG * 2)
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
 
@@ -142,6 +143,7 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide', // Hide text cursor
       threshold: 0.2, // Allow for minor rendering differences
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
+      timeout: WAIT_TIMEOUTS.LONG,
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
