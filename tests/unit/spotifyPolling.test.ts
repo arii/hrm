@@ -69,7 +69,7 @@ describe('SpotifyPolling Service', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    // @ts-ignore: Accessing private static for test reset
+    // @ts-expect-error: Accessing private static for test reset
     SpotifyPolling.instance = undefined;
     // Reset mockPlayer's mocks
     mockPlayer.getCurrentlyPlayingTrack.mockClear()
@@ -275,7 +275,7 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
-      // @ts-ignore
+      // @ts-expect-error
       SpotifyPolling.instance = undefined
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')

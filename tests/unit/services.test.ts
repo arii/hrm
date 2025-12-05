@@ -49,7 +49,7 @@ describe('Services Integration', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
-    // @ts-ignore: Accessing private static for test reset
+    // @ts-expect-error: Accessing private static for test reset
     SpotifyPolling.instance = undefined
     broadcastedMessages = []
 

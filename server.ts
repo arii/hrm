@@ -17,7 +17,6 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { serviceRegistry } from './services/serviceRegistry.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
