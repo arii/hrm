@@ -4,8 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { serviceRegistry } from '../services/serviceRegistry.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -24,9 +23,6 @@ interface ExtWebSocket extends WebSocket {
   clientType?: 'dashboard' | 'controller'
 }
 
-// Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -34,23 +30,16 @@ let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
 
-interface Services {
-  tabataService: TabataTimer
-  spotifyService: SpotifyPolling
-}
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  services: Services,
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
   wsServerInstance = wss
-  tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -179,26 +168,20 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
-        }
+        serviceRegistry.tabataTimer.handleCommand(message.command);
         break
       }
 
       case 'SET_MODE': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode)
-        }
+        serviceRegistry.tabataTimer.setMode(message.mode);
         break
       }
 
       case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
-            workDuration: message.workDuration,
-            restDuration: message.restDuration,
-          })
-        }
+        serviceRegistry.tabataTimer.setConfig({
+          workDuration: message.workDuration,
+          restDuration: message.restDuration,
+        });
         break
       }
 
@@ -220,14 +203,12 @@ const handleIncomingMessage = (
         })
         
         // Also handle locally for backward compatibility
-        if (spotifyServiceInstance) {
-          spotifyServiceInstance.handleCommand(
-            commandMsg.command,
-            commandMsg.deviceId,
-            commandMsg.volume,
-            commandMsg.playlistUri
-          )
-        }
+        serviceRegistry.spotifyPolling.handleCommand(
+          commandMsg.command,
+          commandMsg.deviceId,
+          commandMsg.volume,
+          commandMsg.playlistUri
+        )
         break
       }
 

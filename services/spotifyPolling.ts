@@ -2,6 +2,7 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { ISpotifyPolling } from '../types/service.js';
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -36,7 +37,8 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements ISpotifyPolling {
+  private static instance: SpotifyPolling;
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -75,13 +77,15 @@ export class SpotifyPolling {
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
-    await instance.initializeSdk()
-    instance.tokenRefreshInterval = setInterval(
-      () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
-    return instance
+    if (!SpotifyPolling.instance) {
+      SpotifyPolling.instance = new SpotifyPolling(broadcastUpdate);
+      await SpotifyPolling.instance.initializeSdk();
+      SpotifyPolling.instance.tokenRefreshInterval = setInterval(
+        () => SpotifyPolling.instance.checkAndRefreshSdkToken(),
+        1000 * 60 * 5
+      );
+    }
+    return SpotifyPolling.instance;
   }
 
   private async initializeSdk() {
@@ -322,30 +326,28 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
+      return
     }
     
     if (command === 'GET_DEVICES') {
-      this.refreshDevices()
+      await this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        this.logSpotifyCommandError(command, error)
-      }
-    })()
+    try {
+      await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
+    } catch (error) {
+      this.logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(

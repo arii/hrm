@@ -49,6 +49,8 @@ describe('WebSocket Manager Integration', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+    // @ts-ignore: Accessing private static for test reset
+    SpotifyPolling.instance = undefined
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
@@ -224,7 +226,7 @@ describe('WebSocket Manager Integration', () => {
     it('should support Spotify volume commands', async () => {
       // The service now manages SDK internally, no need to set accessToken manually if mocks are set up
 
-      spotifyService.handleCommand('SET_VOLUME', undefined, 75)
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 75)
 
       // Verify mock called
       expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()

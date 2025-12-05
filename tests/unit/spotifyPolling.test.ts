@@ -69,6 +69,8 @@ describe('SpotifyPolling Service', () => {
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+    // @ts-ignore: Accessing private static for test reset
+    SpotifyPolling.instance = undefined;
     // Reset mockPlayer's mocks
     mockPlayer.getCurrentlyPlayingTrack.mockClear()
     mockPlayer.startResumePlayback.mockClear()
@@ -273,6 +275,8 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
+      // @ts-ignore
+      SpotifyPolling.instance = undefined
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY')
       // Should not make API call without token

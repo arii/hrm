@@ -10,7 +10,8 @@ import {
   TimerData,
   TimerMode,
   TimerPhase,
-} from '../types/websocket'
+} from '../types/websocket';
+import { ITabataTimer } from '../types/service';
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -32,7 +33,7 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer {
+class TabataTimer implements ITabataTimer {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
