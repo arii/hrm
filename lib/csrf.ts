@@ -1,12 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 
-const CSRF_SECRET = process.env.CSRF_SECRET;
-
-if (!CSRF_SECRET) {
-  throw new Error('CSRF_SECRET environment variable not set');
+// Helper function to get the secret and throw if it's not set.
+// This centralizes the check and ensures it's only called when a crypto operation is needed.
+function getCsrfSecret(): string {
+  const secret = process.env.CSRF_SECRET;
+  if (!secret) {
+    throw new Error('CSRF_SECRET environment variable is not set');
+  }
+  return secret;
 }
 
-async function sign(value: string, secret: string): Promise<string> {
+async function sign(value: string): Promise<string> {
+  const secret = getCsrfSecret();
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -18,7 +23,8 @@ async function sign(value: string, secret: string): Promise<string> {
   return `${value}.${Buffer.from(signature).toString('base64url')}`;
 }
 
-async function verify(signedValue: string, secret: string): Promise<string | false> {
+async function verify(signedValue: string): Promise<string | false> {
+  const secret = getCsrfSecret();
   const [value, signature] = signedValue.split('.');
   if (!value || !signature) {
     return false;
@@ -38,12 +44,12 @@ async function verify(signedValue: string, secret: string): Promise<string | fal
 
 export async function createCsrfToken(): Promise<{ token: string, signedToken: string }> {
   const token = uuidv4();
-  const signedToken = await sign(token, CSRF_SECRET!);
+  const signedToken = await sign(token);
   return { token, signedToken };
 }
 
 export async function verifyCsrfToken(signedToken: string, headerToken: string): Promise<boolean> {
-  const unsignedToken = await verify(signedToken, CSRF_SECRET!);
+  const unsignedToken = await verify(signedToken);
   if (!unsignedToken) {
     return false;
   }
@@ -51,5 +57,5 @@ export async function verifyCsrfToken(signedToken: string, headerToken: string):
 }
 
 export async function getUnsignedToken(signedToken: string): Promise<string | false> {
-    return await verify(signedToken, CSRF_SECRET!);
+    return await verify(signedToken);
 }

@@ -37,7 +37,11 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies()
   const csrfCookie = cookieStore.get('csrf-token')?.value
-  const csrfToken = csrfCookie ? await getUnsignedToken(csrfCookie) : null
+
+  let csrfToken = null;
+  if (csrfCookie && process.env.CSRF_SECRET) {
+    csrfToken = await getUnsignedToken(csrfCookie);
+  }
 
   return (
     <html lang="en">
