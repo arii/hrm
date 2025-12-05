@@ -11,10 +11,13 @@ import { v4 as uuidv4 } from 'uuid';
  * @param {Request} req - The incoming request.
  * @param {object} context - The context object, containing the validated body.
  * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
+ * @param {Request} _req - The incoming request (unused).
+ * @param {object} context - The context object, containing the validated body.
+ * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
  * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
 async function createUser(
-  req: Request,
+  _req: Request,
   { body }: { body: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> }
 ): Promise<NextResponse> {
   // In a real application, you would save the user to a database.
