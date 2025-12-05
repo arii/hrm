@@ -3,67 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - HRM Dashboard</title>
+    <title>Terms of Service - HRM Monitor</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .policy-content {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin: 2rem auto;
+            max-width: 900px;
+        }
+        .policy-content h2 { margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+        .policy-content ul { margin-left: 2rem; margin-bottom: 1.5rem; color: var(--text-muted); }
+    </style>
 </head>
-<body>
-    <header>
-        <div class="container header-container">
-            <h1>HRM Dashboard</h1>
-            <nav>
+<body class="bg-light">
+
+    <nav class="navbar">
+        <div class="container" style="display:flex; width:100%; justify-content:space-between; align-items:center;">
+            <a href="index.html" class="brand">HRM Monitor</a>
+            <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="privacy.html">Privacy</a>
-                <a href="terms.html" class="active">Terms</a>
-            </nav>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="container doc-container">
-        <h1>Terms of Service</h1>
-        <p class="meta">Last Updated: December 3, 2025</p>
+    <div class="container">
+        <div class="policy-content">
+            <h1>Terms of Service</h1>
+            <p>Last Updated: December 5, 2025</p>
 
-        <section>
-            <h2>1. Acceptance of Terms</h2>
-            <p>By using the HRM Dashboard, you agree to these Terms. If you do not agree, please do not use the application.</p>
-        </section>
+            <h2>1. Service Description</h2>
+            <p>
+                HRM Monitor is a real-time dashboard that visualizes data from your local Bluetooth devices
+                and synchronizes it with third-party platforms. The service is provided "as is" and is intended
+                for recreational use only. It is not a medical device.
+            </p>
 
-        <section>
-            <h2>2. Use at Your Own Risk</h2>
-            <p>This application is for recreational use only. It is not a medical device. Always consult a physician before beginning any training program.</p>
-            <p>THE SERVICE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.</p>
-        </section>
+            <h2>2. Third-Party Dependencies</h2>
+            <p>
+                Our service relies on the Application Programming Interfaces (APIs) provided by Strava, Inc.
+                and Spotify AB. We do not guarantee the continued availability of these features.
+                If Strava or Spotify revoke access or change their API terms, those features may cease to function
+                without notice.
+            </p>
 
-        <section>
-            <h2>3. Third-Party Services</h2>
-            <p>This application may integrate with third-party services like Strava and Spotify to enhance its functionality.</p>
-            
-            <h3>Spotify</h3>
-            <p>Our application uses the Spotify Platform. By using our Spotify integration, you agree to the <a href="https://developer.spotify.com/terms/" target="_blank">Spotify Developer Agreement</a> and <a href="https://developer.spotify.com/policy/" target="_blank">Developer Policy</a>. Key terms include:</p>
+            <h2>3. User Responsibilities</h2>
+            <p>By using this application, you agree to:</p>
             <ul>
-                <li><strong>Non-Commercial Use:</strong> The Spotify service accessed through our app is for personal, non-commercial use only.</li>
-                <li><strong>Data Handling:</strong> You can disconnect your Spotify account at any time. Upon disconnection, we will delete your Spotify-related data.</li>
-                <li><strong>Prohibited Uses:</strong> You may not use this integration for prohibited purposes such as training AI models, creating ringtones, or synchronizing audio with visual media without Spotify's written approval.</li>
-                <li><strong>Attribution:</strong> All Spotify content, including track names and cover art, is attributed to Spotify.</li>
+                <li>Use the Strava and Spotify integrations only in accordance with their respective Terms of Service.</li>
+                <li>Not attempt to reverse engineer or scrape data from the application.</li>
+                <li>Take full responsibility for your physical safety during workouts.</li>
             </ul>
 
-            <h3>Strava</h3>
-            <p>This application uses the Strava API but is not endorsed or certified by Strava. By using the Strava integration features, you also agree to be bound by the <a href="https://www.strava.com/legal/terms" target="_blank">Strava Terms of Service</a>.</p>
-        </section>
+            <h2>4. Limitation of Liability</h2>
+            <p>
+                To the maximum extent permitted by law, HRM Monitor shall not be liable for any indirect, incidental,
+                or consequential damages arising from the use of, or inability to use, this service or its
+                third-party integrations.
+            </p>
 
-        <section>
-            <h2>4. Modifications</h2>
-            <p>We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of modified terms.</p>
-        </section>
-
-        <section>
             <h2>5. Contact</h2>
-            <p>Questions? Contact us at <a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a>.</p>
-        </section>
-    </main>
+            <p>For legal inquiries, please contact: <a href="mailto:support@your-domain.com">support@your-domain.com</a></p>
+        </div>
+    </div>
 
     <footer>
-        <div class="container footer-content">
-            <p class="copyright">&copy; 2025 Ariel Anders.</p>
+        <div class="container">
+            <p>© 2025 HRM App. All rights reserved.</p>
         </div>
     </footer>
 </body>
