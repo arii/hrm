@@ -4,7 +4,6 @@
 import { POST } from '@/app/api/register/route'
 import { promises as fs } from 'fs'
 import bcrypt from 'bcrypt'
-import { NextResponse } from 'next/server'
 
 jest.mock('fs', () => ({
   promises: {
