@@ -42,11 +42,8 @@ class MockWebSocketServer {
 
   addDashboard(ws: WebSocket) {
     this.dashboard = ws;
+    ws.send(JSON.stringify(this.initialState));
     ws.on('framesent', (frame) => {
-        const message = JSON.parse(frame.payload.toString());
-        if (message.type === 'GET_STATE') {
-            ws.send(JSON.stringify(this.initialState));
-        }
       // Relay messages from dashboard to controller if needed
       if (this.controller && this.controller.readyState() === 1) {
         this.controller.send(frame.payload);
@@ -60,12 +57,10 @@ class MockWebSocketServer {
 
   addController(ws: WebSocket) {
     this.controller = ws;
+    ws.send(JSON.stringify(this.initialState));
     ws.on('framesent', (frame) => {
-        const message = JSON.parse(frame.payload.toString());
-        if (message.type === 'GET_STATE') {
-            ws.send(JSON.stringify(this.initialState));
-        }
       // Relay messages from controller to dashboard
+       const message = JSON.parse(frame.payload.toString());
        if (message.type === 'SPOTIFY_COMMAND' && message.command === 'SET_VOLUME') {
          const volumeUpdate: ServerMessage = {
             type: 'SPOTIFY_UPDATE',
