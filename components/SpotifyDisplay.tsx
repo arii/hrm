@@ -1,6 +1,7 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
@@ -44,6 +45,10 @@ const SpotifyDisplay = () => {
     deviceId,
     isAuthenticated: spotifyAuthenticated,
   } = useSpotifyWebPlayback()
+
+  // Enable remote Spotify control from controllers
+  useSpotifyRemoteExecution(player)
+
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
@@ -198,7 +203,7 @@ const SpotifyDisplay = () => {
           right: 0,
           zIndex: 1100,
           boxShadow: 3,
-          mb: 0,
+          width: '100%',
         }}
       >
         <Button
@@ -244,7 +249,7 @@ const SpotifyDisplay = () => {
           right: 0,
           zIndex: 1100,
           boxShadow: 3,
-          mb: 0,
+          width: '100%',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
