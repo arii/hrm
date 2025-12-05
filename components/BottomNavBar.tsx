@@ -39,6 +39,7 @@ export default function BottomNavBar() {
     >
       <BottomNavigationAction
         label="Dashboard"
+        aria-label="Navigate to Dashboard page"
         icon={<DashboardIcon />}
         component={Link}
         href="/"
@@ -50,6 +51,7 @@ export default function BottomNavBar() {
       />
       <BottomNavigationAction
         label="Phone Controls"
+        aria-label="Navigate to Phone Controls page"
         icon={<SettingsIcon />}
         component={Link}
         href="/client/control"
@@ -61,6 +63,7 @@ export default function BottomNavBar() {
       />
       <BottomNavigationAction
         label="Stream HR"
+        aria-label="Navigate to Stream Heart Rate page"
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
