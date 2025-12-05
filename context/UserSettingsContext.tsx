@@ -1,9 +1,9 @@
 // context/UserSettingsContext.tsx
 'use client';
-import React, { createContext, useContext } from 'react';
-import { useUserPreferences, UserPreferences } from '../hooks/useUserPreferences';
+import React, { createContext, useContext, Dispatch } from 'react';
+import { useUserPreferences, UserPreferences, Action } from '../hooks/useUserPreferences';
 
-type UserSettingsContextType = readonly [UserPreferences, (value: UserPreferences | ((val: UserPreferences) => UserPreferences)) => void];
+type UserSettingsContextType = readonly [UserPreferences, Dispatch<Action>];
 
 export const UserSettingsContext = createContext<UserSettingsContextType | undefined>(undefined);
 
