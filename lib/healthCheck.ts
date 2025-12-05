@@ -2,7 +2,8 @@
 import {promises as fs} from 'fs';
 import path from 'path';
 import { WebSocketServer } from 'ws';
-import { ISpotifyPolling, ITabataTimer } from '../types/service';
+import { SpotifyPolling } from '../services/spotifyPolling';
+import TabataTimer from '../services/tabataTimer';
 
 interface HealthCheckStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -17,8 +18,8 @@ interface HealthCheckStatus {
 
 export const performHealthCheck = async (
   wss: WebSocketServer,
-  spotifyService: ISpotifyPolling,
-  tabataService: ITabataTimer
+  spotifyService: SpotifyPolling,
+  tabataService: TabataTimer
 ): Promise<HealthCheckStatus> => {
   const checks = {
     websocket: 'error' as 'ok' | 'error',
