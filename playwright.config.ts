@@ -29,6 +29,13 @@ if (!hasNextAuthSecret) {
   testIgnoreList.push('debug.spec.ts');
 }
 
+// Gate debug tests to development environment
+if (process.env.NODE_ENV !== 'development') {
+  testIgnoreList.push('debug.spec.ts');
+  testIgnoreList.push('spotify-debug.spec.ts');
+}
+
+
 export default defineConfig({
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
