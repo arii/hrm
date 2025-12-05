@@ -1,53 +1,57 @@
-// File: middleware.ts (NextAuth Reverse Proxy Middleware)
-/**
- * Middleware to handle reverse proxy headers for NextAuth.js
- * This ensures that HTTPS cookies work properly behind a reverse proxy.
- */
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server';
+import { createCsrfToken, verifyCsrfToken } from './lib/csrf';
 
-// Base path for auth routes
-const API_AUTH_BASE = '/api/auth/'
+const PROTECTED_PATHS = ['/api/internal/', '/api/debug/'];
+const API_AUTH_BASE = '/api/auth/';
 
-export function middleware(request: NextRequest) {
-  // Only handle auth routes
-  if (!request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
-    return NextResponse.next()
-  }
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next();
 
-  const response = NextResponse.next()
-  
-  // Handle reverse proxy headers for NextAuth
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto')
-  
-  if (forwardedHost && forwardedProto) {
-    // Set the correct host and protocol for NextAuth
-    response.headers.set('x-forwarded-host', forwardedHost)
-    response.headers.set('x-forwarded-proto', forwardedProto)
-    
-    // Ensure NextAuth recognizes HTTPS
-    if (forwardedProto === 'https') {
-      response.headers.set('x-forwarded-ssl', 'on')
+  // Handle CSRF protection for protected API routes
+  if (PROTECTED_PATHS.some(path => request.nextUrl.pathname.startsWith(path))) {
+    if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
+      const signedToken = request.cookies.get('csrf-token')?.value;
+      const headerToken = request.headers.get('x-csrf-token');
+
+      if (!signedToken || !headerToken || !(await verifyCsrfToken(signedToken, headerToken))) {
+        return new NextResponse('Invalid CSRF token', { status: 403 });
+      }
     }
   }
   
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Middleware] Auth request:', {
-      pathname: request.nextUrl.pathname,
-      host: request.headers.get('host'),
-      forwardedHost,
-      forwardedProto
-    })
+  // Set CSRF cookie if it doesn't exist
+  if (!request.cookies.has('csrf-token')) {
+    const { token, signedToken } = await createCsrfToken();
+    response.cookies.set('csrf-token', signedToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+    response.headers.set('x-csrf-token', token)
   }
-  
-  return response
+
+  // Handle reverse proxy headers for NextAuth
+  if (request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const forwardedProto = request.headers.get('x-forwarded-proto');
+
+    if (forwardedHost && forwardedProto) {
+      response.headers.set('x-forwarded-host', forwardedHost);
+      response.headers.set('x-forwarded-proto', forwardedProto);
+      if (forwardedProto === 'https') {
+        response.headers.set('x-forwarded-ssl', 'on');
+      }
+    }
+  }
+
+  return response;
 }
 
 export const config = {
-  // Note: matcher must be static strings for Next.js static analysis
   matcher: [
-    '/api/auth/:path*'
-  ]
-}
+    '/api/auth/:path*',
+    '/api/internal/:path*',
+    '/api/debug/:path*',
+  ],
+};
