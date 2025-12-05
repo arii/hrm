@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
+import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
@@ -178,4 +179,35 @@ export default defineConfig([
   },
   // This turns off any ESLint style rules that conflict with Prettier.
   prettierConfig,
+
+  // Add the Prettier plugin configuration
+  {
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    rules: {
+      'prettier/prettier': 'error',
+    },
+  },
+
+  // Custom ESLint rule for remote state management
+  {
+    plugins: {
+      'custom-rules': {
+        rules: {
+          'enforce-remote-state-pattern': (await import('./.eslint-rules/enforce-remote-state-pattern.js')).default,
+        },
+      },
+    },
+    rules: {
+      'custom-rules/enforce-remote-state-pattern': 'error',
+    },
+  },
+
+  // Restrict console statements in production
+  {
+    rules: {
+      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    },
+  },
 ])
