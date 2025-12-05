@@ -18,7 +18,9 @@ interface SpotifyPlayerInstance {
  * This hook listens for relayed commands from controllers and executes them
  * using the local Spotify Player SDK instance.
  */
-export const useSpotifyRemoteExecution = (player: SpotifyPlayerInstance | null): void => {
+export const useSpotifyRemoteExecution = (
+  player: SpotifyPlayerInstance | null
+): void => {
   const { sendData } = useWebSocket()
 
   useEffect(() => {
@@ -27,8 +29,6 @@ export const useSpotifyRemoteExecution = (player: SpotifyPlayerInstance | null):
     // Register this client as the "Dashboard" (The Executor)
     console.log('[Spotify Remote] Registering as dashboard')
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
-
-
 
     // Listen for custom events dispatched by the WebSocket context
     const handleCustomEvent = (event: CustomEvent) => {
@@ -45,21 +45,21 @@ export const useSpotifyRemoteExecution = (player: SpotifyPlayerInstance | null):
               fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: command })
+                body: JSON.stringify({ command: command }),
               })
               break
             case 'NEXT':
               fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'NEXT' })
+                body: JSON.stringify({ command: 'NEXT' }),
               })
               break
             case 'PREVIOUS':
               fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'PREVIOUS' })
+                body: JSON.stringify({ command: 'PREVIOUS' }),
               })
               break
             case 'SET_VOLUME':
@@ -70,17 +70,21 @@ export const useSpotifyRemoteExecution = (player: SpotifyPlayerInstance | null):
                 fetch('/api/spotify/control', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ command: 'SET_VOLUME', volume: volume, deviceId })
+                  body: JSON.stringify({
+                    command: 'SET_VOLUME',
+                    volume: volume,
+                    deviceId,
+                  }),
                 })
               }
               break
             case 'TRANSFER_PLAYBACK':
               if (deviceId) {
-                 fetch('/api/spotify/control', {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ command: 'TRANSFER', deviceId })
-                 })
+                fetch('/api/spotify/control', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ command: 'TRANSFER', deviceId }),
+                })
               }
               break
           }
@@ -91,13 +95,19 @@ export const useSpotifyRemoteExecution = (player: SpotifyPlayerInstance | null):
     }
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('spotify-remote-command', handleCustomEvent as EventListener)
-      
+      window.addEventListener(
+        'spotify-remote-command',
+        handleCustomEvent as EventListener
+      )
+
       return () => {
-        window.removeEventListener('spotify-remote-command', handleCustomEvent as EventListener)
+        window.removeEventListener(
+          'spotify-remote-command',
+          handleCustomEvent as EventListener
+        )
       }
     }
-    
+
     // Return undefined explicitly for server-side rendering
     return undefined
   }, [player, sendData])

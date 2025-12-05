@@ -43,7 +43,7 @@ export const WAIT_TIMEOUTS = {
  */
 export async function waitForPageReady(
   page: Page,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.TEST_READY } = options
 
@@ -56,7 +56,7 @@ export async function waitForPageReady(
       () => {
         return window.__TEST_READY__ === true
       },
-      { timeout },
+      { timeout }
     )
   } catch {
     // Fallback: If custom signal fails, wait for a known stable element
@@ -81,7 +81,7 @@ export async function waitForPageReady(
  */
 export async function waitForWebSocketConnection(
   page: Page,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.WEBSOCKET } = options
 
@@ -89,7 +89,7 @@ export async function waitForWebSocketConnection(
     () => {
       return window.__TEST_WEBSOCKET_READY__ === true
     },
-    { timeout },
+    { timeout }
   )
 }
 
@@ -116,7 +116,7 @@ export async function waitForFontsLoaded(page: Page): Promise<void> {
 export async function waitForElementStable(
   page: Page,
   selector: string,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.ELEMENT_VISIBLE } = options
 
@@ -126,33 +126,35 @@ export async function waitForElementStable(
   })
 
   // Wait for any animations to complete
-  await page.waitForFunction(
-    (sel: string) => {
-      const element = document.querySelector(sel)
-      if (!element) return false
+  await page
+    .waitForFunction(
+      (sel: string) => {
+        const element = document.querySelector(sel)
+        if (!element) return false
 
-      // Check if element has any ongoing CSS animations
-      const computedStyle = getComputedStyle(element)
-      const animationName = computedStyle.animationName
-      const transitionDuration = computedStyle.transitionDuration
+        // Check if element has any ongoing CSS animations
+        const computedStyle = getComputedStyle(element)
+        const animationName = computedStyle.animationName
+        const transitionDuration = computedStyle.transitionDuration
 
-      // If no animations or transitions, consider stable
-      if (
-        (animationName === 'none' || animationName === '') &&
-        (transitionDuration === '0s' || transitionDuration === '')
-      ) {
-        return true
-      }
+        // If no animations or transitions, consider stable
+        if (
+          (animationName === 'none' || animationName === '') &&
+          (transitionDuration === '0s' || transitionDuration === '')
+        ) {
+          return true
+        }
 
-      // If animations exist, wait for them to complete
-      return false
-    },
-    selector,
-    { timeout },
-  ).catch(() => {
-    // If timeout, assume stable enough for testing
-    console.warn(`Element ${selector} may still be animating`)
-  })
+        // If animations exist, wait for them to complete
+        return false
+      },
+      selector,
+      { timeout }
+    )
+    .catch(() => {
+      // If timeout, assume stable enough for testing
+      console.warn(`Element ${selector} may still be animating`)
+    })
 }
 
 /**
@@ -164,7 +166,7 @@ export async function waitForElementStable(
  */
 export async function waitForNetworkIdle(
   page: Page,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.NETWORK_IDLE } = options
 
@@ -183,7 +185,7 @@ export async function waitForNetworkIdle(
 export async function waitForApiResponse(
   page: Page,
   urlPattern: string | RegExp,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<PlaywrightResponse | null> {
   const { timeout = WAIT_TIMEOUTS.NETWORK_IDLE } = options
 
@@ -195,7 +197,7 @@ export async function waitForApiResponse(
       }
       return urlPattern.test(url)
     },
-    { timeout },
+    { timeout }
   )
 
   return response
@@ -210,7 +212,7 @@ export async function waitForApiResponse(
  */
 export async function waitForAllConditions(
   page: Page,
-  conditions: Array<() => Promise<void>>,
+  conditions: Array<() => Promise<void>>
 ): Promise<void> {
   await Promise.all(conditions.map((condition) => condition()))
 }

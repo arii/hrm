@@ -101,25 +101,32 @@ export default function ConnectPage() {
   }
 
   const handleResetServer = async () => {
-      if (confirm('Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.')) {
-        try {
-          // Clear client-side cookies
-          document.cookie = 'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    if (
+      confirm(
+        'Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.'
+      )
+    ) {
+      try {
+        // Clear client-side cookies
+        document.cookie =
+          'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie =
+          'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie =
+          'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
-          // Also clear local storage if used
-          localStorage.clear();
+        // Also clear local storage if used
+        localStorage.clear()
 
-          const response = await fetch(API_DEBUG_RESET, { method: 'POST' });
-          const data = await response.json();
-          alert(data.message);
-          window.location.reload(); // Reload to reflect changes
-        } catch (error) {
-          console.error('Error resetting server:', error);
-          alert('Failed to reset server.');
-        }
+        const response = await fetch(API_DEBUG_RESET, { method: 'POST' })
+        const data = await response.json()
+        alert(data.message)
+        window.location.reload() // Reload to reflect changes
+      } catch (error) {
+        console.error('Error resetting server:', error)
+        alert('Failed to reset server.')
       }
+    }
   }
 
   // Find current user's heart rate data from WebSocket
@@ -132,20 +139,20 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-       userName={userName}
-       setUserName={setUserName}
-       userAge={userAge}
-       setUserAge={setUserAge}
-       isConnected={isConnected}
-       deviceStatus={deviceStatus}
-       batteryLevel={batteryLevel}
-       onConnect={handleConnect}
-       onDisconnect={handleDisconnect}
-       onResetServer={handleResetServer}
-       currentHR={currentHR}
-       hrZoneProps={hrZoneProps}
-       connectionStatus={connectionStatus}
-       bluetoothConnected={bluetoothConnected}
+      userName={userName}
+      setUserName={setUserName}
+      userAge={userAge}
+      setUserAge={setUserAge}
+      isConnected={isConnected}
+      deviceStatus={deviceStatus}
+      batteryLevel={batteryLevel}
+      onConnect={handleConnect}
+      onDisconnect={handleDisconnect}
+      onResetServer={handleResetServer}
+      currentHR={currentHR}
+      hrZoneProps={hrZoneProps}
+      connectionStatus={connectionStatus}
+      bluetoothConnected={bluetoothConnected}
     />
   )
 }

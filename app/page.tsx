@@ -30,13 +30,10 @@ const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
-const GoogleDocViewer = dynamic(
-  () => import('../components/GoogleDocViewer'),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={500} />,
-  }
-)
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={500} />,
+})
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
@@ -45,7 +42,7 @@ const Dashboard = () => {
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()
-  
+
   // Enable remote Spotify control from controllers
   useSpotifyRemoteExecution(player)
 

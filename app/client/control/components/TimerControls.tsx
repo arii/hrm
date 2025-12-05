@@ -136,7 +136,7 @@ const TimerControls = () => {
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
         const firstDevice = spotifyDevices[0]
-        deviceId = activeDevice ? activeDevice.id : (firstDevice?.id || null)
+        deviceId = activeDevice ? activeDevice.id : firstDevice?.id || null
         if (deviceId) {
           setSpotifyDeviceId(deviceId)
         }
@@ -150,7 +150,7 @@ const TimerControls = () => {
         command,
         // FIX: Use spread to omit the key entirely if deviceId is null/undefined
         ...(deviceId ? { deviceId } : {}), //
-       // deviceId: deviceId || '', 
+        // deviceId: deviceId || '',
       }
       sendData(message)
     },
@@ -189,7 +189,8 @@ const TimerControls = () => {
     sendData(message)
   }
 
-  const controlsDisabled = timerData.isRunning || connectionStatus !== 'Connected'
+  const controlsDisabled =
+    timerData.isRunning || connectionStatus !== 'Connected'
 
   return (
     <Card
@@ -284,7 +285,14 @@ const TimerControls = () => {
         {timerData.mode === 'TABATA' && (
           <Stack spacing={1.5} sx={{ mb: 2 }}>
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
+              <Typography
+                sx={{
+                  color: 'white',
+                  fontWeight: 'medium',
+                  mb: 0.5,
+                  fontSize: '0.9rem',
+                }}
+              >
                 Timer Presets
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
@@ -327,7 +335,14 @@ const TimerControls = () => {
                   EMOM (60/60)
                 </Button>
               </Stack>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
+              <Typography
+                sx={{
+                  color: 'white',
+                  fontWeight: 'medium',
+                  mb: 0.5,
+                  fontSize: '0.9rem',
+                }}
+              >
                 {' '}
                 Work Duration (seconds)
               </Typography>
@@ -399,7 +414,14 @@ const TimerControls = () => {
             </Box>
 
             <Box>
-              <Typography sx={{ color: 'white', fontWeight: 'medium', mb: 0.5, fontSize: '0.9rem' }}>
+              <Typography
+                sx={{
+                  color: 'white',
+                  fontWeight: 'medium',
+                  mb: 0.5,
+                  fontSize: '0.9rem',
+                }}
+              >
                 Rest Duration (seconds)
               </Typography>
               <Stack

@@ -97,7 +97,9 @@ class TabataTimer {
       mode: this.timerState.mode,
       workDuration: this.timerState.workDuration,
       restDuration: this.timerState.restDuration,
-      ...(this.timerState.soundToPlay !== undefined && { soundToPlay: this.timerState.soundToPlay }),
+      ...(this.timerState.soundToPlay !== undefined && {
+        soundToPlay: this.timerState.soundToPlay,
+      }),
       soundEventId: this.timerState.soundEventId,
     }
   }
@@ -117,7 +119,10 @@ class TabataTimer {
     }
 
     // This applies to TABATA and PREPARE modes (which count down)
-    if (this.timerState.mode === 'TABATA' || this.timerState.currentPhase === 'PREPARE') {
+    if (
+      this.timerState.mode === 'TABATA' ||
+      this.timerState.currentPhase === 'PREPARE'
+    ) {
       const nextRemaining = Math.max(0, this.timerState.timeRemaining - 1)
       this.timerState.timeRemaining = nextRemaining
 
@@ -179,7 +184,8 @@ class TabataTimer {
       isRunning: false,
       currentPhase: 'IDLE',
       timeElapsed: 0,
-      timeRemaining: this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
+      timeRemaining:
+        this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
     }
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
@@ -272,7 +278,8 @@ class TabataTimer {
     if (this.timerState.isRunning) this.stopTimer()
     this.timerState.mode = mode
     this.timerState.currentPhase = 'IDLE'
-    this.timerState.timeRemaining = mode === 'TABATA' ? this.timerState.workDuration : 0
+    this.timerState.timeRemaining =
+      mode === 'TABATA' ? this.timerState.workDuration : 0
     this.timerState.timeElapsed = 0
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
