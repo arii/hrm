@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
 
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse(null, { status: 404 })
+  }
   try {
     const tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',

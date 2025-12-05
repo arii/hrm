@@ -18,12 +18,9 @@ test.describe('Spotify Debug UI', () => {
     await expect(page.getByText('Server Token Status')).toBeVisible()
   })
 
-  test('token endpoint responds', async ({ request }) => {
+  test('token endpoint is gated in production', async ({ request }) => {
+    // In a production test environment, this endpoint should be disabled.
     const res = await request.get(`${BASE}/api/debug/spotify-token`)
-    expect(res.ok()).toBeTruthy()
-    const data = await res.json()
-    expect(data).toHaveProperty('ok', true)
-    // Token may or may not be present depending on auth state
-    expect(data).toHaveProperty('token')
+    expect(res.status()).toBe(404)
   })
 })

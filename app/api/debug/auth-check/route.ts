@@ -6,6 +6,9 @@ import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
  * This helps diagnose "Invalid Client" and redirect URI issues.
  */
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse(null, { status: 404 })
+  }
   try {
     const clientId = process.env.SPOTIFY_CLIENT_ID
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
