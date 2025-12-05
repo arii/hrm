@@ -44,6 +44,7 @@ trap cleanup EXIT INT TERM
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:3000"
+export CSRF_SECRET="2ee5af350c1b9f6bdf63432d7eb5b90e68f10c69275fdbe76bdbe939a01d826a"
 
 # Clean up any stale processes
 if [ -f "$PID_FILE" ]; then
