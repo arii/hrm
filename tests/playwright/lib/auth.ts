@@ -7,7 +7,7 @@
  * - Session management
  * - Authentication state verification
  */
-import type { BrowserContext, Page } from '@playwright/test'
+import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { WAIT_TIMEOUTS } from './waits'
@@ -26,6 +26,43 @@ export const AUTH_ENDPOINTS = {
   SPOTIFY_TOKEN_STATUS: '/api/debug/spotify-token-status',
 } as const
 
+/**
+ * Creates a browser context with a mocked authentication state.
+ * @param browser The Playwright browser instance.
+ * @returns A promise that resolves to an authenticated BrowserContext.
+ */
+export async function createAuthenticatedContext(browser: Browser): Promise<BrowserContext> {
+  const context = await browser.newContext()
+  const mockSession = {
+    accessToken: 'mock-access-token',
+    user: {
+      name: 'Mock User',
+      email: 'mock@example.com',
+      image: 'https://via.placeholder.com/150',
+    },
+    expires: new Date(Date.now() + 3600 * 1000).toISOString(),
+  }
+
+  await context.addCookies([
+    {
+      name: 'next-auth.session-token',
+      value: 'mock-session-token',
+      domain: '127.0.0.1',
+      path: '/',
+    },
+  ])
+
+  // Add a route to mock the session API response
+  await context.route('**/api/auth/session', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockSession),
+    })
+  })
+
+  return context
+}
 /**
  * Verify that authentication endpoints are properly configured.
  *
@@ -149,33 +186,6 @@ export async function verifySpotifyTokenStatus(
     hasAccessToken: !!data.accessToken,
     hasRefreshToken: !!data.refreshToken,
   }
-}
-
-/**
- * Create an authenticated browser context with stored credentials.
- * Useful for tests that require pre-authenticated state.
- *
- * Note: This function provides a foundation for custom auth state management.
- * For production use, implement storage state handling with context.storageState().
- *
- * @param context - The Playwright BrowserContext object
- * @param _storageState - Reserved for future storage state path parameter
- * @returns The configured context (passthrough for now)
- * @example
- * ```typescript
- * // Save authenticated state
- * await context.storageState({ path: 'auth.json' })
- *
- * // Create context with saved state
- * const context = await browser.newContext({ storageState: 'auth.json' })
- * ```
- */
-export async function createAuthenticatedContext(
-  context: BrowserContext,
-  _storageState?: string,
-): Promise<BrowserContext> {
-  // Returns context as-is - implement storage state handling as needed
-  return context
 }
 
 /**

@@ -14,6 +14,7 @@ import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 import {
   BASE_URL,
+  createAuthenticatedContext,
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
@@ -38,10 +39,7 @@ test.describe('Visual Regression Tests', () => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
     test.setTimeout(WAIT_TIMEOUTS.LONG * 2)  // Allow extra time for visual tests
 
-    context = await browser.newContext({
-      // Start with a clean session - no cookies, cache, or storage
-      storageState: undefined,
-    })
+    context = await createAuthenticatedContext(browser)
 
     // Create all pages in parallel
     ;[dashboardPage, controlPage, mockPage] = await Promise.all([
