@@ -1,7 +1,6 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
-import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
@@ -59,31 +58,9 @@ async function refreshAccessToken(token: JWT) {
   }
 }
 
-// Define scopes required: user-read-playback-state to poll the current track,
-// user-modify-playback-state to control playback (play/pause/skip),
-// streaming for Web Playback SDK (play music in browser).
-const SPOTIFY_SCOPES = [
-  'user-read-private',
-  'user-top-read',
-  'user-read-email',
-  'user-read-playback-state',
-  'user-modify-playback-state',
-  'user-read-currently-playing',
-  'streaming', // Required for Web Playback SDK
-].join(',')
 
 export const authOptions: AuthOptions = {
-  providers: [
-    SpotifyProvider({
-      clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
-      authorization: {
-        params: {
-          scope: SPOTIFY_SCOPES,
-        },
-      },
-    }),
-  ],
+  providers: [],
   // Handle reverse proxy configuration
   ...(process.env.NODE_ENV === 'production' && {
     trustHost: true
