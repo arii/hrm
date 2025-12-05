@@ -19,7 +19,7 @@ async function getUsers(): Promise<User[]> {
     return JSON.parse(data)
   } catch (error) {
     // If the file doesn't exist, return an empty array
-    if (error.code === 'ENOENT') {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
       return []
     }
     throw error
