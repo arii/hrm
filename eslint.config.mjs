@@ -190,20 +190,6 @@ export default defineConfig([
     },
   },
 
-  // Custom ESLint rule for remote state management
-  {
-    plugins: {
-      'custom-rules': {
-        rules: {
-          'enforce-remote-state-pattern': (await import('./.eslint-rules/enforce-remote-state-pattern.js')).default,
-        },
-      },
-    },
-    rules: {
-      'custom-rules/enforce-remote-state-pattern': 'error',
-    },
-  },
-
   // Restrict console statements in production
   {
     rules: {

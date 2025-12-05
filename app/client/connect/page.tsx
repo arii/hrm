@@ -25,7 +25,7 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const { connectionStatus, hrmData: remoteHrmData } = useWebSocket()
+  const { connectionStatus, hrmData } = useWebSocket()
 
   const {
     connectAndStream,
@@ -119,8 +119,8 @@ export default function ConnectPage() {
         localStorage.clear()
 
         const response = await fetch(API_DEBUG_RESET, { method: 'POST' })
-        const remoteData = await response.json()
-        alert(remoteData.message)
+        const data = await response.json()
+        alert(data.message)
         window.location.reload() // Reload to reflect changes
       } catch (error) {
         console.error('Error resetting server:', error)
@@ -130,7 +130,7 @@ export default function ConnectPage() {
   }
 
   // Find current user's heart rate data from WebSocket
-  const currentUserData = remoteHrmData.find(
+  const currentUserData = hrmData.find(
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
   )
   const currentHR = currentUserData?.value || 0

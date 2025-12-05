@@ -174,7 +174,7 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        const remoteTokenData = {
+        const tokenData = {
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
@@ -222,7 +222,7 @@ export const authOptions: AuthOptions = {
           }
         }
 
-        return remoteTokenData
+        return tokenData
       }
 
       // 2. Token is still valid - return it as-is

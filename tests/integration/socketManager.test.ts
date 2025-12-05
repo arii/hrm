@@ -83,8 +83,8 @@ describe('WebSocket Full Integration Test', () => {
     const ws = new WebSocket(wsUrl)
     const receivedMessages: UnifiedStateMessage[] = []
 
-    ws.on('message', (remoteData: WebSocket.Data) => {
-      const message = JSON.parse(remoteData.toString()) as UnifiedStateMessage
+    ws.on('message', (data: WebSocket.Data) => {
+      const message = JSON.parse(data.toString()) as UnifiedStateMessage
       receivedMessages.push(message)
     })
 

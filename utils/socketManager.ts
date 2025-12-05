@@ -65,14 +65,14 @@ const initSocketManager = (
     })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const remoteDefaultClientData: HrmData = {
+    const defaultClientData: HrmData = {
       clientId,
       value: 0,
       maxHr: 185,
       // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     }
-    hrmClients.set(clientId, remoteDefaultClientData)
+    hrmClients.set(clientId, defaultClientData)
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), clientId)
@@ -154,18 +154,16 @@ const handleIncomingMessage = (
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
           existingClientData,
           'newValue:',
-          message.remoteData.value
+          message.data.value
         )
         if (existingClientData) {
           // Filter out null values to avoid overwriting valid data
-          const remoteUpdatedClientProperties = Object.fromEntries(
-            Object.entries(message.remoteData).filter(
-              ([_, value]) => value !== null
-            )
+          const updatedClientProperties = Object.fromEntries(
+            Object.entries(message.data).filter(([_, value]) => value !== null)
           )
           hrmClients.set(clientId, {
             ...existingClientData,
-            ...remoteUpdatedClientProperties,
+            ...updatedClientProperties,
           })
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,

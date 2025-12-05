@@ -96,7 +96,7 @@ export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
-  remoteData: HrmInputData
+  data: HrmInputData
 }
 
 export interface TimerCommandMessage {
@@ -169,7 +169,7 @@ export const HrmInputDataSchema = z.object({
 
 export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
-  remoteData: HrmInputDataSchema,
+  data: HrmInputDataSchema,
 })
 
 export const TimerCommandMessageSchema = z.object({

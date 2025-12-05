@@ -257,20 +257,20 @@ export const WebSocketProvider = ({
     }
   }, [connect, disconnect])
 
-  const sendData = useCallback((remoteData: ClientCommandMessage) => {
+  const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(remoteData)
-      console.log('[WebSocketProvider] Sending:', remoteData)
+      const jsonStr = JSON.stringify(data)
+      console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
     } else {
       console.warn(
         '[WebSocketProvider] WebSocket not open, queueing action. State:',
         ws?.readyState,
         'Data:',
-        remoteData
+        data
       )
-      pendingActions.current.push(remoteData)
+      pendingActions.current.push(data)
       localStorage.setItem(
         'pendingActions',
         JSON.stringify(pendingActions.current)

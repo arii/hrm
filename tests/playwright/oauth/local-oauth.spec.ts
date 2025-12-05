@@ -85,7 +85,7 @@ test.describe('Spotify OAuth Integration (Local)', () => {
 
     // 4. Verify WebSocket Connection
     // We check for a UI element that appears only when connected, e.g., the connection status or user profile
-    const _remote_statusIndicator = page.getByText(/Connected|Online/i)
+    const _statusIndicator = page.getByText(/Connected|Online/i)
     // Or checking internal state via evaluation if UI is subtle
     const socketState = await page.evaluate(() => {
       // @ts-expect-error - assuming we might expose this for debug, otherwise check UI
@@ -99,10 +99,10 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       const debugAuthResponse = await page.request.get(
         `${BASE_URL}/api/debug/auth-check`
       )
-      const remoteDebugJson = await debugAuthResponse.json()
+      const debugJson = await debugAuthResponse.json()
 
-      console.log('Auth Debug Info:', remoteDebugJson)
-      expect(remoteDebugJson.userId).toBe(EXPECTED_USER)
+      console.log('Auth Debug Info:', debugJson)
+      expect(debugJson.userId).toBe(EXPECTED_USER)
     }
 
     // 6. Check Token Validity via API
@@ -110,17 +110,16 @@ test.describe('Spotify OAuth Integration (Local)', () => {
       `${BASE_URL}/api/debug/spotify-token-status`
     )
     expect(tokenResponse.status()).toBe(200)
-    const remoteTokenData = await tokenResponse.json()
+    const tokenData = await tokenResponse.json()
+    expect(tokenData.status, '❌ No valid token status found on server').toBe(
+      'token_found'
+    )
     expect(
-      remoteTokenData.status,
-      '❌ No valid token status found on server'
-    ).toBe('token_found')
-    expect(
-      remoteTokenData.accessToken,
+      tokenData.accessToken,
       '❌ No Access Token found on server'
     ).toBeTruthy()
     expect(
-      remoteTokenData.refreshToken,
+      tokenData.refreshToken,
       '❌ No Refresh Token found on server'
     ).toBeTruthy()
 

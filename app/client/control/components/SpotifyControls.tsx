@@ -26,13 +26,9 @@ import { SpotifyCommandMessage } from '@/types/websocket'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  // 1. Destructure devices directly from remoteSpotifyData
-  const {
-    spotifyData: remoteSpotifyData,
-    connectionStatus,
-    sendData: sendRemoteData,
-  } = useWebSocket()
-  const { devices = [] } = remoteSpotifyData // Default to empty array if undefined
+  // 1. Destructure devices directly from spotifyData
+  const { spotifyData, connectionStatus, sendData } = useWebSocket()
+  const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
@@ -44,19 +40,19 @@ const SpotifyControls = () => {
   }
 
   const hasSpotifyData =
-    remoteSpotifyData.trackName !== 'Awaiting Login...' &&
-    remoteSpotifyData.trackName !== '' &&
-    remoteSpotifyData.trackName !== 'No Track Playing'
+    spotifyData.trackName !== 'Awaiting Login...' &&
+    spotifyData.trackName !== '' &&
+    spotifyData.trackName !== 'No Track Playing'
 
   // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected') {
-      sendRemoteData({
+      sendData({
         type: 'SPOTIFY_COMMAND',
         command: 'GET_DEVICES',
       })
     }
-  }, [connectionStatus, sendRemoteData])
+  }, [connectionStatus, sendData])
 
   // 4. Update selection logic and volume sync
   useEffect(() => {
@@ -118,9 +114,9 @@ const SpotifyControls = () => {
         command,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
-      sendRemoteData(message)
+      sendData(message)
     },
-    [resolveTargetDeviceId, sendRemoteData]
+    [resolveTargetDeviceId, sendData]
   )
 
   const sendVolumeCommand = useCallback(
@@ -140,10 +136,10 @@ const SpotifyControls = () => {
         volume: sanitized,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
-      sendRemoteData(message)
+      sendData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, sendRemoteData]
+    [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
   useEffect(() => {
@@ -187,10 +183,10 @@ const SpotifyControls = () => {
           <>
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-                {remoteSpotifyData.trackName}
+                {spotifyData.trackName}
               </Typography>
               <Typography variant="body2" sx={{ color: 'grey.400' }}>
-                {remoteSpotifyData.artist}
+                {spotifyData.artist}
               </Typography>
             </Box>
 
@@ -213,9 +209,7 @@ const SpotifyControls = () => {
               </IconButton>
               <IconButton
                 onClick={() =>
-                  sendSpotifyCommand(
-                    remoteSpotifyData.isPlaying ? 'PAUSE' : 'PLAY'
-                  )
+                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
                 data-testid="spotify-play-pause-btn" // ADDED
                 disabled={connectionStatus !== 'Connected'}
@@ -225,7 +219,7 @@ const SpotifyControls = () => {
                   '&:hover': { backgroundColor: '#169944' },
                 }}
               >
-                {remoteSpotifyData.isPlaying ? <Pause /> : <PlayArrow />}
+                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}
