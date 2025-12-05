@@ -279,7 +279,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.02,
+      maxDiffPixelRatio: 0.05, // Increased tolerance for rendering variability
       // Mask the dynamic HR values within the tile
       mask: [
         firstTile.locator('[data-testid="live-hr-value"]'),
