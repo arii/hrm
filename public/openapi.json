@@ -1,0 +1,279 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Heart Rate Monitor API",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {
+      "CreateHeartRateDataPointSchema": {
+        "type": "object",
+        "properties": {
+          "workoutSessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "heartRate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "workoutSessionId",
+          "timestamp",
+          "heartRate"
+        ]
+      },
+      "CreateUserProfileSchema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "firstName",
+          "lastName"
+        ]
+      },
+      "CreateWorkoutSessionSchema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "startedAt",
+          "notes"
+        ]
+      },
+      "HeartRateDataPointSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workoutSessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "heartRate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "workoutSessionId",
+          "timestamp",
+          "heartRate"
+        ]
+      },
+      "UserProfileSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "firstName",
+          "lastName",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkoutSessionSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "startedAt",
+          "endedAt",
+          "notes"
+        ]
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "firstName",
+          "lastName",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateUserProfile": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 3
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "firstName",
+          "lastName"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/users": {
+      "post": {
+        "summary": "Create a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          }
+        }
+      }
+    }
+  }
+}
