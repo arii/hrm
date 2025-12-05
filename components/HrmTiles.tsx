@@ -54,14 +54,14 @@ const HrmTiles = () => {
         <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
-            height={320}
+            height={220}
             sx={{ borderRadius: 3 }}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
-            height={320}
+            height={220}
             sx={{ borderRadius: 3 }}
           />
         </Grid>
