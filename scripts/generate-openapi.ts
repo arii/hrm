@@ -10,7 +10,7 @@ import {
   OpenApiGeneratorV3,
   OpenAPIRegistry,
 } from '@asteasolutions/zod-to-openapi';
-import * as Schemas from '../lib/validation/schemas.ts';
+import * as Schemas from '../lib/validation/schemas';
 
 const registry = new OpenAPIRegistry();
 
