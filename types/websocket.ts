@@ -169,7 +169,7 @@ export const HrmInputDataSchema = z.object({
 
 export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
-  data: HrmInputDataSchema,
+  remoteData: HrmInputDataSchema,
 })
 
 export const TimerCommandMessageSchema = z.object({

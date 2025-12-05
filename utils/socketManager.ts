@@ -154,12 +154,14 @@ const handleIncomingMessage = (
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
           existingClientData,
           'newValue:',
-          message.data.value
+          message.remoteData.value
         )
         if (existingClientData) {
           // Filter out null values to avoid overwriting valid data
           const remoteUpdatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+            Object.entries(message.remoteData).filter(
+              ([_, value]) => value !== null
+            )
           )
           hrmClients.set(clientId, {
             ...existingClientData,
