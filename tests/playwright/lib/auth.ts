@@ -12,6 +12,7 @@ import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { WAIT_TIMEOUTS } from './waits'
 import * as jose from 'jose'
+import { createHash } from 'crypto'
 
 /**
  * Authentication endpoints used in testing
@@ -46,9 +47,8 @@ export async function createAuthenticatedContext(browser: Browser): Promise<Brow
 
   // A secret key for signing the JWT. In a real test suite, this should
   // be loaded from a test-specific environment variable.
-  const secret = new TextEncoder().encode(
-    process.env.NEXTAUTH_SECRET || 'fallback-secret-for-testing'
-  );
+  const secretString = process.env.NEXTAUTH_SECRET || 'fallback-secret-for-testing';
+  const secret = createHash('sha256').update(secretString).digest();
 
   const token = await new jose.EncryptJWT(mockSession)
     .setProtectedHeader({ alg: 'dir', enc: 'A128CBC-HS256' })
