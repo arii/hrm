@@ -10,6 +10,7 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
+import fs from 'fs'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
@@ -229,6 +230,10 @@ app
       // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
+      // Signal readiness for tests
+      if (process.env.TESTING === 'true') {
+        fs.writeFileSync('/tmp/server-ready', 'ready');
+      }
     })
   })
   .catch((err: Error) => {

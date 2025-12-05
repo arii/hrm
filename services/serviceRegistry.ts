@@ -1,8 +1,8 @@
-import { ITabataTimer, ISpotifyPolling } from '../types/service';
-import TabataTimer from './tabataTimer';
-import { SpotifyPolling } from './spotifyPolling';
-import { broadcast } from '../utils/broadcast';
-import logger from '../utils/logger';
+import { ITabataTimer, ISpotifyPolling } from '@/types/service';
+import TabataTimer from '@/services/tabataTimer';
+import { SpotifyPolling } from '@/services/spotifyPolling';
+import { broadcast } from '@/utils/broadcast';
+import logger from '@/utils/logger';
 
 class ServiceRegistry {
   private static instance: ServiceRegistry;

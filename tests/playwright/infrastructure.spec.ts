@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
+import fs from 'fs';
 import { WAIT_TIMEOUTS } from './lib/waits';
 
 /**
@@ -24,6 +25,21 @@ const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
           reject(new Error(`Timeout waiting for port ${port}`));
         }
       });
+    }, 500);
+  });
+};
+
+const waitForFile = (file: string, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
+  return new Promise<void>((resolve, reject) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (fs.existsSync(file)) {
+        clearInterval(interval);
+        resolve();
+      } else if (Date.now() - start > timeout) {
+        clearInterval(interval);
+        reject(new Error(`Timeout waiting for file ${file}`));
+      }
     }, 500);
   });
 };
@@ -64,13 +80,15 @@ test.describe('Infrastructure & Scripts', () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2); // Server startup timeout
 
     const PORT = 3005;
+    const devLog = fs.openSync('/tmp/dev-server.log', 'w');
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
-      stdio: 'pipe',
-      env: { ...process.env, PORT: String(PORT) }
+      stdio: ['ignore', devLog, devLog],
+      env: { ...process.env, PORT: String(PORT), TESTING: 'true' }
     });
 
     try {
+      await waitForFile('/tmp/server-ready');
       await waitForPort(PORT);
     } finally {
       // Cleanup: Kill the process group, wrapping in a try/catch in case
@@ -80,6 +98,7 @@ test.describe('Infrastructure & Scripts', () => {
       } catch (_e) {
         // Ignore errors, likely "ESRCH" (process already gone).
       }
+      fs.closeSync(devLog);
     }
   });
 
@@ -98,13 +117,15 @@ test.describe('Infrastructure & Scripts', () => {
        NEXTAUTH_URL: `http://localhost:${PORT}`
      };
 
+     const prodLog = fs.openSync('/tmp/prod-server.log', 'w');
      const prodServer = spawn('./start-production.sh', [], {
        detached: true,
-       stdio: 'pipe',
-       env
+       stdio: ['ignore', prodLog, prodLog],
+       env: { ...env, TESTING: 'true' }
      });
 
      try {
+       await waitForFile('/tmp/server-ready');
        await waitForPort(PORT);
      } finally {
       try {
@@ -112,6 +133,7 @@ test.describe('Infrastructure & Scripts', () => {
       } catch (_e) {
         // Ignore errors
       }
+      fs.closeSync(prodLog);
      }
   });
 });
