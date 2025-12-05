@@ -5,7 +5,7 @@ import logger from '@/utils/logger'
 
 export async function POST() {
   if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ message: 'This feature is only available in development mode.' }, { status: 403 });
+    return new Response('Not Found', { status: 404 })
   }
 
   const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
