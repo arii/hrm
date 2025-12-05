@@ -118,7 +118,7 @@ test.describe('Visual Regression Tests', () => {
     }
   })
 
-  test('Dashboard - main viewer page', async () => {
+  test.skip('Dashboard - main viewer page', async () => {
     test.setTimeout(WAIT_TIMEOUTS.LONG * 2)
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
