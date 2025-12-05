@@ -11,6 +11,7 @@ import type { Browser, BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 import { getBaseURL } from '../../../utils/urls'
 import { WAIT_TIMEOUTS } from './waits'
+import * as jose from 'jose'
 
 /**
  * Authentication endpoints used in testing
@@ -43,26 +44,30 @@ export async function createAuthenticatedContext(browser: Browser): Promise<Brow
     expires: new Date(Date.now() + 3600 * 1000).toISOString(),
   }
 
+  // A secret key for signing the JWT. In a real test suite, this should
+  // be loaded from a test-specific environment variable.
+  const secret = new TextEncoder().encode(
+    process.env.NEXTAUTH_SECRET || 'fallback-secret-for-testing'
+  );
+
+  const token = await new jose.EncryptJWT(mockSession)
+    .setProtectedHeader({ alg: 'dir', enc: 'A128CBC-HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .encrypt(secret)
+
   await context.addCookies([
     {
       name: 'next-auth.session-token',
-      value: 'mock-session-token',
+      value: token,
       domain: '127.0.0.1',
       path: '/',
     },
   ])
 
-  // Add a route to mock the session API response
-  await context.route('**/api/auth/session', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockSession),
-    })
-  })
-
   return context
 }
+
 /**
  * Verify that authentication endpoints are properly configured.
  *
