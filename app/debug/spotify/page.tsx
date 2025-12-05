@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signOut, useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
 import { useSpotifyAuth } from '@/hooks/useSpotifyAuth'
 
@@ -17,23 +17,16 @@ interface ExtendedSession extends Session {
 
 export default function SpotifyDebugPage() {
   const { data: session } = useSession()
-  const [spotifyToken, setSpotifyToken] = useState<string | null>(null)
+  // This state is now only for the *manually* fetched token.
+  const [fetchedToken, setFetchedToken] = useState<string | null>(null)
   const { login } = useSpotifyAuth()
-
-  useEffect(() => {
-    // Cast the session to our extended type to access the accessToken
-    const extendedSession = session as ExtendedSession
-    if (extendedSession?.accessToken) {
-      setSpotifyToken(extendedSession.accessToken)
-    }
-  }, [session])
 
   const handleFetchToken = async () => {
     try {
       const response = await fetch(API_DEBUG_SPOTIFY_TOKEN)
       if (response.ok) {
         const data = await response.json()
-        setSpotifyToken(data.accessToken)
+        setFetchedToken(data.accessToken)
       } else {
         console.error('Failed to fetch Spotify token')
       }
@@ -41,6 +34,14 @@ export default function SpotifyDebugPage() {
       console.error('Error fetching Spotify token:', error)
     }
   }
+
+  // Derive the token to be displayed directly in the render logic.
+  // This avoids the `set-state-in-effect` error.
+  // Precedence: Manually fetched token > session token > default text.
+  const displayedToken =
+    fetchedToken ||
+    (session as ExtendedSession)?.accessToken ||
+    'No token available'
 
   return (
     <Paper
@@ -74,7 +75,7 @@ export default function SpotifyDebugPage() {
             borderRadius: '4px',
           }}
         >
-          {spotifyToken || 'No token available'}
+          {displayedToken}
         </Typography>
         <Button onClick={handleFetchToken} style={{ marginTop: '10px' }}>
           Fetch Server-Side Token
