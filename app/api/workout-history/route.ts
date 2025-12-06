@@ -15,10 +15,6 @@ async function getHistory(): Promise<WorkoutHistory> {
   }
 }
 
-async function saveHistory(history: WorkoutHistory) {
-  await fs.writeFile(historyFilePath, JSON.stringify(history, null, 2))
-}
-
 export async function GET() {
   const history = await getHistory()
   return NextResponse.json(history)
