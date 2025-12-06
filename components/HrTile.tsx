@@ -15,7 +15,7 @@ export interface HrTileProps {
 }
 
 const HrTile = ({ name, bpm, hrZoneProps }: HrTileProps) => {
-  const { percentage, progressColor } = hrZoneProps;
+  const { percentage, progressColor } = hrZoneProps
 
   return (
     <Tooltip
