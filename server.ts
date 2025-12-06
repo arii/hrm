@@ -23,7 +23,6 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -195,9 +194,9 @@ app
           return res.status(503).json({ error: 'Service unavailable' })
         }
         try {
-          // The method `setTokenPayload` will be added to the SpotifyPolling service.
-          // This allows for a direct, in-memory update without file I/O.
-          ;(spotifyService as any).setTokenPayload(req.body) // Using `as any` until the method is added
+          // The method `setTokenPayload` is available on our initialized service.
+          // Casting to SpotifyPolling ensures type safety.
+          ;(spotifyService as SpotifyPolling).setTokenPayload(req.body)
           logger.info(
             { subject: req.body.sub },
             'Received token-delivery and updated in-memory state.'

@@ -263,10 +263,8 @@ describe('SpotifyPolling Service', () => {
       }
 
       // Spy on the private setupSdk method to verify it's called
-      const setupSdkSpy = jest.spyOn(
-        spotifyService as any,
-        'setupSdk'
-      )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setupSdkSpy = jest.spyOn(spotifyService as any, 'setupSdk')
 
       spotifyService.setTokenPayload(tokenPayload)
 
