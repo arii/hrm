@@ -19,7 +19,7 @@ const config = {
     ],
     
   ],
-
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   collectCoverageFrom: [
     'services/**/*.ts',
     'utils/socketManager.ts',

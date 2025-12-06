@@ -1,93 +1,59 @@
+import prismaPkg from '@prisma/client'
+import type { SpotifyToken } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import fs from 'fs'
-import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling'
 
-export interface SpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
+const { PrismaClient } = prismaPkg
+const prisma = new PrismaClient()
 
-export interface TokenRecord {
-  receivedAt: number
-  payload: SpotifyTokenPayload
-}
+const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
+// We can simplify this class significantly if we only have one user/token to manage.
 export class SpotifyTokenManager {
-  /**
-   * Directly set the access token (for command injection/testing).
-   */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token created via setAccessToken.')
-    }
-  }
-  private tokenFile: string
-  private currentToken: TokenRecord | null = null
+  // Use a simple in-memory cache to reduce DB load
+  private inMemoryToken: SpotifyToken | null = null
   private refreshPromise: Promise<void> | null = null
+  private userId: string | null = null // Store the User ID we are managing
 
   constructor(
     private clientId: string,
-    private clientSecret: string,
-    logDir: string = path.resolve(process.cwd(), 'logs')
+    private clientSecret: string
   ) {
-    this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
+    // We expect the first token delivery to set the user ID.
   }
 
-  private loadTokens() {
-    try {
-      if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
-      }
-    } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+  // Initial load or periodic check
+  public async loadToken(userId: string): Promise<void> {
+    this.userId = userId
+    this.inMemoryToken = await prisma.spotifyToken.findUnique({
+      where: { spotifyUserId: userId },
+    })
+    if (this.inMemoryToken) {
+      console.log('Loaded Spotify token from DB for:', userId)
+    } else {
+      console.warn('No token found in DB for:', userId)
     }
   }
 
+  private async writeTokenUpdate(data: Partial<SpotifyToken>): Promise<void> {
+    if (!this.userId) return
+    const updatedToken = await prisma.spotifyToken.update({
+      where: { spotifyUserId: this.userId },
+      data: data,
+    })
+    // Update in-memory cache immediately
+    this.inMemoryToken = updatedToken
+  }
+
+  // Refactored to use the database as source/destination
   private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false
+    if (!this.inMemoryToken?.refreshToken) return false
 
     try {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
       ).toString('base64')
 
-      const response = await fetch('https://accounts.spotify.com/api/token', {
+      const response = await fetch(SPOTIFY_TOKEN_ENDPOINT, {
         method: 'POST',
         headers: {
           Authorization: `Basic ${basic}`,
@@ -95,7 +61,7 @@ export class SpotifyTokenManager {
         },
         body: new URLSearchParams({
           grant_type: 'refresh_token',
-          refresh_token: this.currentToken.payload.refresh_token,
+          refresh_token: this.inMemoryToken.refreshToken,
         }).toString(),
       })
 
@@ -104,35 +70,19 @@ export class SpotifyTokenManager {
         throw new Error(`HTTP ${response.status}: ${errorBody}`)
       }
 
-      const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
-      )
-
-      // Update current token with new values
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          ...this.currentToken.payload,
-          access_token: data.access_token,
-          expires_in: data.expires_in,
-          refresh_token:
-            data.refresh_token ?? this.currentToken.payload.refresh_token,
-          obtainedAt: Date.now(),
-        },
+      const data = (await response.json()) as {
+        access_token: string
+        expires_in: number
+        refresh_token?: string
       }
 
-      // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      // Update DB with new token data
+      await this.writeTokenUpdate({
+        accessToken: data.access_token,
+        accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
+        refreshToken: data.refresh_token ?? null, // Spotify may rotate the refresh token
+        updatedAt: new Date(),
+      })
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -140,17 +90,13 @@ export class SpotifyTokenManager {
     }
   }
 
-  async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
-    if (!this.currentToken) return null
+  public async getValidAccessToken(): Promise<string | null> {
+    if (!this.inMemoryToken) return null
 
-    // Check if token needs refresh
-    const expiresAt =
-      this.currentToken.payload.obtainedAt +
-      this.currentToken.payload.expires_in * 1000
+    const expiresAtMs = this.inMemoryToken.accessTokenExpiresAt.getTime()
 
-    if (Date.now() >= expiresAt - 60000) {
+    // Check expiry: 60-second buffer
+    if (Date.now() >= expiresAtMs - 60000) {
       console.log(
         'Spotify access token is expiring soon, initiating refresh...'
       )
@@ -170,27 +116,27 @@ export class SpotifyTokenManager {
       await this.refreshPromise
     }
 
-    return this.currentToken.payload.access_token
+    return this.inMemoryToken.accessToken
   }
 
   getUserId(): string | null {
-    return this.currentToken?.payload.sub ?? null
+    return this.userId
   }
 
   getCurrentRefreshToken(): string | null {
-    return this.currentToken?.payload.refresh_token ?? null
+    return this.inMemoryToken?.refreshToken ?? null
   }
 
   getSdkAccessToken(): AccessToken | null {
-    if (!this.currentToken) return null
+    if (!this.inMemoryToken) return null
+    const expiresIn =
+      (this.inMemoryToken.accessTokenExpiresAt.getTime() - Date.now()) / 1000
     return {
-      access_token: this.currentToken.payload.access_token,
+      access_token: this.inMemoryToken.accessToken,
       token_type: 'Bearer',
-      expires_in: this.currentToken.payload.expires_in,
-      refresh_token: this.currentToken.payload.refresh_token,
-      expires:
-        this.currentToken.payload.obtainedAt +
-        this.currentToken.payload.expires_in * 1000,
+      expires_in: expiresIn,
+      refresh_token: this.inMemoryToken.refreshToken ?? '',
+      expires: this.inMemoryToken.accessTokenExpiresAt.getTime(),
     }
   }
 }

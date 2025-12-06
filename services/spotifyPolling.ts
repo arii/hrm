@@ -62,8 +62,14 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  private userId: string | null = null
+
+  private constructor(
+    broadcastUpdate: (message: ServerMessage) => void,
+    initialUserId: string | null
+  ) {
     this.broadcastUpdate = broadcastUpdate
+    this.userId = initialUserId
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
@@ -73,9 +79,10 @@ export class SpotifyPolling {
   }
 
   public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
+    broadcastUpdate: (message: ServerMessage) => void,
+    initialUserId: string | null
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
+    const instance = new SpotifyPolling(broadcastUpdate, initialUserId)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
@@ -85,6 +92,11 @@ export class SpotifyPolling {
   }
 
   private async initializeSdk() {
+    if (!this.userId) {
+      logger.debug('No user ID set, skipping SDK initialization.')
+      return
+    }
+    await this.tokenManager.loadToken(this.userId)
     const token = await this.tokenManager.getValidAccessToken() // Triggers refresh if needed
     if (token) {
       const sdkToken = this.tokenManager.getSdkAccessToken()
@@ -131,13 +143,15 @@ export class SpotifyPolling {
   // --- Token Management (Used by NextAuth route) ---
 
   /**
-   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   * Called by the token delivery API route when a new token is available.
    */
-  public setRefreshToken(_token: string) {
-    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+  public setRefreshToken(userId: string) {
+    logger.debug(
+      `Spotify Refresh Token signal received for user: ${userId}. Reloading SDK.`
+    )
+    this.userId = userId
+    // The initializeSdk method will now load the token for the new user ID.
+    setTimeout(() => this.initializeSdk(), 1000) // Give DB a moment to settle
   }
 
   // --- Polling Logic ---

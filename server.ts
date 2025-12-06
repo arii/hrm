@@ -15,6 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import prismaPkg from '@prisma/client'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -23,9 +24,9 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
+const { PrismaClient } = prismaPkg
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
@@ -121,9 +122,25 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
+
+    // On startup, find the first user with a token to initialize polling.
+    // This maintains the singleton service model for now.
+    const prisma = new PrismaClient()
+    const initialToken = await prisma.spotifyToken.findFirst()
+    const initialUserId = initialToken?.spotifyUserId || null
+    if (initialUserId) {
+      logger.info(
+        `Found initial Spotify token for user: ${initialUserId}. Initializing polling service.`
+      )
+    } else {
+      logger.warn(
+        'No Spotify token found in database on startup. Polling will not start until a token is delivered.'
+      )
+    }
+
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      spotifyService = await SpotifyPolling.create(broadcast, initialUserId)
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
@@ -175,31 +192,11 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
-      }
+      // The Next.js API route for token delivery will now directly call
+      // the spotifyService instance to signal a token update.
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
