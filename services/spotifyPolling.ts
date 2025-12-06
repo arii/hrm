@@ -1,11 +1,11 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
-import * as Prisma from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
 // Instantiate Prisma client
-const prisma = new Prisma.PrismaClient()
+const prisma = new PrismaClient()
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {

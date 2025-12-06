@@ -1,13 +1,13 @@
-import * as Prisma from '@prisma/client'
+import { PrismaClient, SpotifyToken } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
 // Instantiate Prisma client outside the class for singleton pattern
-const prisma = new Prisma.PrismaClient()
+const prisma = new PrismaClient()
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
 export class SpotifyTokenManager {
   // Use a simple in-memory cache to reduce DB load
-  private inMemoryToken: Prisma.SpotifyToken | null = null
+  private inMemoryToken: SpotifyToken | null = null
   private refreshPromise: Promise<void> | null = null
   private userId: string | null = null // Store the User ID we are managing
 
@@ -32,7 +32,7 @@ export class SpotifyTokenManager {
   }
 
   private async writeTokenUpdate(
-    data: Partial<Prisma.SpotifyToken>
+    data: Partial<SpotifyToken>
   ): Promise<void> {
     if (!this.userId) return
     const updatedToken = await prisma.spotifyToken.update({
@@ -79,7 +79,7 @@ export class SpotifyTokenManager {
       await this.writeTokenUpdate({
         accessToken: data.access_token,
         accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
-        refreshToken: data.refresh_token, // Spotify may rotate the refresh token
+        refreshToken: data.refresh_token ?? null, // Coalesce undefined to null
         updatedAt: new Date(),
       })
       console.log('Spotify access token refresh completed.')

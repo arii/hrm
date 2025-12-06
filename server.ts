@@ -5,7 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
-import express, { Request, Response } from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
@@ -170,7 +170,7 @@ app
 
     // Token delivery is handled by Next.js API route, but we can still intercept
     expressApp.use(express.json()) // Middleware to parse JSON bodies
-    expressApp.use(async (req: Request, res: Response, next) => {
+    expressApp.use(async (req: Request, _res: Response, next: NextFunction) => {
       if (
         req.method === 'POST' &&
         req.url &&
