@@ -144,6 +144,7 @@ export default function ConnectPage() {
   const currentHR = currentUserData?.value || 0
   const maxHr = 220 - (parseInt(userAge) || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
+  const currentAlert = currentUserData?.alert
 
   return (
     <ConnectView
@@ -161,6 +162,7 @@ export default function ConnectPage() {
       hrZoneProps={hrZoneProps}
       connectionStatus={connectionStatus}
       bluetoothConnected={bluetoothConnected}
+      {...(currentAlert && { alert: currentAlert })}
     />
   )
 }

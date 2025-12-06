@@ -57,8 +57,6 @@ const useBluetoothHRM = () => {
   const [batteryLevel, setBatteryLevel] = useState<number | undefined>(
     undefined
   )
-  const [gattServer, setGattServer] =
-    useState<BluetoothRemoteGATTServer | null>(null)
 
   // Refs to track state without dependency cycles or for event handlers
   const statusRef = useRef(deviceStatus)
@@ -131,7 +129,6 @@ const useBluetoothHRM = () => {
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(undefined)
-    setGattServer(null)
     deviceRef.current = null
     setCookie('hrm_device_id', '', -1)
   }, [])
@@ -151,7 +148,6 @@ const useBluetoothHRM = () => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(undefined)
-    setGattServer(null)
     if (batteryIntervalRef.current) {
       clearInterval(batteryIntervalRef.current)
       batteryIntervalRef.current = null
@@ -200,7 +196,6 @@ const useBluetoothHRM = () => {
         setDeviceStatus(`Connecting to: ${device.name}...`)
 
         const server = await device.gatt!.connect()
-        setGattServer(server)
 
         // Initial Battery Read
         readBatteryLevel(server)
@@ -234,14 +229,16 @@ const useBluetoothHRM = () => {
             const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
             const currentSignalStatus = server.connected
               ? 'OPTIMAL'
-              : 'DISCONNECTED'
+              : 'DISCONNECTED';
 
             const data: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
-              batteryLevel: batteryLevelRef.current,
               signalStatus: currentSignalStatus,
+            }
+            if (typeof batteryLevelRef.current === 'number') {
+              data.batteryLevel = batteryLevelRef.current
             }
             if (age) {
               data.age = parseInt(age)

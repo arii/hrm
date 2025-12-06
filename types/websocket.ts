@@ -6,6 +6,11 @@
 
 // --- Server Broadcast State Interfaces ---
 
+export interface HrmAlert {
+  severity: 'warning' | 'error' | 'info'
+  message: string
+}
+
 export interface HrmData {
   clientId: string
   value: number
@@ -14,6 +19,7 @@ export interface HrmData {
   age?: number
   batteryLevel?: number
   signalStatus?: 'OPTIMAL' | 'FAIR' | 'POOR' | 'DISCONNECTED'
+  alert?: HrmAlert
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
@@ -76,12 +82,6 @@ export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
 // TOPIC-BASED REAL-TIME MESSAGES
 // Use a discriminated union for type-safe message handling
 
-export interface DiagnosticAlert {
-  severity: 'warning' | 'error' | 'info'
-  message: string
-  deviceName?: string
-}
-
 export type ServerMessage =
   | {
       type: 'INITIAL_STATE'
@@ -91,7 +91,6 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
-  | { type: 'DIAGNOSTIC_ALERT'; payload: DiagnosticAlert }
   | SpotifyExecutionMessage
 
 /**

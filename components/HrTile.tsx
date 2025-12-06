@@ -4,17 +4,20 @@ import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
+import { HrmAlert } from '@/types/websocket'
 
 export interface HrTileProps {
   name: string
   bpm: number
   percentMax: number // 0-100
   background: string // hex color
+  alert?: HrmAlert
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({ name, bpm, percentMax, background, alert }: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
@@ -32,10 +35,10 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <Box aria-live="polite" aria-atomic="true">
+        <Box aria-live="polite" aria-atomic="true" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
             <Typography
@@ -81,6 +84,29 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
             )}
           </CardContent>
         </Box>
+        {alert && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <WarningAmberIcon
+              fontSize="small"
+              sx={{
+                mr: 1,
+                color: alert.severity === 'warning' ? 'warning.main' : 'error.main',
+              }}
+            />
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+              {alert.message}
+            </Typography>
+          </Box>
+        )}
       </StyledCard>
     </Tooltip>
   )
@@ -93,7 +119,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.background === nextProps.background &&
-    prevProps.percentMax === nextProps.percentMax
+    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.alert?.message === nextProps.alert?.message
   )
 }
 

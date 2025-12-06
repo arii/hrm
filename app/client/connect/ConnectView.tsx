@@ -13,6 +13,7 @@ import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
+import { HrmAlert } from '@/types/websocket'
 
 interface ConnectViewProps {
   userName: string
@@ -21,7 +22,7 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   isConnected: boolean
   deviceStatus: string
-  batteryLevel: number | null
+  batteryLevel: number | undefined
   onConnect: () => void
   onDisconnect: () => void
   onResetServer: () => void
@@ -29,6 +30,7 @@ interface ConnectViewProps {
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
   bluetoothConnected: boolean
+  alert?: HrmAlert
 }
 
 export default function ConnectView({
@@ -46,6 +48,7 @@ export default function ConnectView({
   hrZoneProps,
   connectionStatus,
   bluetoothConnected,
+  alert,
 }: ConnectViewProps) {
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -60,6 +63,12 @@ export default function ConnectView({
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>
+
+        {alert && (
+          <Alert severity={alert.severity} sx={{ mb: 2 }}>
+            {alert.message}
+          </Alert>
+        )}
 
         {/* Inputs (Hidden when connected) */}
         {!isConnected ? (
@@ -148,7 +157,7 @@ export default function ConnectView({
                   gap: 1,
                 }}
               >
-                {batteryLevel !== null && (
+                {typeof batteryLevel === 'number' && (
                   <Stack
                     direction="row"
                     alignItems="center"

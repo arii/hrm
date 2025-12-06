@@ -15,7 +15,7 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-  DiagnosticAlert,
+  HrmAlert,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
@@ -241,32 +241,30 @@ const handleIncomingMessage = (
   }
 }
 
-const runDiagnostics = (clientData: HrmData) => {
-  const { batteryLevel, signalStatus, name, clientId } = clientData
+const runDiagnostics = (clientData: HrmData): HrmData => {
+  const { batteryLevel, signalStatus } = clientData
+  let alert: HrmAlert | undefined = undefined
 
   if (typeof batteryLevel === 'number' && batteryLevel < 20) {
-    const alert: DiagnosticAlert = {
+    alert = {
       severity: 'warning',
-      message: `Low battery warning: ${batteryLevel}% remaining.`,
-      deviceName: name || clientId,
+      message: `Low Battery: ${batteryLevel}%`,
     }
-    broadcast({
-      type: 'DIAGNOSTIC_ALERT',
-      payload: alert,
-    })
+  } else if (signalStatus === 'POOR' || signalStatus === 'DISCONNECTED') {
+    alert = {
+      severity: 'error',
+      message: `Signal Unstable`,
+    }
   }
 
-  if (signalStatus === 'POOR' || signalStatus === 'DISCONNECTED') {
-    const alert: DiagnosticAlert = {
-      severity: 'error',
-      message: `Signal status is ${signalStatus}. Data may be unreliable.`,
-      deviceName: name || clientId,
-    }
-    broadcast({
-      type: 'DIAGNOSTIC_ALERT',
-      payload: alert,
-    })
-  }
+  // Return a new object with the alert property updated.
+const newClientData = { ...clientData }
+if (alert) {
+  newClientData.alert = alert
+} else {
+  delete newClientData.alert
+}
+return newClientData
 }
 
 export { initSocketManager }
