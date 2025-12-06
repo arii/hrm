@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  spotifyToken SpotifyToken?
+}
+
+model SpotifyToken {
+  id            String   @id @default(cuid())
+  provider      String
+  sub           String   @unique
+  accessToken   String   @map("access_token")
+  refreshToken  String   @map("refresh_token")
+  expiresIn     Int      @map("expires_in")
+  scope         String
+  obtainedAt    DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @unique
+}

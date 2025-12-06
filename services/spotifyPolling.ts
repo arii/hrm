@@ -2,6 +2,7 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
+import { PrismaClient } from '@prisma/client'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -62,20 +63,25 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  private constructor(
+    broadcastUpdate: (message: ServerMessage) => void,
+    prisma: PrismaClient
+  ) {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
+      process.env.SPOTIFY_CLIENT_SECRET || '',
+      prisma
     )
   }
 
   public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
+    broadcastUpdate: (message: ServerMessage) => void,
+    prisma: PrismaClient
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
+    const instance = new SpotifyPolling(broadcastUpdate, prisma)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),

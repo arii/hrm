@@ -13,6 +13,7 @@ import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import { PrismaClient } from '@prisma/client'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -44,6 +45,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
 // ===========================================
 
 const app = next({ dev, hostname, port })
+const prisma = new PrismaClient()
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
@@ -123,7 +125,7 @@ app
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcast)
+      spotifyService = await SpotifyPolling.create(broadcast, prisma)
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
