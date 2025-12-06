@@ -41,13 +41,11 @@ jest.mock('@prisma/client', () => {
       findFirst: jest.fn(),
     },
   }
-  // The module is imported as `import prismaPkg from '@prisma/client'`.
-  // We need to mock the `default` export that contains the `PrismaClient` constructor.
+  // The module is imported as `import * as Prisma from '@prisma/client'`.
+  // We need to mock the entire namespace.
   return {
     __esModule: true,
-    default: {
-      PrismaClient: jest.fn(() => mPrismaClient),
-    },
+    PrismaClient: jest.fn(() => mPrismaClient),
     // Mock the named export for `SpotifyToken` type. It's a type-only import,
     // so an empty object is sufficient for Jest's module resolution.
     SpotifyToken: {},
