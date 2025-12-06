@@ -55,9 +55,9 @@ class HeartRateService {
       }
     }
 
-    const timeInZones: { [zone: string]: number } = this.session.timeInZones;
+    const timeInZones: { [zone: string]: number } = this.session.timeInZones
     if (Object.prototype.hasOwnProperty.call(timeInZones, currentZone)) {
-        timeInZones[currentZone]++;
+      timeInZones[currentZone]++
     }
   }
 
