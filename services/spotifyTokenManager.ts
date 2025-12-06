@@ -1,7 +1,8 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import fs from 'fs'
+import fs from 'fs/promises'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling'
+import { EncryptionService } from '../utils/encryption'
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -19,63 +20,79 @@ export interface TokenRecord {
 }
 
 export class SpotifyTokenManager {
-  /**
-   * Directly set the access token (for command injection/testing).
-   */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token created via setAccessToken.')
-    }
-  }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
+  private refreshPromise: Promise<boolean> | null = null
+  private encryptionService: EncryptionService
 
   constructor(
     private clientId: string,
     private clientSecret: string,
     logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
+    const encryptionKey = process.env.ENCRYPTION_KEY
+    if (!encryptionKey) {
+      throw new Error(
+        'ENCRYPTION_KEY is not set in the environment variables.'
+      )
+    }
+    this.encryptionService = new EncryptionService(encryptionKey)
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
   }
 
-  private loadTokens() {
+  public async setTokenData(tokenPayload: SpotifyTokenPayload): Promise<void> {
+    this.currentToken = {
+      receivedAt: Date.now(),
+      payload: tokenPayload,
+    }
+    await this.saveTokens(this.currentToken)
+  }
+
+  private async saveTokens(tokenRecord: TokenRecord): Promise<void> {
     try {
-      if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+      const recordToSave = JSON.parse(JSON.stringify(tokenRecord))
+
+      if (recordToSave.payload.refresh_token) {
+        recordToSave.payload.refresh_token =
+          await this.encryptionService.encrypt(
+            recordToSave.payload.refresh_token
+          )
       }
+
+      await fs.writeFile(
+        this.tokenFile,
+        JSON.stringify(recordToSave, null, 2),
+        'utf8'
+      )
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      console.error('Failed to save Spotify tokens:', err)
+      throw err
+    }
+  }
+
+  private async loadTokens(): Promise<void> {
+    try {
+      await fs.access(this.tokenFile)
+      const data = await fs.readFile(this.tokenFile, 'utf8')
+      const record = JSON.parse(data) as TokenRecord
+
+      if (record.payload.refresh_token) {
+        try {
+          record.payload.refresh_token =
+            await this.encryptionService.decrypt(record.payload.refresh_token)
+        } catch (decryptionError) {
+          console.error(
+            'Failed to decrypt refresh token. Deleting corrupted file.',
+            decryptionError
+          )
+          this.currentToken = null
+          await fs.unlink(this.tokenFile)
+          return
+        }
+      }
+      this.currentToken = record
+    } catch (err) {
+      this.currentToken = null
     }
   }
 
@@ -86,7 +103,6 @@ export class SpotifyTokenManager {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
       ).toString('base64')
-
       const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
@@ -100,19 +116,10 @@ export class SpotifyTokenManager {
       })
 
       if (!response.ok) {
-        const errorBody = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errorBody}`)
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`)
       }
 
       const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
-      )
-
-      // Update current token with new values
       this.currentToken = {
         receivedAt: Date.now(),
         payload: {
@@ -125,14 +132,7 @@ export class SpotifyTokenManager {
         },
       }
 
-      // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      await this.saveTokens(this.currentToken)
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -141,43 +141,34 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
+    await this.loadTokens()
     if (!this.currentToken) return null
 
-    // Check if token needs refresh
     const expiresAt =
       this.currentToken.payload.obtainedAt +
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
-      )
-      // Refresh if within 1 minute of expiry
-      // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-          })
+        this.refreshPromise = this.refreshToken().then((success) => {
+          this.refreshPromise = null
+          return success
+        })
       }
       await this.refreshPromise
     }
 
-    return this.currentToken.payload.access_token
+    return this.currentToken?.payload.access_token ?? null
   }
 
   getUserId(): string | null {
     return this.currentToken?.payload.sub ?? null
   }
 
-  getCurrentRefreshToken(): string | null {
+  async getCurrentRefreshToken(): Promise<string | null> {
+    if (!this.currentToken) {
+      await this.loadTokens()
+    }
     return this.currentToken?.payload.refresh_token ?? null
   }
 
