@@ -3,10 +3,17 @@ import {
   SpotifyTokenManager,
   TokenRecord,
 } from '../../../services/spotifyTokenManager'
-import fs from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
+import { EncryptionService } from '../../../utils/encryption'
 
-jest.mock('fs')
+jest.mock('fs/promises')
+jest.mock('../../../utils/encryption', () => ({
+  EncryptionService: jest.fn().mockImplementation(() => ({
+    encrypt: jest.fn((text) => Promise.resolve(text)),
+    decrypt: jest.fn((text) => Promise.resolve(text)),
+  })),
+}))
 
 describe('SpotifyTokenManager', () => {
   const logDir = '/tmp/logs'
@@ -15,9 +22,9 @@ describe('SpotifyTokenManager', () => {
   const clientSecret = 'test_client_secret'
 
   beforeEach(() => {
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
-    ;(fs.readFileSync as jest.Mock).mockClear()
-    ;(fs.writeFileSync as jest.Mock).mockClear()
+    ;(fs.access as jest.Mock).mockResolvedValue(undefined)
+    ;(fs.readFile as jest.Mock).mockClear()
+    ;(fs.writeFile as jest.Mock).mockClear()
     jest.spyOn(console, 'log').mockImplementation(() => {})
   })
 
@@ -25,7 +32,7 @@ describe('SpotifyTokenManager', () => {
     jest.restoreAllMocks()
   })
 
-  it('should load tokens from file on initialization', () => {
+  it('should load tokens from file on initialization', async () => {
     const tokenRecord: TokenRecord = {
       receivedAt: Date.now(),
       payload: {
@@ -38,11 +45,11 @@ describe('SpotifyTokenManager', () => {
         obtainedAt: Date.now(),
       },
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    ;(fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(tokenRecord))
 
     const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    expect(fs.readFileSync).toHaveBeenCalledWith(tokenFile, 'utf8')
+    await tokenManager.getValidAccessToken()
+    expect(fs.readFile).toHaveBeenCalledWith(tokenFile, 'utf8')
     expect(tokenManager.getUserId()).toBe('test_user')
   })
 
@@ -60,8 +67,7 @@ describe('SpotifyTokenManager', () => {
         obtainedAt: now - 3600 * 1000, // Expired
       },
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    ;(fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(tokenRecord))
 
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -78,7 +84,7 @@ describe('SpotifyTokenManager', () => {
 
     expect(global.fetch).toHaveBeenCalled()
     expect(accessToken).toBe('new_access_token')
-    expect(fs.writeFileSync).toHaveBeenCalled()
+    expect(fs.writeFile).toHaveBeenCalled()
   })
 
   it('should not refresh the access token if it is still valid', async () => {
@@ -95,8 +101,7 @@ describe('SpotifyTokenManager', () => {
         obtainedAt: now, // Not expired
       },
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    ;(fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(tokenRecord))
 
     global.fetch = jest.fn()
 
