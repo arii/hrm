@@ -198,7 +198,7 @@ const SpotifyControls = () => {
             >
               <IconButton
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
-                data-testid="spotify-prev-btn" // ADDED
+                data-testid="spotify-prev"
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -211,7 +211,7 @@ const SpotifyControls = () => {
                 onClick={() =>
                   sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
-                data-testid="spotify-play-pause-btn" // ADDED
+                data-testid="spotify-play-pause"
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
@@ -223,7 +223,7 @@ const SpotifyControls = () => {
               </IconButton>
               <IconButton
                 onClick={() => sendSpotifyCommand('NEXT')}
-                data-testid="spotify-next-btn" // ADDED
+                data-testid="spotify-next"
                 disabled={connectionStatus !== 'Connected'}
                 sx={{
                   color: 'white',
