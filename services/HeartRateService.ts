@@ -41,14 +41,23 @@ class HeartRateService {
     this.session.hrReadings.push(bpm)
 
     const percentOfMax = bpm / maxHr
-    let currentZone = HR_ZONES[0].name
+    const firstZone = HR_ZONES[0];
+    if (!firstZone) {
+      return; // Guard against empty HR_ZONES array
+    }
+
+    let currentZone = firstZone.name;
     for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-      if (percentOfMax >= HR_ZONES[i].min) {
-        currentZone = HR_ZONES[i].name
+      const hrZone = HR_ZONES[i];
+      if (hrZone && percentOfMax >= hrZone.min) {
+        currentZone = hrZone.name;
         break
       }
     }
-    this.session.timeInZones[currentZone]++
+
+    if (typeof this.session.timeInZones[currentZone] === 'number') {
+      this.session.timeInZones[currentZone]++;
+    }
   }
 
   getWorkoutSummary() {
