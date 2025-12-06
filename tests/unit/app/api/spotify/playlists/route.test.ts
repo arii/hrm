@@ -17,6 +17,15 @@ jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
 }))
 
+// Mock Prisma Client
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({
+    spotifyToken: {
+      upsert: jest.fn().mockResolvedValue(null),
+    },
+  })),
+}))
+
 // Mock Spotify SDK
 jest.mock('@spotify/web-api-ts-sdk', () => {
   const mockPlaylists = {
