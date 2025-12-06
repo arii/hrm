@@ -31,9 +31,9 @@ export async function GET() {
         accessToken: `${currentToken.access_token.substring(0, 5)}...`,
         refreshToken: maskedRefreshToken,
         expiresIn: currentToken.expires_in,
-        expiresAt: new Date(expiresAt).toISOString(),
-        isExpired: Date.now() >= expiresAt,
-        willExpireSoon: Date.now() >= expiresAt - 60000, // Within 1 minute
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : 'N/A',
+        isExpired: expiresAt ? Date.now() >= expiresAt : false,
+        willExpireSoon: expiresAt ? Date.now() >= expiresAt - 60000 : false, // Within 1 minute
       },
       { status: 200 }
     )
