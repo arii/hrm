@@ -1,6 +1,6 @@
 // components/UserProfile.tsx
 'use client'
-import React, { useEffect, useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -54,7 +54,10 @@ const UserProfile = () => {
       } catch (error) {
         dispatch({
           type: 'FETCH_FAILURE',
-          payload: error instanceof Error ? error.message : 'An unknown error occurred',
+          payload:
+            error instanceof Error
+              ? error.message
+              : 'An unknown error occurred',
         })
       }
     }
