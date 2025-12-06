@@ -18,6 +18,7 @@ const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -40,7 +41,8 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 })
 
 const Dashboard = () => {
-  const { timerData, hrmData, userSettings } = useWebSocket()
+  const { timerData, hrmData } = useWebSocket()
+  const [userSettings] = useUserSettings()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [isWorkoutActive, setIsWorkoutActive] = useState(false)
   const [workoutStats, setWorkoutStats] = useState<WorkoutStats | null>(null)
@@ -53,10 +55,11 @@ const Dashboard = () => {
   useSpotifyRemoteExecution(player)
 
   useEffect(() => {
-    if (isWorkoutActive && hrmData.bpm) {
-      heartRateService.addHrmReading(hrmData.bpm)
+    const latestReading = hrmData && hrmData.length > 0 ? hrmData[0] : null
+    if (isWorkoutActive && latestReading && latestReading.value) {
+      heartRateService.addHrmReading(latestReading.value)
     }
-  }, [isWorkoutActive, hrmData.bpm])
+  }, [isWorkoutActive, hrmData])
 
   const handleStartWorkout = () => {
     heartRateService.startWorkout()

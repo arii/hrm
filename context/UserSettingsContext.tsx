@@ -1,16 +1,12 @@
 // context/UserSettingsContext.tsx
 'use client'
+import { UserSettings } from '@/types'
 import React, { createContext, useContext } from 'react'
-import {
-  useUserPreferences,
-  UserPreferences,
-} from '../hooks/useUserPreferences'
+import { useUserPreferences } from '../hooks/useUserPreferences'
 
 type UserSettingsContextType = readonly [
-  UserPreferences,
-  (
-    value: UserPreferences | ((val: UserPreferences) => UserPreferences)
-  ) => void,
+  UserSettings,
+  (value: UserSettings | ((val: UserSettings) => UserSettings)) => void,
 ]
 
 export const UserSettingsContext = createContext<

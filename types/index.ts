@@ -12,6 +12,18 @@ export interface HeartRateZonesProps {
   maxHr: number
 }
 
+export interface UserSettings {
+  theme: 'dark' | 'light'
+  volumeLevel: number
+  defaultWorkDuration: number
+  defaultRestDuration: number
+  favoritePlaylist: string | null
+  userAge?: number
+  restingHr?: number
+  maxHr?: number
+  deviceId?: string
+}
+
 import { TimerMode, TimerPhase } from './websocket'
 
 export interface TimerDisplayProps {
