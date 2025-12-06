@@ -6,16 +6,16 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
-import { HrZoneProps } from '@/utils/visualization';
+import { HrZoneProps } from '@/utils/visualization'
 
 export interface HrTileProps {
   name: string
   bpm: number
-  hrZoneProps: HrZoneProps;
+  hrZoneProps: HrZoneProps
 }
 
 const HrTile = ({ name, bpm, hrZoneProps }: HrTileProps) => {
-  const { percentage, progressColor, gradient, glow } = hrZoneProps;
+  const { percentage, progressColor, gradient, glow } = hrZoneProps
 
   return (
     <Tooltip
@@ -100,7 +100,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
-    prevProps.hrZoneProps.progressColor === nextProps.hrZoneProps.progressColor &&
+    prevProps.hrZoneProps.progressColor ===
+      nextProps.hrZoneProps.progressColor &&
     prevProps.hrZoneProps.percentage === nextProps.hrZoneProps.percentage
   )
 }

@@ -1,14 +1,14 @@
-import type { Preview } from "@storybook/react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
-import React from "react";
+import type { Preview } from '@storybook/react'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { CssBaseline } from '@mui/material'
+import React from 'react'
 
 // Minimal theme for storybook
 const theme = createTheme({
-    palette: {
-        mode: 'dark',
-    }
-});
+  palette: {
+    mode: 'dark',
+  },
+})
 
 const preview: Preview = {
   parameters: {
@@ -27,6 +27,6 @@ const preview: Preview = {
       </ThemeProvider>
     ),
   ],
-};
+}
 
-export default preview;
+export default preview

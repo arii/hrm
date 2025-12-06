@@ -162,14 +162,17 @@ const handleIncomingMessage = (
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-            const updatedClientData = {
+          const updatedClientData = {
             ...existingClientData,
             ...updatedClientProperties,
-            }
-            hrmClients.set(clientId, updatedClientData)
-            if (updatedClientData.value && updatedClientData.maxHr) {
-              heartRateService.addHrReading(updatedClientData.value, updatedClientData.maxHr);
-            }
+          }
+          hrmClients.set(clientId, updatedClientData)
+          if (updatedClientData.value && updatedClientData.maxHr) {
+            heartRateService.addHrReading(
+              updatedClientData.value,
+              updatedClientData.maxHr
+            )
+          }
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
             hrmClients.get(clientId)

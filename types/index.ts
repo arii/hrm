@@ -41,15 +41,15 @@ export interface SpotifyPlaylistItem {
 }
 
 export interface WorkoutSession {
-  startTime: number;
-  endTime: number;
-  durationInSeconds: number;
-  averageHr: number;
-  caloriesBurned: number;
-  timeInZones: { [zone: string]: number };
+  startTime: number
+  endTime: number
+  durationInSeconds: number
+  averageHr: number
+  caloriesBurned: number
+  timeInZones: { [zone: string]: number }
 }
 
-export type WorkoutHistory = WorkoutSession[];
+export type WorkoutHistory = WorkoutSession[]
 
 export interface SpotifyPlaylist {
   name: string

@@ -1,6 +1,7 @@
 # Issue Cleanup Progress Tracker
 
 ## Workflow
+
 1. Use `gh issue view` to examine each issue
 2. Determine if the issue is still relevant or can be closed
 3. If no longer relevant: Add comment explaining closure reason → Close with `gh issue close <number>`
@@ -10,6 +11,7 @@
 ---
 
 ## Completed (Closed during cleanup)
+
 - [x] #408 - Epic: Core Architecture - Closed (all sub-issues completed)
 - [x] #410 - Epic: Spotify Integration - Closed (all sub-issues completed)
 - [x] #411 - Epic: Frontend UI/UX - Closed (keeping atomic issues instead)
@@ -23,6 +25,7 @@
 ## Open Issues - Atomic & Actionable (29 total)
 
 ### Security & Production Readiness (High Priority)
+
 - [ ] #719 - Add CSRF protection for state-changing API routes
 - [ ] #720 - Gate or remove debug API endpoints in production
 - [ ] #721 - Implement WebSocket reconnection with exponential backoff
@@ -30,6 +33,7 @@
 - [ ] #723 - Implement rate limiting for API endpoints
 
 ### Features
+
 - [ ] #122 - Implement Workout History
 - [ ] #605 - Settings Drawer & Theme Toggle
 - [ ] #606 - Enhanced Data Visualization: Heart Rate Zones & Typography
@@ -40,6 +44,7 @@
 - [ ] #724 - Add health check and readiness endpoints
 
 ### UI/UX Improvements
+
 - [ ] #460 - Ensure consistent capitalization for all UI buttons and headings
 - [ ] #573 - Prioritize Custom Font Loading for Stability
 - [ ] #653 - Implement Modern Color System & Typography Hierarchy
@@ -48,6 +53,7 @@
 - [ ] #673 - UI quick fixes
 
 ### Infrastructure & Code Quality
+
 - [ ] #472 - Implement Release Automation & Safety Enforcement
 - [ ] #562 - Establish API Contract Management and Validation Strategy
 - [ ] #568 - Refactor: Decouple Server Logic and Standardize Service Interfaces
@@ -62,4 +68,5 @@
 ---
 
 ## Review Notes
+
 (Add notes here as you review each issue)

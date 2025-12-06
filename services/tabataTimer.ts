@@ -5,7 +5,7 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
-import { heartRateService } from './HeartRateService.js';
+import { heartRateService } from './HeartRateService.js'
 import {
   ServerMessage,
   TimerData,
@@ -146,7 +146,7 @@ class TabataTimer {
     // --- UNIVERSAL PREPARE LOGIC ---
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
-      heartRateService.startSession();
+      heartRateService.startSession()
       this.timerState.currentPhase = 'PREPARE'
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
@@ -179,7 +179,7 @@ class TabataTimer {
 
   private stopTimer() {
     if (this.timerInterval) clearInterval(this.timerInterval)
-    heartRateService.stopSession();
+    heartRateService.stopSession()
 
     // Full reset of all time and cycle variables
     this.timerState = {
