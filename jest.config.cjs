@@ -5,6 +5,7 @@ const config = {
   roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  setupFilesAfterEnv: ['./jest.setup.js'],
   coverageDirectory: "coverage",
   reporters : ["default", 
     [
