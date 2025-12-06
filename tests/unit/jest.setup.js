@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 // tests/unit/jest.setup.js
 require('@testing-library/jest-dom')
-const { jest } = require('@jest/globals')
 const fetch = require('node-fetch')
 
 // Mock logger to suppress console output during tests
