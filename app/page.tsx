@@ -13,7 +13,6 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
-import UserProfile from '../components/UserProfile'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -84,10 +83,6 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
-
-        <Grid item xs={12} lg={6}>
-          <UserProfile />
-        </Grid>
 
         <Grid item xs={12}>
           <GoogleDocViewer
