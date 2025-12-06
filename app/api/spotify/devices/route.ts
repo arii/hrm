@@ -3,9 +3,7 @@ import { ApiError } from '@/lib/errors'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import prisma from '@/lib/prisma'
 
 /**
  * API route to fetch available Spotify devices.
