@@ -13,7 +13,8 @@ const SpotifyLoginButton = () => {
     // 1 day / 24 hours / 2 = 0.02083 days, which is 30 minutes.
     Cookies.set('spotify_auth_state', state, { expires: 1 / 24 / 2 })
 
-    const scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state streaming'
+    const scope =
+      'user-read-private user-read-email user-read-playback-state user-modify-playback-state streaming'
     const redirectUri = `${getBaseURL()}/api/auth/spotify/callback`
 
     const params = new URLSearchParams({

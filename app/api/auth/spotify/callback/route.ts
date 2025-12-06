@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
   const validationResult = callbackQuerySchema.safeParse(query)
 
   if (!validationResult.success) {
-    return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid query parameters' },
+      { status: 400 }
+    )
   }
 
   const { code, state } = validationResult.data
@@ -36,7 +39,11 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64'),
+        Authorization:
+          'Basic ' +
+          Buffer.from(
+            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+          ).toString('base64'),
       },
       body: params,
     })
@@ -52,11 +59,19 @@ export async function GET(request: NextRequest) {
 
     const redirectUrl = getBaseURL()
     const nextResponse = NextResponse.redirect(redirectUrl)
-    nextResponse.cookies.set('spotify_access_token', tokens.access_token, { path: '/' })
-    nextResponse.cookies.set('spotify_refresh_token', tokens.refresh_token, { httpOnly: true, path: '/' })
+    nextResponse.cookies.set('spotify_access_token', tokens.access_token, {
+      path: '/',
+    })
+    nextResponse.cookies.set('spotify_refresh_token', tokens.refresh_token, {
+      httpOnly: true,
+      path: '/',
+    })
     return nextResponse
   } catch (error) {
     console.error('Error exchanging code for tokens:', error)
-    return NextResponse.json({ error: 'Failed to authenticate with Spotify' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to authenticate with Spotify' },
+      { status: 500 }
+    )
   }
 }

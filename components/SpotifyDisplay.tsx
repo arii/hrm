@@ -20,7 +20,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import Cookies from 'js-cookie'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 
 interface SpotifyDevice {
@@ -35,14 +35,13 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const [accessToken, setAccessToken] = useState<string | undefined>(Cookies.get('spotify_access_token'))
+  const accessToken = Cookies.get('spotify_access_token')
 
   const handleLogout = () => {
     Cookies.remove('spotify_access_token')
     Cookies.remove('spotify_refresh_token')
     window.location.reload()
   }
-
 
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -108,8 +107,7 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn =
-    Boolean(accessToken) && Boolean(spotifyAuthenticated)
+  const spotifyLoggedIn = Boolean(accessToken) && Boolean(spotifyAuthenticated)
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
