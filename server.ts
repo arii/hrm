@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+import HeartRateService from './services/HeartRateService.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
@@ -139,6 +140,7 @@ app
       } as unknown as SpotifyPolling
     }
     const tabataService = new TabataTimer(broadcast)
+    const heartRateService = new HeartRateService()
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
@@ -150,7 +152,7 @@ app
     // 4. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(
       wss,
-      { tabataService, spotifyService },
+      { tabataService, spotifyService, heartRateService },
       getUnifiedStateSnapshot
     )
 

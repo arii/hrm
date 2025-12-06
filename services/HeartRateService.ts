@@ -84,18 +84,20 @@ class HeartRateService {
     for (let i = 1; i < this.sessionData.length; i++) {
       const previousPoint = this.sessionData[i - 1]
       const currentPoint = this.sessionData[i]
-      const timeDiff = (currentPoint.timestamp - previousPoint.timestamp) / 1000
+      if (previousPoint && currentPoint) {
+        const timeDiff =
+          (currentPoint.timestamp - previousPoint.timestamp) / 1000
 
-      const percentageOfMax = currentPoint.hr / this.userSettings.maxHr
+        const percentageOfMax = currentPoint.hr / this.userSettings.maxHr
 
-      let zoneName = 'Zone 1'
-      for (const zone of HR_ZONES) {
-        if (percentageOfMax >= zone.min) {
-          zoneName = zone.name
+        let zoneName = 'Zone 1'
+        for (const zone of HR_ZONES) {
+          if (percentageOfMax >= zone.min) {
+            zoneName = zone.name
+          }
         }
+        timeInZones[zoneName] = (timeInZones[zoneName] || 0) + timeDiff
       }
-
-      timeInZones[zoneName] += timeDiff
     }
     return timeInZones
   }
