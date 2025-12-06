@@ -17,6 +17,7 @@ import {
   StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { DiagnosticAlert } from '../types/websocket.js'
 
 // Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {
@@ -33,6 +34,8 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
+const activeAlerts = new Map<string, DiagnosticAlert>()
+const lastAlertTimestamps = new Map<string, number>()
 
 interface Services {
   tabataService: TabataTimer
@@ -138,6 +141,7 @@ const handleIncomingMessage = (
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
           hrmData: Array.from(hrmClients.values()),
+          activeAlerts: Array.from(activeAlerts.values()),
         }
 
         const initialStateMessage: ServerMessage = {
@@ -150,25 +154,17 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
-          const updatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmClients.set(clientId, {
+          const updatedData = {
             ...existingClientData,
-            ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+            ...message.data,
+            value: message.data.value ?? existingClientData.value,
+            maxHr: message.data.maxHr ?? existingClientData.maxHr,
+            name: message.data.name ?? existingClientData.name,
+            age: message.data.age ?? existingClientData.age,
+          }
+          hrmClients.set(clientId, updatedData)
+          updateAndBroadcastAlerts(clientId, updatedData)
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -246,6 +242,80 @@ const handleIncomingMessage = (
     if (e instanceof z.ZodError) {
       console.error('WebSocket message validation failed:', e.issues)
     }
+  }
+}
+
+const updateAndBroadcastAlerts = (clientId: string, data: HrmData) => {
+  const DEBOUNCE_PERIOD = 60000 // 60 seconds
+  let alertsChanged = false
+
+  const now = Date.now()
+
+  // Helper to add or update an alert
+  const setAlert = (alert: Omit<DiagnosticAlert, 'timestamp'>) => {
+    const alertKey = `${clientId}-${alert.code}`
+    const lastTime = lastAlertTimestamps.get(alertKey) || 0
+    if (now - lastTime < DEBOUNCE_PERIOD) {
+      return // Debounced
+    }
+    activeAlerts.set(alertKey, { ...alert, timestamp: now })
+    lastAlertTimestamps.set(alertKey, now)
+    alertsChanged = true
+  }
+
+  // Helper to clear an alert
+  const clearAlert = (code: DiagnosticAlert['code']) => {
+    const alertKey = `${clientId}-${code}`
+    if (activeAlerts.has(alertKey)) {
+      activeAlerts.delete(alertKey)
+      alertsChanged = true
+    }
+  }
+
+  // --- Alert Logic ---
+
+  // 1. LOW_BATTERY
+  if (data.batteryLevel !== undefined && data.batteryLevel <= 15) {
+    setAlert({
+      clientId,
+      code: 'LOW_BATTERY',
+      message: `Warning: ${data.name}'s battery is at ${data.batteryLevel}%. Please replace soon.`,
+      severity: 'WARNING',
+    })
+  } else {
+    clearAlert('LOW_BATTERY')
+  }
+
+  // 2. BAD_PLACEMENT
+  const isStale = data.value === 0 || data.value === null
+  if (isStale && data.signalStatus === 'POOR') {
+    setAlert({
+      clientId,
+      code: 'BAD_PLACEMENT',
+      message: `${data.name} heart rate missing. Check device placement on the body.`,
+      severity: 'ERROR',
+    })
+  } else {
+    clearAlert('BAD_PLACEMENT')
+  }
+
+  // 3. HRM_DISCONNECTED
+  if (data.signalStatus === 'DISCONNECTED') {
+    setAlert({
+      clientId,
+      code: 'HRM_DISCONNECTED',
+      message: `${data.name} has disconnected from the client device. Reconnect needed.`,
+      severity: 'ERROR',
+    })
+  } else {
+    clearAlert('HRM_DISCONNECTED')
+  }
+
+  if (alertsChanged) {
+    broadcast({
+      type: 'ALERTS_UPDATE',
+      payload: Array.from(activeAlerts.values()),
+    })
   }
 }
 

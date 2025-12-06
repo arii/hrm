@@ -6,12 +6,25 @@
 
 // --- Server Broadcast State Interfaces ---
 
+// --- New Alert Interfaces ---
+export type AlertSeverity = 'WARNING' | 'ERROR' | 'INFO'
+
+export interface DiagnosticAlert {
+  clientId: string
+  code: 'HRM_DISCONNECTED' | 'LOW_BATTERY' | 'BAD_PLACEMENT' | 'HRM_STALE'
+  message: string // User-facing descriptive message
+  severity: AlertSeverity
+  timestamp: number // epoch time for debouncing/expiry
+}
+
 export interface HrmData {
   clientId: string
   value: number
   maxHr: number
-  name?: string
-  age?: number
+  name?: string | undefined
+  age?: number | undefined
+  batteryLevel?: number | undefined
+  signalStatus?: 'POOR' | 'DISCONNECTED' | 'OK' | undefined
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
@@ -60,6 +73,7 @@ export interface InitialStateSnapshotPayload {
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+  activeAlerts: DiagnosticAlert[]
 }
 
 /**
@@ -82,6 +96,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | { type: 'ALERTS_UPDATE'; payload: DiagnosticAlert[] }
   | SpotifyExecutionMessage
 
 /**
@@ -92,7 +107,10 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId'> & {
+  batteryLevel?: number
+  signalStatus?: 'POOR' | 'DISCONNECTED' | 'OK'
+}
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
@@ -165,6 +183,8 @@ export const HrmInputDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  batteryLevel: z.number().optional(),
+  signalStatus: z.enum(['POOR', 'DISCONNECTED', 'OK']).optional(),
 })
 
 export const HrmInputMessageSchema = z.object({

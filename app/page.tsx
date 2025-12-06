@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
+import HrmDiagnosticDisplay from '../components/HrmDiagnosticDisplay'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -81,6 +82,7 @@ const Dashboard = () => {
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmDiagnosticDisplay />
           <HrmTiles />
         </ErrorBoundary>
 
