@@ -2,7 +2,7 @@
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import { getAPIURL } from '../utils/urls'
+import { prisma } from './prisma'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -206,44 +206,33 @@ export const authOptions: AuthOptions = {
           refreshToken: account.refresh_token,
         }
 
-        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
+        // --- CRITICAL STEP: Persist Refresh Token to DB ---
         if (account.refresh_token) {
           try {
-            const tokenPayload = {
-              provider: account.provider,
-              sub: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
-              obtainedAt: Date.now(),
-            }
-
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tokenPayload),
+            await prisma.spotifyToken.upsert({
+              where: { spotifyUserId: account.providerAccountId },
+              create: {
+                spotifyUserId: account.providerAccountId,
+                accessToken: account.access_token!,
+                refreshToken: account.refresh_token,
+                accessTokenExpiresAt: new Date(
+                  (account.expires_at || Date.now() / 1000 + 3600) * 1000
+                ),
+              },
+              update: {
+                accessToken: account.access_token!,
+                refreshToken: account.refresh_token,
+                accessTokenExpiresAt: new Date(
+                  (account.expires_at || Date.now() / 1000 + 3600) * 1000
+                ),
+              },
             })
-            const responseBody = await response.text()
-            if (response.ok) {
-              console.log(
-                'Internal token delivery successful. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            } else {
-              console.error(
-                'Internal token delivery failed. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            }
+            console.log(
+              'Spotify tokens persisted to DB for user:',
+              account.providerAccountId
+            )
           } catch (e) {
-            console.error('Internal token delivery failed:', e)
+            console.error('Failed to persist Spotify tokens:', e)
           }
         }
 

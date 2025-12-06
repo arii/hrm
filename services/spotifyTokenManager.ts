@@ -1,7 +1,6 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
-import fs from 'fs'
-import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling'
+import { prisma } from '../lib/prisma'
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -22,16 +21,29 @@ export class SpotifyTokenManager {
   /**
    * Directly set the access token (for command injection/testing).
    */
-  public setAccessToken(token: string) {
+  public async setAccessToken(token: string) {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
-      console.log('Access token updated via setAccessToken.')
+
+      try {
+        await prisma.spotifyToken.upsert({
+          where: { spotifyUserId: this.currentToken.payload.sub },
+          create: {
+            spotifyUserId: this.currentToken.payload.sub,
+            accessToken: token,
+            refreshToken: this.currentToken.payload.refresh_token,
+            accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+          },
+          update: {
+            accessToken: token,
+            accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+          },
+        })
+        console.log('Access token updated via setAccessToken.')
+      } catch (e) {
+        console.error('Failed to persist token via setAccessToken:', e)
+      }
     } else {
       // If no token record exists, create a minimal one
       this.currentToken = {
@@ -46,36 +58,58 @@ export class SpotifyTokenManager {
           obtainedAt: Date.now(),
         },
       }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
+      // Note: Cannot persist 'manual' user safely without ID collision risk or valid refresh token
+      console.log(
+        'Access token created via setAccessToken (in-memory only for manual).'
       )
-      console.log('Access token created via setAccessToken.')
     }
   }
-  private tokenFile: string
+
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null
 
   constructor(
     private clientId: string,
     private clientSecret: string,
-    logDir: string = path.resolve(process.cwd(), 'logs')
+    // Ignored legacy param
+    _logDir?: string
   ) {
-    this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
+    // Initial load happens async now, consumer should ensure wait or retry
+    this.loadTokens().catch((e) =>
+      console.error('Failed to load tokens on init:', e)
+    )
   }
 
-  private loadTokens() {
+  // Changed to public so it can be called explicitly
+  public async loadTokens() {
     try {
-      if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
+      // Find the most recently updated token
+      const token = await prisma.spotifyToken.findFirst({
+        orderBy: { updatedAt: 'desc' },
+      })
+
+      if (token) {
+        this.currentToken = {
+          receivedAt: token.updatedAt.getTime(),
+          payload: {
+            provider: 'spotify',
+            sub: token.spotifyUserId,
+            access_token: token.accessToken,
+            refresh_token: token.refreshToken,
+            expires_in: Math.max(
+              0,
+              Math.floor(
+                (token.accessTokenExpiresAt.getTime() - Date.now()) / 1000
+              )
+            ),
+            scope: '', // Scope not currently stored in DB, simplified
+            obtainedAt: Date.now(), // Approximation
+          },
+        }
         console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      console.warn('Failed to load Spotify tokens from DB:', err)
     }
   }
 
@@ -125,14 +159,20 @@ export class SpotifyTokenManager {
         },
       }
 
-      // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      // Save updated token to DB
+      const userId = this.currentToken.payload.sub
+      if (userId && userId !== 'manual') {
+        await prisma.spotifyToken.update({
+          where: { spotifyUserId: userId },
+          data: {
+            accessToken: data.access_token,
+            ...(data.refresh_token ? { refreshToken: data.refresh_token } : {}),
+            accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
+          },
+        })
+        console.log('Refreshed Spotify token persisted for:', userId)
+      }
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -141,8 +181,9 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
+    // Refresh state from DB to ensure we have latest (e.g. from NextAuth login)
+    await this.loadTokens()
+
     if (!this.currentToken) return null
 
     // Check if token needs refresh
