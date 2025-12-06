@@ -15,7 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import prismaPkg from '@prisma/client'
+import * as Prisma from '@prisma/client'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -26,7 +26,6 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
 
-const { PrismaClient } = prismaPkg
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
@@ -125,7 +124,7 @@ app
 
     // On startup, find the first user with a token to initialize polling.
     // This maintains the singleton service model for now.
-    const prisma = new PrismaClient()
+    const prisma = new Prisma.PrismaClient()
     const initialToken = await prisma.spotifyToken.findFirst()
     const initialUserId = initialToken?.spotifyUserId || null
     if (initialUserId) {

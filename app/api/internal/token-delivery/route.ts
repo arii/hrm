@@ -1,11 +1,10 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import prismaPkg from '@prisma/client'
+import * as Prisma from '@prisma/client'
 import { spotifyServiceInstance } from '@/utils/socketManager'
 
-const { PrismaClient } = prismaPkg
-const prisma = new PrismaClient()
+const prisma = new Prisma.PrismaClient()
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.

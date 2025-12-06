@@ -1,16 +1,14 @@
-import prismaPkg from '@prisma/client'
-import type { SpotifyToken } from '@prisma/client'
+import * as Prisma from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
-const { PrismaClient } = prismaPkg
-const prisma = new PrismaClient()
+const prisma = new Prisma.PrismaClient()
 
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
 // We can simplify this class significantly if we only have one user/token to manage.
 export class SpotifyTokenManager {
   // Use a simple in-memory cache to reduce DB load
-  private inMemoryToken: SpotifyToken | null = null
+  private inMemoryToken: Prisma.SpotifyToken | null = null
   private refreshPromise: Promise<void> | null = null
   private userId: string | null = null // Store the User ID we are managing
 
@@ -34,7 +32,9 @@ export class SpotifyTokenManager {
     }
   }
 
-  private async writeTokenUpdate(data: Partial<SpotifyToken>): Promise<void> {
+  private async writeTokenUpdate(
+    data: Partial<Prisma.SpotifyToken>
+  ): Promise<void> {
     if (!this.userId) return
     const updatedToken = await prisma.spotifyToken.update({
       where: { spotifyUserId: this.userId },
