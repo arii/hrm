@@ -28,7 +28,6 @@ jest.mock('../../services/spotifyTokenManager', () => {
         token_type: 'Bearer',
         expires_in: 3600,
       }),
-      setTokenData: jest.fn().mockResolvedValue(undefined),
     }
   })
   return {
@@ -251,23 +250,15 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
-    it('should accept token data and re-initialize SDK', async () => {
-      const tokenPayload = {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'new_access_token',
-        refresh_token: 'new_refresh_token',
-        expires_in: 3600,
-        scope: 'user-read-playback-state',
-        obtainedAt: Date.now(),
-      }
-
+    it('should accept refresh token', async () => {
+      const refreshToken = 'test_refresh_token'
+      // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService as any, 'initializeSdk')
+        .spyOn(spotifyService as never, 'initializeSdk')
         .mockResolvedValue(undefined)
-
-      await spotifyService.setTokenData(tokenPayload)
-
+      spotifyService.setRefreshToken(refreshToken)
+      // Advance timers to allow setTimeout to run
+      jest.advanceTimersByTime(1000)
       expect(initializeSdkSpy).toHaveBeenCalled()
       initializeSdkSpy.mockRestore()
     })
