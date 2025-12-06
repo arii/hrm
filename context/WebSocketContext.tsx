@@ -81,13 +81,14 @@ export const WebSocketProvider = ({
     switch (message.type) {
       case 'INITIAL_STATE':
         return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
+      case 'HRM_UPDATE': {
         // Non-mutating update of the hrmMetrics array
         const newMetrics = message.payload
         const updatedMetrics = state.hrmMetrics.map(
           (metric) =>
-            newMetrics.find((newMetric) => newMetric.clientId === metric.clientId) ||
-            metric
+            newMetrics.find(
+              (newMetric) => newMetric.clientId === metric.clientId
+            ) || metric
         )
         newMetrics.forEach((newMetric) => {
           if (!updatedMetrics.find((m) => m.clientId === newMetric.clientId)) {
@@ -95,6 +96,7 @@ export const WebSocketProvider = ({
           }
         })
         return { ...state, hrmMetrics: updatedMetrics }
+      }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }
       case 'SPOTIFY_UPDATE':
