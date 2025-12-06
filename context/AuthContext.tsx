@@ -1,4 +1,4 @@
-"use client"
+'use client'
 // context/AuthContext.tsx
 import React, { createContext, useReducer, useContext, ReactNode } from 'react'
 
@@ -8,9 +8,7 @@ interface AuthState {
   user: any | null
 }
 
-type AuthAction =
-  | { type: 'LOGIN'; payload: any }
-  | { type: 'LOGOUT' }
+type AuthAction = { type: 'LOGIN'; payload: any } | { type: 'LOGOUT' }
 
 // Reducer function
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -47,7 +45,9 @@ const AuthContext = createContext<{
 })
 
 // AuthProvider component
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   return (

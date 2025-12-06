@@ -57,11 +57,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Received tokens:', tokens)
 
-<<<<<<< HEAD
     const redirectUrl = `${getBaseURL()}/auth/callback`
-=======
-    const redirectUrl = getBaseURL()
->>>>>>> origin/leader
     const nextResponse = NextResponse.redirect(redirectUrl)
     nextResponse.cookies.set('spotify_access_token', tokens.access_token, {
       path: '/',

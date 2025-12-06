@@ -1,4 +1,4 @@
-"use client"
+'use client'
 // components/UserProfile.tsx
 import React, { useReducer, useEffect } from 'react'
 
