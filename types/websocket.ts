@@ -52,7 +52,6 @@ export interface SpotifyData {
   devices: SpotifyDevice[] // <--- ADDED: Synced device list
 }
 
-
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
@@ -68,7 +67,6 @@ export interface InitialStateSnapshotPayload {
  * excluding HRM data which is managed by the socket manager.
  */
 export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
-
 
 /**
  * The single, unified state object broadcast by the server to all clients.

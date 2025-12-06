@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
+import { AuthProvider } from '@/context/AuthContext'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
@@ -47,13 +48,15 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
-            <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
-            </Providers>
+            <AuthProvider>
+              <Providers>
+                <UserSettingsProvider>
+                  <ErrorBoundary fallback={<ErrorFallback />}>
+                    <TimerSoundProvider>{children}</TimerSoundProvider>
+                  </ErrorBoundary>
+                </UserSettingsProvider>
+              </Providers>
+            </AuthProvider>
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />

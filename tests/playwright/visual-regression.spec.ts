@@ -36,7 +36,7 @@ test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(WAIT_TIMEOUTS.LONG * 2)  // Allow extra time for visual tests
+    test.setTimeout(WAIT_TIMEOUTS.LONG * 2) // Allow extra time for visual tests
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
@@ -101,7 +101,9 @@ test.describe('Visual Regression Tests', () => {
     // Wait for dashboard to settle before replacing
     try {
       // Wait for a known stable element instead of arbitrary timeout
-      await expect(dashboardPage.locator('body')).toBeVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })
+      await expect(dashboardPage.locator('body')).toBeVisible({
+        timeout: WAIT_TIMEOUTS.SHORT * 2,
+      })
       await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
       console.warn(
@@ -184,8 +186,12 @@ test.describe('Visual Regression Tests', () => {
 
     // 2. (Recommended) Wait for it to be visible
     // This ensures the component has rendered before you try to fill it.
-    await expect(workInput).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-    await expect(restInput).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+    await expect(workInput).toBeVisible({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
+    await expect(restInput).toBeVisible({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
 
     // Configure timer (15 work, 5s rest)
     await workInput.fill('15')

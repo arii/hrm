@@ -5,7 +5,10 @@ import logger from '@/utils/logger'
 
 export async function POST() {
   if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ message: 'This feature is only available in development mode.' }, { status: 403 });
+    return NextResponse.json(
+      { message: 'This feature is only available in development mode.' },
+      { status: 403 }
+    )
   }
 
   const tokenFile = path.resolve(process.cwd(), 'logs/spotify_tokens.json')
@@ -20,6 +23,9 @@ export async function POST() {
     return NextResponse.json({ message: 'Server reset successful' })
   } catch (error) {
     logger.error('Error resetting server:', error)
-    return NextResponse.json({ message: 'Error resetting server' }, { status: 500 })
+    return NextResponse.json(
+      { message: 'Error resetting server' },
+      { status: 500 }
+    )
   }
 }

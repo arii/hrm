@@ -101,7 +101,7 @@ export async function assertPageSnapshot(
     mask?: Locator[]
     threshold?: number
     maxDiffPixelRatio?: number
-  } = {},
+  } = {}
 ): Promise<void> {
   const { mask = [], threshold, maxDiffPixelRatio } = options
 
@@ -127,7 +127,7 @@ export async function assertElementSnapshot(
     mask?: Locator[]
     threshold?: number
     maxDiffPixelRatio?: number
-  } = {},
+  } = {}
 ): Promise<void> {
   const { mask = [], threshold, maxDiffPixelRatio } = options
 
@@ -151,7 +151,7 @@ export async function assertElementSnapshot(
 export async function assertTimerState(
   page: Page,
   expectedState: 'WORK' | 'REST' | 'IDLE',
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = 5000 } = options
 
@@ -172,26 +172,23 @@ export async function assertTimerState(
  */
 export async function assertWebSocketConnected(
   page: Page,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = 10000 } = options
 
-  const isConnected = await page.evaluate(
-    (t) => {
-      return new Promise<boolean>((resolve) => {
-        const checkConnection = () => {
-          if (window.__TEST_WEBSOCKET_READY__ === true) {
-            resolve(true)
-            return
-          }
-          setTimeout(checkConnection, 100)
+  const isConnected = await page.evaluate((t) => {
+    return new Promise<boolean>((resolve) => {
+      const checkConnection = () => {
+        if (window.__TEST_WEBSOCKET_READY__ === true) {
+          resolve(true)
+          return
         }
-        checkConnection()
-        setTimeout(() => resolve(false), t)
-      })
-    },
-    timeout,
-  )
+        setTimeout(checkConnection, 100)
+      }
+      checkConnection()
+      setTimeout(() => resolve(false), t)
+    })
+  }, timeout)
 
   expect(isConnected).toBe(true)
 }
@@ -206,7 +203,7 @@ export async function assertWebSocketConnected(
 export async function assertHrDataVisible(
   page: Page,
   userName: string,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = 5000 } = options
 
@@ -225,7 +222,7 @@ export async function assertButtonState(
   page: Page,
   buttonName: string,
   expectedState: { visible?: boolean; enabled?: boolean },
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = 5000 } = options
   const button = page.getByRole('button', { name: buttonName, exact: true })
@@ -255,7 +252,7 @@ export async function assertButtonState(
  */
 export function assertApiStatus(
   response: { status: () => number; ok: () => boolean },
-  expectedStatus: number | 'ok' | 'not-ok',
+  expectedStatus: number | 'ok' | 'not-ok'
 ): void {
   if (expectedStatus === 'ok') {
     expect(response.ok()).toBe(true)
@@ -274,7 +271,7 @@ export function assertApiStatus(
  */
 export function assertApiResponse(
   response: Record<string, unknown>,
-  expectedProperties: Record<string, unknown>,
+  expectedProperties: Record<string, unknown>
 ): void {
   for (const [key, value] of Object.entries(expectedProperties)) {
     expect(response).toHaveProperty(key, value)

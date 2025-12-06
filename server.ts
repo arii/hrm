@@ -22,8 +22,6 @@ import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
-import swaggerUi from 'swagger-ui-express'
-import swaggerSpec from './lib/swagger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
@@ -71,7 +69,9 @@ app
         max: 30,
         standardHeaders: true,
         legacyHeaders: false,
-        message: { error: 'Too many requests to Spotify API, please try again later.' },
+        message: {
+          error: 'Too many requests to Spotify API, please try again later.',
+        },
       })
 
       const internalApiLimiter = rateLimit({
@@ -79,7 +79,9 @@ app
         max: 100,
         standardHeaders: true,
         legacyHeaders: false,
-        message: { error: 'Too many requests to internal API, please try again later.' },
+        message: {
+          error: 'Too many requests to internal API, please try again later.',
+        },
       })
       const generalApiLimiter = rateLimit({
         windowMs: 1 * 60 * 1000, // 1 minute
@@ -146,28 +148,31 @@ app
     })
 
     // 4. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
+    initSocketManager(
+      wss,
+      { tabataService, spotifyService },
+      getUnifiedStateSnapshot
+    )
 
     // --- Express Routing ---
 
-    // Swagger UI
-    expressApp.use(
-      '/api-docs',
-      swaggerUi.serve,
-      swaggerUi.setup(swaggerSpec)
-    )
-
     // Health Check Endpoints
     expressApp.get('/api/health', (_req: Request, res: Response) => {
-      res.status(200).json({ status: 'ok' });
-    });
+      res.status(200).json({ status: 'ok' })
+    })
 
-    expressApp.get('/api/health/ready', async (_req: Request, res: Response) => {
-      const healthStatus = await performHealthCheck(wss, spotifyService, tabataService);
-      const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
-      res.status(statusCode).json(healthStatus);
-    });
-
+    expressApp.get(
+      '/api/health/ready',
+      async (_req: Request, res: Response) => {
+        const healthStatus = await performHealthCheck(
+          wss,
+          spotifyService,
+          tabataService
+        )
+        const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200
+        res.status(statusCode).json(healthStatus)
+      }
+    )
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
@@ -204,7 +209,11 @@ app
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-        const ip = (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() || req.socket.remoteAddress
+        const ip =
+          (req.headers['x-forwarded-for'] as string)
+            ?.split(',')
+            .shift()
+            ?.trim() || req.socket.remoteAddress
 
         if (process.env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0

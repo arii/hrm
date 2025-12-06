@@ -10,15 +10,18 @@ export const volumeToScalar = (value: number): number =>
   Math.pow(clampVolume(value) / 100, 0.8)
 
 const useVolumePreference = () => {
-  const [prefs, dispatch] = useUserSettings()
+  const [prefs, setPrefs] = useUserSettings()
   const volume = prefs.volumeLevel
 
   const setVolume = useCallback(
     (value: number) => {
       const sanitized = clampVolume(value)
-      dispatch({ type: 'SET_VOLUME', payload: sanitized })
+      setPrefs((prevPrefs) => ({
+        ...prevPrefs,
+        volumeLevel: sanitized,
+      }))
     },
-    [dispatch]
+    [setPrefs]
   )
 
   return { volume, setVolume }
