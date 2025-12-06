@@ -1,8 +1,7 @@
 import { PrismaClient, SpotifyToken } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
-// Instantiate Prisma client outside the class for singleton pattern
-const prisma = new PrismaClient()
+let prisma: PrismaClient
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
 export class SpotifyTokenManager {
@@ -15,7 +14,9 @@ export class SpotifyTokenManager {
     private clientId: string,
     private clientSecret: string
   ) {
-    // We expect the first token delivery to set the user ID.
+    if (!prisma) {
+      prisma = new PrismaClient()
+    }
   }
 
   // Initial load or periodic check

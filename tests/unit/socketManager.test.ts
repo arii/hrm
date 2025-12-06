@@ -38,19 +38,15 @@ describe('WebSocket Manager Integration', () => {
     mockWs = new MockWebSocket()
 
     // Instantiate mocked services
-    mockTabataService = new (TabataTimer as jest.Mock<typeof TabataTimer>)()
-    mockSpotifyService = new (SpotifyPolling as jest.Mock<
-      typeof SpotifyPolling
-    >)()
+    mockTabataService = new (TabataTimer as jest.Mock<any>)(jest.fn())
+    mockSpotifyService = new (SpotifyPolling as jest.Mock<any>)(jest.fn())
 
     // Define mock methods
     mockTabataService.handleCommand = jest.fn()
     mockTabataService.getState = jest.fn().mockReturnValue({ isRunning: false })
 
     mockSpotifyService.handleCommand = jest.fn()
-    mockSpotifyService.getState = jest
-      .fn()
-      .mockReturnValue({ isPlaying: false })
+    mockSpotifyService.getState = jest.fn().mockReturnValue({ isPlaying: false })
     mockSpotifyService.isReady = jest.fn().mockReturnValue(true)
 
     getFullState = jest.fn().mockReturnValue({

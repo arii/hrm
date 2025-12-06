@@ -1,6 +1,6 @@
 /* eslint-env jest */
 // tests/unit/jest.setup.js
-import '@testing-library/jest-dom'
+require('@testing-library/jest-dom')
 
 // Mock logger to suppress console output during tests
 jest.mock('../../utils/logger', () => ({
