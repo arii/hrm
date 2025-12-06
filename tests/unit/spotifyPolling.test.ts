@@ -28,6 +28,7 @@ jest.mock('../../services/spotifyTokenManager', () => {
         token_type: 'Bearer',
         expires_in: 3600,
       }),
+      setToken: jest.fn(), // Add the missing mock method
     }
   })
   return {
@@ -250,17 +251,30 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
-    it('should accept refresh token', async () => {
-      const refreshToken = 'test_refresh_token'
-      // Mock the initializeSdk to resolve immediately
-      const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
-        .mockResolvedValue(undefined)
-      spotifyService.setRefreshToken(refreshToken)
-      // Advance timers to allow setTimeout to run
-      jest.advanceTimersByTime(1000)
-      expect(initializeSdkSpy).toHaveBeenCalled()
-      initializeSdkSpy.mockRestore()
+    it('should accept a token payload and re-initialize the SDK', () => {
+      const tokenPayload = {
+        provider: 'spotify',
+        sub: 'test_user',
+        access_token: 'new_access_token',
+        refresh_token: 'new_refresh_token',
+        expires_in: 3600,
+        scope: 'user-read-playback-state',
+        obtainedAt: Date.now(),
+      }
+
+      // Spy on the private setupSdk method to verify it's called
+      const setupSdkSpy = jest.spyOn(
+        spotifyService as any,
+        'setupSdk'
+      )
+
+      spotifyService.setTokenPayload(tokenPayload)
+
+      expect(setupSdkSpy).toHaveBeenCalled()
+      // We can also check if the underlying token manager was updated.
+      // This requires modifying the mock, but for now, we trust the interaction.
+
+      setupSdkSpy.mockRestore()
     })
 
     it('should not execute commands without access token', async () => {
