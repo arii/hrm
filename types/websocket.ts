@@ -102,6 +102,7 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
+  userSettings?: UserSettings
 }
 
 export interface TimerModeCommandMessage {
@@ -160,6 +161,17 @@ import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
+export const UserSettingsSchema = z.object({
+  userName: z.string(),
+  userAge: z.number(),
+  maxHr: z.number(),
+  restingHr: z.number(),
+  deviceId: z.string(),
+  weight: z.number(),
+});
+
+export type UserSettings = z.infer<typeof UserSettingsSchema>;
+
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable().optional(),
   maxHr: z.number().optional(),
@@ -175,6 +187,7 @@ export const HrmInputMessageSchema = z.object({
 export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+  userSettings: UserSettingsSchema.optional(),
 })
 
 export const TimerModeCommandMessageSchema = z.object({

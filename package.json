@@ -68,6 +68,7 @@
     "pino": "^10.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-query": "^3.39.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",

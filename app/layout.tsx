@@ -47,13 +47,13 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
-            <Providers>
-              <UserSettingsProvider>
+            <UserSettingsProvider>
+              <Providers>
                 <ErrorBoundary fallback={<ErrorFallback />}>
                   <TimerSoundProvider>{children}</TimerSoundProvider>
                 </ErrorBoundary>
-              </UserSettingsProvider>
-            </Providers>
+              </Providers>
+            </UserSettingsProvider>
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />

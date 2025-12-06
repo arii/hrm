@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import HeartRateService from '@/services/HeartRateService.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -15,8 +16,10 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
+  TimerCommandMessage,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { getBaseURL } from './urls.js'
 
 // Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {
@@ -27,6 +30,7 @@ interface ExtWebSocket extends WebSocket {
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+let heartRateServiceInstance: HeartRateService
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -37,6 +41,7 @@ const hrmClients = new Map<string, HrmData>()
 interface Services {
   tabataService: TabataTimer
   spotifyService: SpotifyPolling
+  heartRateService: HeartRateService
 }
 
 /**
@@ -51,6 +56,7 @@ const initSocketManager = (
   wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  heartRateServiceInstance = services.heartRateService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -150,6 +156,10 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
+        if (existingClientData && message.data.value) {
+          heartRateServiceInstance.addHeartRateDataPoint(message.data.value);
+        }
+
         console.log(
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
           existingClientData,
@@ -178,8 +188,24 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
+        const timerMessage = message as TimerCommandMessage;
         if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
+          tabataServiceInstance.handleCommand(timerMessage.command)
+        }
+        if (timerMessage.command === 'START' && timerMessage.userSettings) {
+          heartRateServiceInstance.startSession(timerMessage.userSettings);
+        }
+        if (timerMessage.command === 'STOP') {
+          const workoutStats = heartRateServiceInstance.endSession();
+          if (workoutStats) {
+            fetch(`${getBaseURL()}/api/workouts`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(workoutStats),
+            });
+          }
         }
         break
       }
