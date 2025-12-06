@@ -194,8 +194,7 @@ export default function ConnectView({
               <HrTile
                 name={userName}
                 bpm={currentHR}
-                percentMax={hrZoneProps.percentage}
-                background={hrZoneProps.progressColor}
+                hrZoneProps={hrZoneProps}
               />
             </Grid>
           </Grid>
