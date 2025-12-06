@@ -1,10 +1,6 @@
 // types/service.ts
 
-import {
-  SpotifyData,
-  TimerData,
-  TimerMode,
-} from './websocket.js'
+import { SpotifyData, TimerData, TimerMode } from './websocket.js'
 
 /**
  * A generic service interface.

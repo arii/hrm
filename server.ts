@@ -15,11 +15,10 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { ServiceRegistry } from './services/registry.js'
 import { broadcast } from './utils/broadcast.js'
-import { SpotifyService, TimerService } from './types/service.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
@@ -122,37 +121,24 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    let spotifyService: SpotifyService
-    let tabataService: TimerService
+    let spotifyService: SpotifyPolling
     try {
-      const serviceRegistry = await ServiceRegistry.create()
-      spotifyService = serviceRegistry.spotifyService
-      tabataService = serviceRegistry.tabataTimer
+      spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'ServiceRegistry initialization failed')
+      logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
       })
       // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
-        getState: () => ({
-          trackName: 'Spotify Service Error',
-          artist: '',
-          isPlaying: false,
-          devices: [],
-        }),
         handleCommand: () => {},
         stopPolling: () => {},
         startPolling: () => {},
         setRefreshToken: () => {},
-        isReady: () => false,
-        forcePollAndBroadcast: () => {},
-        cleanup: () => {},
-      }
-      // TabataTimer can usually still be created even if Spotify fails.
-      tabataService = new TabataTimer(broadcast)
+      } as unknown as SpotifyPolling
     }
+    const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({

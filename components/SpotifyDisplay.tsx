@@ -2,7 +2,7 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolume, { clampVolume } from '@/hooks/useVolume'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -37,7 +37,7 @@ const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const { data: session } = useSession()
   console.log('spotifyData.trackName:', spotifyData.trackName)
-  const { volume, setVolume } = useVolume()
+  const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,

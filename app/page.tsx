@@ -20,7 +20,7 @@ const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolume from '@/hooks/useVolume'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -38,7 +38,7 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const { volume } = useVolume() // Get volume state
+  const { volume } = useVolumePreference() // Get volume state
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()
