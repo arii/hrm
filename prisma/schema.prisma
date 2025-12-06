@@ -1,20 +1,20 @@
-// Database is PostgreSQL in production, but development can use sqlite for simplicity.
-datasource db {
-  provider = "postgresql"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Model to securely store the long-lived Spotify Refresh Token
+datasource db {
+  provider = "postgresql"
+}
+
 model SpotifyToken {
-  // Use the Spotify User ID (sub) as the unique identifier (Primary Key)
-  id               String    @id @default(uuid())
-  spotifyUserId    String    @unique // Corresponds to `account.providerAccountId`
-  accessToken      String    @db.Text
-  refreshToken     String    @db.Text // CRITICAL: This long-lived token must be secure
-  accessTokenExpiresAt DateTime // The exact time the access token expires
-  scope            String
-  updatedAt        DateTime  @updatedAt
+  id                    String      @id @default(cuid())
+  spotifyUserId         String      @unique
+  accessToken           String
+  accessTokenExpiresAt  DateTime
+  refreshToken          String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 }

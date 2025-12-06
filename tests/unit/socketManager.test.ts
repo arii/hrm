@@ -16,6 +16,18 @@ import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import TabataTimer from '../../services/tabataTimer'
 import { ServerMessage } from '../../types/websocket'
 
+// Mock Prisma client
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({
+    spotifyToken: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
+  })),
+}))
+
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
@@ -58,6 +70,7 @@ describe('WebSocket Manager Integration', () => {
 
     // Mock TokenManager to return a valid token
     ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementation(() => ({
+      loadFirstAvailableToken: jest.fn().mockResolvedValue(true),
       getValidAccessToken: jest
         .fn()
         .mockResolvedValue('test_access_token') as jest.Mock,

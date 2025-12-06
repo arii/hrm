@@ -1,89 +1,93 @@
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+// File: services/spotifyTokenManager.ts (Refactored)
 import { PrismaClient, SpotifyToken } from '@prisma/client'
-import { SpotifyTokenResponse } from './spotifyPolling'
+import { AccessToken } from '@spotify/web-api-ts-sdk'
 
-// This interface comes from the auth callback
-export interface SpotifyTokenPayload {
-  provider: string
-  sub: string // This is the spotifyUserId
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number // Milliseconds timestamp
-}
+// Instantiate Prisma client outside the class for singleton pattern
+const prisma = new PrismaClient()
+const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
 export class SpotifyTokenManager {
-  private prisma: PrismaClient
-  private currentToken: SpotifyToken | null = null
+  // Use a simple in-memory cache to reduce DB load
+  private inMemoryToken: SpotifyToken | null = null
   private refreshPromise: Promise<void> | null = null
+  private userId: string | null = null // Store the User ID we are managing
 
-  constructor(
-    private clientId: string,
-    private clientSecret: string
-  ) {
-    this.prisma = new PrismaClient()
+  constructor(private clientId: string, private clientSecret: string) {
+    // We expect the first token delivery to set the user ID.
   }
 
-  // New method to handle token delivery from auth callback
-  public async saveToken(tokenData: SpotifyTokenPayload): Promise<void> {
-    const expiresAt = new Date(
-      tokenData.obtainedAt + tokenData.expires_in * 1000
-    )
+  public async loadFirstAvailableToken(): Promise<boolean> {
+    const firstToken = await prisma.spotifyToken.findFirst()
+    if (firstToken) {
+      this.inMemoryToken = firstToken
+      this.userId = firstToken.spotifyUserId
+      console.log(
+        'Loaded first available Spotify token from DB for:',
+        this.userId
+      )
+      return true
+    }
+    console.warn('No tokens found in DB to load on startup.')
+    return false
+  }
 
-    const token = await this.prisma.spotifyToken.upsert({
-      where: { spotifyUserId: tokenData.sub },
-      update: {
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        accessTokenExpiresAt: expiresAt,
-        scope: tokenData.scope,
-      },
-      create: {
-        spotifyUserId: tokenData.sub,
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        accessTokenExpiresAt: expiresAt,
-        scope: tokenData.scope,
-      },
+  public async upsertToken(
+    userId: string,
+    tokenData: {
+      accessToken: string
+      refreshToken: string
+      expiresAt: Date
+    }
+  ): Promise<void> {
+    this.userId = userId
+    const tokenPayload = {
+      spotifyUserId: userId,
+      accessToken: tokenData.accessToken,
+      refreshToken: tokenData.refreshToken,
+      accessTokenExpiresAt: tokenData.expiresAt,
+    }
+
+    this.inMemoryToken = await prisma.spotifyToken.upsert({
+      where: { spotifyUserId: userId },
+      update: tokenPayload,
+      create: tokenPayload,
     })
-
-    // Set the current token to the newly saved one
-    this.currentToken = token
-    console.log('Saved Spotify token for:', token.spotifyUserId)
+    console.log(`Upserted Spotify token in DB for: ${userId}`)
   }
 
-  /**
-   * Loads the first available token from the database.
-   * This maintains the single-user-system assumption of the old implementation.
-   */
-  private async loadToken(): Promise<void> {
-    try {
-      // Only load from DB if not already in memory to avoid unnecessary queries
-      if (!this.currentToken) {
-        const tokenFromDb = await this.prisma.spotifyToken.findFirst()
-        if (tokenFromDb) {
-          this.currentToken = tokenFromDb
-          console.log(
-            'Loaded Spotify token from DB for:',
-            this.currentToken.spotifyUserId
-          )
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to load Spotify token from DB:', err)
+  // Initial load or periodic check
+  public async loadToken(userId: string): Promise<void> {
+    this.userId = userId
+    this.inMemoryToken = await prisma.spotifyToken.findUnique({
+      where: { spotifyUserId: userId },
+    })
+    if (this.inMemoryToken) {
+      console.log('Loaded Spotify token from DB for:', userId)
+    } else {
+      console.warn('No token found in DB for:', userId)
     }
   }
 
+  private async writeTokenUpdate(data: Partial<SpotifyToken>): Promise<void> {
+    if (!this.userId) return
+    const updatedToken = await prisma.spotifyToken.update({
+      where: { spotifyUserId: this.userId },
+      data: data,
+    })
+    // Update in-memory cache immediately
+    this.inMemoryToken = updatedToken
+  }
+
+  // Refactored to use the database as source/destination
   private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.refreshToken) return false
+    if (!this.inMemoryToken?.refreshToken) return false
 
     try {
       const basic = Buffer.from(
         `${this.clientId}:${this.clientSecret}`
       ).toString('base64')
 
-      const response = await fetch('https://accounts.spotify.com/api/token', {
+      const response = await fetch(SPOTIFY_TOKEN_ENDPOINT, {
         method: 'POST',
         headers: {
           Authorization: `Basic ${basic}`,
@@ -91,7 +95,7 @@ export class SpotifyTokenManager {
         },
         body: new URLSearchParams({
           grant_type: 'refresh_token',
-          refresh_token: this.currentToken.refreshToken,
+          refresh_token: this.inMemoryToken.refreshToken,
         }).toString(),
       })
 
@@ -100,26 +104,21 @@ export class SpotifyTokenManager {
         throw new Error(`HTTP ${response.status}: ${errorBody}`)
       }
 
-      const data = (await response.json()) as SpotifyTokenResponse
+      const data = (await response.json()) as {
+        access_token: string
+        expires_in: number
+        refresh_token?: string
+      }
 
-      const expiresAt = new Date(Date.now() + data.expires_in * 1000)
-
-      const updatedToken = await this.prisma.spotifyToken.update({
-        where: { id: this.currentToken.id },
-        data: {
-          accessToken: data.access_token,
-          // Spotify sometimes returns a new refresh token
-          refreshToken: data.refresh_token ?? this.currentToken.refreshToken,
-          accessTokenExpiresAt: expiresAt,
-        },
+      // Update DB with new token data
+      await this.writeTokenUpdate({
+        accessToken: data.access_token,
+        accessTokenExpiresAt: new Date(
+          Date.now() + data.expires_in * 1000
+        ),
+        refreshToken: data.refresh_token ?? null, // Spotify may rotate the refresh token
+        updatedAt: new Date(),
       })
-
-      this.currentToken = updatedToken
-
-      console.log(
-        'Refreshed Spotify token for:',
-        this.currentToken.spotifyUserId
-      )
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -127,18 +126,17 @@ export class SpotifyTokenManager {
     }
   }
 
-  async getValidAccessToken(): Promise<string | null> {
-    await this.loadToken()
-    if (!this.currentToken) return null
+  public async getValidAccessToken(): Promise<string | null> {
+    if (!this.inMemoryToken) return null
 
-    // Check if token needs refresh
-    const expiresAt = this.currentToken.accessTokenExpiresAt.getTime()
+    const expiresAtMs = this.inMemoryToken.accessTokenExpiresAt.getTime()
 
-    if (Date.now() >= expiresAt - 60000) {
-      // 1 minute buffer
+    // Check expiry: 60-second buffer
+    if (Date.now() >= expiresAtMs - 60000) {
       console.log(
         'Spotify access token is expiring soon, initiating refresh...'
       )
+      // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
         this.refreshPromise = this.refreshToken()
           .then(() => {
@@ -153,59 +151,25 @@ export class SpotifyTokenManager {
       await this.refreshPromise
     }
 
-    return this.currentToken?.accessToken ?? null
+    return this.inMemoryToken.accessToken
   }
 
-  getUserId(): string | null {
-    return this.currentToken?.spotifyUserId ?? null
-  }
+  public getSdkAccessToken(): AccessToken | null {
+    if (!this.inMemoryToken || !this.inMemoryToken.refreshToken) return null
 
-  getCurrentRefreshToken(): string | null {
-    return this.currentToken?.refreshToken ?? null
-  }
-
-  getSdkAccessToken(): AccessToken | null {
-    if (!this.currentToken) return null
-
-    const expiresIn = Math.round(
-      (this.currentToken.accessTokenExpiresAt.getTime() - Date.now()) / 1000
-    )
+    const expires = this.inMemoryToken.accessTokenExpiresAt.getTime()
+    const expiresIn = Math.round((expires - Date.now()) / 1000)
 
     return {
-      access_token: this.currentToken.accessToken,
+      access_token: this.inMemoryToken.accessToken,
       token_type: 'Bearer',
       expires_in: expiresIn,
-      refresh_token: this.currentToken.refreshToken,
-      // The SDK wants an absolute timestamp in ms for expires.
-      expires: this.currentToken.accessTokenExpiresAt.getTime(),
+      refresh_token: this.inMemoryToken.refreshToken,
+      expires: expires,
     }
   }
 
-  /**
-   * Directly set the access token (for command injection/testing).
-   */
-  public async setAccessToken(
-    token: string,
-    userId: string = 'manual'
-  ): Promise<void> {
-    const expiresAt = new Date(Date.now() + 3600 * 1000) // Assume 1 hour expiry
-    const upsertedToken = await this.prisma.spotifyToken.upsert({
-      where: { spotifyUserId: userId },
-      update: {
-        accessToken: token,
-        accessTokenExpiresAt: expiresAt,
-      },
-      create: {
-        spotifyUserId: userId,
-        accessToken: token,
-        refreshToken: 'manual_refresh_token', // needs a placeholder
-        accessTokenExpiresAt: expiresAt,
-        scope: 'manual_scope',
-      },
-    })
-    this.currentToken = upsertedToken
-    console.log(
-      `Access token updated/created for user ${userId} via setAccessToken.`
-    )
+  public getUserId(): string | null {
+    return this.userId
   }
 }

@@ -6,6 +6,18 @@ import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 
+// Mock Prisma client
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({
+    spotifyToken: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
+  })),
+}))
+
 // Mock 'next-auth' to prevent TypeError during initialization
 jest.mock('next-auth', () => ({
   __esModule: true,
