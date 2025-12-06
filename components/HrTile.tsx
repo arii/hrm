@@ -38,7 +38,16 @@ const HrTile = ({ name, bpm, percentMax, background, alert }: HrTileProps) => {
           justifyContent: 'space-between',
         }}
       >
-        <Box aria-live="polite" aria-atomic="true" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <Box
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
           <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
             <Typography
@@ -99,7 +108,8 @@ const HrTile = ({ name, bpm, percentMax, background, alert }: HrTileProps) => {
               fontSize="small"
               sx={{
                 mr: 1,
-                color: alert.severity === 'warning' ? 'warning.main' : 'error.main',
+                color:
+                  alert.severity === 'warning' ? 'warning.main' : 'error.main',
               }}
             />
             <Typography variant="caption" sx={{ fontWeight: 'bold' }}>

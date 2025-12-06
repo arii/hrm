@@ -258,13 +258,13 @@ const runDiagnostics = (clientData: HrmData): HrmData => {
   }
 
   // Return a new object with the alert property updated.
-const newClientData = { ...clientData }
-if (alert) {
-  newClientData.alert = alert
-} else {
-  delete newClientData.alert
-}
-return newClientData
+  const newClientData = { ...clientData }
+  if (alert) {
+    newClientData.alert = alert
+  } else {
+    delete newClientData.alert
+  }
+  return newClientData
 }
 
 export { initSocketManager }

@@ -229,7 +229,7 @@ const useBluetoothHRM = () => {
             const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
             const currentSignalStatus = server.connected
               ? 'OPTIMAL'
-              : 'DISCONNECTED';
+              : 'DISCONNECTED'
 
             const data: HrmInputData = {
               value: heartRate,
