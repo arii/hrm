@@ -5,11 +5,16 @@ import Cookies from 'js-cookie'
 import { v4 as uuidv4 } from 'uuid'
 import Button from '@mui/material/Button'
 import { getBaseURL } from '@/utils/urls'
+<<<<<<< HEAD
 import { useAuth } from '@/context/AuthContext'
 
 const SpotifyLoginButton = () => {
   const { state, dispatch } = useAuth()
 
+=======
+
+const SpotifyLoginButton = () => {
+>>>>>>> origin/leader
   const handleLogin = () => {
     const state = uuidv4()
     // The state cookie is used for CSRF protection and should expire shortly after the user is redirected back from Spotify.
@@ -31,6 +36,7 @@ const SpotifyLoginButton = () => {
     window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`
   }
 
+<<<<<<< HEAD
   const handleLogout = () => {
     dispatch({ type: 'LOGOUT' })
     // Note: This only clears the context state.
@@ -49,6 +55,12 @@ const SpotifyLoginButton = () => {
         </Button>
       )}
     </>
+=======
+  return (
+    <Button variant="contained" color="primary" onClick={handleLogin}>
+      Login with Spotify
+    </Button>
+>>>>>>> origin/leader
   )
 }
 
