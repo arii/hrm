@@ -11,8 +11,8 @@ async function getStaticHrmData(userId: string): Promise<HrmStaticMetadata> {
   return {
     clientId: userId,
     maxHr: 185, // Example: based on age or stored profile
-    name: "Arii Streamer",
-    age: 35
+    name: 'Arii Streamer',
+    age: 35,
   }
 }
 
@@ -27,7 +27,5 @@ export default async function DashboardPage() {
   const staticData = await getStaticHrmData(session.user.id)
 
   // Pass static data as props to the client component
-  return (
-    <DashboardClient staticMetadata={staticData} />
-  )
+  return <DashboardClient staticMetadata={staticData} />
 }

@@ -14,7 +14,7 @@ function HeartRateZones({ maxHr }: { maxHr: number }) {
 
 export function DashboardClient({ staticMetadata }: DashboardClientProps) {
   // The hook consumes the initial static data for client-side calculations
-  const { unifiedState } = useWebSocket(staticMetadata)
+  useWebSocket(staticMetadata)
 
   // Example: Display the user's name from the static data
   const userName = staticMetadata.name || 'User'
