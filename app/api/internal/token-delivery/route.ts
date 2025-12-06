@@ -1,16 +1,10 @@
 import { ApiError } from '@/lib/errors'
+import * as Prisma from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import * as Prisma from '@prisma/client'
-import { spotifyServiceInstance } from '@/utils/socketManager'
 
 const prisma = new Prisma.PrismaClient()
 
-/**
- * Internal endpoint for NextAuth to post refresh tokens.
- * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to the database.
- */
 export async function POST(req: NextRequest) {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
@@ -20,45 +14,41 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = await req.json()
-    const {
-      sub: spotifyUserId,
-      access_token,
-      refresh_token,
-      expires_in,
-    } = payload
 
-    if (!spotifyUserId) {
-      throw new ApiError(400, 'Missing spotifyUserId (sub) in token payload')
+    // Validate payload structure
+    if (
+      !payload.sub ||
+      !payload.access_token ||
+      !payload.refresh_token ||
+      !payload.expires_in
+    ) {
+      throw new ApiError(400, 'Invalid token payload')
     }
 
-    const expiresAt = new Date(Date.now() + expires_in * 1000)
+    const spotifyUserId = payload.sub
+    const accessToken = payload.access_token
+    const refreshToken = payload.refresh_token
+    const expiresIn = payload.expires_in
+    const accessTokenExpiresAt = new Date(Date.now() + expiresIn * 1000)
 
     await prisma.spotifyToken.upsert({
       where: { spotifyUserId },
       update: {
-        accessToken: access_token,
-        refreshToken: refresh_token,
-        accessTokenExpiresAt: expiresAt,
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt,
+        updatedAt: new Date(),
       },
       create: {
         spotifyUserId,
-        accessToken: access_token,
-        refreshToken: refresh_token,
-        accessTokenExpiresAt: expiresAt,
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt,
       },
     })
 
-    logger.info(
-      { subject: spotifyUserId },
-      'Received and persisted token-delivery'
-    )
-
-    // Notify the polling service
-    if (spotifyServiceInstance) {
-      spotifyServiceInstance.setRefreshToken(spotifyUserId)
-    }
-
-    return NextResponse.json({ ok: true })
+    logger.info({ subject: spotifyUserId }, 'Received and stored token-delivery')
+    return NextResponse.json({ ok: true, userId: spotifyUserId })
   } catch (err) {
     if (err instanceof ApiError) {
       return NextResponse.json(

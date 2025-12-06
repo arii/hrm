@@ -1,11 +1,10 @@
 import * as Prisma from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
+// Instantiate Prisma client outside the class for singleton pattern
 const prisma = new Prisma.PrismaClient()
-
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
-// We can simplify this class significantly if we only have one user/token to manage.
 export class SpotifyTokenManager {
   // Use a simple in-memory cache to reduce DB load
   private inMemoryToken: Prisma.SpotifyToken | null = null
@@ -80,9 +79,10 @@ export class SpotifyTokenManager {
       await this.writeTokenUpdate({
         accessToken: data.access_token,
         accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
-        refreshToken: data.refresh_token ?? null, // Spotify may rotate the refresh token
+        refreshToken: data.refresh_token, // Spotify may rotate the refresh token
         updatedAt: new Date(),
       })
+      console.log('Spotify access token refresh completed.')
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -91,7 +91,15 @@ export class SpotifyTokenManager {
   }
 
   public async getValidAccessToken(): Promise<string | null> {
-    if (!this.inMemoryToken) return null
+    if (!this.inMemoryToken) {
+      // If there's a userId, try to load from DB
+      if (this.userId) {
+        await this.loadToken(this.userId)
+        if (!this.inMemoryToken) return null
+      } else {
+        return null
+      }
+    }
 
     const expiresAtMs = this.inMemoryToken.accessTokenExpiresAt.getTime()
 
@@ -100,17 +108,13 @@ export class SpotifyTokenManager {
       console.log(
         'Spotify access token is expiring soon, initiating refresh...'
       )
-      // Refresh if within 1 minute of expiry
-      // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
           })
-          .catch((error) => {
+          .catch(() => {
             this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
           })
       }
       await this.refreshPromise
@@ -123,18 +127,14 @@ export class SpotifyTokenManager {
     return this.userId
   }
 
-  getCurrentRefreshToken(): string | null {
-    return this.inMemoryToken?.refreshToken ?? null
-  }
-
   getSdkAccessToken(): AccessToken | null {
     if (!this.inMemoryToken) return null
-    const expiresIn =
-      (this.inMemoryToken.accessTokenExpiresAt.getTime() - Date.now()) / 1000
     return {
       access_token: this.inMemoryToken.accessToken,
       token_type: 'Bearer',
-      expires_in: expiresIn,
+      expires_in: Math.round(
+        (this.inMemoryToken.accessTokenExpiresAt.getTime() - Date.now()) / 1000
+      ),
       refresh_token: this.inMemoryToken.refreshToken ?? '',
       expires: this.inMemoryToken.accessTokenExpiresAt.getTime(),
     }

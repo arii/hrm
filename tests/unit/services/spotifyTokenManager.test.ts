@@ -1,94 +1,107 @@
-import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
+// File: tests/unit/services/spotifyTokenManager.test.ts
+import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
 import * as Prisma from '@prisma/client'
-import fs from 'fs'
-import path from 'path'
-import { jest } from '@jest/globals'
 
-// Get the mock client from the manual mock
-const prismaMock =
-  new (Prisma as jest.Mocked<typeof Prisma>).PrismaClient() as jest.Mocked<Prisma.PrismaClient>
+// Get the mock client from the global setup
+const prisma = new Prisma.PrismaClient()
 
 describe('SpotifyTokenManager', () => {
-  const clientId = 'test-client-id'
-  const clientSecret = 'test-client-secret'
-  const userId = 'test-user-id'
-  const mockToken: Prisma.SpotifyToken = {
-    id: 1,
-    spotifyUserId: userId,
-    accessToken: 'test-access-token',
-    refreshToken: 'test-refresh-token',
-    accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
+  const clientId = 'test_client_id'
+  const clientSecret = 'test_client_secret'
+  let tokenManager: SpotifyTokenManager
 
   beforeEach(() => {
-    // Reset mocks before each test
-    jest.clearAllMocks()
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
+    tokenManager = new SpotifyTokenManager(clientId, clientSecret)
+    jest.clearAllMocks() // Clear mocks between tests
   })
 
-  it('should load token from database', async () => {
-    prismaMock.spotifyToken.findUnique.mockResolvedValue(mockToken)
-
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret)
-    await tokenManager.loadToken(userId)
-
-    expect(prismaMock.spotifyToken.findUnique).toHaveBeenCalledWith({
-      where: { spotifyUserId: userId },
-    })
-    expect(await tokenManager.getValidAccessToken()).toBe('test-access-token')
-  })
-
-  it('should refresh token if expired', async () => {
-    const expiredToken = {
-      ...mockToken,
-      accessTokenExpiresAt: new Date(Date.now() - 1000),
-    }
-    prismaMock.spotifyToken.findUnique.mockResolvedValue(expiredToken)
-    prismaMock.spotifyToken.update.mockResolvedValue({
-      ...expiredToken,
-      accessToken: 'new-access-token',
+  it('should load tokens from the database', async () => {
+    const tokenRecord = {
+      id: '1',
+      accessToken: 'access_token',
+      refreshToken: 'refresh_token',
       accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+      spotifyUserId: 'test-user-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+    ;(prisma.spotifyToken.findUnique as jest.Mock).mockResolvedValue(
+      tokenRecord
+    )
+
+    await tokenManager.loadToken('test-user-id')
+    const accessToken = await tokenManager.getValidAccessToken()
+
+    expect(prisma.spotifyToken.findUnique).toHaveBeenCalledWith({
+      where: { spotifyUserId: 'test-user-id' },
     })
-
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            access_token: 'new-access-token',
-            expires_in: 3600,
-          }),
-      })
-    ) as jest.Mock
-
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret)
-    await tokenManager.loadToken(userId)
-    const newToken = await tokenManager.getValidAccessToken()
-
-    expect(global.fetch).toHaveBeenCalled()
-    expect(newToken).toBe('new-access-token')
+    expect(accessToken).toBe('access_token')
   })
 
-  it('should handle token refresh failure', async () => {
-    const expiredToken = {
-      ...mockToken,
-      accessTokenExpiresAt: new Date(Date.now() - 1000),
+  it('should refresh the access token if it is expired', async () => {
+    const now = new Date()
+    const expiredTokenRecord = {
+      id: '1',
+      accessToken: 'expired_access_token',
+      refreshToken: 'refresh_token',
+      accessTokenExpiresAt: new Date(now.getTime() - 1000), // Expired
+      spotifyUserId: 'test-user-id',
+      createdAt: now,
+      updatedAt: now,
     }
-    prismaMock.spotifyToken.findUnique.mockResolvedValue(expiredToken)
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: false,
-        text: () => Promise.resolve('error'),
-      })
-    ) as jest.Mock
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret)
-    await tokenManager.loadToken(userId)
-    const token = await tokenManager.getValidAccessToken()
+    // Mock the DB find to return the expired token
+    ;(prisma.spotifyToken.findUnique as jest.Mock).mockResolvedValue(
+      expiredTokenRecord
+    )
+
+    const refreshedTokenData = {
+      access_token: 'new_access_token',
+      expires_in: 3600,
+      refresh_token: 'new_refresh_token',
+    }
+
+    // Mock the fetch call for token refresh
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(refreshedTokenData),
+    })
+
+    // Mock the DB update to reflect the new token
+    ;(prisma.spotifyToken.update as jest.Mock).mockImplementation(
+      async ({ data }) => {
+        return { ...expiredTokenRecord, ...data }
+      }
+    )
+
+    await tokenManager.loadToken('test-user-id')
+    const accessToken = await tokenManager.getValidAccessToken()
 
     expect(global.fetch).toHaveBeenCalled()
-    expect(token).toBe('test-access-token') // Should return the old token
+    expect(prisma.spotifyToken.update).toHaveBeenCalled()
+    expect(accessToken).toBe('new_access_token')
+  })
+
+  it('should not refresh the access token if it is still valid', async () => {
+    const validTokenRecord = {
+      id: '1',
+      accessToken: 'valid_access_token',
+      refreshToken: 'refresh_token',
+      accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000), // Not expired
+      spotifyUserId: 'test-user-id',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    ;(prisma.spotifyToken.findUnique as jest.Mock).mockResolvedValue(
+      validTokenRecord
+    )
+    global.fetch = jest.fn()
+
+    await tokenManager.loadToken('test-user-id')
+    const accessToken = await tokenManager.getValidAccessToken()
+
+    expect(global.fetch).not.toHaveBeenCalled()
+    expect(accessToken).toBe('valid_access_token')
   })
 })

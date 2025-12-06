@@ -15,7 +15,6 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import * as Prisma from '@prisma/client'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -24,6 +23,7 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -62,10 +62,9 @@ app
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
     if (process.env.TESTING !== 'true') {
       const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
+        windowMs: 1 * 60 * 1000,
         max: 30,
         standardHeaders: true,
         legacyHeaders: false,
@@ -75,7 +74,7 @@ app
       })
 
       const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
+        windowMs: 1 * 60 * 1000,
         max: 100,
         standardHeaders: true,
         legacyHeaders: false,
@@ -84,8 +83,8 @@ app
         },
       })
       const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
+        windowMs: 1 * 60 * 1000,
+        max: 200,
         standardHeaders: true,
         legacyHeaders: false,
         message: { error: 'Too many requests, please try again later.' },
@@ -94,23 +93,18 @@ app
           req.path.startsWith('/api/internal'),
       })
 
-      // Apply the rate limiters to specific routes
       expressApp.use('/api/spotify/', spotifyApiLimiter)
       expressApp.use('/api/internal/', internalApiLimiter)
       expressApp.use('/api/', generalApiLimiter)
     }
 
     // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
-
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
@@ -121,32 +115,16 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-
-    // On startup, find the first user with a token to initialize polling.
-    // This maintains the singleton service model for now.
-    const prisma = new Prisma.PrismaClient()
-    const initialToken = await prisma.spotifyToken.findFirst()
-    const initialUserId = initialToken?.spotifyUserId || null
-    if (initialUserId) {
-      logger.info(
-        `Found initial Spotify token for user: ${initialUserId}. Initializing polling service.`
-      )
-    } else {
-      logger.warn(
-        'No Spotify token found in database on startup. Polling will not start until a token is delivered.'
-      )
-    }
-
     let spotifyService: SpotifyPolling
     try {
-      spotifyService = await SpotifyPolling.create(broadcast, initialUserId)
+      spotifyService = await SpotifyPolling.create(broadcast)
+      await spotifyService.loadInitialToken() // Attempt to load token from DB on startup
     } catch (e) {
       logger.error({ err: e }, 'SpotifyPolling initialization failed')
       broadcast({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
       })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},
         stopPolling: () => {},
@@ -163,7 +141,7 @@ app
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    // 4. Initialize WebSocket Manager
     initSocketManager(
       wss,
       { tabataService, spotifyService },
@@ -190,17 +168,30 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    expressApp.use(async (req: Request, res: Response) => {
-      // The Next.js API route for token delivery will now directly call
-      // the spotifyService instance to signal a token update.
+    // Token delivery is handled by Next.js API route, but we can still intercept
+    expressApp.use(express.json()) // Middleware to parse JSON bodies
+    expressApp.use(async (req: Request, res: Response, next) => {
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        const { userId } = req.body
+        if (spotifyService && userId) {
+          await spotifyService.setRefreshToken(userId)
+        }
+      }
+      next()
+    })
+
+    // Handle all Next.js routing
+    expressApp.use((req: Request, res: Response) => {
       return nextRequestHandler(req, res)
     })
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
@@ -219,7 +210,6 @@ app
             return
           }
           wsConnections.set(ip, count + 1)
-
           socket.on('close', () => {
             const currentCount = wsConnections.get(ip) || 0
             if (currentCount > 0) {
@@ -228,28 +218,20 @@ app
           })
         }
 
-        // Only upgrade connections to the specific WebSocket path
         if (pathname === '/ws') {
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
 
-    // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })

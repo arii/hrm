@@ -249,4 +249,4 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager, spotifyServiceInstance }
+export { initSocketManager }
