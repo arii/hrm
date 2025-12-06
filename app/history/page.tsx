@@ -1,6 +1,6 @@
 // app/history/page.tsx
 'use client'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Container, Typography, Box, CircularProgress } from '@mui/material'
 import { WorkoutHistory } from '@/types'
 import WorkoutHistoryTable from '@/components/WorkoutHistoryTable'
