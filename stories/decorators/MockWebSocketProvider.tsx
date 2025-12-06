@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
 import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketContext';
-import { TimerPhase } from '@/types/websocket';
+import { TimerPhase } from '@/types/shared';
 
 const defaultState: WebSocketContextType = {
-  hrmData: [],
+  hrmMetrics: [],
+  hrmStaticData: [],
   timerData: {
-    isRunning: false,
     currentPhase: 'IDLE' as TimerPhase,
     timeRemaining: 0,
     timeElapsed: 0,
