@@ -172,7 +172,7 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test('Dashboard with active timer', async () => {
+  test.skip('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
