@@ -161,10 +161,10 @@ const handleIncomingMessage = (
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-            hrmClients.set(clientId, {
+          hrmClients.set(clientId, {
             ...existingClientData,
             ...updatedClientProperties,
-            })
+          })
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
             hrmClients.get(clientId)
