@@ -6,7 +6,15 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
-import { HrZoneProps } from '@/utils/visualization'
+
+interface HrZoneProps {
+  zone: string
+  percentage: number
+  color: string
+  progressColor: string
+  backgroundColor: string
+  bpm: number
+}
 
 export interface HrTileProps {
   name: string
