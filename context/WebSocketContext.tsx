@@ -17,6 +17,7 @@ import {
   TimerData,
   ServerMessage,
 } from '../types/websocket'
+import { HrmStaticMetadata } from '@/types/shared'
 import { getWebSocketURL } from '../utils/urls'
 
 interface AppState {
@@ -293,10 +294,20 @@ export const WebSocketProvider = ({
   )
 }
 
-export const useWebSocket = () => {
+export const useWebSocket = (staticMetadata?: HrmStaticMetadata) => {
   const context = useContext(WebSocketContext)
   if (!context) {
     throw new Error('useWebSocket must be used within a WebSocketProvider')
   }
+
+  // Here you could, for example, send the static metadata to the server
+  // upon connection, or use it to enrich the initial state.
+  // For now, we'll just log it to show it's received.
+  useEffect(() => {
+    if (staticMetadata) {
+      console.log('useWebSocket received static metadata:', staticMetadata)
+    }
+  }, [staticMetadata])
+
   return context
 }
