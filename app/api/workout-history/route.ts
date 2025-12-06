@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import fs from 'fs/promises'
 import path from 'path'
 import { WorkoutHistory } from '@/types'
-import { heartRateService } from '@/services/HeartRateService'
 
 const historyFilePath = path.join(process.cwd(), 'logs', 'workout-history.json')
 
