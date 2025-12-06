@@ -53,10 +53,10 @@ const Dashboard = () => {
   useSpotifyRemoteExecution(player)
 
   useEffect(() => {
-    if (isWorkoutActive && hrmData.bpm) {
-      heartRateService.addHrmReading(hrmData.bpm)
+    if (isWorkoutActive && hrmData.length > 0) {
+      hrmData.forEach((d) => heartRateService.addHrmReading(d.value))
     }
-  }, [isWorkoutActive, hrmData.bpm])
+  }, [isWorkoutActive, hrmData])
 
   const handleStartWorkout = () => {
     heartRateService.startWorkout()

@@ -196,6 +196,7 @@ export default function ConnectView({
                 bpm={currentHR}
                 percentMax={hrZoneProps.percentage}
                 background={hrZoneProps.progressColor}
+                gradient={`linear-gradient(135deg, ${hrZoneProps.progressColor} 0%, ${hrZoneProps.progressColor} 100%)`}
               />
             </Grid>
           </Grid>

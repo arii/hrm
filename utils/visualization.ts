@@ -4,6 +4,7 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
+import { HR_ZONES } from '@/constants/heartRateZones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -14,56 +15,6 @@ type MuiColor =
   | 'info'
   | 'success'
 
-// --- Constants ---
-// Heart Rate Zone Boundaries (as percentage of Max HR)
-export const HR_ZONES = [
-  {
-    name: 'Warm-up',
-    min: 0.5,
-    color: 'text-blue-400',
-    progressColor: '#3b82f6', // Darker blue
-    bgColor: '#3b82f6', // Darker blue
-  },
-  {
-    name: 'Fat Burn',
-    min: 0.6,
-    color: 'text-green-500',
-    progressColor: '#22c55e',
-    bgColor: '#4CAF50',
-  },
-  {
-    name: 'Cardio',
-    min: 0.7,
-    color: 'text-yellow-500',
-    progressColor: '#d97706', // Darker orange/yellow
-    bgColor: '#d97706', // Darker orange/yellow
-  },
-  {
-    name: 'Peak',
-    min: 0.85,
-    color: 'text-red-500',
-    progressColor: '#ef4444',
-    bgColor: '#F44336',
-  },
-  {
-    name: 'Max',
-    min: 0.95,
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
-  },
-]
-
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: '#2196F3', // Zone 1: Warm-up
-  green: '#4CAF50', // Zone 2: Fat Burn
-  yellow: '#FFEB3B', // Zone 3: Cardio
-  red: '#F44336', // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
-}
-
 interface HrZoneProps {
   zone: string
   percentage: number
@@ -71,6 +22,7 @@ interface HrZoneProps {
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
   bpm: number
+  gradient: string
 }
 
 /**
@@ -88,38 +40,28 @@ export const getHrZoneProps = (
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
       bpm: 0,
+      gradient: 'linear-gradient(135deg, #9ca3af 0%, #9ca3af 100%)',
     }
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone = HR_ZONES[0]
+  let zone: typeof HR_ZONES[keyof typeof HR_ZONES] = HR_ZONES.ZONE_1
 
-  for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-    const hrZone = HR_ZONES[i]
-    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
-      zone = hrZone
+  for (const z of Object.values(HR_ZONES)) {
+    if (percentageOfMax >= z.range[0] && percentageOfMax <= z.range[1]) {
+      zone = z
       break
     }
   }
 
-  if (!zone) {
-    return {
-      zone: 'Unknown',
-      percentage: percentageOfMax,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
-      bpm: currentHr,
-    }
-  }
-
   return {
-    zone: zone.name,
+    zone: zone.label,
     percentage: percentageOfMax,
     color: zone.color,
-    progressColor: zone.progressColor,
-    backgroundColor: zone.bgColor,
+    progressColor: zone.color,
+    backgroundColor: zone.color,
     bpm: currentHr,
+    gradient: zone.gradient,
   }
 }
 

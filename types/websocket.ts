@@ -1,3 +1,4 @@
+import { UserSettings } from '@/types'
 // File: types/websocket.ts (Shared TypeScript Data Contracts)
 /**
  * Defines the strict interfaces for all data passed between the server services
@@ -60,6 +61,7 @@ export interface InitialStateSnapshotPayload {
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+  userSettings: UserSettings | null
 }
 
 /**
@@ -82,6 +84,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | { type: 'USER_SETTINGS_UPDATE'; payload: UserSettings }
   | SpotifyExecutionMessage
 
 /**

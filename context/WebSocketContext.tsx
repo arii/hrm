@@ -18,16 +18,19 @@ import {
   ServerMessage,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { UserSettings } from '@/types'
 
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+  userSettings: UserSettings | null
 }
 
 const INITIAL_STATE: AppState = {
   hrmData: [],
+  userSettings: null,
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE',
@@ -79,6 +82,8 @@ export const WebSocketProvider = ({
     switch (message.type) {
       case 'INITIAL_STATE':
         return { ...state, ...message.payload }
+      case 'USER_SETTINGS_UPDATE':
+        return { ...state, userSettings: message.payload }
       case 'HRM_UPDATE':
         return { ...state, hrmData: message.payload }
       case 'TIMER_UPDATE':

@@ -1,6 +1,12 @@
 // This file is for component-specific prop types.
 // All other types should be defined in their respective files.
 
+export interface UserSettings {
+  userAge?: number
+  restingHr?: number
+  maxHr?: number
+}
+
 export interface HrTileProps {
   name: string
   bpm: number
