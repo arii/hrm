@@ -7,7 +7,6 @@ import {
   TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
-  TimerPhase,
 } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import Add from '@mui/icons-material/Add'

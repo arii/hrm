@@ -2,7 +2,7 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HrmMetric, HrmStaticMetadata } from '@/types/websocket'
+import { HrmStaticMetadata } from '@/types/websocket'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
