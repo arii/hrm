@@ -17,13 +17,52 @@ type MuiColor =
 // --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)
 export const HR_ZONES = [
-  { name: 'Zone 1', min: 0.5, color: '#d1d5db', progressColor: '#d1d5db', gradient: 'linear-gradient(to right, #d1d5db, #9ca3af)', glow: '#d1d5db', bgColor: '#374151' },
-  { name: 'Zone 2', min: 0.6, color: '#3b82f6', progressColor: '#3b82f6', gradient: 'linear-gradient(to right, #3b82f6, #2563eb)', glow: '#3b82f6', bgColor: '#1e3a8a' },
-  { name: 'Zone 3', min: 0.7, color: '#10b981', progressColor: '#10b981', gradient: 'linear-gradient(to right, #10b981, #059669)', glow: '#10b981', bgColor: '#064e3b' },
-  { name: 'Zone 4', min: 0.85, color: '#f59e0b', progressColor: '#f59e0b', gradient: 'linear-gradient(to right, #f59e0b, #d97706)', glow: '#f59e0b', bgColor: '#78350f' },
-  { name: 'Zone 5', min: 0.95, color: '#ef4444', progressColor: '#ef4444', gradient: 'linear-gradient(to right, #ef4444, #dc2626)', glow: '#ef4444', bgColor: '#7f1d1d' },
-];
-
+  {
+    name: 'Zone 1',
+    min: 0.5,
+    color: '#d1d5db',
+    progressColor: '#d1d5db',
+    gradient: 'linear-gradient(to right, #d1d5db, #9ca3af)',
+    glow: '#d1d5db',
+    bgColor: '#374151',
+  },
+  {
+    name: 'Zone 2',
+    min: 0.6,
+    color: '#3b82f6',
+    progressColor: '#3b82f6',
+    gradient: 'linear-gradient(to right, #3b82f6, #2563eb)',
+    glow: '#3b82f6',
+    bgColor: '#1e3a8a',
+  },
+  {
+    name: 'Zone 3',
+    min: 0.7,
+    color: '#10b981',
+    progressColor: '#10b981',
+    gradient: 'linear-gradient(to right, #10b981, #059669)',
+    glow: '#10b981',
+    bgColor: '#064e3b',
+  },
+  {
+    name: 'Zone 4',
+    min: 0.85,
+    color: '#f59e0b',
+    progressColor: '#f59e0b',
+    gradient: 'linear-gradient(to right, #f59e0b, #d97706)',
+    glow: '#f59e0b',
+    bgColor: '#78350f',
+  },
+  {
+    name: 'Zone 5',
+    min: 0.95,
+    color: '#ef4444',
+    progressColor: '#ef4444',
+    gradient: 'linear-gradient(to right, #ef4444, #dc2626)',
+    glow: '#ef4444',
+    bgColor: '#7f1d1d',
+  },
+]
 
 // Zone color lookup for easy access (zone 1-5)
 export const ZONE_COLORS = {

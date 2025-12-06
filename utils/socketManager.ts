@@ -157,7 +157,7 @@ const handleIncomingMessage = (
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
         if (existingClientData && message.data.value) {
-          heartRateServiceInstance.addHeartRateDataPoint(message.data.value);
+          heartRateServiceInstance.addHeartRateDataPoint(message.data.value)
         }
 
         console.log(
@@ -188,15 +188,15 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
-        const timerMessage = message as TimerCommandMessage;
+        const timerMessage = message as TimerCommandMessage
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(timerMessage.command)
         }
         if (timerMessage.command === 'START' && timerMessage.userSettings) {
-          heartRateServiceInstance.startSession(timerMessage.userSettings);
+          heartRateServiceInstance.startSession(timerMessage.userSettings)
         }
         if (timerMessage.command === 'STOP') {
-          const workoutStats = heartRateServiceInstance.endSession();
+          const workoutStats = heartRateServiceInstance.endSession()
           if (workoutStats) {
             fetch(`${getBaseURL()}/api/workouts`, {
               method: 'POST',
@@ -204,7 +204,7 @@ const handleIncomingMessage = (
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(workoutStats),
-            });
+            })
           }
         }
         break

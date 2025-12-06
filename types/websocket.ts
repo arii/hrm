@@ -168,9 +168,9 @@ export const UserSettingsSchema = z.object({
   restingHr: z.number(),
   deviceId: z.string(),
   weight: z.number(),
-});
+})
 
-export type UserSettings = z.infer<typeof UserSettingsSchema>;
+export type UserSettings = z.infer<typeof UserSettingsSchema>
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable().optional(),
