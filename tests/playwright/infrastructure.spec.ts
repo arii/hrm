@@ -104,12 +104,12 @@ test.describe('Infrastructure & Scripts', () => {
     })
 
     prodServer.stdout.on('data', (data) => {
-      console.log(`[prod server stdout]: ${data}`);
-    });
+      console.log(`[prod server stdout]: ${data}`)
+    })
 
     prodServer.stderr.on('data', (data) => {
-      console.error(`[prod server stderr]: ${data}`);
-    });
+      console.error(`[prod server stderr]: ${data}`)
+    })
 
     try {
       await waitForPort(PORT)
