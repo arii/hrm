@@ -32,9 +32,7 @@ export class SpotifyTokenManager {
   ) {
     const encryptionKey = process.env.ENCRYPTION_KEY
     if (!encryptionKey) {
-      throw new Error(
-        'ENCRYPTION_KEY is not set in the environment variables.'
-      )
+      throw new Error('ENCRYPTION_KEY is not set in the environment variables.')
     }
     this.encryptionService = new EncryptionService(encryptionKey)
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
@@ -78,8 +76,9 @@ export class SpotifyTokenManager {
 
       if (record.payload.refresh_token) {
         try {
-          record.payload.refresh_token =
-            await this.encryptionService.decrypt(record.payload.refresh_token)
+          record.payload.refresh_token = await this.encryptionService.decrypt(
+            record.payload.refresh_token
+          )
         } catch (decryptionError) {
           console.error(
             'Failed to decrypt refresh token. Deleting corrupted file.',
@@ -91,7 +90,7 @@ export class SpotifyTokenManager {
         }
       }
       this.currentToken = record
-    } catch (err) {
+    } catch {
       this.currentToken = null
     }
   }

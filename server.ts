@@ -190,7 +190,10 @@ app
 
           // 2. Update Service
           const tokenPayload = req.body
-          if (spotifyService && typeof spotifyService.setTokenData === 'function') {
+          if (
+            spotifyService &&
+            typeof spotifyService.setTokenData === 'function'
+          ) {
             await spotifyService.setTokenData(tokenPayload)
           }
 

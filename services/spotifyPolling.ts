@@ -1,9 +1,6 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager'
+import { SpotifyTokenManager, SpotifyTokenPayload } from './spotifyTokenManager'
 import logger from '../utils/logger'
 
 // Utility: Safely parse JSON, fallback to text
@@ -436,9 +433,8 @@ export class SpotifyPolling {
               'response' in error &&
               typeof (error as { response?: unknown }).response === 'object' &&
               (error as { response?: { text?: unknown } }).response &&
-              'text' in (error as { response: { text?: unknown } }).response &&
-              typeof (error as { response: { text?: unknown } }).response
-                .text === 'function'
+              'text' in (err as { response: { text?: unknown } }).response &&
+              typeof (err as { response: { text?: unknown } }).response.text === 'function'
             ) {
               try {
                 text = await (
