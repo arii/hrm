@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/services/*": ["./services/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,

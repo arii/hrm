@@ -20,10 +20,10 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
-import logger from './utils/logger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import { StateSnapshot } from './types/websocket'
+import logger from './utils/logger'
+import { performHealthCheck } from './lib/healthCheck'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -174,32 +174,56 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
+    // --- Internal API Route Overrides ---
 
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
+    // This route is intercepted from Next.js to ensure the long-running server process
+    // receives the token immediately, avoiding race conditions with file-based state.
+    expressApp.post(
+      API_INTERNAL_TOKEN_DELIVERY,
+      express.json({ limit: '10kb' }), // Middleware to parse JSON body
+      async (req: Request, res: Response) => {
+        try {
+          const secretHeader = req.headers['x-internal-token-secret'] as string
+          const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
+
+          if (expected && secretHeader !== expected) {
+            return res.status(401).json({ error: 'Unauthorized' })
           }
-        }, 1000)
+
+          const payload = req.body
+
+          if (!payload || typeof payload !== 'object') {
+            return res.status(400).json({ error: 'Invalid payload' })
+          }
+
+          if (spotifyService) {
+            // This is the critical step: update the running service directly.
+            await spotifyService.processNewToken(payload)
+            logger.info(
+              { subject: payload.sub ?? 'unknown' },
+              '[server.ts] Successfully processed token-delivery in-memory.'
+            )
+          } else {
+            logger.warn(
+              '[server.ts] Spotify service not available to process new token.'
+            )
+          }
+
+          return res.status(200).json({ ok: true })
+        } catch (err) {
+          logger.error({ err }, '[server.ts] /token-delivery error')
+          return res.status(500).json({ error: 'server_error' })
+        }
       }
+    )
+
+    // --- Fallback to Next.js Handler ---
+    // All other requests are handled by Next.js
+    expressApp.all('*', (req: Request, res: Response) => {
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5

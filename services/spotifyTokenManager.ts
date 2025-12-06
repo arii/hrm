@@ -1,7 +1,8 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling'
+import { EncryptionService } from '../utils/encryption.js'
+import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 export interface SpotifyTokenPayload {
   provider: string
@@ -26,11 +27,7 @@ export class SpotifyTokenManager {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      this.saveTokens()
       console.log('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
@@ -46,17 +43,52 @@ export class SpotifyTokenManager {
           obtainedAt: Date.now(),
         },
       }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      this.saveTokens()
       console.log('Access token created via setAccessToken.')
     }
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
+  private refreshPromise: Promise<boolean> | null = null
+  private encryptionService: EncryptionService | null = null
+
+  /**
+   * Updates the in-memory token from a raw payload and persists it.
+   * This is the new primary way to update tokens from the NextAuth flow.
+   * @param payload The raw token payload from the OAuth provider.
+   */
+  public setTokenPayload(payload: unknown) {
+    // Basic validation to ensure the payload is a usable object
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      !('access_token' in payload) ||
+      !('refresh_token' in payload)
+    ) {
+      console.error(
+        '[SpotifyTokenManager] Invalid token payload received:',
+        payload
+      )
+      return
+    }
+
+    this.currentToken = {
+      receivedAt: Date.now(),
+      // We cast here after verifying the essential fields exist.
+      // A more robust solution might use a validation library like Zod.
+      payload: payload as SpotifyTokenPayload,
+    }
+
+    // Ensure `obtainedAt` is set if not provided by the payload
+    if (!this.currentToken.payload.obtainedAt) {
+      this.currentToken.payload.obtainedAt = this.currentToken.receivedAt
+    }
+
+    console.log(
+      `[SpotifyTokenManager] Set new token payload for: ${this.currentToken.payload.sub}`
+    )
+    this.saveTokens()
+  }
 
   constructor(
     private clientId: string,
@@ -64,18 +96,40 @@ export class SpotifyTokenManager {
     logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
+    if (process.env.ENCRYPTION_KEY) {
+      this.encryptionService = new EncryptionService(process.env.ENCRYPTION_KEY)
+    } else {
+      console.warn(
+        'ENCRYPTION_KEY is not set. Spotify tokens will not be persisted.'
+      )
+    }
     this.loadTokens()
   }
 
   private loadTokens() {
+    if (!this.encryptionService) return
     try {
       if (fs.existsSync(this.tokenFile)) {
-        const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
+        const encryptedData = fs.readFileSync(this.tokenFile, 'utf8')
+        const decryptedData = this.encryptionService.decrypt(encryptedData)
+        this.currentToken = JSON.parse(decryptedData) as TokenRecord
         console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
       }
     } catch (err) {
       console.warn('Failed to load Spotify tokens:', err)
+      // If decryption fails, the file might be corrupt. Delete it.
+      fs.unlinkSync(this.tokenFile)
+    }
+  }
+
+  private saveTokens() {
+    if (!this.encryptionService || !this.currentToken) return
+    try {
+      const data = JSON.stringify(this.currentToken, null, 2)
+      const encryptedData = this.encryptionService.encrypt(data)
+      fs.writeFileSync(this.tokenFile, encryptedData, 'utf8')
+    } catch (err) {
+      console.error('Failed to save Spotify tokens:', err)
     }
   }
 
@@ -125,12 +179,7 @@ export class SpotifyTokenManager {
         },
       }
 
-      // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      this.saveTokens()
 
       console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
@@ -157,15 +206,9 @@ export class SpotifyTokenManager {
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-          })
+        this.refreshPromise = this.refreshToken().finally(() => {
+          this.refreshPromise = null
+        })
       }
       await this.refreshPromise
     }
