@@ -20,7 +20,7 @@ export const useTimerSounds = (isMuted: boolean = false) => {
 
   // Effect to play sound based on timer data from WebSocket
   useEffect(() => {
-    if (isMuted) return;
+    if (isMuted) return
     // Ensure we have a new, valid sound event to play
     if (
       timerData.soundToPlay &&

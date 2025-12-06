@@ -20,7 +20,9 @@ export default function FooterControls() {
         boxShadow: '0px -2px 10px rgba(0,0,0,0.1)',
       }}
     >
-      <Box sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: '200px' } }}>
+      <Box
+        sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: '200px' } }}
+      >
         <BottomNavBar />
       </Box>
     </Box>

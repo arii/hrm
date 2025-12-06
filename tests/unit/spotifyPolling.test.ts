@@ -1,4 +1,3 @@
- 
 /**
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
@@ -120,7 +119,7 @@ describe('SpotifyPolling Service', () => {
     }
     jest.clearAllTimers()
     jest.useRealTimers()
-    jest.restoreAllMocks();
+    jest.restoreAllMocks()
   })
 
   describe('Initialization', () => {
@@ -195,7 +194,7 @@ describe('SpotifyPolling Service', () => {
       )
       await spotifyService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
-      expect(logger.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled()
     })
   })
 
@@ -363,7 +362,7 @@ describe('SpotifyPolling Service', () => {
       ).resolves.not.toThrow()
 
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
-      expect(logger.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled()
     })
 
     it('should handle 401 unauthorized responses', async () => {
@@ -371,7 +370,7 @@ describe('SpotifyPolling Service', () => {
         Promise.reject({ status: 401 })
       )
       // @ts-expect-error - Testing private method
-      const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken');
+      const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken')
       spotifyService.startPolling(100)
       jest.advanceTimersByTime(150)
       await Promise.resolve() // Flush promises
@@ -382,8 +381,8 @@ describe('SpotifyPolling Service', () => {
       expect(() => spotifyService.getState()).not.toThrow()
       expect(logger.warn).toHaveBeenCalledWith(
         'Spotify token expired during polling. Attempting refresh.'
-      );
-      expect(refreshSpy).toHaveBeenCalled();
+      )
+      expect(refreshSpy).toHaveBeenCalled()
     })
 
     it('should not execute commands without access token', async () => {
@@ -422,22 +421,24 @@ describe('SpotifyPolling Service', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         { response: 'Invalid JSON' },
-        expect.stringContaining('Error executing Spotify command PLAY: Response body:')
+        expect.stringContaining(
+          'Error executing Spotify command PLAY: Response body:'
+        )
       )
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
-       // Simulate a deeply nested error that might crash text() retrieval
-       const badError = {
-           response: {
-               text: jest.fn().mockRejectedValue(new Error('Stream closed'))
-           }
-       }
-       mockPlayer.startResumePlayback.mockRejectedValue(badError)
+      // Simulate a deeply nested error that might crash text() retrieval
+      const badError = {
+        response: {
+          text: jest.fn().mockRejectedValue(new Error('Stream closed')),
+        },
+      }
+      mockPlayer.startResumePlayback.mockRejectedValue(badError)
 
-       await spotifyService.handleCommand('PLAY', 'device_id')
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
-       expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         { err: expect.any(Error) },
         expect.stringContaining(
           'Error executing Spotify command PLAY: Failed to retrieve error response text:'

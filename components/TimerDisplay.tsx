@@ -116,12 +116,10 @@ const TimerDisplay = ({
               connectionStatus === 'Connected'
                 ? '#10B981'
                 : connectionStatus === 'Reconnecting...'
-                ? '#F59E0B'
-                : '#EF4444',
+                  ? '#F59E0B'
+                  : '#EF4444',
             animation:
-              connectionStatus === 'Connected'
-                ? 'pulse 2s infinite'
-                : 'none',
+              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
         />
       </Box>

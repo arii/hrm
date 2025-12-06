@@ -60,7 +60,9 @@ const initSocketManager = (
     console.log(`WebSocket Client connected: ${clientId}`)
 
     // Heartbeat
-    extWs.on('pong', () => { extWs.isAlive = true })
+    extWs.on('pong', () => {
+      extWs.isAlive = true
+    })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const defaultClientData: HrmData = {
@@ -107,10 +109,7 @@ const handleIncomingMessage = (
   jsonMessage: string,
   clientId: string
 ) => {
-  console.log(
-    `[socketManager] INCOMING MESSAGE from ${clientId}:`,
-    jsonMessage
-  )
+  console.log(`[socketManager] INCOMING MESSAGE from ${clientId}:`, jsonMessage)
   try {
     // Parse and validate message type for type-safe routing
     const parsedMessage = JSON.parse(jsonMessage)
@@ -139,7 +138,7 @@ const handleIncomingMessage = (
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
           hrmData: Array.from(hrmClients.values()),
-        };
+        }
 
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -205,20 +204,23 @@ const handleIncomingMessage = (
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
         console.log(`[WS Relay] Forwarding command: ${commandMsg.command}`)
-        
+
         // Broadcast ONLY to connected Dashboards for remote execution
         wsServerInstance.clients.forEach((client: WebSocket) => {
           const target = client as ExtWebSocket
           // Only forward to the Dashboard, not other controllers
-          if (target.readyState === WebSocket.OPEN && target.clientType === 'dashboard') {
+          if (
+            target.readyState === WebSocket.OPEN &&
+            target.clientType === 'dashboard'
+          ) {
             const executionMessage: SpotifyExecutionMessage = {
               type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg
+              payload: commandMsg,
             }
             target.send(JSON.stringify(executionMessage))
           }
         })
-        
+
         // Also handle locally for backward compatibility
         if (spotifyServiceInstance) {
           spotifyServiceInstance.handleCommand(

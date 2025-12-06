@@ -1,12 +1,11 @@
 'use client'
 
-import React,
-{
+import React, {
   createContext,
   useState,
   useContext,
   ReactNode,
-  useCallback
+  useCallback,
 } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -18,10 +17,7 @@ interface ErrorInfo {
 
 interface ErrorContextType {
   errors: ErrorInfo[]
-  addError: (
-    message: string,
-    type?: 'transient' | 'persistent'
-  ) => void
+  addError: (message: string, type?: 'transient' | 'persistent') => void
   removeError: (id: string) => void
 }
 

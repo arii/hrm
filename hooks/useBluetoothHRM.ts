@@ -64,7 +64,9 @@ const useBluetoothHRM = () => {
   const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Ref to hold the connectToGatt function to break dependency cycles
-  const connectToGattRef = useRef<((device: BluetoothDevice) => Promise<boolean>) | null>(null)
+  const connectToGattRef = useRef<
+    ((device: BluetoothDevice) => Promise<boolean>) | null
+  >(null)
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -84,7 +86,10 @@ const useBluetoothHRM = () => {
   // Watchdog for stale data
   useEffect(() => {
     const interval = setInterval(() => {
-      if (statusRef.current.startsWith('Connected') && lastDataTime.current > 0) {
+      if (
+        statusRef.current.startsWith('Connected') &&
+        lastDataTime.current > 0
+      ) {
         const timeSinceLastData = Date.now() - lastDataTime.current
         // If no data for > 10 seconds, consider it stale/lost
         if (timeSinceLastData > 10000) {
@@ -117,10 +122,12 @@ const useBluetoothHRM = () => {
   }, [])
 
   const handleConnectionError = useCallback((error: unknown) => {
-    let userFriendlyMessage = 'An unknown error occurred during Bluetooth connection.'
+    let userFriendlyMessage =
+      'An unknown error occurred during Bluetooth connection.'
     if (error instanceof DOMException) {
-       userFriendlyMessage = `Bluetooth error: ${error.name}`
-       if (error.name === 'NotFoundError') userFriendlyMessage = 'No device found/selected.'
+      userFriendlyMessage = `Bluetooth error: ${error.name}`
+      if (error.name === 'NotFoundError')
+        userFriendlyMessage = 'No device found/selected.'
     } else if (error instanceof Error) {
       userFriendlyMessage = `Error: ${error.message}`
     }
@@ -145,74 +152,87 @@ const useBluetoothHRM = () => {
     }
   }, [])
 
-  const connectToGatt = useCallback(async (device: BluetoothDevice) => {
-    try {
-      deviceRef.current = device
-      setDeviceStatus(`Connecting to: ${device.name}...`)
-
-      const server = await device.gatt!.connect()
-
-      // 1. Heart Rate Service
-      const service = await server.getPrimaryService(HR_SERVICE_UUID)
-      const characteristic = await service.getCharacteristic(HR_CHARACTERISTIC_UUID)
-
-      // 2. Battery Service (Optional)
+  const connectToGatt = useCallback(
+    async (device: BluetoothDevice) => {
       try {
-        const batteryService = await server.getPrimaryService(BATTERY_SERVICE_UUID)
-        const batteryChar = await batteryService.getCharacteristic(BATTERY_LEVEL_CHARACTERISTIC_UUID)
-        const value = await batteryChar.readValue()
-        setBatteryLevel(value.getUint8(0))
+        deviceRef.current = device
+        setDeviceStatus(`Connecting to: ${device.name}...`)
 
-        // Optional: Subscribe to battery changes
-        await batteryChar.startNotifications()
-        batteryChar.addEventListener('characteristicvaluechanged', (e) => {
-             const target = e.target as unknown as BluetoothRemoteGATTCharacteristic
-             setBatteryLevel(target.value!.getUint8(0))
-        })
-      } catch (err) {
-        console.warn('Battery service not available:', err)
+        const server = await device.gatt!.connect()
+
+        // 1. Heart Rate Service
+        const service = await server.getPrimaryService(HR_SERVICE_UUID)
+        const characteristic = await service.getCharacteristic(
+          HR_CHARACTERISTIC_UUID
+        )
+
+        // 2. Battery Service (Optional)
+        try {
+          const batteryService =
+            await server.getPrimaryService(BATTERY_SERVICE_UUID)
+          const batteryChar = await batteryService.getCharacteristic(
+            BATTERY_LEVEL_CHARACTERISTIC_UUID
+          )
+          const value = await batteryChar.readValue()
+          setBatteryLevel(value.getUint8(0))
+
+          // Optional: Subscribe to battery changes
+          await batteryChar.startNotifications()
+          batteryChar.addEventListener('characteristicvaluechanged', (e) => {
+            const target =
+              e.target as unknown as BluetoothRemoteGATTCharacteristic
+            setBatteryLevel(target.value!.getUint8(0))
+          })
+        } catch (err) {
+          console.warn('Battery service not available:', err)
+        }
+
+        // 3. Start HR notifications
+        await characteristic.startNotifications()
+        lastDataTime.current = Date.now() // Initialize timestamp
+
+        characteristic.addEventListener(
+          'characteristicvaluechanged',
+          (event) => {
+            const target =
+              event.target as unknown as BluetoothRemoteGATTCharacteristic
+            const heartRate = parseHeartRate(target.value!)
+            lastDataTime.current = Date.now()
+
+            // Stream data
+            const { name, age } = userDetailsRef.current || {}
+            const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
+
+            const data: HrmInputData = {
+              value: heartRate,
+              maxHr: calculatedMaxHr,
+              name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
+            }
+            if (age) {
+              data.age = parseInt(age)
+            }
+            const message: HrmInputMessage = {
+              type: 'HRM_INPUT',
+              data,
+            }
+            sendData(message)
+          }
+        )
+
+        device.addEventListener('gattserverdisconnected', onDisconnected)
+
+        setDeviceStatus(`Connected to: ${device.name}`)
+        setSavedDevice(device)
+        isManualDisconnect.current = false // Reset manual flag
+        return true
+      } catch (error: unknown) {
+        console.error('GATT Connection failed:', error)
+        handleConnectionError(error)
+        return false
       }
-
-      // 3. Start HR notifications
-      await characteristic.startNotifications()
-      lastDataTime.current = Date.now() // Initialize timestamp
-
-      characteristic.addEventListener('characteristicvaluechanged', (event) => {
-        const target = event.target as unknown as BluetoothRemoteGATTCharacteristic
-        const heartRate = parseHeartRate(target.value!)
-        lastDataTime.current = Date.now()
-
-        // Stream data
-        const { name, age } = userDetailsRef.current || {}
-        const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
-
-        const data: HrmInputData = {
-          value: heartRate,
-          maxHr: calculatedMaxHr,
-          name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
-        }
-        if (age) {
-          data.age = parseInt(age)
-        }
-        const message: HrmInputMessage = {
-          type: 'HRM_INPUT',
-          data,
-        }
-        sendData(message)
-      })
-
-      device.addEventListener('gattserverdisconnected', onDisconnected)
-
-      setDeviceStatus(`Connected to: ${device.name}`)
-      setSavedDevice(device)
-      isManualDisconnect.current = false // Reset manual flag
-      return true
-    } catch (error: unknown) {
-      console.error('GATT Connection failed:', error)
-      handleConnectionError(error)
-      return false
-    }
-  }, [handleConnectionError, onDisconnected, sendData])
+    },
+    [handleConnectionError, onDisconnected, sendData]
+  )
 
   // Update the ref whenever connectToGatt changes
   useEffect(() => {
@@ -238,9 +258,13 @@ const useBluetoothHRM = () => {
         if (!device) {
           const savedDeviceId = getCookie('hrm_device_id')
           // Try to retrieve known devices if supported
-          if (savedDeviceId && navigator.bluetooth && navigator.bluetooth.getDevices) {
-             const devices = await navigator.bluetooth.getDevices()
-             device = devices.find(d => d.id === savedDeviceId) || null
+          if (
+            savedDeviceId &&
+            navigator.bluetooth &&
+            navigator.bluetooth.getDevices
+          ) {
+            const devices = await navigator.bluetooth.getDevices()
+            device = devices.find((d) => d.id === savedDeviceId) || null
           }
 
           if (!device) {
@@ -248,19 +272,18 @@ const useBluetoothHRM = () => {
             // Must include battery_service in optionalServices to access it later
             device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [HR_SERVICE_UUID] }],
-              optionalServices: [BATTERY_SERVICE_UUID]
+              optionalServices: [BATTERY_SERVICE_UUID],
             })
             setCookie('hrm_device_id', device.id)
           }
         }
 
         if (!device) {
-           setDeviceStatus('No device selected.')
-           return false
+          setDeviceStatus('No device selected.')
+          return false
         }
 
         return await connectToGatt(device)
-
       } catch (error) {
         handleConnectionError(error)
         return false
