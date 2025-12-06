@@ -16,6 +16,7 @@ import {
   SpotifyData,
   TimerData,
   ServerMessage,
+  DiagnosticAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -24,6 +25,7 @@ interface AppState {
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
+  lastDiagnosticAlert?: DiagnosticAlert & { id: number }
 }
 
 const INITIAL_STATE: AppState = {
@@ -45,6 +47,7 @@ const INITIAL_STATE: AppState = {
     devices: [],
   },
   spotifyServiceInitialized: true,
+  lastDiagnosticAlert: undefined,
 }
 
 export interface WebSocketContextType extends AppState {
@@ -87,6 +90,11 @@ export const WebSocketProvider = ({
         return { ...state, spotifyData: message.payload }
       case 'SPOTIFY_SERVICE_INIT_UPDATE':
         return { ...state, spotifyServiceInitialized: message.payload }
+      case 'DIAGNOSTIC_ALERT':
+        return {
+          ...state,
+          lastDiagnosticAlert: { ...message.payload, id: Date.now() },
+        }
       case 'EXECUTE_SPOTIFY':
         // This message type is handled by useSpotifyRemoteExecution hook
         // We don't need to update state here, just pass it through

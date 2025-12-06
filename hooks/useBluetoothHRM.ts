@@ -11,8 +11,8 @@ import { useWebSocket } from '@/context/WebSocketContext'
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
-const BATTERY_SERVICE_UUID = 'battery_service'
-const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+const BATTERY_SERVICE_UUID = 0x180f // Standard Battery Service UUID
+const BATTERY_LEVEL_CHARACTERISTIC_UUID = 0x2a19 // Standard Battery Level Characteristic UUID
 
 /**
  * Parses the raw DataView received from the HR Measurement characteristic.
@@ -54,7 +54,11 @@ const useBluetoothHRM = () => {
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
-  const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [batteryLevel, setBatteryLevel] = useState<number | undefined>(
+    undefined
+  )
+  const [gattServer, setGattServer] =
+    useState<BluetoothRemoteGATTServer | null>(null)
 
   // Refs to track state without dependency cycles or for event handlers
   const statusRef = useRef(deviceStatus)
@@ -63,10 +67,17 @@ const useBluetoothHRM = () => {
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const batteryIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const batteryLevelRef = useRef(batteryLevel)
+
   // Ref to hold the connectToGatt function to break dependency cycles
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
+
+  useEffect(() => {
+    batteryLevelRef.current = batteryLevel
+  }, [batteryLevel])
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -75,8 +86,10 @@ const useBluetoothHRM = () => {
   // Cleanup on unmount
   useEffect(() => {
     const timeoutHandle = reconnectTimeoutRef.current
+    const batteryInterval = batteryIntervalRef.current
     return () => {
       if (timeoutHandle) clearTimeout(timeoutHandle)
+      if (batteryInterval) clearInterval(batteryInterval)
       if (deviceRef.current && deviceRef.current.gatt?.connected) {
         deviceRef.current.gatt.disconnect()
       }
@@ -109,6 +122,7 @@ const useBluetoothHRM = () => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    if (batteryIntervalRef.current) clearInterval(batteryIntervalRef.current)
 
     if (deviceRef.current?.gatt?.connected) {
       deviceRef.current.gatt.disconnect()
@@ -116,7 +130,8 @@ const useBluetoothHRM = () => {
 
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
-    setBatteryLevel(null)
+    setBatteryLevel(undefined)
+    setGattServer(null)
     deviceRef.current = null
     setCookie('hrm_device_id', '', -1)
   }, [])
@@ -135,7 +150,12 @@ const useBluetoothHRM = () => {
   }, [])
 
   const onDisconnected = useCallback(() => {
-    setBatteryLevel(null)
+    setBatteryLevel(undefined)
+    setGattServer(null)
+    if (batteryIntervalRef.current) {
+      clearInterval(batteryIntervalRef.current)
+      batteryIntervalRef.current = null
+    }
 
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
@@ -152,6 +172,27 @@ const useBluetoothHRM = () => {
     }
   }, [])
 
+  const readBatteryLevel = useCallback(
+    async (server: BluetoothRemoteGATTServer) => {
+      try {
+        const service = await server.getPrimaryService(BATTERY_SERVICE_UUID)
+        const characteristic = await service.getCharacteristic(
+          BATTERY_LEVEL_CHARACTERISTIC_UUID
+        )
+        const value = await characteristic.readValue()
+        const level = value.getUint8(0)
+        console.log(`[Bluetooth HRM] Battery Level: ${level}%`)
+        setBatteryLevel(level)
+        return level
+      } catch (error) {
+        console.warn('Could not read Battery Service or Characteristic:', error)
+        setBatteryLevel(undefined)
+        return undefined
+      }
+    },
+    []
+  )
+
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
       try {
@@ -159,35 +200,24 @@ const useBluetoothHRM = () => {
         setDeviceStatus(`Connecting to: ${device.name}...`)
 
         const server = await device.gatt!.connect()
+        setGattServer(server)
 
-        // 1. Heart Rate Service
+        // Initial Battery Read
+        readBatteryLevel(server)
+        // Start periodic polling for Battery
+        if (batteryIntervalRef.current)
+          clearInterval(batteryIntervalRef.current)
+        batteryIntervalRef.current = setInterval(() => {
+          readBatteryLevel(server)
+        }, 300000) // 5 minutes
+
+        // Heart Rate Service
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
           HR_CHARACTERISTIC_UUID
         )
 
-        // 2. Battery Service (Optional)
-        try {
-          const batteryService =
-            await server.getPrimaryService(BATTERY_SERVICE_UUID)
-          const batteryChar = await batteryService.getCharacteristic(
-            BATTERY_LEVEL_CHARACTERISTIC_UUID
-          )
-          const value = await batteryChar.readValue()
-          setBatteryLevel(value.getUint8(0))
-
-          // Optional: Subscribe to battery changes
-          await batteryChar.startNotifications()
-          batteryChar.addEventListener('characteristicvaluechanged', (e) => {
-            const target =
-              e.target as unknown as BluetoothRemoteGATTCharacteristic
-            setBatteryLevel(target.value!.getUint8(0))
-          })
-        } catch (err) {
-          console.warn('Battery service not available:', err)
-        }
-
-        // 3. Start HR notifications
+        // Start HR notifications
         await characteristic.startNotifications()
         lastDataTime.current = Date.now() // Initialize timestamp
 
@@ -202,11 +232,16 @@ const useBluetoothHRM = () => {
             // Stream data
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
+            const currentSignalStatus = server.connected
+              ? 'OPTIMAL'
+              : 'DISCONNECTED'
 
             const data: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
+              batteryLevel: batteryLevelRef.current,
+              signalStatus: currentSignalStatus,
             }
             if (age) {
               data.age = parseInt(age)
@@ -231,7 +266,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [handleConnectionError, onDisconnected, sendData]
+    [handleConnectionError, onDisconnected, sendData, readBatteryLevel]
   )
 
   // Update the ref whenever connectToGatt changes

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '@/components/BottomNavBar'
+import DiagnosticAlerts from '@/components/DiagnosticAlerts'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
@@ -51,6 +52,7 @@ export default function RootLayout({
               <UserSettingsProvider>
                 <ErrorBoundary fallback={<ErrorFallback />}>
                   <TimerSoundProvider>{children}</TimerSoundProvider>
+                  <DiagnosticAlerts />
                 </ErrorBoundary>
               </UserSettingsProvider>
             </Providers>

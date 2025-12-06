@@ -15,6 +15,7 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
+  DiagnosticAlert,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
@@ -150,25 +151,16 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmClients.set(clientId, {
+          const updatedClientData = {
             ...existingClientData,
             ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+          }
+          hrmClients.set(clientId, updatedClientData)
+          runDiagnostics(updatedClientData)
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -246,6 +238,34 @@ const handleIncomingMessage = (
     if (e instanceof z.ZodError) {
       console.error('WebSocket message validation failed:', e.issues)
     }
+  }
+}
+
+const runDiagnostics = (clientData: HrmData) => {
+  const { batteryLevel, signalStatus, name, clientId } = clientData
+
+  if (typeof batteryLevel === 'number' && batteryLevel < 20) {
+    const alert: DiagnosticAlert = {
+      severity: 'warning',
+      message: `Low battery warning: ${batteryLevel}% remaining.`,
+      deviceName: name || clientId,
+    }
+    broadcast({
+      type: 'DIAGNOSTIC_ALERT',
+      payload: alert,
+    })
+  }
+
+  if (signalStatus === 'POOR' || signalStatus === 'DISCONNECTED') {
+    const alert: DiagnosticAlert = {
+      severity: 'error',
+      message: `Signal status is ${signalStatus}. Data may be unreliable.`,
+      deviceName: name || clientId,
+    }
+    broadcast({
+      type: 'DIAGNOSTIC_ALERT',
+      payload: alert,
+    })
   }
 }
 
