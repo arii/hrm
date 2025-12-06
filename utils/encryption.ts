@@ -48,7 +48,10 @@ export class EncryptionService {
     )
 
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-    const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
+    const encrypted = Buffer.concat([
+      cipher.update(text, 'utf8'),
+      cipher.final(),
+    ])
     const tag = cipher.getAuthTag()
 
     return Buffer.concat([salt, iv, tag, encrypted]).toString('hex')
