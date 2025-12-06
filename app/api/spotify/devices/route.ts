@@ -3,6 +3,9 @@ import { ApiError } from '@/lib/errors'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 /**
  * API route to fetch available Spotify devices.
@@ -29,7 +32,8 @@ export async function GET(_req: Request) {
       )
       const tokenManager = new SpotifyTokenManager(
         process.env.SPOTIFY_CLIENT_ID || '',
-        process.env.SPOTIFY_CLIENT_SECRET || ''
+        process.env.SPOTIFY_CLIENT_SECRET || '',
+        prisma
       )
       accessToken = await tokenManager.getValidAccessToken()
     }
