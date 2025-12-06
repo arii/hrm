@@ -2,7 +2,11 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { WorkoutStats } from './HeartRateService'
 
-const WORKOUT_HISTORY_FILE = path.join(process.cwd(), 'logs', 'workout-history.json')
+const WORKOUT_HISTORY_FILE = path.join(
+  process.cwd(),
+  'logs',
+  'workout-history.json'
+)
 
 export interface WorkoutRecord extends WorkoutStats {
   id: string
@@ -15,7 +19,7 @@ class WorkoutService {
       await fs.access(WORKOUT_HISTORY_FILE)
       const data = await fs.readFile(WORKOUT_HISTORY_FILE, 'utf-8')
       return JSON.parse(data)
-    } catch (error) {
+    } catch {
       // If the file doesn't exist, return an empty array
       return []
     }
@@ -25,7 +29,7 @@ class WorkoutService {
     const dir = path.dirname(WORKOUT_HISTORY_FILE)
     try {
       await fs.access(dir)
-    } catch (error) {
+    } catch {
       await fs.mkdir(dir, { recursive: true })
     }
     await fs.writeFile(WORKOUT_HISTORY_FILE, JSON.stringify(history, null, 2))
@@ -34,7 +38,9 @@ class WorkoutService {
   async getHistory(): Promise<WorkoutRecord[]> {
     const history = await this.readHistory()
     // Sort by date descending
-    return history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return history.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
   }
 
   async saveWorkout(workout: WorkoutStats): Promise<WorkoutRecord> {

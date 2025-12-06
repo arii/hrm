@@ -15,7 +15,13 @@ export interface HrTileProps {
   gradient: string
 }
 
-const HrTile = ({ name, bpm, percentMax, background, gradient }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  gradient,
+}: HrTileProps) => {
   return (
     <Tooltip
       title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}

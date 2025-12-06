@@ -32,7 +32,7 @@ const WorkoutHistory: React.FC = () => {
       }
       const data = await response.json()
       setHistory(data)
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred while fetching workout history.')
     } finally {
       setLoading(false)
@@ -45,7 +45,14 @@ const WorkoutHistory: React.FC = () => {
 
   return (
     <DashboardWidget>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+        }}
+      >
         <Typography variant="h6">Workout History</Typography>
         <Button onClick={fetchHistory} disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Refresh'}
@@ -70,8 +77,12 @@ const WorkoutHistory: React.FC = () => {
           <TableBody>
             {history.map((workout) => (
               <TableRow key={workout.id}>
-                <TableCell>{new Date(workout.date).toLocaleDateString()}</TableCell>
-                <TableCell align="right">{workout.duration.toFixed(0)}</TableCell>
+                <TableCell>
+                  {new Date(workout.date).toLocaleDateString()}
+                </TableCell>
+                <TableCell align="right">
+                  {workout.duration.toFixed(0)}
+                </TableCell>
                 <TableCell align="right">{workout.avgHr}</TableCell>
                 <TableCell align="right">{workout.maxHr}</TableCell>
                 <TableCell align="right">{workout.calories}</TableCell>

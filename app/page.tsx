@@ -23,7 +23,6 @@ import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import WorkoutControls from '@/components/WorkoutControls'
 import { heartRateService, WorkoutStats } from '@/services/HeartRateService'
-import { UserSettings } from '@/types'
 import DataWidget from '@/components/widgets/DataWidget'
 import WorkoutHistory from '@/components/WorkoutHistory'
 
@@ -134,16 +133,32 @@ const Dashboard = () => {
         {workoutStats && (
           <>
             <Grid item xs={12} sm={6} md={3}>
-              <DataWidget title="Avg HR" value={workoutStats.avgHr} unit="bpm" />
+              <DataWidget
+                title="Avg HR"
+                value={workoutStats.avgHr}
+                unit="bpm"
+              />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <DataWidget title="Max HR" value={workoutStats.maxHr} unit="bpm" />
+              <DataWidget
+                title="Max HR"
+                value={workoutStats.maxHr}
+                unit="bpm"
+              />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <DataWidget title="Calories" value={workoutStats.calories} unit="kcal" />
+              <DataWidget
+                title="Calories"
+                value={workoutStats.calories}
+                unit="kcal"
+              />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <DataWidget title="Duration" value={workoutStats.duration.toFixed(0)} unit="s" />
+              <DataWidget
+                title="Duration"
+                value={workoutStats.duration.toFixed(0)}
+                unit="s"
+              />
             </Grid>
           </>
         )}

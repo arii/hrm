@@ -75,7 +75,9 @@ class HeartRateService {
     return Math.round(totalCalories)
   }
 
-  private calculateTimeInZones(userSettings: UserSettings): Record<HrZone, number> {
+  private calculateTimeInZones(
+    userSettings: UserSettings
+  ): Record<HrZone, number> {
     const { maxHr } = userSettings
     if (!maxHr) {
       return {
