@@ -78,6 +78,7 @@ export type ServerMessage =
       payload: InitialStateSnapshotPayload
     }
   | { type: 'HRM_UPDATE'; payload: HrmMetric[] }
+  | { type: 'HRM_STATIC_UPDATE'; payload: HrmStaticMetadata[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }

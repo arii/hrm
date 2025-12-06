@@ -85,6 +85,8 @@ export const WebSocketProvider = ({
       }
       case 'HRM_UPDATE':
         return { ...state, hrmMetrics: message.payload }
+      case 'HRM_STATIC_UPDATE':
+        return { ...state, hrmStaticData: message.payload }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }
       case 'SPOTIFY_UPDATE':

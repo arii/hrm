@@ -180,6 +180,11 @@ const handleIncomingMessage = (
             ...staticData,
           } as HrmStaticMetadata
           hrmClients.set(clientId, updatedStaticData)
+          // Also broadcast the updated static data
+          broadcast({
+            type: 'HRM_STATIC_UPDATE',
+            payload: Array.from(hrmClients.values()),
+          })
         }
 
         broadcast({
