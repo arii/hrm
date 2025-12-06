@@ -23,6 +23,7 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -173,45 +174,30 @@ app
       }
     )
 
-    // --- New Token Update Route (Express Middleware) ---
-    expressApp.use(express.json()) // Ensure JSON body parsing is enabled
+    // Handle all Next.js routing (pages, API routes, etc.)
+    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Wait a moment for token to be written
+        setTimeout(async () => {
+          if (spotifyService) {
+            // Signal the service to reload tokens from disk
+            spotifyService.setRefreshToken('signal')
 
-    // We convert the Next.js API route to an Express route for process control
-    expressApp.post(
-      '/api/internal/token-delivery',
-      (req: Request, res: Response) => {
-        const secretHeader = req.headers['x-internal-token-secret'] || ''
-        const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
-        if (expected && secretHeader !== expected) {
-          logger.warn('Unauthorized attempt to access token-delivery endpoint.')
-          return res.status(401).json({ error: 'Unauthorized' })
-        }
-
-        if (!spotifyService || !spotifyService.isReady()) {
-          logger.warn(
-            'Token delivery received but Spotify service is not ready.'
-          )
-          return res.status(503).json({ error: 'Service unavailable' })
-        }
-        try {
-          // The method `setTokenPayload` is available on our initialized service.
-          // Casting to SpotifyPolling ensures type safety.
-          ;(spotifyService as SpotifyPolling).setTokenPayload(req.body)
-          logger.info(
-            { subject: req.body.sub },
-            'Received token-delivery and updated in-memory state.'
-          )
-          return res.status(200).json({ status: 'updated' })
-        } catch (e) {
-          logger.error({ err: e }, 'In-process token update failed')
-          return res.status(500).json({ error: 'Internal update failed' })
-        }
+            // Wait a bit for reload, then force poll
+            setTimeout(async () => {
+              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+                await spotifyService.forcePollAndBroadcast()
+              }
+            }, 1500)
+          }
+        }, 1000)
       }
-    )
-
-    // Handle all Next.js routing (pages, other API routes)
-    expressApp.use((req: Request, res: Response) => {
-      // Must ensure this comes *after* the custom Express route to avoid conflict.
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
