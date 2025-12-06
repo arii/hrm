@@ -175,7 +175,10 @@ const handleIncomingMessage = (
 
         // Update static metadata if provided
         if (existingClientData && Object.keys(staticData).length > 0) {
-          const updatedStaticData = { ...existingClientData, ...staticData }
+          const updatedStaticData = {
+            ...existingClientData,
+            ...staticData,
+          } as HrmStaticMetadata
           hrmClients.set(clientId, updatedStaticData)
         }
 
