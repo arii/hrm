@@ -45,7 +45,7 @@ export const getHrZoneProps = (
   }
 
   const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone: typeof HR_ZONES[keyof typeof HR_ZONES] = HR_ZONES.ZONE_1
+  let zone: (typeof HR_ZONES)[keyof typeof HR_ZONES] = HR_ZONES.ZONE_1
 
   for (const z of Object.values(HR_ZONES)) {
     if (percentageOfMax >= z.range[0] && percentageOfMax <= z.range[1]) {
