@@ -55,7 +55,12 @@ class HeartRateService {
       }
     }
 
-    if (Object.prototype.hasOwnProperty.call(this.session.timeInZones, currentZone)) {
+    if (
+      Object.prototype.hasOwnProperty.call(
+        this.session.timeInZones,
+        currentZone
+      )
+    ) {
       this.session.timeInZones[currentZone]++
     }
   }
