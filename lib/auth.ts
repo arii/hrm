@@ -1,16 +1,8 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
+import NextAuth, { Account, AuthOptions, Session, User } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
-
-// Extend the Session type to include accessToken and error
-declare module 'next-auth' {
-  interface Session {
-    accessToken?: string
-    error?: string
-  }
-}
 
 /**
  * @file NextAuth configuration for Spotify authentication.
@@ -196,14 +188,15 @@ export const authOptions: AuthOptions = {
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
-    async jwt({ token, account }: { token: JWT; account: Account | null }) {
+    async jwt({ token, account, user }: { token: JWT; account: Account | null; user: User | null }) {
       // 1. Initial sign-in
-      if (account) {
+      if (account && user) {
         const tokenData = {
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
+          id: user.id,
         }
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
@@ -264,6 +257,9 @@ export const authOptions: AuthOptions = {
       // Pass the updated token and error info to the session object
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
+      if (session.user) {
+        session.user.id = token.id
+      }
       return session
     },
   },
