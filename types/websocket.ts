@@ -6,25 +6,24 @@
 
 // --- Server Broadcast State Interfaces ---
 
-export interface HrmData {
+// New Interface for static user data (e.g., sent once per session)
+export interface HrmStaticMetadata {
   clientId: string
-  value: number
   maxHr: number
   name?: string
   age?: number
 }
 
-export type TimerMode = 'STOPWATCH' | 'TABATA'
-export type TimerPhase =
-  | 'IDLE'
-  | 'PREPARE'
-  | 'WORK'
-  | 'REST'
-  | 'COOLDOWN'
-  | 'RUNNING'
+// New Lean Interface for high-frequency broadcast
+export interface HrmMetric {
+  clientId: string
+  value: number // current BPM
+  percentMax: number // new calculated field (0-100)
+}
+
+import { TimerMode, TimerPhase } from './shared'
 
 export interface TimerData {
-  isRunning: boolean
   currentPhase: TimerPhase
   timeRemaining: number // Used for countdowns (Tabata, Prepare)
   timeElapsed: number // Used for count-ups (Stopwatch)
@@ -56,7 +55,7 @@ export interface SpotifyData {
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
 export interface InitialStateSnapshotPayload {
-  hrmData: HrmData[]
+  hrmData: HrmStaticMetadata[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
@@ -78,7 +77,7 @@ export type ServerMessage =
       type: 'INITIAL_STATE'
       payload: InitialStateSnapshotPayload
     }
-  | { type: 'HRM_UPDATE'; payload: HrmData[] }
+  | { type: 'HRM_UPDATE'; payload: HrmMetric[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
@@ -92,7 +91,9 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export type HrmInputData = Omit<Partial<HrmStaticMetadata>, 'clientId'> & {
+  value?: number | null
+}
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'

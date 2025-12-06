@@ -2,6 +2,7 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { HrmMetric, HrmStaticMetadata } from '@/types/websocket'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
@@ -9,10 +10,18 @@ import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus } = useWebSocket()
+  const { hrmMetrics, hrmStaticData, connectionStatus } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
-    return hrmData
+    const staticDataMap = new Map<string, HrmStaticMetadata>(
+      hrmStaticData.map((data) => [data.clientId, data])
+    )
+
+    return hrmMetrics
+      .map((metric) => {
+        const staticData = staticDataMap.get(metric.clientId)
+        return { ...metric, ...staticData }
+      })
       .filter((user) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
@@ -42,7 +51,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData])
+  }, [hrmMetrics, hrmStaticData])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

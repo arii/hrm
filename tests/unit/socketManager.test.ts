@@ -145,7 +145,6 @@ describe('WebSocket Manager Integration', () => {
       const timerUpdate = broadcastedMessages.find(
         (msg) => msg.type === 'TIMER_UPDATE'
       )
-      expect(timerUpdate?.payload?.isRunning).toBe(true)
       expect(timerUpdate?.payload?.currentPhase).toBe('PREPARE')
     })
 
@@ -167,43 +166,39 @@ describe('WebSocket Manager Integration', () => {
         (msg) => msg.type === 'TIMER_UPDATE'
       )
       expect(timerUpdates.length).toBeGreaterThanOrEqual(3)
-      expect(timerUpdates.at(-1)?.payload?.isRunning).toBe(true)
+      const lastPayload = timerUpdates.at(-1)?.payload
+      expect(lastPayload?.currentPhase).toBe('PREPARE')
     })
   })
 
   describe('State-Dependent UI Updates', () => {
-    it('should indicate timer as inactive when in IDLE phase', () => {
+    it('should be in IDLE phase initially', () => {
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
 
-    it('should indicate timer as active after START command', () => {
+    it('should be in PREPARE phase after START command', () => {
       tabataTimer.handleCommand('START')
-
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(true)
       expect(state.currentPhase).toBe('PREPARE')
     })
 
-    it('should indicate timer as inactive after PAUSE command', () => {
+    it('should be in a non-IDLE phase after PAUSE command', () => {
+      tabataTimer.setMode('TABATA')
       tabataTimer.handleCommand('START')
-      jest.advanceTimersByTime(2000)
-
+      jest.advanceTimersByTime(6000) // PREPARE -> WORK
       tabataTimer.handleCommand('PAUSE')
 
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
+      expect(state.currentPhase).toBe('WORK') // Should remain in the phase it was paused in
     })
 
-    it('should indicate timer as inactive after STOP command', () => {
+    it('should be in IDLE phase after STOP command', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
-
       tabataTimer.handleCommand('STOP')
 
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
   })
@@ -240,7 +235,7 @@ describe('WebSocket Manager Integration', () => {
       const spotifyState = spotifyService.getState()
 
       expect(timerState.mode).toBe('STOPWATCH')
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(spotifyState).toHaveProperty('trackName')
       expect(spotifyState).toHaveProperty('isPlaying')
     })
@@ -249,7 +244,7 @@ describe('WebSocket Manager Integration', () => {
       tabataTimer.handleCommand('START')
       await spotifyService.handleCommand('PLAY', 'test_device_id')
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(mockSdk.player.startResumePlayback).toHaveBeenCalled()
     })
 
@@ -299,7 +294,6 @@ describe('WebSocket Manager Integration', () => {
 
       // Should end in consistent state
       expect(state.mode).toBe('TABATA')
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
 
@@ -307,7 +301,7 @@ describe('WebSocket Manager Integration', () => {
       tabataTimer.handleCommand('START')
       await spotifyService.handleCommand('NEXT', 'test_device_id')
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(mockSdk.player.skipToNext).toHaveBeenCalled()
     })
 
@@ -317,7 +311,7 @@ describe('WebSocket Manager Integration', () => {
       tabataTimer.handleCommand('STOP')
       await spotifyService.handleCommand('PAUSE', 'test_device_id')
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(false)
+      expect(timerState.currentPhase).toBe('IDLE')
       expect(mockSdk.player.pausePlayback).toHaveBeenCalled()
     })
   })

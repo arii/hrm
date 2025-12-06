@@ -163,7 +163,6 @@ describe('Services Integration', () => {
       expect(broadcastedMessages.length).toBeGreaterThan(0)
       const lastMessage = broadcastedMessages[broadcastedMessages.length - 1]
       if (lastMessage?.type === 'TIMER_UPDATE') {
-        expect(lastMessage.payload.isRunning).toBe(true)
         expect(lastMessage.payload.currentPhase).toBe('PREPARE')
       } else {
         expect(lastMessage?.type).toBe('TIMER_UPDATE')
@@ -198,7 +197,6 @@ describe('Services Integration', () => {
   describe('State-Dependent UI Updates', () => {
     it('should indicate timer as inactive when in IDLE phase', () => {
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
 
@@ -206,7 +204,6 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
 
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(true)
       expect(state.currentPhase).toBe('PREPARE')
     })
 
@@ -217,7 +214,8 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('PAUSE')
 
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
+      const activePhases = ['RUNNING', 'WORK', 'REST', 'PREPARE']
+      expect(activePhases.includes(state.currentPhase)).toBe(true) // Paused but phase is active
     })
 
     it('should indicate timer as inactive after STOP command', () => {
@@ -227,7 +225,6 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('STOP')
 
       const state = tabataTimer.getState()
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
   })
@@ -269,7 +266,7 @@ describe('Services Integration', () => {
       const spotifyState = spotifyService.getState()
 
       expect(timerState.mode).toBe('STOPWATCH')
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(spotifyState).toHaveProperty('trackName')
       expect(spotifyState).toHaveProperty('isPlaying')
     })
@@ -282,7 +279,7 @@ describe('Services Integration', () => {
       await spotifyService.handleCommand('PLAY', 'test_device_id')
 
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(mockSdk.player.startResumePlayback).toHaveBeenCalled()
     })
 
@@ -332,7 +329,6 @@ describe('Services Integration', () => {
 
       // Should end in consistent state
       expect(state.mode).toBe('TABATA')
-      expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
 
@@ -342,7 +338,7 @@ describe('Services Integration', () => {
       await spotifyService.handleCommand('NEXT', 'test_device_id')
 
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(true)
+      expect(timerState.currentPhase).toBe('PREPARE')
       expect(mockSdk.player.skipToNext).toHaveBeenCalled()
     })
 
@@ -354,7 +350,7 @@ describe('Services Integration', () => {
       await spotifyService.handleCommand('PAUSE', 'test_device_id')
 
       const timerState = tabataTimer.getState()
-      expect(timerState.isRunning).toBe(false)
+      expect(timerState.currentPhase).toBe('IDLE')
       expect(mockSdk.player.pausePlayback).toHaveBeenCalled()
     })
   })

@@ -11,7 +11,8 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmData,
+  HrmStaticMetadata,
+  HrmMetric,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -32,7 +33,8 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmClients = new Map<string, HrmData>()
+const hrmClients = new Map<string, HrmStaticMetadata>()
+const hrmValues = new Map<string, number>() // Separate map for real-time values
 
 interface Services {
   tabataService: TabataTimer
@@ -65,14 +67,14 @@ const initSocketManager = (
     })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const defaultClientData: HrmData = {
+    const defaultClientData: HrmStaticMetadata = {
       clientId,
-      value: 0,
       maxHr: 185,
       // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
     }
     hrmClients.set(clientId, defaultClientData)
+    hrmValues.set(clientId, 0) // Initialize real-time value separately
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), clientId)
@@ -81,9 +83,10 @@ const initSocketManager = (
     extWs.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
       hrmClients.delete(clientId)
+      hrmValues.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
-        payload: Array.from(hrmClients.values()),
+        payload: buildHrmMetrics(),
       })
     })
   })
@@ -104,6 +107,18 @@ const initSocketManager = (
 /**
  * Handles incoming JSON messages from client applications.
  */
+const buildHrmMetrics = (): HrmMetric[] => {
+  return Array.from(hrmClients.entries()).map(([clientId, staticData]) => {
+    const value = hrmValues.get(clientId) || 0
+    const percentMax = staticData.maxHr > 0 ? (value / staticData.maxHr) * 100 : 0
+    return {
+      clientId,
+      value,
+      percentMax: Math.round(percentMax),
+    }
+  })
+}
+
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   jsonMessage: string,
@@ -149,30 +164,23 @@ const handleIncomingMessage = (
       }
 
       case 'HRM_INPUT': {
+        const { value, ...staticData } = message.data
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
-        if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
-          const updatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmClients.set(clientId, {
-            ...existingClientData,
-            ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+
+        // Update real-time value if provided
+        if (typeof value === 'number') {
+          hrmValues.set(clientId, value)
         }
+
+        // Update static metadata if provided
+        if (existingClientData && Object.keys(staticData).length > 0) {
+          const updatedStaticData = { ...existingClientData, ...staticData }
+          hrmClients.set(clientId, updatedStaticData)
+        }
+
         broadcast({
           type: 'HRM_UPDATE',
-          payload: Array.from(hrmClients.values()),
+          payload: buildHrmMetrics(),
         })
         break
       }

@@ -22,7 +22,6 @@ type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 // Internal state structure
 interface DualModeTimerState {
   mode: TimerMode
-  isRunning: boolean
   currentPhase: TimerPhase
   timeElapsed: number // For Stopwatch mode
   timeRemaining: number // For Tabata mode
@@ -41,7 +40,6 @@ class TabataTimer {
 
   private timerState: DualModeTimerState = {
     mode: 'TABATA', // Default mode
-    isRunning: false,
     currentPhase: 'IDLE',
     timeElapsed: 0,
     timeRemaining: 0,
@@ -54,6 +52,11 @@ class TabataTimer {
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+  }
+
+  private isActive(): boolean {
+    const activePhases: TimerPhase[] = ['PREPARE', 'RUNNING', 'WORK', 'REST']
+    return activePhases.includes(this.timerState.currentPhase)
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
@@ -90,7 +93,6 @@ class TabataTimer {
   // Adapt getState to return the expected TimerData structure for the front-end
   public getState(): TimerData {
     return {
-      isRunning: this.timerState.isRunning,
       currentPhase: this.timerState.currentPhase,
       timeRemaining: this.timerState.timeRemaining,
       timeElapsed: this.timerState.timeElapsed,
@@ -107,7 +109,7 @@ class TabataTimer {
   // --- Core Timer Logic ---
 
   private updateTimer = () => {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (!this.isActive() || !this.startTime) return
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
@@ -137,39 +139,39 @@ class TabataTimer {
   }
 
   private startTimer() {
-    if (this.timerState.isRunning) return
+    // Guard against multiple intervals running.
+    if (this.timerInterval) return
 
-    this.timerState.isRunning = true
     this.startTime = Date.now()
 
-    // --- UNIVERSAL PREPARE LOGIC ---
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
       this.timerState.currentPhase = 'PREPARE'
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
-    // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
+    // If resuming, the phase and timeRemaining are already set, so we just start the interval.
 
     this.timerInterval = setInterval(this.updateTimer, 1000)
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private pauseTimer() {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (!this.isActive() || !this.startTime) return
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
       this.timerState.currentPhase === 'RUNNING'
     ) {
       this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
-      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+      this.timerState.currentPhase = 'IDLE' // Stopwatch pause resets phase to IDLE
     }
+    // For Tabata, we just stop the interval, preserving the phase and timeRemaining.
 
-    this.timerState.isRunning = false
-    if (this.timerInterval) clearInterval(this.timerInterval)
-    this.timerInterval = null
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval)
+      this.timerInterval = null
+    }
     this.startTime = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
@@ -181,7 +183,6 @@ class TabataTimer {
     // Full reset of all time and cycle variables
     this.timerState = {
       ...this.timerState,
-      isRunning: false,
       currentPhase: 'IDLE',
       timeElapsed: 0,
       timeRemaining:
@@ -206,7 +207,7 @@ class TabataTimer {
 
     // If the timer is not running, update timeRemaining to reflect the new work duration.
     // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
-    if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
+    if (!this.isActive() && this.timerState.mode === 'TABATA') {
       this.timerState.timeRemaining = sanitizedWorkDuration
     }
 
@@ -275,7 +276,7 @@ class TabataTimer {
 
   // --- Mode Switching ---
   public setMode(mode: TimerMode) {
-    if (this.timerState.isRunning) this.stopTimer()
+    if (this.isActive()) this.stopTimer()
     this.timerState.mode = mode
     this.timerState.currentPhase = 'IDLE'
     this.timerState.timeRemaining =

@@ -12,7 +12,8 @@ import {
 } from 'react'
 import {
   ClientCommandMessage,
-  HrmData,
+  HrmMetric,
+  HrmStaticMetadata,
   SpotifyData,
   TimerData,
   ServerMessage,
@@ -20,16 +21,17 @@ import {
 import { getWebSocketURL } from '../utils/urls'
 
 interface AppState {
-  hrmData: HrmData[]
+  hrmMetrics: HrmMetric[]
+  hrmStaticData: HrmStaticMetadata[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
 }
 
 const INITIAL_STATE: AppState = {
-  hrmData: [],
+  hrmMetrics: [],
+  hrmStaticData: [],
   timerData: {
-    isRunning: false,
     currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
@@ -77,10 +79,12 @@ export const WebSocketProvider = ({
   // Unified State Object managed by a reducer
   const reducer = (state: AppState, message: ServerMessage): AppState => {
     switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
+      case 'INITIAL_STATE': {
+        const { hrmData, ...rest } = message.payload
+        return { ...state, ...rest, hrmStaticData: hrmData }
+      }
       case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
+        return { ...state, hrmMetrics: message.payload }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }
       case 'SPOTIFY_UPDATE':
