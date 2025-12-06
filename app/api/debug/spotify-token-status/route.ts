@@ -1,6 +1,7 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { SpotifyToken } from '@prisma/client'
 
 export async function GET() {
   try {
@@ -12,7 +13,8 @@ export async function GET() {
     // We need to get a valid token to force a load from the DB
     await tokenManager.getValidAccessToken()
 
-    const currentToken = (tokenManager as any).currentToken // Access private property for debugging
+    const currentToken = (tokenManager as { currentToken: SpotifyToken | null })
+      .currentToken // Access private property for debugging
 
     if (!currentToken) {
       return NextResponse.json({ status: 'no_token_found' }, { status: 200 })
