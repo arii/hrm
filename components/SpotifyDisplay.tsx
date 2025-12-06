@@ -20,7 +20,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import Cookies from 'js-cookie'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 
 interface SpotifyDevice {
