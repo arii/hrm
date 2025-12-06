@@ -1,148 +1,127 @@
+/* style.css - Modern SaaS Theme */
 :root {
-    --primary: #333;
-    --strava-orange: #FC5200;
-    --bg-light: #f9f9f9;
-    --white: #ffffff;
-    --border: #e0e0e0;
+  --primary: #FC5200; /* Strava Orange for accents */
+  --dark: #1F1F1F;
+  --light: #F7F7F7;
+  --white: #FFFFFF;
+  --text-main: #333333;
+  --text-muted: #666666;
+  --radius: 8px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    margin: 0;
-    padding: 0;
-    color: var(--primary);
-    background: var(--bg-light);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-main);
+  background: var(--white);
 }
 
+/* Typography */
+h1, h2, h3 { color: var(--dark); font-weight: 700; line-height: 1.2; }
+h1 { font-size: 3rem; margin-bottom: 1rem; }
+h2 { font-size: 2.25rem; margin-bottom: 1rem; text-align: center; }
+p { margin-bottom: 1.5rem; color: var(--text-muted); }
+a { text-decoration: none; color: inherit; transition: color 0.2s; }
+
+/* Layout Utilities */
 .container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
-/* Header */
-header {
-    background: var(--primary);
-    color: var(--white);
-    padding: 1rem 0;
+.section { padding: 5rem 0; }
+.bg-light { background-color: var(--light); }
+
+/* Components */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s;
 }
+.btn:hover { transform: translateY(-1px); }
 
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #eaeaea;
 }
-
-header h1 { margin: 0; font-size: 1.25rem; }
-
-nav a {
-    color: #ccc;
-    text-decoration: none;
-    margin-left: 20px;
-    font-size: 0.9rem;
-}
-
-nav a.active, nav a:hover { color: var(--white); }
+.brand { font-size: 1.25rem; font-weight: 800; color: var(--dark); }
+.nav-links a { margin-left: 2rem; font-size: 0.9rem; font-weight: 500; }
+.nav-links a:hover { color: var(--primary); }
 
 /* Hero */
 .hero {
-    background: var(--white);
-    text-align: center;
-    padding: 3rem 0;
-    border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6rem 2rem;
+  gap: 4rem;
+}
+.hero-content { flex: 1; }
+.hero-image { flex: 1; box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden; }
+.hero-image img { width: 100%; height: auto; display: block; }
+
+/* Connect Button - Official Strava Style */
+.btn-connect {
+  display: inline-block;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+.btn-connect img { height: 48px; }
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+.feature-card {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid #eee;
 }
 
-.hero h2 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-.hero-sub { font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto 2rem; }
-
-.cta-button {
-    display: inline-block;
-    background: var(--strava-orange);
-    color: var(--white);
-    padding: 12px 24px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: bold;
-    margin-bottom: 2rem;
+/* Steps/Screenshots */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 3rem;
 }
-
-.screenshot-hero {
-    width: 100%;
-    max-width: 800px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* Tutorial Grid */
-.tutorial { padding: 3rem 0; }
-.tutorial h2 { text-align: center; margin-bottom: 2rem; }
-
-.tutorial-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-}
-
-.step-card {
-    background: var(--white);
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    position: relative;
-}
-
-.step-number {
-    position: absolute;
-    top: -15px;
-    left: -15px;
-    width: 40px;
-    height: 40px;
-    background: var(--primary);
-    color: var(--white);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-.screenshot-step {
-    width: 100%;
-    height: auto;
-    border: 1px solid #eee;
-    margin-top: 1rem;
-    border-radius: 4px;
-}
-
-/* Documentation Pages */
-.doc-container {
-    background: var(--white);
-    margin: 2rem auto;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.highlight-box {
-    background: #fff8f5; /* Light Orange tint */
-    border-left: 4px solid var(--strava-orange);
-    padding: 1rem;
-    margin: 2rem 0;
+.step-card { text-align: center; }
+.step-image {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
+  border: 1px solid #eee;
 }
 
 /* Footer */
 footer {
-    background: var(--primary);
-    color: #888;
-    padding: 2rem 0;
-    text-align: center;
-    margin-top: auto;
-    font-size: 0.9rem;
+  background: var(--dark);
+  color: #888;
+  padding: 4rem 2rem;
+  text-align: center;
+  font-size: 0.9rem;
 }
-
-.brand-compliance { margin-bottom: 1rem; }
-.strava-logo-text { color: var(--strava-orange); font-weight: bold; font-family: sans-serif; }
-.legal-nav a { color: #e0e0e0; text-decoration: none; font-weight: 500; }
-.legal-nav a:hover { color: var(--white); text-decoration: underline; }
-.separator { margin: 0 8px; color: #888; }
+footer a { color: #aaa; text-decoration: underline; }
+footer .legal-links { margin-bottom: 2rem; }
+footer .legal-links a { margin: 0 1rem; text-decoration: none; }

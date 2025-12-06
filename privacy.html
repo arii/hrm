@@ -3,55 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - HRM Dashboard</title>
+    <title>Privacy Policy - HRM Monitor</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Specific overrides for text-heavy pages */
+        .policy-content {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin: 2rem auto;
+            max-width: 900px;
+        }
+        .policy-content h2 { text-align: left; margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+        .policy-content h3 { color: var(--text-main); margin-top: 1.5rem; }
+        .policy-content ul { margin-left: 2rem; margin-bottom: 1.5rem; color: var(--text-muted); }
+        .policy-content li { margin-bottom: 0.5rem; }
+        .last-updated { font-size: 0.9rem; color: #888; margin-bottom: 2rem; }
+    </style>
 </head>
-<body>
-    <header>
-        <div class="container header-container">
-            <h1>HRM Dashboard</h1>
-            <nav>
+<body class="bg-light">
+
+    <nav class="navbar">
+        <div class="container" style="display:flex; width:100%; justify-content:space-between; align-items:center;">
+            <a href="index.html" class="brand">HRM Monitor</a>
+            <div class="nav-links">
                 <a href="index.html">Home</a>
-                <a href="privacy.html" class="active">Privacy</a>
-                <a href="terms.html">Terms</a>
-            </nav>
+                <a href="mailto:support@your-domain.com">Contact</a>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="container doc-container">
-        <h1>Privacy Policy</h1>
-        <p class="meta">Last Updated: December 3, 2025</p>
+    <div class="container">
+        <div class="policy-content">
+            <h1>Privacy Policy</h1>
+            <p class="last-updated">Last Updated: December 5, 2025</p>
 
-        <section>
-            <h2>1. Introduction</h2>
-            <p>The HRM Dashboard ("we", "us") is designed to prioritize your privacy. We process your health data locally on your device.</p>
-        </section>
+            <p>
+                HRM Monitor ("we," "our," or "us") is committed to protecting your privacy.
+                This Privacy Policy explains how we collect, use, and safeguard your information when you use our
+                application and integrate with third-party services like Strava and Spotify.
+            </p>
 
-        <section>
-            <h2>2. Data Collection & Usage</h2>
+            <h2>1. Data Collection & Usage</h2>
+            <p>We believe in <strong>Data Minimization</strong>. We only process data necessary for the functionality of the app:</p>
             <ul>
-                <li><strong>Heart Rate Data:</strong> Streamed via Bluetooth for real-time visualization. This data is processed in your browser's memory and is not stored on our servers.</li>
-                <li><strong>Third-Party Services (Strava, Spotify):</strong> If you connect with a third-party service, we may access your public profile and settings to personalize your experience.</li>
+                <li><strong>Health Data:</strong> We read real-time Heart Rate (HR) data from your connected Bluetooth Low Energy (BLE) devices to visualize your workout zones.</li>
+                <li><strong>Strava Profile:</strong> We access your Strava profile solely to display your avatar and name on your personal dashboard.</li>
+                <li><strong>Spotify Activity:</strong> We access your playback state (current track) to visualize the beat and control tempo.</li>
             </ul>
-            <p><strong>We do not sell, license, or share your data with third parties or advertisers.</strong></p>
-        </section>
 
-        <section>
-            <h2>3. Data Retention</h2>
-            <p>We practice data minimization. Health data is discarded immediately after your session ends unless you explicitly choose to upload it to a connected third-party service.</p>
-        </section>
+            <h2>2. Data Retention and Deletion</h2>
+            <p><strong>We do not store your health data.</strong></p>
+            <p>
+                All heart rate and workout data is processed in real-time on your device or our ephemeral server
+                session and is discarded immediately when you close the application or end the session.
+            </p>
+            <h3>Account Disconnection</h3>
+            <p>
+                You may disconnect your Strava or Spotify accounts at any time via the "Settings" menu in the app.
+                Upon disconnection, all authentication tokens are immediately permanently deleted from our system.
+                You may also revoke access directly via the <a href="https://www.strava.com/settings/apps" target="_blank">Strava Apps Settings</a>
+                or <a href="https://www.spotify.com/account/apps/" target="_blank">Spotify Apps Settings</a> pages.
+            </p>
 
-        <section>
-            <h2>4. Contact & Support</h2>
-            <p>For privacy inquiries or to request data deletion, please contact:</p>
-            <p><a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a></p>
-        </section>
-    </main>
+            <h2>3. Third-Party Services & Attribution</h2>
+            <p>Our service integrates with the following platforms. Your use of these integrations is subject to their respective policies:</p>
+
+            <h3>Strava & Garmin Data</h3>
+            <p>
+                We use the Strava API to sync and display activity data.
+                In compliance with Strava API Brand Guidelines:
+            </p>
+            <ul>
+                <li>We do not use Strava data for any purpose other than providing the HRM Monitor functionality to you.</li>
+                <li><strong>Garmin Attribution:</strong> Some activity data displayed in this application may originate from Garmin® devices.
+                    We acknowledge that this data is sourced from Garmin via Strava. Garmin is a trademark of Garmin Ltd. or its subsidiaries.</li>
+            </ul>
+
+            <h3>Spotify</h3>
+            <p>
+                Music metadata (Album Art, Track Name) is displayed using the Spotify Web API.
+                We do not manipulate, store, or redistribute this content.
+                Use of Spotify features is subject to the <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank">Spotify Privacy Policy</a>.
+            </p>
+
+            <h2>4. AI/ML Prohibitions</h2>
+            <p>
+                We explicitly guarantee that <strong>no user data</strong> (including Heart Rate data, Strava activity history, or Spotify listening habits)
+                is used to train Artificial Intelligence (AI) or Machine Learning (ML) models, either by us or third parties.
+            </p>
+
+            <h2>5. Contact Us</h2>
+            <p>
+                If you have any questions about this Privacy Policy or wish to exercise your data rights, please contact us at:
+                <br><br>
+                <strong>Email:</strong> <a href="mailto:support@your-domain.com">support@your-domain.com</a>
+            </p>
+        </div>
+    </div>
 
     <footer>
-        <div class="container footer-content">
-            <p class="copyright">&copy; 2025 Ariel Anders.</p>
+        <div class="container">
+            <p>&copy; 2025 HRM App. All rights reserved.</p>
         </div>
     </footer>
+
 </body>
 </html>
