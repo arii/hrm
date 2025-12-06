@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import { heartRateService } from '../services/HeartRateService.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -161,10 +162,14 @@ const handleIncomingMessage = (
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmClients.set(clientId, {
+            const updatedClientData = {
             ...existingClientData,
             ...updatedClientProperties,
-          })
+            }
+            hrmClients.set(clientId, updatedClientData)
+            if (updatedClientData.value && updatedClientData.maxHr) {
+              heartRateService.addHrReading(updatedClientData.value, updatedClientData.maxHr);
+            }
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
             hrmClients.get(clientId)

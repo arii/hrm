@@ -36,8 +36,7 @@ const HrmTiles = () => {
             <HrTile
               name={user.name || ''}
               bpm={user.value}
-              percentMax={hrZoneProps.percentage}
-              background={hrZoneProps.progressColor}
+              hrZoneProps={hrZoneProps}
             />
           </Grid>
         )

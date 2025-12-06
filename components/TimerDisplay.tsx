@@ -222,12 +222,12 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
+            fontSize: { xs: '7rem', sm: '9rem', md: '12rem' },
+            fontWeight: 900,
+            letterSpacing: '0.15rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 25px ${phaseColor}90, 0 0 40px ${phaseColor}70`,
           }}
         >
           {displayTime}

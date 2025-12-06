@@ -6,26 +6,28 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
+import { HrZoneProps } from '@/utils/visualization';
 
 export interface HrTileProps {
   name: string
   bpm: number
-  percentMax: number // 0-100
-  background: string // hex color
+  hrZoneProps: HrZoneProps;
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({ name, bpm, hrZoneProps }: HrTileProps) => {
+  const { percentage, progressColor, gradient, glow } = hrZoneProps;
+
   return (
     <Tooltip
-      title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
+      title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentage}%`}
       arrow
     >
       <StyledCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
+        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentage}% of maximum`}
         sx={{
-          backgroundColor: background,
+          backgroundColor: progressColor,
           color: '#fff',
           textAlign: 'center',
           minHeight: 180,
@@ -33,11 +35,16 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          boxShadow: `0 10px 20px -5px ${progressColor}50, 0 4px 5px -2px ${progressColor}30`,
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: `0 14px 28px -7px ${progressColor}70, 0 6px 8px -3px ${progressColor}50`,
+          },
         }}
       >
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
-            {/* Giant Percentage - should dominate the tile */}
             <Typography
               data-testid="live-hr-percent"
               sx={{
@@ -46,10 +53,13 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
                 fontWeight: 900,
                 lineHeight: 0.85,
                 my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                background: `linear-gradient(45deg, ${hrZoneProps.progressColor} 30%, #ffffff 120%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: `drop-shadow(0 0 10px ${hrZoneProps.progressColor}90)`,
               }}
             >
-              {percentMax}%
+              {percentage}%
             </Typography>
             <Typography
               data-testid="live-hr-value"
@@ -58,7 +68,7 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
                 fontWeight: 600,
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
                 transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
+                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
               }}
             >
               {bpm} BPM
@@ -70,10 +80,10 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
                   fontWeight: 700,
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
-                  mt: 1, // Add some margin top to separate from BPM
-                  textOverflow: 'ellipsis', // Truncate with ellipsis
-                  whiteSpace: 'nowrap', // Prevent wrapping
-                  overflow: 'hidden', // Hide overflow content
+                  mt: 1,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
                 }}
               >
                 {name}
@@ -86,14 +96,12 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
   )
 }
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  // Re-render only if display data (name, BPM, or zone-derived props) changes.
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
-    prevProps.background === nextProps.background &&
-    prevProps.percentMax === nextProps.percentMax
+    prevProps.hrZoneProps.progressColor === nextProps.hrZoneProps.progressColor &&
+    prevProps.hrZoneProps.percentage === nextProps.hrZoneProps.percentage
   )
 }
 

@@ -21,8 +21,10 @@ export const HR_ZONES = [
     name: 'Warm-up',
     min: 0.5,
     color: 'text-blue-400',
-    progressColor: '#3b82f6', // Darker blue
-    bgColor: '#3b82f6', // Darker blue
+    progressColor: '#3b82f6',
+    bgColor: '#3b82f6',
+    gradient: 'from-blue-400 to-blue-500',
+    glow: 'shadow-blue-500/50',
   },
   {
     name: 'Fat Burn',
@@ -30,13 +32,17 @@ export const HR_ZONES = [
     color: 'text-green-500',
     progressColor: '#22c55e',
     bgColor: '#4CAF50',
+    gradient: 'from-green-400 to-green-500',
+    glow: 'shadow-green-500/50',
   },
   {
     name: 'Cardio',
     min: 0.7,
     color: 'text-yellow-500',
-    progressColor: '#d97706', // Darker orange/yellow
-    bgColor: '#d97706', // Darker orange/yellow
+    progressColor: '#d97706',
+    bgColor: '#d97706',
+    gradient: 'from-yellow-400 to-yellow-500',
+    glow: 'shadow-yellow-500/50',
   },
   {
     name: 'Peak',
@@ -44,6 +50,8 @@ export const HR_ZONES = [
     color: 'text-red-500',
     progressColor: '#ef4444',
     bgColor: '#F44336',
+    gradient: 'from-red-400 to-red-500',
+    glow: 'shadow-red-500/50',
   },
   {
     name: 'Max',
@@ -51,6 +59,8 @@ export const HR_ZONES = [
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
+    gradient: 'from-purple-500 to-purple-600',
+    glow: 'shadow-purple-600/50',
   },
 ]
 
