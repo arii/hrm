@@ -271,7 +271,7 @@ jobs:
               echo "" >> "$COMMENT_FILE"
               echo "### ${test_name} Log" >> "$COMMENT_FILE"
               echo '```' >> "$COMMENT_FILE"
-              tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" >> "$COMMENT_FILE"
+              tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g' >> "$COMMENT_FILE"
               echo '```' >> "$COMMENT_FILE"
             else
               echo "" >> "$COMMENT_FILE"
