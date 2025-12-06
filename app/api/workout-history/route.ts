@@ -11,7 +11,7 @@ async function getHistory(): Promise<WorkoutHistory> {
   try {
     const data = await fs.readFile(historyFilePath, 'utf-8')
     return JSON.parse(data)
-  } catch (error) {
+  } catch (_error) {
     return []
   }
 }

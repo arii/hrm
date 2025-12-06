@@ -34,9 +34,7 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 })
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const { volume } = useVolumePreference() // Get volume state
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()

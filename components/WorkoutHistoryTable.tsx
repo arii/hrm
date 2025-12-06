@@ -8,7 +8,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Typography,
 } from '@mui/material'
 import { WorkoutHistory } from '@/types'
 import { HR_ZONES } from '@/utils/visualization'

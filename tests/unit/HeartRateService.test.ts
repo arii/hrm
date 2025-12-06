@@ -1,6 +1,5 @@
 // tests/unit/HeartRateService.test.ts
 import { heartRateService } from '@/services/HeartRateService'
-import { HR_ZONES } from '@/utils/visualization'
 
 describe('HeartRateService', () => {
   beforeEach(() => {
