@@ -325,30 +325,29 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
-    }
-
-    if (command === 'GET_DEVICES') {
-      this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        this.logSpotifyCommandError(command, error)
-      }
-    })()
+    if (command === 'GET_DEVICES') {
+      await this.refreshDevices()
+      return
+    }
+
+    try {
+      await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+      // Fire-and-forget poll for faster UI update
+      setTimeout(() => this.getCurrentlyPlaying(), 500)
+    } catch (error) {
+      this.logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(
