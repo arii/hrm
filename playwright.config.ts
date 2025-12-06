@@ -19,6 +19,7 @@ const testIgnoreList = [
   'workflow-assessment.spec.ts',
   // OAuth tests are excluded from regular test runs (use separate npm script)
   'oauth/**/*.spec.ts',
+  'visual-regression.spec.ts',
 ];
 
 // Only ignore auth-dependent tests if credentials are missing

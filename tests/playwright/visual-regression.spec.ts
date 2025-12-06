@@ -118,7 +118,7 @@ test.describe('Visual Regression Tests', () => {
     }
   })
 
-  test.skip('Dashboard - main viewer page', async () => {
+  test('Dashboard - main viewer page', async () => {
     test.setTimeout(WAIT_TIMEOUTS.LONG * 2)
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
@@ -172,7 +172,7 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test.skip('Dashboard with active timer', async () => {
+  test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
