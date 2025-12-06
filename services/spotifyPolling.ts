@@ -137,7 +137,9 @@ export class SpotifyPolling {
    * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
   public async setToken(tokenPayload: SpotifyTokenPayload): Promise<void> {
-    logger.debug('Spotify token received. Saving to database and reloading SDK.')
+    logger.debug(
+      'Spotify token received. Saving to database and reloading SDK.'
+    )
     await this.tokenManager.saveToken(tokenPayload)
     // After saving, re-initialize the SDK with the new token.
     await this.initializeSdk()
