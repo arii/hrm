@@ -92,7 +92,9 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export interface HrmInputData extends Omit<Partial<HrmStaticMetadata>, 'clientId'> {
+  value?: number | null
+}
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'

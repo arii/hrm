@@ -9,10 +9,16 @@ import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus } = useWebSocket()
+  const { hrmMetrics, hrmStaticData, connectionStatus } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
-    return hrmData
+    return hrmMetrics
+      .map((metric) => {
+        const staticData = hrmStaticData.find(
+          (user) => user.clientId === metric.clientId
+        )
+        return { ...metric, ...staticData }
+      })
       .filter((user) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
@@ -42,7 +48,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData])
+  }, [hrmMetrics, hrmStaticData])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

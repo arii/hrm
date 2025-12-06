@@ -83,7 +83,7 @@ const initSocketManager = (
       hrmClients.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
-        payload: Array.from(hrmClients.values()),
+        payload: [],
       })
     })
   })

@@ -142,6 +142,8 @@ app
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
+      hrmStaticData: [], // Placeholder, will be populated by socketManager
+      hrmMetrics: [], // Placeholder, will be populated by socketManager
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
