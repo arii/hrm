@@ -19,9 +19,9 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import Cookies from 'js-cookie'
+import { useSession } from 'next-auth/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import SpotifyLoginButton from './SpotifyLoginButton'
+import { login, logout } from '@/services/authService'
 
 interface SpotifyDevice {
   id: string
@@ -35,14 +35,8 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const accessToken = Cookies.get('spotify_access_token')
-
-  const handleLogout = () => {
-    Cookies.remove('spotify_access_token')
-    Cookies.remove('spotify_refresh_token')
-    window.location.reload()
-  }
-
+  const { data: session } = useSession()
+  console.log('spotifyData.trackName:', spotifyData.trackName)
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -107,7 +101,16 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn = Boolean(accessToken) && Boolean(spotifyAuthenticated)
+  const spotifyLoggedIn =
+    Boolean(session?.accessToken) && Boolean(spotifyAuthenticated)
+  console.log(
+    'spotifyLoggedIn:',
+    spotifyLoggedIn,
+    'session?.accessToken:',
+    session?.accessToken,
+    'spotifyAuthenticated:',
+    spotifyAuthenticated
+  )
 
   useEffect(() => {
     if (spotifyLoggedIn && spotifyData.trackName) {
@@ -174,6 +177,14 @@ const SpotifyDisplay = () => {
     setDeviceMenuAnchor(null)
   }
 
+  const handleSpotifyLogin = () => {
+    login()
+  }
+
+  const handleSpotifyLogout = () => {
+    logout()
+  }
+
   if (!spotifyLoggedIn) {
     return (
       <Box
@@ -195,7 +206,15 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <SpotifyLoginButton />
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleSpotifyLogin}
+          sx={{ px: 4, py: 1 }}
+          data-testid="login-button"
+        >
+          🎵 Login with Spotify
+        </Button>
       </Box>
     )
   }
@@ -370,7 +389,7 @@ const SpotifyDisplay = () => {
           <Button
             variant="outlined"
             size="small"
-            onClick={handleLogout}
+            onClick={handleSpotifyLogout}
             sx={{
               color: 'common.white',
               borderColor: 'grey.600',

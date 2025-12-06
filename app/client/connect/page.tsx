@@ -7,7 +7,6 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
 import ConnectView from './ConnectView'
-import { getCsrfToken } from 'next-auth/react'
 
 // Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
@@ -119,14 +118,7 @@ export default function ConnectPage() {
         // Also clear local storage if used
         localStorage.clear()
 
-        const csrfToken = await getCsrfToken()
-        const response = await fetch(API_DEBUG_RESET, {
-          method: 'POST',
-          body: JSON.stringify({ csrfToken }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+        const response = await fetch(API_DEBUG_RESET, { method: 'POST' })
         const data = await response.json()
         alert(data.message)
         window.location.reload() // Reload to reflect changes

@@ -1,113 +1,85 @@
 // components/UserProfile.tsx
 'use client'
 import React, { useEffect, useReducer } from 'react'
-
-interface User {
-  id: number
-  name: string
-  username: string
-  email: string
-}
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
+import Typography from '@mui/material/Typography'
+import CircularProgress from '@mui/material/CircularProgress'
+import Alert from '@mui/material/Alert'
 
 interface State {
   loading: boolean
-  user: User | null
+  data: { name?: string; email?: string } | null
   error: string | null
 }
 
 type Action =
   | { type: 'FETCH_INIT' }
-  | { type: 'FETCH_SUCCESS'; payload: User }
+  | { type: 'FETCH_SUCCESS'; payload: { name?: string; email?: string } }
   | { type: 'FETCH_FAILURE'; payload: string }
 
 const initialState: State = {
-  loading: false,
-  user: null,
+  loading: true,
+  data: null,
   error: null,
 }
 
-const dataFetchReducer = (state: State, action: Action): State => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'FETCH_INIT':
-      return {
-        ...state,
-        loading: true,
-        error: null,
-      }
+      return { ...state, loading: true, error: null }
     case 'FETCH_SUCCESS':
-      return {
-        ...state,
-        loading: false,
-        user: action.payload,
-      }
+      return { ...state, loading: false, data: action.payload }
     case 'FETCH_FAILURE':
-      return {
-        ...state,
-        loading: false,
-        error: action.payload,
-      }
+      return { ...state, loading: false, error: action.payload }
     default:
-      throw new Error()
+      return state
   }
 }
 
-// Mock user data
-const mockUser: User = {
-  id: 1,
-  name: 'Leanne Graham',
-  username: 'Bret',
-  email: 'Sincere@april.biz',
-}
-
-const UserProfile: React.FC = () => {
-  const [state, dispatch] = useReducer(dataFetchReducer, initialState)
+const UserProfile = () => {
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserProfile = async () => {
       dispatch({ type: 'FETCH_INIT' })
       try {
-        // Simulate a successful API call with mock data
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        dispatch({ type: 'FETCH_SUCCESS', payload: mockUser })
-      } catch (error) {
-        if (error instanceof Error) {
-          dispatch({ type: 'FETCH_FAILURE', payload: error.message })
-        } else {
-          dispatch({
-            type: 'FETCH_FAILURE',
-            payload: 'An unknown error occurred',
-          })
+        const response = await fetch('/api/profile')
+        if (!response.ok) {
+          throw new Error('Failed to fetch user profile')
         }
+        const data = await response.json()
+        dispatch({ type: 'FETCH_SUCCESS', payload: data })
+      } catch (error) {
+        dispatch({
+          type: 'FETCH_FAILURE',
+          payload: error instanceof Error ? error.message : 'An unknown error occurred',
+        })
       }
     }
 
-    fetchUser()
+    fetchUserProfile()
   }, [])
 
-  const { loading, user, error } = state
-
   return (
-    <div>
-      <h1>User Profile</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error}</p>}
-      {user && (
-        <div>
-          <p>
-            <strong>ID:</strong> {user.id}
-          </p>
-          <p>
-            <strong>Name:</strong> {user.name}
-          </p>
-          <p>
-            <strong>Username:</strong> {user.username}
-          </p>
-          <p>
-            <strong>Email:</strong> {user.email}
-          </p>
-        </div>
-      )}
-    </div>
+    <Card>
+      <CardContent>
+        <Typography variant="h5" component="h5">
+          User Profile
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          {state.loading && <CircularProgress />}
+          {state.error && <Alert severity="error">{state.error}</Alert>}
+          {state.data && (
+            <>
+              <Typography>Name: {state.data.name}</Typography>
+              <Typography>Email: {state.data.email}</Typography>
+            </>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
   )
 }
 
