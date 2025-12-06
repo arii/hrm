@@ -1,6 +1,9 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
-import { SpotifyTokenManager } from './spotifyTokenManager.js'
+import {
+  SpotifyTokenManager,
+  SpotifyTokenPayload,
+} from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
 // Utility: Safely parse JSON, fallback to text
@@ -91,7 +94,7 @@ export class SpotifyPolling {
       if (sdkToken) {
         this.setupSdk(sdkToken)
         logger.debug(
-          'Loaded existing Spotify tokens from file. Starting polling.'
+          'Loaded existing Spotify tokens from database. Starting polling.'
         )
         this.startPolling()
       }
@@ -133,11 +136,11 @@ export class SpotifyPolling {
   /**
    * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
-  public setRefreshToken(_token: string) {
-    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+  public async setToken(tokenPayload: SpotifyTokenPayload): Promise<void> {
+    logger.debug('Spotify token received. Saving to database and reloading SDK.')
+    await this.tokenManager.saveToken(tokenPayload)
+    // After saving, re-initialize the SDK with the new token.
+    await this.initializeSdk()
   }
 
   // --- Polling Logic ---

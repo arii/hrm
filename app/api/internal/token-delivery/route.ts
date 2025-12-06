@@ -1,17 +1,14 @@
-import { ApiError } from '@/lib/errors'
-import fs from 'fs'
-import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
-import logger from '@/utils/logger'
-
+// File: app/api/internal/token-delivery/route.ts
 /**
- * Internal endpoint for NextAuth to post refresh tokens.
+ * Internal endpoint for NextAuth to post the full token payload.
  * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * It passes the token payload to the singleton spotifyService instance.
  */
-
-const LOG_DIR = path.resolve(process.cwd(), 'logs')
-const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
+import { NextRequest, NextResponse } from 'next/server'
+import { spotifyServiceInstance } from '@/utils/socketManager'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
+import { ApiError } from '@/lib/errors'
+import logger from '@/utils/logger'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,21 +18,18 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized')
     }
 
-    const payload = await req.json()
+    const payload = (await req.json()) as SpotifyTokenPayload
 
-    // ensure logs dir
-    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
-
-    // write timestamped record (overwrite with latest)
-    const record = {
-      receivedAt: Date.now(),
-      payload,
+    if (!spotifyServiceInstance) {
+      throw new ApiError(503, 'Spotify service is not available.')
     }
-    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
+
+    // Pass the token to the singleton service instance
+    await spotifyServiceInstance.setToken(payload)
 
     logger.info(
       { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
+      'Received and processed token-delivery'
     )
     return NextResponse.json({ ok: true })
   } catch (err) {
