@@ -66,7 +66,14 @@ test.describe('Infrastructure & Scripts', () => {
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
       stdio: 'pipe',
-      env: { ...process.env, PORT: String(PORT) },
+      env: {
+        ...process.env,
+        PORT: String(PORT),
+        // Prisma requires DATABASE_URL to be set, even if not connecting for simple health checks
+        DATABASE_URL:
+          process.env.DATABASE_URL ||
+          'postgresql://test:test@localhost:5432/testdb',
+      },
     })
 
     try {
@@ -95,6 +102,10 @@ test.describe('Infrastructure & Scripts', () => {
       PORT: String(PORT),
       NEXTAUTH_SECRET: 'test-secret-mock',
       NEXTAUTH_URL: `http://localhost:${PORT}`,
+      // Prisma requires DATABASE_URL to be set
+      DATABASE_URL:
+        process.env.DATABASE_URL ||
+        'postgresql://test:test@localhost:5432/testdb',
     }
 
     const prodServer = spawn('./start-production.sh', [], {

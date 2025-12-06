@@ -1,6 +1,6 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenResponse } from './spotifyPolling'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/prisma.js'
 
 export interface SpotifyTokenPayload {
   provider: string
