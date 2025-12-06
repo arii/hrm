@@ -1,35 +1,36 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export async function GET() {
   try {
     const tokenManager = new SpotifyTokenManager(
       process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
+      process.env.SPOTIFY_CLIENT_SECRET || '',
+      prisma
     )
 
-    const currentToken = tokenManager['currentToken'] // Access private property for debugging
+    const currentToken = tokenManager.getSdkAccessToken()
 
     if (!currentToken) {
       return NextResponse.json({ status: 'no_token_found' }, { status: 200 })
     }
 
-    const maskedRefreshToken = currentToken.payload.refresh_token
-      ? `${currentToken.payload.refresh_token.substring(0, 5)}...${currentToken.payload.refresh_token.substring(currentToken.payload.refresh_token.length - 5)}`
+    const maskedRefreshToken = currentToken.refresh_token
+      ? `${currentToken.refresh_token.substring(0, 5)}...${currentToken.refresh_token.substring(currentToken.refresh_token.length - 5)}`
       : 'N/A'
 
-    const expiresAt =
-      currentToken.payload.obtainedAt + currentToken.payload.expires_in * 1000
+    const expiresAt = currentToken.expires
 
     return NextResponse.json(
       {
         status: 'token_found',
-        userId: currentToken.payload.sub,
-        accessToken: `${currentToken.payload.access_token.substring(0, 5)}...`,
+        accessToken: `${currentToken.access_token.substring(0, 5)}...`,
         refreshToken: maskedRefreshToken,
-        expiresIn: currentToken.payload.expires_in,
-        obtainedAt: new Date(currentToken.payload.obtainedAt).toISOString(),
+        expiresIn: currentToken.expires_in,
         expiresAt: new Date(expiresAt).toISOString(),
         isExpired: Date.now() >= expiresAt,
         willExpireSoon: Date.now() >= expiresAt - 60000, // Within 1 minute
