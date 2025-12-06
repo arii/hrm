@@ -18,11 +18,8 @@ log() {
 
 cleanup() {
     EXIT_CODE=$?
-    log "🛑 Shutting down server (PID: $SERVER_PID)..."
-    if [ -n "$SERVER_PID" ]; then
-        kill $SERVER_PID 2>/dev/null || true
-    fi
-    rm "$PID_FILE" 2>/dev/null || true
+    log "🛑 Shutting down server..."
+    pnpm pm2 kill || true
 
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
@@ -45,22 +42,15 @@ export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:3000"
 
-# Clean up any stale processes
-if [ -f "$PID_FILE" ]; then
-    PID=$(cat "$PID_FILE")
-    if ps -p $PID > /dev/null; then
-        log "⚠️  Killing existing server (PID: $PID)..."
-        kill $PID 2>/dev/null || true
-    fi
-    rm "$PID_FILE"
-fi
+# Clean up any stale PM2 processes
+log "🧹 Cleaning up any old PM2 processes..."
+pnpm pm2 kill || true
 
-log "🚀 Starting server..."
-# Start server in background, redirecting output to log file
-bash start-production.sh > "$SERVER_LOG" 2>&1 &
-SERVER_PID=$!
-echo $SERVER_PID > "$PID_FILE"
-log "✅ Server process started (PID: $SERVER_PID)"
+
+log "🚀 Starting server with PM2..."
+# Start server with `pnpm start`, which uses PM2
+pnpm start > "$SERVER_LOG" 2>&1
+log "✅ Server process started via PM2."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
 if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
