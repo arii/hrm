@@ -110,7 +110,8 @@ const initSocketManager = (
 const buildHrmMetrics = (): HrmMetric[] => {
   return Array.from(hrmClients.entries()).map(([clientId, staticData]) => {
     const value = hrmValues.get(clientId) || 0
-    const percentMax = staticData.maxHr > 0 ? (value / staticData.maxHr) * 100 : 0
+    const percentMax =
+      staticData.maxHr > 0 ? (value / staticData.maxHr) * 100 : 0
     return {
       clientId,
       value,
