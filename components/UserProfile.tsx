@@ -1,17 +1,21 @@
-"use client"
+'use client'
 // components/UserProfile.tsx
 import React, { useReducer, useEffect } from 'react'
 
 // Define state and action types
+interface UserProfileData {
+  name: string
+  email: string
+}
 interface State {
   loading: boolean
-  data: any | null
+  data: UserProfileData | null
   error: string | null
 }
 
 type Action =
   | { type: 'FETCH_START' }
-  | { type: 'FETCH_SUCCESS'; payload: any }
+  | { type: 'FETCH_SUCCESS'; payload: UserProfileData }
   | { type: 'FETCH_ERROR'; payload: string }
 
 // Reducer function
@@ -45,7 +49,7 @@ const UserProfile: React.FC = () => {
         // Mock success
         const mockData = { name: 'Jules', email: 'jules@example.com' }
         dispatch({ type: 'FETCH_SUCCESS', payload: mockData })
-      } catch (error) {
+      } catch (_error) {
         // Mock error
         dispatch({ type: 'FETCH_ERROR', payload: 'Failed to fetch user data' })
       }
