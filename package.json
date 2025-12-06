@@ -47,6 +47,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
+    "postinstall": "prisma generate",
     "prepare": "husky"
   },
   "dependencies": {
