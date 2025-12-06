@@ -1,78 +1,53 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { createCsrfToken, getUnsignedToken, verifyCsrfToken } from './lib/csrf';
+// File: middleware.ts (NextAuth Reverse Proxy Middleware)
+/**
+ * Middleware to handle reverse proxy headers for NextAuth.js
+ * This ensures that HTTPS cookies work properly behind a reverse proxy.
+ */
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/api/internal/', '/api/debug/'];
-const API_AUTH_BASE = '/api/auth/';
+// Base path for auth routes
+const API_AUTH_BASE = '/api/auth/'
 
-export async function middleware(request: NextRequest) {
-  // 1. Handle API CSRF validation first.
-  if (PROTECTED_PATHS.some(path => request.nextUrl.pathname.startsWith(path))) {
-    if (['POST', 'PUT', 'DELETE'].includes(request.method)) {
-      const signedToken = request.cookies.get('csrf-token')?.value;
-      const headerToken = request.headers.get('x-csrf-token');
+export function middleware(request: NextRequest) {
+  // Only handle auth routes
+  if (!request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
+    return NextResponse.next()
+  }
 
-      if (!signedToken || !headerToken || !(await verifyCsrfToken(signedToken, headerToken))) {
-        return new NextResponse('Invalid CSRF token', { status: 403 });
-      }
+  const response = NextResponse.next()
+
+  // Handle reverse proxy headers for NextAuth
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+
+  if (forwardedHost && forwardedProto) {
+    // Set the correct host and protocol for NextAuth
+    response.headers.set('x-forwarded-host', forwardedHost)
+    response.headers.set('x-forwarded-proto', forwardedProto)
+
+    // Ensure NextAuth recognizes HTTPS
+    if (forwardedProto === 'https') {
+      response.headers.set('x-forwarded-ssl', 'on')
     }
   }
 
-  // 2. Pass CSRF token to Server Components via request headers.
-  const requestHeaders = new Headers(request.headers);
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-
-  const csrfCookie = request.cookies.get('csrf-token')?.value;
-
-  if (csrfCookie) {
-    // If cookie exists, unsign it and pass it in the request headers.
-    const token = await getUnsignedToken(csrfCookie);
-    if (token) {
-      requestHeaders.set('x-csrf-token', token);
-    }
-  } else {
-    // If cookie doesn't exist, generate a new token.
-    const { token, signedToken } = await createCsrfToken();
-    // Pass the raw token in the request headers for the current render.
-    requestHeaders.set('x-csrf-token', token);
-    // Set the signed token in the response cookie for subsequent requests.
-    response.cookies.set('csrf-token', signedToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-    });
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Middleware] Auth request:', {
+      pathname: request.nextUrl.pathname,
+      host: request.headers.get('host'),
+      forwardedHost,
+      forwardedProto
+    })
   }
 
-  // 3. Handle existing NextAuth reverse proxy logic.
-  if (request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
-    const forwardedHost = request.headers.get('x-forwarded-host');
-    const forwardedProto = request.headers.get('x-forwarded-proto');
-
-    if (forwardedHost && forwardedProto) {
-      // Note: We modify the response headers here, which is correct for this logic.
-      response.headers.set('x-forwarded-host', forwardedHost);
-      response.headers.set('x-forwarded-proto', forwardedProto);
-      if (forwardedProto === 'https') {
-        response.headers.set('x-forwarded-ssl', 'on');
-      }
-    }
-  }
-
-  return response;
+  return response
 }
 
 export const config = {
+  // Note: matcher must be static strings for Next.js static analysis
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-};
+    '/api/auth/:path*'
+  ]
+}
