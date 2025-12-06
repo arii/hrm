@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // tests/unit/jest.setup.js
 require('@testing-library/jest-dom')
 const { jest } = require('@jest/globals')

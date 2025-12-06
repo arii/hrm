@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = await req.json()
-    const { sub: spotifyUserId, access_token, refresh_token, expires_in } = payload
+    const {
+      sub: spotifyUserId,
+      access_token,
+      refresh_token,
+      expires_in,
+    } = payload
 
     if (!spotifyUserId) {
       throw new ApiError(400, 'Missing spotifyUserId (sub) in token payload')
@@ -44,7 +49,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    logger.info({ subject: spotifyUserId }, 'Received and persisted token-delivery')
+    logger.info(
+      { subject: spotifyUserId },
+      'Received and persisted token-delivery'
+    )
 
     // Notify the polling service
     if (spotifyServiceInstance) {
