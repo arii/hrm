@@ -46,9 +46,11 @@
     "depcheck": "depcheck",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
     "prepare": "husky"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.1.0",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
