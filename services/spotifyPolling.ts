@@ -435,9 +435,8 @@ export class SpotifyPolling {
               (error as { response?: { text?: unknown } }).response &&
               'text' in (error as { response: { text?: unknown } }).response &&
               typeof (
-                (error as { response: { text?: unknown } }).response.text ===
-                'function'
-              )
+                (error as { response: { text?: unknown } }).response.text
+              ) === 'function'
             ) {
               try {
                 text = await (
