@@ -76,7 +76,7 @@ interface HrZoneProps {
 /**
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
  */
-export const getHrZoneProps = (
+export const calculateWorkoutMetrics = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {

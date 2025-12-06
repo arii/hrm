@@ -2,15 +2,7 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
-
-// Utility: Safely parse JSON, fallback to text
-function safeParseJSON(input: string): unknown {
-  try {
-    return JSON.parse(input)
-  } catch {
-    return input // Return raw text if not JSON
-  }
-}
+import { safeParseJSON } from '../utils/apiResponseUtils.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK

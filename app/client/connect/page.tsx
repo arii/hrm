@@ -1,10 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import useAutoConnect from '../../../hooks/useAutoConnect'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
+import useAutoConnect from '@/hooks/useAutoConnect'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { calculateWorkoutMetrics } from '@/utils/visualization'
 import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
 import ConnectView from './ConnectView'
 
@@ -135,7 +134,7 @@ export default function ConnectPage() {
   )
   const currentHR = currentUserData?.value || 0
   const maxHr = 220 - (parseInt(userAge) || 30)
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
+  const hrZoneProps = calculateWorkoutMetrics(currentHR, maxHr)
 
   return (
     <ConnectView

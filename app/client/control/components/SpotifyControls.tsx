@@ -20,7 +20,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolume, { clampVolume } from '@/hooks/useVolume'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 
@@ -29,7 +29,7 @@ const SpotifyControls = () => {
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume } = useVolume()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
