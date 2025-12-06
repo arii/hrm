@@ -119,7 +119,11 @@ export async function GET(_req: Request) {
       // `types/next-auth.d.ts` or similar? `lib/auth.ts` has `declare module 'next-auth' { interface Session { accessToken?: string; error?: string } }`.
       // I can add `sub` or `providerAccountId` there.
 
-      accessToken = session.accessToken
+      // accessToken = session.accessToken
+      // Correcting type mismatch: session.accessToken is `string | undefined`, but we need `string | null` for initialization or assignment logic if we were strict.
+      // However, the error says: Type 'string | undefined' is not assignable to type 'string | null'.
+      // This means `accessToken` variable is typed as `string | null` (inferred or explicit), but we are assigning `string | undefined`.
+      accessToken = session.accessToken ?? null
     }
 
     // If session token is missing or invalid (we could verify it), fallback to system
