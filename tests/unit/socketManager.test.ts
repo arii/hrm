@@ -12,9 +12,9 @@ import {
 } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import TabataTimer from '../../services/tabataTimer'
-import { ServerMessage } from '../../types/websocket'
 import { initSocketManager } from '../../utils/socketManager'
 import EventEmitter from 'events'
+import { WebSocketServer } from 'ws'
 
 // Mock the services
 jest.mock('../../services/spotifyPolling')
@@ -38,23 +38,29 @@ describe('WebSocket Manager Integration', () => {
     mockWs = new MockWebSocket()
 
     // Instantiate mocked services
-    mockTabataService = new (TabataTimer as jest.Mock<any>)()
-    mockSpotifyService = new (SpotifyPolling as jest.Mock<any>)()
+    mockTabataService = new (TabataTimer as jest.Mock<typeof TabataTimer>)()
+    mockSpotifyService = new (SpotifyPolling as jest.Mock<
+      typeof SpotifyPolling
+    >)()
 
     // Define mock methods
     mockTabataService.handleCommand = jest.fn()
     mockTabataService.getState = jest.fn().mockReturnValue({ isRunning: false })
 
     mockSpotifyService.handleCommand = jest.fn()
-    mockSpotifyService.getState = jest.fn().mockReturnValue({ isPlaying: false })
+    mockSpotifyService.getState = jest
+      .fn()
+      .mockReturnValue({ isPlaying: false })
     mockSpotifyService.isReady = jest.fn().mockReturnValue(true)
 
-    getFullState = jest
-      .fn()
-      .mockReturnValue({ timerData: {}, spotifyData: {}, spotifyServiceInitialized: true })
+    getFullState = jest.fn().mockReturnValue({
+      timerData: {},
+      spotifyData: {},
+      spotifyServiceInitialized: true,
+    })
 
     initSocketManager(
-      mockWss as any,
+      mockWss as WebSocketServer,
       {
         tabataService: mockTabataService,
         spotifyService: mockSpotifyService,

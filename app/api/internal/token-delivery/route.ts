@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    logger.info({ subject: spotifyUserId }, 'Received and stored token-delivery')
+    logger.info(
+      { subject: spotifyUserId },
+      'Received and stored token-delivery'
+    )
     return NextResponse.json({ ok: true, userId: spotifyUserId })
   } catch (err) {
     if (err instanceof ApiError) {

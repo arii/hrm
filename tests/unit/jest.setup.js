@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /* eslint-env jest */
 // tests/unit/jest.setup.js
-require('@testing-library/jest-dom')
+import '@testing-library/jest-dom'
 
 // Mock logger to suppress console output during tests
 jest.mock('../../utils/logger', () => ({
@@ -17,7 +16,8 @@ jest.mock('../../utils/logger', () => ({
 // Mock node-fetch for API calls
 global.fetch = jest.fn(() =>
   Promise.resolve({
-    json: () => Promise.resolve({ access_token: 'mock_access_token', expires_in: 3600 }),
+    json: () =>
+      Promise.resolve({ access_token: 'mock_access_token', expires_in: 3600 }),
     ok: true,
   })
 )
