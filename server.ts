@@ -22,8 +22,6 @@ import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
-import swaggerUi from 'swagger-ui-express'
-import swaggerSpec from './lib/swagger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
@@ -149,13 +147,6 @@ app
     initSocketManager(wss, { tabataService, spotifyService }, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
-
-    // Swagger UI
-    expressApp.use(
-      '/api-docs',
-      swaggerUi.serve,
-      swaggerUi.setup(swaggerSpec)
-    )
 
     // Health Check Endpoints
     expressApp.get('/api/health', (_req: Request, res: Response) => {

@@ -12,7 +12,23 @@ declare module 'next-auth' {
   }
 }
 
-// A function to handle the token refresh logic
+/**
+ * @file NextAuth configuration for Spotify authentication.
+ * @module lib/auth
+ */
+
+/**
+ * Refreshes an expired Spotify access token using a refresh token.
+ *
+ * This function is invoked by the NextAuth JWT callback when an access token
+ * is expired. It posts to Spotify's token endpoint to get a new access token
+ * and updates the token object with the new credentials.
+ *
+ * @param {JWT} token The JWT from NextAuth containing the expired accessToken
+ *                    and the valid refreshToken.
+ * @returns {Promise<JWT>} The updated JWT with a new accessToken and expiry,
+ *                         or the original token with an error flag if refresh fails.
+ */
 async function refreshAccessToken(token: JWT) {
   try {
     const url = 'https://accounts.spotify.com/api/token'
@@ -72,6 +88,15 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
+/**
+ * Configuration options for NextAuth.js.
+ *
+ * This object defines the authentication providers, callbacks, and other settings
+ * for managing user sessions and authentication flows. It is configured to use the
+ * Spotify provider with specific scopes required for the application's features.
+ *
+ * @type {AuthOptions}
+ */
 export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
