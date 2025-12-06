@@ -150,7 +150,10 @@ export class SpotifyPolling {
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
       : 3000
     // Poll every `intervalMs` for low-latency updates
-    this.pollInterval = setInterval(() => this.getCurrentlyPlaying(), intervalMs)
+    this.pollInterval = setInterval(
+      () => this.getCurrentlyPlaying(),
+      intervalMs
+    )
     logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
   }
 
@@ -278,9 +281,7 @@ export class SpotifyPolling {
       }
 
       if (err?.status === 401) {
-        logger.warn(
-          'Spotify token expired during polling. Attempting refresh.'
-        )
+        logger.warn('Spotify token expired during polling. Attempting refresh.')
         this.checkAndRefreshSdkToken()
         return
       }
@@ -308,7 +309,7 @@ export class SpotifyPolling {
           is_restricted: d.is_restricted,
           name: d.name,
           type: d.type,
-          volume_percent: d.volume_percent ?? 0
+          volume_percent: d.volume_percent ?? 0,
         }))
 
       this.state.devices = validDevices
@@ -332,7 +333,7 @@ export class SpotifyPolling {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
     }
-    
+
     if (command === 'GET_DEVICES') {
       this.refreshDevices()
       return

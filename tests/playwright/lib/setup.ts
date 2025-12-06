@@ -50,7 +50,7 @@ export const LEGACY_ROUTES = {
  */
 export async function warmupEndpoints(
   context: BrowserContext,
-  routes: string[] = Object.values(HRM_ROUTES),
+  routes: string[] = Object.values(HRM_ROUTES)
 ): Promise<void> {
   const baseUrl = getBaseURL()
   const warmupPage = await context.newPage()
@@ -78,9 +78,12 @@ export async function createTestPage(
   options: {
     viewport?: { width: number; height: number }
     enableConsoleLogging?: boolean
-  } = {},
+  } = {}
 ): Promise<Page> {
-  const { viewport = { width: 1920, height: 1080 }, enableConsoleLogging = false } = options
+  const {
+    viewport = { width: 1920, height: 1080 },
+    enableConsoleLogging = false,
+  } = options
 
   const page = await context.newPage()
   await page.setViewportSize(viewport)
@@ -102,7 +105,10 @@ export async function createTestPage(
  * @param page - The Playwright Page object
  * @param route - Route to navigate to (or empty string for dashboard)
  */
-export async function navigateAndWait(page: Page, route: string = ''): Promise<void> {
+export async function navigateAndWait(
+  page: Page,
+  route: string = ''
+): Promise<void> {
   const baseUrl = getBaseURL()
   await page.goto(`${baseUrl}${route}`)
   await waitForPageReady(page)
@@ -114,7 +120,9 @@ export async function navigateAndWait(page: Page, route: string = ''): Promise<v
  *
  * @param page - The Playwright Page object
  */
-export async function replaceIframeWithStableWorkout(page: Page): Promise<void> {
+export async function replaceIframeWithStableWorkout(
+  page: Page
+): Promise<void> {
   await page.evaluate(() => {
     const iframe = document.querySelector('iframe')
     if (iframe) {
@@ -150,7 +158,9 @@ export async function replaceIframeWithStableWorkout(page: Page): Promise<void> 
       timeout: 2000,
     })
   } catch {
-    console.warn('Warning: Iframe with data:text/html src not found. Iframe may be missing.')
+    console.warn(
+      'Warning: Iframe with data:text/html src not found. Iframe may be missing.'
+    )
   }
 }
 
@@ -199,7 +209,7 @@ export async function setupVisualRegressionTest(pages: {
  */
 export async function setupMinimalVisualRegressionTest(
   page: Page,
-  path: string = '',
+  path: string = ''
 ): Promise<void> {
   await navigateAndWait(page, path)
   if (path === '' || path === '/') {
@@ -267,7 +277,7 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
     () => {
       return window.__TEST_WEBSOCKET_READY__ === true
     },
-    { timeout: 10000 },
+    { timeout: 10000 }
   )
 }
 
@@ -278,8 +288,14 @@ export async function setupCoreTest(options: { page: Page }): Promise<void> {
  * @param controlPage - The control panel Page object
  * @param dashboardPage - The dashboard Page object (optional)
  */
-export async function stopTimer(controlPage: Page, dashboardPage?: Page): Promise<void> {
-  const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
+export async function stopTimer(
+  controlPage: Page,
+  dashboardPage?: Page
+): Promise<void> {
+  const stopButton = controlPage.getByRole('button', {
+    name: 'STOP',
+    exact: true,
+  })
 
   try {
     // If timer is running, stop it
@@ -288,12 +304,14 @@ export async function stopTimer(controlPage: Page, dashboardPage?: Page): Promis
 
       // Wait for START button to confirm timer stopped
       await expect(
-        controlPage.getByRole('button', { name: 'START', exact: true }),
+        controlPage.getByRole('button', { name: 'START', exact: true })
       ).toBeVisible({ timeout: 5000 })
 
       // Wait for dashboard to clear timer display if provided
       if (dashboardPage) {
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({ timeout: 5000 })
+        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
+          timeout: 5000,
+        })
       }
     }
   } catch (error) {
@@ -311,13 +329,15 @@ export async function stopTimer(controlPage: Page, dashboardPage?: Page): Promis
 export async function configureTimer(
   controlPage: Page,
   workDuration: number,
-  restDuration: number,
+  restDuration: number
 ): Promise<void> {
   // Ensure Tabata mode is active so inputs are visible
-  await controlPage.getByTestId('tabata-mode-button').click();
-  
+  await controlPage.getByTestId('tabata-mode-button').click()
+
   // Explicitly wait for the work input to become visible after mode change
-  await controlPage.waitForSelector('[data-testid="work-duration-input"]', { timeout: 5000 });
+  await controlPage.waitForSelector('[data-testid="work-duration-input"]', {
+    timeout: 5000,
+  })
 
   const workInput = controlPage.getByTestId('work-duration-input')
   const restInput = controlPage.getByTestId('rest-duration-input')
@@ -338,7 +358,10 @@ export async function startTimer(controlPage: Page): Promise<void> {
   await controlPage.click('button:has-text("START")', { force: true })
 
   // Verify timer started
-  const stopButton = controlPage.getByRole('button', { name: 'STOP', exact: true })
+  const stopButton = controlPage.getByRole('button', {
+    name: 'STOP',
+    exact: true,
+  })
   await expect(stopButton).toBeVisible()
 }
 
@@ -350,7 +373,7 @@ export async function startTimer(controlPage: Page): Promise<void> {
  */
 export async function setupMockHrStreaming(
   mockPage: Page,
-  options: { bpm?: number; zone?: number } = {},
+  options: { bpm?: number; zone?: number } = {}
 ): Promise<void> {
   const { bpm = 155, zone = 4 } = options
 
@@ -374,7 +397,9 @@ export async function setupMockHrStreaming(
  */
 export async function startMockHrStreaming(mockPage: Page): Promise<void> {
   await mockPage.click('button:has-text("START")')
-  await expect(mockPage.locator('button:has-text("STOP Streaming")')).toBeVisible()
+  await expect(
+    mockPage.locator('button:has-text("STOP Streaming")')
+  ).toBeVisible()
 }
 
 /**
@@ -383,6 +408,8 @@ export async function startMockHrStreaming(mockPage: Page): Promise<void> {
  *
  * @param pages - Array of pages to prepare
  */
-export async function prepareForVisualRegression(...pages: Page[]): Promise<void> {
+export async function prepareForVisualRegression(
+  ...pages: Page[]
+): Promise<void> {
   await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
 }

@@ -32,15 +32,15 @@ export const AUTH_ENDPOINTS = {
  * @param page - The Playwright Page object
  * @returns Object containing authentication configuration status
  */
-export async function verifyAuthConfiguration(
-  page: Page,
-): Promise<{
+export async function verifyAuthConfiguration(page: Page): Promise<{
   spotifyConfigured: boolean
   nextAuthConfigured: boolean
   hasClientSecret: boolean
 }> {
   const baseUrl = getBaseURL()
-  const response = await page.request.get(`${baseUrl}${AUTH_ENDPOINTS.AUTH_CHECK}`)
+  const response = await page.request.get(
+    `${baseUrl}${AUTH_ENDPOINTS.AUTH_CHECK}`
+  )
 
   expect(response.ok()).toBe(true)
   const data = await response.json()
@@ -58,20 +58,22 @@ export async function verifyAuthConfiguration(
  * @param page - The Playwright Page object
  * @returns Object containing endpoint status
  */
-export async function verifyDebugEndpoints(
-  page: Page,
-): Promise<{
+export async function verifyDebugEndpoints(page: Page): Promise<{
   pingOk: boolean
   sessionOk: boolean
 }> {
   const baseUrl = getBaseURL()
 
   // Check ping endpoint
-  const pingResponse = await page.request.get(`${baseUrl}${AUTH_ENDPOINTS.PING}`)
+  const pingResponse = await page.request.get(
+    `${baseUrl}${AUTH_ENDPOINTS.PING}`
+  )
   const pingJson = await pingResponse.json()
 
   // Check session endpoint
-  const sessionResponse = await page.request.get(`${baseUrl}${AUTH_ENDPOINTS.SESSION}`)
+  const sessionResponse = await page.request.get(
+    `${baseUrl}${AUTH_ENDPOINTS.SESSION}`
+  )
 
   return {
     pingOk: pingResponse.ok() && pingJson.ok === true,
@@ -88,7 +90,7 @@ export async function verifyDebugEndpoints(
  */
 export async function waitForAuthRedirect(
   page: Page,
-  options: { timeout?: number } = {},
+  options: { timeout?: number } = {}
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.NAVIGATION } = options
   const baseUrl = getBaseURL()
@@ -109,7 +111,9 @@ export async function waitForAuthRedirect(
 export async function isLoggedIn(page: Page): Promise<boolean> {
   // Check for login button (indicates NOT logged in)
   const loginButton = page.getByText('🎵 Login with Spotify')
-  const isLoginButtonVisible = await loginButton.isVisible({ timeout: 3000 }).catch(() => false)
+  const isLoginButtonVisible = await loginButton
+    .isVisible({ timeout: 3000 })
+    .catch(() => false)
 
   return !isLoginButtonVisible
 }
@@ -121,8 +125,13 @@ export async function isLoggedIn(page: Page): Promise<boolean> {
  * @param page - The Playwright Page object
  */
 export async function verifyNoStateCookieError(page: Page): Promise<void> {
-  const errorText = await page.getByText(/State cookie was missing/i).isVisible()
-  expect(errorText, '❌ Critical: "State cookie was missing" error detected!').toBe(false)
+  const errorText = await page
+    .getByText(/State cookie was missing/i)
+    .isVisible()
+  expect(
+    errorText,
+    '❌ Critical: "State cookie was missing" error detected!'
+  ).toBe(false)
 }
 
 /**
@@ -131,15 +140,15 @@ export async function verifyNoStateCookieError(page: Page): Promise<void> {
  * @param page - The Playwright Page object
  * @returns Token status information
  */
-export async function verifySpotifyTokenStatus(
-  page: Page,
-): Promise<{
+export async function verifySpotifyTokenStatus(page: Page): Promise<{
   status: string
   hasAccessToken: boolean
   hasRefreshToken: boolean
 }> {
   const baseUrl = getBaseURL()
-  const response = await page.request.get(`${baseUrl}${AUTH_ENDPOINTS.SPOTIFY_TOKEN_STATUS}`)
+  const response = await page.request.get(
+    `${baseUrl}${AUTH_ENDPOINTS.SPOTIFY_TOKEN_STATUS}`
+  )
 
   expect(response.status()).toBe(200)
   const data = await response.json()
@@ -172,7 +181,7 @@ export async function verifySpotifyTokenStatus(
  */
 export async function createAuthenticatedContext(
   context: BrowserContext,
-  _storageState?: string,
+  _storageState?: string
 ): Promise<BrowserContext> {
   // Returns context as-is - implement storage state handling as needed
   return context
@@ -188,7 +197,7 @@ export async function createAuthenticatedContext(
 export async function navigateToProtectedRoute(
   page: Page,
   route: string,
-  options: { expectAuth?: boolean; timeout?: number } = {},
+  options: { expectAuth?: boolean; timeout?: number } = {}
 ): Promise<void> {
   const { expectAuth = false, timeout = 30000 } = options
   const baseUrl = getBaseURL()
@@ -198,7 +207,9 @@ export async function navigateToProtectedRoute(
   if (expectAuth) {
     // Check if we were redirected to login
     const loginButton = page.getByText('🎵 Login with Spotify')
-    const isLoginButtonVisible = await loginButton.isVisible({ timeout: 3000 }).catch(() => false)
+    const isLoginButtonVisible = await loginButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false)
 
     if (isLoginButtonVisible) {
       console.log('ℹ️  Login button found. Auth required for this route.')

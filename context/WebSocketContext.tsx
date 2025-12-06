@@ -38,7 +38,12 @@ const INITIAL_STATE: AppState = {
     restDuration: 10,
     soundEventId: 0,
   },
-  spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false, devices: [] },
+  spotifyData: {
+    trackName: 'Awaiting Login...',
+    artist: '',
+    isPlaying: false,
+    devices: [],
+  },
   spotifyServiceInitialized: true,
 }
 
@@ -115,7 +120,10 @@ export const WebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    if (typeof window === 'undefined' || wsRef.current?.readyState === WebSocket.OPEN) {
+    if (
+      typeof window === 'undefined' ||
+      wsRef.current?.readyState === WebSocket.OPEN
+    ) {
       return
     }
 
@@ -136,8 +144,10 @@ export const WebSocketProvider = ({
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        console.log(`[useWebSocket] Sending ${pendingActions.current.length} pending actions.`)
-        pendingActions.current.forEach(action => {
+        console.log(
+          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
+        )
+        pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
         pendingActions.current = []
@@ -201,16 +211,18 @@ export const WebSocketProvider = ({
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
-        
+
         // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
           // Dispatch a custom event that the remote execution hook can listen to
-          window.dispatchEvent(new CustomEvent('spotify-remote-command', { 
-            detail: message 
-          }))
+          window.dispatchEvent(
+            new CustomEvent('spotify-remote-command', {
+              detail: message,
+            })
+          )
           return
         }
-        
+
         // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
@@ -259,7 +271,10 @@ export const WebSocketProvider = ({
         data
       )
       pendingActions.current.push(data)
-      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
+      localStorage.setItem(
+        'pendingActions',
+        JSON.stringify(pendingActions.current)
+      )
     }
   }, [])
 

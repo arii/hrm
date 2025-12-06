@@ -28,7 +28,7 @@ const SpotifyControls = () => {
   const router = useRouter()
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { devices = [] } = spotifyData; // Default to empty array if undefined
+  const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
@@ -36,8 +36,8 @@ const SpotifyControls = () => {
   const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleBrowseClick = () => {
-    router.push('/client/spotify-selection');
-  };
+    router.push('/client/spotify-selection')
+  }
 
   const hasSpotifyData =
     spotifyData.trackName !== 'Awaiting Login...' &&
@@ -49,7 +49,7 @@ const SpotifyControls = () => {
     if (connectionStatus === 'Connected') {
       sendData({
         type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES'
+        command: 'GET_DEVICES',
       })
     }
   }, [connectionStatus, sendData])
@@ -58,36 +58,39 @@ const SpotifyControls = () => {
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
-    
+
     // Sync Selected Device
     if (prevActiveIdRef.current === undefined && activeId) {
-       // Initial sync
-       setSelectedDeviceId(activeId)
+      // Initial sync
+      setSelectedDeviceId(activeId)
     } else if (activeId && activeId !== prevActiveIdRef.current) {
-       // Active device changed externally, update selection
-       setSelectedDeviceId(activeId)
+      // Active device changed externally, update selection
+      setSelectedDeviceId(activeId)
     } else {
-       // Check if selected device is still valid
-       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-       if (selectedDeviceId && !selectedStillExists) {
-          setSelectedDeviceId(activeId ?? '')
-       }
-       if (!selectedDeviceId && activeId) {
-          setSelectedDeviceId(activeId)
-       }
+      // Check if selected device is still valid
+      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
+      if (selectedDeviceId && !selectedStillExists) {
+        setSelectedDeviceId(activeId ?? '')
+      }
+      if (!selectedDeviceId && activeId) {
+        setSelectedDeviceId(activeId)
+      }
     }
     prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging)
-    if (!isDragging && activeDevice && typeof activeDevice.volume_percent === 'number') {
-        if (activeDevice.volume_percent !== volume) {
-             setVolume(activeDevice.volume_percent)
-        }
+    if (
+      !isDragging &&
+      activeDevice &&
+      typeof activeDevice.volume_percent === 'number'
+    ) {
+      if (activeDevice.volume_percent !== volume) {
+        setVolume(activeDevice.volume_percent)
+      }
     }
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]); // Rely on devices update to trigger sync
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devices]) // Rely on devices update to trigger sync
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
@@ -236,12 +239,12 @@ const SpotifyControls = () => {
               <Slider
                 value={volume}
                 onChange={(_, val) => {
-                   setIsDragging(true)
-                   setVolume(val as number)
+                  setIsDragging(true)
+                  setVolume(val as number)
                 }}
                 onChangeCommitted={(_, val) => {
-                   setIsDragging(false)
-                   sendVolumeCommand(val as number)
+                  setIsDragging(false)
+                  sendVolumeCommand(val as number)
                 }}
                 min={0}
                 max={100}
@@ -273,9 +276,7 @@ const SpotifyControls = () => {
                         sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                       }
                     }}
-                    disabled={
-                      connectionStatus !== 'Connected'
-                    }
+                    disabled={connectionStatus !== 'Connected'}
                     sx={{
                       color: 'white',
                       '& .MuiOutlinedInput-notchedOutline': {
@@ -296,13 +297,13 @@ const SpotifyControls = () => {
               </Box>
             )}
             <Button
-                variant="outlined"
-                size="small"
-                startIcon={<LibraryMusic />}
-                onClick={handleBrowseClick}
-                sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
-              >
-                Select Playlist
+              variant="outlined"
+              size="small"
+              startIcon={<LibraryMusic />}
+              onClick={handleBrowseClick}
+              sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+            >
+              Select Playlist
             </Button>
           </>
         ) : (
