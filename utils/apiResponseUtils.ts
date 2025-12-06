@@ -7,8 +7,8 @@
  */
 export function safeParseJSON(input: string): unknown {
   try {
-    return JSON.parse(input);
+    return JSON.parse(input)
   } catch {
-    return input; // Return raw text if not JSON
+    return input // Return raw text if not JSON
   }
 }
