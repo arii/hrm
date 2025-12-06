@@ -1,23 +1,45 @@
 // File: components/HrTile.tsx
 'use client'
+import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
+import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 
-export interface HrTileProps {
-  name: string
-  bpm: number
-  percentMax: number // 0-100
-  background: string // hex color
+// Define the style for the centered overlay
+const overlayStyles = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 10,
+  borderRadius: 'inherit', // Match card border radius from StyledCard
 }
 
-const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
+const HrTile = ({
+  name,
+  bpm,
+  percentMax,
+  background,
+  isAlerting, // NEW PROP
+  alertMessage = 'Checking signal...', // Default message
+}: HrTileProps) => {
   return (
     <Tooltip
-      title={`Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`}
+      title={
+        isAlerting
+          ? alertMessage
+          : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+      }
       arrow
     >
       <StyledCard
@@ -33,8 +55,21 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
+          position: 'relative', // IMPORTANT: Allows the overlay to be absolutely positioned
         }}
       >
+        {/* CONDITIONAL OVERLAY: Renders only when isAlerting is true. */}
+        {isAlerting && (
+          <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
+            <CircularProgress size={30} sx={{ color: 'white' }} />
+            <Typography
+              variant="caption"
+              sx={{ mt: 1, color: 'white', textAlign: 'center' }}
+            >
+              {alertMessage}
+            </Typography>
+          </Box>
+        )}
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
@@ -88,12 +123,14 @@ const HrTile = ({ name, bpm, percentMax, background }: HrTileProps) => {
 
 // Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  // Re-render only if display data (name, BPM, or zone-derived props) changes.
+  // Re-render only if display data changes.
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.background === nextProps.background &&
-    prevProps.percentMax === nextProps.percentMax
+    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.isAlerting === nextProps.isAlerting &&
+    prevProps.alertMessage === nextProps.alertMessage
   )
 }
 

@@ -6,6 +6,11 @@ export interface HrTileProps {
   bpm: number
   percentMax: number // 0-100
   background: string // hex color
+
+  // NEW: Flag to trigger the visual diagnostic state
+  isAlerting: boolean
+  // NEW: Message to display in the overlay when alerting
+  alertMessage?: string
 }
 
 export interface HeartRateZonesProps {
