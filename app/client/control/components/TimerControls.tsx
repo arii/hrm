@@ -189,8 +189,10 @@ const TimerControls = () => {
     sendData(message)
   }
 
-  const controlsDisabled =
-    timerData.isRunning || connectionStatus !== 'Connected'
+  const isRunning = ['PREPARE', 'RUNNING', 'WORK', 'REST'].includes(
+    timerData.currentPhase
+  )
+  const controlsDisabled = isRunning || connectionStatus !== 'Connected'
 
   return (
     <Card
@@ -275,7 +277,7 @@ const TimerControls = () => {
 
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography variant="h6" sx={{ color: 'white', mb: 0.5 }}>
-            {timerData.isRunning ? 'Timer Running' : 'Timer Stopped'}
+            {isRunning ? 'Timer Running' : 'Timer Stopped'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#EF4444' }}>
             {timerData.currentPhase}
@@ -493,7 +495,7 @@ const TimerControls = () => {
         )}
 
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          {!timerData.isRunning ? (
+          {!isRunning ? (
             <Button
               data-testid="start-timer-button"
               variant="contained"

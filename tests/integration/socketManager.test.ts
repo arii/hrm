@@ -118,7 +118,6 @@ describe('WebSocket Full Integration Test', () => {
       ws.send(JSON.stringify(startCommand))
       await new Promise((resolve) => setTimeout(resolve, 1500)) // Wait for prepare phase
       lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(true)
       expect(lastMessage.timerData?.currentPhase).toBe('PREPARE')
 
       // 4. Stop the timer
@@ -129,7 +128,6 @@ describe('WebSocket Full Integration Test', () => {
       ws.send(JSON.stringify(stopCommand))
       await new Promise((resolve) => setTimeout(resolve, 500))
       lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(false)
       expect(lastMessage.timerData?.currentPhase).toBe('IDLE')
 
       ws.close()

@@ -11,7 +11,8 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmData,
+  HrmStaticMetadata,
+  HrmMetric,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -32,7 +33,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmClients = new Map<string, HrmData>()
+const hrmClients = new Map<string, HrmStaticMetadata>()
 
 interface Services {
   tabataService: TabataTimer
@@ -65,9 +66,8 @@ const initSocketManager = (
     })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const defaultClientData: HrmData = {
+    const defaultClientData: HrmStaticMetadata = {
       clientId,
-      value: 0,
       maxHr: 185,
       // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
@@ -134,10 +134,14 @@ const handleIncomingMessage = (
         // The client is requesting the full current state.
         const stateSnapshot = getUnifiedStateSnapshot()
 
+        // Create a placeholder for hrmMetrics, as we don't store historical values
+        const hrmMetrics: HrmMetric[] = []
+
         // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: Array.from(hrmClients.values()),
+          hrmStaticData: Array.from(hrmClients.values()),
+          hrmMetrics: hrmMetrics,
         }
 
         const initialStateMessage: ServerMessage = {
@@ -150,30 +154,28 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
-          const updatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmClients.set(clientId, {
-            ...existingClientData,
-            ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+          // Update static data if present in the message
+          if (message.data.name) existingClientData.name = message.data.name
+          if (message.data.age) existingClientData.age = message.data.age
+          if (message.data.maxHr) existingClientData.maxHr = message.data.maxHr
+          hrmClients.set(clientId, existingClientData)
+
+          // Create and broadcast the real-time metric
+          if (message.data.value !== null && message.data.value !== undefined) {
+            const percentMax =
+              (message.data.value / (existingClientData.maxHr || 1)) * 100
+            const hrmMetric: HrmMetric = {
+              clientId: clientId,
+              value: message.data.value,
+              percentMax: percentMax,
+            }
+            broadcast({
+              type: 'HRM_UPDATE',
+              payload: [hrmMetric],
+            })
+          }
         }
-        broadcast({
-          type: 'HRM_UPDATE',
-          payload: Array.from(hrmClients.values()),
-        })
         break
       }
 

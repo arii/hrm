@@ -17,7 +17,6 @@ const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
 >
 
 const baseTimerData: TimerData = {
-  isRunning: false,
   currentPhase: 'IDLE',
   timeRemaining: 20,
   timeElapsed: 0,
