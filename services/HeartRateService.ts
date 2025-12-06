@@ -55,7 +55,7 @@ class HeartRateService {
       }
     }
 
-    if (typeof this.session.timeInZones[currentZone] === 'number') {
+    if (currentZone in this.session.timeInZones) {
       this.session.timeInZones[currentZone]++
     }
   }
