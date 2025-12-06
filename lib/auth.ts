@@ -2,7 +2,7 @@
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import { SpotifyTokenManager } from '../services/spotifyTokenManager'
+import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -16,10 +16,7 @@ declare module 'next-auth' {
  * @file NextAuth configuration for Spotify authentication.
  * @module lib/auth
  */
-const tokenManager = new SpotifyTokenManager(
-  process.env.SPOTIFY_CLIENT_ID || '',
-  process.env.SPOTIFY_CLIENT_SECRET || ''
-)
+
 /**
  * Refreshes an expired Spotify access token using a refresh token.
  *
@@ -202,25 +199,52 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        const expiresAt =
-          Date.now() + (Number(account.expires_in) || 3600) * 1000
         const tokenData = {
           accessToken: account.access_token,
-          accessTokenExpires: expiresAt,
+          accessTokenExpires:
+            Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
         }
 
-        // --- CRITICAL STEP: Persist Token to Database ---
-        if (
-          account.refresh_token &&
-          account.access_token &&
-          account.providerAccountId
-        ) {
-          await tokenManager.upsertToken(account.providerAccountId, {
-            accessToken: account.access_token,
-            refreshToken: account.refresh_token,
-            expiresAt: new Date(expiresAt),
-          })
+        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
+        if (account.refresh_token) {
+          try {
+            const tokenPayload = {
+              provider: account.provider,
+              sub: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_in: account.expires_at
+                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
+                : 3600,
+              scope: account.scope || '',
+              obtainedAt: Date.now(),
+            }
+
+            const response = await fetch(getAPIURL('internal/token-delivery'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tokenPayload),
+            })
+            const responseBody = await response.text()
+            if (response.ok) {
+              console.log(
+                'Internal token delivery successful. Status:',
+                response.status,
+                'Body:',
+                responseBody
+              )
+            } else {
+              console.error(
+                'Internal token delivery failed. Status:',
+                response.status,
+                'Body:',
+                responseBody
+              )
+            }
+          } catch (e) {
+            console.error('Internal token delivery failed:', e)
+          }
         }
 
         return tokenData

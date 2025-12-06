@@ -1,6 +1,6 @@
 // Database is PostgreSQL in production, but development can use sqlite for simplicity.
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 generator client {
@@ -12,8 +12,8 @@ model SpotifyToken {
   // Use the Spotify User ID (sub) as the unique identifier (Primary Key)
   id               String    @id @default(uuid())
   spotifyUserId    String    @unique // Corresponds to `account.providerAccountId`
-  accessToken      String    @db.Text
-  refreshToken     String    @db.Text // CRITICAL: This long-lived token must be secure
+  accessToken      String
+  refreshToken     String    // CRITICAL: This long-lived token must be secure
   accessTokenExpiresAt DateTime // The exact time the access token expires
   scope            String
   updatedAt        DateTime  @updatedAt

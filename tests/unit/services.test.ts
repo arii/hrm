@@ -16,18 +16,6 @@ import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 
-// Mock Prisma client
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => ({
-    spotifyToken: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      upsert: jest.fn(),
-      update: jest.fn(),
-    },
-  })),
-}))
-
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
@@ -70,7 +58,6 @@ describe('Services Integration', () => {
 
     // Mock TokenManager to return a valid token
     ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      loadFirstAvailableToken: jest.fn().mockResolvedValue(true),
       getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
       getSdkAccessToken: jest.fn().mockReturnValue({
         access_token: 'test_access_token',
