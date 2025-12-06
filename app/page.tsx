@@ -21,6 +21,11 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import WorkoutControls from '@/components/WorkoutControls'
+import { heartRateService, WorkoutStats } from '@/services/HeartRateService'
+import { UserSettings } from '@/types'
+import DataWidget from '@/components/widgets/DataWidget'
+import WorkoutHistory from '@/components/WorkoutHistory'
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -36,8 +41,10 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 })
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
+  const { timerData, hrmData, userSettings } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const [isWorkoutActive, setIsWorkoutActive] = useState(false)
+  const [workoutStats, setWorkoutStats] = useState<WorkoutStats | null>(null)
   const { volume } = useVolumePreference() // Get volume state
 
   // Initialize Spotify Web Playback SDK
@@ -45,6 +52,38 @@ const Dashboard = () => {
 
   // Enable remote Spotify control from controllers
   useSpotifyRemoteExecution(player)
+
+  useEffect(() => {
+    if (isWorkoutActive && hrmData.bpm) {
+      heartRateService.addHrmReading(hrmData.bpm)
+    }
+  }, [isWorkoutActive, hrmData.bpm])
+
+  const handleStartWorkout = () => {
+    heartRateService.startWorkout()
+    setIsWorkoutActive(true)
+    setWorkoutStats(null)
+  }
+
+  const handleStopWorkout = async () => {
+    if (!userSettings) {
+      console.error('User settings not available to stop workout.')
+      setIsWorkoutActive(false)
+      return
+    }
+    const stats = heartRateService.stopWorkout(userSettings)
+    if (stats) {
+      setWorkoutStats(stats)
+      await fetch('/api/workouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(stats),
+      })
+    }
+    setIsWorkoutActive(false)
+  }
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -83,6 +122,35 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
+
+        <Grid item xs={12}>
+          <WorkoutControls
+            onStart={handleStartWorkout}
+            onStop={handleStopWorkout}
+            isWorkoutActive={isWorkoutActive}
+          />
+        </Grid>
+
+        {workoutStats && (
+          <>
+            <Grid item xs={12} sm={6} md={3}>
+              <DataWidget title="Avg HR" value={workoutStats.avgHr} unit="bpm" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <DataWidget title="Max HR" value={workoutStats.maxHr} unit="bpm" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <DataWidget title="Calories" value={workoutStats.calories} unit="kcal" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <DataWidget title="Duration" value={workoutStats.duration.toFixed(0)} unit="s" />
+            </Grid>
+          </>
+        )}
+
+        <Grid item xs={12}>
+          <WorkoutHistory />
+        </Grid>
 
         <Grid item xs={12}>
           <GoogleDocViewer
