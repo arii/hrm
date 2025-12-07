@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client' // Import Prisma
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import { getAPIURL } from '../utils/urls'
 
 const prisma = new PrismaClient()
 
