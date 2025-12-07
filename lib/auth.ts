@@ -2,7 +2,7 @@
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import prisma from './prisma'
+import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -199,41 +199,55 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        // --- CRITICAL STEP: Write Refresh Token to SECURE DATABASE ---
-        if (account.refresh_token && account.expires_at) {
-          try {
-            await prisma.spotifyToken.upsert({
-              where: { spotifyUserId: account.providerAccountId },
-              update: {
-                accessToken: account.access_token as string,
-                refreshToken: account.refresh_token,
-                accessTokenExpiresAt: new Date(account.expires_at * 1000),
-                scope: account.scope || '',
-              },
-              create: {
-                spotifyUserId: account.providerAccountId,
-                accessToken: account.access_token as string,
-                refreshToken: account.refresh_token,
-                accessTokenExpiresAt: new Date(account.expires_at * 1000),
-                scope: account.scope || '',
-              },
-            })
-            console.log(
-              `[NextAuth] Token persisted for user: ${account.providerAccountId}`
-            )
-          } catch (e) {
-            console.error('[AUTH DB WRITE ERROR]', e)
-          }
-        }
-
-        // Return the token as before (the in-memory JWT holds the necessary data for the session)
-        return {
+        const tokenData = {
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
-          // ... other JWT fields
         }
+
+        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
+        if (account.refresh_token) {
+          try {
+            const tokenPayload = {
+              provider: account.provider,
+              sub: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_in: account.expires_at
+                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
+                : 3600,
+              scope: account.scope || '',
+              obtainedAt: Date.now(),
+            }
+
+            const response = await fetch(getAPIURL('internal/token-delivery'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tokenPayload),
+            })
+            const responseBody = await response.text()
+            if (response.ok) {
+              console.log(
+                'Internal token delivery successful. Status:',
+                response.status,
+                'Body:',
+                responseBody
+              )
+            } else {
+              console.error(
+                'Internal token delivery failed. Status:',
+                response.status,
+                'Body:',
+                responseBody
+              )
+            }
+          } catch (e) {
+            console.error('Internal token delivery failed:', e)
+          }
+        }
+
+        return tokenData
       }
 
       // 2. Token is still valid - return it as-is
