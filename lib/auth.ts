@@ -1,10 +1,8 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import { PrismaClient } from '@prisma/client' // Import Prisma
 import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-
-const prisma = new PrismaClient()
+import prisma from './prisma'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {

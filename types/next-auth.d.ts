@@ -1,8 +1,6 @@
-import 'next-auth'
+import { PrismaClient } from '@prisma/client'
 
-declare module 'next-auth' {
-  interface Session {
-    accessToken?: string
-    error?: string
-  }
+declare global {
+  // allow global `var` declarations
+  var prisma: PrismaClient | undefined
 }
