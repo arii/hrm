@@ -103,18 +103,6 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
-  // Expose dispatch for testing purposes
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || process.env.TESTING === 'true') {
-      ;(window as any).__dispatchWebSocketMessage = dispatch
-    }
-    return () => {
-      if (process.env.NODE_ENV !== 'production' || process.env.TESTING === 'true') {
-        delete (window as any).__dispatchWebSocketMessage
-      }
-    }
-  }, [])
-
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
       dispatch(message)

@@ -81,13 +81,8 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={12}>
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmDiagnosticDisplay />
-          </ErrorBoundary>
-        </Grid>
-
         <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmDiagnosticDisplay />
           <HrmTiles />
         </ErrorBoundary>
 

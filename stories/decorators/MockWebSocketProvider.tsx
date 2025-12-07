@@ -3,8 +3,8 @@ import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketConte
 import { TimerPhase } from '@/types/websocket';
 
 const defaultState: WebSocketContextType = {
-  activeAlerts: [],
   hrmData: [],
+  activeAlerts: [],
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE' as TimerPhase,
