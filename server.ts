@@ -145,7 +145,6 @@ app
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
-      activeAlerts: [],
     })
 
     // 4. Initialize WebSocket Manager (to handle commands and connections)
