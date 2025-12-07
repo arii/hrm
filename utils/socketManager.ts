@@ -4,8 +4,8 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '@/services/spotifyPolling'
-import TabataTimer from '@/services/tabataTimer'
+import { SpotifyPolling } from '../services/spotifyPolling'
+import TabataTimer from '../services/tabataTimer'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -15,8 +15,8 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-} from '@/types/websocket'
-import { broadcast, initBroadcaster } from '@/utils/broadcast'
+} from '../types/websocket'
+import { broadcast, initBroadcaster } from './broadcast'
 
 // Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {

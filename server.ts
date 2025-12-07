@@ -15,14 +15,14 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from '@/services/spotifyPolling'
-import TabataTimer from '@/services/tabataTimer'
-import { initSocketManager } from '@/utils/socketManager'
-import { broadcast } from '@/utils/broadcast'
-import { getBaseURL } from '@/utils/urls'
-import { StateSnapshot } from '@/types/websocket'
-import logger from '@/utils/logger'
-import { performHealthCheck } from '@/lib/healthCheck'
+import { SpotifyPolling } from './services/spotifyPolling'
+import TabataTimer from './services/tabataTimer'
+import { initSocketManager } from './utils/socketManager'
+import { broadcast } from './utils/broadcast'
+import { getBaseURL } from './utils/urls'
+import { StateSnapshot } from './types/websocket'
+import logger from './utils/logger'
+import { performHealthCheck } from './lib/healthCheck'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
