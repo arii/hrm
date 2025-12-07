@@ -1,6 +1,6 @@
 // File: services/HeartRateService.ts
-import { HR_ZONES } from '@/utils/visualization'
-import { UserSettings } from '@/types/websocket'
+import { HR_ZONES } from '../utils/visualization.js'
+import { UserSettings } from '../types/websocket.js'
 
 interface HeartRateDataPoint {
   hr: number
