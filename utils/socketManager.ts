@@ -6,7 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
-import HeartRateService from '@/services/HeartRateService.js'
+import HeartRateService from '../services/HeartRateService.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -16,10 +16,8 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-  TimerCommandMessage,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
-import { getBaseURL } from './urls.js'
 
 // Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {
@@ -156,29 +154,20 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        if (existingClientData && message.data.value) {
-          heartRateServiceInstance.addHeartRateDataPoint(message.data.value)
-        }
-
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmClients.set(clientId, {
+          const updatedData = {
             ...existingClientData,
             ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+          }
+          hrmClients.set(clientId, updatedData)
+
+          // Feed HR data to the service
+          if (updatedData.value) {
+            heartRateServiceInstance.addHeartRateDataPoint(updatedData.value)
+          }
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -187,25 +176,37 @@ const handleIncomingMessage = (
         break
       }
 
-      case 'TIMER_COMMAND': {
-        const timerMessage = message as TimerCommandMessage
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(timerMessage.command)
-        }
-        if (timerMessage.command === 'START' && timerMessage.userSettings) {
-          heartRateServiceInstance.startSession(timerMessage.userSettings)
-        }
-        if (timerMessage.command === 'STOP') {
-          const workoutStats = heartRateServiceInstance.endSession()
-          if (workoutStats) {
-            fetch(`${getBaseURL()}/api/workouts`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(workoutStats),
-            })
+      case 'WORKOUT_COMMAND': {
+        if (heartRateServiceInstance) {
+          if (message.command === 'START') {
+            const clientData = hrmClients.get(clientId)
+            if (clientData) {
+              const userSettings = {
+                maxHr: clientData.maxHr,
+                userAge: clientData.age || 30, // Default age to 30 if not provided
+                weight: clientData.weight || 70, // Default weight to 70kg if not provided
+                name: clientData.name || 'User',
+              }
+              heartRateServiceInstance.startSession(userSettings)
+            }
+          } else if (message.command === 'STOP') {
+            const stats = heartRateServiceInstance.endSession()
+            if (stats) {
+              fetch('http://127.0.0.1:3000/api/workouts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(stats),
+              })
+              broadcast({ type: 'WORKOUT_COMPLETE', payload: stats })
+            }
           }
+        }
+        break
+      }
+
+      case 'TIMER_COMMAND': {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.handleCommand(message.command)
         }
         break
       }

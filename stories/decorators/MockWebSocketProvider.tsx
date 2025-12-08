@@ -23,6 +23,7 @@ const defaultState: WebSocketContextType = {
   spotifyServiceInitialized: true,
   connectionStatus: 'Connected',
   sendData: (data) => console.log('Mock sendData:', data),
+  sendWorkoutCommand: (command) => console.log('Mock sendWorkoutCommand:', command),
   connect: () => console.log('Mock connect'),
   disconnect: () => console.log('Mock disconnect'),
 };

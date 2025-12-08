@@ -12,6 +12,19 @@ export interface HrmData {
   maxHr: number
   name?: string
   age?: number
+  weight?: number // in kg
+}
+
+export interface UserSettings extends Omit<HrmData, 'value' | 'clientId'> {
+  userAge: number
+}
+
+export interface WorkoutStats {
+  averageHr: number
+  caloriesBurned: number
+  timeInZones: { [zone: string]: number }
+  duration: number // in seconds
+  date: string
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
@@ -82,6 +95,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+  | { type: 'WORKOUT_COMPLETE'; payload: WorkoutStats }
   | SpotifyExecutionMessage
 
 /**
@@ -102,7 +116,11 @@ export interface HrmInputMessage {
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
-  userSettings?: UserSettings
+}
+
+export interface WorkoutCommandMessage {
+  type: 'WORKOUT_COMMAND'
+  command: 'START' | 'STOP'
 }
 
 export interface TimerModeCommandMessage {
@@ -151,6 +169,7 @@ export interface SpotifyExecutionMessage {
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
+  | WorkoutCommandMessage
   | TimerModeCommandMessage
   | SpotifyCommandMessage
   | TimerConfigMessage
@@ -161,22 +180,12 @@ import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
-export const UserSettingsSchema = z.object({
-  userName: z.string(),
-  userAge: z.number(),
-  maxHr: z.number(),
-  restingHr: z.number(),
-  deviceId: z.string(),
-  weight: z.number(),
-})
-
-export type UserSettings = z.infer<typeof UserSettingsSchema>
-
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({
@@ -187,7 +196,11 @@ export const HrmInputMessageSchema = z.object({
 export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
-  userSettings: UserSettingsSchema.optional(),
+})
+
+export const WorkoutCommandMessageSchema = z.object({
+  type: z.literal('WORKOUT_COMMAND'),
+  command: z.union([z.literal('START'), z.literal('STOP')]),
 })
 
 export const TimerModeCommandMessageSchema = z.object({
@@ -229,6 +242,7 @@ export const ClientRegistrationMessageSchema = z.object({
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
+  WorkoutCommandMessageSchema,
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,

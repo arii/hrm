@@ -1,6 +1,6 @@
 // File: services/HeartRateService.ts
-import { HR_ZONES } from '../utils/visualization.js'
-import { UserSettings } from '../types/websocket.js'
+import { HR_ZONES } from '../utils/visualization'
+import { UserSettings } from '../types/websocket'
 
 interface HeartRateDataPoint {
   hr: number
@@ -48,9 +48,10 @@ class HeartRateService {
       this.sessionData.reduce((acc, curr) => acc + curr.hr, 0) /
       this.sessionData.length
 
+    // Calorie calculation using the Mifflin-St Jeor equation approximation for a male
     const caloriesBurned = this.sessionData.reduce((acc, curr) => {
       const age = this.userSettings?.userAge ?? 30
-      const weight = this.userSettings?.weight ?? 70
+      const weight = this.userSettings?.weight ?? 70 // weight in kg
       const caloriesPerMinute =
         (-55.0969 + 0.6309 * curr.hr + 0.1988 * weight + 0.2017 * age) /
         4.184 /
@@ -61,13 +62,14 @@ class HeartRateService {
     const timeInZones = this.calculateTimeInZones()
 
     const workoutStats: WorkoutStats = {
-      averageHr,
-      caloriesBurned,
+      averageHr: Math.round(averageHr),
+      caloriesBurned: Math.round(caloriesBurned),
       timeInZones,
-      duration,
+      duration: Math.round(duration),
       date: new Date().toISOString(),
     }
 
+    // Reset session
     this.sessionStartTime = null
     this.userSettings = null
     this.sessionData = []

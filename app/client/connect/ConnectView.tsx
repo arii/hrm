@@ -26,7 +26,13 @@ interface ConnectViewProps {
   onDisconnect: () => void
   onResetServer: () => void
   currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
+  hrZoneProps: {
+    percentage: number
+    progressColor: string
+    backgroundColor: string
+    gradient: string
+    glow: string
+  }
   connectionStatus: string
   bluetoothConnected: boolean
 }
@@ -195,7 +201,9 @@ export default function ConnectView({
                 name={userName}
                 bpm={currentHR}
                 percentMax={hrZoneProps.percentage}
-                background={hrZoneProps.progressColor}
+                background={hrZoneProps.backgroundColor}
+                gradient={hrZoneProps.gradient}
+                glow={hrZoneProps.glow}
               />
             </Grid>
           </Grid>

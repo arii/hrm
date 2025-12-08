@@ -50,6 +50,7 @@ const INITIAL_STATE: AppState = {
 export interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
+  sendWorkoutCommand: (command: 'START' | 'STOP') => void
   connect: () => void
   disconnect: () => void
 }
@@ -278,10 +279,18 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  const sendWorkoutCommand = useCallback(
+    (command: 'START' | 'STOP') => {
+      sendData({ type: 'WORKOUT_COMMAND', command })
+    },
+    [sendData]
+  )
+
   const contextValue = {
     ...appState,
     connectionStatus,
     sendData,
+    sendWorkoutCommand,
     connect,
     disconnect,
   }

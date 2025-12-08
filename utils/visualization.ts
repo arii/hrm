@@ -1,4 +1,4 @@
-// File: utils/visualization.ts
+// File: utils/visualization.ts (MUI Visualization Utilities - Final Fix)
 /**
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
@@ -18,49 +18,49 @@ type MuiColor =
 // Heart Rate Zone Boundaries (as percentage of Max HR)
 export const HR_ZONES = [
   {
-    name: 'Zone 1',
+    name: 'Warm-up',
     min: 0.5,
-    color: '#d1d5db',
-    progressColor: '#d1d5db',
-    gradient: 'linear-gradient(to right, #d1d5db, #9ca3af)',
-    glow: '#d1d5db',
-    bgColor: '#374151',
-  },
-  {
-    name: 'Zone 2',
-    min: 0.6,
-    color: '#3b82f6',
+    color: 'text-blue-400',
     progressColor: '#3b82f6',
-    gradient: 'linear-gradient(to right, #3b82f6, #2563eb)',
-    glow: '#3b82f6',
-    bgColor: '#1e3a8a',
+    bgColor: '#3b82f6',
+    gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+    glow: '0 0 8px #3b82f6',
   },
   {
-    name: 'Zone 3',
+    name: 'Fat Burn',
+    min: 0.6,
+    color: 'text-green-500',
+    progressColor: '#22c55e',
+    bgColor: '#4CAF50',
+    gradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
+    glow: '0 0 10px #22c55e',
+  },
+  {
+    name: 'Cardio',
     min: 0.7,
-    color: '#10b981',
-    progressColor: '#10b981',
-    gradient: 'linear-gradient(to right, #10b981, #059669)',
-    glow: '#10b981',
-    bgColor: '#064e3b',
+    color: 'text-yellow-500',
+    progressColor: '#d97706',
+    bgColor: '#d97706',
+    gradient: 'linear-gradient(135deg, #facc15, #d97706)',
+    glow: '0 0 12px #d97706',
   },
   {
-    name: 'Zone 4',
+    name: 'Peak',
     min: 0.85,
-    color: '#f59e0b',
-    progressColor: '#f59e0b',
-    gradient: 'linear-gradient(to right, #f59e0b, #d97706)',
-    glow: '#f59e0b',
-    bgColor: '#78350f',
+    color: 'text-red-500',
+    progressColor: '#ef4444',
+    bgColor: '#F44336',
+    gradient: 'linear-gradient(135deg, #f87171, #ef4444)',
+    glow: '0 0 15px #ef4444',
   },
   {
-    name: 'Zone 5',
+    name: 'Max',
     min: 0.95,
-    color: '#ef4444',
-    progressColor: '#ef4444',
-    gradient: 'linear-gradient(to right, #ef4444, #dc2626)',
-    glow: '#ef4444',
-    bgColor: '#7f1d1d',
+    color: 'text-purple-600',
+    progressColor: '#9333ea',
+    bgColor: '#9C27B0',
+    gradient: 'linear-gradient(135deg, #c084fc, #9333ea)',
+    glow: '0 0 20px #9333ea',
   },
 ]
 
@@ -77,12 +77,12 @@ export const ZONE_COLORS = {
 interface HrZoneProps {
   zone: string
   percentage: number
-  color: string
-  progressColor: string
-  backgroundColor: string
+  color: string // Tailwind text color class
+  progressColor: string // Hex color for MUI components
+  backgroundColor: string // Hex color for background
+  bpm: number
   gradient: string
   glow: string
-  bpm: number
 }
 
 /**
@@ -99,9 +99,9 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
-      gradient: 'linear-gradient(to right, #d1d5db, #9ca3af)',
-      glow: '#d1d5db',
       bpm: 0,
+      gradient: 'linear-gradient(135deg, #9ca3af, #6b7280)',
+      glow: 'none',
     }
   }
 
@@ -123,9 +123,9 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
-      gradient: 'linear-gradient(to right, #d1d5db, #9ca3af)',
-      glow: '#d1d5db',
       bpm: currentHr,
+      gradient: 'linear-gradient(135deg, #9ca3af, #6b7280)',
+      glow: 'none',
     }
   }
 
@@ -135,9 +135,9 @@ export const getHrZoneProps = (
     color: zone.color,
     progressColor: zone.progressColor,
     backgroundColor: zone.bgColor,
+    bpm: currentHr,
     gradient: zone.gradient,
     glow: zone.glow,
-    bpm: currentHr,
   }
 }
 

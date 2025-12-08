@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
+import WorkoutControls from '../components/WorkoutControls'
+import WorkoutHistory from '../components/WorkoutHistory'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -67,7 +69,13 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        <Grid item xs={12} md={6}>
+          <WorkoutControls />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <WorkoutHistory />
+        </Grid>
+        <Grid item xs={12} md={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}

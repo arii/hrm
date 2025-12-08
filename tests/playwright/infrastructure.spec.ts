@@ -29,9 +29,6 @@ const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
 }
 
 test.describe('Infrastructure & Scripts', () => {
-  test.beforeAll(() => {
-    execSync('npm run build:server', { stdio: 'pipe' })
-  })
   // 1. LINT CHECK
   // Ensures you never commit code that violates ESLint rules.
   // Skipping since npm build is already running in ci
