@@ -14,8 +14,37 @@
             margin: 2rem auto;
             max-width: 900px;
         }
-        .policy-content h2 { margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+        .policy-content h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .policy-content h2 { color: #34495e; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3498db; }
+        .policy-content h3 { color: #34495e; margin-top: 1.5rem; margin-bottom: 0.75rem; }
         .policy-content ul { margin-left: 2rem; margin-bottom: 1.5rem; color: var(--text-muted); }
+        .policy-content p { margin-bottom: 1rem; }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .important {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .contact-box {
+            background: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin-top: 2rem;
+        }
+        .policy-content a { color: #3498db; text-decoration: none; }
+        .policy-content a:hover { text-decoration: underline; }
     </style>
 </head>
 <body class="bg-light">
@@ -24,8 +53,9 @@
         <div class="container" style="display:flex; width:100%; justify-content:space-between; align-items:center;">
             <a href="index.html" class="brand">HRM Monitor</a>
             <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="privacy.html">Privacy</a>
+                <a href="index.html" class="nav-item">Home</a>
+                <a href="terms.html" class="nav-item active">Terms</a>
+                <a href="privacy.html" class="nav-item">Privacy</a>
             </div>
         </div>
     </nav>
@@ -33,46 +63,211 @@
     <div class="container">
         <div class="policy-content">
             <h1>Terms of Service</h1>
-            <p>Last Updated: December 5, 2025</p>
+            <p class="last-updated">Last Updated: December 8, 2025</p>
 
-            <h2>1. Service Description</h2>
-            <p>
-                HRM Monitor is a real-time dashboard that visualizes data from your local Bluetooth devices
-                and synchronizes it with third-party platforms. The service is provided "as is" and is intended
-                for recreational use only. It is not a medical device.
-            </p>
+            <p>Please read these Terms of Service carefully before using the HRM Monitor application. By accessing or using our service, you agree to be bound by these terms.</p>
 
-            <h2>2. Third-Party Dependencies</h2>
-            <p>
-                Our service relies on the Application Programming Interfaces (APIs) provided by Strava, Inc.
-                and Spotify AB. We do not guarantee the continued availability of these features.
-                If Strava or Spotify revoke access or change their API terms, those features may cease to function
-                without notice.
-            </p>
+            <h2>1. Acceptance of Terms</h2>
+            <p>By using the HRM Dashboard, you agree to these Terms. If you do not agree, please do not use the application. These terms constitute a legally binding agreement between you and HRM Monitor.</p>
 
-            <h2>3. User Responsibilities</h2>
-            <p>By using this application, you agree to:</p>
+            <h2>2. Service Description</h2>
+            <p>HRM Monitor is a real-time dashboard that visualizes data from your local Bluetooth devices and synchronizes it with third-party platforms. The service is provided "as is" and is intended for <strong>recreational use only</strong>.</p>
+
+            <div class="info-box">
+                <strong>Key Features:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem;">
+                    <li>Real-time heart rate monitoring via Bluetooth Low Energy (BLE) devices</li>
+                    <li>Integration with Strava for activity tracking</li>
+                    <li>Integration with Spotify for music control during workouts</li>
+                    <li>Local data processing with no server storage</li>
+                    <li>Workout timer and heart rate zone visualization</li>
+                </ul>
+            </div>
+
+            <h2>3. Use at Your Own Risk</h2>
+
+            <div class="important">
+                <p><strong>MEDICAL DISCLAIMER:</strong></p>
+                <p>This application is for recreational use only. It is <strong>NOT</strong> a medical device. Always consult a physician before beginning any training program.</p>
+                <p><strong>THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.</strong> We make no guarantees about the accuracy, reliability, or availability of the service.</p>
+            </div>
+
+            <p>You acknowledge and agree that:</p>
             <ul>
-                <li>Use the Strava and Spotify integrations only in accordance with their respective Terms of Service.</li>
-                <li>Not attempt to reverse engineer or scrape data from the application.</li>
-                <li>Take full responsibility for your physical safety during workouts.</li>
+                <li>You use this application at your own risk</li>
+                <li>The heart rate data displayed is for informational purposes only</li>
+                <li>You should not rely on this application for medical decisions</li>
+                <li>You are responsible for your own physical safety during workouts</li>
+                <li>You should stop exercising and seek medical attention if you experience any discomfort</li>
             </ul>
 
-            <h2>4. Limitation of Liability</h2>
-            <p>
-                To the maximum extent permitted by law, HRM Monitor shall not be liable for any indirect, incidental,
-                or consequential damages arising from the use of, or inability to use, this service or its
-                third-party integrations.
-            </p>
+            <h2>4. Third-Party Services</h2>
+            <p>This application integrates with third-party services. Your use of these services through our application is subject to their respective terms and policies.</p>
 
-            <h2>5. Contact</h2>
-            <p>For legal inquiries, please contact: <a href="mailto:support@your-domain.com">support@your-domain.com</a></p>
+            <h3>Strava Integration</h3>
+            <p>By connecting your Strava account, you agree to:</p>
+            <ul>
+                <li>Strava's <a href="https://www.strava.com/legal/terms" target="_blank">Terms of Service</a></li>
+                <li>Strava's <a href="https://www.strava.com/legal/privacy" target="_blank">Privacy Policy</a></li>
+                <li>Strava's <a href="https://www.strava.com/legal/api" target="_blank">API Agreement</a></li>
+            </ul>
+
+            <div class="info-box">
+                <p><strong>Strava Compliance:</strong> We comply fully with Strava's Brand Guidelines and API Agreement. We use Strava data solely to provide HRM Monitor functionality and do not store, manipulate, or share your Strava data with third parties.</p>
+            </div>
+
+            <h3>Spotify Integration</h3>
+            <p>By authorizing Spotify, you agree to:</p>
+            <ul>
+                <li>Spotify's <a href="https://www.spotify.com/legal/end-user-agreement/" target="_blank">End User Agreement</a></li>
+                <li>Spotify's <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank">Privacy Policy</a></li>
+                <li>Spotify's <a href="https://developer.spotify.com/terms" target="_blank">Developer Terms</a></li>
+            </ul>
+
+            <p><strong>Important Spotify Restrictions:</strong></p>
+            <ul>
+                <li>Non-commercial use only</li>
+                <li>Do not sell or redistribute Spotify content</li>
+                <li>Do not extract or scrape Spotify data</li>
+                <li>All Spotify content is attributed to Spotify</li>
+            </ul>
+
+            <h3>Third-Party Service Changes</h3>
+            <p>We do not guarantee the continued availability of third-party integrations. If Strava or Spotify changes their APIs, modifies access, or changes their Terms of Service, these features may cease to function without notice. We are not responsible for changes made by third-party services.</p>
+
+            <h2>5. User Responsibilities</h2>
+            <p>By using this application, you agree to:</p>
+            <ul>
+                <li>Use the Strava and Spotify integrations only in accordance with their respective Terms of Service</li>
+                <li>Not attempt to reverse engineer or scrape data from the application</li>
+                <li>Not attempt to circumvent any security measures</li>
+                <li>Take full responsibility for your physical safety during workouts</li>
+                <li>Provide accurate information when setting up your account or profile</li>
+                <li>Maintain the security of your connected accounts</li>
+                <li>Use the service only for lawful purposes</li>
+            </ul>
+
+            <div class="warning">
+                <p><strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your login credentials for connected services. Notify us immediately of any unauthorized use of your account.</p>
+            </div>
+
+            <h2>6. Prohibited Uses & AI/ML Restrictions</h2>
+            <p>You may NOT use this service to:</p>
+            <ul>
+                <li>Train Artificial Intelligence (AI) or Machine Learning (ML) models using user data (including heart rate data, Strava activity history, or Spotify listening habits)</li>
+                <li>Extract, scrape, or harvest data for any purpose other than personal use within the application</li>
+                <li>Create derivative products or services based on user data</li>
+                <li>Sell, license, or redistribute any data accessed through this application</li>
+                <li>Violate any applicable laws or regulations</li>
+                <li>Infringe on the intellectual property rights of others</li>
+                <li>Transmit malicious code or interfere with the service</li>
+                <li>Impersonate others or provide false information</li>
+            </ul>
+
+            <div class="important">
+                <p><strong>Data Protection:</strong> We explicitly guarantee that <strong>no user data</strong> (including Heart Rate data, Strava activity history, or Spotify listening habits) will be used to train Artificial Intelligence (AI) or Machine Learning (ML) models, either by us or by third parties.</p>
+            </div>
+
+            <h2>7. Intellectual Property</h2>
+            <p>The HRM Monitor application, including its design, code, and original content, is owned by us and protected by copyright and other intellectual property laws. Third-party trademarks and content (Strava, Spotify, Garmin) remain the property of their respective owners.</p>
+
+            <p>You may not:</p>
+            <ul>
+                <li>Copy, modify, or distribute our application code</li>
+                <li>Remove any copyright or proprietary notices</li>
+                <li>Use our branding without permission</li>
+            </ul>
+
+            <h2>8. Limitation of Liability</h2>
+
+            <div class="important">
+                <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW:</strong></p>
+                <p>HRM Monitor shall not be liable for any indirect, incidental, consequential, or special damages arising from the use of, or inability to use, this service or its third-party integrations. This includes, but is not limited to, damages for loss of data, loss of profits, personal injury, or any other losses.</p>
+            </div>
+
+            <p>We are not responsible for:</p>
+            <ul>
+                <li>Inaccuracies in heart rate data from Bluetooth devices</li>
+                <li>Interruptions or errors in service availability</li>
+                <li>Changes or discontinuation of third-party APIs (Strava, Spotify)</li>
+                <li>Any injuries sustained during physical activity while using the app</li>
+                <li>Loss of data due to device or browser issues</li>
+                <li>Unauthorized access to your accounts</li>
+            </ul>
+
+            <h2>9. Indemnification</h2>
+            <p>You agree to indemnify and hold harmless HRM Monitor, its developers, and affiliates from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from:</p>
+            <ul>
+                <li>Your use of the service</li>
+                <li>Your violation of these Terms</li>
+                <li>Your violation of any third-party rights</li>
+                <li>Any injuries or health issues related to your use of the application</li>
+            </ul>
+
+            <h2>10. Service Modifications and Termination</h2>
+            <p>We reserve the right to:</p>
+            <ul>
+                <li>Modify or discontinue the service at any time without notice</li>
+                <li>Update these Terms of Service (continued use constitutes acceptance of modified terms)</li>
+                <li>Terminate or suspend access to the service for violations of these terms</li>
+                <li>Remove or disable third-party integrations if required by API providers</li>
+            </ul>
+
+            <p>You may stop using the service at any time. To disconnect third-party services, use the Settings menu or revoke access directly through Strava or Spotify.</p>
+
+            <h2>11. Privacy and Data Collection</h2>
+            <p>Your use of this service is also governed by our <a href="privacy.html">Privacy Policy</a>. Please review it to understand how we handle your data.</p>
+
+            <p><strong>Key Privacy Points:</strong></p>
+            <ul>
+                <li>We do not store your health data on servers</li>
+                <li>All processing occurs locally in real-time</li>
+                <li>You can disconnect third-party services at any time</li>
+                <li>We comply with Strava and Spotify data usage policies</li>
+            </ul>
+
+            <h2>12. Governing Law and Disputes</h2>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction where HRM Monitor operates, without regard to conflict of law principles.</p>
+
+            <p>Any disputes arising from these Terms or your use of the service shall be resolved through binding arbitration, except where prohibited by law. You waive any right to participate in class action lawsuits.</p>
+
+            <h2>13. Severability</h2>
+            <p>If any provision of these Terms is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary, and the remaining provisions shall remain in full force and effect.</p>
+
+            <h2>14. Entire Agreement</h2>
+            <p>These Terms, together with our Privacy Policy, constitute the entire agreement between you and HRM Monitor regarding the use of the service and supersede any prior agreements.</p>
+
+            <h2>15. Updates to Terms</h2>
+            <p>We reserve the right to modify these terms at any time. Continued use of the service after changes constitutes acceptance of the modified terms. We will update the "Last Updated" date at the top of this page when changes are made.</p>
+
+            <div class="contact-box">
+                <h2>16. Contact Information</h2>
+                <p>For legal inquiries, questions about these Terms, or to report violations, please contact:</p>
+                <p><strong>Email:</strong> <a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a></p>
+            </div>
+
+            <p style="margin-top: 2rem; text-align: center; color: #7f8c8d; font-size: 0.9rem;">© 2025 HRM Monitor. All rights reserved.</p>
         </div>
     </div>
 
-    <footer>
+    <footer>        
         <div class="container">
-            <p>© 2025 HRM App. All rights reserved.</p>
+            <div class="legal-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="mailto:anders.ariel@gmail.com">Contact Support</a>
+            </div>
+
+            <p style="opacity: 0.7;">
+                <img src="assets/strava/powered_by_strava_light.svg" alt="Powered by Strava" height="30" style="vertical-align: middle;">
+            </p>
+
+            <p>&copy; 2025 HRM App. All rights reserved.</p>
+            <p style="font-size: 0.75rem; margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                This application is not affiliated with, endorsed by, or sponsored by Strava, Inc. or Spotify AB.
+                "Strava" and the Strava Logo are trademarks of Strava, Inc.
+                "Spotify" and the Spotify Logo are trademarks of Spotify AB.
+            </p>
         </div>
     </footer>
 </body>
