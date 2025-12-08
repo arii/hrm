@@ -82,20 +82,25 @@ export const WebSocketProvider = ({
       case 'INITIAL_STATE':
         return { ...state, ...message.payload }
       case 'HRM_UPDATE': {
-        // Non-mutating update of the hrmMetrics array
+        // Efficiently update or add new metrics
         const newMetrics = message.payload
-        const updatedMetrics = state.hrmMetrics.map(
-          (metric) =>
-            newMetrics.find(
-              (newMetric) => newMetric.clientId === metric.clientId
-            ) || metric
+        const metricsMap = new Map(
+          state.hrmMetrics.map((metric) => [metric.clientId, metric])
         )
-        newMetrics.forEach((newMetric) => {
-          if (!updatedMetrics.find((m) => m.clientId === newMetric.clientId)) {
-            updatedMetrics.push(newMetric)
-          }
+        newMetrics.forEach((metric) => {
+          metricsMap.set(metric.clientId, metric)
         })
-        return { ...state, hrmMetrics: updatedMetrics }
+        return { ...state, hrmMetrics: Array.from(metricsMap.values()) }
+      }
+      case 'HRM_STATIC_UPDATE': {
+        const newStaticData = message.payload
+        const staticDataMap = new Map(
+          state.hrmStaticData.map((data) => [data.clientId, data])
+        )
+        newStaticData.forEach((data) => {
+          staticDataMap.set(data.clientId, data)
+        })
+        return { ...state, hrmStaticData: Array.from(staticDataMap.values()) }
       }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }

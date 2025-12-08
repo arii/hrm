@@ -172,6 +172,20 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
+  test.beforeEach(async () => {
+    // Ensure timer is stopped before tests start
+    const stopButton = controlPage.getByRole('button', {
+      name: 'STOP',
+      exact: true,
+    })
+
+    if (await stopButton.isVisible({ timeout: 2000 })) {
+      await stopButton.click()
+      await expect(
+        controlPage.getByRole('button', { name: 'START', exact: true })
+      ).toBeVisible()
+    }
+  })
   test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
@@ -192,6 +206,10 @@ test.describe('Visual Regression Tests', () => {
     await expect(restInput).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
+
+    // Ensure inputs are enabled before filling
+    await expect(workInput).toBeEnabled({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+    await expect(restInput).toBeEnabled({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
     // Configure timer (15 work, 5s rest)
     await workInput.fill('15')

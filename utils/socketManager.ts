@@ -82,8 +82,8 @@ const initSocketManager = (
       console.log(`WebSocket Client disconnected: ${clientId}`)
       hrmClients.delete(clientId)
       broadcast({
-        type: 'HRM_UPDATE',
-        payload: [],
+        type: 'HRM_STATIC_UPDATE',
+        payload: Array.from(hrmClients.values()),
       })
     })
   })
@@ -155,11 +155,28 @@ const handleIncomingMessage = (
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
         if (existingClientData) {
+          let staticDataUpdated = false
           // Update static data if present in the message
-          if (message.data.name) existingClientData.name = message.data.name
-          if (message.data.age) existingClientData.age = message.data.age
-          if (message.data.maxHr) existingClientData.maxHr = message.data.maxHr
-          hrmClients.set(clientId, existingClientData)
+          if (message.data.name) {
+            existingClientData.name = message.data.name
+            staticDataUpdated = true
+          }
+          if (message.data.age) {
+            existingClientData.age = message.data.age
+            staticDataUpdated = true
+          }
+          if (message.data.maxHr) {
+            existingClientData.maxHr = message.data.maxHr
+            staticDataUpdated = true
+          }
+
+          if (staticDataUpdated) {
+            hrmClients.set(clientId, existingClientData)
+            broadcast({
+              type: 'HRM_STATIC_UPDATE',
+              payload: Array.from(hrmClients.values()),
+            })
+          }
 
           // Create and broadcast the real-time metric
           if (message.data.value !== null && message.data.value !== undefined) {
