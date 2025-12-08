@@ -49,7 +49,7 @@ pnpm pm2 kill || true
 
 log "🚀 Starting server with PM2..."
 # Start server with `pnpm start`, which uses PM2
-pnpm start > "$SERVER_LOG" 2>&1
+pnpm start > "$SERVER_LOG" 2>&1 &
 log "✅ Server process started via PM2."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
