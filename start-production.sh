@@ -36,6 +36,11 @@ if [ -n "$ORIGINAL_PORT" ]; then
   echo "[start-production] Using PORT=$PORT from environment"
 fi
 
+if [ -z "$ENCRYPTION_KEY" ]; then
+  echo "[start-production] ENCRYPTION_KEY not set. Generating a temporary one."
+  export ENCRYPTION_KEY=$(openssl rand -hex 32)
+fi
+
 if [ -n "$ORIGINAL_HOST" ]; then
   export HOST="$ORIGINAL_HOST"
   echo "[start-production] Using HOST=$HOST from environment"

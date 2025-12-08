@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+    "dev": "pnpm run build:server && cross-env NODE_ENV=development node --env-file=.env.local dist/server.mjs | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "npm run build:server && next build",
-    "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
+    "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs && node scripts/post-build-fix.mjs",
     "analyze": "cross-env ANALYZE=true npm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:logs": "pm2 logs hrm-server",
