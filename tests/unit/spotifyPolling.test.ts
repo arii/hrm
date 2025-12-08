@@ -2,7 +2,7 @@
  * Unit tests for Spotify integration with timer
  * Tests Spotify commands and volume control
  */
-import { beforeEach, describe, expect, it, jest } from '@jest-globals'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
@@ -20,7 +20,6 @@ jest.mock('../../utils/logger', () => ({
 jest.mock('../../services/spotifyTokenManager', () => {
   const SpotifyTokenManager = jest.fn().mockImplementation(() => {
     return {
-      loadToken: jest.fn().mockImplementation(() => Promise.resolve()),
       getValidAccessToken: jest
         .fn()
         .mockImplementation(() => Promise.resolve('mock_access_token')),

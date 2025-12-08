@@ -4,7 +4,8 @@ import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
-let prisma: PrismaClient
+// Instantiate Prisma client
+const prisma = new PrismaClient()
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -46,9 +47,6 @@ export class SpotifyPolling {
   private sdk: SpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
-    if (!prisma) {
-      prisma = new PrismaClient()
-    }
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
     this.tokenManager = new SpotifyTokenManager(

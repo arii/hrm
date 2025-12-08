@@ -3,13 +3,9 @@ import { PrismaClient } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
 
-let prisma: PrismaClient
+const prisma = new PrismaClient()
 
 export async function POST(req: NextRequest) {
-  if (!prisma) {
-    prisma = new PrismaClient()
-  }
-
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''

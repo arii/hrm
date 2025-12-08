@@ -8,7 +8,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   env: {
     TESTING: process.env.TESTING,
-    DATABASE_URL: process.env.DATABASE_URL,
   },
   async redirects() {
     return [

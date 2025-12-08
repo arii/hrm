@@ -111,7 +111,7 @@ export default defineConfig([
     },
   },
 
-  // Override for Jest unit test files (TypeScript)
+  // Override for Jest unit test files
   {
     files: ['tests/unit/**/*.{ts,tsx}'],
     languageOptions: {
@@ -134,17 +134,6 @@ export default defineConfig([
     },
     rules: {
       // Jest specific rules or overrides
-    },
-  },
-  // Override for Jest unit test files (JavaScript)
-  {
-    files: ['tests/unit/**/*.js'],
-    languageOptions: {
-      globals: {
-        jest: 'readonly',
-        require: 'readonly',
-        global: 'readonly',
-      },
     },
   },
 

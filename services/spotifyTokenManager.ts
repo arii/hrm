@@ -1,7 +1,8 @@
 import { PrismaClient, SpotifyToken } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
-let prisma: PrismaClient
+// Instantiate Prisma client outside the class for singleton pattern
+const prisma = new PrismaClient()
 const SPOTIFY_TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
 
 export class SpotifyTokenManager {
@@ -14,9 +15,7 @@ export class SpotifyTokenManager {
     private clientId: string,
     private clientSecret: string
   ) {
-    if (!prisma) {
-      prisma = new PrismaClient()
-    }
+    // We expect the first token delivery to set the user ID.
   }
 
   // Initial load or periodic check
@@ -80,7 +79,7 @@ export class SpotifyTokenManager {
       await this.writeTokenUpdate({
         accessToken: data.access_token,
         accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
-        refreshToken: data.refresh_token ?? null, // Coalesce undefined to null
+        refreshToken: data.refresh_token ?? null,
         updatedAt: new Date(),
       })
       console.log('Spotify access token refresh completed.')

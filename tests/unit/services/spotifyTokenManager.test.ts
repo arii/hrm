@@ -1,9 +1,9 @@
 // File: tests/unit/services/spotifyTokenManager.test.ts
 import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
-import * as Prisma from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 // Get the mock client from the global setup
-const prisma = new Prisma.PrismaClient()
+const prisma = new PrismaClient()
 
 describe('SpotifyTokenManager', () => {
   const clientId = 'test_client_id'
