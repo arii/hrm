@@ -1,6 +1,8 @@
 /* style.css - Modern SaaS Theme */
 :root {
   --primary: #FC5200; /* Strava Orange for accents */
+  --primary-hover: #e04a00; /* Darker orange for hover */
+  --primary-active: #c23e00; /* Even darker for active */
   --dark: #1F1F1F;
   --light: #F7F7F7;
   --white: #FFFFFF;
@@ -24,7 +26,7 @@ h1, h2, h3 { color: var(--dark); font-weight: 700; line-height: 1.2; }
 h1 { font-size: 3rem; margin-bottom: 1rem; }
 h2 { font-size: 2.25rem; margin-bottom: 1rem; text-align: center; }
 p { margin-bottom: 1.5rem; color: var(--text-muted); }
-a { text-decoration: none; color: inherit; transition: color 0.2s; }
+a { text-decoration: none; color: inherit; transition: color 0.2s, background-color 0.2s, transform 0.1s; }
 
 /* Layout Utilities */
 .container {
@@ -43,9 +45,19 @@ a { text-decoration: none; color: inherit; transition: color 0.2s; }
   border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.1s;
+  background-color: var(--primary);
+  color: var(--white) !important;
+  border: none;
+  transition: background-color 0.2s, transform 0.1s;
 }
-.btn:hover { transform: translateY(-1px); }
+.btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+.btn:active {
+  background-color: var(--primary-active);
+  transform: translateY(0);
+}
 
 /* Navbar */
 .navbar {
@@ -60,8 +72,10 @@ a { text-decoration: none; color: inherit; transition: color 0.2s; }
   border-bottom: 1px solid #eaeaea;
 }
 .brand { font-size: 1.25rem; font-weight: 800; color: var(--dark); }
-.nav-links a { margin-left: 2rem; font-size: 0.9rem; font-weight: 500; }
-.nav-links a:hover { color: var(--primary); }
+.nav-links { display: flex; align-items: center; }
+.nav-links a.nav-item { margin-left: 2rem; font-size: 0.9rem; font-weight: 500; }
+.nav-links a.nav-item:hover { color: var(--primary); }
+.nav-links .btn-contact { margin-left: 2rem; font-size: 0.9rem; }
 
 /* Hero */
 .hero {
@@ -81,7 +95,10 @@ a { text-decoration: none; color: inherit; transition: color 0.2s; }
   background: transparent;
   padding: 0;
   border: none;
+  transition: transform 0.1s;
 }
+.btn-connect:hover { transform: translateY(-2px); }
+.btn-connect:active { transform: translateY(0); }
 .btn-connect img { height: 48px; }
 
 /* Features Grid */
@@ -123,5 +140,6 @@ footer {
   font-size: 0.9rem;
 }
 footer a { color: #aaa; text-decoration: underline; }
+footer a:hover { color: var(--white); }
 footer .legal-links { margin-bottom: 2rem; }
 footer .legal-links a { margin: 0 1rem; text-decoration: none; }
