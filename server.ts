@@ -15,11 +15,11 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
+import { SpotifyPolling } from './services/spotifyPolling'
+import TabataTimer from './services/tabataTimer'
+import { initSocketManager } from './utils/socketManager'
+import { broadcast } from './utils/broadcast'
+import { getBaseURL } from './utils/urls'
 import { StateSnapshot } from './types/websocket'
 import logger from './utils/logger'
 import { performHealthCheck } from './lib/healthCheck'

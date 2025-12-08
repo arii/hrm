@@ -1,8 +1,8 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { EncryptionService } from '../utils/encryption.js'
-import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { EncryptionService } from '../utils/encryption'
+import { SpotifyTokenResponse } from './spotifyPolling'
 
 export interface SpotifyTokenPayload {
   provider: string
