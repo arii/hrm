@@ -41,17 +41,23 @@
 </head>
 <body class="bg-light">
 
-    <nav class="navbar">
-        <div class="container nav-container">
-            <a href="index.html" class="logo">HRM</a>
-            <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="terms.html">Terms</a>
-                <a href="privacy.html" style="color: var(--primary);">Privacy</a>
-                <a href="contact.html">Contact</a>
-            </div>
-        </div>
-    </nav>
+    <header style="background-color: #fff; border-bottom: 1px solid #eaeaea; padding: 1rem 0;">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <a href="index.html" style="text-decoration: none; color: #333; font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+          HRM Monitor
+        </a>
+
+        <nav>
+          <ul style="display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0;">
+            <li><a href="index.html" style="text-decoration: none; color: #555; font-weight: 500;">Home</a></li>
+            <li><a href="index.html#features" style="text-decoration: none; color: #555; font-weight: 500;">Features</a></li>
+            <li><a href="privacy.html" style="text-decoration: none; color: #555; font-weight: 500;">Privacy</a></li>
+            <li><a href="terms.html" style="text-decoration: none; color: #555; font-weight: 500;">Terms</a></li>
+            <li><a href="contact.html" style="text-decoration: none; color: #555; font-weight: 500;">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
 
     <div class="container">
         <div class="policy-content">
@@ -61,7 +67,7 @@
             <p>HRM Monitor ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our application and integrate with third-party services like Strava, Spotify, and Garmin.</p>
 
             <h2>1. Introduction</h2>
-            <p>The HRM Dashboard is designed to prioritize your privacy. We process your health data locally on your device in real-time. We do not store your personal health information on our servers.</p>
+            <p>The HRM Monitor is designed to prioritize your privacy. We process your health data locally on your device in real-time. We do not store your personal health information on our servers.</p>
 
             <div class="highlight">
                 <strong>Our Core Privacy Promise:</strong> Your health data stays on your device. We believe in data minimization and only process data necessary for the functionality of the app.
@@ -173,25 +179,34 @@
         </div>
     </div>
 
-    <footer>
-        <div class="container">
-            <div class="legal-links">
-                <a href="privacy.html">Privacy Policy</a>
-                <a href="terms.html">Terms of Service</a>
-                <a href="contact.html">Contact Support</a>
-            </div>
+    <footer style="background-color: #f9f9f9; border-top: 1px solid #eaeaea; padding: 3rem 0; margin-top: auto;">
+      <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem; text-align: center;">
 
-            <p style="opacity: 0.7;">
-                <img src="assets/strava/powered_by_strava_light.svg" alt="Powered by Strava" height="30" style="vertical-align: middle;">
-            </p>
+        <nav style="margin-bottom: 2rem;">
+          <a href="privacy.html" style="margin: 0 10px; color: #666; text-decoration: none; font-size: 0.9rem;">Privacy Policy</a>
+          <span style="color: #ccc;">|</span>
+          <a href="terms.html" style="margin: 0 10px; color: #666; text-decoration: none; font-size: 0.9rem;">Terms of Service</a>
+          <span style="color: #ccc;">|</span>
+          <a href="contact.html" style="margin: 0 10px; color: #666; text-decoration: none; font-size: 0.9rem;">Contact Support</a>
+        </nav>
 
-            <p>&copy; 2025 HRM App. All rights reserved.</p>
-            <p style="font-size: 0.75rem; margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-                This application is not affiliated with, endorsed by, or sponsored by Strava, Inc. or Spotify AB.
-                "Strava" and the Strava Logo are trademarks of Strava, Inc.
-                "Spotify" and the Spotify Logo are trademarks of Spotify AB.
-            </p>
+        <div style="margin-bottom: 2rem;">
+          <a href="https://www.strava.com" target="_blank" rel="noopener noreferrer" aria-label="Go to Strava">
+            <img src="assets/strava/powered_by_strava_light.svg" alt="Powered by Strava" style="height: 32px; opacity: 0.9;">
+          </a>
         </div>
+
+        <p style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          &copy; 2025 HRM Monitor. All rights reserved.
+        </p>
+
+        <div style="color: #999; font-size: 0.75rem; line-height: 1.5; max-width: 600px; margin: 0 auto;">
+          <p style="margin: 5px 0;">This application is not affiliated with, endorsed by, or sponsored by Strava, Inc. or Spotify AB.</p>
+          <p style="margin: 5px 0;">"Strava" and the Strava Logo are trademarks of Strava, Inc.</p>
+          <p style="margin: 5px 0;">"Spotify" and the Spotify Logo are trademarks of Spotify AB.</p>
+        </div>
+
+      </div>
     </footer>
 
 </body>
