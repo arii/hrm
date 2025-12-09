@@ -4,6 +4,8 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
+import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
+import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 
 // Define types for MUI color props
@@ -182,4 +184,17 @@ export const getTimerProps = (
         progressColor: '#6b7280',
       }
   }
+}
+
+export const transformWorkoutDataToColumns = (
+  data: WorkoutData
+): WorkoutColumnsProps['columns'] => {
+  if (!data) return []
+
+  return data.map((category: WorkoutItem) => ({
+    title: category.category,
+    items: category.exercises.map((ex: string) => ({
+      title: ex,
+    })),
+  }))
 }

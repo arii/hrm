@@ -21,6 +21,8 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import { transformWorkoutDataToColumns } from '@/utils/visualization'
+import { Box } from '@mui/material'
 
 // Lazy-load heavy components
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
@@ -30,6 +32,10 @@ const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
 const WorkoutTable = dynamic(() => import('../components/WorkoutTable'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={500} />,
+})
+const WorkoutColumns = dynamic(() => import('../components/WorkoutColumns'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 
 const Dashboard = () => {
@@ -81,7 +87,17 @@ const Dashboard = () => {
         </ErrorBoundary>
 
         <Grid item xs={12}>
-          <WorkoutTable workoutData={workoutData} />
+          {/* Desktop: Native Table */}
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <WorkoutTable workoutData={workoutData} />
+          </Box>
+
+          {/* Mobile: Card Columns (The new component) */}
+          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+            <WorkoutColumns
+              columns={transformWorkoutDataToColumns(workoutData)}
+            />
+          </Box>
         </Grid>
       </Grid>
 
