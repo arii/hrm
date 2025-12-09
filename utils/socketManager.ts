@@ -29,8 +29,6 @@ let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
-let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
 
@@ -67,7 +65,6 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot
 ) => {
   initBroadcaster(wss)
-  wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
