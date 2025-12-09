@@ -93,10 +93,7 @@ const Dashboard = () => {
         <Grid item xs={12} md={6}>
           <DashboardWidget title="Workout Stats">
             <DataWidget label="Avg HR" value={workoutStats.avgHr || '--'} />
-            <DataWidget
-              label="Calories"
-              value={workoutStats.calories || '--'}
-            />
+            <DataWidget label="Calories" value={workoutStats.calories || '--'} />
           </DashboardWidget>
         </Grid>
 

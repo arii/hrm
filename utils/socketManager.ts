@@ -108,7 +108,7 @@ const initSocketManager = (
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = async (
+const handleIncomingMessage = (
   ws: ExtWebSocket,
   jsonMessage: string,
   clientId: string
@@ -201,13 +201,12 @@ const handleIncomingMessage = async (
               })
             }
           } else if (message.command === 'STOP') {
-            const stats = await heartRateServiceInstance.endSession()
-            if (stats) {
-              broadcast({
-                type: 'WORKOUT_STATS_UPDATE',
-                payload: stats,
-              })
-            }
+            const stats = heartRateServiceInstance.getSessionStats()
+            broadcast({
+              type: 'WORKOUT_STATS_UPDATE',
+              payload: stats,
+            })
+            heartRateServiceInstance.reset()
           }
         }
         break

@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import TimerControls from '@/app/client/control/components/TimerControls'
-import { MockWebSocketProvider } from './decorators/MockWebSocketProvider'
+import type { Meta, StoryObj } from '@storybook/react';
+import TimerControls from '@/app/client/control/components/TimerControls';
+import { MockWebSocketProvider } from './decorators/MockWebSocketProvider';
 
 const meta: Meta<typeof TimerControls> = {
   title: 'Control/TimerControls',
@@ -15,12 +15,12 @@ const meta: Meta<typeof TimerControls> = {
   parameters: {
     layout: 'centered',
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {}
+export const Default: Story = {};
 
 export const Running: Story = {
   decorators: [
@@ -43,7 +43,7 @@ export const Running: Story = {
       </MockWebSocketProvider>
     ),
   ],
-}
+};
 
 export const Disconnected: Story = {
   decorators: [
@@ -57,4 +57,4 @@ export const Disconnected: Story = {
       </MockWebSocketProvider>
     ),
   ],
-}
+};

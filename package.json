@@ -58,7 +58,6 @@
     "@mui/material": "^7.3.6",
     "@react-spring/web": "^10.0.3",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@types/uuid": "^11.0.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.23.24",

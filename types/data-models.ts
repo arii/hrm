@@ -1,38 +1,55 @@
-// types/data-models.ts
+/**
+ * @file This file contains the centralized data models for the application.
+ *
+ * @see /docs/decisions/0001-centralized-data-models.md
+ */
 
 /**
- * Distinguishes between data sources.
- * - 'legacy_import': From your Google Doc scraping (qualitative).
- * - 'live_tracking': Recorded by this app's HRM (quantitative).
+ * Represents a user's profile information.
+ *
+ * @property {string} id - The unique identifier for the user (UUID).
+ * @property {string} username - The user's chosen username. Must be unique.
+ * @property {string} email - The user's email address. Must be unique.
+ * @property {string | null} firstName - The user's first name.
+ * @property {string | null} lastName - The user's last name.
+ * @property {string} createdAt - The timestamp when the user was created (ISO 8601).
+ * @property {string} updatedAt - The timestamp when the user was last updated (ISO 8601).
  */
-export type SessionSource = 'legacy_import' | 'live_tracking'
-
-export interface WorkoutPhase {
-  name: string
-  exercises: string[]
+export interface UserProfile {
+  id: string
+  username: string
+  email: string
+  firstName: string | null
+  lastName: string | null
+  createdAt: string
+  updatedAt: string
 }
 
+/**
+ * Represents a single workout session.
+ *
+ * @property {string} id - The unique identifier for the workout session (UUID).
+ * @property {string} userId - The ID of the user who performed the workout.
+ * @property {string} startedAt - The timestamp when the workout started (ISO 8601).
+ * @property {string | null} endedAt - The timestamp when the workout ended (ISO 8601).
+ * @property {string} notes - Any notes the user added for the workout.
+ */
 export interface WorkoutSession {
   id: string
   userId: string
-  startedAt: string // ISO 8601 Date
+  startedAt: string
   endedAt: string | null
-  source: SessionSource
-
-  // Summary Stats (Optional as legacy data lacks these)
-  avgHr?: number
-  calories?: number
-  duration?: number // Seconds
-
-  // Rich Context (Legacy data excels here)
-  phases: WorkoutPhase[]
-  notes?: string
-
-  // Time-Series (Live data excels here)
-  samples?: HeartRateDataPoint[]
+  notes: string
 }
 
-// ... existing HeartRateDataPoint and UserProfile interfaces ...
+/**
+ * Represents a single heart rate data point.
+ *
+ * @property {string} id - The unique identifier for the data point (UUID).
+ * @property {string} workoutSessionId - The ID of the workout session this data point belongs to.
+ * @property {number} timestamp - The Unix epoch milliseconds when the heart rate was measured.
+ * @property {number} heartRate - The heart rate in beats per minute.
+ */
 export interface HeartRateDataPoint {
   id: string
   workoutSessionId: string
