@@ -59,6 +59,7 @@ export interface InitialStateSnapshotPayload {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
+  workoutData: WorkoutData
   spotifyServiceInitialized?: boolean
 }
 
@@ -89,6 +90,7 @@ export type ServerMessage =
   | { type: 'HRM_UPDATE'; payload: HrmData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'WORKOUT_DATA_UPDATE'; payload: WorkoutData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | SpotifyExecutionMessage
@@ -165,6 +167,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
 
+import { WorkoutData } from './index'
 import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
