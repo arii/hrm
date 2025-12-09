@@ -196,8 +196,7 @@ const handleIncomingMessage = (
         if (tabataService) {
           tabataService.setConfig({
             workDuration: message.workDuration,
-            restDuration:.
-            restDuration,
+            restDuration: message.restDuration,
           })
         }
         break
