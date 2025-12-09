@@ -40,16 +40,17 @@ class HeartRateService {
         duration: 0,
       }
     }
+    const userSettings = this.userSettings
 
     const duration = (Date.now() - this.startTime) / 1000 // in seconds
     const avgHr = this.samples.reduce((a, b) => a + b, 0) / this.samples.length
     const calories = calculateCalories(
       avgHr,
       duration,
-      this.userSettings!.userAge
+      userSettings.userAge
     )
 
-    const timeInZone = this.calculateTimeInZones()
+    const timeInZone = this.calculateTimeInZones(userSettings)
 
     return {
       avgHr: Math.round(avgHr),
@@ -59,13 +60,12 @@ class HeartRateService {
     }
   }
 
-  private calculateTimeInZones() {
+  private calculateTimeInZones(userSettings: UserSettings) {
     const timeInZone: { [key: string]: number } = {}
-    if (!this.userSettings) return timeInZone
 
     // This is a simplified calculation assuming one sample per second
     this.samples.forEach((hr) => {
-      const percentage = (hr / this.userSettings!.maxHr) * 100
+      const percentage = (hr / userSettings.maxHr) * 100
       for (const zone of HR_ZONES) {
         if (percentage >= zone.range[0] && percentage <= zone.range[1]) {
           timeInZone[zone.name] = (timeInZone[zone.name] || 0) + 1
