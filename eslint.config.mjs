@@ -68,6 +68,7 @@ export default defineConfig([
     '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
     '.github/copilot-instructions.md', // Exclude copilot instructions
     'ecosystem.config.cjs', // Exclude PM2 config file
+    'types/better-sqlite3.d.ts', // Exclude the better-sqlite3 declaration file
   ]),
 
   // Configuration for TypeScript files
