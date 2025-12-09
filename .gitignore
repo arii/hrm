@@ -114,6 +114,3 @@ server.log
 test-update.log
 running_notes.md.backup
 test-proof.json
-
-*storybook.log
-storybook-static

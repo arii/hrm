@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import SpotifyControls from '@/app/client/control/components/SpotifyControls'
-import { MockWebSocketProvider } from './decorators/MockWebSocketProvider'
+import type { Meta, StoryObj } from '@storybook/react';
+import SpotifyControls from '@/app/client/control/components/SpotifyControls';
+import { MockWebSocketProvider } from './decorators/MockWebSocketProvider';
 
 // Mock useRouter
 // Storybook Next.js addon should handle this, but explicit mock might be safer for specific behavior if needed.
@@ -19,12 +19,12 @@ const meta: Meta<typeof SpotifyControls> = {
   parameters: {
     layout: 'centered',
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
-export const NoTrack: Story = {}
+export const NoTrack: Story = {};
 
 export const Playing: Story = {
   decorators: [
@@ -36,24 +36,8 @@ export const Playing: Story = {
             artist: 'Queen',
             isPlaying: true,
             devices: [
-              {
-                id: '1',
-                name: 'MacBook Pro',
-                is_active: true,
-                type: 'Computer',
-                volume_percent: 50,
-                is_private_session: false,
-                is_restricted: false,
-              },
-              {
-                id: '2',
-                name: 'iPhone',
-                is_active: false,
-                type: 'Smartphone',
-                volume_percent: 80,
-                is_private_session: false,
-                is_restricted: false,
-              },
+              { id: '1', name: 'MacBook Pro', is_active: true, type: 'Computer', volume_percent: 50, is_private_session: false, is_restricted: false },
+              { id: '2', name: 'iPhone', is_active: false, type: 'Smartphone', volume_percent: 80, is_private_session: false, is_restricted: false },
             ],
           },
         }}
@@ -62,7 +46,7 @@ export const Playing: Story = {
       </MockWebSocketProvider>
     ),
   ],
-}
+};
 
 export const Paused: Story = {
   decorators: [
@@ -74,15 +58,7 @@ export const Paused: Story = {
             artist: 'Queen',
             isPlaying: false,
             devices: [
-              {
-                id: '1',
-                name: 'MacBook Pro',
-                is_active: true,
-                type: 'Computer',
-                volume_percent: 50,
-                is_private_session: false,
-                is_restricted: false,
-              },
+                { id: '1', name: 'MacBook Pro', is_active: true, type: 'Computer', volume_percent: 50, is_private_session: false, is_restricted: false },
             ],
           },
         }}
@@ -91,7 +67,7 @@ export const Paused: Story = {
       </MockWebSocketProvider>
     ),
   ],
-}
+};
 
 export const Disconnected: Story = {
   decorators: [
@@ -105,4 +81,4 @@ export const Disconnected: Story = {
       </MockWebSocketProvider>
     ),
   ],
-}
+};

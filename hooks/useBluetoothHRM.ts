@@ -37,7 +37,9 @@ const parseHeartRate = (value: DataView): number => {
 const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+    document.cookie = `${name}=${encodeURIComponent(
+      value
+    )}; expires=${expires}; path=/`
   }
 }
 

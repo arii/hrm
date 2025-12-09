@@ -30,23 +30,14 @@ export interface TimerDisplayProps {
   restDuration?: number
 }
 
-// Renamed to avoid conflict
-export interface WorkoutColumnItem {
+export interface WorkoutItem {
   title: string
   details?: string
 }
 
 export interface WorkoutColumnsProps {
-  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
+  columns: Array<{ title: string; items: WorkoutItem[] }>
 }
-
-// Correct WorkoutItem for the parser and WebSocket
-export interface WorkoutItem {
-  category: string
-  exercises: string[]
-}
-
-export type WorkoutData = WorkoutItem[]
 
 export interface SpotifyPlaylistItem {
   id: string
