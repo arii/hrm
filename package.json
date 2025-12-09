@@ -58,6 +58,7 @@
     "@mui/material": "^5.18.0",
     "@react-spring/web": "^10.0.3",
     "@spotify/web-api-ts-sdk": "^1.2.0",
+    "cheerio": "^1.1.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.23.24",
