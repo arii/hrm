@@ -34,9 +34,19 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { status } = useSession()
+  const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
+
+  // Debug: Log session status changes
+  useEffect(() => {
+    console.log('[SpotifyDisplay] Session status changed:', {
+      status,
+      hasSession: !!session,
+      hasAccessToken: !!session?.accessToken,
+      isLoggedIn,
+    })
+  }, [status, session, isLoggedIn])
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -201,7 +211,7 @@ const SpotifyDisplay = () => {
   // If we are logged in, we show the player bar.
   // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
   // or simply showing the controls so the user can transfer playback.
-  if (spotifyLoggedIn) {
+  if (isLoggedIn) {
     const isWaiting = spotifyData.trackName === 'Awaiting Login...'
     const displayTrackName = isWaiting
       ? 'No Active Playback'

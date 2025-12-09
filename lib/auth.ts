@@ -136,10 +136,7 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  // Trust the X-Forwarded-Proto and X-Forwarded-Host headers for localhost
-  trustHost: true,
   // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
-  // Use trustHost for v5, but v4 uses different mechanism
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -197,25 +194,29 @@ export const authOptions: AuthOptions = {
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
+    async signIn() {
+      // Always allow Spotify sign-in
+      return true
+    },
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        console.log('[AUTH JWT] Initial sign-in, account:', {
+        console.log('[AUTH JWT] Initial sign-in - Full account object:', {
           provider: account.provider,
           providerAccountId: account.providerAccountId,
           hasAccessToken: !!account.access_token,
+          hasProfile: !!account.profile,
+          profileKeys: account.profile
+            ? Object.keys(account.profile)
+            : 'NO PROFILE',
+          profileEmail: (account.profile as Record<string, unknown>)?.email,
+          profileDisplayName: (account.profile as Record<string, unknown>)
+            ?.display_name,
         })
-        const tokenData = {
-          sub: account.providerAccountId, // Add user ID so NextAuth knows who this is
-          accessToken: account.access_token,
-          accessTokenExpires:
-            Date.now() + (Number(account.expires_in) || 3600) * 1000,
-          refreshToken: account.refresh_token,
-        }
-        console.log('[AUTH JWT] Returning tokenData:', {
-          hasSub: !!tokenData.sub,
-          hasAccessToken: !!tokenData.accessToken,
-        })
+        console.log(
+          '[AUTH JWT] Initial token before modification:',
+          Object.keys(token)
+        )
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
@@ -258,7 +259,21 @@ export const authOptions: AuthOptions = {
           }
         }
 
-        return tokenData
+        // Return token with Spotify account data
+        const updatedToken = {
+          ...token,
+          accessToken: account.access_token,
+          accessTokenExpires:
+            Date.now() + (Number(account.expires_in) || 3600) * 1000,
+          refreshToken: account.refresh_token,
+        }
+        console.log(
+          '[AUTH JWT] Returning token with keys:',
+          Object.keys(updatedToken),
+          'has sub:',
+          !!updatedToken.sub
+        )
+        return updatedToken
       }
 
       // 2. Token is still valid - return it as-is
