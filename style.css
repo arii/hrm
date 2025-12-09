@@ -241,3 +241,13 @@ footer .legal-links a { margin: 0 1rem; text-decoration: none; }
 .action-button.outline:hover {
     background-color: #eff6ff;
 }
+
+/* Branding */
+.brand-code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    background: #f1f1f1;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    color: #333;
+}

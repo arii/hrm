@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - HRM Monitor</title>
+    <title>arii/hrm - Heart Rate & Music Sync</title>
     <link rel="stylesheet" href="style.css">
-    <meta name="description" content="Sync your heart rate data in real-time. Compatible with Strava and Spotify.">
+    <meta name="description" content="Sync your heart rate data in real-time. Compatible with Spotify. Strava integration coming soon.">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-H4XN1M8M3C"></script>
     <script>
@@ -21,7 +21,7 @@
     <header style="background-color: #fff; border-bottom: 1px solid #eaeaea; padding: 1rem 0;">
       <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;">
         <a href="index.html" style="text-decoration: none; color: #333; font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-          HRM Monitor
+          <span class="brand-code">arii/hrm</span>
         </a>
 
         <nav>
@@ -38,19 +38,29 @@
 
     <div class="container hero">
         <div class="hero-content">
-            <h1>Unlock Your Workout Data</h1>
+            <h1>Heart Rate <span style="color: var(--primary);">×</span> Music</h1>
             <p>
-                Seamlessly visualize your heart rate zones, control your music,
-                and sync your performance data directly to your favorite platforms.
+                An open-source dashboard that syncs your Spotify playback with your workout timer.
+                Visualize real-time Bluetooth heart rate data in the browser.
             </p>
 
-            <a href="https://arii.github.io/hrm/" class="btn-connect">
-                <img src="assets/strava/btn_strava_connectwith_orange.svg"
-                     alt="Connect with Strava">
-            </a>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">
-                Compatible with Spotify • Secure OAuth Login
-            </p>
+            <div style="margin-bottom: 1.5rem;">
+                <p style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #1db954;">
+                    <span style="vertical-align: middle;">🎵</span> Works with Spotify Premium
+                </p>
+            </div>
+
+            <div style="opacity: 0.7;">
+                <p style="font-size: 0.8rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: #FC5200;">
+                    Coming Soon
+                </p>
+                <div style="pointer-events: none; filter: grayscale(100%); display: inline-block;">
+                     <img src="assets/strava/btn_strava_connectwith_orange.svg" alt="Connect with Strava">
+                </div>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+                    Activity upload integration in development.
+                </p>
+            </div>
         </div>
         <div class="hero-image">
             <img src="assets/screenshots/dashboard-hero.png" alt="HRM Dashboard View">
@@ -79,10 +89,10 @@
                 </div>
 
                 <div class="feature-card">
-                    <h3>🔒 Secure Sync</h3>
+                    <h3>🚧 Strava Integration (Planned)</h3>
                     <p>
-                        Your data is yours. We strictly adhere to industry-standard <strong>OAuth 2.0</strong> protocols for authentication.
-                        We operate using secure, temporary access tokens and <strong>never store your passwords</strong> or credentials.
+                        We are currently building secure OAuth integration to upload your workout summaries directly to Strava.
+                        <br><em style="font-size: 0.85rem; color: #888;">Pending API Approval.</em>
                     </p>
                 </div>
 
@@ -102,12 +112,12 @@
                 <div class="step-card">
                     <img src="assets/screenshots/tutorial-02-pair.png" alt="Authorize Apps" class="step-image">
                     <h3>2. Authorize</h3>
-                    <p>Link your Strava & Spotify accounts.</p>
+                    <p>Link your Spotify account.</p>
                 </div>
                 <div class="step-card">
                     <img src="assets/screenshots/tutorial-03-sync.png" alt="Sync Data" class="step-image">
                     <h3>3. Analyze</h3>
-                    <p>Visualize zones and export activities.</p>
+                    <p>Visualize zones in real-time.</p>
                 </div>
             </div>
         </div>
@@ -131,7 +141,7 @@
         </div>
 
         <p style="color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">
-          &copy; 2025 HRM Monitor. All rights reserved.
+          &copy; 2025 arii/hrm. All rights reserved.
         </p>
 
         <div style="color: #999; font-size: 0.75rem; line-height: 1.5; max-width: 600px; margin: 0 auto;">
