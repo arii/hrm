@@ -20,14 +20,34 @@ export function middleware(request: NextRequest) {
   // Handle reverse proxy headers for NextAuth
   const forwardedHost = request.headers.get('x-forwarded-host')
   const forwardedProto = request.headers.get('x-forwarded-proto')
+  const forwardedPort = request.headers.get('x-forwarded-port')
+  const host = request.headers.get('host')
 
-  if (forwardedHost && forwardedProto) {
-    // Set the correct host and protocol for NextAuth
-    response.headers.set('x-forwarded-host', forwardedHost)
-    response.headers.set('x-forwarded-proto', forwardedProto)
+  // Determine the actual host being accessed
+  const actualHost = forwardedHost || host || ''
+  const actualProto = forwardedProto || 'https'
+  const actualPort = forwardedPort || ''
+
+  // Reconstruct the full URL with port for NextAuth
+  if (actualHost) {
+    // Ensure Host header includes the port if not already present and port is custom
+    let hostWithPort = actualHost
+    if (actualPort && !actualHost.includes(':')) {
+      // Add port only if it's non-standard (444 for dev, or explicitly forwarded)
+      if (actualPort !== '443') {
+        hostWithPort = `${actualHost}:${actualPort}`
+      }
+    }
+
+    response.headers.set('x-forwarded-host', hostWithPort)
+    response.headers.set('x-forwarded-proto', actualProto)
+
+    if (actualPort) {
+      response.headers.set('x-forwarded-port', actualPort)
+    }
 
     // Ensure NextAuth recognizes HTTPS
-    if (forwardedProto === 'https') {
+    if (actualProto === 'https') {
       response.headers.set('x-forwarded-ssl', 'on')
     }
   }
@@ -39,6 +59,7 @@ export function middleware(request: NextRequest) {
       host: request.headers.get('host'),
       forwardedHost,
       forwardedProto,
+      forwardedPort,
     })
   }
 

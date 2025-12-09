@@ -13,6 +13,26 @@ declare module 'next-auth' {
 }
 
 /**
+ * Safe helper to extract hostname from NEXTAUTH_URL
+ * Returns undefined if URL is invalid to prevent cookie domain errors
+ */
+function getCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== 'production' || !process.env.NEXTAUTH_URL) {
+    return undefined
+  }
+  try {
+    return new URL(process.env.NEXTAUTH_URL).hostname
+  } catch (e) {
+    console.error(
+      'Failed to parse NEXTAUTH_URL for cookie domain:',
+      process.env.NEXTAUTH_URL,
+      e
+    )
+    return undefined
+  }
+}
+
+/**
  * @file NextAuth configuration for Spotify authentication.
  * @module lib/auth
  */
@@ -100,6 +120,8 @@ const SPOTIFY_SCOPES = [
 export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
+      id: 'spotify',
+      name: 'Spotify',
       clientId: process.env.SPOTIFY_CLIENT_ID as string,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
       authorization: {
@@ -109,10 +131,8 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  // Handle reverse proxy configuration
-  ...(process.env.NODE_ENV === 'production' && {
-    trustHost: true,
-  }),
+  // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
+  // Use trustHost for v5, but v4 uses different mechanism
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -121,13 +141,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // Set domain based on environment
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     callbackUrl: {
@@ -137,12 +151,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     csrfToken: {
@@ -152,12 +161,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     pkceCodeVerifier: {
@@ -168,12 +172,7 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     state: {
@@ -184,12 +183,7 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
   },

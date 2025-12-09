@@ -1,5 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
+import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -19,7 +20,6 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import Cookies from 'js-cookie'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 
@@ -34,12 +34,12 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
+  const { data: session, status } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const accessToken = Cookies.get('spotify_access_token')
+  const isLoggedIn = status === 'authenticated' && session?.accessToken
 
-  const handleLogout = () => {
-    Cookies.remove('spotify_access_token')
-    Cookies.remove('spotify_refresh_token')
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
     window.location.reload()
   }
 
@@ -107,10 +107,8 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn = Boolean(accessToken) && Boolean(spotifyAuthenticated)
-
   useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
+    if (isLoggedIn && spotifyData.trackName) {
       const fetchDevices = async () => {
         try {
           const response = await fetch(API_SPOTIFY_DEVICES)
@@ -129,7 +127,7 @@ const SpotifyDisplay = () => {
       setAvailableDevices([])
       setSelectedDeviceId('')
     }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
+  }, [isLoggedIn, spotifyData.trackName, isReady])
 
   useEffect(() => {
     if (availableDevices.length === 0) {
@@ -174,7 +172,7 @@ const SpotifyDisplay = () => {
     setDeviceMenuAnchor(null)
   }
 
-  if (!spotifyLoggedIn) {
+  if (!isLoggedIn) {
     return (
       <Box
         sx={{

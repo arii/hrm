@@ -54,6 +54,9 @@ const nextRequestHandler = app.getRequestHandler()
 // Create Express app for routing and middleware
 const expressApp = express()
 
+// Trust the reverse proxy (nginx) for X-Forwarded-* headers
+expressApp.set('trust proxy', true)
+
 // --- Main Application Setup ---
 
 app
@@ -69,6 +72,14 @@ app
         max: 30,
         standardHeaders: true,
         legacyHeaders: false,
+        keyGenerator: (req: Request) => {
+          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+          return (
+            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+            req.socket.remoteAddress ||
+            'unknown'
+          )
+        },
         message: {
           error: 'Too many requests to Spotify API, please try again later.',
         },
@@ -79,6 +90,14 @@ app
         max: 100,
         standardHeaders: true,
         legacyHeaders: false,
+        keyGenerator: (req: Request) => {
+          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+          return (
+            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+            req.socket.remoteAddress ||
+            'unknown'
+          )
+        },
         message: {
           error: 'Too many requests to internal API, please try again later.',
         },
@@ -88,6 +107,14 @@ app
         max: 200, // General limit for all other routes
         standardHeaders: true,
         legacyHeaders: false,
+        keyGenerator: (req: Request) => {
+          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+          return (
+            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+            req.socket.remoteAddress ||
+            'unknown'
+          )
+        },
         message: { error: 'Too many requests, please try again later.' },
         skip: (req: Request) =>
           req.path.startsWith('/api/spotify') ||
