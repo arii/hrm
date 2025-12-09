@@ -188,7 +188,15 @@ export const authOptions: AuthOptions = {
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
-    async jwt({ token, account, user }: { token: JWT; account: Account | null; user: User | null }) {
+    async jwt({
+      token,
+      account,
+      user,
+    }: {
+      token: JWT
+      account: Account | null
+      user: User | null
+    }) {
       // 1. Initial sign-in
       if (account && user) {
         const tokenData = {
