@@ -52,7 +52,7 @@ test.describe('Visual Regression Tests', () => {
 
     // Navigate all pages in parallel
     await Promise.all([
-      dashboardPage.goto(BASE_URL),
+      dashboardPage.goto(`${BASE_URL}/dashboard`),
       controlPage.goto(`${BASE_URL}/client/control`),
       mockPage.goto(`${BASE_URL}/client/mock`),
     ])
