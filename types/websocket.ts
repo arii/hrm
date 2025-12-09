@@ -12,7 +12,7 @@ import { TimerPhase, TimerMode } from './shared'
  */
 export interface HrmData {
   clientId: string
-  value: number
+  value: number | null
   maxHr: number
   name?: string
   age?: number
