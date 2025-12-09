@@ -46,7 +46,7 @@ class HeartRateService {
     const calories = calculateCalories(
       avgHr,
       duration,
-      this.userSettings.userAge
+      this.userSettings!.userAge
     )
 
     const timeInZone = this.calculateTimeInZones()
