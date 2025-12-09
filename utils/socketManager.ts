@@ -172,7 +172,7 @@ const handleIncomingMessage = (
           if (typeof updatedData.value === 'undefined') {
             updatedData.value = null
           }
-          hrmClients.set(clientId, updatedData)
+          hrmClients.set(clientId, updatedData as HrmData)
         }
         // Broadcast the lightweight metric payload
         broadcast({
