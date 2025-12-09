@@ -4,14 +4,10 @@ import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
-
-export interface WorkoutItem {
-  title: string
-  details?: string
-}
+import { WorkoutColumnItem } from '@/types/index'
 
 export interface WorkoutColumnsProps {
-  columns: Array<{ title: string; items: WorkoutItem[] }>
+  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
 }
 
 const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
