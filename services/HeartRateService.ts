@@ -3,6 +3,7 @@ import workoutRepository from './WorkoutRepository'
 import { UserSettings } from '@/types'
 import { HeartRateDataPoint } from '@/types/data-models'
 import crypto from 'crypto'
+import { HR_ZONES } from '@/constants'
 
 class HeartRateService {
   private currentSessionId: string | null = null
@@ -10,7 +11,7 @@ class HeartRateService {
   private userSettings: UserSettings | null = null
   private samples: HeartRateDataPoint[] = []
 
-  public startSession(userId: string, settings: UserSettings) {
+  public startSession(settings: UserSettings) {
     this.reset()
     this.currentSessionId = crypto.randomUUID()
     this.startTime = Date.now()
@@ -46,6 +47,7 @@ class HeartRateService {
       avgHr: stats.avgHr,
       calories: stats.calories,
       duration: stats.duration,
+      timeInZone: stats.timeInZone,
     }
 
     await workoutRepository.saveSession(fullSessionData)
@@ -60,6 +62,7 @@ class HeartRateService {
         avgHr: 0,
         calories: 0,
         duration: 0,
+        timeInZone: {},
       }
     }
 
@@ -71,12 +74,31 @@ class HeartRateService {
       duration,
       this.userSettings.userAge
     )
+    const timeInZone = this.calculateTimeInZones()
 
     return {
       avgHr: Math.round(avgHr),
       calories: Math.round(calories),
       duration,
+      timeInZone,
     }
+  }
+
+  private calculateTimeInZones() {
+    const timeInZone: { [key: string]: number } = {}
+    if (!this.userSettings) return timeInZone
+
+    // This is a simplified calculation assuming one sample per second
+    this.samples.forEach((sample) => {
+      const percentage = (sample.heartRate / this.userSettings!.maxHr) * 100
+      for (const zone of HR_ZONES) {
+        if (percentage >= zone.range[0] && percentage <= zone.range[1]) {
+          timeInZone[zone.name] = (timeInZone[zone.name] || 0) + 1
+          break
+        }
+      }
+    })
+    return timeInZone
   }
 
   private calculateCalories(

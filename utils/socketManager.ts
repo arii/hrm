@@ -192,7 +192,7 @@ const handleIncomingMessage = async (
           if (message.command === 'START') {
             const clientData = hrmClients.get(clientId)
             if (clientData) {
-              heartRateServiceInstance.startSession('default-user', {
+              heartRateServiceInstance.startSession({
                 userAge: clientData.age || 30,
                 maxHr: clientData.maxHr,
                 restingHr: 60, // Placeholder
