@@ -3,7 +3,8 @@
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
-import { TimerData, WorkoutData } from '../types/websocket'
+import { TimerData } from '../types/websocket'
+import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 
 // Define types for MUI color props
@@ -189,9 +190,9 @@ export const transformWorkoutDataToColumns = (
 ): WorkoutColumnsProps['columns'] => {
   if (!data) return []
 
-  return data.map((category) => ({
+  return data.map((category: WorkoutItem) => ({
     title: category.category,
-    items: category.exercises.map((ex) => ({
+    items: category.exercises.map((ex: string) => ({
       title: ex,
     })),
   }))
