@@ -191,7 +191,6 @@ const handleIncomingMessage = (
       }
 
       case 'SET_MODE': {
-,
         if (tabataServiceInstance) {
           tabataServiceInstance.setMode(message.mode)
         }
