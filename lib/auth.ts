@@ -1,5 +1,5 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
+import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
@@ -9,6 +9,31 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
+  }
+}
+
+/**
+ * Safe helper to extract hostname from NEXTAUTH_URL
+ * Returns undefined if URL is invalid to prevent cookie domain errors
+ */
+function getCookieDomain(): string | undefined {
+  if (!process.env.NEXTAUTH_URL) {
+    return undefined
+  }
+  try {
+    const url = new URL(process.env.NEXTAUTH_URL)
+    // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return undefined
+    }
+    return url.hostname
+  } catch (e) {
+    console.error(
+      'Failed to parse NEXTAUTH_URL for cookie domain:',
+      process.env.NEXTAUTH_URL,
+      e
+    )
+    return undefined
   }
 }
 
@@ -100,6 +125,8 @@ const SPOTIFY_SCOPES = [
 export const authOptions: AuthOptions = {
   providers: [
     SpotifyProvider({
+      id: 'spotify',
+      name: 'Spotify',
       clientId: process.env.SPOTIFY_CLIENT_ID as string,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
       authorization: {
@@ -109,10 +136,7 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  // Handle reverse proxy configuration
-  ...(process.env.NODE_ENV === 'production' && {
-    trustHost: true,
-  }),
+  // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -121,13 +145,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // Set domain based on environment
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     callbackUrl: {
@@ -137,12 +155,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     csrfToken: {
@@ -152,12 +165,7 @@ export const authOptions: AuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     pkceCodeVerifier: {
@@ -168,12 +176,7 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
     state: {
@@ -184,27 +187,36 @@ export const authOptions: AuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
-        domain:
-          process.env.NODE_ENV === 'production'
-            ? process.env.NEXTAUTH_URL
-              ? new URL(process.env.NEXTAUTH_URL).hostname
-              : undefined
-            : undefined,
+        domain: getCookieDomain(),
       },
     },
   },
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
+    async signIn() {
+      // Always allow Spotify sign-in
+      return true
+    },
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        const tokenData = {
-          accessToken: account.access_token,
-          accessTokenExpires:
-            Date.now() + (Number(account.expires_in) || 3600) * 1000,
-          refreshToken: account.refresh_token,
-        }
+        console.log('[AUTH JWT] Initial sign-in - Full account object:', {
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          hasAccessToken: !!account.access_token,
+          hasProfile: !!account.profile,
+          profileKeys: account.profile
+            ? Object.keys(account.profile)
+            : 'NO PROFILE',
+          profileEmail: (account.profile as Record<string, unknown>)?.email,
+          profileDisplayName: (account.profile as Record<string, unknown>)
+            ?.display_name,
+        })
+        console.log(
+          '[AUTH JWT] Initial token before modification:',
+          Object.keys(token)
+        )
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
@@ -247,7 +259,21 @@ export const authOptions: AuthOptions = {
           }
         }
 
-        return tokenData
+        // Return token with Spotify account data
+        const updatedToken = {
+          ...token,
+          accessToken: account.access_token,
+          accessTokenExpires:
+            Date.now() + (Number(account.expires_in) || 3600) * 1000,
+          refreshToken: account.refresh_token,
+        }
+        console.log(
+          '[AUTH JWT] Returning token with keys:',
+          Object.keys(updatedToken),
+          'has sub:',
+          !!updatedToken.sub
+        )
+        return updatedToken
       }
 
       // 2. Token is still valid - return it as-is
@@ -262,8 +288,16 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
+      console.log(
+        '[AUTH SESSION] Creating session, token keys:',
+        Object.keys(token)
+      )
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
+      console.log(
+        '[AUTH SESSION] Session created with accessToken:',
+        !!session.accessToken
+      )
       return session
     },
   },
@@ -271,5 +305,3 @@ export const authOptions: AuthOptions = {
   secret:
     process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
 }
-
-export default NextAuth(authOptions)

@@ -9,7 +9,7 @@ import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
-  const { hrmData, connectionStatus } = useWebSocket()
+  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -24,6 +24,14 @@ const HrmTiles = () => {
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
+
+        // Find the alert specific to this HR Monitor's clientId
+        const matchingAlert = activeAlerts.find(
+          (alert) =>
+            alert.clientId === user.clientId &&
+            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+        )
+
         return (
           <Grid
             item
@@ -38,11 +46,14 @@ const HrmTiles = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               background={hrZoneProps.progressColor}
+              isAlerting={!!matchingAlert}
+              // Conditionally add alertMessage to avoid passing `undefined`
+              {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Grid>
         )
       })
-  }, [hrmData])
+  }, [hrmData, activeAlerts])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

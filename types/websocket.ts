@@ -73,6 +73,14 @@ export type StateSnapshot = Omit<InitialStateSnapshotPayload, 'hrmData'>
  */
 // TOPIC-BASED REAL-TIME MESSAGES
 // Use a discriminated union for type-safe message handling
+export interface ActiveAlert {
+  clientId: string
+  code: 'HRM_STALE' | 'BAD_PLACEMENT'
+  message: string
+  severity: 'warning' | 'error'
+  timestamp: number
+}
+
 export type ServerMessage =
   | {
       type: 'INITIAL_STATE'
@@ -81,6 +89,7 @@ export type ServerMessage =
   | { type: 'HRM_UPDATE'; payload: HrmData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | SpotifyExecutionMessage
 

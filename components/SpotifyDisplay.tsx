@@ -1,5 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
+import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -19,7 +20,6 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
-import Cookies from 'js-cookie'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 
@@ -34,12 +34,22 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
+  const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const accessToken = Cookies.get('spotify_access_token')
+  const isLoggedIn = status === 'authenticated'
 
-  const handleLogout = () => {
-    Cookies.remove('spotify_access_token')
-    Cookies.remove('spotify_refresh_token')
+  // Debug: Log session status changes
+  useEffect(() => {
+    console.log('[SpotifyDisplay] Session status changed:', {
+      status,
+      hasSession: !!session,
+      hasAccessToken: !!session?.accessToken,
+      isLoggedIn,
+    })
+  }, [status, session, isLoggedIn])
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
     window.location.reload()
   }
 
@@ -107,10 +117,8 @@ const SpotifyDisplay = () => {
       )
   }, [player, volume])
 
-  const spotifyLoggedIn = Boolean(accessToken) && Boolean(spotifyAuthenticated)
-
   useEffect(() => {
-    if (spotifyLoggedIn && spotifyData.trackName) {
+    if (isLoggedIn && spotifyData.trackName) {
       const fetchDevices = async () => {
         try {
           const response = await fetch(API_SPOTIFY_DEVICES)
@@ -129,7 +137,7 @@ const SpotifyDisplay = () => {
       setAvailableDevices([])
       setSelectedDeviceId('')
     }
-  }, [spotifyLoggedIn, spotifyData.trackName, isReady])
+  }, [isLoggedIn, spotifyData.trackName, isReady])
 
   useEffect(() => {
     if (availableDevices.length === 0) {
@@ -174,7 +182,7 @@ const SpotifyDisplay = () => {
     setDeviceMenuAnchor(null)
   }
 
-  if (!spotifyLoggedIn) {
+  if (!isLoggedIn) {
     return (
       <Box
         sx={{
@@ -203,7 +211,7 @@ const SpotifyDisplay = () => {
   // If we are logged in, we show the player bar.
   // We handle the specific "Awaiting Login..." text by replacing it with "No Active Playback"
   // or simply showing the controls so the user can transfer playback.
-  if (spotifyLoggedIn) {
+  if (isLoggedIn) {
     const isWaiting = spotifyData.trackName === 'Awaiting Login...'
     const displayTrackName = isWaiting
       ? 'No Active Playback'
