@@ -20,8 +20,8 @@ importers:
   .:
     dependencies:
       '@asteasolutions/zod-to-openapi':
-        specifier: ^8.1.0
-        version: 8.1.0(zod@4.1.13)
+        specifier: ^8.2.0
+        version: 8.2.0(zod@4.1.13)
       '@emotion/cache':
         specifier: ^11.14.0
         version: 11.14.0
@@ -277,8 +277,8 @@ packages:
   '@asamuzakjp/css-color@3.2.0':
     resolution: {integrity: sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==}
 
-  '@asteasolutions/zod-to-openapi@8.1.0':
-    resolution: {integrity: sha512-tQFxVs05J/6QXXqIzj6rTRk3nj1HFs4pe+uThwE95jL5II2JfpVXkK+CqkO7aT0Do5AYqO6LDrKpleLUFXgY+g==}
+  '@asteasolutions/zod-to-openapi@8.2.0':
+    resolution: {integrity: sha512-u05zNUirlukJAf9oEHmxSF31L1XQhz9XdpVILt7+xhrz65oQqBpiOWFkGvRWL0IpjOUJ878idKoNmYPxrFnkeg==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -7107,7 +7107,7 @@ snapshots:
       '@csstools/css-tokenizer': 3.0.4
       lru-cache: 10.4.3
 
-  '@asteasolutions/zod-to-openapi@8.1.0(zod@4.1.13)':
+  '@asteasolutions/zod-to-openapi@8.2.0(zod@4.1.13)':
     dependencies:
       openapi3-ts: 4.5.0
       zod: 4.1.13
