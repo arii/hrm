@@ -169,6 +169,9 @@ const handleIncomingMessage = (
         if (existingClientData) {
           // Create a new object with updated properties, allowing null to be set for 'value'
           const updatedData = { ...existingClientData, ...message.data }
+          if (typeof updatedData.value === 'undefined') {
+            updatedData.value = null
+          }
           hrmClients.set(clientId, updatedData)
         }
         // Broadcast the lightweight metric payload
