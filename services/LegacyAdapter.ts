@@ -1,6 +1,5 @@
 // services/LegacyAdapter.ts
 import fs from 'fs/promises'
-import path from 'path'
 import { WorkoutSession, WorkoutPhase } from '@/types/data-models'
 import { v5 as uuidv5 } from 'uuid'
 
