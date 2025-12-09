@@ -7,9 +7,9 @@ import { SpotifyTokenResponse } from './spotifyPolling'
  * Helper for atomic writes to prevent file corruption.
  * Writes to a temporary file and then atomically renames it to the final destination.
  * @param {string} filePath - The final path of the file.
- * @param {any} data - The data to be serialized to JSON.
+ * @param {TokenRecord} data - The data to be serialized to JSON.
  */
-const writeTokenFileSafe = (filePath: string, data: any) => {
+const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
   const tempPath = `${filePath}.tmp`
   try {
     fs.writeFileSync(tempPath, JSON.stringify(data, null, 2))
