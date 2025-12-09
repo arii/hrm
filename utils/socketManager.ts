@@ -4,6 +4,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
+import { getBaseURL } from './urls.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import HeartRateService from '../services/HeartRateService.js'
@@ -192,11 +193,13 @@ const handleIncomingMessage = (
           } else if (message.command === 'STOP') {
             const stats = heartRateServiceInstance.endSession()
             if (stats) {
-              fetch('http://127.0.0.1:3000/api/workouts', {
+              fetch(`${getBaseURL()}/api/workouts`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(stats),
-              })
+              }).catch((err) =>
+                console.error('Failed to save workout stats:', err)
+              )
               broadcast({ type: 'WORKOUT_COMPLETE', payload: stats })
             }
           }
