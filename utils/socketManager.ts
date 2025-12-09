@@ -39,7 +39,8 @@ const hrmClients = new Map<string, HrmData>()
 const mapToHrmMetrics = (clients: Map<string, HrmData>): HrmMetric[] => {
   return Array.from(clients.values()).map((client) => {
     // A null value indicates a disconnected sensor or signal drop
-    const isConnected = client.value !== null && typeof client.value !== 'undefined'
+    const isConnected =
+      client.value !== null && typeof client.value !== 'undefined'
     const currentValue = isConnected ? client.value : 0
     const percentMax =
       client.maxHr > 0 ? (currentValue / client.maxHr) * 100 : 0
@@ -190,6 +191,7 @@ const handleIncomingMessage = (
       }
 
       case 'SET_MODE': {
+,
         if (tabataServiceInstance) {
           tabataServiceInstance.setMode(message.mode)
         }

@@ -230,7 +230,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [handleConnectionError, onDisconnected, sendData]
+    [handleConnectionError, onDisconnected, sendData, seedLocalUser]
   )
 
   // Update the ref whenever connectToGatt changes
