@@ -10,7 +10,6 @@ import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
   SpotifyCommandMessage,
-  SpotifyExecutionMessage,
   HrmData,
   HrmMetric,
   InitialStateSnapshotPayload,
@@ -209,25 +208,8 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
-        console.log(`[WS Relay] Forwarding command: ${commandMsg.command}`)
+        console.log(`[WS] Handling command: ${commandMsg.command}`)
 
-        // Broadcast ONLY to connected Dashboards for remote execution
-        wsServerInstance.clients.forEach((client: WebSocket) => {
-          const target = client as ExtWebSocket
-          // Only forward to the Dashboard, not other controllers
-          if (
-            target.readyState === WebSocket.OPEN &&
-            target.clientType === 'dashboard'
-          ) {
-            const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
-            }
-            target.send(JSON.stringify(executionMessage))
-          }
-        })
-
-        // Also handle locally for backward compatibility
         if (spotifyServiceInstance) {
           spotifyServiceInstance.handleCommand(
             commandMsg.command,

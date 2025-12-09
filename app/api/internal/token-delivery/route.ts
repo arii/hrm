@@ -3,6 +3,7 @@ import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 import logger from '@/utils/logger'
+import { spotifyEvents } from '@/services/spotifyPolling'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
@@ -32,6 +33,9 @@ export async function POST(req: NextRequest) {
       payload,
     }
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
+
+    // Emit event to notify the server
+    spotifyEvents.emit('token_updated')
 
     logger.info(
       { subject: payload.sub ?? payload.provider },
