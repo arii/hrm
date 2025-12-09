@@ -67,7 +67,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -84,7 +84,7 @@ const Dashboard = () => {
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
