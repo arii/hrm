@@ -1,48 +1,49 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import HrTile from './HrTile'
-import theme from '../lib/theme'
 
 const meta = {
   title: 'Components/HrTile',
   component: HrTile,
-  // This enables auto-generated controls for your props
+  parameters: {
+    layout: 'centered',
+  },
   tags: ['autodocs'],
   argTypes: {
     background: { control: 'color' },
     percentMax: { control: { type: 'range', min: 0, max: 100 } },
-    bpm: { control: { type: 'number', min: 0, max: 220 } },
+    bpm: { control: { type: 'number', min: 40, max: 220 } },
   },
 } satisfies Meta<typeof HrTile>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-// 1. Baseline State
+// Scenario 1: Resting Heart Rate
 export const Resting: Story = {
   args: {
-    name: 'User 1',
+    name: 'Resting User',
     bpm: 65,
     percentMax: 35,
-    background: theme.palette.success.main, // green
+    background: '#2196F3', // Zone 2 (Blue)
   },
 }
 
-// 2. Critical State (Visual Stress Test)
-export const HighIntensity: Story = {
+// Scenario 2: Peak Performance
+export const PeakZone: Story = {
   args: {
-    name: 'Athlete A',
+    name: 'Athlete Pro',
     bpm: 185,
     percentMax: 95,
-    background: theme.palette.primary.main, // red
+    background: '#F44336', // Zone 5 (Red)
   },
 }
 
-// 3. Edge Case: Long Names
+// Scenario 3: Long Name Handling
 export const LongNameTruncation: Story = {
   args: {
-    name: 'Christopher "The Machine" Richardson',
-    bpm: 120,
-    percentMax: 60,
-    background: theme.palette.secondary.main, // blue
+    name: 'Christopher Livingstone-Smythe',
+    bpm: 140,
+    percentMax: 75,
+    background: '#4CAF50', // Zone 3 (Green)
   },
 }
