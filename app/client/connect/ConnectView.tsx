@@ -3,7 +3,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -189,17 +188,15 @@ export default function ConnectView({
         )}
 
         {isConnected && currentHR > 0 && (
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12}>
-              <HrTile
-                name={userName}
-                bpm={currentHR}
-                percentMax={hrZoneProps.percentage}
-                background={hrZoneProps.progressColor}
-                isAlerting={false}
-              />
-            </Grid>
-          </Grid>
+          <Box sx={{ mt: 2 }}>
+            <HrTile
+              name={userName}
+              bpm={currentHR}
+              percentMax={hrZoneProps.percentage}
+              background={hrZoneProps.progressColor}
+              isAlerting={false}
+            />
+          </Box>
         )}
 
         {isConnected && currentHR === 0 && (
