@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact & Contribute - HRM Project</title>
+    <title>Contact & Contribute - HRM Monitor</title>
     <meta name="description" content="Contact the developer or contribute to the open-source HRM project.">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,11 +12,12 @@
 
     <nav class="navbar">
         <div class="container nav-container">
-            <a href="index.html" class="logo">
-                HRM <span class="badge">BETA</span>
-            </a>
+            <a href="index.html" class="logo">HRM</a>
             <div class="nav-links">
-                <a href="index.html">← Back to Home</a>
+                <a href="index.html">Home</a>
+                <a href="terms.html">Terms</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="contact.html" style="color: var(--primary);">Contact</a>
             </div>
         </div>
     </nav>
@@ -26,7 +27,7 @@
             <div class="container">
                 <div style="text-align: center; max-width: 700px; margin: 0 auto 3rem;">
                     <h1>Connect & Contribute</h1>
-                    <p class="section-subtitle">
+                    <p class="section-subtitle" style="margin-bottom: 1.5rem; color: var(--text-muted);">
                         This project is built in public. Whether you are a developer looking to contribute
                         or a user with feedback, I'd love to hear from you.
                     </p>
@@ -38,8 +39,8 @@
                         <div class="icon-large">📧</div>
                         <h3>Email</h3>
                         <p>For consulting, integration support, or general inquiries.</p>
-                        <a href="mailto:developer@example.com" class="action-button">
-                            developer@example.com
+                        <a href="mailto:anders.ariel@gmail.com" class="action-button">
+                            anders.ariel@gmail.com
                         </a>
                     </div>
 
@@ -57,18 +58,24 @@
         </section>
     </main>
 
-    <footer class="footer">
+    <footer>
         <div class="container">
-            <div class="footer-content">
-                <p class="copyright">
-                    &copy; 2024 HRM Project. Open Source (MIT License).
-                </p>
-                <nav class="footer-links">
-                    <a href="privacy.html">Privacy Policy</a>
-                    <span class="separator">•</span>
-                    <a href="terms.html">Terms of Service</a>
-                </nav>
+            <div class="legal-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="contact.html">Contact Support</a>
             </div>
+
+            <p style="opacity: 0.7;">
+                <img src="assets/strava/powered_by_strava_light.svg" alt="Powered by Strava" height="30" style="vertical-align: middle;">
+            </p>
+
+            <p>&copy; 2025 HRM App. All rights reserved.</p>
+            <p style="font-size: 0.75rem; margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                This application is not affiliated with, endorsed by, or sponsored by Strava, Inc. or Spotify AB.
+                "Strava" and the Strava Logo are trademarks of Strava, Inc.
+                "Spotify" and the Spotify Logo are trademarks of Spotify AB.
+            </p>
         </div>
     </footer>
 
