@@ -10,6 +10,26 @@ STRESS_CLIENT_SCRIPT="scripts/ws-stress-client.ts"
 LOG_FILE="logs/ws-stress-client.log"
 URL="http://127.0.0.1:3000"
 PROFILE_DURATION=15 # Duration in seconds for both HTTP and WS load
+STRESS_CLIENT_PID=""
+
+# --- Cleanup Function ---
+# This runs automatically on EXIT (success or failure) or SIGINT (Ctrl+C)
+cleanup() {
+  echo ""
+  echo "🧹 Cleaning up background processes..."
+
+  if [ -n "$STRESS_CLIENT_PID" ]; then
+    echo "   - Killing WebSocket stress client (PID: $STRESS_CLIENT_PID)..."
+    kill "$STRESS_CLIENT_PID" 2>/dev/null || true
+  fi
+
+  # Ensure port 3000 is free
+  echo "   - Ensuring port 3000 is released..."
+  fuser -k 3000/tcp 2>/dev/null || true
+}
+
+# Register the cleanup trap
+trap cleanup EXIT INT
 
 # --- Setup ---
 echo "📈 Starting Backend Performance Profiling..."
@@ -35,7 +55,7 @@ pnpm exec ts-node "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_F
 STRESS_CLIENT_PID=$!
 echo "   - Stress client running with PID: $STRESS_CLIENT_PID"
 
-# Allow a moment for the stress client to be ready (though it starts trying immediately)
+# Allow a moment for the stress client to be ready
 sleep 2
 
 # 3. Run Clinic.js Doctor
@@ -50,13 +70,6 @@ pnpm exec clinic doctor \
   --on "pnpm exec autocannon -d $PROFILE_DURATION -c 100 \"$URL\"" \
   -- \
   node "$SERVER_ENTRY_POINT"
-
-# --- Cleanup ---
-echo "   - Profiling complete. Cleaning up..."
-
-# Stop the WebSocket stress client
-echo "   - Stopping WebSocket stress client (PID: $STRESS_CLIENT_PID)..."
-kill "$STRESS_CLIENT_PID" 2>/dev/null || echo "   - Stress client was already stopped."
 
 # --- Completion ---
 echo "------------------------------------------"
