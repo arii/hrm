@@ -3,9 +3,15 @@ import { HR_ZONES } from '@/constants'
 import { UserSettings } from '@/types'
 
 // A simple calorie burn formula (very basic)
-const calculateCalories = (hr: number, durationSeconds: number, age: number, weightKg: number = 70) => {
+const calculateCalories = (
+  hr: number,
+  durationSeconds: number,
+  age: number,
+  weightKg: number = 70
+) => {
   // Simplified formula for demonstration
-  const caloriesPerMinute = (age * 0.074) - (weightKg * 0.05741) + (hr * 0.4472) - 20.4022
+  const caloriesPerMinute =
+    age * 0.074 - weightKg * 0.05741 + hr * 0.4472 - 20.4022
   return (caloriesPerMinute * durationSeconds) / 60
 }
 
@@ -37,7 +43,11 @@ class HeartRateService {
 
     const duration = (Date.now() - this.startTime) / 1000 // in seconds
     const avgHr = this.samples.reduce((a, b) => a + b, 0) / this.samples.length
-    const calories = calculateCalories(avgHr, duration, this.userSettings.userAge)
+    const calories = calculateCalories(
+      avgHr,
+      duration,
+      this.userSettings.userAge
+    )
 
     const timeInZone = this.calculateTimeInZones()
 
@@ -54,7 +64,7 @@ class HeartRateService {
     if (!this.userSettings) return timeInZone
 
     // This is a simplified calculation assuming one sample per second
-    this.samples.forEach(hr => {
+    this.samples.forEach((hr) => {
       const percentage = (hr / this.userSettings!.maxHr) * 100
       for (const zone of HR_ZONES) {
         if (percentage >= zone.range[0] && percentage <= zone.range[1]) {
@@ -73,4 +83,5 @@ class HeartRateService {
   }
 }
 
-export default new HeartRateService()
+const heartRateService = new HeartRateService()
+export default heartRateService

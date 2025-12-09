@@ -5,17 +5,20 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Development Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/arii/hrm.git
    cd hrm
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your configuration
@@ -29,18 +32,21 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Code Style and Standards
 
 ### TypeScript
+
 - Use strict TypeScript configuration
 - Prefer explicit types over `any`
 - Use interfaces for object shapes
 - Follow naming conventions (camelCase for variables, PascalCase for components)
 
 ### React Components
+
 - Use functional components with hooks
 - Prefer named exports over default exports for components
 - Keep components small and focused
 - Use TypeScript for prop types
 
 ### Code Formatting
+
 - We use Prettier for code formatting
 - ESLint for code linting
 - Run `npm run format` before committing
@@ -49,6 +55,7 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Testing
 
 ### Running Tests
+
 ```bash
 # Run all tests
 npm test
@@ -64,6 +71,7 @@ npm run test:visual
 ```
 
 ### Writing Tests
+
 - Write unit tests for utilities and hooks
 - Write integration tests for components
 - Aim for 70%+ code coverage
@@ -83,6 +91,7 @@ We use [Conventional Commits](https://conventionalcommits.org/) format:
 ```
 
 ### Types:
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes
@@ -93,6 +102,7 @@ We use [Conventional Commits](https://conventionalcommits.org/) format:
 - `chore`: Changes to the build process or auxiliary tools
 
 ### Examples:
+
 ```
 feat(timer): add pause functionality to Tabata timer
 fix(websocket): resolve connection drop on network change
@@ -103,6 +113,7 @@ test: add unit tests for timer utilities
 ## Pull Request Process
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -113,6 +124,7 @@ test: add unit tests for timer utilities
    - Update documentation as needed
 
 3. **Test your changes**
+
    ```bash
    npm run lint
    npm run test:coverage
@@ -121,12 +133,14 @@ test: add unit tests for timer utilities
    ```
 
 4. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: your descriptive commit message"
    ```
 
 5. **Push to your branch**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -148,12 +162,14 @@ test: add unit tests for timer utilities
 ## Issue Reporting
 
 ### Bug Reports
+
 - Use the bug report template
 - Provide clear reproduction steps
 - Include environment details
 - Attach screenshots if applicable
 
 ### Feature Requests
+
 - Use the feature request template
 - Explain the problem being solved
 - Describe proposed solution
@@ -192,6 +208,7 @@ test: add unit tests for timer utilities
 ## Development Tools
 
 ### Recommended VS Code Extensions
+
 - TypeScript and JavaScript Language Features
 - ESLint
 - Prettier
@@ -199,6 +216,7 @@ test: add unit tests for timer utilities
 - Thunder Client (for API testing)
 
 ### Git Workflow
+
 - Use descriptive branch names
 - Rebase feature branches before merging
 - Keep commits atomic and focused
