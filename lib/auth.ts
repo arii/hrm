@@ -1,5 +1,5 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import { Account, AuthOptions, Session } from 'next-auth'
+import { Account, AuthOptions, Session, User } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
@@ -9,6 +9,12 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
+    user?: User
+  }
+
+  interface User {
+    id: string
+    age?: number
   }
 }
 
@@ -198,20 +204,25 @@ export const authOptions: AuthOptions = {
       // Always allow Spotify sign-in
       return true
     },
-    async jwt({ token, account }: { token: JWT; account: Account | null }) {
+    async jwt({
+      token,
+      account,
+      profile,
+    }: {
+      token: JWT
+      account: Account | null
+      profile?: any
+    }) {
       // 1. Initial sign-in
-      if (account) {
+      if (account && profile) {
         console.log('[AUTH JWT] Initial sign-in - Full account object:', {
           provider: account.provider,
           providerAccountId: account.providerAccountId,
           hasAccessToken: !!account.access_token,
-          hasProfile: !!account.profile,
-          profileKeys: account.profile
-            ? Object.keys(account.profile)
-            : 'NO PROFILE',
-          profileEmail: (account.profile as Record<string, unknown>)?.email,
-          profileDisplayName: (account.profile as Record<string, unknown>)
-            ?.display_name,
+          hasProfile: !!profile,
+          profileKeys: profile ? Object.keys(profile) : 'NO PROFILE',
+          profileEmail: profile?.email,
+          profileDisplayName: profile?.display_name,
         })
         console.log(
           '[AUTH JWT] Initial token before modification:',
@@ -260,12 +271,14 @@ export const authOptions: AuthOptions = {
         }
 
         // Return token with Spotify account data
-        const updatedToken = {
+        const updatedToken: JWT & { age?: number } = {
           ...token,
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
+          id: profile.id,
+          age: profile.age, // Assuming age is available in the profile
         }
         console.log(
           '[AUTH JWT] Returning token with keys:',
@@ -294,6 +307,10 @@ export const authOptions: AuthOptions = {
       )
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.age = token.age as number
+      }
       console.log(
         '[AUTH SESSION] Session created with accessToken:',
         !!session.accessToken
