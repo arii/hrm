@@ -15,11 +15,28 @@
             margin: 2rem auto;
             max-width: 900px;
         }
-        .policy-content h2 { text-align: left; margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-        .policy-content h3 { color: var(--text-main); margin-top: 1.5rem; }
+        .policy-content h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .policy-content h2 { text-align: left; margin-top: 2rem; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem; font-size: 1.5rem; }
+        .policy-content h3 { color: var(--text-main); margin-top: 1.5rem; font-size: 1.25rem; }
+        .policy-content p { margin-bottom: 1rem; }
         .policy-content ul { margin-left: 2rem; margin-bottom: 1.5rem; color: var(--text-muted); }
         .policy-content li { margin-bottom: 0.5rem; }
-        .last-updated { font-size: 0.9rem; color: #888; margin-bottom: 2rem; }
+        .last-updated { font-size: 0.9rem; color: #888; margin-bottom: 2rem; font-style: italic; }
+        .highlight {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-left: 4px solid #3498db;
+            margin: 1rem 0;
+            color: var(--text-main);
+        }
+        .contact-box {
+            background: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 5px;
+            margin-top: 2rem;
+        }
+        .policy-content a { color: #3498db; text-decoration: none; }
+        .policy-content a:hover { text-decoration: underline; }
     </style>
 </head>
 <body class="bg-light">
@@ -28,8 +45,9 @@
         <div class="container" style="display:flex; width:100%; justify-content:space-between; align-items:center;">
             <a href="index.html" class="brand">HRM Monitor</a>
             <div class="nav-links">
-                <a href="index.html">Home</a>
-                <a href="mailto:support@your-domain.com">Contact</a>
+                <a href="index.html" class="nav-item">Home</a>
+                <a href="terms.html" class="nav-item">Terms</a>
+                <a href="privacy.html" class="nav-item active">Privacy</a>
             </div>
         </div>
     </nav>
@@ -37,75 +55,141 @@
     <div class="container">
         <div class="policy-content">
             <h1>Privacy Policy</h1>
-            <p class="last-updated">Last Updated: December 5, 2025</p>
+            <p class="last-updated">Last Updated: December 8, 2025</p>
 
-            <p>
-                HRM Monitor ("we," "our," or "us") is committed to protecting your privacy.
-                This Privacy Policy explains how we collect, use, and safeguard your information when you use our
-                application and integrate with third-party services like Strava and Spotify.
-            </p>
+            <p>HRM Monitor ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our application and integrate with third-party services like Strava, Spotify, and Garmin.</p>
 
-            <h2>1. Data Collection & Usage</h2>
-            <p>We believe in <strong>Data Minimization</strong>. We only process data necessary for the functionality of the app:</p>
+            <h2>1. Introduction</h2>
+            <p>The HRM Dashboard is designed to prioritize your privacy. We process your health data locally on your device in real-time. We do not store your personal health information on our servers.</p>
+
+            <div class="highlight">
+                <strong>Our Core Privacy Promise:</strong> Your health data stays on your device. We believe in data minimization and only process data necessary for the functionality of the app.
+            </div>
+
+            <h2>2. Data Collection & Usage</h2>
+
+            <h3>Health Data</h3>
+            <p>We read real-time Heart Rate (HR) data from your connected Bluetooth Low Energy (BLE) devices. This data includes:</p>
             <ul>
-                <li><strong>Health Data:</strong> We read real-time Heart Rate (HR) data from your connected Bluetooth Low Energy (BLE) devices to visualize your workout zones.</li>
-                <li><strong>Strava Profile:</strong> We access your Strava profile solely to display your avatar and name on your personal dashboard.</li>
-                <li><strong>Spotify Activity:</strong> We access your playback state (current track) to visualize the beat and control tempo.</li>
+                <li>Current heart rate (beats per minute)</li>
+                <li>Heart rate zone information</li>
             </ul>
+            <p><strong>Important:</strong> All heart rate data is streamed via Bluetooth for real-time visualization. This data is processed in your browser's memory and is <strong>not stored on our servers</strong>. When you close the application or end your session, this data is immediately discarded.</p>
 
-            <h2>2. Data Retention and Deletion</h2>
-            <p><strong>We do not store your health data.</strong></p>
-            <p>
-                All heart rate and workout data is processed in real-time on your device or our ephemeral server
-                session and is discarded immediately when you close the application or end the session.
-            </p>
-            <h3>Account Disconnection</h3>
-            <p>
-                You may disconnect your Strava or Spotify accounts at any time via the "Settings" menu in the app.
-                Upon disconnection, all authentication tokens are immediately permanently deleted from our system.
-                You may also revoke access directly via the <a href="https://www.strava.com/settings/apps" target="_blank">Strava Apps Settings</a>
-                or <a href="https://www.spotify.com/account/apps/" target="_blank">Spotify Apps Settings</a> pages.
-            </p>
+            <h3>Workout Session Data</h3>
+            <p>If you choose to save workout summaries (duration, average heart rate, zones), this data is stored locally on your device only. We never transmit or store this information on external servers.</p>
 
             <h2>3. Third-Party Services & Attribution</h2>
-            <p>Our service integrates with the following platforms. Your use of these integrations is subject to their respective policies:</p>
+            <p>Our service integrates with the following platforms. Your use of these integrations is subject to their respective privacy policies:</p>
 
-            <h3>Strava & Garmin Data</h3>
-            <p>
-                We use the Strava API to sync and display activity data.
-                In compliance with Strava API Brand Guidelines:
-            </p>
+            <h3>Strava Integration</h3>
+            <p>When you connect your Strava account, we access:</p>
             <ul>
-                <li>We do not use Strava data for any purpose other than providing the HRM Monitor functionality to you.</li>
-                <li><strong>Garmin Attribution:</strong> Some activity data displayed in this application may originate from Garmin® devices.
-                    We acknowledge that this data is sourced from Garmin via Strava. Garmin is a trademark of Garmin Ltd. or its subsidiaries.</li>
+                <li><strong>Strava Profile:</strong> We access your profile solely to display your avatar and name on your personal dashboard</li>
+                <li><strong>Activity Data:</strong> We access your playback state (current activity) to visualize and synchronize with your workout timer</li>
             </ul>
 
-            <h3>Spotify</h3>
-            <p>
-                Music metadata (Album Art, Track Name) is displayed using the Spotify Web API.
-                We do not manipulate, store, or redistribute this content.
-                Use of Spotify features is subject to the <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank">Spotify Privacy Policy</a>.
-            </p>
+            <div class="highlight">
+                <p><strong>Strava Data Usage Commitment:</strong></p>
+                <p>We do not use Strava data for any purpose other than providing the HRM Monitor functionality to you. We comply fully with Strava's API Agreement and Brand Guidelines. Strava activity data is only used to display your workout metrics during active sessions and is never stored, analyzed for other purposes, sold, or shared with third parties.</p>
+                <p>We do not manipulate, store, or redistribute this content. Use of Strava features is subject to the <a href="https://www.strava.com/legal/terms" target="_blank">Strava Terms of Service</a>.</p>
+            </div>
 
-            <h2>4. AI/ML Prohibitions</h2>
-            <p>
-                We explicitly guarantee that <strong>no user data</strong> (including Heart Rate data, Strava activity history, or Spotify listening habits)
-                is used to train Artificial Intelligence (AI) or Machine Learning (ML) models, either by us or third parties.
-            </p>
+            <p><strong>Strava Attribution:</strong> Some activity data displayed in this application may originate from Garmin devices. We acknowledge that this data is sourced from Garmin via Strava. Garmin is a trademark of Garmin Ltd or its subsidiaries.</p>
 
-            <h2>5. Contact Us</h2>
-            <p>
-                If you have any questions about this Privacy Policy or wish to exercise your data rights, please contact us at:
-                <br><br>
-                <strong>Email:</strong> <a href="mailto:support@your-domain.com">support@your-domain.com</a>
-            </p>
+            <h3>Spotify Integration</h3>
+            <p>When you authorize Spotify, we access:</p>
+            <ul>
+                <li><strong>Playback Control:</strong> We use the Spotify Web API to display current track information and provide playback controls</li>
+                <li><strong>Music Metadata:</strong> Album art, track name, and artist information are displayed using the Spotify integration</li>
+            </ul>
+            <p>Our Spotify integration uses the Spotify Platform. By using our Spotify integration, you agree to be bound by the <a href="https://www.spotify.com/legal/end-user-agreement/" target="_blank">Spotify Developer Agreement</a> and <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank">Spotify Privacy Policy</a>.</p>
+
+            <p><strong>Key Terms:</strong></p>
+            <ul>
+                <li><strong>Non-Commercial Use:</strong> The Spotify service accessed through our app is for personal, non-commercial use only</li>
+                <li><strong>Distribution Restrictions:</strong> Users may not sell or redistribute any Spotify data. Upon disconnection, we will delete your Spotify-related data</li>
+                <li><strong>Prohibited Uses:</strong> You may not use this integration for prohibited purposes such as training AI models, creating ringtones, or synchronizing audio with visual media without Spotify's written approval</li>
+                <li><strong>Attribution:</strong> All Spotify content, including visual names and cover art, is attributed to Spotify</li>
+            </ul>
+
+            <h3>Garmin Data</h3>
+            <p>We use the Strava API to sync and display activity data. In compliance with Strava API Brand Guidelines:</p>
+            <ul>
+                <li>We do not use Strava data for any purpose other than providing the HRM Monitor functionality to you</li>
+                <li>We acknowledge that data may be sourced from Garmin via Strava</li>
+                <li>Garmin is a trademark of Garmin Ltd or its subsidiaries</li>
+            </ul>
+
+            <h2>4. Data Retention and Deletion</h2>
+
+            <div class="highlight">
+                <strong>We do not store your health data.</strong>
+            </div>
+
+            <p>All heart rate and workout data is processed in real-time on your device or our application when you close the application or end the session. This data is discarded immediately after your workout session ends unless you explicitly choose to upload it to a connected third-party service.</p>
+
+            <h3>Account Disconnection</h3>
+            <p>You may disconnect your Strava or Spotify accounts at any time via the "Settings" menu in the app. Upon disconnection, all authentication tokens are immediately permanently deleted from our system. You may also revoke access directly via the Strava Apps Settings pages or Spotify Apps Settings pages.</p>
+
+            <h2>5. Data Security</h2>
+            <p>We implement appropriate technical measures to protect your information:</p>
+            <ul>
+                <li>All data transmission occurs over HTTPS encrypted connections</li>
+                <li>OAuth 2.0 authentication for third-party service connections</li>
+                <li>No server-side storage of personal health data</li>
+                <li>Bluetooth Low Energy secure pairing for device connections</li>
+            </ul>
+
+            <h2>6. Your Rights and Control</h2>
+            <p>You maintain full control of your data:</p>
+            <ul>
+                <li><strong>Access:</strong> You can view all data displayed in the application in real-time</li>
+                <li><strong>Deletion:</strong> Close the app to immediately discard all session data</li>
+                <li><strong>Disconnect:</strong> Revoke third-party integrations at any time through app settings or directly through Strava/Spotify</li>
+                <li><strong>Data Portability:</strong> Any data you choose to save locally can be exported from your device</li>
+            </ul>
+
+            <h2>7. Children's Privacy</h2>
+            <p>Our service is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe we have inadvertently collected such information, please contact us immediately.</p>
+
+            <h2>8. Changes to This Privacy Policy</h2>
+            <p>We may update this Privacy Policy from time to time. We will notify you of any changes by updating the "Last Updated" date at the top of this policy. Continued use of the service after changes constitutes acceptance of the modified terms.</p>
+
+            <h2>9. Third-Party Links</h2>
+            <p>Our application may contain links to third-party websites and services. We are not responsible for the privacy practices of these external sites. We encourage you to review their privacy policies.</p>
+
+            <h2>10. International Users</h2>
+            <p>This application processes data locally on your device. If you use our service from outside the United States, please be aware that any information processed will be in accordance with this Privacy Policy.</p>
+
+            <div class="contact-box">
+                <h2>11. Contact Us</h2>
+                <p>If you have any questions about this Privacy Policy, wish to exercise your data rights, or request data deletion, please contact us at:</p>
+                <p><strong>Email:</strong> <a href="mailto:anders.ariel@gmail.com">anders.ariel@gmail.com</a></p>
+            </div>
+
+            <p style="margin-top: 2rem; text-align: center; color: #7f8c8d; font-size: 0.9rem;">© 2025 HRM Monitor. All rights reserved.</p>
         </div>
     </div>
 
-    <footer>
+    <footer>       
         <div class="container">
+            <div class="legal-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="mailto:anders.ariel@gmail.com">Contact Support</a>
+            </div>
+
+            <p style="opacity: 0.7;">
+                <img src="assets/strava/powered_by_strava_light.svg" alt="Powered by Strava" height="30" style="vertical-align: middle;">
+            </p>
+
             <p>&copy; 2025 HRM App. All rights reserved.</p>
+            <p style="font-size: 0.75rem; margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                This application is not affiliated with, endorsed by, or sponsored by Strava, Inc. or Spotify AB.
+                "Strava" and the Strava Logo are trademarks of Strava, Inc.
+                "Spotify" and the Spotify Logo are trademarks of Spotify AB.
+            </p>
         </div>
     </footer>
 
