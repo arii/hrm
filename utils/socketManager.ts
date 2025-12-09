@@ -25,8 +25,9 @@ interface ExtWebSocket extends WebSocket {
 }
 
 // Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+let tabataService: TabataTimer
+// Export the spotifyService instance so it can be used by the API route
+export let spotifyService: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -49,8 +50,8 @@ const initSocketManager = (
 ) => {
   initBroadcaster(wss)
   wsServerInstance = wss
-  tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
+  tabataService = services.tabataService
+  spotifyService = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -178,22 +179,22 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
+        if (tabataService) {
+          tabataService.handleCommand(message.command)
         }
         break
       }
 
       case 'SET_MODE': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode)
+        if (tabataService) {.
+          tabataService.setMode(message.mode)
         }
         break
       }
 
       case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
+        if (tabataService) {
+          tabataService.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
           })
@@ -222,8 +223,8 @@ const handleIncomingMessage = (
         })
 
         // Also handle locally for backward compatibility
-        if (spotifyServiceInstance) {
-          spotifyServiceInstance.handleCommand(
+        if (spotifyService) {
+          spotifyService.handleCommand(
             commandMsg.command,
             commandMsg.deviceId,
             commandMsg.volume,
