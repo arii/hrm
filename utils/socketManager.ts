@@ -4,8 +4,8 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
+import { SpotifyPolling } from '@/services/spotifyPolling.js'
+import TabataTimer from '@/services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -15,8 +15,8 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-} from '../types/websocket.js'
-import { broadcast, initBroadcaster } from './broadcast.js'
+} from '@/types/websocket.js'
+import { broadcast, initBroadcaster } from '@/utils/broadcast.js'
 
 // Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {
@@ -196,7 +196,8 @@ const handleIncomingMessage = (
         if (tabataService) {
           tabataService.setConfig({
             workDuration: message.workDuration,
-            restDuration: message.restDuration,
+            restDuration:.
+            restDuration,
           })
         }
         break
