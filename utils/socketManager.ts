@@ -186,7 +186,7 @@ const handleIncomingMessage = (
       }
 
       case 'SET_MODE': {
-        if (tabataService) {.
+        if (tabataService) {
           tabataService.setMode(message.mode)
         }
         break
