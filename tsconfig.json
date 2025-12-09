@@ -42,6 +42,8 @@
   "exclude": [
     "node_modules",
     "tests/playwright",
+    "tests/unit",
+    "tests/integration",
     "playwright.config.ts",
     ".stories",
     "**/*.stories.tsx"

@@ -15,15 +15,14 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
-import logger from './utils/logger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import { SpotifyPolling } from './services/spotifyPolling'
+import TabataTimer from './services/tabataTimer'
+import { initSocketManager } from './utils/socketManager'
+import { broadcast } from './utils/broadcast'
+import { getBaseURL } from './utils/urls'
+import { StateSnapshot } from './types/websocket'
+import logger from './utils/logger'
+import { performHealthCheck } from './lib/healthCheck'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -174,30 +173,46 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
+    // --- New Token Update Route (Express Middleware) ---
+    expressApp.use(express.json()) // Ensure JSON body parsing is enabled
 
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
+    // We convert the Next.js API route to an Express route for process control
+    expressApp.post(
+      '/api/internal/token-delivery',
+      (req: Request, res: Response) => {
+        // SECURITY NOTE: This endpoint MUST be protected by a shared secret header (as you have)
+        const secretHeader = req.headers['x-internal-token-secret'] || ''
+        const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
+        if (expected && secretHeader !== expected) {
+          logger.warn('Unauthorized attempt to access token-delivery endpoint.')
+          return res.status(401).json({ error: 'Unauthorized' })
+        }
+
+        if (!spotifyService || !spotifyService.isReady()) {
+          logger.warn(
+            'Token delivery received but Spotify service is not ready.'
+          )
+          return res.status(503).json({ error: 'Service unavailable' })
+        }
+        try {
+          // The method `setTokenPayload` will be added to the SpotifyPolling service.
+          // This allows for a direct, in-memory update without file I/O.
+          ;(spotifyService as SpotifyPolling).setTokenPayload(req.body)
+          logger.info(
+            { subject: req.body.sub },
+            'Received token-delivery and updated in-memory state.'
+          )
+          return res.status(200).json({ status: 'updated' })
+        } catch (e) {
+          logger.error({ err: e }, 'In-process token update failed')
+          return res.status(500).json({ error: 'Internal update failed' })
+        }
       }
+    )
+
+    // Handle all Next.js routing (pages, other API routes)
+    expressApp.use((req: Request, res: Response) => {
+      // Must ensure this comes *after* the custom Express route to avoid conflict.
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
