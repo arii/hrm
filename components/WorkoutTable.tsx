@@ -1,5 +1,5 @@
 // components/WorkoutTable.tsx
-import React from 'react';
+import React from 'react'
 import {
   Table,
   TableBody,
@@ -10,31 +10,29 @@ import {
   Paper,
   Typography,
   IconButton,
-} from '@mui/material';
-import { WorkoutData } from '@/types/index';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Box } from '@mui/system';
+} from '@mui/material'
+import { WorkoutData } from '@/types/index'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { Box } from '@mui/system'
 
 interface WorkoutTableProps {
-  workoutData: WorkoutData;
+  workoutData: WorkoutData
 }
 
-const WorkoutTable: React.FC<WorkoutTableProps> = ({
-  workoutData,
-}) => {
-  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
-  const [isShrunk, setIsShrunk] = React.useState(false);
+const WorkoutTable: React.FC<WorkoutTableProps> = ({ workoutData }) => {
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
+  const [isShrunk, setIsShrunk] = React.useState(false)
 
   React.useEffect(() => {
     if (workoutData && workoutData.length > 0) {
-      setLastUpdated(new Date());
+      setLastUpdated(new Date())
     }
-  }, [workoutData]);
+  }, [workoutData])
 
-  const maxExercises = isShrunk ? 1 : Math.max(
-    ...workoutData.map((col) => col.exercises.length)
-  );
+  const maxExercises = isShrunk
+    ? 1
+    : Math.max(...workoutData.map((col) => col.exercises.length))
 
   return (
     <Paper elevation={3} sx={{ position: 'relative' }}>
@@ -69,28 +67,35 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({
           </TableBody>
         </Table>
       </TableContainer>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 1,
+        }}
+      >
         {lastUpdated && (
-            <Typography variant="caption" style={{ padding: '8px' }}>
+          <Typography variant="caption" style={{ padding: '8px' }}>
             Last Updated: {lastUpdated.toLocaleTimeString()}
-            </Typography>
+          </Typography>
         )}
         <IconButton
-            onClick={() => setIsShrunk(!isShrunk)}
-            sx={{
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
-              },
-              zIndex: 10,
-            }}
-            aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
-          >
-            {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-          </IconButton>
+          onClick={() => setIsShrunk(!isShrunk)}
+          sx={{
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,1)',
+            },
+            zIndex: 10,
+          }}
+          aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
+        >
+          {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+        </IconButton>
       </Box>
     </Paper>
-  );
-};
+  )
+}
 
-export default WorkoutTable;
+export default WorkoutTable
