@@ -44,11 +44,7 @@ class HeartRateService {
 
     const duration = (Date.now() - this.startTime) / 1000 // in seconds
     const avgHr = this.samples.reduce((a, b) => a + b, 0) / this.samples.length
-    const calories = calculateCalories(
-      avgHr,
-      duration,
-      userSettings.userAge
-    )
+    const calories = calculateCalories(avgHr, duration, userSettings.userAge)
 
     const timeInZone = this.calculateTimeInZones(userSettings)
 
