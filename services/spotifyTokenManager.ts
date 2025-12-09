@@ -3,6 +3,26 @@ import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling'
 
+/**
+ * Helper for atomic writes to prevent file corruption.
+ * Writes to a temporary file and then atomically renames it to the final destination.
+ * @param {string} filePath - The final path of the file.
+ * @param {TokenRecord} data - The data to be serialized to JSON.
+ */
+const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
+  const tempPath = `${filePath}.tmp`
+  try {
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2))
+    fs.renameSync(tempPath, filePath) // Atomic rename
+  } catch (error) {
+    console.error(`Failed to write token file safely: ${error}`)
+    // Clean up temp file if it exists
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath)
+    }
+  }
+}
+
 export interface SpotifyTokenPayload {
   provider: string
   sub: string
@@ -26,11 +46,7 @@ export class SpotifyTokenManager {
     if (this.currentToken) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      writeTokenFileSafe(this.tokenFile, this.currentToken)
       console.log('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
@@ -46,11 +62,7 @@ export class SpotifyTokenManager {
           obtainedAt: Date.now(),
         },
       }
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      writeTokenFileSafe(this.tokenFile, this.currentToken)
       console.log('Access token created via setAccessToken.')
     }
   }
@@ -126,11 +138,7 @@ export class SpotifyTokenManager {
       }
 
       // Save updated token
-      fs.writeFileSync(
-        this.tokenFile,
-        JSON.stringify(this.currentToken, null, 2),
-        'utf8'
-      )
+      writeTokenFileSafe(this.tokenFile, this.currentToken)
 
       console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
       return true
