@@ -1,34 +1,56 @@
 // services/HeartRateService.ts
-import { HR_ZONES } from '@/constants'
+import workoutRepository from './WorkoutRepository';
 import { UserSettings } from '@/types'
-
-// A simple calorie burn formula (very basic)
-const calculateCalories = (
-  hr: number,
-  durationSeconds: number,
-  age: number,
-  weightKg: number = 70
-) => {
-  // Simplified formula for demonstration
-  const caloriesPerMinute =
-    age * 0.074 - weightKg * 0.05741 + hr * 0.4472 - 20.4022
-  return (caloriesPerMinute * durationSeconds) / 60
-}
+import { HeartRateDataPoint } from '@/types/data-models';
+import crypto from 'crypto';
 
 class HeartRateService {
-  private samples: number[] = []
-  private startTime: number | null = null
-  private userSettings: UserSettings | null = null
+  private currentSessionId: string | null = null;
+  private startTime: number | null = null;
+  private userSettings: UserSettings | null = null;
+  private samples: HeartRateDataPoint[] = [];
 
-  public startSession(settings: UserSettings) {
-    this.reset()
-    this.startTime = Date.now()
-    this.userSettings = settings
+  public startSession(userId: string, settings: UserSettings) {
+    this.reset();
+    this.currentSessionId = crypto.randomUUID();
+    this.startTime = Date.now();
+    this.userSettings = settings;
   }
 
   public addSample(hr: number) {
-    if (!this.startTime) return
-    this.samples.push(hr)
+    if (!this.currentSessionId || !this.startTime) return;
+    this.samples.push({
+        id: crypto.randomUUID(),
+        workoutSessionId: this.currentSessionId,
+        timestamp: Date.now(),
+        heartRate: hr,
+    });
+  }
+
+  public async endSession() {
+    if (!this.currentSessionId || !this.startTime || !this.userSettings) return null;
+
+    const endTime = new Date().toISOString();
+    const stats = this.getSessionStats();
+
+    const fullSessionData = {
+      id: this.currentSessionId,
+      userId: "user-id-placeholder",
+      startedAt: new Date(this.startTime).toISOString(),
+      endedAt: endTime,
+      source: 'live_tracking' as const,
+      phases: [],
+      notes: "",
+      samples: this.samples,
+      avgHr: stats.avgHr,
+      calories: stats.calories,
+      duration: stats.duration,
+    };
+
+    await workoutRepository.saveSession(fullSessionData);
+
+    this.reset();
+    return stats;
   }
 
   public getSessionStats() {
@@ -36,46 +58,31 @@ class HeartRateService {
       return {
         avgHr: 0,
         calories: 0,
-        timeInZone: {},
         duration: 0,
       }
     }
-    const userSettings = this.userSettings
 
     const duration = (Date.now() - this.startTime) / 1000 // in seconds
-    const avgHr = this.samples.reduce((a, b) => a + b, 0) / this.samples.length
-    const calories = calculateCalories(avgHr, duration, userSettings.userAge)
-
-    const timeInZone = this.calculateTimeInZones(userSettings)
+    const avgHr = this.samples.reduce((a, b) => a + b.heartRate, 0) / this.samples.length
+    const calories = this.calculateCalories(avgHr, duration, this.userSettings.userAge)
 
     return {
       avgHr: Math.round(avgHr),
       calories: Math.round(calories),
-      timeInZone,
       duration,
     }
   }
 
-  private calculateTimeInZones(userSettings: UserSettings) {
-    const timeInZone: { [key: string]: number } = {}
-
-    // This is a simplified calculation assuming one sample per second
-    this.samples.forEach((hr) => {
-      const percentage = (hr / userSettings.maxHr) * 100
-      for (const zone of HR_ZONES) {
-        if (percentage >= zone.range[0] && percentage <= zone.range[1]) {
-          timeInZone[zone.name] = (timeInZone[zone.name] || 0) + 1
-          break
-        }
-      }
-    })
-    return timeInZone
+  private calculateCalories(hr: number, durationSeconds: number, age: number, weightKg: number = 70) {
+    const caloriesPerMinute = (age * 0.074) - (weightKg * 0.05741) + (hr * 0.4472) - 20.4022
+    return (caloriesPerMinute * durationSeconds) / 60
   }
 
-  public reset() {
-    this.samples = []
-    this.startTime = null
-    this.userSettings = null
+  private reset() {
+    this.currentSessionId = null;
+    this.startTime = null;
+    this.userSettings = null;
+    this.samples = [];
   }
 }
 

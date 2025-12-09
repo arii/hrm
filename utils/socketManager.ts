@@ -108,7 +108,7 @@ const initSocketManager = (
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
+const handleIncomingMessage = async (
   ws: ExtWebSocket,
   jsonMessage: string,
   clientId: string
@@ -192,7 +192,7 @@ const handleIncomingMessage = (
           if (message.command === 'START') {
             const clientData = hrmClients.get(clientId)
             if (clientData) {
-              heartRateServiceInstance.startSession({
+              heartRateServiceInstance.startSession('default-user', {
                 userAge: clientData.age || 30,
                 maxHr: clientData.maxHr,
                 restingHr: 60, // Placeholder
@@ -201,12 +201,13 @@ const handleIncomingMessage = (
               })
             }
           } else if (message.command === 'STOP') {
-            const stats = heartRateServiceInstance.getSessionStats()
-            broadcast({
-              type: 'WORKOUT_STATS_UPDATE',
-              payload: stats,
-            })
-            heartRateServiceInstance.reset()
+            const stats = await heartRateServiceInstance.endSession()
+            if (stats) {
+              broadcast({
+                type: 'WORKOUT_STATS_UPDATE',
+                payload: stats,
+              })
+            }
           }
         }
         break
