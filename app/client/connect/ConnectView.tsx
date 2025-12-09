@@ -11,7 +11,7 @@ import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
-import HrTile from '../../../components/HrTile'
+import HrTile, { HrZoneProps } from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 
 interface ConnectViewProps {
@@ -26,7 +26,7 @@ interface ConnectViewProps {
   onDisconnect: () => void
   onResetServer: () => void
   currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
+  hrZoneProps: HrZoneProps
   connectionStatus: string
   bluetoothConnected: boolean
 }

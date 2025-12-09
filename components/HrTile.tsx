@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 
-interface HrZoneProps {
+export interface HrZoneProps {
   zone: string
   percentage: number
   color: string
