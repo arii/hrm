@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+import { startPolling as startWorkoutPolling } from './services/workoutDataPoller.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
@@ -62,6 +63,7 @@ expressApp.set('trust proxy', true)
 app
   .prepare()
   .then(async () => {
+    logger.info('Next.js prepared. Setting up express server.')
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
@@ -166,7 +168,9 @@ app
       } as unknown as SpotifyPolling
     }
     const tabataService = new TabataTimer(broadcast)
-
+    logger.info('Tabata service initialized.')
+    startWorkoutPolling()
+    logger.info('Workout polling started.')
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),

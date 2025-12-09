@@ -30,10 +30,13 @@ const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
-const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={500} />,
-})
+const WorkoutTableViewer = dynamic(
+  () => import('../components/WorkoutTableViewer'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={500} />,
+  }
+)
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
@@ -85,10 +88,8 @@ const Dashboard = () => {
         </ErrorBoundary>
 
         <Grid size={{ xs: 12 }}>
-          <GoogleDocViewer
+          <WorkoutTableViewer
             title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
