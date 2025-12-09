@@ -19,7 +19,8 @@ log() {
 cleanup() {
     EXIT_CODE=$?
     log "🛑 Shutting down server..."
-    pnpm pm2 kill || true
+    # Suppress PM2 output during shutdown to keep stdout clean for JSON reports
+    pnpm pm2 kill >/dev/null 2>&1 || true
 
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
@@ -44,7 +45,7 @@ export NEXTAUTH_URL="http://127.0.0.1:3000"
 
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
-pnpm pm2 kill || true
+pnpm pm2 kill >/dev/null 2>&1 || true
 
 
 log "🚀 Starting server with PM2..."

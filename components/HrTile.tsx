@@ -82,10 +82,6 @@ const HrTile = ({
                 lineHeight: 0.85,
                 my: 0.5,
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Optional: Only animate if we have a valid BPM > 0
-                animationPlayState: bpm > 0 ? 'running' : 'paused',
               }}
             >
               {percentMax}%

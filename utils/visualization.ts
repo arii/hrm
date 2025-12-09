@@ -4,9 +4,6 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
-import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
 
 // Define types for MUI color props
 type MuiColor =
@@ -24,29 +21,29 @@ export const HR_ZONES = [
     name: 'Warm-up',
     min: 0.5,
     color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main, // Darker blue
-    bgColor: theme.palette.secondary.main, // Darker blue
+    progressColor: '#3b82f6', // Darker blue
+    bgColor: '#3b82f6', // Darker blue
   },
   {
     name: 'Fat Burn',
     min: 0.6,
     color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
+    progressColor: '#22c55e',
+    bgColor: '#4CAF50',
   },
   {
     name: 'Cardio',
     min: 0.7,
     color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark, // Darker orange/yellow
-    bgColor: theme.palette.warning.dark, // Darker orange/yellow
+    progressColor: '#d97706', // Darker orange/yellow
+    bgColor: '#d97706', // Darker orange/yellow
   },
   {
     name: 'Peak',
     min: 0.85,
     color: 'text-red-500',
-    progressColor: theme.palette.primary.main,
-    bgColor: theme.palette.primary.main,
+    progressColor: '#ef4444',
+    bgColor: '#F44336',
   },
   {
     name: 'Max',
@@ -60,10 +57,10 @@ export const HR_ZONES = [
 // Zone color lookup for easy access (zone 1-5)
 export const ZONE_COLORS = {
   grey: '#9E9E9E', // Below zone 1
-  blue: theme.palette.secondary.main, // Zone 1: Warm-up
-  green: theme.palette.success.main, // Zone 2: Fat Burn
-  yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
+  blue: '#2196F3', // Zone 1: Warm-up
+  green: '#4CAF50', // Zone 2: Fat Burn
+  yellow: '#FFEB3B', // Zone 3: Cardio
+  red: '#F44336', // Zone 4: Peak
   purple: '#9C27B0', // Zone 5: Max
 }
 
@@ -184,17 +181,4 @@ export const getTimerProps = (
         progressColor: '#6b7280',
       }
   }
-}
-
-export const transformWorkoutDataToColumns = (
-  data: WorkoutData
-): WorkoutColumnsProps['columns'] => {
-  if (!data) return []
-
-  return data.map((category: WorkoutItem) => ({
-    title: category.category,
-    items: category.exercises.map((ex: string) => ({
-      title: ex,
-    })),
-  }))
 }

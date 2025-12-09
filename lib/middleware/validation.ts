@@ -14,12 +14,12 @@ import { NextResponse } from 'next/server'
  *
  * @template T The expected type of the validated data.
  * @param {Request} req The original Next.js request object.
- * @param {{ params: P; body: T }} context An object containing URL parameters and the validated request body.
+ * @param {{ params: Promise<P>; body: T }} context An object containing URL parameters and the validated request body.
  * @returns {Promise<NextResponse>} A promise that resolves to a Next.js response.
  */
 type AppRouterHandler<T, P> = (
   req: Request,
-  context: { params: P; body: T }
+  context: { params: Promise<P>; body: T }
 ) => Promise<NextResponse>
 
 /**
@@ -44,7 +44,7 @@ type AppRouterHandler<T, P> = (
  */
 export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
   return (handler: AppRouterHandler<T, P>) =>
-    async (req: Request, context: { params: P }) => {
+    async (req: Request, context: { params: Promise<P> }) => {
       try {
         const body = await req.json()
         const validatedData = schema.parse(body)
