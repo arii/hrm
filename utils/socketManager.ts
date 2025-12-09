@@ -38,7 +38,7 @@ const mapToHrmMetrics = (clients: Map<string, HrmData>): HrmMetric[] => {
     // A null value indicates a disconnected sensor or signal drop
     const isConnected =
       client.value !== null && typeof client.value !== 'undefined'
-    const currentValue = isConnected ? client.value : 0
+    const currentValue = isConnected && client.value ? client.value : 0
     const percentMax =
       client.maxHr > 0 ? (currentValue / client.maxHr) * 100 : 0
 
