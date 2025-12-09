@@ -1,105 +1,24 @@
-// UI Refactor
-// File: app/page.tsx (Main Viewer Dashboard)
-/**
- * Main Viewer Dashboard: The primary output page for the trainer or viewer.
- * Consumes all real-time data streams and renders the unified MUI visualization.
- */
-'use client'
-import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
-import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
-import HrmTiles from '../components/HrmTiles'
-const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
-import { useWebSocket } from '@/context/WebSocketContext'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolumePreference from '@/hooks/useVolumePreference'
+// File: app/page.tsx
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
+import DashboardClient from './DashboardClient'
+import { HrmStaticMetadata } from '@/types/shared'
 
-const DOC_URL =
-  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+const DashboardPage = async () => {
+  const session = await getServerSession(authOptions)
+  let staticMetadata: HrmStaticMetadata | undefined
 
-// Lazy-load heavy components
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={80} />,
-})
-const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={500} />,
-})
-
-const Dashboard = () => {
-  const { timerData } = useWebSocket()
-  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const { volume } = useVolumePreference() // Get volume state
-
-  // Initialize Spotify Web Playback SDK
-  const { player } = useSpotifyWebPlayback()
-
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
-
-  // Signal when page is ready for testing
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
-      window.dispatchEvent(new CustomEvent('test-ready'))
+  if (session?.user) {
+    const age = session.user.age || 30 // Default age if not provided
+    staticMetadata = {
+      clientId: session.user.id,
+      name: session.user.name || 'Anonymous',
+      age: age,
+      maxHr: 220 - age,
     }
-  }, [])
+  }
 
-  return (
-    <Container
-      maxWidth="xl"
-      sx={{
-        py: { xs: 2, sm: 3 },
-        minHeight: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
-        {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
-
-        {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-            soundEventId={timerData.soundEventId}
-            volume={volume}
-          />
-        </Grid>
-
-        <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles />
-        </ErrorBoundary>
-
-        <Grid size={{ xs: 12 }}>
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-          />
-        </Grid>
-      </Grid>
-
-      <ErrorBoundary fallback={<ErrorFallback />}>
-        <SpotifyDisplay />
-      </ErrorBoundary>
-    </Container>
-  )
+  return <DashboardClient staticMetadata={staticMetadata} />
 }
 
-export default Dashboard
+export default DashboardPage

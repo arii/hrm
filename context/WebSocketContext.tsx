@@ -6,30 +6,56 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useReducer,
 } from 'react'
 import {
   ClientCommandMessage,
-  HrmData,
+  HrmMetric,
   SpotifyData,
   TimerData,
   ServerMessage,
   ActiveAlert,
+  InitialStateSnapshotPayload,
 } from '../types/websocket'
+import { HrmStaticMetadata } from '../types/shared'
 import { getWebSocketURL } from '../utils/urls'
 
-interface AppState {
-  hrmData: HrmData[]
+// The new combined data structure for UI components
+export interface HrmDataDisplay {
+  clientId: string
+  name: string
+  age?: number
+  maxHr?: number
+  value: number
+  percentMax: number
+  connected: boolean
+}
+
+// 1. Define Reducer State & Actions
+interface WebSocketState {
+  staticData: Map<string, HrmStaticMetadata>
+  metrics: Map<string, HrmMetric>
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized?: boolean
 }
 
-const INITIAL_STATE: AppState = {
-  hrmData: [],
+type WebSocketAction =
+  | { type: 'SEED_METADATA'; payload: HrmStaticMetadata }
+  | { type: 'INITIAL_STATE'; payload: InitialStateSnapshotPayload }
+  | { type: 'HRM_UPDATE'; payload: HrmMetric[] }
+  | { type: 'TIMER_UPDATE'; payload: TimerData }
+  | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
+  | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
+
+const INITIAL_STATE: WebSocketState = {
+  staticData: new Map(),
+  metrics: new Map(),
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE',
@@ -50,11 +76,61 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
-export interface WebSocketContextType extends AppState {
+const reducer = (
+  state: WebSocketState,
+  action: WebSocketAction
+): WebSocketState => {
+  switch (action.type) {
+    case 'SEED_METADATA': {
+      const newStaticData = new Map(state.staticData)
+      newStaticData.set(action.payload.clientId, action.payload)
+      return { ...state, staticData: newStaticData }
+    }
+    case 'INITIAL_STATE': {
+      const newMetrics = new Map<string, HrmMetric>()
+      action.payload.hrmMetrics.forEach((metric) => {
+        newMetrics.set(metric.clientId, metric)
+      })
+      return {
+        ...state,
+        metrics: newMetrics,
+        timerData: action.payload.timerData,
+        spotifyData: action.payload.spotifyData,
+        spotifyServiceInitialized: action.payload.spotifyServiceInitialized,
+      }
+    }
+    case 'HRM_UPDATE': {
+      const updatedMetrics = new Map(state.metrics)
+      action.payload.forEach((metric) => {
+        updatedMetrics.set(metric.clientId, metric)
+      })
+      return { ...state, metrics: updatedMetrics }
+    }
+    case 'TIMER_UPDATE':
+      return { ...state, timerData: action.payload }
+    case 'SPOTIFY_UPDATE':
+      return { ...state, spotifyData: action.payload }
+    case 'ACTIVE_ALERTS_UPDATE':
+      return { ...state, activeAlerts: action.payload }
+    case 'SPOTIFY_SERVICE_INIT_UPDATE':
+      return { ...state, spotifyServiceInitialized: action.payload }
+    default:
+      return state
+  }
+}
+
+// Note: The context now exposes derived hrmData, not the raw maps
+export interface WebSocketContextType {
+  hrmData: HrmDataDisplay[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  activeAlerts: ActiveAlert[]
+  spotifyServiceInitialized?: boolean
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
+  seedLocalUser: (user: HrmStaticMetadata) => void
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
@@ -72,47 +148,23 @@ export const WebSocketProvider = ({
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
-  // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
-  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-  const JITTER_FACTOR = 0.2 // 20% jitter
+  const INITIAL_RECONNECT_DELAY = 1000
+  const JITTER_FACTOR = 0.2
 
-  // Unified State Object managed by a reducer
-  const reducer = (state: AppState, message: ServerMessage): AppState => {
-    switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
-      case 'TIMER_UPDATE':
-        return { ...state, timerData: message.payload }
-      case 'SPOTIFY_UPDATE':
-        return { ...state, spotifyData: message.payload }
-      case 'ACTIVE_ALERTS_UPDATE':
-        return { ...state, activeAlerts: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      case 'EXECUTE_SPOTIFY':
-        // This message type is handled by useSpotifyRemoteExecution hook
-        // We don't need to update state here, just pass it through
-        return state
-      default:
-        return state
-    }
-  }
-
-  const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
-      dispatch(message)
+      // The reducer now expects a specific action format
+      if (message.type !== 'EXECUTE_SPOTIFY') {
+        dispatch(message as WebSocketAction)
+      }
     }, 100)
   ).current
 
   const wsRef = useRef<WebSocket | null>(null)
   const shouldReconnect = useRef(true)
-
-  // Ref to hold the connect function, ensuring it's always up-to-date
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
@@ -131,109 +183,47 @@ export const WebSocketProvider = ({
     ) {
       return
     }
-
     shouldReconnect.current = true
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
-
     ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
-
-      // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
-      }
-
-      // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
-
-      if (pendingActions.current.length > 0) {
-        console.log(
-          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
-        )
-        pendingActions.current.forEach((action) => {
-          ws.send(JSON.stringify(action))
-        })
-        pendingActions.current = []
-        localStorage.setItem('pendingActions', '[]')
-      }
-
-      // Reset reconnect attempts on successful connection
       reconnectAttempts.current = 0
-
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
       }
     }
-
-    ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
-      )
+    ws.onclose = () => {
       setConnectionStatus('Disconnected')
-
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
-      }
-
       if (shouldReconnect.current) {
         if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttempts.current++
-          const delay =
-            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
+          const delay = INITIAL_RECONNECT_DELAY * 2 ** reconnectAttempts.current
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
-          const reconnectDelay = delay + jitter
-
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
-          )
-
           reconnectTimeoutRef.current = setTimeout(() => {
             setConnectionStatus('Reconnecting...')
             connectRef.current()
-          }, reconnectDelay)
+          }, delay + jitter)
         } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
-          setConnectionStatus(
-            'Failed to connect. Please check your connection and refresh the page.'
-          )
+          setConnectionStatus('Failed to connect.')
         }
       }
     }
-
-    ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
-      setConnectionStatus('Error')
-    }
-
+    ws.onerror = () => setConnectionStatus('Error')
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
-
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
-            new CustomEvent('spotify-remote-command', {
-              detail: message,
-            })
+            new CustomEvent('spotify-remote-command', { detail: message })
           )
           return
         }
-
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
-          dispatch(message)
+          dispatch(message as WebSocketAction)
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
@@ -243,52 +233,74 @@ export const WebSocketProvider = ({
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    if (wsRef.current) {
-      wsRef.current.close()
-    }
-    console.log('[useWebSocket] Manually disconnected.')
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    wsRef.current?.close()
   }, [])
 
   useEffect(() => {
     connectRef.current = connect
     connect()
-
-    return () => {
-      disconnect()
-    }
+    return () => disconnect()
   }, [connect, disconnect])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
-      ws.send(jsonStr)
-    } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
-      pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(data))
     }
   }, [])
 
-  const contextValue = {
-    ...appState,
+  const seedLocalUser = useCallback((user: HrmStaticMetadata) => {
+    dispatch({ type: 'SEED_METADATA', payload: user })
+  }, [])
+
+  // 3. Implement Merge Logic: Expose a derived hrmData array
+  const derivedHrmData = useMemo((): HrmDataDisplay[] => {
+    const combinedData = new Map<string, HrmDataDisplay>()
+
+    // Initialize with static data
+    state.staticData.forEach((meta, clientId) => {
+      combinedData.set(clientId, {
+        ...meta,
+        value: 0,
+        percentMax: 0,
+        connected: false,
+      })
+    })
+
+    // Merge in live metrics
+    state.metrics.forEach((metric, clientId) => {
+      const existing = combinedData.get(clientId)
+      if (existing) {
+        // Update existing entry (from static data)
+        existing.value = metric.value
+        existing.percentMax = metric.percentMax
+        existing.connected = metric.connected
+      } else {
+        // Create new entry for clients without static data (e.g., other HRM users)
+        combinedData.set(clientId, {
+          clientId: metric.clientId,
+          name: `User-${metric.clientId.substring(0, 4)}`, // Fallback name
+          value: metric.value,
+          percentMax: metric.percentMax,
+          connected: metric.connected,
+        })
+      }
+    })
+
+    return Array.from(combinedData.values())
+  }, [state.staticData, state.metrics])
+
+  const contextValue: WebSocketContextType = {
+    timerData: state.timerData,
+    spotifyData: state.spotifyData,
+    activeAlerts: state.activeAlerts,
+    spotifyServiceInitialized: state.spotifyServiceInitialized,
+    hrmData: derivedHrmData,
     connectionStatus,
     sendData,
     connect,
     disconnect,
+    seedLocalUser,
   }
 
   return (

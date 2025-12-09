@@ -50,8 +50,8 @@ const getCookie = (name: string): string => {
 }
 
 const useBluetoothHRM = () => {
-  // We assume the useWebSocket hook is available and provides the sendData function
-  const { sendData, connectionStatus } = useWebSocket()
+  // The hook now requires both sendData and the new seedLocalUser function
+  const { sendData, connectionStatus, seedLocalUser } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -189,7 +189,7 @@ const useBluetoothHRM = () => {
 
         // 3. Start HR notifications
         await characteristic.startNotifications()
-        lastDataTime.current = Date.now() // Initialize timestamp
+        lastDataTime.current = Date.now()
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
@@ -199,27 +199,26 @@ const useBluetoothHRM = () => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            // Stream data
-            const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
-
-            const data: HrmInputData = {
-              value: heartRate,
-              maxHr: calculatedMaxHr,
-              name: name || `Bluetooth HRM (${device?.name || 'Unknown'})`,
-            }
-            if (age) {
-              data.age = parseInt(age)
-            }
-            const message: HrmInputMessage = {
-              type: 'HRM_INPUT',
-              data,
-            }
+            // Only stream the raw BPM value
+            const data: HrmInputData = { value: heartRate }
+            const message: HrmInputMessage = { type: 'HRM_INPUT', data }
             sendData(message)
           }
         )
 
         device.addEventListener('gattserverdisconnected', onDisconnected)
+
+        // Seed the user's static data into the client-side state machine
+        const { name, age } = userDetailsRef.current || {}
+        if (name && age) {
+          const calculatedMaxHr = 220 - parseInt(age)
+          seedLocalUser({
+            clientId: `local-${device.id}`, // A stable ID for the local user
+            name: name,
+            age: parseInt(age),
+            maxHr: calculatedMaxHr,
+          })
+        }
 
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)

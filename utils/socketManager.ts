@@ -12,6 +12,7 @@ import {
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
   HrmData,
+  HrmMetric,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -33,6 +34,24 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const hrmClients = new Map<string, HrmData>()
+
+// Helper function to map internal state to the new lightweight metric format
+const mapToHrmMetrics = (clients: Map<string, HrmData>): HrmMetric[] => {
+  return Array.from(clients.values()).map((client) => {
+    // A null value indicates a disconnected sensor or signal drop
+    const isConnected = client.value !== null && typeof client.value !== 'undefined'
+    const currentValue = isConnected ? client.value : 0
+    const percentMax =
+      client.maxHr > 0 ? (currentValue / client.maxHr) * 100 : 0
+
+    return {
+      clientId: client.clientId,
+      value: currentValue,
+      percentMax: Math.round(percentMax), // Keep it as a whole number
+      connected: isConnected,
+    }
+  })
+}
 
 interface Services {
   tabataService: TabataTimer
@@ -83,7 +102,7 @@ const initSocketManager = (
       hrmClients.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
-        payload: Array.from(hrmClients.values()),
+        payload: mapToHrmMetrics(hrmClients),
       })
     })
   })
@@ -134,10 +153,10 @@ const handleIncomingMessage = (
         // The client is requesting the full current state.
         const stateSnapshot = getUnifiedStateSnapshot()
 
-        // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
+        // Construct the new payload with lightweight metrics
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: Array.from(hrmClients.values()),
+          hrmMetrics: mapToHrmMetrics(hrmClients),
         }
 
         const initialStateMessage: ServerMessage = {
@@ -150,29 +169,15 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
         if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
-          const updatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmClients.set(clientId, {
-            ...existingClientData,
-            ...updatedClientProperties,
-          })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+          // Create a new object with updated properties, allowing null to be set for 'value'
+          const updatedData = { ...existingClientData, ...message.data }
+          hrmClients.set(clientId, updatedData)
         }
+        // Broadcast the lightweight metric payload
         broadcast({
           type: 'HRM_UPDATE',
-          payload: Array.from(hrmClients.values()),
+          payload: mapToHrmMetrics(hrmClients),
         })
         break
       }
