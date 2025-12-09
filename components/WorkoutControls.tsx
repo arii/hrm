@@ -11,15 +11,15 @@ const TimerDisplay = dynamic(() => import('./TimerDisplay'), {
 })
 
 const WorkoutControls: React.FC = () => {
-  const { send, timerData } = useWebSocket()
+  const { sendData, timerData } = useWebSocket()
   const { volume } = useVolumePreference()
 
   const handleStart = () => {
-    send({ type: 'TIMER_COMMAND', payload: { command: 'START' } })
+    sendData({ type: 'TIMER_COMMAND', payload: { command: 'START' } })
   }
 
   const handleStop = () => {
-    send({ type: 'TIMER_COMMAND', payload: { command: 'STOP' } })
+    sendData({ type: 'TIMER_COMMAND', payload: { command: 'STOP' } })
   }
 
   return (
