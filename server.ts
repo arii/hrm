@@ -261,7 +261,7 @@ app
     })
 
     // Begin listening
-    server..listen(port, hostname, () => {
+    server.listen(port, hostname, () => {
       // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
