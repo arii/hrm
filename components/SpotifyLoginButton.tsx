@@ -3,17 +3,34 @@
 
 import Button from '@mui/material/Button'
 import { signIn } from 'next-auth/react'
+import { useState } from 'react'
 
 const SpotifyLoginButton = () => {
+  const [isLoading, setIsLoading] = useState(false)
+
   const handleLogin = async () => {
-    // Use NextAuth's built-in sign-in flow with Spotify provider
-    // This automatically handles the correct redirect URI and CSRF protection
-    await signIn('spotify', { callbackUrl: '/' })
+    setIsLoading(true)
+    try {
+      console.log('[SpotifyLoginButton] Clicking login, calling signIn()...')
+      const result = await signIn('spotify', {
+        callbackUrl: '/',
+        redirect: true,
+      })
+      console.log('[SpotifyLoginButton] signIn() result:', result)
+    } catch (error) {
+      console.error('[SpotifyLoginButton] signIn() error:', error)
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Button variant="contained" color="primary" onClick={handleLogin}>
-      Login with Spotify
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={handleLogin}
+      disabled={isLoading}
+    >
+      {isLoading ? 'Logging in...' : 'Login with Spotify'}
     </Button>
   )
 }

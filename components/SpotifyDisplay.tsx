@@ -34,9 +34,9 @@ interface SpotifyDevice {
 }
 
 const SpotifyDisplay = () => {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const isLoggedIn = status === 'authenticated' && session?.accessToken
+  const isLoggedIn = status === 'authenticated'
 
   const handleLogout = async () => {
     await signOut({ redirect: false })

@@ -1,5 +1,5 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import NextAuth, { Account, AuthOptions, Session } from 'next-auth'
+import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
@@ -193,12 +193,22 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
+        console.log('[AUTH JWT] Initial sign-in, account:', {
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          hasAccessToken: !!account.access_token,
+        })
         const tokenData = {
+          sub: account.providerAccountId, // Add user ID so NextAuth knows who this is
           accessToken: account.access_token,
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
         }
+        console.log('[AUTH JWT] Returning tokenData:', {
+          hasSub: !!tokenData.sub,
+          hasAccessToken: !!tokenData.accessToken,
+        })
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
         if (account.refresh_token) {
@@ -256,8 +266,16 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
+      console.log(
+        '[AUTH SESSION] Creating session, token keys:',
+        Object.keys(token)
+      )
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
+      console.log(
+        '[AUTH SESSION] Session created with accessToken:',
+        !!session.accessToken
+      )
       return session
     },
   },
@@ -265,5 +283,3 @@ export const authOptions: AuthOptions = {
   secret:
     process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
 }
-
-export default NextAuth(authOptions)
