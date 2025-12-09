@@ -31,11 +31,9 @@ export interface TimerDisplayProps {
 }
 
 export interface WorkoutItem {
-  category: string
-  exercises: string[]
+  title: string
+  details?: string
 }
-
-export type WorkoutData = WorkoutItem[]
 
 export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutItem[] }>
@@ -50,12 +48,4 @@ export interface SpotifyPlaylistItem {
 export interface SpotifyPlaylist {
   name: string
   uri: string
-}
-
-export interface UserSettings {
-  userName: string
-  userAge: number
-  maxHr: number
-  restingHr: number
-  deviceId: string | null
 }

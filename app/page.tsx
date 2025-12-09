@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
@@ -21,25 +21,23 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { transformWorkoutDataToColumns } from '@/utils/visualization'
-import { Box } from '@mui/material'
+
+const DOC_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 // Lazy-load heavy components
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
-const WorkoutTable = dynamic(() => import('../components/WorkoutTable'), {
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={500} />,
 })
-const WorkoutColumns = dynamic(() => import('../components/WorkoutColumns'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
-})
 
 const Dashboard = () => {
-  const { timerData, workoutData } = useWebSocket()
+  const { timerData } = useWebSocket()
+  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const { volume } = useVolumePreference() // Get volume state
 
   // Initialize Spotify Web Playback SDK
@@ -69,7 +67,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -86,18 +84,14 @@ const Dashboard = () => {
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid item xs={12}>
-          {/* Desktop: Native Table */}
-          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-            <WorkoutTable workoutData={workoutData} />
-          </Box>
-
-          {/* Mobile: Card Columns (The new component) */}
-          <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-            <WorkoutColumns
-              columns={transformWorkoutDataToColumns(workoutData)}
-            />
-          </Box>
+        <Grid size={{ xs: 12 }}>
+          <GoogleDocViewer
+            title="Today's Training Regimen"
+            embedUrl={DOC_URL}
+            height={500}
+            isShrunk={docIsManuallyShrunk}
+            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+          />
         </Grid>
       </Grid>
 
