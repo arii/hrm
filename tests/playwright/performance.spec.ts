@@ -72,7 +72,7 @@ test.describe('Frontend Performance', () => {
     // over the initial size, it's a potential leak. This is a heuristic.
     const heapGrowthRatio = (finalHeapSize - initialHeapSize) / initialHeapSize
     console.log(`Heap Growth Ratio: ${(heapGrowthRatio * 100).toFixed(2)}%`)
-    expect(heapGrowthRatio).toBeLessThan(0.5)
+    expect(heapGrowthRatio).toBeLessThan(0.2)
 
     // 2. Layout Thrashing Analysis
     const layoutCounts = metrics.map((m) => m.LayoutCount)

@@ -7,6 +7,18 @@ set -e
 PERF_TEST_FILE="tests/playwright/performance.spec.ts"
 SERVER_LOG="logs/frontend-perf-server.log"
 
+# --- Cleanup Function ---
+cleanup() {
+  echo ""
+  echo "🧹 Cleaning up Frontend Profiling environment..."
+  echo "   - Stopping PM2 server..."
+  pnpm run pm2:stop 2>/dev/null || true
+  pnpm run pm2:delete 2>/dev/null || true
+}
+
+# Register the cleanup trap
+trap cleanup EXIT INT
+
 # --- Setup ---
 echo "📈 Starting Frontend Performance Profiling..."
 echo "------------------------------------------"
@@ -23,7 +35,8 @@ NODE_ENV=production pnpm run build
 echo "   - Starting production server in the background..."
 # Use pnpm start which uses pm2
 pnpm start > "$SERVER_LOG" 2>&1 &
-SERVER_PID=$!
+# We don't need to track PID for PM2, we use pm2 commands to stop it
+
 echo "   - Server running..."
 
 # Wait for the server to be ready
@@ -33,11 +46,6 @@ pnpm exec wait-on http://127.0.0.1:3000 -t 30000 # 30-second timeout
 # --- Execution ---
 echo "   - Running Playwright performance test..."
 pnpm exec playwright test "$PERF_TEST_FILE"
-
-# --- Cleanup ---
-echo "   - Test complete. Cleaning up..."
-pnpm run pm2:stop
-pnpm run pm2:delete
 
 # --- Completion ---
 echo "------------------------------------------"
