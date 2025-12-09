@@ -84,8 +84,8 @@ const HrTile = ({
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 // ADDED: Pulse animation
                 animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Optional: Only animate if we have a valid BPM > 0
-                animationPlayState: bpm > 0 ? 'running' : 'paused',
+                // Animate only when receiving live data (bpm > 0 and not in an alert state)
+                animationPlayState: bpm > 0 && !isAlerting ? 'running' : 'paused',
               }}
             >
               {percentMax}%
