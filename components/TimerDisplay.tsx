@@ -104,7 +104,11 @@ const TimerDisplay = ({
           zIndex: 2,
         }}
       >
-        <Typography variant="caption" sx={{ color: '#fff' }}>
+        <Typography
+          variant="caption"
+          sx={{ color: '#fff' }}
+          data-testid="ws-status-indicator"
+        >
           {connectionStatus}
         </Typography>
         <Box
