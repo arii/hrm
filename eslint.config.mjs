@@ -196,4 +196,14 @@ export default defineConfig([
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     },
   },
+  {
+    files: ['tests/unit/**/*.js'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+        require: 'readonly',
+        global: 'readonly',
+      },
+    },
+  },
 ])

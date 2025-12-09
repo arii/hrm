@@ -31,9 +31,7 @@ export class SpotifyTokenManager {
     }
   }
 
-  private async writeTokenUpdate(
-    data: Partial<SpotifyToken>
-  ): Promise<void> {
+  private async writeTokenUpdate(data: Partial<SpotifyToken>): Promise<void> {
     if (!this.userId) return
     const updatedToken = await prisma.spotifyToken.update({
       where: { spotifyUserId: this.userId },

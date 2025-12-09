@@ -1,9 +1,17 @@
 import { ApiError } from '@/lib/errors'
-import { PrismaClient } from '@prisma/client'
+import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 import logger from '@/utils/logger'
 
-const prisma = new PrismaClient()
+/**
+ * Internal endpoint for NextAuth to post refresh tokens.
+ * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
+ * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ */
+
+const LOG_DIR = path.resolve(process.cwd(), 'logs')
+const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,43 +23,21 @@ export async function POST(req: NextRequest) {
 
     const payload = await req.json()
 
-    // Validate payload structure
-    if (
-      !payload.sub ||
-      !payload.access_token ||
-      !payload.refresh_token ||
-      !payload.expires_in
-    ) {
-      throw new ApiError(400, 'Invalid token payload')
+    // ensure logs dir
+    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
+
+    // write timestamped record (overwrite with latest)
+    const record = {
+      receivedAt: Date.now(),
+      payload,
     }
-
-    const spotifyUserId = payload.sub
-    const accessToken = payload.access_token
-    const refreshToken = payload.refresh_token
-    const expiresIn = payload.expires_in
-    const accessTokenExpiresAt = new Date(Date.now() + expiresIn * 1000)
-
-    await prisma.spotifyToken.upsert({
-      where: { spotifyUserId },
-      update: {
-        accessToken,
-        refreshToken,
-        accessTokenExpiresAt,
-        updatedAt: new Date(),
-      },
-      create: {
-        spotifyUserId,
-        accessToken,
-        refreshToken,
-        accessTokenExpiresAt,
-      },
-    })
+    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
     logger.info(
-      { subject: spotifyUserId },
-      'Received and stored token-delivery'
+      { subject: payload.sub ?? payload.provider },
+      'Received token-delivery'
     )
-    return NextResponse.json({ ok: true, userId: spotifyUserId })
+    return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
       return NextResponse.json(

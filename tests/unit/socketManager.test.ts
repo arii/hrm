@@ -38,8 +38,10 @@ describe('WebSocket Manager Integration', () => {
     mockWs = new MockWebSocket()
 
     // Instantiate mocked services
-    mockTabataService = new (TabataTimer as jest.Mock<any>)(jest.fn())
-    mockSpotifyService = new (SpotifyPolling as jest.Mock<any>)(jest.fn())
+    mockTabataService = new (TabataTimer as jest.Mock<typeof TabataTimer>)()
+    mockSpotifyService = new (SpotifyPolling as jest.Mock<
+      typeof SpotifyPolling
+    >)()
 
     // Define mock methods
     mockTabataService.handleCommand = jest.fn()
