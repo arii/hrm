@@ -17,7 +17,6 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { parseGoogleDoc } from './services/googleDocParser.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
@@ -172,7 +171,6 @@ app
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
-      workoutData: JSON.parse(lastWorkoutData || '[]'),
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
@@ -182,35 +180,6 @@ app
       { tabataService, spotifyService },
       getUnifiedStateSnapshot
     )
-
-    // 5. Periodically fetch and broadcast workout data
-    const DOC_URL =
-      'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
-
-    let lastWorkoutData = ''
-
-    const fetchAndBroadcastWorkoutData = async () => {
-      try {
-        const workoutData = await parseGoogleDoc(DOC_URL)
-        const workoutDataString = JSON.stringify(workoutData)
-
-        if (workoutDataString !== lastWorkoutData) {
-          lastWorkoutData = workoutDataString
-          broadcast({
-            type: 'WORKOUT_DATA_UPDATE',
-            payload: workoutData,
-          })
-        }
-      } catch (error) {
-        logger.error({ err: error }, 'Failed to fetch and parse workout data')
-      }
-    }
-
-    // Fetch initial data
-    fetchAndBroadcastWorkoutData()
-
-    // Poll for changes every 30 seconds
-    setInterval(fetchAndBroadcastWorkoutData, 30000)
 
     // --- Express Routing ---
 
