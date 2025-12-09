@@ -219,3 +219,39 @@ export async function navigateToProtectedRoute(
   // Wait for page to stabilize
   await page.waitForLoadState('networkidle', { timeout })
 }
+
+/**
+ * Mocks a successful login by setting necessary localStorage items.
+ *
+ * @param page The Playwright page object.
+ */
+export async function mockLogin(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    // Mock the access token
+    localStorage.setItem(
+      'spotify-sdk:AuthorizationCodeWithPKCEStrategy:token',
+      JSON.stringify({
+        access_token: 'mock_access_token',
+        token_type: 'Bearer',
+        expires_in: 3600,
+        refresh_token: 'mock_refresh_token',
+        scope: 'user-read-private user-read-email',
+      })
+    )
+    // Mock user settings
+    localStorage.setItem(
+      'userSettings',
+      JSON.stringify({
+        userName: 'Mock User',
+        userAge: 30,
+        maxHr: 190,
+        restingHr: 60,
+        soundEnabled: true,
+        deviceId: 'mock_device_id',
+      })
+    )
+  })
+  // After setting the items, you might need to reload the page or navigate
+  // for the application to pick up the new localStorage state.
+  await page.reload()
+}

@@ -87,6 +87,7 @@ export {
   isLoggedIn,
   // Context management
   createAuthenticatedContext,
+  mockLogin,
 } from './auth'
 
 // ============================================================================

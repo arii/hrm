@@ -208,8 +208,12 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // Ensure inputs are enabled before filling
-    await expect(workInput).toBeEnabled({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-    await expect(restInput).toBeEnabled({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+    await expect(workInput).toBeEnabled({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
+    await expect(restInput).toBeEnabled({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
 
     // Configure timer (15 work, 5s rest)
     await workInput.fill('15')
@@ -258,7 +262,9 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Dashboard page already loaded via fixture
-    await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
+    await expect(dashboardPage.locator('text=Mock User')).toBeVisible({
+      timeout: WAIT_TIMEOUTS.MEDIUM,
+    })
 
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)

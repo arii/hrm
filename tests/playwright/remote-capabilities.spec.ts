@@ -1,11 +1,17 @@
 // File: tests/playwright/remote-capabilities.spec.ts
 import { test, expect } from '@playwright/test'
 import { getBaseURL } from '../../utils/urls'
+import { mockLogin } from './lib'
 
 const BASE_URL = getBaseURL()
 
 test.describe('Remote Capabilities & Command Relay', () => {
   test('Controller sends commands via WebSocket', async ({ page }) => {
+    // Navigate to the base page to ensure we can set localStorage
+    await page.goto(BASE_URL)
+    // Mock a successful login before each test
+    await mockLogin(page)
+
     // 1. Setup Network & WS capture
     const failedRequests: string[] = []
     page.on('requestfailed', (request) => {

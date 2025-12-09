@@ -22,8 +22,10 @@ const HrmTiles = () => {
       .filter((user) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+        // A tile should be rendered even if the name isn't available yet.
+        // The HrTile component can handle a missing name gracefully.
+        // const hasNoIdentity = user.name == null
+        return !(isZero || isPlaceholderName)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
