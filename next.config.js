@@ -45,16 +45,17 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          }
-        ]
-      }
+            value: 'nosniff',
+          },
+        ],
+      },
     ]
-  }
+  },
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
 }
 
 export default withBundleAnalyzer(nextConfig)
