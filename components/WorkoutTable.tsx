@@ -10,11 +10,11 @@ import {
   Paper,
   Typography,
   IconButton,
+  Box,
 } from '@mui/material'
 import { WorkoutData } from '@/types/index'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import { Box } from '@mui/system'
 
 interface WorkoutTableProps {
   workoutData: WorkoutData
@@ -30,9 +30,11 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({ workoutData }) => {
     }
   }, [workoutData])
 
-  const maxExercises = isShrunk
-    ? 1
-    : Math.max(...workoutData.map((col) => col.exercises.length))
+  const maxExercises = React.useMemo(() => {
+    if (isShrunk) return 1
+    if (!workoutData || workoutData.length === 0) return 0
+    return Math.max(...workoutData.map((col) => col.exercises.length))
+  }, [workoutData, isShrunk])
 
   return (
     <Paper elevation={3} sx={{ position: 'relative' }}>
