@@ -113,7 +113,7 @@ export default function MockPage() {
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={8}>
+            <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
@@ -122,7 +122,7 @@ export default function MockPage() {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <TextField
                 label="Age"
                 placeholder="e.g., 30"
@@ -157,7 +157,7 @@ export default function MockPage() {
             Select a zone to set HR:
           </Typography>
           <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid item xs>
+            <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -167,7 +167,7 @@ export default function MockPage() {
                 Zone 1
               </Button>
             </Grid>
-            <Grid item xs>
+            <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -177,7 +177,7 @@ export default function MockPage() {
                 Zone 2
               </Button>
             </Grid>
-            <Grid item xs>
+            <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -187,7 +187,7 @@ export default function MockPage() {
                 Zone 3
               </Button>
             </Grid>
-            <Grid item xs>
+            <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -197,7 +197,7 @@ export default function MockPage() {
                 Zone 4
               </Button>
             </Grid>
-            <Grid item xs>
+            <Grid size={{ xs: 'auto' }}>
               <Button
                 fullWidth
                 variant="contained"

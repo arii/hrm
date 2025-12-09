@@ -20,10 +20,11 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
       {columns.map((col, idx) => (
         <Grid
           key={idx}
-          item
-          xs={12}
-          sm={6}
-          md={Math.max(12 / columns.length, 3)}
+          size={{
+            xs: 12,
+            sm: 6,
+            md: Math.max(12 / columns.length, 3),
+          }}
         >
           <Paper sx={{ p: 3 }}>
             {' '}
