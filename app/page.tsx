@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
+import WorkoutControls from '../components/WorkoutControls'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -67,7 +68,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid item xs={12} lg={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -78,13 +79,14 @@ const Dashboard = () => {
             soundEventId={timerData.soundEventId}
             volume={volume}
           />
+          <WorkoutControls />
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid size={{ xs: 12 }}>
+        <Grid item xs={12}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
