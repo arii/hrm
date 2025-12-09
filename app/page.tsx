@@ -13,6 +13,9 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
+import WorkoutControls from '@/components/WorkoutControls'
+import DashboardWidget from '@/components/widgets/DashboardWidget'
+import DataWidget from '@/components/widgets/DataWidget'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -36,7 +39,7 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 })
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
+  const { timerData, workoutStats } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const { volume } = useVolumePreference() // Get volume state
 
@@ -67,7 +70,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid item xs={12} lg={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -84,7 +87,17 @@ const Dashboard = () => {
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid size={{ xs: 12 }}>
+        <Grid item xs={12} md={6}>
+          <WorkoutControls />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <DashboardWidget title="Workout Stats">
+            <DataWidget label="Avg HR" value={workoutStats.avgHr || '--'} />
+            <DataWidget label="Calories" value={workoutStats.calories || '--'} />
+          </DashboardWidget>
+        </Grid>
+
+        <Grid item xs={12}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}

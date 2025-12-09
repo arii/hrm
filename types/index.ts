@@ -45,6 +45,14 @@ export interface SpotifyPlaylistItem {
   uri: string
 }
 
+export interface UserSettings {
+  userName: string
+  userAge: number
+  maxHr: number
+  restingHr: number
+  deviceId: string
+}
+
 export interface SpotifyPlaylist {
   name: string
   uri: string

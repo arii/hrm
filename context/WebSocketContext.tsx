@@ -26,6 +26,12 @@ interface AppState {
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized?: boolean
+  workoutStats: {
+    avgHr: number
+    calories: number
+    timeInZone: { [key: string]: number }
+    duration: number
+  }
 }
 
 const INITIAL_STATE: AppState = {
@@ -48,6 +54,12 @@ const INITIAL_STATE: AppState = {
   },
   activeAlerts: [],
   spotifyServiceInitialized: true,
+  workoutStats: {
+    avgHr: 0,
+    calories: 0,
+    timeInZone: {},
+    duration: 0,
+  },
 }
 
 export interface WebSocketContextType extends AppState {
@@ -92,6 +104,8 @@ export const WebSocketProvider = ({
         return { ...state, activeAlerts: message.payload }
       case 'SPOTIFY_SERVICE_INIT_UPDATE':
         return { ...state, spotifyServiceInitialized: message.payload }
+      case 'WORKOUT_STATS_UPDATE':
+        return { ...state, workoutStats: message.payload }
       case 'EXECUTE_SPOTIFY':
         // This message type is handled by useSpotifyRemoteExecution hook
         // We don't need to update state here, just pass it through

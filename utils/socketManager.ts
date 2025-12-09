@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import HeartRateService from '../services/HeartRateService.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -27,6 +28,7 @@ interface ExtWebSocket extends WebSocket {
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
 let spotifyServiceInstance: SpotifyPolling
+let heartRateServiceInstance: typeof HeartRateService
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -37,6 +39,7 @@ const hrmClients = new Map<string, HrmData>()
 interface Services {
   tabataService: TabataTimer
   spotifyService: SpotifyPolling
+  heartRateService: typeof HeartRateService
 }
 
 /**
@@ -51,6 +54,7 @@ const initSocketManager = (
   wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
+  heartRateServiceInstance = services.heartRateService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -169,6 +173,11 @@ const handleIncomingMessage = (
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
             hrmClients.get(clientId)
           )
+
+          // Add sample to HeartRateService
+          if (message.data.value) {
+            heartRateServiceInstance.addSample(message.data.value)
+          }
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -180,6 +189,25 @@ const handleIncomingMessage = (
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)
+          if (message.command === 'START') {
+            const clientData = hrmClients.get(clientId)
+            if (clientData) {
+              heartRateServiceInstance.startSession({
+                userAge: clientData.age || 30,
+                maxHr: clientData.maxHr,
+                restingHr: 60, // Placeholder
+                userName: clientData.name || 'User',
+                deviceId: clientId,
+              })
+            }
+          } else if (message.command === 'STOP') {
+            const stats = heartRateServiceInstance.getSessionStats()
+            broadcast({
+              type: 'WORKOUT_STATS_UPDATE',
+              payload: stats,
+            })
+            heartRateServiceInstance.reset()
+          }
         }
         break
       }
