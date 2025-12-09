@@ -1,5 +1,5 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
-import { Account, AuthOptions, Session, User } from 'next-auth'
+import { Account, AuthOptions, Profile, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
@@ -9,7 +9,13 @@ declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
-    user?: User
+    user?: {
+      id: string
+      age?: number
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
   }
 
   interface User {
@@ -211,7 +217,7 @@ export const authOptions: AuthOptions = {
     }: {
       token: JWT
       account: Account | null
-      profile?: any
+      profile?: Profile & { age?: number }
     }) {
       // 1. Initial sign-in
       if (account && profile) {
