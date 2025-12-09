@@ -56,6 +56,7 @@ function getCookieDomain(): string | undefined {
  */
 async function refreshAccessToken(token: JWT) {
   try {
+    // FIX: Use the correct Spotify endpoint
     const url = 'https://accounts.spotify.com/api/token'
     const response = await fetch(url, {
       method: 'POST',
