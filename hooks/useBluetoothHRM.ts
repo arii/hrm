@@ -5,7 +5,7 @@
  */
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage, HrmInputData } from '../types/websocket'
-import { MAX_HR_DEFAULT } from '../utils/constants'
+import { MAX_HR_DEFAULT, HRM_STALE_THRESHOLD_MS } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
@@ -92,7 +92,7 @@ const useBluetoothHRM = () => {
       ) {
         const timeSinceLastData = Date.now() - lastDataTime.current
         // If no data for > 10 seconds, consider it stale/lost
-        if (timeSinceLastData > 10000) {
+        if (timeSinceLastData > HRM_STALE_THRESHOLD_MS) {
           console.warn('Bluetooth data stale. Forcing reconnection...')
           setDeviceStatus('Connection unstable (Stale Data). Reconnecting...')
           // Force disconnect to trigger the ondisconnect handler which handles reconnection
@@ -139,8 +139,16 @@ const useBluetoothHRM = () => {
       isIntentionalDisconnect.current = false // Reset flag
     } else {
       // Unintentional disconnect (signal loss, etc.)
-      setDeviceStatus('Signal Lost (Check Range/Battery)')
-      // Note: We keep savedDevice here to allow for easy reconnection.
+      setDeviceStatus('Signal Lost. Retrying connection...')
+      // Attempt to reconnect after a short delay
+      const deviceToReconnect = deviceRef.current
+      if (deviceToReconnect) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (connectToGattRef.current) {
+            connectToGattRef.current(deviceToReconnect)
+          }
+        }, 2000)
+      }
     }
   }, [])
 
