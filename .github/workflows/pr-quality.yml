@@ -1,0 +1,216 @@
+name: PR Quality Gate
+
+on:
+  # Disabled - use pr-quality-standalone.yml instead
+  # pull_request:
+  #   branches: [ "leader" ]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to check'
+        required: true
+        default: 'leader'
+
+concurrency:
+  group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  # Browsers are installed INSIDE the workspace so they persist with clean: false
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+  # Unique session identifier for concurrent runs
+  SESSION_ID: ${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+
+jobs:
+  # ===========================================================================
+  # JOB 1: INFRASTRUCTURE SETUP (The "Clean Slate")
+  # Wipes workspace, installs deps, and prepares the environment for all jobs.
+  # ===========================================================================
+  infra-setup:
+    name: 🏗️ Infra Setup
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          fetch-depth: 0
+          clean: true  # 🧹 Wipes previous run artifacts to ensure a fresh start
+
+      # --- GLOBAL PERSISTENCE CONFIG ---
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Configure Persistent Store
+        shell: bash
+        run: |
+          mkdir -p ~/.local/share/pnpm/store
+          # Use session-specific cache directories to prevent conflicts
+          mkdir -p ~/.cache/pnpm-${{ env.SESSION_ID }}
+          pnpm config set store-dir ~/.local/share/pnpm/store
+          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
+          pnpm config set side-effects-cache true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20.x"
+      # ---------------------------------
+
+      - name: Create Runtime Envs
+        run: |
+          mkdir -p logs
+          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
+
+      - name: Run Setup Script
+        run: |
+          chmod +x ./scripts/setup.sh
+          ./scripts/setup.sh
+        # This installs dependencies into ./node_modules
+
+      - name: Install Playwright (Binary Only)
+        run: pnpm exec playwright install chromium
+        # Installs into ./.cache/ms-playwright (inside workspace)
+
+  # ===========================================================================
+  # JOB 2: QUALITY CHECKS
+  # Reuses the workspace from Job 1 (No re-install needed)
+  # ===========================================================================
+  quality-check:
+    name: 🛡️ Quality Check
+    needs: infra-setup
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          clean: false  # ⚡ KEEP WORKSPACE (Preserves node_modules & browsers)
+
+      # We still set up pnpm/node just to ensure the binaries are in PATH
+      - uses: pnpm/action-setup@v4
+        with: { run_install: false }
+      - uses: actions/setup-node@v6
+        with: { node-version: "20.x" }
+
+      - name: Configure Session-specific Cache
+        run: |
+          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
+          pnpm config set side-effects-cache true
+
+      - name: Verify Dependencies
+        run: |
+          # Ensure dependencies are installed if node_modules is missing
+          if [ ! -d "node_modules" ]; then
+            echo "node_modules missing, reinstalling dependencies..."
+            pnpm install --frozen-lockfile
+          fi
+
+      - name: Lint Code
+        run: pnpm run lint
+
+      - name: Verify Build
+        run: pnpm run build
+
+  # ===========================================================================
+  # JOB 3: CORE LOGIC TESTS
+  # Reuses workspace. Runs functional tests.
+  # ===========================================================================
+  core-tests:
+    name: 🧪 Core Logic
+    needs: quality-check
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          clean: false  # ⚡ KEEP WORKSPACE
+
+      - uses: pnpm/action-setup@v4
+        with: { run_install: false }
+      - uses: actions/setup-node@v6
+        with: { node-version: "20.x" }
+
+      - name: Configure Session-specific Cache
+        run: |
+          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
+          pnpm config set side-effects-cache true
+
+      - name: Configure Envs
+        run: |
+          # Re-write envs just in case, but folder is persisted
+          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
+
+      - name: Verify Dependencies
+        run: |
+          # Ensure dependencies are installed if node_modules is missing
+          if [ ! -d "node_modules" ]; then
+            echo "node_modules missing, reinstalling dependencies..."
+            pnpm install --frozen-lockfile
+            pnpm exec playwright install chromium
+          fi
+
+      - name: Run Infra Tests
+        run: pnpm run test:infra
+
+      - name: Run Unit Tests
+        run: pnpm run test:unit
+
+  # ===========================================================================
+  # JOB 4: VISUAL REGRESSION TESTS
+  # Reuses workspace. Runs visual tests.
+  # ===========================================================================
+  visual-tests:
+    name: 🎨 Visual Regression
+    needs: core-tests
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.branch || github.ref }}
+          clean: false  # ⚡ KEEP WORKSPACE
+
+      - uses: pnpm/action-setup@v4
+        with: { run_install: false }
+      - uses: actions/setup-node@v6
+        with: { node-version: "20.x" }
+
+      - name: Configure Session-specific Cache
+        run: |
+          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
+          pnpm config set side-effects-cache true
+
+      - name: Configure Envs
+        run: |
+          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
+          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
+
+      - name: Verify Dependencies
+        run: |
+          # Ensure dependencies are installed if node_modules is missing
+          if [ ! -d "node_modules" ]; then
+            echo "node_modules missing, reinstalling dependencies..."
+            pnpm install --frozen-lockfile
+            pnpm exec playwright install chromium
+          fi
+
+      - name: Run Visual Tests
+        run: |
+          pnpm run test:json || true
+          python3 scripts/analyze-playwright-report.py playwright-report.json
+
+      - name: Upload Report on Failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-visual-${{ env.SESSION_ID }}
+          path: playwright-report/
+          retention-days: 5

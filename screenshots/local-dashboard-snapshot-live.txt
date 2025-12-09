@@ -1,0 +1,20 @@
+
+uid=1_0 RootWebArea "Create Next App" url="http://127.0.0.1:3000/client/control"
+  uid=1_1 heading "Workout Control Center" level="1"
+  uid=1_2 StaticText "Server Status:"
+  uid=1_3 StaticText "Connected"
+  uid=1_4 StaticText "0"
+  uid=1_5 StaticText "Work: "
+  uid=1_6 StaticText "20"
+  uid=1_7 StaticText "Rest: "
+  uid=1_8 StaticText "10"
+  uid=1_9 heading "Spotify Player" level="6"
+  uid=1_10 heading "Black Out Days" level="6"
+  uid=1_11 StaticText "by "
+  uid=1_12 StaticText "Phantogram"
+  uid=1_13 button
+  uid=1_14 button
+  uid=1_15 button
+  uid=1_16 slider orientation="horizontal" value="50" valuemax="100" valuemin="0" valuetext=""
+  uid=1_17 StaticText "50"
+  uid=1_18 button "Open Next.js Dev Tools" haspopup="menu"
