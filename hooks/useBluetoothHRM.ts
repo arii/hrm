@@ -60,7 +60,7 @@ const useBluetoothHRM = () => {
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
-  const isManualDisconnect = useRef(false)
+  const isIntentionalDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Ref to hold the connectToGatt function to break dependency cycles
@@ -105,21 +105,40 @@ const useBluetoothHRM = () => {
 
     return () => clearInterval(interval)
   }, [])
-
-  const disconnect = useCallback(() => {
-    isManualDisconnect.current = true
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-
-    if (deviceRef.current?.gatt?.connected) {
-      deviceRef.current.gatt.disconnect()
+  const onDisconnected = useCallback(() => {
+    setBatteryLevel(null)
+    // Stop any pending reconnect attempts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
     }
 
-    setDeviceStatus('Disconnected')
-    setSavedDevice(null)
-    setBatteryLevel(null)
-    deviceRef.current = null
-    setCookie('hrm_device_id', '', -1)
+    if (isIntentionalDisconnect.current) {
+      // --- INTENTIONAL DISCONNECT ---
+      setDeviceStatus('Disconnected')
+      setSavedDevice(null)
+      deviceRef.current = null
+      setCookie('hrm_device_id', '', -1)
+      isIntentionalDisconnect.current = false // Reset for next connection
+    } else {
+      // --- UNINTENTIONAL DISCONNECT ---
+      setDeviceStatus('Signal Lost (Check Range/Battery)')
+      // Note: We leave savedDevice as is, allowing for a one-click reconnect.
+    }
   }, [])
+  const disconnect = useCallback(() => {
+    isIntentionalDisconnect.current = true
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+    }
+
+    if (deviceRef.current?.gatt?.connected) {
+      deviceRef.current.gatt.disconnect() // This triggers onDisconnected
+    } else {
+      // If not connected (e.g., in a "Signal Lost" state), manually trigger cleanup
+      onDisconnected()
+    }
+  }, [onDisconnected])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let userFriendlyMessage =
@@ -132,24 +151,6 @@ const useBluetoothHRM = () => {
       userFriendlyMessage = `Error: ${error.message}`
     }
     setDeviceStatus(`Failed: ${userFriendlyMessage}`)
-  }, [])
-
-  const onDisconnected = useCallback(() => {
-    setBatteryLevel(null)
-
-    if (!isManualDisconnect.current && deviceRef.current) {
-      console.log('Attempting auto-reconnect...')
-      setDeviceStatus('Signal Lost. Retrying connection...')
-
-      const deviceToReconnect = deviceRef.current
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (connectToGattRef.current) {
-          connectToGattRef.current(deviceToReconnect)
-        }
-      }, 2000)
-    } else {
-      setDeviceStatus('Disconnected (Signal Lost)')
-    }
   }, [])
 
   const connectToGatt = useCallback(
@@ -223,7 +224,7 @@ const useBluetoothHRM = () => {
 
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
-        isManualDisconnect.current = false // Reset manual flag
+        isIntentionalDisconnect.current = false // Reset manual flag
         return true
       } catch (error: unknown) {
         console.error('GATT Connection failed:', error)

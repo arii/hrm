@@ -97,7 +97,6 @@ export default function ConnectPage() {
   }
 
   const handleDisconnect = () => {
-    setIsConnected(false)
     disconnect()
   }
 
