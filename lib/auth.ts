@@ -17,11 +17,16 @@ declare module 'next-auth' {
  * Returns undefined if URL is invalid to prevent cookie domain errors
  */
 function getCookieDomain(): string | undefined {
-  if (process.env.NODE_ENV !== 'production' || !process.env.NEXTAUTH_URL) {
+  if (!process.env.NEXTAUTH_URL) {
     return undefined
   }
   try {
-    return new URL(process.env.NEXTAUTH_URL).hostname
+    const url = new URL(process.env.NEXTAUTH_URL)
+    // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return undefined
+    }
+    return url.hostname
   } catch (e) {
     console.error(
       'Failed to parse NEXTAUTH_URL for cookie domain:',
@@ -131,6 +136,8 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  // Trust the X-Forwarded-Proto and X-Forwarded-Host headers for localhost
+  trustHost: true,
   // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
   // Use trustHost for v5, but v4 uses different mechanism
   cookies: {
