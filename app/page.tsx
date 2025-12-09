@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
@@ -63,7 +63,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid item xs={12} lg={6}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -80,10 +80,8 @@ const Dashboard = () => {
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid size={{ xs: 12 }}>
-          <WorkoutTable
-            workoutData={workoutData}
-          />
+        <Grid item xs={12}>
+          <WorkoutTable workoutData={workoutData} />
         </Grid>
       </Grid>
 
