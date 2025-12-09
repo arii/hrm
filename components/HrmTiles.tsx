@@ -42,7 +42,6 @@ const HrmTiles = () => {
               name={user.name || ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
-              background={hrZoneProps.progressColor}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
