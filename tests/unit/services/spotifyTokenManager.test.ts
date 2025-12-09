@@ -15,6 +15,7 @@ describe('SpotifyTokenManager', () => {
   const clientSecret = 'test_client_secret'
 
   beforeEach(() => {
+    process.env.ENCRYPTION_KEY = 'a'.repeat(64); // 32-byte hex string
     ;(fs.existsSync as jest.Mock).mockReturnValue(false)
     ;(fs.readFileSync as jest.Mock).mockClear()
     ;(fs.writeFileSync as jest.Mock).mockClear()
