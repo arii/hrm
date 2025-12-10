@@ -5,7 +5,6 @@ import {
   ClientCommandMessage,
   HrmData,
   ActiveAlert,
-  SpotifyDevice,
   TimerData,
   SpotifyData,
 } from '@/types/websocket'
