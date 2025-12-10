@@ -18,7 +18,7 @@ const DashboardPage = async () => {
     }
   }
 
-  return <DashboardClient staticMetadata={staticMetadata} />
+  return <DashboardClient {...(staticMetadata && { staticMetadata })} />
 }
 
 export default DashboardPage

@@ -229,7 +229,7 @@ export const authOptions: AuthOptions = {
           hasProfile: !!profile,
           profileKeys: profile ? Object.keys(profile) : 'NO PROFILE',
           profileEmail: profile?.email,
-          profileDisplayName: profile?.display_name,
+          profileDisplayName: profile?.name,
         })
         console.log(
           '[AUTH JWT] Initial token before modification:',
@@ -284,9 +284,13 @@ export const authOptions: AuthOptions = {
           accessTokenExpires:
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
-          id: profile.id,
-          age: profile.age, // Assuming age is available in the profile
+          id: account.providerAccountId,
         }
+
+        if (profile.age) {
+          updatedToken.age = profile.age
+        }
+
         console.log(
           '[AUTH JWT] Returning token with keys:',
           Object.keys(updatedToken),

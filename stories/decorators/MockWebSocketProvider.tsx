@@ -29,6 +29,7 @@ const defaultState: WebSocketContextType = {
   sendData: (data) => console.log('Mock sendData:', data),
   connect: () => console.log('Mock connect'),
   disconnect: () => console.log('Mock disconnect'),
+  seedLocalUser: (user) => console.log('Mock seedLocalUser:', user),
 }
 
 interface MockWebSocketProviderProps {

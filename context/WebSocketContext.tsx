@@ -41,7 +41,7 @@ interface WebSocketState {
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
-  spotifyServiceInitialized?: boolean
+  spotifyServiceInitialized: boolean
 }
 
 type WebSocketAction =
@@ -96,7 +96,8 @@ const reducer = (
         metrics: newMetrics,
         timerData: action.payload.timerData,
         spotifyData: action.payload.spotifyData,
-        spotifyServiceInitialized: action.payload.spotifyServiceInitialized,
+        spotifyServiceInitialized:
+          action.payload.spotifyServiceInitialized ?? false,
       }
     }
     case 'HRM_UPDATE': {
@@ -125,7 +126,7 @@ export interface WebSocketContextType {
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
-  spotifyServiceInitialized?: boolean
+  spotifyServiceInitialized: boolean
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void

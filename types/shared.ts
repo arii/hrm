@@ -3,9 +3,9 @@ export type TimerMode = 'STOPWATCH' | 'TABATA'
 export type TimerPhase =
   | 'IDLE'
   | 'PREPARE'
-  | 'RUNNING'
   | 'WORK'
   | 'REST'
+  | 'RUNNING'
   | 'COOLDOWN'
 
 export interface HrmStaticMetadata {

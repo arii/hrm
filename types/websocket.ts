@@ -3,7 +3,19 @@
  * Defines the strict interfaces for all data passed between the server services
  * and the client hooks via the WebSocket connection.
  */
-import { TimerPhase, TimerMode } from './shared'
+import { z } from 'zod'
+import { TimerMode, TimerPhase } from './shared'
+
+// --- Zod Schemas for Client Input Command Interfaces ---
+
+export const HrmInputDataSchema = z.object({
+  value: z.number().nullable().optional(),
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+})
+
+export const TimerModeEnum = z.enum(['STOPWATCH', 'TABATA'])
 
 // --- Server Broadcast State Interfaces ---
 
@@ -168,17 +180,6 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
 
-import { z } from 'zod'
-
-// --- Zod Schemas for Client Input Command Interfaces ---
-
-export const HrmInputDataSchema = z.object({
-  value: z.number().nullable().optional(),
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
-})
-
 export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: HrmInputDataSchema,
@@ -191,7 +192,7 @@ export const TimerCommandMessageSchema = z.object({
 
 export const TimerModeCommandMessageSchema = z.object({
   type: z.literal('SET_MODE'),
-  mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
+  mode: TimerModeEnum,
 })
 
 export const TimerConfigMessageSchema = z.object({
@@ -234,3 +235,4 @@ export const ClientCommandMessageSchema = z.union([
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
 ])
+export type { TimerMode, TimerPhase }
