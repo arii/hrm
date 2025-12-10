@@ -53,6 +53,7 @@
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
+    "stress-test:ws": "ts-node --esm scripts/ws-stress-client.ts",
     "prepare": "husky"
   },
   "dependencies": {
