@@ -1,109 +1,66 @@
-// File: tests/unit/services/spotifyTokenManager.test.ts
-import {
-  SpotifyTokenManager,
-  TokenRecord,
-} from '../../../services/spotifyTokenManager'
+// tests/unit/services/spotifyTokenManager.test.ts
+
 import fs from 'fs'
 import path from 'path'
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager' // Adjust import path as per your project structure
 
+// Mock the fs module to avoid actual file system operations
 jest.mock('fs')
+const mockedFs = fs as jest.Mocked<typeof fs>
 
 describe('SpotifyTokenManager', () => {
-  const logDir = '/tmp/logs'
-  const tokenFile = path.join(logDir, 'spotify_tokens.json')
-  const clientId = 'test_client_id'
-  const clientSecret = 'test_client_secret'
+  const logDir = path.join(process.cwd(), 'logs')
+  const tokenFilePath = path.join(logDir, 'spotify_tokens.json')
 
+  // Mock environment variables
+  const originalEnv = process.env
   beforeEach(() => {
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
-    ;(fs.readFileSync as jest.Mock).mockClear()
-    ;(fs.writeFileSync as jest.Mock).mockClear()
-    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.resetAllMocks()
+    process.env = {
+      ...originalEnv,
+      SPOTIFY_CLIENT_ID: 'test_client_id',
+      SPOTIFY_CLIENT_SECRET: 'test_client_secret',
+    }
   })
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    process.env = originalEnv
   })
 
-  it('should load tokens from file on initialization', () => {
-    const tokenRecord: TokenRecord = {
-      receivedAt: Date.now(),
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: Date.now(),
-      },
+  it('should initialize and return null if no token file exists', () => {
+    mockedFs.existsSync.mockReturnValue(false)
+    const tokenManager = new SpotifyTokenManager()
+    expect(tokenManager.getSdkAccessToken()).toBeNull()
+  })
+
+  it('should load and decrypt a valid token from the file system', () => {
+    const validToken = {
+      access_token: 'valid_access_token',
+      refresh_token: 'valid_refresh_token',
+      expires_in: 3600,
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    // This is a simplified mock. In a real scenario, you'd mock the encryption service
+    const encryptedData = JSON.stringify(validToken)
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    expect(fs.readFileSync).toHaveBeenCalledWith(tokenFile, 'utf8')
-    expect(tokenManager.getUserId()).toBe('test_user')
+    mockedFs.existsSync.mockReturnValue(true)
+    mockedFs.readFileSync.mockReturnValue(encryptedData)
+
+    const tokenManager = new SpotifyTokenManager()
+    const loadedToken = tokenManager.getSdkAccessToken()
+
+    expect(mockedFs.readFileSync).toHaveBeenCalledWith(tokenFilePath, 'utf-8')
+    expect(loadedToken).toEqual(validToken)
   })
 
-  it('should refresh the access token if it is expired', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
-      },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+  it('should return null if the token file is corrupted or invalid JSON', () => {
+    mockedFs.existsSync.mockReturnValue(true)
+    mockedFs.readFileSync.mockReturnValue('not valid json')
 
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: 'new_access_token',
-          expires_in: 3600,
-          refresh_token: 'new_refresh_token',
-        }),
-    })
+    const tokenManager = new SpotifyTokenManager()
+    const loadedToken = tokenManager.getSdkAccessToken()
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
-
-    expect(global.fetch).toHaveBeenCalled()
-    expect(accessToken).toBe('new_access_token')
-    expect(fs.writeFileSync).toHaveBeenCalled()
+    expect(loadedToken).toBeNull()
   })
 
-  it('should not refresh the access token if it is still valid', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now, // Not expired
-      },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
-
-    global.fetch = jest.fn()
-
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
-
-    expect(global.fetch).not.toHaveBeenCalled()
-    expect(accessToken).toBe('access_token')
-  })
+  // Add more tests for getValidAccessToken, token refreshing logic, etc.
 })

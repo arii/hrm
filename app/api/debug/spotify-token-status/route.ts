@@ -1,49 +1,42 @@
-// File: app/api/debug/spotify-token-status/route.ts
+// app/api/debug/spotify-token-status/route.ts
+
 import { NextResponse } from 'next/server'
-import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 
 export async function GET() {
   try {
-    const tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
-    )
+    const tokenManager = new SpotifyTokenManager()
+    const token = tokenManager.getSdkAccessToken()
 
-    const currentToken = tokenManager['currentToken'] // Access private property for debugging
-
-    if (!currentToken) {
-      return NextResponse.json({ status: 'no_token_found' }, { status: 200 })
+    if (token) {
+      return NextResponse.json({
+        status: 'success',
+        message: 'Token is available and appears valid.',
+        token: {
+          accessToken: token.access_token,
+          expiresIn: token.expires_in,
+          tokenType: token.token_type,
+        },
+      })
+    } else {
+      return NextResponse.json(
+        {
+          status: 'error',
+          message: 'Failed to retrieve a valid token.',
+        },
+        { status: 500 }
+      )
     }
-
-    const maskedRefreshToken = currentToken.payload.refresh_token
-      ? `${currentToken.payload.refresh_token.substring(0, 5)}...${currentToken.payload.refresh_token.substring(currentToken.payload.refresh_token.length - 5)}`
-      : 'N/A'
-
-    const expiresAt =
-      currentToken.payload.obtainedAt + currentToken.payload.expires_in * 1000
-
+  } catch (error) {
+    console.error('[/api/debug/spotify-token-status] Error:', error)
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred'
     return NextResponse.json(
       {
-        status: 'token_found',
-        userId: currentToken.payload.sub,
-        accessToken: `${currentToken.payload.access_token.substring(0, 5)}...`,
-        refreshToken: maskedRefreshToken,
-        expiresIn: currentToken.payload.expires_in,
-        obtainedAt: new Date(currentToken.payload.obtainedAt).toISOString(),
-        expiresAt: new Date(expiresAt).toISOString(),
-        isExpired: Date.now() >= expiresAt,
-        willExpireSoon: Date.now() >= expiresAt - 60000, // Within 1 minute
+        status: 'error',
+        message: 'An exception occurred while checking the token.',
+        details: errorMessage,
       },
-      { status: 200 }
-    )
-  } catch (error: unknown) {
-    console.error('Error in spotify-token-status API:', error)
-    let errorMessage = 'An unknown error occurred.'
-    if (error instanceof Error) {
-      errorMessage = error.message
-    }
-    return NextResponse.json(
-      { status: 'error', message: errorMessage },
       { status: 500 }
     )
   }

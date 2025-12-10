@@ -179,6 +179,7 @@ export class SpotifyPolling {
 
   /**
    * Handles incoming commands to control Spotify playback.
+   * A `deviceId` is REQUIRED for all commands except GET_DEVICES and TRANSFER_PLAYBACK.
    */
   public async handleCommand(
     command: string,
@@ -193,38 +194,50 @@ export class SpotifyPolling {
       return
     }
 
+    // Guard clause for commands that require a deviceId
+    if (
+      !deviceId &&
+      ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS', 'SET_VOLUME'].includes(command)
+    ) {
+      console.warn(
+        `[Spotify] Command '${command}' requires a deviceId, but none was provided.`
+      )
+      return
+    }
+
     try {
       switch (command) {
         case 'PLAY':
+          // The guard clause above ensures deviceId is a string here.
           await sdk.player.startResumePlayback(
-            deviceId ?? undefined,
+            deviceId as string,
             undefined,
             playlistUri ? [playlistUri] : undefined
           )
           break
         case 'PAUSE':
-          await sdk.player.pausePlayback(deviceId)
+          await sdk.player.pausePlayback(deviceId as string)
           break
         case 'NEXT':
-          await sdk.player.skipToNext(deviceId)
+          await sdk.player.skipToNext(deviceId as string)
           break
         case 'PREVIOUS':
-          await sdk.player.skipToPrevious(deviceId)
+          await sdk.player.skipToPrevious(deviceId as string)
           break
         case 'TRANSFER_PLAYBACK':
+          // This command is an exception and has its own deviceId check.
           if (deviceId) {
             await sdk.player.transferPlayback([deviceId], true)
           }
           break
         case 'SET_VOLUME':
+          // The guard clause ensures deviceId is a string here.
           if (volume !== undefined) {
-            await sdk.player.setPlaybackVolume(volume, {
-              device_id: deviceId,
-            })
+            // The SDK expects the volume (0-100) and the deviceId string.
+            await sdk.player.setPlaybackVolume(volume, deviceId as string)
           }
           break
         case 'GET_DEVICES':
-          // The regular poll already gets devices, but we can force a poll
           await this.forcePollAndBroadcast()
           break
         default:
@@ -248,10 +261,9 @@ export class SpotifyPolling {
    */
   public async forcePollAndBroadcast() {
     console.log('[SpotifyPolling] Forcing immediate poll and broadcast.')
-    // If the SDK isn't ready, try to initialize it now (e.g., after a token was just delivered)
     if (!sdk) {
       console.log(
-        '[SpotifyPolling] SDK not ready, attempting to initialize before forced poll.'
+        '[SpotifyPolling] SDK not ready, a new token may be required.'
       )
       await this.initializeSdk()
     }
