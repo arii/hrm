@@ -57,8 +57,7 @@ export class SpotifyTokenManager {
     // Check if the token is expired or about to expire (within 5 minutes)
     const buffer = 300 // 5 minutes in seconds
     const isExpired =
-      new Date().getTime() >
-      (this.token.expires ?? 0) - buffer * 1000
+      new Date().getTime() > (this.token.expires ?? 0) - buffer * 1000
 
     if (isExpired) {
       await this.refreshToken()

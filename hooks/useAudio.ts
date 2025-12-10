@@ -39,11 +39,7 @@ export const useAudio = (timerData: TimerData, volume?: number) => {
     }
 
     // 2. During PREPARE phase, play short countdown beeps for the last 3 seconds
-    if (
-      currentPhase === 'PREPARE' &&
-      timeRemaining > 0 &&
-      timeRemaining <= 3
-    ) {
+    if (currentPhase === 'PREPARE' && timeRemaining > 0 && timeRemaining <= 3) {
       // Play short beep only once for each remaining second
       if (lastCountdownBeepRef.current !== timeRemaining) {
         audioManager.playShort()
