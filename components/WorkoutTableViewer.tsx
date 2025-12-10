@@ -17,9 +17,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
 import { useWebSocket } from '../context/WebSocketContext'
-import type { WorkoutItem } from '../services/googleDocParser'
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
