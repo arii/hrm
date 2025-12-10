@@ -20,12 +20,12 @@ export const parseGoogleDocTable = (html: string): WorkoutTableData => {
 
   const parsedRows: string[][] = []
 
-  table.find('tr').each((rowIndex, rowElement) => {
+  table.find('tr').each((_rowIndex, rowElement) => {
     const cells: string[] = []
 
     $(rowElement)
       .find('td, th')
-      .each((colIndex, cellElement) => {
+      .each((_colIndex, cellElement) => {
         // 1. Get text and normalize whitespace (but keep newlines)
         // Google docs often uses <p> tags inside cells, so we map over them
         let text = ''
@@ -55,9 +55,10 @@ export const parseGoogleDocTable = (html: string): WorkoutTableData => {
     }
   })
 
-  // Assume first row is header if we have multiple rows, otherwise just data
-  const headers = parsedRows.length > 0 ? parsedRows[0] : []
-  const rows = parsedRows.length > 1 ? parsedRows.slice(1) : []
+  // The first row is the header, the rest are data rows.
+  // .shift() removes the first element and returns it. If the array is empty, it returns undefined.
+  const headers = parsedRows.shift() || []
+  const rows = parsedRows // The rest of the array is the data rows.
 
   return { headers, rows }
 }
