@@ -1,7 +1,7 @@
 // components/WorkoutTableViewer.tsx
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -13,57 +13,59 @@ import {
   CircularProgress,
   Typography,
   Alert,
-  Box
-} from '@mui/material';
+  Box,
+} from '@mui/material'
 
 interface WorkoutData {
-  headers: string[];
-  rows: string[][];
+  headers: string[]
+  rows: string[][]
 }
 
 interface WorkoutTableViewerProps {
-  docId: string;
+  docId: string
 }
 
 export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
-  const [data, setData] = useState<WorkoutData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<WorkoutData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`/api/workout?docId=${docId}`);
-        if (!res.ok) throw new Error('Failed to load workout data');
-        const json = await res.json();
-        setData(json);
+        setLoading(true)
+        const res = await fetch(`/api/workout?docId=${docId}`)
+        if (!res.ok) throw new Error('Failed to load workout data')
+        const json = await res.json()
+        setData(json)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     if (docId) {
-      fetchData();
+      fetchData()
     }
-  }, [docId]);
+  }, [docId])
 
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
         <CircularProgress />
       </Box>
-    );
+    )
   }
 
   if (error) {
-    return <Alert severity="error">{error}</Alert>;
+    return <Alert severity="error">{error}</Alert>
   }
 
   if (!data || (data.headers.length === 0 && data.rows.length === 0)) {
-    return <Alert severity="info">No workout data found in this document.</Alert>;
+    return (
+      <Alert severity="info">No workout data found in this document.</Alert>
+    )
   }
 
   return (
@@ -97,7 +99,7 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
                     sx={{
                       whiteSpace: 'pre-wrap',
                       fontFamily: 'inherit',
-                      m: 0
+                      m: 0,
                     }}
                   >
                     {cell}
@@ -109,5 +111,5 @@ export default function WorkoutTableViewer({ docId }: WorkoutTableViewerProps) {
         </TableBody>
       </Table>
     </TableContainer>
-  );
+  )
 }
