@@ -51,7 +51,7 @@ echo "   - Server built successfully."
 # --- Execution ---
 echo "   - Starting WebSocket stress client in the background..."
 # Run the stress client with ts-node and redirect output to a log file
-pnpm exec ts-node "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_FILE" 2>&1 &
+pnpm exec ts-node --esm "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_FILE" 2>&1 &
 STRESS_CLIENT_PID=$!
 echo "   - Stress client running with PID: $STRESS_CLIENT_PID"
 

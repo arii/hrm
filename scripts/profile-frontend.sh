@@ -6,14 +6,16 @@ set -e
 # --- Configuration ---
 PERF_TEST_FILE="tests/playwright/performance.spec.ts"
 SERVER_LOG="logs/frontend-perf-server.log"
+SERVER_PID=""
 
 # --- Cleanup Function ---
 cleanup() {
   echo ""
   echo "🧹 Cleaning up Frontend Profiling environment..."
-  echo "   - Stopping PM2 server..."
-  pnpm run pm2:stop 2>/dev/null || true
-  pnpm run pm2:delete 2>/dev/null || true
+  if [ -n "$SERVER_PID" ]; then
+    echo "   - Stopping background server (PID: $SERVER_PID)..."
+    kill "$SERVER_PID" 2>/dev/null || true
+  fi
 }
 
 # Register the cleanup trap
@@ -33,11 +35,10 @@ NODE_ENV=production pnpm run build
 
 # 3. Start the server in the background
 echo "   - Starting production server in the background..."
-# Use pnpm start which uses pm2
-pnpm start > "$SERVER_LOG" 2>&1 &
-# We don't need to track PID for PM2, we use pm2 commands to stop it
-
-echo "   - Server running..."
+# Bypass PM2 and run the start script directly
+bash ./start-production.sh > "$SERVER_LOG" 2>&1 &
+SERVER_PID=$!
+echo "   - Server running with PID: $SERVER_PID"
 
 # Wait for the server to be ready
 echo "   - Waiting for server to become available..."
