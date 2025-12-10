@@ -160,7 +160,7 @@ export default function MockPage() {
                 <Switch
                   checked={stableMode}
                   onChange={(e) => setStableMode(e.target.checked)}
-                  inputProps={{ 'data-testid': 'stable-mode-switch' }}
+                  data-testid="stable-mode-switch"
                 />
               }
               label="Stable Mode (No Fluctuation)"
