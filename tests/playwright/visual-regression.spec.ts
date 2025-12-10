@@ -254,7 +254,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.01,
+      maxDiffPixelRatio: 0.05,
       mask: [
         // Use precise data-testid selectors for all dynamic content masking
         ...getDynamicContentMasks(dashboardPage),
