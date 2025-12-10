@@ -169,7 +169,7 @@ app
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
+      timerData: tabataService.getDerivedState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
     })

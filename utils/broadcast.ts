@@ -5,7 +5,7 @@
  * a direct reference to the WebSocket server instance, preventing circular
  * dependency issues.
  */
-import { ServerMessage } from '../types/websocket'
+import { BroadcastMessage } from '../types/websocket'
 import { WebSocket, Server as WebSocketServer } from 'ws'
 
 let wssInstance: WebSocketServer | null = null
@@ -27,9 +27,9 @@ export const initBroadcaster = (wss: WebSocketServer) => {
 /**
  * Broadcasts a typed server message to all connected WebSocket clients.
  * If the broadcaster has not been initialized, it will log an error and return.
- * @param message The `ServerMessage` to broadcast.
+ * @param message The `BroadcastMessage` to broadcast.
  */
-export const broadcast = (message: ServerMessage) => {
+export const broadcast = (message: BroadcastMessage) => {
   if (!wssInstance) {
     console.error(
       '[Broadcaster] Broadcast called before initialization. Message lost:',

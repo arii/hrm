@@ -10,7 +10,7 @@ import path from 'path'
 import {
   TabataConfig,
   TimerData,
-  UnifiedStateMessage,
+  BroadcastMessage,
 } from '../types/websocket.js' // Ensure .js extension for Node ESM
 
 const STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
@@ -31,7 +31,7 @@ const DEFAULT_CONFIG: TabataConfig = {
 }
 
 export default class TabataTimer {
-  private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+  private broadcast: (data: BroadcastMessage) => void
   private interval: NodeJS.Timeout | null = null
 
   // The simplified, resilient state object
@@ -47,8 +47,8 @@ export default class TabataTimer {
   // Cache last derived state to detect phase transitions (for sound effects)
   private lastDerivedState: TimerData | null = null
 
-  constructor(broadcastState: (data: Partial<UnifiedStateMessage>) => void) {
-    this.broadcastState = broadcastState
+  constructor(broadcast: (data: BroadcastMessage) => void) {
+    this.broadcast = broadcast
 
     // 1. Attempt to restore state from disk on server boot
     this.loadState()
@@ -117,7 +117,7 @@ export default class TabataTimer {
     }
 
     this.lastDerivedState = currentState
-    this.broadcastState({ timerData: currentState })
+    this.broadcast({ type: 'TIMER_UPDATE', payload: currentState })
 
     // Auto-stop if finished
     if (
