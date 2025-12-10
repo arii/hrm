@@ -43,6 +43,13 @@ rm -f "$LOG_FILE" # Clean up old log file
 
 # 2. Build the server
 echo "   - Building server for production..."
+
+# Ensure NEXTAUTH_SECRET is set for production build/run
+if [ -z "$NEXTAUTH_SECRET" ]; then
+  echo "   - Generating temporary NEXTAUTH_SECRET for profiling..."
+  export NEXTAUTH_SECRET=$(openssl rand -base64 32)
+fi
+
 # We need the production build so that Next.js doesn't interfere with profiling
 NODE_ENV=production pnpm run build
 
@@ -51,7 +58,7 @@ echo "   - Server built successfully."
 # --- Execution ---
 echo "   - Starting WebSocket stress client in the background..."
 # Run the stress client with ts-node and redirect output to a log file
-pnpm exec ts-node "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_FILE" 2>&1 &
+pnpm exec ts-node --esm "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_FILE" 2>&1 &
 STRESS_CLIENT_PID=$!
 echo "   - Stress client running with PID: $STRESS_CLIENT_PID"
 

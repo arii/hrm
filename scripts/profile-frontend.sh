@@ -29,6 +29,13 @@ rm -f "$SERVER_LOG"
 
 # 2. Build for production
 echo "   - Building application for production..."
+
+# Ensure NEXTAUTH_SECRET is set for production build/run
+if [ -z "$NEXTAUTH_SECRET" ]; then
+  echo "   - Generating temporary NEXTAUTH_SECRET for profiling..."
+  export NEXTAUTH_SECRET=$(openssl rand -base64 32)
+fi
+
 NODE_ENV=production pnpm run build
 
 # 3. Start the server in the background

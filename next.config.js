@@ -6,6 +6,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   env: {
     TESTING: process.env.TESTING,
   },
@@ -55,7 +56,7 @@ const nextConfig = {
       },
     ]
   },
-  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
 }
 
 export default withBundleAnalyzer(nextConfig)
