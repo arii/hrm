@@ -1,11 +1,9 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   SpotifyCommandMessage,
   TimerCommandMessage,
-  TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -74,8 +72,6 @@ const TimerControls = () => {
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
 
-  const debouncedWorkTime = useDebounce(workTime, 500)
-  const debouncedRestTime = useDebounce(restTime, 500)
   // Track latest numeric values synchronously to avoid stale state on click
   const latestWork = useRef<number>(workTime)
   const latestRest = useRef<number>(restTime)
@@ -88,16 +84,6 @@ const TimerControls = () => {
   useEffect(() => {
     latestRest.current = restTime
   }, [restTime])
-
-  // Send settings update to server when local state changes
-  useEffect(() => {
-    const message: TimerConfigMessage = {
-      type: 'TIMER_CONFIG',
-      workDuration: debouncedWorkTime,
-      restDuration: debouncedRestTime,
-    }
-    sendData(message)
-  }, [debouncedWorkTime, debouncedRestTime, sendData])
 
   // Get deviceId from SpotifyControls context or fallback to active device
   interface SpotifyDevice {
@@ -141,40 +127,37 @@ const TimerControls = () => {
           setSpotifyDeviceId(deviceId)
         }
       }
-      /*if (!deviceId) {
-        logger.warn('No deviceId available, Spotify command not sent.')
-        return
-      }*/
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        // FIX: Use spread to omit the key entirely if deviceId is null/undefined
-        ...(deviceId ? { deviceId } : {}), //
-        // deviceId: deviceId || '',
+        ...(deviceId ? { deviceId } : {}),
       }
       sendData(message)
     },
     [sendData, spotifyDeviceId, spotifyDevices]
   )
 
-  const sendTimerCommand = useCallback(
-    (command: 'START' | 'PAUSE' | 'STOP') => {
+  const handleTimerCommand = useCallback(
+    (command: 'START_TABATA' | 'START_STOPWATCH' | 'PAUSE' | 'STOP') => {
       if (connectionStatus !== 'Connected') return
 
-      // When starting, ensure the server receives the latest configuration immediately
-      if (command === 'START') {
-        // Prefer reading the current ref values to avoid stale React state
-        const config: TimerConfigMessage = {
-          type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
+      let message: TimerCommandMessage
+      if (command === 'START_TABATA') {
+        message = {
+          type: 'TIMER_COMMAND',
+          command,
+          config: {
+            workDuration: latestWork.current,
+            restDuration: latestRest.current,
+            totalCycles: 8, // Assuming a default for now
+          },
         }
-        sendData(config)
+      } else {
+        message = { type: 'TIMER_COMMAND', command }
       }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
       sendData(message)
 
-      if (command === 'START') {
+      if (command.startsWith('START')) {
         sendSpotifyCommand('NEXT')
       } else if (command === 'STOP') {
         sendSpotifyCommand('PAUSE')
@@ -498,7 +481,13 @@ const TimerControls = () => {
               data-testid="start-timer-button"
               variant="contained"
               color="success"
-              onClick={() => sendTimerCommand('START')}
+              onClick={() =>
+                handleTimerCommand(
+                  timerData.mode === 'TABATA'
+                    ? 'START_TABATA'
+                    : 'START_STOPWATCH'
+                )
+              }
               disabled={connectionStatus !== 'Connected'}
               sx={startButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
@@ -510,7 +499,7 @@ const TimerControls = () => {
               data-testid="stop-timer-button"
               variant="contained"
               color="error"
-              onClick={() => sendTimerCommand('STOP')}
+              onClick={() => handleTimerCommand('STOP')}
               disabled={connectionStatus !== 'Connected'}
               sx={stopButtonSx}
               startIcon={<Stop fontSize="large" />}

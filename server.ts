@@ -20,7 +20,7 @@ import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
+import { StateSnapshot, TimerData } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
@@ -165,11 +165,13 @@ app
         setRefreshToken: () => {},
       } as unknown as SpotifyPolling
     }
-    const tabataService = new TabataTimer(broadcast)
+    const tabataBroadcast = (data: { timerData: TimerData }) =>
+      broadcast({ type: 'TIMER_UPDATE', payload: data.timerData })
+    const tabataService = new TabataTimer(tabataBroadcast)
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
+      timerData: tabataService.getDerivedState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
     })

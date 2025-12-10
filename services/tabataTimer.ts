@@ -4,7 +4,6 @@ import path from 'path'
 import {
   TabataConfig,
   TimerData,
-  UnifiedStateMessage,
 } from '../types/websocket.js'
 
 const STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
@@ -33,11 +32,10 @@ export default class TabataTimer {
     accumulatedElapsed: 0,
     config: { ...DEFAULT_CONFIG },
   }
-  private lastDerivedState: TimerData | null = null
   private interval: NodeJS.Timeout | null = null
 
   constructor(
-    private broadcastState: (data: Partial<UnifiedStateMessage>) => void
+    private broadcastState: (data: { timerData: TimerData }) => void
   ) {
     this.loadState()
     if (this.persistentState.isRunning) this.startTickLoop()
@@ -75,7 +73,6 @@ export default class TabataTimer {
 
   private tick = () => {
     const currentState = this.getDerivedState()
-    this.lastDerivedState = currentState
     this.broadcastState({ timerData: currentState })
 
     if (
@@ -100,6 +97,7 @@ export default class TabataTimer {
         timeElapsed: 0,
         cycle: 0,
         totalCycles: config.totalCycles,
+        soundEventId: 0,
       }
 
     let totalElapsed = accumulatedElapsed
@@ -114,6 +112,7 @@ export default class TabataTimer {
         timeElapsed: Math.floor(totalElapsed),
         cycle: 0,
         totalCycles: 0,
+        soundEventId: 0,
       }
 
     // TABATA Logic
@@ -126,6 +125,7 @@ export default class TabataTimer {
         timeElapsed: Math.floor(totalElapsed),
         cycle: 1,
         totalCycles: config.totalCycles,
+        soundEventId: 0,
       }
 
     const workoutTime = totalElapsed - 5
@@ -139,6 +139,7 @@ export default class TabataTimer {
         timeElapsed: Math.floor(totalElapsed),
         cycle: config.totalCycles,
         totalCycles: config.totalCycles,
+        soundEventId: 0,
       }
 
     const cycleIndex = Math.floor(workoutTime / cycleDur)
@@ -155,6 +156,7 @@ export default class TabataTimer {
       timeElapsed: Math.floor(totalElapsed),
       cycle: cycleIndex + 1,
       totalCycles: config.totalCycles,
+      soundEventId: 0,
     }
   }
 

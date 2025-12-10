@@ -6,7 +6,7 @@
  */
 'use client'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
@@ -18,6 +18,7 @@ const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -37,6 +38,7 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
+  const [userSettings] = useUserSettings()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const { volume } = useVolumePreference() // Get volume state
 
@@ -63,28 +65,28 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+      <Box display="flex" flexWrap="wrap" gap={{ xs: 2, sm: 2, md: 3 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Box flexBasis={{ xs: '100%', lg: 'calc(50% - 12px)' }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
             timeElapsed={timerData.timeElapsed}
             mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
+            workDuration={userSettings.defaultWorkDuration}
+            restDuration={userSettings.defaultRestDuration}
             soundEventId={timerData.soundEventId}
             volume={volume}
           />
-        </Grid>
+        </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid size={{ xs: 12 }}>
+        <Box flexBasis="100%">
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
@@ -92,8 +94,8 @@ const Dashboard = () => {
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />

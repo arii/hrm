@@ -14,7 +14,7 @@ export interface HrmData {
   age?: number
 }
 
-export type TimerMode = 'STOPWATCH' | 'TABATA'
+export type TimerMode = 'STOPWATCH' | 'TABATA' | 'IDLE'
 export type TimerPhase =
   | 'IDLE'
   | 'PREPARE'
@@ -22,6 +22,7 @@ export type TimerPhase =
   | 'REST'
   | 'COOLDOWN'
   | 'RUNNING'
+  | 'FINISHED'
 
 export interface TabataConfig {
   workDuration: number
@@ -35,10 +36,10 @@ export interface TimerData {
   timeRemaining: number // Used for countdowns (Tabata, Prepare)
   timeElapsed: number // Used for count-ups (Stopwatch)
   mode: TimerMode
-  workDuration: number // seconds for Tabata work interval
-  restDuration: number // seconds for Tabata rest interval
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
+  cycle: number
+  totalCycles: number
 }
 // 1. Update SpotifyData to include the device list
 export interface SpotifyDevice {

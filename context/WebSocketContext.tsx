@@ -36,9 +36,9 @@ const INITIAL_STATE: AppState = {
     timeRemaining: 0,
     timeElapsed: 0,
     mode: 'TABATA',
-    workDuration: 30,
-    restDuration: 10,
     soundEventId: 0,
+    cycle: 0,
+    totalCycles: 0,
   },
   spotifyData: {
     trackName: 'Awaiting Login...',
