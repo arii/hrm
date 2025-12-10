@@ -36,10 +36,6 @@ export async function GET(request: Request) {
     const errorMessage =
       error instanceof Error ? error.message : 'Internal Server Error'
     console.error('Workout API Error:', error)
-    return NextResponse.json(
-      { error: errorMessage },
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
