@@ -1,12 +1,19 @@
-// File: app/components/dashboard/HrmTiles.tsx
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
-import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box' // Changed from Grid
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
+
+const boxStyles = {
+  width: {
+    xs: '100%',
+    sm: 'calc(50% - 8px)', // 2 columns with 16px gap
+    lg: 'calc(25% - 18px)', // 4 columns with 24px gap
+  },
+}
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -33,8 +40,8 @@ const HrmTiles = () => {
         )
 
         return (
-          <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+          <Box
+            sx={boxStyles}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -47,7 +54,7 @@ const HrmTiles = () => {
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
-          </Grid>
+          </Box>
         )
       })
   }, [hrmData, activeAlerts])
@@ -59,20 +66,20 @@ const HrmTiles = () => {
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
+        <Box sx={boxStyles} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
             height={220}
             sx={{ borderRadius: 3 }}
           />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
+        </Box>
+        <Box sx={boxStyles} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
             height={220}
             sx={{ borderRadius: 3 }}
           />
-        </Grid>
+        </Box>
       </>
     )
   }
