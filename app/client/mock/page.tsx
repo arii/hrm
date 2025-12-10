@@ -6,7 +6,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
@@ -26,14 +25,10 @@ export default function MockPage() {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    if (typeof window !== 'undefined') {
+      window.__TEST_READY__ = true
+      window.dispatchEvent(new CustomEvent('test-ready'))
+    }
   }, [])
 
   const sendHrPacket = useCallback(
@@ -112,27 +107,23 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 8 }}>
-              <TextField
-                label="User Name"
-                placeholder="e.g., Mock User"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 4 }}>
-              <TextField
-                label="Age"
-                placeholder="e.g., 30"
-                type="number"
-                value={age}
-                onChange={(e) => setAge(parseInt(e.target.value, 10))}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <TextField
+              label="User Name"
+              placeholder="e.g., Mock User"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Age"
+              placeholder="e.g., 30"
+              type="number"
+              value={age}
+              onChange={(e) => setAge(parseInt(e.target.value, 10))}
+              sx={{ width: '50%' }}
+            />
+          </Box>
 
           <TextField
             label="Current BPM"
@@ -156,58 +147,43 @@ export default function MockPage() {
           >
             Select a zone to set HR:
           </Typography>
-          <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 'auto' }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#9E9E9E' }}
-                onClick={() => setHrByZone('grey')}
-              >
-                Zone 1
-              </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#2196F3' }}
-                onClick={() => setHrByZone('blue')}
-              >
-                Zone 2
-              </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#4CAF50' }}
-                onClick={() => setHrByZone('green')}
-              >
-                Zone 3
-              </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
-                onClick={() => setHrByZone('yellow')}
-              >
-                Zone 4
-              </Button>
-            </Grid>
-            <Grid size={{ xs: 'auto' }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#F44336' }}
-                onClick={() => setHrByZone('red')}
-              >
-                Zone 5
-              </Button>
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#9E9E9E' }}
+              onClick={() => setHrByZone('grey')}
+            >
+              Zone 1
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#2196F3' }}
+              onClick={() => setHrByZone('blue')}
+            >
+              Zone 2
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#4CAF50' }}
+              onClick={() => setHrByZone('green')}
+            >
+              Zone 3
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
+              onClick={() => setHrByZone('yellow')}
+            >
+              Zone 4
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#F44336' }}
+              onClick={() => setHrByZone('red')}
+            >
+              Zone 5
+            </Button>
+          </Box>
 
           <Button
             variant="contained"
