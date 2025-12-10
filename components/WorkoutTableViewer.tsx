@@ -36,20 +36,10 @@ const WorkoutTableViewer = ({
   isShrunk = false,
   onToggleShrink,
 }: WorkoutTableViewerProps) => {
-  const [data, setData] = useState<WorkoutItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
-
   const { workoutData } = useWebSocket()
-
-  useEffect(() => {
-    if (workoutData && workoutData.length > 0) {
-      setData(workoutData)
-      setLastUpdated(new Date().toLocaleTimeString())
-      setIsLoading(false)
-    }
-  }, [workoutData])
+  const data = workoutData || []
+  const isLoading = workoutData === null
+  const lastUpdated = new Date().toLocaleTimeString()
 
   return (
     <Card elevation={6}>
