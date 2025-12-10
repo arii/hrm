@@ -4,7 +4,6 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer

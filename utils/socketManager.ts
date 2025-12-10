@@ -84,7 +84,10 @@ export const broadcastUnifiedState = () => {
   }
 
   // The generic `broadcast` function handles the actual sending
-  console.log('[socketManager] Broadcasting unified state:', JSON.stringify(message, null, 2))
+  console.log(
+    '[socketManager] Broadcasting unified state:',
+    JSON.stringify(message, null, 2)
+  )
   broadcast(message)
 }
 
