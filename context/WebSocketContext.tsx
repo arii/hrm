@@ -17,7 +17,6 @@ import {
   TimerData,
   ServerMessage,
   ActiveAlert,
-  WorkoutItem,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
