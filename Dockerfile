@@ -1,22 +1,44 @@
-# Use the official Node.js 20 image.
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-bullseye
-
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Set the working directory in the container
-WORKDIR /usr/src/app
-
-# Copy package.json and pnpm-lock.yaml to the working directory
-COPY package.json pnpm-lock.yaml ./
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy the rest of the application source code to the working directory
+# Copy source code
 COPY . .
 
-# Expose the port the app runs on
+# Build Server (tsc) and Next.js App
+# This runs your "build" script: "tsc -p tsconfig.build.json && next build"
+RUN npm run build
+
+# Stage 2: Production Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Install PM2 globally to manage the process inside the container
+RUN npm install -g pm2
+
+# Install only production dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
+
+# Copy built artifacts from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/ecosystem.config.cjs ./ecosystem.config.cjs
+
+# Setup persistent logs directory with correct permissions
+RUN mkdir -p logs && chown -R node:node logs
+
+# Use non-root user for security
+USER node
+
+# Expose the application port
 EXPOSE 3000
 
-# The command to run the application will be specified in the docker-compose.yml file
+# Start application using PM2 Runtime (Foreground mode for Docker)
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs", "--env", "production"]

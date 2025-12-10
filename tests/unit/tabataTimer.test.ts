@@ -1,448 +1,208 @@
 /**
- * Unit tests for TabataTimer service
- * Tests timer state transitions, mode changes, and configuration
+ * Unit tests for the new, persistent TabataTimer service.
  */
-import { describe, it, expect, jest, beforeEach } from '@jest/globals'
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import fs from 'fs'
+import path from 'path'
 import TabataTimer from '../../services/tabataTimer'
-import { ServerMessage, TimerData } from '../../types/websocket'
+import { TimerData, UnifiedStateMessage } from '../../types/websocket'
 
-describe('TabataTimer Service', () => {
+// Mock the file system to prevent actual file I/O during tests
+jest.mock('fs')
+const mockedFs = fs as jest.Mocked<typeof fs>
+
+const STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
+
+describe('Persistent TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
+  let broadcastMock: jest.Mock<(data: Partial<UnifiedStateMessage>) => void>
   let broadcastedStates: TimerData[]
+
+  // Helper to advance time and trigger the timer's tick
+  const advanceTime = (ms: number) => {
+    jest.advanceTimersByTime(ms)
+  }
 
   beforeEach(() => {
     jest.useFakeTimers()
     broadcastedStates = []
     broadcastMock = jest.fn((message) => {
-      if (message.type === 'TIMER_UPDATE') {
-        broadcastedStates.push(message.payload)
+      if (message.timerData) {
+        broadcastedStates.push(message.timerData)
       }
     })
-    timer = new TabataTimer(broadcastMock)
+
+    // Reset mocks before each test
+    mockedFs.writeFileSync.mockClear()
+    mockedFs.readFileSync.mockClear()
+    mockedFs.existsSync.mockReturnValue(false) // Default to no state file
   })
 
   afterEach(() => {
     jest.useRealTimers()
   })
 
-  describe('Initialization', () => {
-    it('should initialize in IDLE state with TABATA mode', () => {
-      const state = timer.getState()
+  describe('Initialization and State Loading', () => {
+    it('should initialize in a clean IDLE state if no state file exists', () => {
+      timer = new TabataTimer(broadcastMock)
+      const state = timer.getDerivedState()
+
+      expect(state.mode).toBe('IDLE')
       expect(state.isRunning).toBe(false)
-      expect(state.currentPhase).toBe('IDLE')
-      expect(state.mode).toBe('TABATA')
-      expect(state.timeElapsed).toBe(0)
+      expect(fs.readFileSync).not.toHaveBeenCalled()
     })
 
-    it('should have default Tabata configuration', () => {
-      const state = timer.getState()
-      expect(state.workDuration).toBe(20)
-      expect(state.restDuration).toBe(10)
-    })
-  })
-
-  describe('Mode Switching', () => {
-    it('should switch from TABATA to STOPWATCH mode', () => {
-      timer.setMode('STOPWATCH')
-      const state = timer.getState()
-      expect(state.mode).toBe('STOPWATCH')
-      expect(state.currentPhase).toBe('IDLE')
-      expect(state.timeElapsed).toBe(0)
-    })
-
-    it('should switch from STOPWATCH to TABATA mode', () => {
-      timer.setMode('STOPWATCH')
-      timer.setMode('TABATA')
-      const state = timer.getState()
-      expect(state.mode).toBe('TABATA')
-      expect(state.currentPhase).toBe('IDLE')
-      expect(state.timeRemaining).toBe(20) // Default work duration
-    })
-
-    it('should stop running timer when switching modes', () => {
-      timer.setMode('STOPWATCH')
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(6000) // Complete PREPARE phase
-
-      const runningState = timer.getState()
-      expect(runningState.isRunning).toBe(true)
-
-      timer.setMode('TABATA')
-      const stoppedState = timer.getState()
-      expect(stoppedState.isRunning).toBe(false)
-      expect(stoppedState.currentPhase).toBe('IDLE')
-    })
-
-    it('should broadcast state update when mode changes', () => {
-      broadcastedStates = []
-      timer.setMode('STOPWATCH')
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
-        'STOPWATCH'
-      )
-    })
-  })
-
-  describe('Stopwatch Mode', () => {
-    beforeEach(() => {
-      timer.setMode('STOPWATCH')
-    })
-
-    it('should transition from IDLE to PREPARE when started', () => {
-      timer.handleCommand('START')
-      const state = timer.getState()
-      expect(state.isRunning).toBe(true)
-      expect(state.currentPhase).toBe('PREPARE')
-      expect(state.timeRemaining).toBe(5)
-    })
-
-    it('should count up after PREPARE phase completes', () => {
-      timer.handleCommand('START')
-
-      // Advance through PREPARE phase (5 seconds)
-      jest.advanceTimersByTime(5000)
-
-      const prepareComplete = timer.getState()
-      expect(prepareComplete.currentPhase).toBe('RUNNING')
-      expect(prepareComplete.timeElapsed).toBe(0)
-
-      // Count up during RUNNING phase
-      jest.advanceTimersByTime(3000)
-
-      const running = timer.getState()
-      expect(running.timeElapsed).toBe(3)
-    })
-
-    it('should pause and maintain elapsed time', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(6000) // 5s PREPARE + 1s RUNNING
-
-      const beforePause = timer.getState()
-      expect(beforePause.timeElapsed).toBe(1)
-
-      timer.handleCommand('PAUSE')
-      const paused = timer.getState()
-      expect(paused.isRunning).toBe(false)
-      expect(paused.currentPhase).toBe('IDLE')
-      expect(paused.timeElapsed).toBe(1)
-
-      jest.advanceTimersByTime(5000) // Time should not advance while paused
-      const stillPaused = timer.getState()
-      expect(stillPaused.timeElapsed).toBe(1)
-    })
-
-    it('should preserve runningTotal when pausing and resuming', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(10000) // 5s PREPARE + 5s RUNNING
-
-      const beforePause = timer.getState()
-      expect(beforePause.timeElapsed).toBe(5)
-      expect(beforePause.currentPhase).toBe('RUNNING')
-
-      timer.handleCommand('PAUSE')
-      jest.advanceTimersByTime(2000) // Wait while paused - time should not advance
-
-      const paused = timer.getState()
-      expect(paused.timeElapsed).toBe(5) // Should still be 5
-      expect(paused.isRunning).toBe(false)
-
-      // When resuming, it will go through PREPARE again
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(3000) // RUNNING
-
-      const resumed = timer.getState()
-      expect(resumed.currentPhase).toBe('RUNNING')
-      // Time should continue counting (might be 3s or more depending on implementation)
-      expect(resumed.timeElapsed).toBeGreaterThanOrEqual(2)
-    })
-
-    it('should reset to zero when stopped', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(10000)
-
-      timer.handleCommand('STOP')
-      const stopped = timer.getState()
-      expect(stopped.isRunning).toBe(false)
-      expect(stopped.currentPhase).toBe('IDLE')
-      expect(stopped.timeElapsed).toBe(0)
-    })
-  })
-
-  describe('Tabata Mode', () => {
-    beforeEach(() => {
-      timer.setMode('TABATA')
-    })
-
-    it('should transition from IDLE to PREPARE when started', () => {
-      timer.handleCommand('START')
-      const state = timer.getState()
-      expect(state.isRunning).toBe(true)
-      expect(state.currentPhase).toBe('PREPARE')
-      expect(state.timeRemaining).toBe(5)
-    })
-
-    it('should transition to WORK phase after PREPARE', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000)
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('WORK')
-      expect(state.timeRemaining).toBe(20) // Default work duration
-    })
-
-    it('should transition from WORK to REST phase', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(20000) // WORK
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('REST')
-      expect(state.timeRemaining).toBe(10) // Default rest duration
-    })
-
-    it('should loop indefinitely between WORK and REST', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-
-      // Complete 20 iterations
-      for (let i = 0; i < 20; i++) {
-        jest.advanceTimersByTime(20000) // WORK
-        expect(timer.getState().currentPhase).toBe('REST')
-        jest.advanceTimersByTime(10000) // REST
-        expect(timer.getState().currentPhase).toBe('WORK')
+    it('should load and resume from a persisted RUNNING state', () => {
+      const persistedState = {
+        mode: 'TABATA' as const,
+        isRunning: true,
+        startTime: Date.now() - 10000, // Started 10 seconds ago
+        accumulatedElapsed: 0,
+        config: { workDuration: 20, restDuration: 10, totalCycles: 8 },
       }
+      mockedFs.existsSync.mockReturnValue(true)
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(persistedState))
 
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('WORK')
+      timer = new TabataTimer(broadcastMock)
+      const state = timer.getDerivedState()
+
       expect(state.isRunning).toBe(true)
-    })
-
-    it('should pause during any phase', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(10000) // Halfway through WORK
-
-      timer.handleCommand('PAUSE')
-      const paused = timer.getState()
-      expect(paused.isRunning).toBe(false)
-      expect(paused.currentPhase).toBe('WORK')
-      expect(paused.timeRemaining).toBe(10)
-    })
-
-    it('should resume from paused phase', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(10000) // Halfway through WORK
-      timer.handleCommand('PAUSE')
-
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000)
-
-      const resumed = timer.getState()
-      expect(resumed.currentPhase).toBe('WORK')
-      expect(resumed.timeRemaining).toBe(5)
-    })
-
-    it('should reset to IDLE when stopped', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(15000)
-
-      timer.handleCommand('STOP')
-      const stopped = timer.getState()
-      expect(stopped.isRunning).toBe(false)
-      expect(stopped.currentPhase).toBe('IDLE')
-      expect(stopped.timeRemaining).toBe(20) // Default work duration
-    })
-  })
-
-  describe('Configuration Changes', () => {
-    it('should update work duration', () => {
-      timer.setConfig({ workDuration: 45, restDuration: 15 })
-      const state = timer.getState()
-      expect(state.workDuration).toBe(45)
-    })
-
-    it('should update rest duration', () => {
-      timer.setConfig({ workDuration: 20, restDuration: 15 })
-      const state = timer.getState()
-      expect(state.restDuration).toBe(15)
-    })
-
-    it('should sanitize work duration to minimum of 1 second', () => {
-      timer.setConfig({ workDuration: 0, restDuration: 10 })
-      const state = timer.getState()
-      expect(state.workDuration).toBe(1)
-    })
-
-    it('should sanitize rest duration to minimum of 0 seconds', () => {
-      timer.setConfig({ workDuration: 20, restDuration: -5 })
-      const state = timer.getState()
-      expect(state.restDuration).toBe(0)
-    })
-
-    it('should update timeRemaining when IDLE in Tabata mode', () => {
-      timer.setMode('TABATA')
-      timer.setConfig({ workDuration: 30, restDuration: 10 })
-      const state = timer.getState()
-      expect(state.timeRemaining).toBe(30)
-    })
-
-    it('should broadcast state after configuration change', () => {
-      broadcastedStates = []
-      timer.setConfig({ workDuration: 30, restDuration: 15 })
-      expect(broadcastMock).toHaveBeenCalled()
-      const lastState = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastState.workDuration).toBe(30)
-      expect(lastState.restDuration).toBe(15)
-    })
-
-    it('should use new rest duration in next rest phase', () => {
-      timer.setConfig({ workDuration: 20, restDuration: 15 })
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(20000) // WORK
-
-      const state = timer.getState()
-      expect(state.currentPhase).toBe('REST')
-      expect(state.timeRemaining).toBe(15)
-    })
-  })
-
-  describe('State-Dependent Commands', () => {
-    it('should allow START when timer is IDLE', () => {
-      const initialState = timer.getState()
-      expect(initialState.isRunning).toBe(false)
-
-      timer.handleCommand('START')
-      const afterStart = timer.getState()
-      expect(afterStart.isRunning).toBe(true)
-    })
-
-    it('should allow PAUSE when timer is running', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(1000)
-
-      const running = timer.getState()
-      expect(running.isRunning).toBe(true)
-
-      timer.handleCommand('PAUSE')
-      const paused = timer.getState()
-      expect(paused.isRunning).toBe(false)
-    })
-
-    it('should allow STOP when timer is running', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(1000)
-
-      timer.handleCommand('STOP')
-      const stopped = timer.getState()
-      expect(stopped.isRunning).toBe(false)
-      expect(stopped.currentPhase).toBe('IDLE')
-    })
-
-    it('should ignore START when already running', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(2000)
-
-      const beforeSecondStart = timer.getState()
-      const phase = beforeSecondStart.currentPhase
-
-      timer.handleCommand('START')
-      const afterSecondStart = timer.getState()
-
-      // State should not change
-      expect(afterSecondStart.currentPhase).toBe(phase)
-    })
-  })
-
-  describe('Sound Cues', () => {
-    it('should queue WORK sound when transitioning from PREPARE', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000)
-
-      const state = timer.getState()
+      expect(state.mode).toBe('TABATA')
+      // 10s elapsed = 5s PREPARE + 5s WORK
       expect(state.currentPhase).toBe('WORK')
-      // Sound should have been queued (check broadcast was called with soundToPlay)
-      const workTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'WORK' && s.soundToPlay === 'WORK'
-      )
-      expect(workTransitionBroadcast).toBeDefined()
+      expect(state.timeElapsed).toBe(10)
+      expect(state.timeRemaining).toBe(15) // 20 - 5
     })
 
-    it('should queue REST sound when transitioning from WORK', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(20000) // WORK
+    it('should load a PAUSED state and not start the tick loop', () => {
+        const pausedState = {
+            mode: 'STOPWATCH' as const,
+            isRunning: false,
+            startTime: null,
+            accumulatedElapsed: 30, // Paused after 30 seconds
+            config: { workDuration: 20, restDuration: 10, totalCycles: 8 },
+        }
+        mockedFs.existsSync.mockReturnValue(true)
+        mockedFs.readFileSync.mockReturnValue(JSON.stringify(pausedState))
 
-      const restTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'REST' && s.soundToPlay === 'REST'
-      )
-      expect(restTransitionBroadcast).toBeDefined()
-    })
+        timer = new TabataTimer(broadcastMock)
 
-    it('should queue COUNTDOWN sound during final 3 seconds', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(2000) // 3 seconds remaining in PREPARE
+        // Advance time to see if the tick loop is running
+        advanceTime(5000)
 
-      const countdownBroadcast = broadcastedStates.find(
-        (s) => s.soundToPlay === 'COUNTDOWN'
-      )
-      expect(countdownBroadcast).toBeDefined()
-    })
-
-    it('should increment soundEventId for each sound cue', () => {
-      timer.handleCommand('START')
-
-      const initialState = broadcastedStates[0]
-      const initialId = initialState.soundEventId
-
-      jest.advanceTimersByTime(3000) // Trigger countdown sounds
-
-      const laterState = broadcastedStates[broadcastedStates.length - 1]
-      expect(laterState.soundEventId).toBeGreaterThan(initialId)
+        // The broadcast mock should not be called if the timer is paused
+        expect(broadcastMock).not.toHaveBeenCalled()
+        const state = timer.getDerivedState()
+        expect(state.isRunning).toBe(false)
+        expect(state.timeElapsed).toBe(30)
     })
   })
 
-  describe('Broadcasting', () => {
-    it('should broadcast state on every tick', () => {
-      broadcastedStates = []
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(3000)
-
-      // Should broadcast at least once per second
-      expect(broadcastMock.mock.calls.length).toBeGreaterThanOrEqual(3)
+  describe('State Persistence', () => {
+    it('should save state to file on start', () => {
+      timer = new TabataTimer(broadcastMock)
+      timer.start()
+      expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
+      const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
+      expect(savedState.isRunning).toBe(true)
     })
 
-    it('should broadcast state when configuration changes', () => {
-      broadcastedStates = []
-      timer.setConfig({ workDuration: 30, restDuration: 15 })
-
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates.length).toBeGreaterThan(0)
+    it('should save state to file on pause', () => {
+        timer = new TabataTimer(broadcastMock)
+        timer.start()
+        advanceTime(1000); // Advance time by 1 second
+        mockedFs.writeFileSync.mockClear() // Clear the call from start()
+        timer.pause()
+        expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
+        const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
+        expect(savedState.isRunning).toBe(false)
+        expect(savedState.accumulatedElapsed).toBeGreaterThan(0)
     })
 
-    it('should broadcast state when mode changes', () => {
-      broadcastedStates = []
-      timer.setMode('STOPWATCH')
+    it('should save state to file on stop', () => {
+        timer = new TabataTimer(broadcastMock)
+        timer.start()
+        mockedFs.writeFileSync.mockClear()
+        timer.stop()
+        expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
+        const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
+        expect(savedState.mode).toBe('IDLE')
+    })
+  })
 
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[0].mode).toBe('STOPWATCH')
+  describe('Timestamp-based Logic', () => {
+    beforeEach(() => {
+        timer = new TabataTimer(broadcastMock)
     })
 
-    it('should broadcast complete timer state', () => {
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(1000)
+    it('should correctly calculate elapsed time after a delay', () => {
+      timer.startStopwatch()
 
-      const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastBroadcast).toHaveProperty('isRunning')
-      expect(lastBroadcast).toHaveProperty('currentPhase')
-      expect(lastBroadcast).toHaveProperty('timeRemaining')
-      expect(lastBroadcast).toHaveProperty('timeElapsed')
-      expect(lastBroadcast).toHaveProperty('mode')
-      expect(lastBroadcast).toHaveProperty('workDuration')
-      expect(lastBroadcast).toHaveProperty('restDuration')
+      const startTime = Date.now()
+
+      // Simulate the passage of time without running setInterval
+      jest.spyOn(Date, 'now').mockReturnValue(startTime + 15000) // 15 seconds pass
+
+      const state = timer.getDerivedState()
+      // 15s total = 5s PREPARE + 10s WORK
+      expect(state.timeElapsed).toBe(15)
+      expect(state.currentPhase).toBe('WORK')
+    })
+
+    it('should correctly calculate state after being paused', () => {
+        timer.start()
+        const time1 = Date.now()
+
+        // Run for 12 seconds
+        jest.spyOn(Date, 'now').mockReturnValue(time1 + 12000)
+        timer.pause()
+
+        const pausedState = timer.getDerivedState()
+        // 12s total = 5s PREPARE + 7s WORK
+        expect(pausedState.timeElapsed).toBe(12)
+        expect(pausedState.timeRemaining).toBe(13) // 20 - 7
+
+        // Resume after another 10 seconds of "real" time has passed
+        const time2 = Date.now()
+        jest.spyOn(Date, 'now').mockReturnValue(time2 + 10000)
+        timer.start()
+
+        // Elapse another 6 seconds in the running state
+        const time3 = Date.now()
+        jest.spyOn(Date, 'now').mockReturnValue(time3 + 6000)
+
+        const resumedState = timer.getDerivedState()
+        // 12s (accumulated) + 6s (new) = 18s total elapsed
+        // 18s total = 5s PREPARE + 13s WORK
+        expect(resumedState.timeElapsed).toBe(18)
+        expect(resumedState.timeRemaining).toBe(7) // 20 - 13
+    })
+
+    it('should transition through TABATA phases correctly based on time', () => {
+        timer.start({ workDuration: 10, restDuration: 5, totalCycles: 2 })
+
+        // PREPARE phase
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 4000) // 4s elapsed
+        let state = timer.getDerivedState()
+        expect(state.currentPhase).toBe('PREPARE')
+        expect(state.timeRemaining).toBe(1)
+
+        // WORK phase 1
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3000) // 7s elapsed
+        state = timer.getDerivedState()
+        expect(state.currentPhase).toBe('WORK')
+        expect(state.timeRemaining).toBe(8) // 10 - (7-5)
+
+        // REST phase 1
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 9000) // 16s elapsed
+        state = timer.getDerivedState()
+        expect(state.currentPhase).toBe('REST')
+        expect(state.timeRemaining).toBe(4) // 15 - (16-5)
+
+        // FINISHED phase
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 20000) // 36s elapsed
+        state = timer.getDerivedState()
+        expect(state.currentPhase).toBe('FINISHED')
     })
   })
 })

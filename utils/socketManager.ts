@@ -15,6 +15,7 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
+  TimerCommandMessage,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
@@ -179,24 +180,21 @@ const handleIncomingMessage = (
 
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
-          tabataServiceInstance.handleCommand(message.command)
-        }
-        break
-      }
-
-      case 'SET_MODE': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setMode(message.mode)
-        }
-        break
-      }
-
-      case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
-          tabataServiceInstance.setConfig({
-            workDuration: message.workDuration,
-            restDuration: message.restDuration,
-          })
+          const { command, config } = message as TimerCommandMessage
+          switch (command) {
+            case 'START_TABATA':
+              tabataServiceInstance.start(config)
+              break
+            case 'START_STOPWATCH':
+              tabataServiceInstance.startStopwatch()
+              break
+            case 'PAUSE':
+              tabataServiceInstance.pause()
+              break
+            case 'STOP':
+              tabataServiceInstance.stop()
+              break
+          }
         }
         break
       }

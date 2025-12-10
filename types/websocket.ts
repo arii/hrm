@@ -23,6 +23,12 @@ export type TimerPhase =
   | 'COOLDOWN'
   | 'RUNNING'
 
+export interface TabataConfig {
+  workDuration: number
+  restDuration: number
+  totalCycles: number
+}
+
 export interface TimerData {
   isRunning: boolean
   currentPhase: TimerPhase
@@ -110,7 +116,8 @@ export interface HrmInputMessage {
 
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
-  command: 'START' | 'PAUSE' | 'STOP'
+  command: 'START_TABATA' | 'START_STOPWATCH' | 'PAUSE' | 'STOP'
+  config?: TabataConfig
 }
 
 export interface TimerModeCommandMessage {
@@ -181,9 +188,21 @@ export const HrmInputMessageSchema = z.object({
   data: HrmInputDataSchema,
 })
 
+export const TabataConfigSchema = z.object({
+  workDuration: z.number(),
+  restDuration: z.number(),
+  totalCycles: z.number(),
+})
+
 export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
-  command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+  command: z.union([
+    z.literal('START_TABATA'),
+    z.literal('START_STOPWATCH'),
+    z.literal('PAUSE'),
+    z.literal('STOP'),
+  ]),
+  config: TabataConfigSchema.optional(),
 })
 
 export const TimerModeCommandMessageSchema = z.object({
