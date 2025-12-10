@@ -59,3 +59,9 @@ diff.txt
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
+
+# Reports
+blob-report/
+
+*storybook.log
+storybook-static

@@ -1,14 +1,4 @@
-import type { Preview } from "@storybook/react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
-import React from "react";
-
-// Minimal theme for storybook
-const theme = createTheme({
-    palette: {
-        mode: 'dark',
-    }
-});
+import type { Preview } from '@storybook/nextjs-vite'
 
 const preview: Preview = {
   parameters: {
@@ -18,15 +8,14 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-  },
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
-};
 
-export default preview;
+    a11y: {
+      // 'todo' - show a11y violations in the test UI only
+      // 'error' - fail CI on a11y violations
+      // 'off' - skip a11y checks entirely
+      test: 'todo',
+    },
+  },
+}
+
+export default preview
