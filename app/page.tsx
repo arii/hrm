@@ -42,7 +42,8 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
-const DOC_ID = '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
+const DOC_ID =
+  '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
