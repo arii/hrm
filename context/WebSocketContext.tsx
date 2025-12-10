@@ -20,6 +20,7 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
+//
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -68,14 +69,19 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
+
+  // Refs for connection management
+  const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
+  const isPageVisible = useRef(true) // Track visibility to pause reconnections if needed
+  const shouldReconnect = useRef(true)
   const pendingActions = useRef<ClientCommandMessage[]>([])
 
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
-  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-  const JITTER_FACTOR = 0.2 // 20% jitter
+  const INITIAL_RECONNECT_DELAY = 1000
+  const JITTER_FACTOR = 0.2
 
   // Unified State Object managed by a reducer
   const reducer = (state: AppState, message: ServerMessage): AppState => {
@@ -93,8 +99,6 @@ export const WebSocketProvider = ({
       case 'SPOTIFY_SERVICE_INIT_UPDATE':
         return { ...state, spotifyServiceInitialized: message.payload }
       case 'EXECUTE_SPOTIFY':
-        // This message type is handled by useSpotifyRemoteExecution hook
-        // We don't need to update state here, just pass it through
         return state
       default:
         return state
@@ -109,12 +113,7 @@ export const WebSocketProvider = ({
     }, 100)
   ).current
 
-  const wsRef = useRef<WebSocket | null>(null)
-  const shouldReconnect = useRef(true)
-
-  // Ref to hold the connect function, ensuring it's always up-to-date
-  const connectRef = useRef<() => void>(() => {})
-
+  // Load pending actions from storage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')
@@ -124,15 +123,25 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  // The Connect Function
   const connect = useCallback(() => {
+    // Prevent duplicate connections or connecting when offline
     if (
       typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
     ) {
       return
     }
 
+    if (!navigator.onLine) {
+      setConnectionStatus('Offline')
+      return
+    }
+
     shouldReconnect.current = true
+    setConnectionStatus('Connecting...')
+
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
@@ -140,18 +149,15 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
 
-      // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
+      // Flush pending actions
       if (pendingActions.current.length > 0) {
-        console.log(
-          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
-        )
+        console.log(`[WebSocket] Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
@@ -159,10 +165,8 @@ export const WebSocketProvider = ({
         localStorage.setItem('pendingActions', '[]')
       }
 
-      // Reset reconnect attempts on successful connection
+      // Reset Resilience Counters
       reconnectAttempts.current = 0
-
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
@@ -170,69 +174,56 @@ export const WebSocketProvider = ({
     }
 
     ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
-      )
+      console.log('[WebSocketProvider] Disconnected', event.code, event.reason)
       setConnectionStatus('Disconnected')
 
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
       }
 
-      if (shouldReconnect.current) {
+      wsRef.current = null // Clear ref on close
+
+      if (shouldReconnect.current && navigator.onLine && isPageVisible.current) {
         if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttempts.current++
-          const delay =
-            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
-          const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
-          const reconnectDelay = delay + jitter
 
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
-          )
+          // Exponential Backoff with Jitter
+          const delay = INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
+          const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
+          const reconnectDelay = Math.min(delay + jitter, 30000) // Cap at 30s
+
+          console.log(`[WebSocket] Reconnecting attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`)
+          setConnectionStatus(`Reconnecting (${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS})...`)
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
-            connectRef.current()
+            connect()
           }, reconnectDelay)
         } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
-          setConnectionStatus(
-            'Failed to connect. Please check your connection and refresh the page.'
-          )
+          console.error('[WebSocket] Max reconnection attempts reached.')
+          setConnectionStatus('Connection Lost. Refresh to try again.')
         }
       }
     }
 
     ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
-      setConnectionStatus('Error')
+      console.warn('[WebSocket] Connection error')
+      // onError usually precedes onClose, so we handle logic in onClose
     }
 
     ws.onmessage = (event) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
-            new CustomEvent('spotify-remote-command', {
-              detail: message,
-            })
+            new CustomEvent('spotify-remote-command', { detail: message })
           )
           return
         }
 
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
           dispatch(message)
         }
       } catch (e) {
@@ -249,15 +240,52 @@ export const WebSocketProvider = ({
     }
     if (wsRef.current) {
       wsRef.current.close()
+      wsRef.current = null
     }
-    console.log('[useWebSocket] Manually disconnected.')
+    console.log('[WebSocket] Manually disconnected.')
   }, [])
 
+  // --- Network & Visibility Event Listeners (Issue #721 Resolution) ---
   useEffect(() => {
-    connectRef.current = connect
+    const handleOnline = () => {
+      console.log('[WebSocket] Network online detected. Reconnecting immediately.')
+      // Reset attempts so we get a fresh set of tries
+      reconnectAttempts.current = 0
+      setConnectionStatus('Network Recovered. Reconnecting...')
+      connect()
+    }
+
+    const handleOffline = () => {
+      console.log('[WebSocket] Network offline detected. Pausing reconnection.')
+      setConnectionStatus('Offline')
+      // We don't necessarily need to close the socket here; browser will timeout/close it.
+      // But we can pause active reconnection loops.
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      isPageVisible.current = document.visibilityState === 'visible'
+      if (isPageVisible.current && !wsRef.current && navigator.onLine) {
+        console.log('[WebSocket] Tab visible. Reconnecting if disconnected.')
+        reconnectAttempts.current = 0 // Optional: Reset attempts on tab focus
+        connect()
+      }
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Initial connection
     connect()
 
     return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       disconnect()
     }
   }, [connect, disconnect])
@@ -266,20 +294,11 @@ export const WebSocketProvider = ({
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
       const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
       ws.send(jsonStr)
     } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
+      console.warn('[WebSocket] Socket not open, queueing action.', data)
       pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
+      localStorage.setItem('pendingActions', JSON.stringify(pendingActions.current))
     }
   }, [])
 

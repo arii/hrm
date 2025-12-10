@@ -1,24 +1,49 @@
-name: Release
+name: Release Automation
 
 on:
-  # This workflow is triggered on pushes to the 'leader' branch.
-  # The release-please-action creates a "Release PR". When this PR is merged,
-  # it constitutes a push to 'leader', which then triggers the action to create
-  # the actual GitHub Release and tag.
   push:
     branches:
       - leader
+      - beta
+
+permissions:
+  contents: write # Required for creating releases and committing changes
+  issues: write   # Required for commenting on released issues
+  pull-requests: write
 
 jobs:
-  release:
+  test-and-release:
+    name: 🚀 Test & Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Release Please
-        uses: google-github-actions/release-please-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
-          package-name: hrm
+          fetch-depth: 0 # Important: Fetch all history for semantic-release to analyze commits
+          persist-credentials: false # We use a custom token for the release step
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🧪 Run Quality Checks
+        run: |
+          pnpm run lint
+          pnpm run build
+          pnpm run test:unit
+
+      - name: 📦 Semantic Release
+        env:
+          # GITHUB_TOKEN is automatically provided by Actions, but using a PAT (PERSONAL_ACCESS_TOKEN)
+          # is recommended if you want the release commit to trigger other workflows.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

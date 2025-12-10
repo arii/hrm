@@ -1,63 +1,33 @@
-/**
- * @file This script generates an OpenAPI specification from Zod schemas.
- *
- * @see /docs/decisions/0003-automated-api-documentation.md
- */
+import { OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi'
+import * as fs from 'fs'
+import * as path from 'path'
+import { registry } from '../lib/openapi/registry'
 
-import { writeFileSync } from 'fs'
-import { resolve } from 'path'
-import {
-  OpenApiGeneratorV3,
-  OpenAPIRegistry,
-} from '@asteasolutions/zod-to-openapi'
-import * as Schemas from '../lib/validation/schemas'
+// Import all schema files to trigger registration
+import '../app/api/spotify/control/schema'
+// Add future imports here:
+// import '../app/api/timer/schema';
 
-const registry = new OpenAPIRegistry()
+const generateOpenAPI = () => {
+  const generator = new OpenApiGeneratorV3(registry.definitions)
 
-// Register all schemas
-Object.entries(Schemas).forEach(([name, schema]) => {
-  registry.register(name, schema)
-})
-
-// Define the API endpoints
-registry.registerPath({
-  method: 'post',
-  path: '/api/users',
-  summary: 'Create a new user',
-  request: {
-    body: {
-      content: {
-        'application/json': {
-          schema: Schemas.CreateUserProfileSchema.openapi('CreateUserProfile'),
-        },
-      },
+  const document = generator.generateDocument({
+    openapi: '3.0.0',
+    info: {
+      title: 'HRM App API',
+      version: '1.0.0',
+      description: 'API documentation for the Heart Rate Monitor & Gym Control System',
     },
-  },
-  responses: {
-    '201': {
-      description: 'User created successfully',
-      content: {
-        'application/json': {
-          schema: Schemas.UserProfileSchema.openapi('UserProfile'),
-        },
-      },
-    },
-    '400': {
-      description: 'Invalid request body',
-    },
-  },
-})
+    servers: [
+      { url: 'http://localhost:3000', description: 'Local Development' },
+      { url: 'https://hrm.yourdomain.com', description: 'Production' },
+    ],
+  })
 
-const generator = new OpenApiGeneratorV3(registry.definitions)
-const openapiSpec = generator.generateDocument({
-  openapi: '3.0.0',
-  info: {
-    title: 'Heart Rate Monitor API',
-    version: '1.0.0',
-  },
-})
+  const outputPath = path.join(process.cwd(), 'public', 'openapi.json')
+  fs.writeFileSync(outputPath, JSON.stringify(document, null, 2))
 
-const outputPath = resolve(process.cwd(), 'public', 'openapi.json')
-writeFileSync(outputPath, JSON.stringify(openapiSpec, null, 2))
+  console.log(`✅ OpenAPI specification generated at: ${outputPath}`)
+}
 
-console.log(`✅ OpenAPI specification generated at ${outputPath}`)
+generateOpenAPI()
