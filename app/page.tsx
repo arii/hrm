@@ -6,7 +6,7 @@
  */
 'use client'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
@@ -64,11 +64,11 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+      <Box display="flex" flexWrap="wrap" sx={{ gap: { xs: 2, sm: 2, md: 3 } }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        <Box sx={{ width: { xs: '100%', lg: 'calc(50% - 12px)' } }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -80,13 +80,13 @@ const Dashboard = () => {
             volume={volume}
           />
           <WorkoutControls />
-        </Grid>
+        </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid item xs={12}>
+        <Box sx={{ width: '100%' }}>
           <GoogleDocViewer
             title="Today's Training Regimen"
             embedUrl={DOC_URL}
@@ -94,8 +94,8 @@ const Dashboard = () => {
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
