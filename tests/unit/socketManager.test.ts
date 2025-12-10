@@ -10,7 +10,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { Server } from 'ws'
+import { Server, WebSocket } from 'ws'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import TabataTimer from '../../services/tabataTimer'
 import { initSocketManager } from '../../utils/socketManager'
@@ -40,7 +40,7 @@ describe('WebSocket Manager', () => {
     // Mock WebSocket server
     mockWss = new Server() as jest.Mocked<Server>
     mockWss.on = jest.fn()
-    mockWss.clients = new Set<any>()
+    mockWss.clients = new Set<WebSocket>()
 
     getSnapshot = jest.fn()
 
