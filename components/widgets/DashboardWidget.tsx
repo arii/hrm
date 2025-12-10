@@ -1,13 +1,16 @@
 // File: components/widgets/DashboardWidget.tsx
-import React, { ReactNode } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import React, { ReactNode } from 'react'
+import { Card, CardContent, Typography, Box } from '@mui/material'
 
 interface DashboardWidgetProps {
-  title: string;
-  children: ReactNode;
+  title: string
+  children: ReactNode
 }
 
-const DashboardWidget: React.FC<DashboardWidgetProps> = ({ title, children }) => {
+const DashboardWidget: React.FC<DashboardWidgetProps> = ({
+  title,
+  children,
+}) => {
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
@@ -17,7 +20,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({ title, children }) =>
         <Box>{children}</Box>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default DashboardWidget;
+export default DashboardWidget
