@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import HrTile from './HrTile'
-import { getHrZoneProps } from '@/utils/visualization'
 
 const meta = {
   title: 'Components/HrTile',
