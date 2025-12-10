@@ -64,7 +64,7 @@ const useVolumePreference = (defaultVolume = 70) => {
       window.dispatchEvent(
         new CustomEvent('volumeChange', { detail: sanitized })
       )
-    } catch (e) {
+    } catch (_e) {
       // Ignore storage errors (e.g. Incognito mode quotas)
     }
   }, [])
@@ -75,7 +75,7 @@ const useVolumePreference = (defaultVolume = 70) => {
       try {
         window.localStorage.setItem(STORAGE_KEY_MUTE, String(next))
         window.dispatchEvent(new CustomEvent('muteChange', { detail: next }))
-      } catch (e) {
+      } catch (_e) {
         // Ignore storage errors
       }
       return next
@@ -95,13 +95,13 @@ const useVolumePreference = (defaultVolume = 70) => {
 
     // Custom events for same-tab synchronization (e.g. two components using this hook)
     const handleLocalVolume = (e: Event) => {
-        const customEvent = e as CustomEvent;
-        setVolumeState(customEvent.detail);
+      const customEvent = e as CustomEvent
+      setVolumeState(customEvent.detail)
     }
 
     const handleLocalMute = (e: Event) => {
-        const customEvent = e as CustomEvent;
-        setMutedState(customEvent.detail);
+      const customEvent = e as CustomEvent
+      setMutedState(customEvent.detail)
     }
 
     window.addEventListener('storage', handleStorageChange)
