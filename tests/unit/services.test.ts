@@ -171,7 +171,9 @@ describe('Services Integration Tests', () => {
 
     it('should handle PAUSE command', async () => {
       await spotifyService.handleCommand('PAUSE', 'test_device_id')
-      expect(mockSdk.player.pausePlayback).toHaveBeenCalledWith('test_device_id')
+      expect(mockSdk.player.pausePlayback).toHaveBeenCalledWith(
+        'test_device_id'
+      )
     })
 
     it('should handle SET_VOLUME command', async () => {
