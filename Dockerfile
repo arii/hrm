@@ -30,6 +30,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/ecosystem.config.cjs ./ecosystem.config.cjs
+COPY scripts/start-production.sh .
+RUN chmod +x start-production.sh
 
 # Setup persistent logs directory with correct permissions
 RUN mkdir -p logs && chown -R node:node logs
@@ -41,4 +43,4 @@ USER node
 EXPOSE 3000
 
 # Start application using PM2 Runtime (Foreground mode for Docker)
-CMD ["pm2-runtime", "start", "ecosystem.config.cjs", "--env", "production"]
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs"]
