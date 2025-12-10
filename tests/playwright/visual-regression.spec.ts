@@ -178,27 +178,7 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Ensure control panel inputs are visible
-    // 1. Get the locator for the input using its test ID
-    const workInput = controlPage.getByTestId('work-duration-input')
-
-    const restInput = controlPage.getByTestId('rest-duration-input')
-
-    // 2. (Recommended) Wait for it to be visible
-    // This ensures the component has rendered before you try to fill it.
-    await expect(workInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-    })
-    await expect(restInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-    })
-
-    // Configure timer (15 work, 5s rest)
-    await workInput.fill('15')
-    await restInput.fill('5')
-
     // Start timer
-
     await controlPage.click('button:has-text("START")', { force: true })
 
     // wait for broadcast messages to propagate

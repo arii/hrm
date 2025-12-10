@@ -73,9 +73,6 @@ const Dashboard = () => {
             timeRemaining={timerData.timeRemaining}
             timeElapsed={timerData.timeElapsed}
             mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-            soundEventId={timerData.soundEventId}
             volume={volume}
           />
         </Grid>

@@ -36,7 +36,7 @@ export async function GET() {
         is_restricted: d.is_restricted,
         name: d.name,
         type: d.type,
-        volume_percent: d.volume_percent,
+        volume_percent: d.volume_percent ?? 100, // Handle null volume
       }))
 
     return NextResponse.json(devices)

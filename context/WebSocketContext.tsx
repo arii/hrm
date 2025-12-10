@@ -35,10 +35,9 @@ const INITIAL_STATE: AppState = {
     currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
-    mode: 'TABATA',
-    workDuration: 30,
-    restDuration: 10,
-    soundEventId: 0,
+    mode: 'IDLE',
+    cycle: 0,
+    totalCycles: 0,
   },
   spotifyData: {
     trackName: 'Awaiting Login...',

@@ -13,9 +13,6 @@ export interface TimerDisplayProps {
   timeRemaining: number // seconds (for countdown)
   timeElapsed: number // seconds (for stopwatch)
   mode: TimerMode
-  workDuration?: number
-  restDuration?: number
-  soundEventId?: number // Sound cue trigger
   volume?: number // Master volume
 }
 
@@ -26,8 +23,6 @@ const TimerDisplay = ({
   timeRemaining,
   timeElapsed,
   mode,
-  workDuration = 20,
-  restDuration = 10,
 }: TimerDisplayProps) => {
   const { connectionStatus } = useWebSocket()
 
@@ -154,37 +149,6 @@ const TimerDisplay = ({
             }}
           >
             {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
-        </Box>
-      )}
-
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
           </Typography>
         </Box>
       )}

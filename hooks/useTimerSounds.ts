@@ -1,17 +1,19 @@
 // File: hooks/useTimerSounds.ts
 /**
  * A dedicated hook to manage timer sound effects globally.
- * It listens to WebSocket state for sound cues and applies user-defined volume.
+ * It listens to WebSocket state for phase transitions and applies user-defined volume.
  */
 import { useCallback, useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import useVolumePreference from './useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { TimerPhase } from '@/types/websocket'
 
 export const useTimerSounds = (isMuted: boolean = false) => {
   const { timerData } = useWebSocket()
   const { volume } = useVolumePreference()
-  const lastSoundEventId = useRef<number>(0)
+  const previousPhaseRef = useRef<TimerPhase>('IDLE')
+  const lastCountdownBeepRef = useRef<number>(0)
 
   // Update audio volume when volume preference changes
   useEffect(() => {
@@ -21,33 +23,45 @@ export const useTimerSounds = (isMuted: boolean = false) => {
   // Effect to play sound based on timer data from WebSocket
   useEffect(() => {
     if (isMuted) return
-    // Ensure we have a new, valid sound event to play
-    if (
-      timerData.soundToPlay &&
-      timerData.soundEventId &&
-      timerData.soundEventId !== lastSoundEventId.current
-    ) {
-      lastSoundEventId.current = timerData.soundEventId
 
-      switch (timerData.soundToPlay) {
-        case 'COUNTDOWN':
-          audioManager.playShort()
-          break
+    const currentPhase = timerData.currentPhase
+    const previousPhase = previousPhaseRef.current
+    const timeRemaining = timerData.timeRemaining
+
+    // 1. On phase change, play a long notification sound
+    if (currentPhase !== previousPhase) {
+      switch (currentPhase) {
         case 'WORK':
         case 'REST':
           audioManager.playLong()
           break
-        default:
-          // Optional: handle unknown sound types if necessary
+        case 'PREPARE':
+          // Reset countdown beep tracking when we enter PREPARE
+          lastCountdownBeepRef.current = 0
+          // Also play a long beep to signal the start of the prepare phase
+          audioManager.playLong()
           break
       }
     }
-  }, [timerData.soundToPlay, timerData.soundEventId, isMuted])
+
+    // 2. During PREPARE phase, play short countdown beeps for the last 3 seconds
+    if (
+      currentPhase === 'PREPARE' &&
+      timeRemaining > 0 &&
+      timeRemaining <= 3
+    ) {
+      // Play short beep only once for each remaining second
+      if (lastCountdownBeepRef.current !== timeRemaining) {
+        audioManager.playShort()
+        lastCountdownBeepRef.current = timeRemaining
+      }
+    }
+
+    // 3. Update the previous phase ref for the next render
+    previousPhaseRef.current = currentPhase
+  }, [timerData, isMuted])
 
   // Expose a stable function to initialize audio on first user interaction.
-  // useCallback ensures consumers can safely include it in dependency arrays
-  // without causing unnecessary re-runs. It has no dependencies because
-  // audioManager is a module singleton.
   const initializeAudio = useCallback(() => {
     audioManager.loadAudio()
   }, [])
