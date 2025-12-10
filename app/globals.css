@@ -75,3 +75,8 @@ a {
     100% { transform: scale(1); opacity: 1; }
   }
 }
+
+@keyframes line-flow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

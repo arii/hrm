@@ -5,6 +5,7 @@ import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
+import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
@@ -29,10 +30,15 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  background,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
 }: HrTileProps) => {
+  // Get HR zone props which include the theme-based background color
+  // Note: We're passing a placeholder maxHr because the function currently requires it,
+  // but it only uses the ratio (percentMax) to determine the zone color.
+  // This could be refactored in getHrZoneProps to accept percentMax directly.
+  const { backgroundColor } = getHrZoneProps(percentMax, 100)
+
   return (
     <Tooltip
       title={
@@ -47,7 +53,7 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
         sx={{
-          backgroundColor: background,
+          backgroundColor: backgroundColor,
           color: '#fff',
           textAlign: 'center',
           minHeight: 180,
@@ -84,8 +90,9 @@ const HrTile = ({
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 // ADDED: Pulse animation
                 animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Optional: Only animate if we have a valid BPM > 0
-                animationPlayState: bpm > 0 ? 'running' : 'paused',
+                // Animate only when receiving live data (bpm > 0 and not in an alert state)
+                animationPlayState:
+                  bpm > 0 && !isAlerting ? 'running' : 'paused',
               }}
             >
               {percentMax}%
@@ -131,7 +138,6 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
-    prevProps.background === nextProps.background &&
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
