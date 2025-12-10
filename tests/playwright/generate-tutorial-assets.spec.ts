@@ -49,6 +49,8 @@ test.describe('Tutorial Asset Generator', () => {
     // Go to the mock page to send a single high HR value
     await page.goto('/client/mock')
     await page.waitForLoadState('networkidle')
+    // Enable Stable Mode to prevent Zone flickering
+    await page.getByLabel('Stable Mode (No Fluctuation)').click()
     await page.getByRole('button', { name: 'Zone 4' }).click()
 
     // Navigate back to dashboard to see the live data
