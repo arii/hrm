@@ -6,18 +6,30 @@ import {
   HrmData,
   ActiveAlert,
   SpotifyDevice,
+  TimerData,
+  SpotifyData,
 } from '@/types/websocket'
 import { action } from '@storybook/addon-actions'
 
+// Explicitly type the state to avoid incorrect type inference on empty arrays
+// and string literals.
+interface MockAppState {
+  hrmData: HrmData[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  activeAlerts: ActiveAlert[]
+  spotifyServiceInitialized: boolean
+}
+
 // Default empty state matching your AppState interface
-const DEFAULT_STATE = {
-  hrmData: [] as HrmData[],
+const DEFAULT_STATE: MockAppState = {
+  hrmData: [],
   timerData: {
     isRunning: false,
-    currentPhase: 'IDLE' as const,
+    currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
-    mode: 'TABATA' as const,
+    mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
@@ -26,9 +38,9 @@ const DEFAULT_STATE = {
     trackName: 'Storybook Simulation',
     artist: 'Mock Artist',
     isPlaying: false,
-    devices: [] as SpotifyDevice[],
+    devices: [],
   },
-  activeAlerts: [] as ActiveAlert[],
+  activeAlerts: [],
   spotifyServiceInitialized: true,
 }
 
@@ -47,7 +59,7 @@ interface MockProviderProps {
   /**
    * Overrides for the initial static state.
    */
-  initialState?: Partial<typeof DEFAULT_STATE>
+  initialState?: Partial<MockAppState>
 }
 
 export const MockWebSocketProvider = ({
