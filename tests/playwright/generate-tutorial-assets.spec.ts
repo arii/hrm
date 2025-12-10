@@ -46,7 +46,7 @@ test.describe('Tutorial Asset Generator', () => {
     await page.screenshot({ path: `${ASSET_PATH}/05-timer-running.png` })
 
     // 6. HEART RATE ZONES - Mock Data Variation
-    // Go to the mock page to increase the heart rate
+    // Go to the mock page to send a single high HR value
     await page.goto('/client/mock')
     await page.waitForLoadState('networkidle')
     await page.getByRole('button', { name: 'Zone 4' }).click()
@@ -54,8 +54,8 @@ test.describe('Tutorial Asset Generator', () => {
     // Navigate back to dashboard to see the live data
     await page.goto('/')
 
-    // Wait for the UI to update to "Zone 4" (Orange/Red)
-    await page.waitForTimeout(2000)
+    // Wait for the UI to update to the static Zone 4 value
+    await expect(page.getByText('155 BPM')).toBeVisible()
     await page.screenshot({ path: `${ASSET_PATH}/06-zone-high-intensity.png` })
   })
 })
