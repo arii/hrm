@@ -612,3 +612,35 @@ The `Upgrade` and `Connection` headers are critical for the WebSocket handshake.
 
 - **Symptom**: You have to log in every time the server restarts.
 - **Fix**: Check that the `logs/spotify_tokens.json` file exists and is writable.
+
+## 📦 Release & Commit Standards
+
+To ensure the stability of the stateful WebSocket server, all contributions must adhere to the following standards.
+
+### Commit Convention
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` New features (e.g., `feat: add tabata countdown audio`)
+- `fix:` Bug fixes (e.g., `fix: sync spotify volume slider`)
+- `chore:` Maintenance (e.g., `chore: update .gitignore`)
+- `docs:` Documentation updates
+
+### 🚀 Production Deployment Checklist
+**Do not run `deploy.sh` manually from a dirty tree.**
+
+1.  **Clean & Verify**:
+    ```bash
+    npm run clean
+    npm install
+    npm run lint
+    npm run build:server
+    ```
+2.  **Pass Core Tests**:
+    The core suite must pass against the fresh build.
+    ```bash
+    npm run test:core
+    ```
+3.  **Deploy**:
+    Commit your changes, then run the deployment script on the host.
+    ```bash
+    ./deploy.sh
+    ```
