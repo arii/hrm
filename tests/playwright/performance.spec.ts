@@ -54,7 +54,7 @@ test.describe('Frontend Performance', () => {
           LayoutCount: layoutCount,
           RecalculateStyleCount: recalculateStyleCount,
         })
-      } catch (error) {
+      } catch (_error) {
         // Ignore errors if the session closes prematurely
       }
     }, SAMPLING_INTERVAL_MS)
@@ -81,7 +81,8 @@ test.describe('Frontend Performance', () => {
     console.log(`Heap Growth Ratio: ${(heapGrowthRatio * 100).toFixed(2)}%`)
 
     const layoutCounts = metrics.map((m) => m.LayoutCount)
-    const totalLayouts = (layoutCounts[layoutCounts.length - 1] || 0) - (layoutCounts[0] || 0)
+    const totalLayouts =
+      (layoutCounts[layoutCounts.length - 1] || 0) - (layoutCounts[0] || 0)
     console.log(`Total Layouts during test: ${totalLayouts}`)
 
     // --- Reporting ---
@@ -103,7 +104,6 @@ test.describe('Frontend Performance', () => {
     // Write the report to a file
     fs.writeFileSync(outputFile, JSON.stringify(report, null, 2))
     console.log(`Performance report saved to ${outputFile}`)
-
 
     // --- Assertion ---
     expect(heapGrowthRatio).toBeLessThan(HEAP_GROWTH_THRESHOLD)
