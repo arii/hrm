@@ -22,18 +22,18 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
+const DOC_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+
 // Lazy-load heavy components
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
-const WorkoutTableViewer = dynamic(
-  () => import('../components/WorkoutTableViewer'),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={500} />,
-  }
-)
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={500} />,
+})
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
@@ -85,8 +85,10 @@ const Dashboard = () => {
         </ErrorBoundary>
 
         <Grid size={{ xs: 12 }}>
-          <WorkoutTableViewer
+          <GoogleDocViewer
             title="Today's Training Regimen"
+            embedUrl={DOC_URL}
+            height={500}
             isShrunk={docIsManuallyShrunk}
             onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
           />

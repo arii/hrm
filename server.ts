@@ -62,7 +62,6 @@ expressApp.set('trust proxy', true)
 app
   .prepare()
   .then(async () => {
-    logger.info('Next.js prepared. Setting up express server.')
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
@@ -167,7 +166,7 @@ app
       } as unknown as SpotifyPolling
     }
     const tabataService = new TabataTimer(broadcast)
-    logger.info('Tabata service initialized.')
+
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
