@@ -12,7 +12,7 @@
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true npm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
-    "profile:server": "clinic doctor --on-port 'ts-node --esm scripts/ws-stress-client.ts' -- autocannon localhost:3000",
+    "profile:server": "clinic doctor --on-port 'ts-node --esm scripts/ws-stress-client.ts' -- node --loader ts-node/esm server.ts",
     "profile:frontend": "bash scripts/profile-frontend.sh",
     "profile:all": "pnpm run profile:server && pnpm run profile:frontend",
     "pm2:logs": "pm2 logs hrm-server",
