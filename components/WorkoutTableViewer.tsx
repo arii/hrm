@@ -1,6 +1,7 @@
 // File: components/WorkoutTableViewer.tsx
 /**
  * Renders workout data fetched from the API as a native Material-UI table.
+ * Refactored to use REST API instead of WebSocket for static data efficiency.
  */
 'use client'
 
@@ -17,11 +18,17 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { useWebSocket } from '../context/WebSocketContext'
+import { useEffect, useState } from 'react'
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import IconButton from '@mui/material/IconButton'
+
+// Define the shape of the data based on your API response
+interface WorkoutItem {
+  name: string
+  sets: string
+}
 
 interface WorkoutTableViewerProps {
   title: string
@@ -34,10 +41,36 @@ const WorkoutTableViewer = ({
   isShrunk = false,
   onToggleShrink,
 }: WorkoutTableViewerProps) => {
-  const { workoutData } = useWebSocket()
-  const data = workoutData || []
-  const isLoading = workoutData === null
-  const lastUpdated = new Date().toLocaleTimeString()
+  // State management for API data
+  const [data, setData] = useState<WorkoutItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchWorkout = async () => {
+      try {
+        setIsLoading(true)
+        const res = await fetch('/api/workout')
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch workout: ${res.statusText}`)
+        }
+
+        const jsonData = await res.json()
+        setData(jsonData)
+        setLastUpdated(new Date().toLocaleTimeString())
+        setError(null)
+      } catch (err) {
+        console.error('Error loading workout:', err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchWorkout()
+  }, [])
 
   return (
     <Card elevation={6}>
@@ -55,7 +88,7 @@ const WorkoutTableViewer = ({
           </Typography>
           {lastUpdated && (
             <Typography variant="caption" color="text.secondary">
-              Last Updated: {lastUpdated}
+              Fetched: {lastUpdated}
             </Typography>
           )}
         </Box>
@@ -64,7 +97,7 @@ const WorkoutTableViewer = ({
 
         {error && (
           <Typography color="error" sx={{ my: 2 }}>
-            Error: {error}
+            Error loading regimen: {error}
           </Typography>
         )}
 
@@ -89,9 +122,7 @@ const WorkoutTableViewer = ({
                 {(isShrunk ? data.slice(0, 5) : data).map((item, index) => (
                   <TableRow
                     key={index}
-                    sx={{
-                      '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
-                    }}
+                    sx={{ '&:nth-of-type(odd)': { backgroundColor: 'action.hover' } }}
                   >
                     <TableCell component="th" scope="row">
                       {item.name}
@@ -99,6 +130,13 @@ const WorkoutTableViewer = ({
                     <TableCell align="right">{item.sets}</TableCell>
                   </TableRow>
                 ))}
+                {data.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center">
+                      No workout data found in the linked document.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>

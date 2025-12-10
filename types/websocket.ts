@@ -81,11 +81,6 @@ export interface ActiveAlert {
   timestamp: number
 }
 
-export interface WorkoutItem {
-  name: string
-  sets: string
-}
-
 export type ServerMessage =
   | {
       type: 'INITIAL_STATE'
@@ -96,7 +91,6 @@ export type ServerMessage =
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
-  | { type: 'WORKOUT_DATA_UPDATE'; payload: WorkoutItem[] }
   | SpotifyExecutionMessage
 
 /**

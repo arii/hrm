@@ -3,8 +3,7 @@
  * Fetches and parses a publicly published Google Doc HTML page into a structured format
  * using Cheerio for robust DOM parsing.
  */
-import * as cheerio from 'cheerio'
-import type { CheerioAPI, Element } from 'cheerio'
+import { CheerioAPI, Element, load } from 'cheerio'
 
 interface WorkoutItem {
   name: string
@@ -22,7 +21,7 @@ const parseGoogleDocTable = async (
     }
 
     const html = await response.text()
-    const $: CheerioAPI = cheerio.load(html)
+    const $: CheerioAPI = load(html)
     const workoutItems: WorkoutItem[] = []
 
     // Find the first table on the page. This is a fragile assumption but is the
