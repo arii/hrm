@@ -1,0 +1,44 @@
+name: Production Build & Deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    env:
+      # Define your production connection details here or in GitHub Secrets
+      PROD_HOST: ${{ secrets.PROD_HOST }}
+      PROD_USER: ${{ secrets.PROD_USER }}
+      PROD_PATH: ~/hrm
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🏗️ Build Application
+        run: |
+          npm ci
+          npm run build
+
+      - name: 🎁 Package Artifact
+        run: |
+          chmod +x scripts/package.sh
+          ./scripts/package.sh
+
+      - name: 🚚 Transfer Artifact
+        run: |
+          # We copy the artifact which contains the deploy script
+          scp release.tar.gz $PROD_USER@$PROD_HOST:$PROD_PATH/
+
+      - name: 🚀 Execute Deployment
+        run: |
+          ssh $PROD_USER@$PROD_HOST "chmod +x $PROD_PATH/scripts/deploy-artifact.sh && $PROD_PATH/scripts/deploy-artifact.sh"
