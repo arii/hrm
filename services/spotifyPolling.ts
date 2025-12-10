@@ -17,8 +17,13 @@ const POLLING_INTERVAL = 2000 // 2 seconds
 let sdk: SpotifyApi | null = null
 
 // Type guard to check if an item is a Track
-function isTrack(item: any): item is Track {
-  return item && item.type === 'track'
+function isTrack(item: unknown): item is Track {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    'type' in item &&
+    (item as { type: string }).type === 'track'
+  )
 }
 
 export class SpotifyPolling {
