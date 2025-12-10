@@ -4,17 +4,17 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { Button, Stack } from '@mui/material'
 
 const WorkoutControls = () => {
-  const { send } = useWebSocket()
+  const { sendData } = useWebSocket()
 
   const handleStart = () => {
-    if (send) {
-      send({ type: 'TIMER_COMMAND', payload: { command: 'START' } })
+    if (sendData) {
+      sendData({ type: 'TIMER_COMMAND', payload: { command: 'START' } })
     }
   }
 
   const handleStop = () => {
-    if (send) {
-      send({ type: 'TIMER_COMMAND', payload: { command: 'STOP' } })
+    if (sendData) {
+      sendData({ type: 'TIMER_COMMAND', payload: { command: 'STOP' } })
     }
   }
 
