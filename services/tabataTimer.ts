@@ -55,7 +55,9 @@ export default class TabataTimer {
 
     // 2. If we were running before the restart, resume immediately
     if (this.persistentState.isRunning) {
-      console.log('🔄 TabataTimer: Resuming active workout from persisted state.')
+      console.log(
+        '🔄 TabataTimer: Resuming active workout from persisted state.'
+      )
       // Adjust startTime to account for the downtime during server restart?
       // Strict resumable logic: The clock kept ticking while server was down.
       // If you want "pause while server down", that logic is more complex.
@@ -72,7 +74,10 @@ export default class TabataTimer {
       const dir = path.dirname(STATE_FILE)
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-      fs.writeFileSync(STATE_FILE, JSON.stringify(this.persistentState, null, 2))
+      fs.writeFileSync(
+        STATE_FILE,
+        JSON.stringify(this.persistentState, null, 2)
+      )
     } catch (e) {
       console.error('Failed to save timer state:', e)
     }
@@ -129,7 +134,8 @@ export default class TabataTimer {
    * Pure function behavior based on persistentState.
    */
   public getDerivedState(): TimerData {
-    const { mode, isRunning, startTime, accumulatedElapsed, config } = this.persistentState
+    const { mode, isRunning, startTime, accumulatedElapsed, config } =
+      this.persistentState
 
     // 1. Idle / Not Running
     if (mode === 'IDLE') {
@@ -241,7 +247,11 @@ export default class TabataTimer {
   }
 
   public startStopwatch() {
-    if (this.persistentState.isRunning && this.persistentState.mode === 'STOPWATCH') return
+    if (
+      this.persistentState.isRunning &&
+      this.persistentState.mode === 'STOPWATCH'
+    )
+      return
 
     this.persistentState.mode = 'STOPWATCH'
     this.persistentState.isRunning = true
@@ -255,10 +265,12 @@ export default class TabataTimer {
   }
 
   public pause() {
-    if (!this.persistentState.isRunning || !this.persistentState.startTime) return
+    if (!this.persistentState.isRunning || !this.persistentState.startTime)
+      return
 
     // Calculate how much time passed during this active burst
-    const sessionDurationSec = (Date.now() - this.persistentState.startTime) / 1000
+    const sessionDurationSec =
+      (Date.now() - this.persistentState.startTime) / 1000
 
     this.persistentState.isRunning = false
     this.persistentState.accumulatedElapsed += sessionDurationSec
