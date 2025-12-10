@@ -1,56 +1,60 @@
 #!/bin/bash
-# Production deployment script for HRM Next.js app
-
 set -e
 
-echo "🚀 Starting HRM production deployment..."
+# Configuration
+APP_DIR="/var/www/hrm"
+BRANCH="main"
+
+echo "🚀 Starting Deployment..."
+
+# Change to the application directory
+cd $APP_DIR
+
+# 1. Pre-flight Safety Checks
+echo "🔎 Performing pre-flight safety checks..."
 
 # Check for .env.production
 if [ ! -f ".env.production" ]; then
     echo "❌ Error: .env.production file not found!"
-    echo "Please create .env.production with:"
-    echo "  NEXTAUTH_URL=https://your-domain.com"
-    echo "  NEXTAUTH_SECRET=your-secret-here"
-    echo "  SPOTIFY_CLIENT_ID=your-client-id"
-    echo "  SPOTIFY_CLIENT_SECRET=your-client-secret"
+    echo "Deployment aborted. Please ensure the production environment file exists."
     exit 1
 fi
 
-# Check if nginx is configured (skip if no sudo access)
-if ! command -v nginx &> /dev/null; then
-    echo "⚠️  Warning: nginx not found. Make sure it's installed and configured."
-else
+# Check Nginx configuration if possible
+if command -v nginx &> /dev/null && command -v sudo &> /dev/null; then
     if sudo -n true 2>/dev/null; then
         if ! sudo nginx -t &> /dev/null; then
             echo "❌ Error: nginx configuration test failed!"
-            echo "Please check your nginx configuration."
+            echo "Deployment aborted. Please fix your nginx configuration before deploying."
             exit 1
         fi
+        echo "✅ Nginx configuration test passed."
     else
-        echo "⚠️  Warning: Cannot test nginx configuration (no sudo access). Proceeding..."
+        echo "⚠️  Warning: Cannot test nginx configuration without sudo access. Proceeding with caution..."
     fi
+else
+    echo "⚠️  Warning: nginx or sudo not found. Skipping nginx configuration check."
 fi
 
-# Create logs directory
-echo "📁 Creating logs directory..."
-mkdir -p logs
+# 2. Update Codebase
+echo "📥 Pulling latest changes..."
+git fetch origin
+git reset --hard origin/$BRANCH
 
-# Build the application
-echo "📦 Building Next.js application..."
+# 3. Dependency Management (Clean Install)
+echo "📦 Installing dependencies..."
+pnpm ci --only=production
+
+# 4. Build Application
+echo "🔨 Building Next.js application..."
 pnpm run build
 
-# Stop and delete existing PM2 processes
-echo "🛑 Stopping existing PM2 processes..."
-pnpm run pm2:delete || true
+# 5. Process Management (PM2 Zero-Downtime Reload)
+echo "🔄 Reloading PM2 application..."
+pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
 
-# Start with production environment
-echo "▶️ Starting HRM server with PM2..."
-pnpm run start
-
-# Save PM2 configuration
-echo "💾 Saving PM2 configuration..."
+# 6. Save PM2 Process List
+echo "💾 Saving PM2 process list for reboot..."
 pm2 save
 
-echo "✅ Deployment complete!"
-echo "📊 Check status with: pm2 status"
-echo "📝 View logs with: pnpm run pm2:logs"
+echo "✅ Deployment Successful!"
