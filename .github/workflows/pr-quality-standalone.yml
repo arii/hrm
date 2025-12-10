@@ -180,8 +180,17 @@ jobs:
         if: always() && steps.build.outcome == 'success'
         run: |
           set -o pipefail
-          pnpm run test:perf 2>&1 | tee logs/performance-output.log
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/performance-output.log
         continue-on-error: true
+
+      - name: Publish Performance Test Results to GitHub Checks
+        uses: dorny/test-reporter@v1
+        if: always() && steps.perf_tests.outcome != 'skipped'
+        with:
+          name: Performance Tests Report
+          path: test-results/perf-results.xml
+          reporter: java-junit
+          fail-on-error: true
 
       - name: Upload Performance Metrics
         if: always()
