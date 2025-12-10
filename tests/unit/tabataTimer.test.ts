@@ -1,7 +1,14 @@
 /**
  * Unit tests for the refactored, persistent TabataTimer service.
  */
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import {
+  describe,
+  it,
+  expect,
+  jest,
+  beforeEach,
+  afterEach,
+} from '@jest/globals'
 import fs from 'fs'
 import TabataTimer from '../../services/tabataTimer'
 import { ServerMessage, TimerData } from '../../types/websocket'
