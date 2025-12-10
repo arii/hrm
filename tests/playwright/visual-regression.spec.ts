@@ -212,7 +212,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(stopButton).toBeVisible()
 
     // Wait for timer to appear on dashboard
-    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
+    await expect(dashboardPage.getByTestId('timer-phase-label')).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
@@ -234,6 +234,9 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
+    // 1. Enable Stable Mode to prevent Zone flickering
+    await mockPage.getByLabel('Stable Mode (No Fluctuation)').click()
+
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
@@ -251,7 +254,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.04, // Robustness for dynamic content
+      maxDiffPixelRatio: 0.01,
       mask: [
         // Use precise data-testid selectors for all dynamic content masking
         ...getDynamicContentMasks(dashboardPage),

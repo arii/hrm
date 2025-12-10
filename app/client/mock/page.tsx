@@ -12,6 +12,8 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import { HrmInputMessage } from '../../../types/websocket'
 
 export default function MockPage() {
@@ -20,6 +22,7 @@ export default function MockPage() {
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
+  const [stableMode, setStableMode] = useState(false) // <--- NEW STATE
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
@@ -56,12 +59,14 @@ export default function MockPage() {
     if (isStreaming || connectionStatus !== 'Connected') return
     sendHrPacket(hrValue)
     const id = setInterval(() => {
-      const fluctuatedHr = Math.max(
-        70,
-        hrValue + Math.floor(Math.random() * 5) - 2
-      )
-      setHrValue(fluctuatedHr)
-      sendHrPacket(fluctuatedHr)
+      // FIX: Check stableMode before applying randomness
+      let nextHr = hrValue
+      if (!stableMode) {
+        nextHr = Math.max(70, hrValue + Math.floor(Math.random() * 5) - 2)
+      }
+
+      setHrValue(nextHr)
+      sendHrPacket(nextHr)
     }, 2000)
     setIntervalId(id)
   }
@@ -147,6 +152,19 @@ export default function MockPage() {
             inputProps={{ 'data-testid': 'hr-input' }}
             sx={{ mb: 3 }}
           />
+
+          {/* ADD THIS SWITCH BEFORE THE ZONE BUTTONS */}
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={stableMode}
+                  onChange={(e) => setStableMode(e.target.checked)}
+                />
+              }
+              label="Stable Mode (No Fluctuation)"
+            />
+          </Box>
 
           <Typography
             variant="caption"

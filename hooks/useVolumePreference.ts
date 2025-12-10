@@ -1,6 +1,6 @@
 // File: hooks/useVolumePreference.ts
 // Provides a shared volume preference persisted via the UserSettingsContext.
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useUserSettings } from '../context/UserSettingsContext'
 
 export const clampVolume = (value: number): number =>
@@ -11,7 +11,14 @@ export const volumeToScalar = (value: number): number =>
 
 const useVolumePreference = () => {
   const [prefs, setPrefs] = useUserSettings()
-  const volume = prefs.volumeLevel
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Default to 70 (server-side default) until mounted to prevent hydration mismatch
+  const volume = isMounted ? prefs.volumeLevel : 70
 
   const setVolume = useCallback(
     (value: number) => {

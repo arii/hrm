@@ -1,0 +1,31 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Documentation/User Workflow" />
+
+# HRM System: End-to-End Workflow
+
+This guide walks you through connecting your device, synchronizing music, and monitoring performance zones.
+
+## 1. The Dashboard
+Your central hub for monitoring real-time metrics.
+![Dashboard Initial State](/assets/tutorial/01-dashboard-initial.png)
+
+## 2. Connecting a Device
+Navigate to the **Connect** tab. Here you can pair standard Bluetooth LE Heart Rate Monitors (Polar, Garmin) or use the Mock HRM for testing.
+![Connect Page](/assets/tutorial/02-connect-page.png)
+
+### Successful Connection
+Once paired, the status indicator will turn green.
+![Device Connected](/assets/tutorial/03-device-connected.png)
+
+## 3. Spotify Integration
+To sync music tempo with your workout intensity, log in to Spotify via the Control Panel.
+![Spotify Login](/assets/tutorial/04-spotify-login-prompt.png)
+
+## 4. Using the Timer
+Configure your Tabata or HIIT intervals. The timer synchronizes across all connected clients via WebSockets.
+![Timer Running](/assets/tutorial/05-timer-running.png)
+
+## 5. Live Zone Monitoring
+As your heart rate increases, the dashboard tiles update in real-time to reflect your current zone (Blue -> Green -> Orange -> Red).
+![High Intensity Zone](/assets/tutorial/06-zone-high-intensity.png)
