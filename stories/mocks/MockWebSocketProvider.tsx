@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketContext'
-import { ServerMessage, ClientCommandMessage } from '@/types/websocket'
+import {
+  ServerMessage,
+  ClientCommandMessage,
+  HrmData,
+  ActiveAlert,
+} from '@/types/websocket'
+import { SpotifyDevice } from '@/types'
 import { action } from '@storybook/addon-actions'
 
 // Default empty state matching your AppState interface
 const DEFAULT_STATE = {
-  hrmData: [],
+  hrmData: [] as HrmData[],
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE' as const,
@@ -20,9 +26,9 @@ const DEFAULT_STATE = {
     trackName: 'Storybook Simulation',
     artist: 'Mock Artist',
     isPlaying: false,
-    devices: [],
+    devices: [] as SpotifyDevice[],
   },
-  activeAlerts: [],
+  activeAlerts: [] as ActiveAlert[],
   spotifyServiceInitialized: true,
 }
 
