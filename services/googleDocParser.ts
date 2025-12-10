@@ -3,7 +3,7 @@
  * Fetches and parses a publicly published Google Doc HTML page into a structured format
  * using Cheerio for robust DOM parsing.
  */
-import { CheerioAPI, Element, load } from 'cheerio'
+import { CheerioAPI, load } from 'cheerio'
 
 interface WorkoutItem {
   name: string
@@ -34,7 +34,7 @@ const parseGoogleDocTable = async (
     }
 
     // Iterate over each row in the table body
-    table.find('tbody > tr').each((_rowIndex: number, row: Element): void => {
+    table.find('tbody > tr').each((_rowIndex: number, row): void => {
       const cells = $(row).find('td')
       if (cells.length >= 2) {
         const sets = $(cells[0]).text().trim()
