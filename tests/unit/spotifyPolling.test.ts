@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { ServerMessage, SpotifyData } from '../../types/websocket'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi, PlaybackState } from '@spotify/web-api-ts-sdk'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -20,14 +20,14 @@ describe('SpotifyPolling Service', () => {
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   let broadcastedStates: SpotifyData[]
   let mockPlayer: {
-    getCurrentlyPlayingTrack: jest.Mock
-    startResumePlayback: jest.Mock
-    pausePlayback: jest.Mock
-    skipToNext: jest.Mock
-    skipToPrevious: jest.Mock
-    transferPlayback: jest.Mock
-    setPlaybackVolume: jest.Mock
-    getAvailableDevices: jest.Mock
+    getCurrentlyPlayingTrack: jest.Mock<() => Promise<PlaybackState | null>>
+    startResumePlayback: jest.Mock<() => Promise<void>>
+    pausePlayback: jest.Mock<() => Promise<void>>
+    skipToNext: jest.Mock<() => Promise<void>>
+    skipToPrevious: jest.Mock<() => Promise<void>>
+    transferPlayback: jest.Mock<() => Promise<void>>
+    setPlaybackVolume: jest.Mock<() => Promise<void>>
+    getAvailableDevices: jest.Mock<() => Promise<{ devices: [] }>>
   }
 
   beforeEach(async () => {
@@ -35,7 +35,7 @@ describe('SpotifyPolling Service', () => {
     jest.clearAllMocks()
 
     broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
+    broadcastMock = jest.fn((message: ServerMessage) => {
       if (message.type === 'SPOTIFY_UPDATE') {
         broadcastedStates.push(message.payload)
       }
@@ -140,7 +140,10 @@ describe('SpotifyPolling Service', () => {
   describe('Device Management', () => {
     it('should refresh devices on GET_DEVICES command', async () => {
       const pollSpy = jest
-        .spyOn(spotifyService as any, 'pollPlaybackState')
+        .spyOn(
+          spotifyService as unknown as { pollPlaybackState: () => void },
+          'pollPlaybackState'
+        )
         .mockResolvedValue(undefined)
       await spotifyService.handleCommand('GET_DEVICES')
       expect(pollSpy).toHaveBeenCalled()
@@ -166,9 +169,13 @@ describe('SpotifyPolling Service', () => {
         },
         is_playing: true,
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockPlayback as any)
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(
+        mockPlayback as PlaybackState
+      )
 
-      await (spotifyService as any).pollPlaybackState() // Manually trigger a poll
+      await (
+        spotifyService as unknown as { pollPlaybackState: () => void }
+      ).pollPlaybackState() // Manually trigger a poll
 
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
@@ -182,7 +189,9 @@ describe('SpotifyPolling Service', () => {
 
     it('should broadcast "No Active Playback" when nothing is playing', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
-      await (spotifyService as any).pollPlaybackState()
+      await (
+        spotifyService as unknown as { pollPlaybackState: () => void }
+      ).pollPlaybackState()
       expect(broadcastMock).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
