@@ -15,6 +15,7 @@ import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import TabataTimer from '../../services/tabataTimer'
 import { ServerMessage } from '../../types/websocket'
 import * as socketManager from '../../utils/socketManager'
+import { WebSocketServer } from 'ws'
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -81,7 +82,7 @@ describe('WebSocket Manager Integration', () => {
 
     // Initialize the socket manager with mocked services
     socketManager.initializeSocketManager(
-      {} as any, // WebSocket server mock
+      {} as WebSocketServer, // WebSocket server mock
       broadcastFn as (msg: ServerMessage) => void,
       tabataTimer,
       spotifyService
@@ -96,19 +97,28 @@ describe('WebSocket Manager Integration', () => {
   describe('Timer Command Routing', () => {
     it('should route START command to TabataTimer', () => {
       const startSpy = jest.spyOn(tabataTimer, 'start')
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'START' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
       expect(startSpy).toHaveBeenCalled()
     })
 
     it('should route PAUSE command to TabataTimer', () => {
       const pauseSpy = jest.spyOn(tabataTimer, 'pause')
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'PAUSE' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'PAUSE',
+      })
       expect(pauseSpy).toHaveBeenCalled()
     })
 
     it('should route STOP command to TabataTimer', () => {
       const stopSpy = jest.spyOn(tabataTimer, 'stop')
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'STOP' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'STOP',
+      })
       expect(stopSpy).toHaveBeenCalled()
     })
 
@@ -116,7 +126,10 @@ describe('WebSocket Manager Integration', () => {
       const startSpy = jest.spyOn(tabataTimer, 'start')
       const config = { workDuration: 45, restDuration: 15, totalCycles: 8 }
       socketManager.handleTimerConfig({ type: 'TIMER_CONFIG', ...config })
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'START' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
       expect(startSpy).toHaveBeenCalledWith(config)
     })
   })
@@ -151,12 +164,18 @@ describe('WebSocket Manager Integration', () => {
 
   describe('Cross-Service Command Coordination', () => {
     it('should trigger Spotify NEXT when a Tabata timer is started', () => {
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'START' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'START',
+      })
       expect(mockSdkPlayer.skipToNext).toHaveBeenCalled()
     })
 
     it('should trigger Spotify PAUSE when a Tabata timer is stopped', () => {
-      socketManager.handleTimerCommand({ type: 'TIMER_COMMAND', command: 'STOP' })
+      socketManager.handleTimerCommand({
+        type: 'TIMER_COMMAND',
+        command: 'STOP',
+      })
       expect(mockSdkPlayer.pausePlayback).toHaveBeenCalled()
     })
   })
