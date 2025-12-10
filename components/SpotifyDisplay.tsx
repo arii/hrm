@@ -327,7 +327,11 @@ const SpotifyDisplay = () => {
               '&:hover': { color: 'white' },
             }}
           >
-            {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
+            {muted ? (
+              <VolumeOff fontSize="small" />
+            ) : (
+              <VolumeUp fontSize="small" />
+            )}
           </IconButton>
           <Slider
             value={volume}

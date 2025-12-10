@@ -83,7 +83,10 @@ const useVolumePreference = (defaultVolume = 70) => {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('volumeChange', handleLocalVolume as EventListener)
+      window.removeEventListener(
+        'volumeChange',
+        handleLocalVolume as EventListener
+      )
       window.removeEventListener('muteChange', handleLocalMute as EventListener)
     }
   }, [])
