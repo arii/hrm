@@ -5,8 +5,8 @@ import {
   ClientCommandMessage,
   HrmData,
   ActiveAlert,
+  SpotifyDevice,
 } from '@/types/websocket'
-import { SpotifyDevice } from '@/types'
 import { action } from '@storybook/addon-actions'
 
 // Default empty state matching your AppState interface
