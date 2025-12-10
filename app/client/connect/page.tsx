@@ -139,7 +139,9 @@ export default function ConnectPage() {
 
   // Find current user's heart rate data from WebSocket
   const currentUserData = hrmData.find(
-    (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
+    (user) =>
+      user.name === userName ||
+      (user.name?.includes('Bluetooth HRM') && hrmData.length === 1)
   )
   const currentHR = currentUserData?.value || 0
   const maxHr = 220 - (parseInt(userAge) || 30)

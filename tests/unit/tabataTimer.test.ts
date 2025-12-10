@@ -4,22 +4,16 @@
  */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
-import { ServerMessage, TimerData } from '../../types/websocket'
+import { TimerData } from '../../types/websocket'
 
 describe('TabataTimer Service', () => {
   let timer: TabataTimer
-  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
-  let broadcastedStates: TimerData[]
+  let onStateChange: jest.Mock<() => void>
 
   beforeEach(() => {
     jest.useFakeTimers()
-    broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
-      if (message.type === 'TIMER_UPDATE') {
-        broadcastedStates.push(message.payload)
-      }
-    })
-    timer = new TabataTimer(broadcastMock)
+    onStateChange = jest.fn()
+    timer = new TabataTimer(onStateChange)
   })
 
   afterEach(() => {
@@ -74,13 +68,10 @@ describe('TabataTimer Service', () => {
       expect(stoppedState.currentPhase).toBe('IDLE')
     })
 
-    it('should broadcast state update when mode changes', () => {
-      broadcastedStates = []
+    it('should trigger state change when mode changes', () => {
+      onStateChange.mockClear()
       timer.setMode('STOPWATCH')
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[broadcastedStates.length - 1].mode).toBe(
-        'STOPWATCH'
-      )
+      expect(onStateChange).toHaveBeenCalled()
     })
   })
 
@@ -289,13 +280,10 @@ describe('TabataTimer Service', () => {
       expect(state.timeRemaining).toBe(30)
     })
 
-    it('should broadcast state after configuration change', () => {
-      broadcastedStates = []
+    it('should trigger state change after configuration change', () => {
+      onStateChange.mockClear()
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-      expect(broadcastMock).toHaveBeenCalled()
-      const lastState = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastState.workDuration).toBe(30)
-      expect(lastState.restDuration).toBe(15)
+      expect(onStateChange).toHaveBeenCalled()
     })
 
     it('should use new rest duration in next rest phase', () => {
@@ -364,11 +352,7 @@ describe('TabataTimer Service', () => {
 
       const state = timer.getState()
       expect(state.currentPhase).toBe('WORK')
-      // Sound should have been queued (check broadcast was called with soundToPlay)
-      const workTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'WORK' && s.soundToPlay === 'WORK'
-      )
-      expect(workTransitionBroadcast).toBeDefined()
+      expect(state.soundToPlay).toBe('WORK')
     })
 
     it('should queue REST sound when transitioning from WORK', () => {
@@ -376,73 +360,61 @@ describe('TabataTimer Service', () => {
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(20000) // WORK
 
-      const restTransitionBroadcast = broadcastedStates.find(
-        (s) => s.currentPhase === 'REST' && s.soundToPlay === 'REST'
-      )
-      expect(restTransitionBroadcast).toBeDefined()
+      const state = timer.getState()
+      expect(state.currentPhase).toBe('REST')
+      expect(state.soundToPlay).toBe('REST')
     })
 
     it('should queue COUNTDOWN sound during final 3 seconds', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(2000) // 3 seconds remaining in PREPARE
 
-      const countdownBroadcast = broadcastedStates.find(
-        (s) => s.soundToPlay === 'COUNTDOWN'
-      )
-      expect(countdownBroadcast).toBeDefined()
+      const state = timer.getState()
+      expect(state.soundToPlay).toBe('COUNTDOWN')
     })
 
     it('should increment soundEventId for each sound cue', () => {
       timer.handleCommand('START')
-
-      const initialState = broadcastedStates[0]
-      const initialId = initialState.soundEventId
-
+      const initialId = timer.getState().soundEventId
       jest.advanceTimersByTime(3000) // Trigger countdown sounds
-
-      const laterState = broadcastedStates[broadcastedStates.length - 1]
+      const laterState = timer.getState()
       expect(laterState.soundEventId).toBeGreaterThan(initialId)
     })
   })
 
   describe('Broadcasting', () => {
-    it('should broadcast state on every tick', () => {
-      broadcastedStates = []
+    it('should trigger state change on every tick', () => {
+      onStateChange.mockClear()
       timer.handleCommand('START')
       jest.advanceTimersByTime(3000)
 
-      // Should broadcast at least once per second
-      expect(broadcastMock.mock.calls.length).toBeGreaterThanOrEqual(3)
+      // Should be called for start, each tick, and sound cues
+      expect(onStateChange).toHaveBeenCalledTimes(6)
     })
 
-    it('should broadcast state when configuration changes', () => {
-      broadcastedStates = []
+    it('should trigger state change when configuration changes', () => {
+      onStateChange.mockClear()
       timer.setConfig({ workDuration: 30, restDuration: 15 })
-
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates.length).toBeGreaterThan(0)
+      expect(onStateChange).toHaveBeenCalled()
     })
 
-    it('should broadcast state when mode changes', () => {
-      broadcastedStates = []
+    it('should trigger state change when mode changes', () => {
+      onStateChange.mockClear()
       timer.setMode('STOPWATCH')
-
-      expect(broadcastMock).toHaveBeenCalled()
-      expect(broadcastedStates[0].mode).toBe('STOPWATCH')
+      expect(onStateChange).toHaveBeenCalled()
     })
 
-    it('should broadcast complete timer state', () => {
+    it('should provide complete timer state', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(1000)
-
-      const lastBroadcast = broadcastedStates[broadcastedStates.length - 1]
-      expect(lastBroadcast).toHaveProperty('isRunning')
-      expect(lastBroadcast).toHaveProperty('currentPhase')
-      expect(lastBroadcast).toHaveProperty('timeRemaining')
-      expect(lastBroadcast).toHaveProperty('timeElapsed')
-      expect(lastBroadcast).toHaveProperty('mode')
-      expect(lastBroadcast).toHaveProperty('workDuration')
-      expect(lastBroadcast).toHaveProperty('restDuration')
+      const state = timer.getState()
+      expect(state).toHaveProperty('isRunning')
+      expect(state).toHaveProperty('currentPhase')
+      expect(state).toHaveProperty('timeRemaining')
+      expect(state).toHaveProperty('timeElapsed')
+      expect(state).toHaveProperty('mode')
+      expect(state).toHaveProperty('workDuration')
+      expect(state).toHaveProperty('restDuration')
     })
   })
 })

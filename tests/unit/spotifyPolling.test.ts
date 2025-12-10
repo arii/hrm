@@ -5,7 +5,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import { SpotifyData } from '../../types/websocket'
 import logger from '../../utils/logger'
 
 // Mock the logger
@@ -59,11 +58,9 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
-import { ServerMessage } from '../../types/websocket'
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
-  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
-  let broadcastedStates: SpotifyData[]
+  let onStateChange: jest.Mock<() => void>
 
   beforeEach(async () => {
     jest.useFakeTimers()
@@ -79,12 +76,7 @@ describe('SpotifyPolling Service', () => {
     mockPlayer.getAvailableDevices.mockClear()
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
-    broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
-      if (message.type === 'SPOTIFY_UPDATE') {
-        broadcastedStates.push(message.payload)
-      }
-    })
+    onStateChange = jest.fn()
 
     // Mock environment variables
     process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
@@ -93,7 +85,7 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
+    spotifyService = await SpotifyPolling.create(onStateChange)
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as unknown)['pollInterval']) {
@@ -199,7 +191,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Device Management', () => {
-    it('should refresh and broadcast available devices', async () => {
+    it('should refresh and trigger state change for available devices', async () => {
       const mockDevices = [
         {
           id: 'device1',
@@ -227,13 +219,8 @@ describe('SpotifyPolling Service', () => {
       )
 
       await spotifyService.refreshDevices()
-
-      expect(broadcastMock).toHaveBeenCalledWith({
-        type: 'SPOTIFY_UPDATE',
-        payload: expect.objectContaining({
-          devices: mockDevices,
-        }),
-      })
+      expect(onStateChange).toHaveBeenCalled()
+      expect(spotifyService.getState().devices).toEqual(mockDevices)
     })
 
     it('should transfer playback to device', async () => {
@@ -272,7 +259,7 @@ describe('SpotifyPolling Service', () => {
         })
       )
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create(onStateChange)
       await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -280,7 +267,7 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Playback State', () => {
-    it('should broadcast state when track changes', async () => {
+    it('should trigger state change when track changes', async () => {
       const mockPlayback = {
         item: {
           id: 'track123',
@@ -301,9 +288,8 @@ describe('SpotifyPolling Service', () => {
       await Promise.resolve()
       spotifyService.stopPolling()
 
-      // Only check the last broadcasted state
-      const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Test Track')
+      expect(onStateChange).toHaveBeenCalled()
+      expect(spotifyService.getState().trackName).toBe('Test Track')
     })
 
     it('should handle 204 No Content response', async () => {
@@ -317,9 +303,10 @@ describe('SpotifyPolling Service', () => {
       await Promise.resolve()
       spotifyService.stopPolling()
 
-      // Only check the last broadcasted state
-      const lastState = broadcastedStates.at(-1)
-      expect(lastState?.trackName).toBe('Nothing is currently playing.')
+      expect(onStateChange).toHaveBeenCalled()
+      expect(spotifyService.getState().trackName).toBe(
+        'Nothing is currently playing.'
+      )
     })
   })
 
@@ -400,7 +387,7 @@ describe('SpotifyPolling Service', () => {
         sdk: null, // Ensure SDK is null
       })
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create(onStateChange)
       await newService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
