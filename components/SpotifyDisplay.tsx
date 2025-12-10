@@ -8,6 +8,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import VolumeUp from '@mui/icons-material/VolumeUp'
+import VolumeOff from '@mui/icons-material/VolumeOff'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -53,7 +54,7 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,
@@ -109,13 +110,15 @@ const SpotifyDisplay = () => {
 
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return
-    const scalar = Math.min(Math.max(volume / 100, 0), 1)
+    // IF MUTED: Force 0
+    // IF ACTIVE: Use current volume scalar
+    const scalar = muted ? 0 : Math.min(Math.max(volume / 100, 0), 1)
     player
       .setVolume(scalar)
       .catch((err) =>
         console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
       )
-  }, [player, volume])
+  }, [player, volume, muted])
 
   useEffect(() => {
     if (isLoggedIn && spotifyData.trackName) {
@@ -315,7 +318,17 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeUp sx={{ color: 'grey.400', fontSize: 18 }} />
+          {/* MUTE TOGGLE BUTTON */}
+          <IconButton
+            size="small"
+            onClick={toggleMute}
+            sx={{
+              color: muted ? 'error.main' : 'grey.400',
+              '&:hover': { color: 'white' },
+            }}
+          >
+            {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
+          </IconButton>
           <Slider
             value={volume}
             onChange={(_, val) => setVolume(val as number)}
