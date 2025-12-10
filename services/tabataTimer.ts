@@ -1,10 +1,7 @@
 // File: services/tabataTimer.ts
 import fs from 'fs'
 import path from 'path'
-import {
-  TabataConfig,
-  TimerData,
-} from '../types/websocket.js'
+import { TabataConfig, TimerData } from '../types/websocket.js'
 
 const STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
 

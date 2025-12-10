@@ -24892,12 +24892,10 @@ class nv {
     try {
       const s =
           this._isUtilityWorld && this._browserName === 'firefox' ? 2 : 10,
-        l = i
-          .slice(0, s)
-          .map((u) => ({
-            preview: this.previewNode(u),
-            selector: this.generateSelectorSimple(u),
-          })),
+        l = i.slice(0, s).map((u) => ({
+          preview: this.previewNode(u),
+          selector: this.generateSelectorSimple(u),
+        })),
         o = l.map(
           (u, f) => `
     ${f + 1}) ${u.preview} aka ${Ji(this._sdkLanguage, u.selector)}`
