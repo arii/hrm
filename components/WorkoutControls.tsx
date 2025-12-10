@@ -8,13 +8,13 @@ const WorkoutControls = () => {
 
   const handleStart = () => {
     if (sendData) {
-      sendData({ type: 'TIMER_COMMAND', payload: { command: 'START' } })
+      sendData({ type: 'TIMER_COMMAND', command: 'START' })
     }
   }
 
   const handleStop = () => {
     if (sendData) {
-      sendData({ type: 'TIMER_COMMAND', payload: { command: 'STOP' } })
+      sendData({ type: 'TIMER_COMMAND', command: 'STOP' })
     }
   }
 
