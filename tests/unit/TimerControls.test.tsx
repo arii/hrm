@@ -22,9 +22,9 @@ const baseTimerData: TimerData = {
   timeRemaining: 20,
   timeElapsed: 0,
   mode: 'TABATA',
-  workDuration: 20,
-  restDuration: 10,
   soundEventId: 0,
+  cycle: 0,
+  totalCycles: 8,
 }
 
 describe('TimerControls', () => {
@@ -43,13 +43,13 @@ describe('TimerControls', () => {
     ) as jest.Mock
   })
 
-  it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
+  it('should send a START_TABATA command with the correct config', async () => {
     const sendData = jest.fn()
 
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       timerData: { ...baseTimerData },
-      spotifyData: { trackName: '', artist: '', isPlaying: false },
+      spotifyData: { trackName: '', artist: '', isPlaying: false, devices: [] },
       spotifyServiceInitialized: true,
       connectionStatus: 'Connected',
       sendData,
@@ -68,23 +68,21 @@ describe('TimerControls', () => {
     ) as HTMLInputElement
 
     // Use fireEvent.change to directly trigger the onChange event with new values
-    // This properly simulates input changes on MUI TextField components
     fireEvent.change(workInput, { target: { value: '45' } })
     fireEvent.change(restInput, { target: { value: '15' } })
 
-    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
-    act(() => {
-      jest.advanceTimersByTime(600)
-    })
-
     await user.click(screen.getByRole('button', { name: /start/i }))
 
-    // Verify that TIMER_CONFIG was sent with the updated values
+    // Verify that START_TABATA was sent with the updated values in the config
     expect(sendData).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'TIMER_CONFIG',
-        workDuration: 45,
-        restDuration: 15,
+        type: 'TIMER_COMMAND',
+        command: 'START_TABATA',
+        config: {
+          workDuration: 45,
+          restDuration: 15,
+          totalCycles: 8,
+        },
       })
     )
   })

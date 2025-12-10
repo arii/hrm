@@ -40,6 +40,7 @@ describe('WebSocket Manager', () => {
     // Mock WebSocket server
     mockWss = new Server() as jest.Mocked<Server>
     mockWss.on = jest.fn()
+    mockWss.clients = new Set<any>()
 
     getSnapshot = jest.fn()
 
