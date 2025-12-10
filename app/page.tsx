@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
@@ -35,9 +35,19 @@ const WorkoutTableViewer = dynamic(
   }
 )
 
+const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" height={500} />,
+})
+
+const DOC_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+const DOC_ID = '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
+
 const Dashboard = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference() // Get volume state
+  const { volume } = useVolumePreference()
+  const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()
@@ -84,7 +94,17 @@ const Dashboard = () => {
         </ErrorBoundary>
 
         <Grid size={{ xs: 12 }}>
-          <WorkoutTableViewer docId="1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ" />
+          {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
+            <WorkoutTableViewer docId={DOC_ID} />
+          ) : (
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={DOC_URL}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+            />
+          )}
         </Grid>
       </Grid>
 
