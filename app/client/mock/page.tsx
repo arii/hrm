@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import FormControlLabel from '@mui/material/FormControlLabel'
@@ -23,6 +23,18 @@ export default function MockPage() {
   const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
   const [stableMode, setStableMode] = useState(false) // <--- NEW STATE
+
+  // Create refs to access latest state in interval callback
+  const hrValueRef = useRef(hrValue)
+  const stableModeRef = useRef(stableMode)
+
+  useEffect(() => {
+    hrValueRef.current = hrValue
+  }, [hrValue])
+
+  useEffect(() => {
+    stableModeRef.current = stableMode
+  }, [stableMode])
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
@@ -57,14 +69,18 @@ export default function MockPage() {
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
-    sendHrPacket(hrValue)
+    sendHrPacket(hrValueRef.current)
     const id = setInterval(() => {
-      // FIX: Check stableMode before applying randomness
-      let nextHr = hrValue
-      if (!stableMode) {
-        nextHr = Math.max(70, hrValue + Math.floor(Math.random() * 5) - 2)
+      const currentHr = hrValueRef.current
+      const isStable = stableModeRef.current
+
+      let nextHr = currentHr
+      if (!isStable) {
+        // Only apply random fluctuation if stable mode is OFF
+        nextHr = Math.max(70, currentHr + Math.floor(Math.random() * 5) - 2)
       }
 
+      // Update state AND send packet
       setHrValue(nextHr)
       sendHrPacket(nextHr)
     }, 2000)
