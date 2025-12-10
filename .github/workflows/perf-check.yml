@@ -1,0 +1,35 @@
+name: Performance Regression Check
+on: [pull_request]
+
+jobs:
+  memory-leak-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Start your production build with PM2 for accurate memory profiling
+      - name: Build application
+        run: pnpm run build
+
+      - name: Start application
+        run: pnpm run start
+
+      - name: Run Memory Leak Test
+        run: pnpm run test:perf
+
+      - name: Upload Performance Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-metrics
+          path: test-results/performance-metrics.json

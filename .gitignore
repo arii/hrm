@@ -12,6 +12,7 @@
 /coverage
 /test-results/
 /playwright-report/
+/blob-report/
 /test-recordings/
 /tests/playwright/screenshots/
 /tests/playwright/*-actual.png

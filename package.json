@@ -37,6 +37,8 @@
     "test:oauth:local": "python3 scripts/verify_oauth_local.py",
     "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "test:remote": "scripts/test-with-server.sh playwright test remote-capabilities --project=chromium",
+    "test:perf": "playwright test tests/playwright/performance.spec.ts --project=chromium || pnpm run pm2:stop",
+    "test:perf:debug": "cross-env PWDEBUG=1 pnpm run test:perf",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
     "test:clean": "pnpm run kill-all && pnpm run dev & sleep 5 && pnpm run test:visual",
