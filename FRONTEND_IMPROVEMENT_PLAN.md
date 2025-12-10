@@ -280,19 +280,6 @@ After analyzing 24 screenshots across multiple viewports and user journeys, this
 - Add accessibility testing with axe-core
 - Implement responsive design testing
 
-### Performance Guardrails
-
-- **CSS Containment for HR Tiles**: To prevent layout recalculations during high-frequency animations (like the "Active HR monitoring" pulse), HR tile components must use the CSS `contain` property. This isolates their rendering from the rest of the page.
-  ```css
-  .hr-tile {
-    contain: content;
-    will-change: transform; /* Hint to the browser for animation optimization */
-  }
-  ```
-- **Lazy-Load Google Doc Iframe**: The Google Doc integration, being an `iframe`, is memory-intensive. It must be lazy-loaded, meaning the `iframe` is only rendered into the DOM when it is about to enter the viewport. This can be achieved using the `IntersectionObserver` API.
-
-- **Throttle WebSocket UI Updates**: While the server may broadcast data at a high frequency, the frontend must throttle UI updates to a maximum of 30 frames per second (roughly every 33ms). This prevents dropped frames and excessive re-renders. The throttling logic should be implemented within the relevant React hooks or components that consume WebSocket data.
-
 ## Conclusion
 
 This improvement plan focuses on enhancing the user experience while preserving the application's robust functionality. The phased approach ensures manageable implementation while maintaining system stability. Priority is given to accessibility, mobile experience, and visual polish to create a modern, professional HRM dashboard.

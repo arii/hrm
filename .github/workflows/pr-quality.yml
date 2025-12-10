@@ -1,8 +1,9 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    branches: [ "leader" ]
+  # Disabled - use pr-quality-standalone.yml instead
+  # pull_request:
+  #   branches: [ "leader" ]
   workflow_dispatch:
     inputs:
       branch:
@@ -41,6 +42,8 @@ jobs:
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          run_install: false
 
       - name: Configure Persistent Store
         shell: bash
@@ -91,6 +94,7 @@ jobs:
 
       # We still set up pnpm/node just to ensure the binaries are in PATH
       - uses: pnpm/action-setup@v4
+        with: { run_install: false }
       - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
       
@@ -129,6 +133,7 @@ jobs:
           clean: false  # ⚡ KEEP WORKSPACE
 
       - uses: pnpm/action-setup@v4
+        with: { run_install: false }
       - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
       
@@ -159,52 +164,12 @@ jobs:
         run: pnpm run test:unit
 
   # ===========================================================================
-  # JOB 4: PERFORMANCE REGRESSION TESTS
-  # Reuses workspace. Runs performance tests.
-  # ===========================================================================
-  performance-tests:
-    name: 🚀 Performance Regression
-    needs: core-tests
-    runs-on: self-hosted
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.branch || github.ref }}
-          clean: false # ⚡ KEEP WORKSPACE
-
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v6
-        with: { node-version: "20.x" }
-
-      - name: Configure Session-specific Cache
-        run: |
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
-          pnpm config set side-effects-cache true
-
-      - name: Configure Envs
-        run: |
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
-          echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
-      - name: Start application
-        run: pnpm run start
-
-      - name: Run Memory Leak Test
-        run: pnpm run test:perf
-
-      - name: Upload Performance Metrics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: performance-metrics
-          path: test-results/performance-metrics.json
-  # ===========================================================================
-  # JOB 5: VISUAL REGRESSION TESTS
+  # JOB 4: VISUAL REGRESSION TESTS
   # Reuses workspace. Runs visual tests.
   # ===========================================================================
   visual-tests:
     name: 🎨 Visual Regression
-    needs: performance-tests
+    needs: core-tests
     runs-on: self-hosted
     timeout-minutes: 15
     steps:
@@ -214,6 +179,7 @@ jobs:
           clean: false  # ⚡ KEEP WORKSPACE
 
       - uses: pnpm/action-setup@v4
+        with: { run_install: false }
       - uses: actions/setup-node@v6
         with: { node-version: "20.x" }
       
