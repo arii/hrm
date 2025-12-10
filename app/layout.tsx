@@ -35,13 +35,13 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Preload the primary display font to prevent FOUT. */}
-        <link
+        {/* <link
           rel="preload"
           href="/assets/digital-7-mono.ttf"
           as="font"
           type="font/ttf"
           crossOrigin="anonymous"
-        />
+        /> */}
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         {/* ThemeRegistry now contains all the logic */}
