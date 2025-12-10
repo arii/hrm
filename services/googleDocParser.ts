@@ -35,20 +35,18 @@ const parseGoogleDocTable = async (
     }
 
     // Iterate over each row in the table body
-    table
-      .find('tbody > tr')
-      .each((_rowIndex: number, row: Element): void => {
-        const cells = $(row).find('td')
-        if (cells.length >= 2) {
-          const sets = $(cells[0]).text().trim()
-          const name = $(cells[1]).text().trim()
+    table.find('tbody > tr').each((_rowIndex: number, row: Element): void => {
+      const cells = $(row).find('td')
+      if (cells.length >= 2) {
+        const sets = $(cells[0]).text().trim()
+        const name = $(cells[1]).text().trim()
 
-          // Ensure both cells have content to avoid adding empty/header rows
-          if (name && sets) {
-            workoutItems.push({ name, sets })
-          }
+        // Ensure both cells have content to avoid adding empty/header rows
+        if (name && sets) {
+          workoutItems.push({ name, sets })
         }
-      })
+      }
+    })
 
     return workoutItems
   } catch (error) {

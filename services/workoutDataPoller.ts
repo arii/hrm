@@ -13,7 +13,9 @@ let lastKnownData: string | null = null
 const pollWorkoutData = async (): Promise<void> => {
   const url = getGoogleDocWorkoutUrl()
   if (!url) {
-    logger.warn('GOOGLE_DOC_WORKOUT_URL is not set. Skipping workout data polling.')
+    logger.warn(
+      'GOOGLE_DOC_WORKOUT_URL is not set. Skipping workout data polling.'
+    )
     return
   }
 

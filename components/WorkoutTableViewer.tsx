@@ -89,7 +89,9 @@ const WorkoutTableViewer = ({
                 {(isShrunk ? data.slice(0, 5) : data).map((item, index) => (
                   <TableRow
                     key={index}
-                    sx={{ '&:nth-of-type(odd)': { backgroundColor: 'action.hover' } }}
+                    sx={{
+                      '&:nth-of-type(odd)': { backgroundColor: 'action.hover' },
+                    }}
                   >
                     <TableCell component="th" scope="row">
                       {item.name}
