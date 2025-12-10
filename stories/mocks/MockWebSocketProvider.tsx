@@ -63,22 +63,24 @@ export const MockWebSocketProvider = ({
       const message = scenario[frameIndex]
 
       // Update state based on the message type
-      setState((prev) => {
-        switch (message.type) {
-          case 'HRM_UPDATE':
-            return { ...prev, hrmData: message.payload }
-          case 'TIMER_UPDATE':
-            return { ...prev, timerData: message.payload }
-          case 'SPOTIFY_UPDATE':
-            return { ...prev, spotifyData: message.payload }
-          case 'ACTIVE_ALERTS_UPDATE':
-            return { ...prev, activeAlerts: message.payload }
-          case 'INITIAL_STATE':
-             return { ...prev, ...message.payload }
-          default:
-            return prev
-        }
-      })
+      if (message) {
+        setState((prev) => {
+          switch (message.type) {
+            case 'HRM_UPDATE':
+              return { ...prev, hrmData: message.payload }
+            case 'TIMER_UPDATE':
+              return { ...prev, timerData: message.payload }
+            case 'SPOTIFY_UPDATE':
+              return { ...prev, spotifyData: message.payload }
+            case 'ACTIVE_ALERTS_UPDATE':
+              return { ...prev, activeAlerts: message.payload }
+            case 'INITIAL_STATE':
+               return { ...prev, ...message.payload }
+            default:
+              return prev
+          }
+        })
+      }
 
       // Loop the scenario
       frameIndex = (frameIndex + 1) % scenario.length
