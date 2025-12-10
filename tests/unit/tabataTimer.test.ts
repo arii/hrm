@@ -1,7 +1,14 @@
 /**
  * Unit tests for the new, persistent TabataTimer service.
  */
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import {
+  describe,
+  it,
+  expect,
+  jest,
+  beforeEach,
+  afterEach,
+} from '@jest/globals'
 import fs from 'fs'
 import path from 'path'
 import TabataTimer from '../../services/tabataTimer'
@@ -75,26 +82,26 @@ describe('Persistent TabataTimer Service', () => {
     })
 
     it('should load a PAUSED state and not start the tick loop', () => {
-        const pausedState = {
-            mode: 'STOPWATCH' as const,
-            isRunning: false,
-            startTime: null,
-            accumulatedElapsed: 30, // Paused after 30 seconds
-            config: { workDuration: 20, restDuration: 10, totalCycles: 8 },
-        }
-        mockedFs.existsSync.mockReturnValue(true)
-        mockedFs.readFileSync.mockReturnValue(JSON.stringify(pausedState))
+      const pausedState = {
+        mode: 'STOPWATCH' as const,
+        isRunning: false,
+        startTime: null,
+        accumulatedElapsed: 30, // Paused after 30 seconds
+        config: { workDuration: 20, restDuration: 10, totalCycles: 8 },
+      }
+      mockedFs.existsSync.mockReturnValue(true)
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(pausedState))
 
-        timer = new TabataTimer(broadcastMock)
+      timer = new TabataTimer(broadcastMock)
 
-        // Advance time to see if the tick loop is running
-        advanceTime(5000)
+      // Advance time to see if the tick loop is running
+      advanceTime(5000)
 
-        // The broadcast mock should not be called if the timer is paused
-        expect(broadcastMock).not.toHaveBeenCalled()
-        const state = timer.getDerivedState()
-        expect(state.isRunning).toBe(false)
-        expect(state.timeElapsed).toBe(30)
+      // The broadcast mock should not be called if the timer is paused
+      expect(broadcastMock).not.toHaveBeenCalled()
+      const state = timer.getDerivedState()
+      expect(state.isRunning).toBe(false)
+      expect(state.timeElapsed).toBe(30)
     })
   })
 
@@ -102,37 +109,52 @@ describe('Persistent TabataTimer Service', () => {
     it('should save state to file on start', () => {
       timer = new TabataTimer(broadcastMock)
       timer.start()
-      expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
-      const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        STATE_FILE,
+        expect.any(String)
+      )
+      const savedState = JSON.parse(
+        mockedFs.writeFileSync.mock.calls[0][1] as string
+      )
       expect(savedState.isRunning).toBe(true)
     })
 
     it('should save state to file on pause', () => {
-        timer = new TabataTimer(broadcastMock)
-        timer.start()
-        advanceTime(1000); // Advance time by 1 second
-        mockedFs.writeFileSync.mockClear() // Clear the call from start()
-        timer.pause()
-        expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
-        const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
-        expect(savedState.isRunning).toBe(false)
-        expect(savedState.accumulatedElapsed).toBeGreaterThan(0)
+      timer = new TabataTimer(broadcastMock)
+      timer.start()
+      advanceTime(1000) // Advance time by 1 second
+      mockedFs.writeFileSync.mockClear() // Clear the call from start()
+      timer.pause()
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        STATE_FILE,
+        expect.any(String)
+      )
+      const savedState = JSON.parse(
+        mockedFs.writeFileSync.mock.calls[0][1] as string
+      )
+      expect(savedState.isRunning).toBe(false)
+      expect(savedState.accumulatedElapsed).toBeGreaterThan(0)
     })
 
     it('should save state to file on stop', () => {
-        timer = new TabataTimer(broadcastMock)
-        timer.start()
-        mockedFs.writeFileSync.mockClear()
-        timer.stop()
-        expect(fs.writeFileSync).toHaveBeenCalledWith(STATE_FILE, expect.any(String))
-        const savedState = JSON.parse(mockedFs.writeFileSync.mock.calls[0][1] as string)
-        expect(savedState.mode).toBe('IDLE')
+      timer = new TabataTimer(broadcastMock)
+      timer.start()
+      mockedFs.writeFileSync.mockClear()
+      timer.stop()
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        STATE_FILE,
+        expect.any(String)
+      )
+      const savedState = JSON.parse(
+        mockedFs.writeFileSync.mock.calls[0][1] as string
+      )
+      expect(savedState.mode).toBe('IDLE')
     })
   })
 
   describe('Timestamp-based Logic', () => {
     beforeEach(() => {
-        timer = new TabataTimer(broadcastMock)
+      timer = new TabataTimer(broadcastMock)
     })
 
     it('should correctly calculate elapsed time after a delay', () => {
@@ -150,59 +172,59 @@ describe('Persistent TabataTimer Service', () => {
     })
 
     it('should correctly calculate state after being paused', () => {
-        timer.start()
-        const time1 = Date.now()
+      timer.start()
+      const time1 = Date.now()
 
-        // Run for 12 seconds
-        jest.spyOn(Date, 'now').mockReturnValue(time1 + 12000)
-        timer.pause()
+      // Run for 12 seconds
+      jest.spyOn(Date, 'now').mockReturnValue(time1 + 12000)
+      timer.pause()
 
-        const pausedState = timer.getDerivedState()
-        // 12s total = 5s PREPARE + 7s WORK
-        expect(pausedState.timeElapsed).toBe(12)
-        expect(pausedState.timeRemaining).toBe(13) // 20 - 7
+      const pausedState = timer.getDerivedState()
+      // 12s total = 5s PREPARE + 7s WORK
+      expect(pausedState.timeElapsed).toBe(12)
+      expect(pausedState.timeRemaining).toBe(13) // 20 - 7
 
-        // Resume after another 10 seconds of "real" time has passed
-        const time2 = Date.now()
-        jest.spyOn(Date, 'now').mockReturnValue(time2 + 10000)
-        timer.start()
+      // Resume after another 10 seconds of "real" time has passed
+      const time2 = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(time2 + 10000)
+      timer.start()
 
-        // Elapse another 6 seconds in the running state
-        const time3 = Date.now()
-        jest.spyOn(Date, 'now').mockReturnValue(time3 + 6000)
+      // Elapse another 6 seconds in the running state
+      const time3 = Date.now()
+      jest.spyOn(Date, 'now').mockReturnValue(time3 + 6000)
 
-        const resumedState = timer.getDerivedState()
-        // 12s (accumulated) + 6s (new) = 18s total elapsed
-        // 18s total = 5s PREPARE + 13s WORK
-        expect(resumedState.timeElapsed).toBe(18)
-        expect(resumedState.timeRemaining).toBe(7) // 20 - 13
+      const resumedState = timer.getDerivedState()
+      // 12s (accumulated) + 6s (new) = 18s total elapsed
+      // 18s total = 5s PREPARE + 13s WORK
+      expect(resumedState.timeElapsed).toBe(18)
+      expect(resumedState.timeRemaining).toBe(7) // 20 - 13
     })
 
     it('should transition through TABATA phases correctly based on time', () => {
-        timer.start({ workDuration: 10, restDuration: 5, totalCycles: 2 })
+      timer.start({ workDuration: 10, restDuration: 5, totalCycles: 2 })
 
-        // PREPARE phase
-        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 4000) // 4s elapsed
-        let state = timer.getDerivedState()
-        expect(state.currentPhase).toBe('PREPARE')
-        expect(state.timeRemaining).toBe(1)
+      // PREPARE phase
+      jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 4000) // 4s elapsed
+      let state = timer.getDerivedState()
+      expect(state.currentPhase).toBe('PREPARE')
+      expect(state.timeRemaining).toBe(1)
 
-        // WORK phase 1
-        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3000) // 7s elapsed
-        state = timer.getDerivedState()
-        expect(state.currentPhase).toBe('WORK')
-        expect(state.timeRemaining).toBe(8) // 10 - (7-5)
+      // WORK phase 1
+      jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 3000) // 7s elapsed
+      state = timer.getDerivedState()
+      expect(state.currentPhase).toBe('WORK')
+      expect(state.timeRemaining).toBe(8) // 10 - (7-5)
 
-        // REST phase 1
-        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 9000) // 16s elapsed
-        state = timer.getDerivedState()
-        expect(state.currentPhase).toBe('REST')
-        expect(state.timeRemaining).toBe(4) // 15 - (16-5)
+      // REST phase 1
+      jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 9000) // 16s elapsed
+      state = timer.getDerivedState()
+      expect(state.currentPhase).toBe('REST')
+      expect(state.timeRemaining).toBe(4) // 15 - (16-5)
 
-        // FINISHED phase
-        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 20000) // 36s elapsed
-        state = timer.getDerivedState()
-        expect(state.currentPhase).toBe('FINISHED')
+      // FINISHED phase
+      jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 20000) // 36s elapsed
+      state = timer.getDerivedState()
+      expect(state.currentPhase).toBe('FINISHED')
     })
   })
 })

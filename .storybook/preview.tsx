@@ -1,6 +1,6 @@
-import type { Preview } from "@storybook/react";
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from '../lib/theme'; // Import your custom theme
+import type { Preview } from '@storybook/react'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import theme from '../lib/theme' // Import your custom theme
 
 const preview: Preview = {
   parameters: {
@@ -22,6 +22,6 @@ const preview: Preview = {
       </ThemeProvider>
     ),
   ],
-};
+}
 
-export default preview;
+export default preview

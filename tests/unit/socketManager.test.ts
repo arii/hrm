@@ -10,6 +10,7 @@ import {
   it,
   jest,
 } from '@jest/globals'
+import { Server } from 'ws'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import TabataTimer from '../../services/tabataTimer'
 import { initSocketManager } from '../../utils/socketManager'
@@ -28,31 +29,22 @@ const MockSpotifyPolling = SpotifyPolling as jest.MockedClass<
 describe('WebSocket Manager', () => {
   let tabataService: jest.Mocked<TabataTimer>
   let spotifyService: jest.Mocked<SpotifyPolling>
-  let mockWss: any
+  let mockWss: jest.Mocked<Server>
   let getSnapshot: jest.Mock
 
   beforeEach(() => {
     // Create mock instances of services
-    tabataService = new MockTabataTimer(
-      jest.fn()
-    ) as jest.Mocked<TabataTimer>
-    spotifyService =
-      new MockSpotifyPolling() as jest.Mocked<SpotifyPolling>
+    tabataService = new MockTabataTimer(jest.fn()) as jest.Mocked<TabataTimer>
+    spotifyService = new MockSpotifyPolling() as jest.Mocked<SpotifyPolling>
 
     // Mock WebSocket server
-    mockWss = {
-      on: jest.fn(),
-      clients: new Set(),
-    }
+    mockWss = new Server() as jest.Mocked<Server>
+    mockWss.on = jest.fn()
 
     getSnapshot = jest.fn()
 
     // Initialize the socket manager with mocked dependencies
-    initSocketManager(
-      mockWss,
-      { tabataService, spotifyService },
-      getSnapshot
-    )
+    initSocketManager(mockWss, { tabataService, spotifyService }, getSnapshot)
   })
 
   afterEach(() => {
@@ -62,17 +54,23 @@ describe('WebSocket Manager', () => {
   // Helper function to simulate a client message
   const simulateMessage = (message: object) => {
     const connectionHandler = mockWss.on.mock.calls.find(
-      (call: any) => call[0] === 'connection'
-    )[1]
-    const mockWs: any = {
+      (call) => call[0] === 'connection'
+    )?.[1]
+    if (!connectionHandler) {
+      throw new Error('Connection handler not found')
+    }
+    const mockWs = {
       on: jest.fn(),
       send: jest.fn(),
       ping: jest.fn(),
     }
     connectionHandler(mockWs)
     const messageHandler = mockWs.on.mock.calls.find(
-      (call: any) => call[0] === 'message'
-    )[1]
+      (call) => call[0] === 'message'
+    )?.[1]
+    if (!messageHandler) {
+      throw new Error('Message handler not found')
+    }
     messageHandler(JSON.stringify(message))
     return mockWs
   }
@@ -85,13 +83,17 @@ describe('WebSocket Manager', () => {
 
     it('should call tabataService.start() with config on START_TABATA command', () => {
       const config = { workDuration: 30, restDuration: 15, totalCycles: 10 }
-      simulateMessage({ type: 'TIMER_COMMAND', command: 'START_TABATA', config })
+      simulateMessage({
+        type: 'TIMER_COMMAND',
+        command: 'START_TABATA',
+        config,
+      })
       expect(tabataService.start).toHaveBeenCalledWith(config)
     })
 
     it('should call tabataService.startStopwatch() on START_STOPWATCH command', () => {
-        simulateMessage({ type: 'TIMER_COMMAND', command: 'START_STOPWATCH' })
-        expect(tabataService.startStopwatch).toHaveBeenCalledTimes(1)
+      simulateMessage({ type: 'TIMER_COMMAND', command: 'START_STOPWATCH' })
+      expect(tabataService.startStopwatch).toHaveBeenCalledTimes(1)
     })
 
     it('should call tabataService.pause() on PAUSE command', () => {
@@ -141,7 +143,9 @@ describe('WebSocket Manager', () => {
 
       expect(receivedPayload.type).toBe('INITIAL_STATE')
       expect(receivedPayload.payload.timerData).toEqual(mockSnapshot.timerData)
-      expect(receivedPayload.payload.spotifyData).toEqual(mockSnapshot.spotifyData)
+      expect(receivedPayload.payload.spotifyData).toEqual(
+        mockSnapshot.spotifyData
+      )
       expect(Array.isArray(receivedPayload.payload.hrmData)).toBe(true)
     })
   })
