@@ -31,13 +31,16 @@ export const parseGoogleDocTable = (html: string): WorkoutTableData => {
         let text = ''
         const paragraphs = $(cellElement).find('p')
 
+        // Helper to clean invisible Google Docs artifacts like non-breaking spaces
+        const cleanText = (str: string) => str.replace(/\u00A0/g, ' ').trim()
+
         if (paragraphs.length > 0) {
           text = paragraphs
-            .map((_, p) => $(p).text().trim())
+            .map((_, p) => cleanText($(p).text()))
             .get()
             .join('\n')
         } else {
-          text = $(cellElement).text().trim()
+          text = cleanText($(cellElement).text())
         }
 
         // 2. Enforce the 10-line limit
