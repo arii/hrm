@@ -22,13 +22,16 @@ fi
 # 2. Set production mode
 export NODE_ENV=production
 
-# 3. Check for required secrets
+# 3. Set a default port if not provided by the environment
+export PORT=${PORT:-3000}
+
+# 4. Check for required secrets
 if [ -z "$NEXTAUTH_SECRET" ]; then
   echo "❌ Error: NEXTAUTH_SECRET is not set!"
   exit 1
 fi
 
-echo "🚀 Starting HRM Production Server..."
+echo "🚀 Starting HRM Production Server on port $PORT..."
 
 # Exec ensures the node process replaces the shell
 # allowing signals (SIGINT/SIGTERM) to reach the app
