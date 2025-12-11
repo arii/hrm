@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const schema = z.object({
+const baseSchema = z.object({
   RATE_LIMIT_SPOTIFY_MAX: z.coerce.number().int().positive().default(30),
   RATE_LIMIT_SPOTIFY_WINDOW_MINUTES: z.coerce
     .number()
@@ -25,5 +25,14 @@ const schema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
 })
+
+// In test environments, Upstash credentials are not available.
+// We make them optional to allow the server to start for tests.
+const testSchema = baseSchema.extend({
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+})
+
+const schema = process.env.TESTING === 'true' ? testSchema : baseSchema
 
 export const env = schema.parse(process.env)
