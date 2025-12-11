@@ -20,11 +20,7 @@ const schema = z.object({
     .positive()
     .default(1),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(10),
-  RATE_LIMIT_AUTH_WINDOW_MINUTES: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(5),
+  RATE_LIMIT_AUTH_WINDOW_MINUTES: z.coerce.number().int().positive().default(5),
   WS_MAX_CONNECTIONS: z.coerce.number().int().positive().default(5),
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),

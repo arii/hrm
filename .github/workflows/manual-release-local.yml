@@ -47,7 +47,7 @@ jobs:
       - name: 🏗️ Build Standalone Artifact
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
-          NEXTAUTH_URL: "http://localhost:3000"
+          NEXTAUTH_URL: 'http://localhost:3000'
         run: |
           echo "Building Next.js application..."
           pnpm run build
@@ -59,10 +59,10 @@ jobs:
         run: |
           DEPLOY_DIR="${{ github.event.inputs.deploy_dir }}"
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
-          
+
           echo "Creating deployment directory: $DEPLOY_DIR"
           mkdir -p "$DEPLOY_DIR"
-          
+
           # Backup existing deployment if it exists
           if [ -d "$DEPLOY_DIR/.next" ]; then
             echo "⚠️ Existing deployment found. Backing up to ${DEPLOY_DIR}.backup"
@@ -70,7 +70,7 @@ jobs:
             mv "$DEPLOY_DIR" "${DEPLOY_DIR}.backup"
             mkdir -p "$DEPLOY_DIR"
           fi
-          
+
           # Copy the release artifact
           echo "Extracting release artifact..."
           cp release.tar.gz "$DEPLOY_DIR/"
@@ -84,7 +84,7 @@ jobs:
         run: |
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
-          
+
           echo "Installing production dependencies..."
           pnpm install --prod --ignore-scripts
 
@@ -94,7 +94,7 @@ jobs:
         run: |
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
-          
+
           echo "Starting/reloading application with PM2..."
           if [ -f "ecosystem.config.cjs" ]; then
             npx pm2 startOrReload ecosystem.config.cjs --env production --update-env
@@ -109,7 +109,7 @@ jobs:
         run: |
           DEPLOY_DIR="${DEPLOY_DIR/#\~/$HOME}"
           cd "$DEPLOY_DIR"
-          
+
           if [ -f "scripts/verify-deployment.sh" ]; then
             echo "Running deployment verification..."
             chmod +x scripts/verify-deployment.sh
