@@ -14,12 +14,25 @@ import {
   Paper,
   Fade,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
-import HrTile from '../../../components/HrTile'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+import { useEffect, useState, useRef } from 'react'
+import BottomNavBar from '@/components/BottomNavBar'
+import HrTile from '@/components/HrTile'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
+import { getHrZoneProps } from '@/utils/visualization'
+import { calculateCaloriesBurned } from '@/utils/calculations'
+import WorkoutSummaryDisplay from '@/components/WorkoutSummaryDisplay'
+
+// --- Interfaces ---
+interface HeartRateDataPoint {
+  timestamp: number
+  value: number
+}
+
+interface WorkoutSummary {
+  duration: string
+  caloriesBurned: number
+}
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -40,6 +53,12 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummary | null>(
+    null
+  )
+
+  // Refs
+  const hrHistoryRef = useRef<HeartRateDataPoint[]>([])
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
@@ -77,6 +96,32 @@ export default function ConnectPage() {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
 
+  // 3. Track HR History
+  const currentUserData = hrmData.find(
+    (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
+  )
+  const currentHR = currentUserData?.value || 0
+
+  useEffect(() => {
+    if (isConnected && currentHR > 0) {
+      hrHistoryRef.current.push({ timestamp: Date.now(), value: currentHR })
+    }
+  }, [isConnected, currentHR])
+
+  // --- Helper Functions ---
+  const formatDuration = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600)
+      .toString()
+      .padStart(2, '0')
+    const m = Math.floor((seconds % 3600) / 60)
+      .toString()
+      .padStart(2, '0')
+    const s = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, '0')
+    return `${h}:${m}:${s}`
+  }
+
   // --- Handlers ---
 
   const handleConnect = async () => {
@@ -85,24 +130,42 @@ export default function ConnectPage() {
     if (!userAge.trim() || ageNum < 1 || ageNum > 120)
       return alert('Invalid age')
 
+    // Reset state for a new session
+    hrHistoryRef.current = []
+    setWorkoutSummary(null)
+
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
     await connectAndStream(userName, userAge)
   }
 
   const handleDisconnect = () => {
+    // 1. Calculate Summary
+    if (hrHistoryRef.current.length > 1) {
+      const age = parseInt(userAge) || 30
+      const calories = calculateCaloriesBurned(age, hrHistoryRef.current)
+
+      const startTime = hrHistoryRef.current[0].timestamp
+      const endTime = hrHistoryRef.current[hrHistoryRef.current.length - 1].timestamp
+      const durationSeconds = (endTime - startTime) / 1000
+
+      setWorkoutSummary({
+        duration: formatDuration(durationSeconds),
+        caloriesBurned: calories,
+      })
+    }
+
+    // 2. Update State
     setIsConnected(false)
-    // Clear device ID to prevent immediate auto-reconnect loop
+
+    // 3. Clear session data
+    hrHistoryRef.current = []
     document.cookie =
       'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    window.location.reload() // Cleanest way to reset bluetooth state hooks
+    // NOTE: window.location.reload() is removed to allow summary to be displayed
   }
 
   // --- Data Derived ---
-  const currentUserData = hrmData.find(
-    (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
-  )
-  const currentHR = currentUserData?.value || 0
   const maxHr = 220 - (parseInt(userAge) || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
@@ -199,6 +262,18 @@ export default function ConnectPage() {
         ) : (
           /* VIEW 2: CONNECTION FORM (Disconnected) */
           <Box sx={{ mt: 4 }}>
+            {/* Ephemeral Workout Summary */}
+            {workoutSummary && (
+              <Fade in={true}>
+                <div>
+                  <WorkoutSummaryDisplay
+                    duration={workoutSummary.duration}
+                    caloriesBurned={workoutSummary.caloriesBurned}
+                  />
+                </div>
+              </Fade>
+            )}
+
             <Typography
               variant="h4"
               component="h1"
