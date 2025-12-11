@@ -1,290 +1,221 @@
-// File: services/tabataTimer.ts (Dual-Mode Timer Service: Stopwatch & Tabata)
-/**
- * Dual-Mode Timer Service: Manages both continuous elapsed time (Stopwatch)
- * and interval-based countdowns (Tabata). Includes a universal 5-second
- * PREPARE countdown that runs before both modes begin.
- * Pushes updates to the WebSocket manager via the injected broadcast function.
- */
+// File: services/tabataTimer.ts (Event-Sourced Timer Service)
+
+import { TimerEventStore } from './timer/eventStore'
+import { TimerState } from './timer/reducer'
 import {
   ServerMessage,
   TimerData,
   TimerMode,
   TimerPhase,
 } from '../types/websocket'
+import logger from '../utils/logger'
 
-// --- Tabata Constants ---
-const DEFAULT_WORK_DURATION = 20 // seconds
-const DEFAULT_REST_DURATION = 10 // seconds
-const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
+const TICK_INTERVAL = 200 // ms
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
-// Internal state structure
-interface DualModeTimerState {
-  mode: TimerMode
-  isRunning: boolean
-  currentPhase: TimerPhase
-  timeElapsed: number // For Stopwatch mode
-  timeRemaining: number // For Tabata mode
-  workDuration: number // Configurable work duration
-  restDuration: number // Configurable rest duration
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
-  soundEventId: number
-}
-
-class TabataTimer {
-  // Function provided by server.ts to push updates to all clients
+export class TabataTimer {
+  private eventStore: TimerEventStore
   private broadcastUpdate: (message: ServerMessage) => void
-  private timerInterval: NodeJS.Timeout | null = null
-  private startTime: number | null = null
-  private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
+  private tickInterval: NodeJS.Timeout | null = null
+  private soundEventId = 0
+  private lastPlayedSoundAt: number | null = null
 
-  private timerState: DualModeTimerState = {
-    mode: 'TABATA', // Default mode
-    isRunning: false,
-    currentPhase: 'IDLE',
-    timeElapsed: 0,
-    timeRemaining: 0,
-    workDuration: DEFAULT_WORK_DURATION,
-    restDuration: DEFAULT_REST_DURATION,
-    soundEventId: 0,
-  }
-
-  private countdownMarker: string | null = null
-
-  constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  private constructor(
+    eventStore: TimerEventStore,
+    broadcastUpdate: (message: ServerMessage) => void
+  ) {
+    this.eventStore = eventStore
     this.broadcastUpdate = broadcastUpdate
-  }
-
-  private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
-    this.timerState.soundToPlay = sound
-    this.timerState.soundEventId += 1
-    // Broadcast immediately so clients can play sound
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
-  }
-
-  private resetCountdownMarker() {
-    this.countdownMarker = null
-  }
-
-  private handleCountdownCue() {
-    const phase = this.timerState.currentPhase
-    if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN') {
-      return
-    }
-
-    const remaining = this.timerState.timeRemaining
-    if (remaining <= 0) {
-      return
-    }
-
-    // Build marker per phase + second to avoid replaying countdown in same second
-    const marker = `${phase}-${remaining}`
-    // Play short beep for countdown during PREPARE, WORK, and REST phases when 1-3 seconds remain
-    if (remaining >= 1 && remaining <= 3 && this.countdownMarker !== marker) {
-      this.queueSound('COUNTDOWN')
-      this.countdownMarker = marker
+    if (this.getState().isRunning) {
+      this.startTicking()
     }
   }
 
-  // Adapt getState to return the expected TimerData structure for the front-end
-  public getState(): TimerData {
+  public static async create(
+    broadcastUpdate: (message: ServerMessage) => void
+  ): Promise<TabataTimer> {
+    const eventStore = await TimerEventStore.create()
+    return new TabataTimer(eventStore, broadcastUpdate)
+  }
+
+  private getState(): TimerState {
+    return this.eventStore.getState()
+  }
+
+  public getTimerData(): TimerData {
+    const state = this.calculateCurrentState()
+    const soundToPlay = this.getSoundToPlay(state)
+
     return {
-      isRunning: this.timerState.isRunning,
-      currentPhase: this.timerState.currentPhase,
-      timeRemaining: this.timerState.timeRemaining,
-      timeElapsed: this.timerState.timeElapsed,
-      mode: this.timerState.mode,
-      workDuration: this.timerState.workDuration,
-      restDuration: this.timerState.restDuration,
-      ...(this.timerState.soundToPlay !== undefined && {
-        soundToPlay: this.timerState.soundToPlay,
-      }),
-      soundEventId: this.timerState.soundEventId,
+      isRunning: state.isRunning,
+      currentPhase: state.phase,
+      timeRemaining: state.timeRemaining,
+      timeElapsed: this.getTimeElapsed(state),
+      mode: state.mode,
+      workDuration: state.workDuration,
+      restDuration: state.restDuration,
+      soundToPlay,
+      soundEventId: this.soundEventId,
     }
   }
 
-  // --- Core Timer Logic ---
-
-  private updateTimer = () => {
-    if (!this.timerState.isRunning || !this.startTime) return
-
-    if (
-      this.timerState.mode === 'STOPWATCH' &&
-      this.timerState.currentPhase === 'RUNNING'
-    ) {
-      // COUNT UP (STOPWATCH)
-      const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-      this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+  private calculateCurrentState(): TimerState {
+    const state = this.getState()
+    if (!state.isRunning) {
+      return state
     }
 
-    // This applies to TABATA and PREPARE modes (which count down)
-    if (
-      this.timerState.mode === 'TABATA' ||
-      this.timerState.currentPhase === 'PREPARE'
-    ) {
-      const nextRemaining = Math.max(0, this.timerState.timeRemaining - 1)
-      this.timerState.timeRemaining = nextRemaining
+    const now = Date.now()
+    const elapsedTime = now - state.startTime
+    const timeRemaining = (state.targetDuration ?? 0) - elapsedTime
 
-      if (nextRemaining <= 0) {
-        this.transitionPhase()
-      } else {
-        this.handleCountdownCue()
+    const currentState: TimerState = {
+      ...state,
+      timeRemaining: Math.max(0, timeRemaining),
+    }
+
+    if (currentState.timeRemaining <= 0) {
+      return this.transitionPhase(currentState)
+    }
+
+    return currentState
+  }
+
+  private transitionPhase(currentState: TimerState): TimerState {
+    let nextPhase: TimerPhase = currentState.phase
+    let nextTargetDuration: number | null = null
+
+    if (currentState.mode === 'STOPWATCH') {
+      return currentState
+    }
+
+    switch (currentState.phase) {
+      case 'PREPARE':
+        nextPhase = 'WORK'
+        nextTargetDuration = currentState.workDuration
+        break
+      case 'WORK':
+        nextPhase = 'REST'
+        nextTargetDuration = currentState.restDuration
+        break
+      case 'REST':
+        nextPhase = 'WORK'
+        nextTargetDuration = currentState.workDuration
+        break
+      default:
+        return { ...currentState, isRunning: false }
+    }
+
+    const now = Date.now()
+    return {
+      ...currentState,
+      phase: nextPhase,
+      startTime: now,
+      targetDuration: nextTargetDuration,
+      timeRemaining: nextTargetDuration ?? 0,
+    }
+  }
+
+  private getTimeElapsed(state: TimerState): number {
+    if (state.mode !== 'STOPWATCH') {
+      return 0
+    }
+    if (!state.isRunning) {
+      return state.timeRemaining
+    }
+    const now = Date.now()
+    return state.timeRemaining + (now - state.startTime)
+  }
+
+  private getSoundToPlay(
+    state: TimerState
+  ): 'WORK' | 'REST' | 'COUNTDOWN' | undefined {
+    if (!state.isRunning) {
+      return undefined
+    }
+
+    const timeRemainingSeconds = Math.ceil(state.timeRemaining / 1000)
+
+    if (this.lastPlayedSoundAt !== state.startTime) {
+      this.lastPlayedSoundAt = state.startTime
+      this.soundEventId++
+      switch (state.phase) {
+        case 'WORK':
+          return 'WORK'
+        case 'REST':
+          return 'REST'
       }
     }
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
-  }
-
-  private startTimer() {
-    if (this.timerState.isRunning) return
-
-    this.timerState.isRunning = true
-    this.startTime = Date.now()
-
-    // --- UNIVERSAL PREPARE LOGIC ---
-    // If starting from IDLE, always begin with the PREPARE countdown.
-    if (this.timerState.currentPhase === 'IDLE') {
-      this.timerState.currentPhase = 'PREPARE'
-      this.timerState.timeRemaining = START_COUNTDOWN_DURATION
-      this.resetCountdownMarker()
-    }
-    // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
-
-    this.timerInterval = setInterval(this.updateTimer, 1000)
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
-  }
-
-  private pauseTimer() {
-    if (!this.timerState.isRunning || !this.startTime) return
-
     if (
-      this.timerState.mode === 'STOPWATCH' &&
-      this.timerState.currentPhase === 'RUNNING'
+      timeRemainingSeconds >= 1 &&
+      timeRemainingSeconds <= 3 &&
+      this.lastPlayedSoundAt !== timeRemainingSeconds
     ) {
-      this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
-      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+      this.lastPlayedSoundAt = timeRemainingSeconds
+      this.soundEventId++
+      return 'COUNTDOWN'
     }
 
-    this.timerState.isRunning = false
-    if (this.timerInterval) clearInterval(this.timerInterval)
-    this.timerInterval = null
-    this.startTime = null
-
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+    return undefined
   }
 
-  private stopTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval)
-
-    // Full reset of all time and cycle variables
-    this.timerState = {
-      ...this.timerState,
-      isRunning: false,
-      currentPhase: 'IDLE',
-      timeElapsed: 0,
-      timeRemaining:
-        this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
-    }
-    delete this.timerState.soundToPlay
-    this.resetCountdownMarker()
-    this.pausedElapsedTime = 0
-    this.startTime = null
-    this.timerInterval = null
-
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  private broadcast() {
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getTimerData() })
   }
 
-  // --- Configuration ---
-  public setConfig(config: { workDuration: number; restDuration: number }) {
-    const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
-    const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
-
-    this.timerState.workDuration = sanitizedWorkDuration
-    this.timerState.restDuration = sanitizedRestDuration
-
-    // If the timer is not running, update timeRemaining to reflect the new work duration.
-    // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
-    if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
-      this.timerState.timeRemaining = sanitizedWorkDuration
-    }
-
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  private startTicking() {
+    if (this.tickInterval) return
+    this.tickInterval = setInterval(() => {
+      this.broadcast()
+    }, TICK_INTERVAL)
   }
 
-  // --- Universal Transition Logic ---
-
-  private transitionPhase() {
-    this.resetCountdownMarker()
-    switch (this.timerState.currentPhase) {
-      case 'PREPARE': // Transition from 5s countdown
-        this.queueSound('WORK') // Long beep when starting
-        if (this.timerState.mode === 'STOPWATCH') {
-          // Start Stopwatch counting up
-          this.timerState.currentPhase = 'RUNNING'
-          this.timerState.timeElapsed = 0
-          this.pausedElapsedTime = 0
-          this.startTime = Date.now() // Reset start time for accurate count up
-        } else {
-          // Start Tabata WORK phase
-          this.timerState.currentPhase = 'WORK'
-          this.timerState.timeRemaining = this.timerState.workDuration
-        }
-        break
-
-      case 'WORK':
-        // Infinite loop: WORK -> REST
-        this.queueSound('REST')
-        this.timerState.currentPhase = 'REST'
-        this.timerState.timeRemaining = this.timerState.restDuration
-        break
-
-      case 'REST':
-        // Infinite loop: REST -> WORK
-        this.queueSound('WORK')
-        this.timerState.currentPhase = 'WORK'
-        this.timerState.timeRemaining = this.timerState.workDuration
-        break
-
-      case 'IDLE':
-      case 'COOLDOWN':
-      case 'RUNNING':
-        this.stopTimer()
-        break
+  private stopTicking() {
+    if (this.tickInterval) {
+      clearInterval(this.tickInterval)
+      this.tickInterval = null
     }
   }
 
-  // --- Command Handler (Used by socketManager) ---
-  public handleCommand(command: TimerCommand) {
+  public async handleCommand(command: TimerCommand) {
+    const now = Date.now()
     switch (command) {
       case 'START':
-        // START now triggers PREPARE if in IDLE
-        this.startTimer()
+        await this.eventStore.dispatch({ type: 'START', startTime: now })
+        this.startTicking()
         break
       case 'PAUSE':
-        this.pauseTimer()
+        await this.eventStore.dispatch({ type: 'PAUSE', pauseTime: now })
+        this.stopTicking()
         break
       case 'STOP':
-        this.stopTimer()
+        await this.eventStore.dispatch({ type: 'STOP', stopTime: now })
+        this.stopTicking()
         break
       default:
-        console.warn(`Unknown timer command: ${command}`)
+        logger.warn(`Unknown timer command: ${command}`)
+        return
     }
+    this.broadcast()
   }
 
-  // --- Mode Switching ---
-  public setMode(mode: TimerMode) {
-    if (this.timerState.isRunning) this.stopTimer()
-    this.timerState.mode = mode
-    this.timerState.currentPhase = 'IDLE'
-    this.timerState.timeRemaining =
-      mode === 'TABATA' ? this.timerState.workDuration : 0
-    this.timerState.timeElapsed = 0
-    delete this.timerState.soundToPlay
-    this.resetCountdownMarker()
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  public async setConfig(config: { workDuration: number; restDuration: number }) {
+    await this.eventStore.dispatch({
+      type: 'SET_CONFIG',
+      workDuration: config.workDuration,
+      restDuration: config.restDuration,
+    })
+    this.broadcast()
+  }
+
+  public async setMode(mode: TimerMode) {
+    await this.eventStore.dispatch({ type: 'SET_MODE', mode })
+    this.broadcast()
+  }
+
+  public dispose() {
+    this.stopTicking()
   }
 }
-
-export default TabataTimer
