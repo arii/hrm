@@ -1,10 +1,10 @@
 // tests/playwright/storybook.config.ts
 import { defineConfig } from '@playwright/test'
 
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
-  testDir: "./",
+  testDir: './',
   testMatch: /storybook\.spec\.ts$/,
   timeout: 30 * 1000,
   expect: {
