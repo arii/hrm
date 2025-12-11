@@ -9,9 +9,11 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      // STRICT CHANGE: Default to production immediately
       env: {
-        NODE_ENV: 'development',
+        NODE_ENV: 'production',
       },
+      // Redundant but kept for compatibility with existing scripts
       env_production: {
         NODE_ENV: 'production',
       },

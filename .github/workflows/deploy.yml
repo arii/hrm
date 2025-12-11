@@ -1,0 +1,65 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [ "leader" ]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    # Only run if Quality Gate passed (implied by branch protection, but good to be explicit)
+    if: github.ref == 'refs/heads/leader'
+
+    steps:
+      - name: 🛑 Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏗️ Build Standalone Artifact
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
+          NEXTAUTH_URL: "http://localhost:3000"
+        run: |
+          # 1. Build Next.js (Standalone enabled in next.config.js)
+          pnpm run build
+
+          # 2. Package Artifact (Hybrid Strategy)
+          ./scripts/package.sh
+
+      - name: 🚚 Transfer Artifact
+        env:
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+          PROD_PATH: ${{ secrets.PROD_PATH }}
+        run: |
+          # Transfer the Release Archive (contains all scripts)
+          scp release.tar.gz $PROD_USER@$PROD_HOST:$PROD_PATH/
+
+      - name: 🚀 Execute Deployment
+        env:
+          PROD_HOST: ${{ secrets.PROD_HOST }}
+          PROD_USER: ${{ secrets.PROD_USER }}
+          PROD_PATH: ${{ secrets.PROD_PATH }}
+        run: |
+          # Extract tarball and run deploy script (which it contains)
+          ssh $PROD_USER@$PROD_HOST "bash -l -c 'cd $PROD_PATH && tar -xzf release.tar.gz --overwrite && ./scripts/deploy-artifact.sh'"

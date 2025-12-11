@@ -21,7 +21,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
-
+import { useAudio } from '@/hooks/useAudio'
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
@@ -30,15 +30,35 @@ const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={80} />,
 })
+const WorkoutTableViewer = dynamic(
+  () => import('../components/WorkoutTableViewer'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={500} />,
+  }
+)
+
 const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={500} />,
 })
 
+const DOC_ID =
+  '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
+
 const Dashboard = () => {
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const { volume } = useVolumePreference() // Get volume state
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  useVolumePreference()
+  const { initializeAudio } = useAudio(timerData)
+
+  const handleInteraction = () => {
+    if (!audioInitialized) {
+      initializeAudio()
+      setAudioInitialized(true)
+    }
+  }
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()
@@ -57,6 +77,7 @@ const Dashboard = () => {
   return (
     <Container
       maxWidth="xl"
+      onClick={handleInteraction}
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
@@ -76,7 +97,6 @@ const Dashboard = () => {
             workDuration={timerData.workDuration}
             restDuration={timerData.restDuration}
             soundEventId={timerData.soundEventId}
-            volume={volume}
           />
         </Grid>
 
@@ -85,13 +105,17 @@ const Dashboard = () => {
         </ErrorBoundary>
 
         <Grid size={{ xs: 12 }}>
-          <GoogleDocViewer
-            title="Today's Training Regimen"
-            embedUrl={DOC_URL}
-            height={500}
-            isShrunk={docIsManuallyShrunk}
-            onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
-          />
+          {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
+            <WorkoutTableViewer docId={DOC_ID} />
+          ) : (
+            <GoogleDocViewer
+              title="Today's Training Regimen"
+              embedUrl={DOC_URL}
+              height={500}
+              isShrunk={docIsManuallyShrunk}
+              onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
+            />
+          )}
         </Grid>
       </Grid>
 
