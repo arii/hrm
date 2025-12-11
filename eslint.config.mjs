@@ -14,10 +14,17 @@ export default [
   // Apply recommended TypeScript ESLint rules
   ...tseslint.configs.recommended,
 
-  // React, Hooks, and a11y recommended rules
+  // React and a11y recommended rules
   reactPlugin.configs.flat.recommended,
-  hooksPlugin.configs.recommended,
   jsxA11yPlugin.configs.recommended,
+
+  // Configure React Hooks plugin
+  {
+    plugins: {
+      'react-hooks': hooksPlugin,
+    },
+    rules: hooksPlugin.configs.recommended.rules,
+  },
 
   // Configure JavaScript unused vars to work with TypeScript
   {
