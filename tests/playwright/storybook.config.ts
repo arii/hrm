@@ -1,15 +1,11 @@
 // tests/playwright/storybook.config.ts
 import { defineConfig } from '@playwright/test'
 
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: path.resolve(__dirname, '../../components'),
-  testMatch: /.*\.stories\.tsx$/,
+  testDir: "./",
+  testMatch: /storybook\.spec\.ts$/,
   timeout: 30 * 1000,
   expect: {
     timeout: 5000,
