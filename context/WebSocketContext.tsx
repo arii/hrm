@@ -68,6 +68,7 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (
       typeof window !== 'undefined' &&
       (window as any).__MOCK_WEB_SOCKET_DATA__
