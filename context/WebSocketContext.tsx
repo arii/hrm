@@ -189,7 +189,8 @@ export const WebSocketProvider = ({
 
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(window as any).__TEST_WEBSOCKET_READY__ = true
       }
 
       // Explicitly request initial state from the server
