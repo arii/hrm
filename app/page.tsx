@@ -21,6 +21,9 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import { useAudio } from '@/hooks/useAudio'
+const DOC_URL =
+  'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 // Lazy-load heavy components
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
@@ -47,8 +50,17 @@ const DOC_ID =
 
 const Dashboard = () => {
   const { timerData } = useWebSocket()
-  const { volume } = useVolumePreference()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  useVolumePreference()
+  const { initializeAudio } = useAudio(timerData)
+
+  const handleInteraction = () => {
+    if (!audioInitialized) {
+      initializeAudio()
+      setAudioInitialized(true)
+    }
+  }
 
   // Initialize Spotify Web Playback SDK
   const { player } = useSpotifyWebPlayback()
@@ -67,6 +79,7 @@ const Dashboard = () => {
   return (
     <Container
       maxWidth="xl"
+      onClick={handleInteraction}
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
@@ -86,7 +99,6 @@ const Dashboard = () => {
             workDuration={timerData.workDuration}
             restDuration={timerData.restDuration}
             soundEventId={timerData.soundEventId}
-            volume={volume}
           />
         </Grid>
 
