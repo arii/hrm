@@ -73,12 +73,14 @@ const GoogleDocViewer = ({
             title={title}
             width="100%"
             height="100%"
+            loading="lazy"
             sx={{
               border: 'none',
               display: iframeLoading ? 'none' : 'block',
               position: 'absolute',
               top: 0,
               left: 0,
+              transition: 'height 0.3s ease-in-out',
             }}
             onLoad={() => setIframeLoading(false)}
           />
