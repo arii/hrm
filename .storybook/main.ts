@@ -15,5 +15,41 @@ const config: StorybookConfig = {
   docs: {
     autodocs: "tag",
   },
+  webpackFinal: async (config) => {
+    config.module.rules.push({
+      test: /\.(ts|tsx)$/,
+      use: [
+        {
+          loader: require.resolve("babel-loader"),
+          options: {
+            presets: [
+              require.resolve("@babel/preset-env"),
+              require.resolve("@babel/preset-typescript"),
+              [
+                require.resolve("@babel/preset-react"),
+                {
+                  runtime: "automatic",
+                },
+              ],
+            ],
+          },
+        },
+      ],
+    });
+    return config;
+  },
+  babel: async (options) => {
+    options.presets = [
+      ...options.presets,
+      [
+        "@babel/preset-react",
+        {
+          runtime: "automatic",
+        },
+        "preset-react-jsx-transform", // Can be removed in Storybook 8
+      ],
+    ];
+    return options;
+  },
 };
 export default config;
