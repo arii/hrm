@@ -55,10 +55,14 @@ export interface SpotifyData {
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
+import { WorkoutState } from '@/context/WorkoutContext'
+export type { WorkoutState }
+
 export interface InitialStateSnapshotPayload {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
+  workoutData: WorkoutState
   spotifyServiceInitialized?: boolean
 }
 
@@ -89,6 +93,7 @@ export type ServerMessage =
   | { type: 'HRM_UPDATE'; payload: HrmData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | { type: 'WORKOUT_UPDATE'; payload: WorkoutState }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
@@ -161,6 +166,14 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface WorkoutCommandMessage {
+  type: 'WORKOUT_COMMAND'
+  payload: {
+    action: 'START' | 'END'
+    state: WorkoutState
+  }
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
@@ -170,6 +183,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | WorkoutCommandMessage
 
 import { z } from 'zod'
 
@@ -232,6 +246,21 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const WorkoutStateSchema = z.object({
+  isWorkoutActive: z.boolean(),
+  startTime: z.number().nullable(),
+  endTime: z.number().nullable(),
+  duration: z.number(),
+})
+
+export const WorkoutCommandMessageSchema = z.object({
+  type: z.literal('WORKOUT_COMMAND'),
+  payload: z.object({
+    action: z.union([z.literal('START'), z.literal('END')]),
+    state: WorkoutStateSchema,
+  }),
+})
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
@@ -241,4 +270,5 @@ export const ClientCommandMessageSchema = z.union([
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
+  WorkoutCommandMessageSchema,
 ])

@@ -171,6 +171,12 @@ app
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
+      workoutData: {
+        isWorkoutActive: false,
+        startTime: null,
+        endTime: null,
+        duration: 0,
+      },
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 

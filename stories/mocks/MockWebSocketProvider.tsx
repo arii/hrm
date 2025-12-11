@@ -7,6 +7,7 @@ import {
   ActiveAlert,
   TimerData,
   SpotifyData,
+  WorkoutState,
 } from '@/types/websocket'
 import { action } from '@storybook/addon-actions'
 
@@ -16,6 +17,7 @@ interface MockAppState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
+  workoutData: WorkoutState
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized: boolean
 }
@@ -32,6 +34,12 @@ const DEFAULT_STATE: MockAppState = {
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
+  },
+  workoutData: {
+    isWorkoutActive: false,
+    startTime: null,
+    endTime: null,
+    duration: 0,
   },
   spotifyData: {
     trackName: 'Storybook Simulation',
@@ -87,6 +95,8 @@ export const MockWebSocketProvider = ({
               return { ...prev, hrmData: message.payload }
             case 'TIMER_UPDATE':
               return { ...prev, timerData: message.payload }
+            case 'WORKOUT_UPDATE':
+              return { ...prev, workoutData: message.payload }
             case 'SPOTIFY_UPDATE':
               return { ...prev, spotifyData: message.payload }
             case 'ACTIVE_ALERTS_UPDATE':

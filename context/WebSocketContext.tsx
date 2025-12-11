@@ -18,12 +18,14 @@ import {
   ServerMessage,
   ActiveAlert,
 } from '../types/websocket'
+import { WorkoutState } from './WorkoutContext'
 import { getWebSocketURL } from '../utils/urls'
 
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
+  workoutData: WorkoutState
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized?: boolean
 }
@@ -39,6 +41,12 @@ const INITIAL_STATE: AppState = {
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
+  },
+  workoutData: {
+    isWorkoutActive: false,
+    startTime: null,
+    endTime: null,
+    duration: 0,
   },
   spotifyData: {
     trackName: 'Awaiting Login...',
@@ -89,6 +97,8 @@ export const WebSocketProvider = ({
         return { ...state, hrmData: message.payload }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }
+      case 'WORKOUT_UPDATE':
+        return { ...state, workoutData: message.payload }
       case 'SPOTIFY_UPDATE':
         return { ...state, spotifyData: message.payload }
       case 'ACTIVE_ALERTS_UPDATE':

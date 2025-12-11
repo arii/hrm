@@ -14,6 +14,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
+import WorkoutSummary from '../components/WorkoutSummary'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -77,6 +78,11 @@ const Dashboard = () => {
       }}
     >
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+        {/* --------------------- WORKOUT SUMMARY --------------------- */}
+        <Grid size={{ xs: 12 }}>
+          <WorkoutSummary />
+        </Grid>
+
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}

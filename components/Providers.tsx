@@ -1,6 +1,7 @@
 'use client'
 
 import { WebSocketProvider } from '@/context/WebSocketContext'
+import { WorkoutProvider } from '@/context/WorkoutContext'
 import theme from '@/lib/theme'
 import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider } from '@mui/material/styles'
@@ -10,10 +11,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
       <WebSocketProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <WorkoutProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+          </ThemeProvider>
+        </WorkoutProvider>
       </WebSocketProvider>
     </SessionProvider>
   )
