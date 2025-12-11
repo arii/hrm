@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/arii/hrm/compare/v0.2.0...v0.2.1) (2025-12-11)
+
+
+### Bug Fixes
+
+* remove --frozen-lockfile from deploy workflow ([4addf88](https://github.com/arii/hrm/commit/4addf889c7b09968624108e43fd62bbc0da0cbfa))
+
 ## [0.2.0](https://github.com/arii/hrm/compare/v0.1.4...v0.2.0) (2025-12-09)
 
 
