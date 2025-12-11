@@ -15,11 +15,13 @@ import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
 })
 
 const roboto_mono = Roboto_Mono({
   subsets: ['latin'],
   variable: '--font-roboto-mono',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
