@@ -34,6 +34,15 @@ export interface TimerData {
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }
+
+export type SpotifyCommand =
+  | 'PLAY'
+  | 'PAUSE'
+  | 'NEXT'
+  | 'PREVIOUS'
+  | 'TRANSFER_PLAYBACK'
+  | 'SET_VOLUME'
+  | 'GET_DEVICES'
 // 1. Update SpotifyData to include the device list
 export interface SpotifyDevice {
   id: string
@@ -127,14 +136,7 @@ export interface TimerConfigMessage {
 
 export interface SpotifyCommandMessage {
   type: 'SPOTIFY_COMMAND'
-  command:
-    | 'PLAY'
-    | 'PAUSE'
-    | 'NEXT'
-    | 'PREVIOUS'
-    | 'TRANSFER_PLAYBACK'
-    | 'SET_VOLUME'
-    | 'GET_DEVICES' // <--- ADDED
+  command: SpotifyCommand
   deviceId?: string
   volume?: number
   playlistUri?: string
