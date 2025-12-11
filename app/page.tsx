@@ -15,8 +15,8 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
-import useVolumePreference from '../hooks/useVolumePreference'
-import useWebSocket from '../hooks/useWebSocket'
+import useVolumePreference from '@/hooks/useVolumePreference'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
