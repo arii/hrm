@@ -81,6 +81,7 @@ expressApp.use(
     },
   })
 )
+expressApp.use(helmet.hsts())
 
 // --- Main Application Setup ---
 
