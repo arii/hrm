@@ -9,8 +9,10 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      // Pass environment variables to the script
       env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
         NODE_ENV: 'production',
         PORT: process.env.PORT || 3000,
       },
