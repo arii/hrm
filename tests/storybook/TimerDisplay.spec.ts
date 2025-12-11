@@ -10,14 +10,18 @@ test.describe('TimerDisplay Stories', () => {
       '00:00'
     )
     await expect(page.locator('[data-testid="timer-phase"]')).not.toBeVisible()
-    await expect(page.locator('[data-testid="ws-status-indicator"]')).toHaveText('Connected')
+    await expect(
+      page.locator('[data-testid="ws-status-indicator"]')
+    ).toHaveText('Connected')
   })
 
   test('Prepare story', async ({ page }) => {
     await page.goto(
       '/iframe.html?id=components-timerdisplay--prepare&viewMode=story'
     )
-    await expect(page.locator('[data-testid="timer-countdown"]')).toHaveText('05')
+    await expect(page.locator('[data-testid="timer-countdown"]')).toHaveText(
+      '05'
+    )
     await expect(page.locator('[data-testid="timer-phase"]')).toHaveText(
       'GET READY'
     )
@@ -56,6 +60,8 @@ test.describe('TimerDisplay Stories', () => {
     await page.goto(
       '/iframe.html?id=components-timerdisplay--disconnected&viewMode=story'
     )
-     await expect(page.locator('[data-testid="ws-status-indicator"]')).toHaveText('Disconnected')
+    await expect(
+      page.locator('[data-testid="ws-status-indicator"]')
+    ).toHaveText('Disconnected')
   })
 })

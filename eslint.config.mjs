@@ -2,9 +2,10 @@
 import js from '@eslint/js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
+import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
-export default [
+export default defineConfig([
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
@@ -51,22 +52,27 @@ export default [
       // '@next/next/no-html-link-for-pages': 'off',
     },
   },
+  {
+    files: ['**/*.tsx'],
+    rules: {
+      'react-hooks/exhaustive-deps': 'off',
+      'react/no-unescaped-entities': 'off',
+    },
+  },
 
   // Ignore files and directories
-  {
-    ignores: [
-      '.next/**',
-      'out/**',
-      'build/**',
-      'next-env.d.ts',
-      'node_modules/',
-      'dist/**', // Exclude compiled output
-      'server.js', // Exclude server.js
-      '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-      '.github/copilot-instructions.md', // Exclude copilot instructions
-      'ecosystem.config.cjs', // Exclude PM2 config file
-    ],
-  },
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+    'node_modules/',
+    'dist/**', // Exclude compiled output
+    'server.js', // Exclude server.js
+    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
+    '.github/copilot-instructions.md', // Exclude copilot instructions
+    'ecosystem.config.cjs', // Exclude PM2 config file
+  ]),
 
   // Configuration for TypeScript files
   {
@@ -194,4 +200,4 @@ export default [
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     },
   },
-]
+])

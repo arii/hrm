@@ -13,12 +13,14 @@ This directory contains OAuth integration tests designed to run locally with exi
 ### Running OAuth Tests
 
 **Option 1: Automated Setup (Recommended)**
+
 ```bash
 # This script handles server checks, secrets provisioning, and test execution
 npm run test:oauth:local
 ```
 
 **Option 2: Direct Playwright Execution**
+
 ```bash
 # Start server manually first
 npm run dev
@@ -28,6 +30,7 @@ npm run test:oauth:playwright
 ```
 
 **Option 3: Manual Configuration**
+
 ```bash
 # Explicitly set environment variables
 TEST_BASE_URL=http://localhost:3000 \
@@ -47,6 +50,7 @@ npm run test:oauth:playwright
 ### Browser Profile Detection
 
 The test automatically detects Chrome profiles:
+
 - **Linux**: `~/.config/google-chrome/Default`
 - **macOS**: `~/Library/Application Support/Google/Chrome/Default`
 - **Windows**: `%LOCALAPPDATA%\Google\Chrome\User Data\Default`
@@ -64,24 +68,29 @@ The test automatically detects Chrome profiles:
 ### Common Issues
 
 **"No active Spotify session found"**
+
 - Log into Spotify manually in your default Chrome browser
 - Ensure cookies are not cleared between sessions
 
 **"State cookie was missing" error**
+
 - This indicates the OAuth regression we're testing for
 - Check server logs for detailed error information
 
 **Chrome profile not found**
+
 - Manually specify profile path: `CHROME_PROFILE_PATH=/path/to/profile npm run test:oauth:local`
 - Or use a temporary profile (requires manual login)
 
 **Server not running**
+
 - Start dev server: `npm run dev`
 - Verify server responds: `curl -I http://localhost:3000`
 
 ### Debug Mode
 
 For detailed debugging, run tests with additional logging:
+
 ```bash
 DEBUG=* npm run test:oauth:playwright
 ```
@@ -95,6 +104,7 @@ DEBUG=* npm run test:oauth:playwright
 ## Design Philosophy
 
 These tests use existing browser sessions rather than programmatic authentication to:
+
 - Avoid Spotify API rate limits
 - Test real-world OAuth flows
 - Prevent automated detection by OAuth providers
