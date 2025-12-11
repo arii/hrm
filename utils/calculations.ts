@@ -41,8 +41,8 @@ export const calculateCaloriesBurned = (
   }
 
   // Calculate duration in minutes
-  const startTime = hrData[0].timestamp
-  const endTime = hrData[hrData.length - 1].timestamp
+  const startTime = hrData[0]!.timestamp
+  const endTime = hrData[hrData.length - 1]!.timestamp
   const durationInMinutes = (endTime - startTime) / (1000 * 60)
 
   if (durationInMinutes <= 0) {
