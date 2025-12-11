@@ -7,7 +7,7 @@ import logger from '../../utils/logger'
 const TIMER_STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
 
 // DistributiveOmit utility to correctly omit keys from a discriminated union
-export type DistributiveOmit<T, K extends keyof any> = T extends any
+export type DistributiveOmit<T, K extends PropertyKey> = T extends any
   ? Omit<T, K>
   : never
 
