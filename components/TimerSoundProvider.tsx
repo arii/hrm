@@ -6,22 +6,19 @@
 'use client'
 
 import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { useTimerSounds } from '../hooks/useTimerSounds'
+import { audioManager } from '../utils/audioManager'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode
 }
 
 const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
-  const pathname = usePathname()
-  const isController = pathname.startsWith('/client')
-  const { initializeAudio } = useTimerSounds(isController)
-
   useEffect(() => {
     const handleFirstInteraction = () => {
-      console.log('User interaction detected, initializing audio...')
-      initializeAudio()
+      console.log(
+        '[TimerSoundProvider] User interaction detected, initializing audio...'
+      )
+      audioManager.loadAudio()
       // Clean up listeners after initialization
       document.removeEventListener('click', handleFirstInteraction)
       document.removeEventListener('keydown', handleFirstInteraction)
@@ -36,7 +33,7 @@ const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
       document.removeEventListener('click', handleFirstInteraction)
       document.removeEventListener('keydown', handleFirstInteraction)
     }
-  }, [initializeAudio])
+  }, [])
 
   return <>{children}</>
 }
