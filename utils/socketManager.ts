@@ -18,9 +18,9 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
-// Extend WebSocket to track client role and connection health
+// Extend WebSocket to track client role
 interface ExtWebSocket extends WebSocket {
-  lastPingTime: number // Changed to non-optional
+  isAlive?: boolean
   clientType?: 'dashboard' | 'controller'
 }
 
@@ -56,8 +56,13 @@ const initSocketManager = (
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    extWs.lastPingTime = Date.now() // Initialize on connect
+    extWs.isAlive = true
     console.log(`WebSocket Client connected: ${clientId}`)
+
+    // Heartbeat
+    extWs.on('pong', () => {
+      extWs.isAlive = true
+    })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const defaultClientData: HrmData = {
@@ -83,24 +88,15 @@ const initSocketManager = (
     })
   })
 
-  // Server-side watchdog to clean up stale connections.
-  const WATCHDOG_INTERVAL = 30000 // 30 seconds
-  const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
-
+  // Keep-alive pinger (runs every 30s)
   const interval = setInterval(() => {
-    const now = Date.now()
     wss.clients.forEach((ws) => {
       const extWs = ws as ExtWebSocket
-
-      // If the client hasn't responded in time, terminate.
-      if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
-        console.log(
-          `Terminating stale WebSocket connection for client (no pong received).`
-        )
-        return ws.terminate()
-      }
+      if (extWs.isAlive === false) return ws.terminate()
+      extWs.isAlive = false
+      ws.ping()
     })
-  }, WATCHDOG_INTERVAL)
+  }, 30000)
 
   wss.on('close', () => clearInterval(interval))
 }
@@ -127,13 +123,6 @@ const handleIncomingMessage = (
     )
 
     switch (message.type) {
-      case 'PING': {
-        // Client-side heartbeat
-        ws.lastPingTime = Date.now()
-        // Respond with a pong
-        ws.send(JSON.stringify({ type: 'PONG' }))
-        break
-      }
       case 'REGISTER_CLIENT': {
         // Role Registration - Dashboard identifies itself as the executor
         ws.clientType = (message as ClientRegistrationMessage).role
