@@ -5,7 +5,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 
 interface VolumeSliderProps {
   volume: number
@@ -72,4 +72,4 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   )
 }
 
-export default VolumeSlider
+export default memo(VolumeSlider)
