@@ -2,15 +2,22 @@
 import js from '@eslint/js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import reactPlugin from 'eslint-plugin-react'
+import hooksPlugin from 'eslint-plugin-react-hooks'
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y'
 import tseslint from 'typescript-eslint'
 
-export default defineConfig([
+export default [
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
   // Apply recommended TypeScript ESLint rules
   ...tseslint.configs.recommended,
+
+  // React, Hooks, and a11y recommended rules
+  reactPlugin.configs.flat.recommended,
+  hooksPlugin.configs.recommended,
+  jsxA11yPlugin.configs.recommended,
 
   // Configure JavaScript unused vars to work with TypeScript
   {
@@ -46,33 +53,24 @@ export default defineConfig([
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      // You can override or add Next.js specific rules here
-      // For example:
-      // '@next/next/no-html-link-for-pages': 'off',
-    },
-  },
-  {
-    files: ['**/*.tsx'],
-    rules: {
-      'react-hooks/exhaustive-deps': 'off',
-      'react/no-unescaped-entities': 'off',
-    },
+    rules: {},
   },
 
   // Ignore files and directories
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-    'node_modules/',
-    'dist/**', // Exclude compiled output
-    'server.js', // Exclude server.js
-    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-    '.github/copilot-instructions.md', // Exclude copilot instructions
-    'ecosystem.config.cjs', // Exclude PM2 config file
-  ]),
+  {
+    ignores: [
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'node_modules/',
+      'dist/**', // Exclude compiled output
+      'server.js', // Exclude server.js
+      '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
+      '.github/copilot-instructions.md', // Exclude copilot instructions
+      'ecosystem.config.cjs', // Exclude PM2 config file
+    ],
+  },
 
   // Configuration for TypeScript files
   {
@@ -91,9 +89,7 @@ export default defineConfig([
       },
     },
     rules: {
-      // TypeScript specific rules
-      // For example, to prevent unused variables:
-      // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'react/react-in-jsx-scope': 'off',
     },
   },
 
@@ -200,4 +196,4 @@ export default defineConfig([
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     },
   },
-])
+]
