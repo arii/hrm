@@ -24,7 +24,12 @@ echo $! > /tmp/storybook.pid
 
 # Wait for Storybook to be ready
 echo "⏳ Waiting for Storybook to become available..."
-npx wait-on http://127.0.0.1:6006 --timeout 180000
+if ! npx wait-on http://127.0.0.1:6006 --timeout 180000; then
+    echo "❌ Storybook failed to start within the time limit."
+    echo "Displaying the last 50 lines of the Storybook log:"
+    tail -n 50 /tmp/storybook.log
+    exit 1
+fi
 
 echo "✅ Storybook is ready."
 
