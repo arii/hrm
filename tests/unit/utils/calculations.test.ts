@@ -7,11 +7,7 @@ describe('calculateCaloriesBurned', () => {
   const ONE_MINUTE = 60 * 1000
 
   // Helper to generate mock HR data
-  const generateHrData = (
-    points: number,
-    startTime: number,
-    avgHr: number
-  ) => {
+  const generateHrData = (points: number, startTime: number, avgHr: number) => {
     const data = []
     for (let i = 0; i < points; i++) {
       data.push({
