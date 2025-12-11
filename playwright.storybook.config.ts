@@ -1,6 +1,5 @@
 // playwright.storybook.config.ts
 import { defineConfig, devices } from '@playwright/test'
-import path from 'path'
 
 // Use process.env.PORT by default and fallback to 6006
 const PORT = process.env.PORT || 6006
