@@ -14,6 +14,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
+import WorkoutTimer from '../components/WorkoutTimer'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -90,6 +91,11 @@ const Dashboard = () => {
             restDuration={timerData.restDuration}
             soundEventId={timerData.soundEventId}
           />
+        </Grid>
+
+        {/* 2. WORKOUT DURATION - Componentized */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <WorkoutTimer />
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
