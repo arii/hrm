@@ -12,12 +12,10 @@ import CardContent from '@mui/material/CardContent'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
-import Tab from '@mui/material/Tab'
-import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import VolumeControl from '../../../components/Spotify/VolumeControl'
+import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
@@ -31,21 +29,11 @@ const PlaylistSelector = dynamic(
   }
 )
 
-const CategoryBrowser = dynamic(
-  () => import('../../../components/Spotify/CategoryBrowser'),
-  {
-    ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={200} />,
-  }
-)
-
 const SpotifySelectionPage = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
     null
   )
-  const [currentTab, setCurrentTab] = useState(0)
-
   interface SpotifyDevice {
     id: string
     name: string
@@ -162,27 +150,14 @@ const SpotifySelectionPage = () => {
       </Card>
 
       <Card sx={{ mt: 2 }}>
-        <Tabs
-          value={currentTab}
-          onChange={(_e, newValue) => setCurrentTab(newValue)}
-          aria-label="Playlist selection tabs"
-        >
-          <Tab label="Your Playlists" />
-          <Tab label="Browse" />
-        </Tabs>
         <CardContent>
-          {currentTab === 0 && (
-            <PlaylistSelector
-              onPlaylistSelected={handlePlaylistSelected}
-              onPlaylistPlay={handlePlaylistPlay}
-            />
-          )}
-          {currentTab === 1 && (
-            <CategoryBrowser
-              onPlaylistSelected={handlePlaylistSelected}
-              onPlaylistPlay={handlePlaylistPlay}
-            />
-          )}
+          <Typography variant="h6" gutterBottom>
+            Select a Playlist
+          </Typography>
+          <PlaylistSelector
+            onPlaylistSelected={handlePlaylistSelected}
+            onPlaylistPlay={handlePlaylistPlay}
+          />
         </CardContent>
       </Card>
 

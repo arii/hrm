@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
-import { withErrorHandlerDynamic } from '@/lib/middleware/errorHandlerDynamic'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 
 async function getPlaylistsForCategory(
@@ -47,4 +47,4 @@ async function getPlaylistsForCategory(
   return NextResponse.json({ playlists })
 }
 
-export const GET = withErrorHandlerDynamic(getPlaylistsForCategory)
+export const GET = withErrorHandler(getPlaylistsForCategory)

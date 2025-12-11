@@ -1,23 +1,39 @@
 // lib/middleware/errorHandler.ts
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
-type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
+// Base handler types
+type SimpleApiHandler = (req: NextRequest) => Promise<NextResponse>
+type DynamicApiHandler<T> = (
+  req: NextRequest,
+  context: { params: T }
+) => Promise<NextResponse>
 
-/**
- * Wraps an API route handler to provide centralized error handling.
- *
- * This function catches any errors that occur during the execution of the handler,
- * logs them, and returns a standardized JSON error response.
- *
- * @param handler The API route handler to wrap.
- * @returns A new handler with error handling.
- */
-export function withErrorHandler(handler: ApiHandler): ApiHandler {
-  return async (req: Request, ...args: unknown[]) => {
+// Type guard to check if params is a Promise
+function isPromise<T>(p: any): p is Promise<T> {
+  return p && typeof p.then === 'function'
+}
+
+// Overload signatures
+export function withErrorHandler<T>(
+  handler: DynamicApiHandler<T>
+): (
+  req: NextRequest,
+  context: { params: T | Promise<T> }
+) => Promise<NextResponse>
+export function withErrorHandler(handler: SimpleApiHandler): SimpleApiHandler
+
+// Implementation
+export function withErrorHandler(handler: Function) {
+  return async (req: NextRequest, context: { params?: any }) => {
     try {
-      return await handler(req, ...args)
+      // Resolve params if it's a promise
+      if (context && context.params && isPromise(context.params)) {
+        const resolvedParams = await context.params
+        return await handler(req, { ...context, params: resolvedParams })
+      }
+      return await handler(req, context)
     } catch (error) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
