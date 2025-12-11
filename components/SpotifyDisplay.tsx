@@ -326,6 +326,7 @@ const SpotifyDisplay = () => {
               color: muted ? 'error.main' : 'grey.400',
               '&:hover': { color: 'white' },
             }}
+            aria-label={muted ? 'Unmute' : 'Mute'}
           >
             {muted ? (
               <VolumeOff fontSize="small" />
@@ -334,6 +335,7 @@ const SpotifyDisplay = () => {
             )}
           </IconButton>
           <Slider
+            aria-label="Volume"
             value={volume}
             onChange={(_, val) => setVolume(val as number)}
             onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}

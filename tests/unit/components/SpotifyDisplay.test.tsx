@@ -112,4 +112,29 @@ describe('SpotifyDisplay', () => {
       expect(screen.getByText(/Test Track — Test Artist/i)).toBeInTheDocument()
     })
   })
+
+  it('should have correct aria-labels for volume controls', async () => {
+    mockedUseSession.mockReturnValue({
+      data: { accessToken: 'fake-token' },
+      status: 'authenticated',
+    })
+    mockedUseWebSocket.mockReturnValue({
+      spotifyData: {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        isPlaying: true,
+      },
+      spotifyServiceInitialized: true,
+    })
+
+    renderWithProviders(<SpotifyDisplay />)
+
+    await waitFor(() => {
+      // Check the volume slider's aria-label
+      expect(screen.getByLabelText('Volume')).toBeInTheDocument()
+
+      // Check the mute button's initial aria-label
+      expect(screen.getByLabelText('Mute')).toBeInTheDocument()
+    })
+  })
 })
