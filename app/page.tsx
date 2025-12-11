@@ -13,23 +13,21 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
-const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
+import TimerDisplay from '../components/TimerDisplay'
+import { useAudio } from '../hooks/useAudio'
+import useVolumePreference from '../hooks/useVolumePreference'
+import useWebSocket from '../hooks/useWebSocket'
+
+// Dynamically import SpotifyDisplay with SSR disabled.
+// This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
+const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={300} />,
+  loading: () => <Skeleton variant="rectangular" height={80} />, // Optional: Render nothing while loading to avoid layout shift
 })
-import { useWebSocket } from '@/context/WebSocketContext'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolumePreference from '@/hooks/useVolumePreference'
-import { useAudio } from '@/hooks/useAudio'
+
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
-// Lazy-load heavy components
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={80} />,
-})
 const WorkoutTableViewer = dynamic(
   () => import('../components/WorkoutTableViewer'),
   {
@@ -59,12 +57,6 @@ const Dashboard = () => {
       setAudioInitialized(true)
     }
   }
-
-  // Initialize Spotify Web Playback SDK
-  const { player } = useSpotifyWebPlayback()
-
-  // Enable remote Spotify control from controllers
-  useSpotifyRemoteExecution(player)
 
   // Signal when page is ready for testing
   useEffect(() => {
