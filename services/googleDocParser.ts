@@ -1,58 +1,67 @@
-// File: services/googleDocParser.ts
+// services/googleDocParser.ts
+import * as cheerio from 'cheerio'
+
+export interface WorkoutTableData {
+  headers: string[]
+  rows: string[][]
+}
+
 /**
- * Fetches and parses a publicly published Google Doc HTML page into a structured format
- * using Cheerio for robust DOM parsing.
+ * Parses raw HTML from a Google Doc export and extracts the first table.
+ * Enforces a 10-line limit per cell.
  */
-import { CheerioAPI, load } from 'cheerio'
+export const parseGoogleDocTable = (html: string): WorkoutTableData => {
+  const $ = cheerio.load(html)
+  const table = $('table').first()
 
-interface WorkoutItem {
-  name: string
-  sets: string
-}
-
-const parseGoogleDocTable = async (
-  url: string
-): Promise<WorkoutItem[] | null> => {
-  try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      console.error(`Failed to fetch Google Doc: ${response.statusText}`)
-      return null
-    }
-
-    const html = await response.text()
-    const $: CheerioAPI = load(html)
-    const workoutItems: WorkoutItem[] = []
-
-    // Find the first table on the page. This is a fragile assumption but is the
-    // simplest approach without more complex selectors.
-    const table = $('table').first()
-
-    if (table.length === 0) {
-      console.warn('No table found in the Google Doc HTML.')
-      return [] // Return empty array if no table is found
-    }
-
-    // Iterate over each row in the table body
-    table.find('tbody > tr').each((_rowIndex: number, row): void => {
-      const cells = $(row).find('td')
-      if (cells.length >= 2) {
-        const sets = $(cells[0]).text().trim()
-        const name = $(cells[1]).text().trim()
-
-        // Ensure both cells have content to avoid adding empty/header rows
-        if (name && sets) {
-          workoutItems.push({ name, sets })
-        }
-      }
-    })
-
-    return workoutItems
-  } catch (error) {
-    console.error('Error fetching or parsing Google Doc with Cheerio:', error)
-    return null
+  if (!table.length) {
+    throw new Error('No table found in the Google Doc')
   }
-}
 
-export { parseGoogleDocTable }
-export type { WorkoutItem }
+  const parsedRows: string[][] = []
+
+  table.find('tr').each((_rowIndex, rowElement) => {
+    const cells: string[] = []
+
+    $(rowElement)
+      .find('td, th')
+      .each((_colIndex, cellElement) => {
+        // 1. Get text and normalize whitespace (but keep newlines)
+        // Google docs often uses <p> tags inside cells, so we map over them
+        let text = ''
+        const paragraphs = $(cellElement).find('p')
+
+        // Helper to clean invisible Google Docs artifacts like non-breaking spaces
+        const cleanText = (str: string) => str.replace(/\u00A0/g, ' ').trim()
+
+        if (paragraphs.length > 0) {
+          text = paragraphs
+            .map((_, p) => cleanText($(p).text()))
+            .get()
+            .join('\n')
+        } else {
+          text = cleanText($(cellElement).text())
+        }
+
+        // 2. Enforce the 10-line limit
+        const lines = text.split('\n')
+        if (lines.length > 10) {
+          text = lines.slice(0, 10).join('\n') + '...'
+        }
+
+        cells.push(text)
+      })
+
+    // Only include rows that have actual content
+    if (cells.some((cell) => cell.length > 0)) {
+      parsedRows.push(cells)
+    }
+  })
+
+  // The first row is the header, the rest are data rows.
+  // .shift() removes the first element and returns it. If the array is empty, it returns undefined.
+  const headers = parsedRows.shift() || []
+  const rows = parsedRows // The rest of the array is the data rows.
+
+  return { headers, rows }
+}
