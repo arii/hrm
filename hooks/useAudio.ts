@@ -1,3 +1,4 @@
+'use client'
 import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { TimerData } from '../types/websocket'

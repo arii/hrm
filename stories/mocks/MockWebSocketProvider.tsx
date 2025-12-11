@@ -3,17 +3,17 @@ import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketConte
 import {
   ServerMessage,
   ClientCommandMessage,
-  HrmData,
   ActiveAlert,
   TimerData,
   SpotifyData,
 } from '@/types/websocket'
+import { HrmStaticMetadata } from '@/types/shared'
 import { action } from '@storybook/addon-actions'
 
 // Explicitly type the state to avoid incorrect type inference on empty arrays
 // and string literals.
 interface MockAppState {
-  hrmData: HrmData[]
+  hrmData: (HrmStaticMetadata & { value?: number })[]
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
@@ -83,8 +83,21 @@ export const MockWebSocketProvider = ({
       if (message) {
         setState((prev) => {
           switch (message.type) {
-            case 'HRM_UPDATE':
-              return { ...prev, hrmData: message.payload }
+            case 'HRM_METRICS_UPDATE':
+              // This is a simplified merge for Storybook; a real implementation would be more robust.
+              const hrmDataMap = new Map(
+                prev.hrmData.map((c) => [c.clientId, c])
+              )
+              for (const metric of message.payload) {
+                const client = hrmDataMap.get(metric.clientId)
+                if (client) {
+                  client.value = metric.value
+                }
+              }
+              return {
+                ...prev,
+                hrmData: Array.from(hrmDataMap.values()),
+              }
             case 'TIMER_UPDATE':
               return { ...prev, timerData: message.payload }
             case 'SPOTIFY_UPDATE':

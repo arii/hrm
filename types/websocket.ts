@@ -3,25 +3,9 @@
  * Defines the strict interfaces for all data passed between the server services
  * and the client hooks via the WebSocket connection.
  */
+import { TimerMode, TimerPhase, HrmStaticMetadata, HrmMetric } from './shared'
 
 // --- Server Broadcast State Interfaces ---
-
-export interface HrmData {
-  clientId: string
-  value: number
-  maxHr: number
-  name?: string
-  age?: number
-}
-
-export type TimerMode = 'STOPWATCH' | 'TABATA'
-export type TimerPhase =
-  | 'IDLE'
-  | 'PREPARE'
-  | 'WORK'
-  | 'REST'
-  | 'COOLDOWN'
-  | 'RUNNING'
 
 export interface TimerData {
   isRunning: boolean
@@ -56,7 +40,7 @@ export interface SpotifyData {
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
 export interface InitialStateSnapshotPayload {
-  hrmData: HrmData[]
+  hrmData: HrmStaticMetadata[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
@@ -86,7 +70,7 @@ export type ServerMessage =
       type: 'INITIAL_STATE'
       payload: InitialStateSnapshotPayload
     }
-  | { type: 'HRM_UPDATE'; payload: HrmData[] }
+  | { type: 'HRM_METRICS_UPDATE'; payload: HrmMetric[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
@@ -101,7 +85,10 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export type HrmInputData = Omit<
+  Partial<HrmStaticMetadata & HrmMetric>,
+  'clientId'
+>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'

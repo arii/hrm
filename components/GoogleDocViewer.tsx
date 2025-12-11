@@ -1,3 +1,4 @@
+'use client'
 // File: components/GoogleDocViewer.tsx (Google Doc Viewer Component)
 /**
  * Google Doc Viewer Component: Embeds a Google Doc/Sheet/Presentation using an iframe.

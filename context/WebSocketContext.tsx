@@ -12,16 +12,17 @@ import {
 } from 'react'
 import {
   ClientCommandMessage,
-  HrmData,
   SpotifyData,
   TimerData,
   ServerMessage,
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { HrmStaticMetadata, HrmMetric } from '../types/shared'
 
+type HrmClient = HrmStaticMetadata & Partial<HrmMetric>
 interface AppState {
-  hrmData: HrmData[]
+  hrmData: HrmClient[]
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
@@ -62,9 +63,11 @@ export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 export const WebSocketProvider = ({
   children,
   serverUrl,
+  initialHrmData = [],
 }: {
   children: ReactNode
   serverUrl?: string
+  initialHrmData?: HrmClient[]
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
@@ -80,10 +83,34 @@ export const WebSocketProvider = ({
   // Unified State Object managed by a reducer
   const reducer = (state: AppState, message: ServerMessage): AppState => {
     switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
+      case 'INITIAL_STATE': {
+        // When the initial state comes in, it contains only the static data.
+        // We need to merge this with any existing metric data we might have.
+        const newHrmData = message.payload.hrmData.map((staticData) => {
+          const existingClient = state.hrmData.find(
+            (c) => c.clientId === staticData.clientId
+          )
+          return { ...staticData, value: existingClient?.value || 0 }
+        })
+        return { ...state, ...message.payload, hrmData: newHrmData }
+      }
+      case 'HRM_METRICS_UPDATE': {
+        // This is the hot path. We need to efficiently merge the new metrics.
+        const hrmDataMap = new Map(state.hrmData.map((c) => [c.clientId, c]))
+        for (const metric of message.payload) {
+          const client = hrmDataMap.get(metric.clientId)
+          if (client) {
+            client.value = metric.value
+          } else {
+            // This case should be rare, but we'll handle it gracefully.
+            hrmDataMap.set(metric.clientId, {
+              ...metric,
+              maxHr: 180, // sensible default
+            })
+          }
+        }
+        return { ...state, hrmData: Array.from(hrmDataMap.values()) }
+      }
       case 'TIMER_UPDATE':
         return { ...state, timerData: message.payload }
       case 'SPOTIFY_UPDATE':
@@ -101,7 +128,10 @@ export const WebSocketProvider = ({
     }
   }
 
-  const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const [appState, dispatch] = useReducer(reducer, {
+    ...INITIAL_STATE,
+    hrmData: initialHrmData,
+  })
 
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
@@ -229,7 +259,10 @@ export const WebSocketProvider = ({
         }
 
         // Throttle high-frequency messages
-        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
+        if (
+          message.type === 'HRM_METRICS_UPDATE' ||
+          message.type === 'TIMER_UPDATE'
+        ) {
           throttledDispatch(message)
         } else {
           // Dispatch critical messages immediately

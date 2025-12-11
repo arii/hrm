@@ -238,6 +238,10 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
+    // Set user name
+    await mockPage.getByLabel('User Name').fill('Mock User')
+    await mockPage.getByTestId('send-user-settings').click()
+    await dashboardPage.waitForTimeout(1000)
 
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()

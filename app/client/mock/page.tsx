@@ -112,7 +112,7 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid container spacing={2} sx={{ mb: 3 }} data-testid="user-settings">
             <Grid size={{ xs: 8 }}>
               <TextField
                 label="User Name"
@@ -131,6 +131,16 @@ export default function MockPage() {
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
               />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Button
+                variant="contained"
+                onClick={() => sendHrPacket(hrValue)}
+                fullWidth
+                data-testid="send-user-settings"
+              >
+                Send
+              </Button>
             </Grid>
           </Grid>
 

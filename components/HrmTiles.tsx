@@ -2,14 +2,19 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { HrmStaticMetadata } from '@/types/shared'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
-const HrmTiles = () => {
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+const HrmTiles = ({
+  hrmData,
+}: {
+  hrmData: (HrmStaticMetadata & { value?: number })[]
+}) => {
+  const { connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -21,7 +26,7 @@ const HrmTiles = () => {
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
-          user.value,
+          user.value || 0,
           user.maxHr || MAX_HR_DEFAULT
         )
 
@@ -40,7 +45,7 @@ const HrmTiles = () => {
           >
             <HrTile
               name={user.name || ''}
-              bpm={user.value}
+              bpm={user.value || 0}
               percentMax={hrZoneProps.percentage}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`

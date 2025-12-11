@@ -11,11 +11,11 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmData,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
+import { HrmMetric, HrmStaticMetadata } from '../types/shared.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 
 // Extend WebSocket to track client role
@@ -32,7 +32,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmClients = new Map<string, HrmData>()
+const hrmClients = new Map<string, HrmStaticMetadata & HrmMetric>()
 
 interface Services {
   tabataService: TabataTimer
@@ -65,7 +65,7 @@ const initSocketManager = (
     })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const defaultClientData: HrmData = {
+    const defaultClientData: HrmStaticMetadata & HrmMetric = {
       clientId,
       value: 0,
       maxHr: 185,
@@ -82,8 +82,11 @@ const initSocketManager = (
       console.log(`WebSocket Client disconnected: ${clientId}`)
       hrmClients.delete(clientId)
       broadcast({
-        type: 'HRM_UPDATE',
-        payload: Array.from(hrmClients.values()),
+        type: 'HRM_METRICS_UPDATE',
+        payload: Array.from(hrmClients.values()).map(({ clientId, value }) => ({
+          clientId,
+          value,
+        })),
       })
     })
   })
@@ -137,7 +140,21 @@ const handleIncomingMessage = (
         // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: Array.from(hrmClients.values()),
+          hrmData: Array.from(hrmClients.values()).map(
+            ({ clientId, maxHr, name, age }) => {
+              const staticData: HrmStaticMetadata = {
+                clientId,
+                maxHr,
+              }
+              if (name) {
+                staticData.name = name
+              }
+              if (age) {
+                staticData.age = age
+              }
+              return staticData
+            }
+          ),
         }
 
         const initialStateMessage: ServerMessage = {
@@ -170,9 +187,13 @@ const handleIncomingMessage = (
             hrmClients.get(clientId)
           )
         }
+        // PERFORMANCE CRITICAL: Broadcast only the lightweight metrics
+        const metrics: HrmMetric[] = Array.from(hrmClients.values()).map(
+          ({ clientId, value }) => ({ clientId, value })
+        )
         broadcast({
-          type: 'HRM_UPDATE',
-          payload: Array.from(hrmClients.values()),
+          type: 'HRM_METRICS_UPDATE',
+          payload: metrics,
         })
         break
       }
