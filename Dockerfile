@@ -1,22 +1,41 @@
-# Use the official Node.js 20 image.
-FROM mcr.microsoft.com/devcontainers/typescript-node:20-bullseye
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy package.json and pnpm-lock.yaml to the working directory
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files and install dependencies
 COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy the rest of the application source code to the working directory
+# Copy the rest of the application source code
 COPY . .
 
-# Expose the port the app runs on
+# Build the application
+RUN pnpm run build
+
+# Stage 2: Runner
+FROM node:20-alpine AS runner
+
+WORKDIR /usr/src/app
+
+# Install pm2
+RUN npm install -g pm2
+
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+# Copy built application from builder stage
+COPY --from=builder /usr/src/app/.next ./.next
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/package.json ./package.json
+COPY --from=builder /usr/src/app/ecosystem.config.cjs ./
+
 EXPOSE 3000
 
-# The command to run the application will be specified in the docker-compose.yml file
+# Start the application
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs"]
