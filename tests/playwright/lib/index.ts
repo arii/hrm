@@ -36,38 +36,38 @@
 export {
   // Constants
   WAIT_TIMEOUTS,
+  waitForAllConditions,
+  waitForApiResponse,
+  waitForElementStable,
+  waitForFontsLoaded,
+  waitForNetworkIdle,
   // Wait functions
   waitForPageReady,
   waitForWebSocketConnection,
-  waitForFontsLoaded,
-  waitForElementStable,
-  waitForNetworkIdle,
-  waitForApiResponse,
-  waitForAllConditions,
 } from './waits'
 
 // ============================================================================
 // Custom Assertions
 // ============================================================================
 export {
-  // Constants
-  VRT_MASK_SELECTORS,
+  assertApiResponse,
+  // API assertions
+  assertApiStatus,
+  assertButtonState,
+  assertElementSnapshot,
+  assertHrDataVisible,
+  // Snapshot assertions
+  assertPageSnapshot,
+  // Domain-specific assertions
+  assertTimerState,
+  assertWebSocketConnected,
   DEFAULT_SCREENSHOT_OPTIONS,
   // Mask helpers
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
-  // Snapshot assertions
-  assertPageSnapshot,
-  assertElementSnapshot,
-  // Domain-specific assertions
-  assertTimerState,
-  assertWebSocketConnected,
-  assertHrDataVisible,
-  assertButtonState,
-  // API assertions
-  assertApiStatus,
-  assertApiResponse,
+  // Constants
+  VRT_MASK_SELECTORS,
 } from './assertions'
 
 // ============================================================================
@@ -76,6 +76,10 @@ export {
 export {
   // Constants
   AUTH_ENDPOINTS,
+  // Context management
+  createAuthenticatedContext,
+  isLoggedIn,
+  navigateToProtectedRoute,
   // Auth verification
   verifyAuthConfiguration,
   verifyDebugEndpoints,
@@ -83,50 +87,46 @@ export {
   verifySpotifyTokenStatus,
   // Auth navigation
   waitForAuthRedirect,
-  navigateToProtectedRoute,
-  isLoggedIn,
-  // Context management
-  createAuthenticatedContext,
 } from './auth'
 
 // ============================================================================
 // Setup and Teardown Utilities
 // ============================================================================
 export {
+  configureTimer,
+  createTestPage,
   // Constants
   HRM_ROUTES,
   LEGACY_ROUTES,
-  // Warmup and page creation
-  warmupEndpoints,
-  createTestPage,
   navigateAndWait,
+  prepareForVisualRegression,
   // VRT helpers
   replaceIframeWithStableWorkout,
-  prepareForVisualRegression,
-  // Full setup functions
-  setupVisualRegressionTest,
-  setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
-  // Timer utilities
-  stopTimer,
-  configureTimer,
-  startTimer,
+  setupMinimalVisualRegressionTest,
   // Mock utilities
   setupMockHrStreaming,
+  // Full setup functions
+  setupVisualRegressionTest,
   startMockHrStreaming,
+  startTimer,
+  // Timer utilities
+  stopTimer,
+  // Warmup and page creation
+  warmupEndpoints,
 } from './setup'
 
 // ============================================================================
 // Re-export Playwright test utilities for convenience
 // ============================================================================
-export { test, expect } from '@playwright/test'
-export type { Page, BrowserContext, Locator } from '@playwright/test'
+export type { BrowserContext, Locator, Page } from '@playwright/test'
+export { expect, test } from '@playwright/test'
 
 // ============================================================================
 // Re-export URL utilities
 // ============================================================================
-export { getBaseURL, getWebSocketURL, getAPIURL } from '../../../utils/urls'
+export { getAPIURL, getBaseURL, getWebSocketURL } from '../../../utils/urls'
 
 // Export BASE_URL for backward compatibility
 import { getBaseURL } from '../../../utils/urls'

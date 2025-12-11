@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { execSync } from 'child_process'
 
 test.describe('WebSocket Resilience', () => {

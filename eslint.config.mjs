@@ -1,7 +1,8 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
+import storybook from 'eslint-plugin-storybook'
 
 import js from '@eslint/js'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
@@ -182,6 +183,17 @@ export default defineConfig([
   },
   // This turns off any ESLint style rules that conflict with Prettier.
   prettierConfig,
+
+  // Add the simple-import-sort plugin configuration
+  {
+    plugins: {
+      'simple-import-sort': simpleImportSort,
+    },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+    },
+  },
 
   // Add the Prettier plugin configuration
   {

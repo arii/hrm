@@ -1,10 +1,11 @@
 // tests/unit/app/api/spotify/playlists/route.test.ts
 /** @jest-environment node */
 
-import { GET } from '@/app/api/spotify/playlists/route'
-import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
+
+import { GET } from '@/app/api/spotify/playlists/route'
+import { authOptions } from '@/lib/auth'
 
 // Mock 'next-auth' to prevent TypeError during initialization
 jest.mock('next-auth', () => ({

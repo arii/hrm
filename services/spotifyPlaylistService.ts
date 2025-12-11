@@ -3,12 +3,13 @@
  * Spotify Playlist Service: Handles playlist-related operations for the standalone Spotify page.
  * This service is used by the standalone playlist selection page.
  */
-import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
-import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk'
+
+import { SpotifyPlaylist, SpotifyPlaylistItem } from '../types/index'
 import { presetPlaylists } from './seedData'
 
 // Re-export types for backward compatibility
-export type { SpotifyPlaylistItem, SpotifyPlaylist }
+export type { SpotifyPlaylist, SpotifyPlaylistItem }
 
 /**
  * Returns a list of preset workout playlists.

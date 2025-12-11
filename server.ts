@@ -6,6 +6,7 @@
  */
 
 import express, { Request, Response } from 'express'
+import rateLimit from 'express-rate-limit'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
@@ -14,17 +15,16 @@ import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import { performHealthCheck } from './lib/healthCheck.js'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
+import { broadcast } from './utils/broadcast.js'
 import logger from './utils/logger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
-import rateLimit from 'express-rate-limit'
+import { initSocketManager } from './utils/socketManager.js'
+import { getBaseURL } from './utils/urls.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers

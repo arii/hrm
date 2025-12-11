@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
 import fs from 'fs'
+import { NextResponse } from 'next/server'
 import path from 'path'
+
 import logger from '@/utils/logger'
 
 export async function POST() {

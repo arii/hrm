@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+
 import { getBaseURL } from '../../utils/urls'
 
 const BASE = getBaseURL()
