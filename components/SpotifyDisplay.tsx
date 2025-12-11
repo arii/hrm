@@ -322,6 +322,7 @@ const SpotifyDisplay = () => {
           <IconButton
             size="small"
             onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
             sx={{
               color: muted ? 'error.main' : 'grey.400',
               '&:hover': { color: 'white' },
@@ -340,6 +341,7 @@ const SpotifyDisplay = () => {
             min={0}
             max={100}
             size="small"
+            aria-label="Volume"
             sx={{
               width: 80,
               color: '#1DB954',
