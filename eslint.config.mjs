@@ -1,14 +1,12 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
-
+// eslint.config.mjs
+import storybookPlugin from 'eslint-plugin-storybook'
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals.js'
+import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
-export default tseslint.config([
+export default [
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
@@ -60,18 +58,20 @@ export default tseslint.config([
   },
 
   // Ignore files and directories
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-    'node_modules/',
-    'dist/**', // Exclude compiled output
-    'server.js', // Exclude server.js
-    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-    '.github/copilot-instructions.md', // Exclude copilot instructions
-    'ecosystem.config.cjs', // Exclude PM2 config file
-  ]),
+  {
+    ignores: [
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'node_modules/',
+      'dist/**', // Exclude compiled output
+      'server.js', // Exclude server.js
+      '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
+      '.github/copilot-instructions.md', // Exclude copilot instructions
+      'ecosystem.config.cjs', // Exclude PM2 config file
+    ],
+  },
 
   // Configuration for TypeScript files
   {
@@ -199,4 +199,8 @@ export default tseslint.config([
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     },
   },
-])
+
+  // Storybook recommended flat configs
+  ...storybookPlugin.configs['flat/recommended'],
+  ...storybookPlugin.configs['flat/addon-interactions'],
+]
