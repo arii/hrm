@@ -163,6 +163,7 @@ export default function MockPage() {
                 variant="contained"
                 sx={{ backgroundColor: '#9E9E9E' }}
                 onClick={() => setHrByZone('grey')}
+                data-testid="zone-1-button"
               >
                 Zone 1
               </Button>
@@ -173,6 +174,7 @@ export default function MockPage() {
                 variant="contained"
                 sx={{ backgroundColor: '#2196F3' }}
                 onClick={() => setHrByZone('blue')}
+                data-testid="zone-2-button"
               >
                 Zone 2
               </Button>
@@ -183,6 +185,7 @@ export default function MockPage() {
                 variant="contained"
                 sx={{ backgroundColor: '#4CAF50' }}
                 onClick={() => setHrByZone('green')}
+                data-testid="zone-3-button"
               >
                 Zone 3
               </Button>
@@ -193,6 +196,7 @@ export default function MockPage() {
                 variant="contained"
                 sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
                 onClick={() => setHrByZone('yellow')}
+                data-testid="zone-4-button"
               >
                 Zone 4
               </Button>
@@ -203,6 +207,7 @@ export default function MockPage() {
                 variant="contained"
                 sx={{ backgroundColor: '#F44336' }}
                 onClick={() => setHrByZone('red')}
+                data-testid="zone-5-button"
               >
                 Zone 5
               </Button>
@@ -218,6 +223,9 @@ export default function MockPage() {
             startIcon={<HeartBroken />}
             fullWidth
             sx={{ mb: 3 }}
+            data-testid={
+              isStreaming ? 'streaming-stop-button' : 'streaming-start-button'
+            }
           >
             {isStreaming
               ? `STOP Streaming HR: ${hrValue} BPM`
