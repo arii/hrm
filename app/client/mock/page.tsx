@@ -28,7 +28,8 @@ export default function MockPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(window as any).__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1000)
