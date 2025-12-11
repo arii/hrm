@@ -203,7 +203,7 @@ const TimerDisplay = ({
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
-            data-testid="timer-phase"
+            data-testid="timer-phase-label"
             variant="h6"
             aria-live="polite"
             sx={{

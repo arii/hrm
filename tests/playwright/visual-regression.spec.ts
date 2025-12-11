@@ -71,26 +71,23 @@ test.describe('Visual Regression Tests', () => {
       waitForFontsLoaded(mockPage),
     ])
 
-    // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
-
+    // Ensure timer is stopped before tests start, using precise data-testid selectors
+    const stopButton = controlPage.getByTestId('timer-stop-button')
     try {
-      // If timer is running, stop it
       if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
         await stopButton.click()
-        // Wait for START button to confirm timer stopped on control page
-        await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+        // Wait for START button to confirm timer stopped, using data-testid
+        await expect(controlPage.getByTestId('timer-start-button')).toBeVisible(
+          { timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE }
+        )
 
-        // Wait for dashboard to clear timer display (return to READY state)
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-        })
+        // Wait for dashboard timer to reset to 00:00, using data-testid
+        await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
+          '00:00',
+          {
+            timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+          }
+        )
       }
     } catch (error) {
       // Timer not running or failed to stop, log and continue
@@ -124,12 +121,14 @@ test.describe('Visual Regression Tests', () => {
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
 
-    // Extra verification: ensure timer is NOT in active state (no WORK/REST)
-    // Wait for any existing timer display to settle or disappear
+    // Extra verification: ensure timer is in IDLE state
     try {
-      await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-        timeout: WAIT_TIMEOUTS.MEDIUM,
-      })
+      await expect(dashboardPage.getByTestId('timer-countdown')).toHaveText(
+        '00:00',
+        {
+          timeout: WAIT_TIMEOUTS.MEDIUM,
+        }
+      )
     } catch {
       // Timer might already be idle, continue
     }
@@ -197,22 +196,16 @@ test.describe('Visual Regression Tests', () => {
     await workInput.fill('15')
     await restInput.fill('5')
 
-    // Start timer
+    // Start timer using data-testid
+    await controlPage.getByTestId('timer-start-button').click()
 
-    await controlPage.click('button:has-text("START")', { force: true })
-
-    // wait for broadcast messages to propagate
-    // Use the recommended, specific locator
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
+    // Wait for STOP button to appear, using data-testid
+    await expect(controlPage.getByTestId('timer-stop-button')).toBeVisible({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Use this specific locator in your assertion
-    await expect(stopButton).toBeVisible()
-
-    // Wait for timer to appear on dashboard
-    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
+    // Wait for timer phase label to appear on dashboard, using data-testid
+    await expect(dashboardPage.getByTestId('timer-phase-label')).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
@@ -234,13 +227,15 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
-    // Set HR to yellow zone on mock page
-    await mockPage.getByLabel('Current BPM').fill('155')
-    await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
+    // Set HR to yellow zone on mock page, using data-testid for inputs
+    await mockPage.getByTestId('mock-hrm-bpm-input').fill('155')
+    await mockPage.getByTestId('mock-hrm-zone-4-button').click()
+    await expect(mockPage.getByTestId('mock-hrm-bpm-input')).toHaveValue('155')
 
-    // Dashboard page already loaded via fixture
-    await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
+    // Wait for mock user to appear on dashboard, using data-testid
+    await expect(
+      dashboardPage.getByTestId('hr-tile-user-name').first()
+    ).toHaveText('Mock User', { timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
