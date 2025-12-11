@@ -1,6 +1,6 @@
 import type { Preview } from "@storybook/react";
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from '../lib/theme'; // Import your custom theme
+import theme from '@/lib/theme'; // Import your custom theme
 
 const preview: Preview = {
   parameters: {

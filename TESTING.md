@@ -70,36 +70,6 @@ The project uses a combination of Jest for unit tests and Playwright for end-to-
 
 ---
 
-## Storybook Visual Regression Testing
-
-The project uses a dedicated Playwright setup to capture visual snapshots of every story in Storybook. This ensures that individual components and their various states are visually consistent.
-
-### How it Works
-
-The `scripts/photographer.sh` script automates the entire process:
-
-1.  **Launches Storybook**: Starts the Storybook server on port 6006.
-2.  **Captures Snapshots**: Runs a Playwright test suite (`tests/playwright/storybook.spec.ts`) that visits each story and takes a screenshot.
-3.  **Compares and Reports**: Compares the new snapshots against the baseline images stored in the repository. If there are differences, the test fails, and a report is generated.
-
-### Adding New Stories to the Test Suite
-
-**No extra work is needed.** Any new story you create will be automatically discovered and included in the visual regression test run. The test suite is designed to dynamically fetch the list of all available stories and capture a snapshot for each one.
-
-### Updating Storybook Snapshots
-
-If you make an intentional change to a component's appearance, you will need to update the baseline snapshots.
-
-To do this, run the following command:
-
-```bash
-bash scripts/photographer.sh --update-snapshots
-```
-
-This will regenerate the snapshot images. Review the changes to ensure they are correct, and then commit them to your branch.
-
----
-
 ## Future Improvements & Test Consolidation Plan
 
 The current test suite has some redundancy and opportunities for optimization. The following plan is in place to improve the test suite's efficiency and maintainability.
