@@ -1,5 +1,6 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse } from 'next/server'
+
 import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 

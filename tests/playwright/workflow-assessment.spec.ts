@@ -2,7 +2,8 @@
 /**
  * Workflow Assessment Tests: End-to-end user scenarios with video recording
  */
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+
 import { getBaseURL } from '../../utils/urls'
 
 const BASE_URL = getBaseURL()

@@ -1,0 +1,5 @@
+
+> hrm@0.3.0 lint /app
+> eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts middleware.ts --cache "--" "--print-config"
+
+ ELIFECYCLE  Command failed with exit code 2.

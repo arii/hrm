@@ -2,6 +2,7 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
+
 import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error

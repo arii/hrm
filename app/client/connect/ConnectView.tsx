@@ -1,3 +1,7 @@
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
+import BatteryFullIcon from '@mui/icons-material/BatteryFull'
+import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -6,12 +10,9 @@ import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import BatteryStdIcon from '@mui/icons-material/BatteryStd'
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
-import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
+
+import BottomNavBar from '@/components/BottomNavBar'
+import HrTile from '@/components/HrTile'
 
 interface ConnectViewProps {
   userName: string

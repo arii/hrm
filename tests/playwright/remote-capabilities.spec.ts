@@ -1,5 +1,6 @@
 // File: tests/playwright/remote-capabilities.spec.ts
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+
 import { getBaseURL } from '../../utils/urls'
 
 const BASE_URL = getBaseURL()

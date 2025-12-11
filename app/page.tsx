@@ -10,13 +10,14 @@ import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
-import HrmTiles from '../components/HrmTiles'
-import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
-import useVolumePreference from '@/hooks/useVolumePreference'
+
+import ErrorBoundary from '@/components/ErrorBoundary'
+import ErrorFallback from '@/components/ErrorFallback'
+import HrmTiles from '@/components/HrmTiles'
+import TimerDisplay from '@/components/TimerDisplay'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useAudio } from '@/hooks/useAudio'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.

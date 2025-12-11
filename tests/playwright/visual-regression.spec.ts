@@ -11,7 +11,9 @@
  * - Element isolation for scoped component screenshots
  */
 import { type BrowserContext, type Page } from '@playwright/test'
+
 import { expect, test } from './fixtures'
+import { WAIT_TIMEOUTS } from './lib/waits'
 import {
   BASE_URL,
   getDynamicContentMasks,
@@ -21,7 +23,6 @@ import {
   waitForFontsLoaded,
   waitForPageReady,
 } from './test-helpers'
-import { WAIT_TIMEOUTS } from './lib/waits'
 
 // Configure tests to run serially for better performance
 test.describe.configure({ mode: 'serial' })

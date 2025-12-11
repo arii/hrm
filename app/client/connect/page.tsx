@@ -9,17 +9,18 @@ import {
   Box,
   Button,
   Container,
+  Fade,
+  Paper,
   TextField,
   Typography,
-  Paper,
-  Fade,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
-import HrTile from '../../../components/HrTile'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+
+import BottomNavBar from '@/components/BottomNavBar'
+import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { getHrZoneProps } from '@/utils/visualization'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
