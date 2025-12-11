@@ -57,16 +57,8 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
-  experimental: {
-    fontLoaders: [
-      {
-        loader: '@next/font/google',
-        options: {
-          subsets: ['latin'],
-          display: 'swap',
-        },
-      },
-    ],
+  features: {
+    fontLoaders: false,
   },
 }
 
