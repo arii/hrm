@@ -47,4 +47,5 @@ async function getPlaylistsForCategory(
   return NextResponse.json({ playlists })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GET = withErrorHandler(getPlaylistsForCategory as any)
