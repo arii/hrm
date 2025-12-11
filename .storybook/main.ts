@@ -1,4 +1,4 @@
-import type { StorybookConfig } from "@storybook/nextjs";
+import type { StorybookConfig } from "@storybook/react-webpack5";
 import path from "path";
 
 const config: StorybookConfig = {
@@ -10,34 +10,12 @@ const config: StorybookConfig = {
     "@storybook/addon-docs",
   ],
   framework: {
-    name: "@storybook/nextjs",
+    name: "@storybook/react-webpack5",
     options: {},
   },
   staticDirs: ["../public"],
   docs: {
     autodocs: "tag",
-  },
-  webpackFinal: async (config) => {
-    if (config.resolve) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        "next/config": path.resolve(__dirname, "mocks/nextConfig.js"),
-      };
-    }
-    return config;
-  },
-  babel: async (options) => {
-    options.presets = [
-      ...options.presets,
-      [
-        "@babel/preset-react",
-        {
-          runtime: "automatic",
-        },
-        "preset-react-jsx-transform", // Can be removed in Storybook 8
-      ],
-    ];
-    return options;
   },
 };
 export default config;
