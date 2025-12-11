@@ -91,7 +91,9 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const ws = useRef<WebSocket | null>(null)
-  const [status, setStatus] = useState<'CONNECTING' | 'OPEN' | 'CLOSED'>('CLOSED')
+  const [status, setStatus] = useState<
+    'CONNECTING' | 'OPEN' | 'CLOSED'
+  >('CLOSED')
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   const throttledDispatch = useRef(
@@ -124,8 +126,13 @@ export const WebSocketProvider = ({
     [throttledDispatch]
   )
 
+  const connectRef = useRef<() => void>()
+
   const connect = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN || ws.current?.readyState === WebSocket.CONNECTING) {
+    if (
+      ws.current?.readyState === WebSocket.OPEN ||
+      ws.current?.readyState === WebSocket.CONNECTING
+    ) {
       return
     }
 
@@ -144,8 +151,8 @@ export const WebSocketProvider = ({
     ws.current.onclose = () => {
       console.log('[WebSocketProvider] Disconnected. Reconnecting...')
       setStatus('CLOSED')
-      // Simple reconnect delay from the user's example
-      setTimeout(connect, 1000)
+      // Use the ref to avoid stale closures and TDZ issues.
+      setTimeout(() => connectRef.current?.(), 1000)
     }
 
     ws.current.onerror = (err) => {
@@ -154,8 +161,14 @@ export const WebSocketProvider = ({
     }
   }, [wsUrl, onMessage])
 
+  // Keep the ref updated with the latest connect function on every render.
   useEffect(() => {
-    connect()
+    connectRef.current = connect
+  })
+
+
+  useEffect(() => {
+    connectRef.current?.()
     return () => {
       // Prevent reconnection logic from firing on unmount
       if (ws.current) {
@@ -163,7 +176,7 @@ export const WebSocketProvider = ({
         ws.current.close()
       }
     }
-  }, [connect])
+  }, [])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
