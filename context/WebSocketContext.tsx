@@ -68,6 +68,7 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof window !== 'undefined' && (window as any).__MOCK_WEB_SOCKET_DATA__) {
       return 'Connected (Mocked)'
     }
@@ -124,9 +125,11 @@ export const WebSocketProvider = ({
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).__MOCK_WEB_SOCKET_DATA__) {
       dispatch({
         type: 'INITIAL_STATE',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         payload: (window as any).__MOCK_WEB_SOCKET_DATA__,
       })
       return // Skip WebSocket connection logic

@@ -22,6 +22,7 @@ export const test = baseTest.extend<MyFixtures>({
     await use(async (_page, mockData) => {
       await page.addInitScript(
         (data: Record<string, unknown>) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ;(window as any).__MOCK_WEB_SOCKET_DATA__ = data
         },
         [mockData]
