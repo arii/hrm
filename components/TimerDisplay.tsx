@@ -204,13 +204,18 @@ const TimerDisplay = ({
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
-            variant="h6"
+            variant="h5"
             aria-live="polite"
             sx={{
-              mb: 1,
-              color: phaseColor,
+              mb: 2,
+              color: '#000',
+              backgroundColor: phaseColor,
               fontWeight: 700,
-              letterSpacing: 2,
+              letterSpacing: 3,
+              px: 2.5,
+              py: 1,
+              borderRadius: 2,
+              boxShadow: `0 0 15px ${phaseColor}`,
             }}
           >
             {phaseLabel}
@@ -226,12 +231,12 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontSize: { xs: '7rem', sm: '10rem', md: '12rem' },
             fontWeight: 800,
-            letterSpacing: '0.12rem',
+            letterSpacing: '0.15rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 25px ${phaseColor}90`,
           }}
         >
           {displayTime}
