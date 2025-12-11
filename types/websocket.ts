@@ -49,7 +49,9 @@ export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
-  devices: SpotifyDevice[] // <--- ADDED: Synced device list
+  progressMs?: number
+  durationMs?: number
+  devices: SpotifyDevice[]
 }
 
 /**
@@ -134,10 +136,12 @@ export interface SpotifyCommandMessage {
     | 'PREVIOUS'
     | 'TRANSFER_PLAYBACK'
     | 'SET_VOLUME'
-    | 'GET_DEVICES' // <--- ADDED
+    | 'GET_DEVICES'
+    | 'SEEK'
   deviceId?: string
   volume?: number
   playlistUri?: string
+  positionMs?: number
 }
 
 export interface GetStateMessage {
@@ -212,11 +216,13 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('GET_DEVICES'),
+    z.literal('SEEK'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
+  positionMs: z.number().min(0).optional(),
 })
 
 export const GetStateMessageSchema = z.object({

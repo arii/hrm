@@ -23,6 +23,7 @@ import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
+import ProgressBar from './Spotify/ProgressBar'
 
 interface SpotifyDevice {
   id: string
@@ -162,22 +163,40 @@ const SpotifyDisplay = () => {
     }
   }, [availableDevices, selectedDeviceId])
 
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-    targetDeviceId?: string
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...(targetDeviceId && { deviceId: targetDeviceId }),
-    }
-    sendData(message)
-  }
+  const sendSpotifyCommand = useCallback(
+    (
+      command:
+        | 'PLAY'
+        | 'PAUSE'
+        | 'NEXT'
+        | 'PREVIOUS'
+        | 'TRANSFER_PLAYBACK'
+        | 'SEEK',
+      targetDeviceId?: string,
+      positionMs?: number
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...(targetDeviceId && { deviceId: targetDeviceId }),
+        ...(positionMs && { positionMs }),
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
     sendSpotifyCommand(command)
   }
+
+  const handleSeek = useCallback(
+    (positionMs: number) => {
+      sendSpotifyCommand('SEEK', undefined, positionMs)
+    },
+    [sendSpotifyCommand]
+  )
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
@@ -245,39 +264,49 @@ const SpotifyDisplay = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {displayTrackName} {displayArtist}
-          </Typography>
-          {spotifyAuthenticated && !isReady && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'info.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🔄 Connecting Player...
-            </Typography>
-          )}
-          {isReady && deviceId && (
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.8,
-                backgroundColor: 'success.main',
-                color: 'common.white',
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              🎵 Browser Player Active
-            </Typography>
-          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {displayTrackName} {displayArtist}
+              </Typography>
+              {spotifyAuthenticated && !isReady && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    opacity: 0.8,
+                    backgroundColor: 'info.main',
+                    color: 'common.white',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                  }}
+                >
+                  🔄 Connecting Player...
+                </Typography>
+              )}
+              {isReady && deviceId && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    opacity: 0.8,
+                    backgroundColor: 'success.main',
+                    color: 'common.white',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                  }}
+                >
+                  🎵 Browser Player Active
+                </Typography>
+              )}
+            </Box>
+            <ProgressBar
+              progressMs={spotifyData.progressMs || 0}
+              durationMs={spotifyData.durationMs || 0}
+              isPlaying={spotifyData.isPlaying}
+              onSeek={handleSeek}
+            />
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

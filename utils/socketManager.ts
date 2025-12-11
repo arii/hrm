@@ -238,7 +238,8 @@ const handleIncomingMessage = (
             commandMsg.command,
             commandMsg.deviceId,
             commandMsg.volume,
-            commandMsg.playlistUri
+            commandMsg.playlistUri,
+            commandMsg.positionMs
           )
         }
         break

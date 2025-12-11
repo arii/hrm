@@ -24,6 +24,7 @@ type SpotifyCommand =
   | 'SET_VOLUME'
   | 'PAUSE'
   | 'GET_DEVICES'
+  | 'SEEK'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -52,12 +53,15 @@ export class SpotifyPolling {
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
+  private lastProgressMs: number | null = null
 
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
-    devices: [], // <--- ADDED
+    progressMs: 0,
+    durationMs: 0,
+    devices: [],
   }
 
   private sdk: SpotifyApi | null = null
@@ -252,19 +256,29 @@ export class SpotifyPolling {
       }
 
       const isPlaying = playbackState.is_playing
+      const progressMs = playbackState.progress_ms || 0
+      const durationMs = item?.duration_ms || 0
 
-      // Only broadcast if track ID or playback state has changed
+      const progressChanged =
+        progressMs < this.lastProgressMs! ||
+        progressMs > this.lastProgressMs! + 5000
+
+      // Only broadcast if track ID, playback state, or progress has changed
       if (
         item?.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
+        isPlaying !== this.lastPlaybackState ||
+        progressChanged
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
+        this.lastProgressMs = progressMs
         this.state = {
           ...this.state,
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
+          progressMs: progressMs,
+          durationMs: durationMs,
         }
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
@@ -327,7 +341,8 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    positionMs?: number
   ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -341,7 +356,13 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        await this.executeSpotifyCommand(
+          command,
+          deviceId,
+          volume,
+          playlistUri,
+          positionMs
+        )
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
@@ -353,7 +374,8 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    positionMs?: number
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
@@ -397,6 +419,11 @@ export class SpotifyPolling {
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+        }
+        break
+      case 'SEEK':
+        if (positionMs !== undefined) {
+          await this.sdk!.player.seekToPosition(positionMs, deviceId)
         }
         break
       case 'LOGIN':
