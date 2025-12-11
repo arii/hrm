@@ -24,7 +24,7 @@ echo $! > /tmp/storybook.pid
 
 # Wait for Storybook to be ready
 echo "⏳ Waiting for Storybook to become available..."
-npx wait-on http://127.0.0.1:6006 --timeout 60000
+npx wait-on http://127.0.0.1:6006 --timeout 180000
 
 echo "✅ Storybook is ready."
 
