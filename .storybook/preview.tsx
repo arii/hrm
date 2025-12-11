@@ -1,7 +1,7 @@
 // .storybook/preview.ts
 import type { Preview } from "@storybook/react";
 import { CssBaseline, ThemeProvider } from "@mui/material";
-import { theme } from "components/theme";
+import { theme } from "@/components/theme";
 
 export const decorators = [
   (Story) => (
