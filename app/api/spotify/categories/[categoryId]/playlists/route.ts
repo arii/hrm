@@ -47,4 +47,4 @@ async function getPlaylistsForCategory(
   return NextResponse.json({ playlists })
 }
 
-export const GET = withErrorHandler(getPlaylistsForCategory)
+export const GET = withErrorHandler(getPlaylistsForCategory as any)
