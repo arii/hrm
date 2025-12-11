@@ -1,12 +1,7 @@
 // File: services/timer/eventStore.ts
 import fs from 'fs/promises'
 import path from 'path'
-import {
-  reducer,
-  initialState,
-  TimerState,
-  TimerEvent,
-} from './reducer'
+import { reducer, initialState, TimerState, TimerEvent } from './reducer'
 import logger from '../../utils/logger'
 
 const TIMER_STATE_FILE = path.join(process.cwd(), 'logs', 'timer_state.json')
@@ -46,13 +41,13 @@ export class TimerEventStore {
     const timestamp = Date.now()
     const newPersistedEvent: PersistedEvent = { ...event, timestamp }
     this.events.push(newPersistedEvent)
-    this.state = reducer(this.state, event)
+    this.state = reducer(this.state, event as TimerEvent)
     await this.persistToDisk()
     // Broadcasting is now handled by the main service
   }
 
-  public tick() {
-    this.state = reducer(this.state, { type: 'TICK' })
+  public tick(event: TimerEvent) {
+    this.state = reducer(this.state, event)
     // No persistence or broadcasting for ticks
   }
 
@@ -81,15 +76,16 @@ export class TimerEventStore {
           `Successfully loaded and rebuilt ${this.events.length} timer events from disk.`
         )
       }
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
+    } catch (error: unknown) {
+      const fsError = error as NodeJS.ErrnoException
+      if (fsError.code === 'ENOENT') {
         logger.warn(
           `Timer state file not found at ${TIMER_STATE_FILE}. Starting with a clean state.`
         )
         this.events = []
         this.state = initialState
       } else {
-        logger.error({ err: error }, 'Failed to load timer state from disk.')
+        logger.error({ err: fsError }, 'Failed to load timer state from disk.')
       }
     }
   }

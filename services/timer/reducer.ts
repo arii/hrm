@@ -82,7 +82,8 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
 
       let timeRemaining: number
       if (state.mode === 'STOPWATCH') {
-        timeRemaining = state.timeRemaining + (event.pauseTime - state.startTime)
+        timeRemaining =
+          state.timeRemaining + (event.pauseTime - state.startTime)
       } else {
         const elapsedTime = event.pauseTime - state.startTime
         timeRemaining = Math.max(0, (state.targetDuration ?? 0) - elapsedTime)
@@ -118,7 +119,11 @@ export function reducer(state: TimerState, event: TimerEvent): TimerState {
         workDuration: event.workDuration,
         restDuration: event.restDuration,
       }
-      if (!state.isRunning && state.phase === 'IDLE' && state.mode === 'TABATA') {
+      if (
+        !state.isRunning &&
+        state.phase === 'IDLE' &&
+        state.mode === 'TABATA'
+      ) {
         newState.timeRemaining = event.workDuration
       }
       return newState

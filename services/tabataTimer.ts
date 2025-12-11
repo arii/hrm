@@ -201,7 +201,10 @@ export class TabataTimer {
     this.broadcast()
   }
 
-  public async setConfig(config: { workDuration: number; restDuration: number }) {
+  public async setConfig(config: {
+    workDuration: number
+    restDuration: number
+  }) {
     await this.eventStore.dispatch({
       type: 'SET_CONFIG',
       workDuration: config.workDuration,

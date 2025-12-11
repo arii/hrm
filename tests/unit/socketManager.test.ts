@@ -15,7 +15,6 @@ import { IncomingMessage } from 'http'
 import { initSocketManager } from '../../utils/socketManager'
 import { TabataTimer } from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { ServerMessage } from '../../types/websocket'
 
 // Mock dependencies
 jest.mock('ws', () => ({
@@ -44,9 +43,9 @@ describe('WebSocket Manager Integration', () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
     // Create new mock instances for each test
-    tabataTimer = new (TabataTimer as jest.Mock<any, any>)(jest.fn())
-    spotifyService = new (SpotifyPolling as jest.Mock<any, any>)(jest.fn())
-    mockSocket = new (WebSocket as jest.Mock<any, any>)('')
+    tabataTimer = new (TabataTimer as jest.Mock)(jest.fn())
+    spotifyService = new (SpotifyPolling as jest.Mock)(jest.fn())
+    mockSocket = new (WebSocket as jest.Mock)('')
     // Ensure clients set is always fresh
     mockWebSocketServer.clients.clear()
   })
@@ -100,9 +99,7 @@ describe('WebSocket Manager Integration', () => {
     const messageHandler = (mockSocket.on as jest.Mock).mock.calls.find(
       (call) => call[0] === 'message'
     )[1]
-    messageHandler(
-      JSON.stringify({ type: 'TIMER_COMMAND', command: 'START' })
-    )
+    messageHandler(JSON.stringify({ type: 'TIMER_COMMAND', command: 'START' }))
     expect(tabataTimer.handleCommand).toHaveBeenCalledWith('START')
   })
 })

@@ -54,7 +54,6 @@ describe('Services Integration', () => {
     broadcastFn = (message: ServerMessage) => {
       broadcastedMessages.push(message)
     }
-
     ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
       getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
       getSdkAccessToken: jest.fn().mockReturnValue({
