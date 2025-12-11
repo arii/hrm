@@ -32,7 +32,6 @@ export async function middleware(req: NextRequest) {
     const identifier =
       token?.sub ||
       (req.headers.get('x-forwarded-for') as string)?.split(',')[0] ||
-      req.ip ||
       '127.0.0.1'
     const { success, limit, remaining, reset } = await limiter.limit(identifier)
 
