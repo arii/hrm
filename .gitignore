@@ -11,6 +11,7 @@
 # Testing & Coverage
 /coverage
 /test-results/
+/storybook-test-results/
 /playwright-report/
 /test-recordings/
 /tests/playwright/screenshots/

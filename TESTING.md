@@ -68,6 +68,13 @@ The project uses a combination of Jest for unit tests and Playwright for end-to-
   - `mobile-assessment.spec.ts`: Contains tests specifically for mobile viewports.
 - **Snapshots**: Visual snapshots are stored in a `*-snapshots` directory alongside the test file.
 
+### Storybook Interaction Tests (`tests/storybook`)
+
+- **Purpose**: To run fast, targeted interaction tests against individual component stories. This allows for verifying component behavior in isolation without needing to run the full application stack.
+- **Framework**: Playwright integrated with Storybook.
+- **Location**: `tests/storybook/`
+- **Command**: `pnpm run test:storybook`
+
 ---
 
 ## Future Improvements & Test Consolidation Plan
