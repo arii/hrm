@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
   Paper,
-  Fade
+  Fade,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
@@ -82,7 +82,8 @@ export default function ConnectPage() {
   const handleConnect = async () => {
     if (!userName.trim()) return alert('Please enter your name')
     const ageNum = parseInt(userAge)
-    if (!userAge.trim() || ageNum < 1 || ageNum > 120) return alert('Invalid age')
+    if (!userAge.trim() || ageNum < 1 || ageNum > 120)
+      return alert('Invalid age')
 
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
@@ -92,7 +93,8 @@ export default function ConnectPage() {
   const handleDisconnect = () => {
     setIsConnected(false)
     // Clear device ID to prevent immediate auto-reconnect loop
-    document.cookie = 'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+    document.cookie =
+      'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     window.location.reload() // Cleanest way to reset bluetooth state hooks
   }
 
@@ -113,17 +115,20 @@ export default function ConnectPage() {
           pb: 12, // Space for BottomNavBar
           minHeight: '100vh',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
         }}
       >
         {/* VIEW 1: ACTIVE SESSION (Connected) */}
         {isConnected ? (
           <Fade in={true}>
             <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-
               {/* 1. Status Header */}
               <Box sx={{ mb: 2, textAlign: 'center' }}>
-                <Typography variant="overline" color="success.main" fontWeight="bold">
+                <Typography
+                  variant="overline"
+                  color="success.main"
+                  fontWeight="bold"
+                >
                   ● LIVE STREAMING
                 </Typography>
               </Box>
@@ -140,17 +145,34 @@ export default function ConnectPage() {
               </Box>
 
               {/* 3. Minimized Profile Info */}
-              <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Paper
+                variant="outlined"
+                sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}
+              >
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
                   <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                    >
                       SESSION PROFILE
                     </Typography>
                     <Typography variant="body1" fontWeight="500">
-                      {userName} <Typography component="span" color="text.secondary">({userAge}yo)</Typography>
+                      {userName}{' '}
+                      <Typography component="span" color="text.secondary">
+                        ({userAge}yo)
+                      </Typography>
                     </Typography>
                   </Box>
-                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     WS: {connectionStatus}
                   </Typography>
                 </Box>
@@ -166,7 +188,7 @@ export default function ConnectPage() {
                   onClick={handleDisconnect}
                   sx={{
                     borderWidth: 2,
-                    '&:hover': { borderWidth: 2 }
+                    '&:hover': { borderWidth: 2 },
                   }}
                 >
                   STOP & DISCONNECT
@@ -177,10 +199,21 @@ export default function ConnectPage() {
         ) : (
           /* VIEW 2: CONNECTION FORM (Disconnected) */
           <Box sx={{ mt: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight="bold">
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              align="center"
+              fontWeight="bold"
+            >
               Connect Device
             </Typography>
-            <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              align="center"
+              sx={{ mb: 4 }}
+            >
               Enter your details to calculate accurate heart rate zones.
             </Typography>
 
@@ -222,9 +255,9 @@ export default function ConnectPage() {
             </Button>
 
             <Box sx={{ mt: 4, textAlign: 'center' }}>
-               <Typography variant="caption" color="text.secondary">
-                 Server Status: {connectionStatus}
-               </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Server Status: {connectionStatus}
+              </Typography>
             </Box>
           </Box>
         )}
