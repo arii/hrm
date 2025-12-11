@@ -201,19 +201,10 @@ test.describe('Visual Regression Tests', () => {
 
     await controlPage.click('button:has-text("START")', { force: true })
 
-    // wait for broadcast messages to propagate
-    // Use the recommended, specific locator
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
-
     // Use this specific locator in your assertion
-    await dashboardPage.waitForFunction(
-      () => window.testHrm && window.testHrm.getState().timerData.isRunning,
-      { timeout: WAIT_TIMEOUTS.MEDIUM }
-    )
-    await expect(controlPage.getByTestId('stop-button')).toBeVisible()
+    await expect(
+      controlPage.getByRole('button', { name: 'STOP', exact: true })
+    ).toBeVisible()
 
     // Wait for timer to appear on dashboard
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({

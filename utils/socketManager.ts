@@ -15,16 +15,8 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-  WorkoutState,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
-
-let currentWorkoutState: WorkoutState = {
-  isWorkoutActive: false,
-  startTime: null,
-  endTime: null,
-  duration: 0,
-}
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -157,7 +149,6 @@ const handleIncomingMessage = (
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
           hrmData: Array.from(hrmClients.values()),
-          workoutData: currentWorkoutState,
         }
 
         const initialStateMessage: ServerMessage = {
@@ -218,15 +209,6 @@ const handleIncomingMessage = (
             restDuration: message.restDuration,
           })
         }
-        break
-      }
-
-      case 'WORKOUT_COMMAND': {
-        currentWorkoutState = message.payload.state
-        broadcast({
-          type: 'WORKOUT_UPDATE',
-          payload: currentWorkoutState,
-        })
         break
       }
 

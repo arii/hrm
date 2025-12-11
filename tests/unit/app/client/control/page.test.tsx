@@ -2,7 +2,6 @@
 
 import ControlPage from '@/app/client/control/page'
 import { WebSocketProvider } from '@/context/WebSocketContext'
-import { WorkoutProvider } from '@/context/WorkoutContext'
 import { SessionProvider } from 'next-auth/react'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -25,9 +24,7 @@ describe('ControlPage Integration', () => {
     render(
       <SessionProvider session={null}>
         <WebSocketProvider>
-          <WorkoutProvider>
-            <ControlPage />
-          </WorkoutProvider>
+          <ControlPage />
         </WebSocketProvider>
       </SessionProvider>
     )
