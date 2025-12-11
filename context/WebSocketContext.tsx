@@ -119,29 +119,18 @@ export const WebSocketProvider = ({
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    // This effect runs once on mount to check for mock data.
-    // It avoids running on every render, preventing cascading renders.
     if (window.__MOCK_WEB_SOCKET_DATA__) {
       dispatch({
         type: 'INITIAL_STATE',
         payload: window.__MOCK_WEB_SOCKET_DATA__,
       })
       setConnectionStatus('Connected (Mocked)')
-    }
-  }, []) // Empty dependency array ensures this runs only once.
-
-  useEffect(() => {
-    // This effect handles the WebSocket connection and re-connections.
-    // It's separate from the mock data handling to avoid conflicts.
-    if (window.__MOCK_WEB_SOCKET_DATA__) {
-      return // Skip WebSocket connection if using mock data
+      return // Skip WebSocket connection logic
     }
 
-    if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
-      }
+    const savedActions = localStorage.getItem('pendingActions')
+    if (savedActions) {
+      pendingActions.current = JSON.parse(savedActions)
     }
   }, [])
 
