@@ -223,9 +223,8 @@ const SpotifyDisplay = () => {
 
     return (
       <Box
-        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-          spotifyData.isPlaying ? 'Playing' : 'Paused'
-        }${isReady ? ', Browser player ready' : ''}`}
+        component="section" // [!code ++] CHANGE: Use semantic HTML5 tag
+        aria-label="Spotify Player" // [!code ++] CHANGE: Static label for the region
         sx={{
           backgroundColor: 'grey.900',
           color: 'common.white',
@@ -334,6 +333,7 @@ const SpotifyDisplay = () => {
             )}
           </IconButton>
           <Slider
+            aria-label="Volume" // [!code ++] CRITICAL: Fixes "Form elements must have labels"
             value={volume}
             onChange={(_, val) => setVolume(val as number)}
             onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}

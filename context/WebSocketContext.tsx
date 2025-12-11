@@ -20,6 +20,7 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
+// --- State Management (largely unchanged) ---
 interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -50,15 +51,37 @@ const INITIAL_STATE: AppState = {
   spotifyServiceInitialized: true,
 }
 
+const reducer = (state: AppState, message: ServerMessage): AppState => {
+  switch (message.type) {
+    case 'INITIAL_STATE':
+      return { ...state, ...message.payload }
+    case 'HRM_UPDATE':
+      return { ...state, hrmData: message.payload }
+    case 'TIMER_UPDATE':
+      return { ...state, timerData: message.payload }
+    case 'SPOTIFY_UPDATE':
+      return { ...state, spotifyData: message.payload }
+    case 'ACTIVE_ALERTS_UPDATE':
+      return { ...state, activeAlerts: message.payload }
+    case 'SPOTIFY_SERVICE_INIT_UPDATE':
+      return { ...state, spotifyServiceInitialized: message.payload }
+    case 'EXECUTE_SPOTIFY':
+      // This is handled by a global event listener, not state change
+      return state
+    default:
+      return state
+  }
+}
+
+// --- Context Definition ---
 export interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
-  connect: () => void
-  disconnect: () => void
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
+// --- Provider Implementation (Refactored with Robust Hook Logic) ---
 export const WebSocketProvider = ({
   children,
   serverUrl,
@@ -67,40 +90,8 @@ export const WebSocketProvider = ({
   serverUrl?: string
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...')
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const reconnectAttempts = useRef(0)
-  const pendingActions = useRef<ClientCommandMessage[]>([])
-
-  // Configuration for exponential backoff
-  const MAX_RECONNECT_ATTEMPTS = 10
-  const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-  const JITTER_FACTOR = 0.2 // 20% jitter
-
-  // Unified State Object managed by a reducer
-  const reducer = (state: AppState, message: ServerMessage): AppState => {
-    switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
-      case 'TIMER_UPDATE':
-        return { ...state, timerData: message.payload }
-      case 'SPOTIFY_UPDATE':
-        return { ...state, spotifyData: message.payload }
-      case 'ACTIVE_ALERTS_UPDATE':
-        return { ...state, activeAlerts: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      case 'EXECUTE_SPOTIFY':
-        // This message type is handled by useSpotifyRemoteExecution hook
-        // We don't need to update state here, just pass it through
-        return state
-      default:
-        return state
-    }
-  }
-
+  const ws = useRef<WebSocket | null>(null)
+  const [status, setStatus] = useState<'CONNECTING' | 'OPEN' | 'CLOSED'>('CLOSED')
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   const throttledDispatch = useRef(
@@ -109,186 +100,100 @@ export const WebSocketProvider = ({
     }, 100)
   ).current
 
-  const wsRef = useRef<WebSocket | null>(null)
-  const shouldReconnect = useRef(true)
-
-  // Ref to hold the connect function, ensuring it's always up-to-date
-  const connectRef = useRef<() => void>(() => {})
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
-        pendingActions.current = JSON.parse(savedActions)
-      }
-    }
-  }, [])
-
-  const connect = useCallback(() => {
-    if (
-      typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN
-    ) {
-      return
-    }
-
-    shouldReconnect.current = true
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
-      setConnectionStatus('Connected')
-
-      // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
-      }
-
-      // Explicitly request initial state from the server
-      ws.send(JSON.stringify({ type: 'GET_STATE' }))
-
-      if (pendingActions.current.length > 0) {
-        console.log(
-          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
-        )
-        pendingActions.current.forEach((action) => {
-          ws.send(JSON.stringify(action))
-        })
-        pendingActions.current = []
-        localStorage.setItem('pendingActions', '[]')
-      }
-
-      // Reset reconnect attempts on successful connection
-      reconnectAttempts.current = 0
-
-      // Clear any pending reconnection
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-        reconnectTimeoutRef.current = null
-      }
-    }
-
-    ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
-      )
-      setConnectionStatus('Disconnected')
-
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
-      }
-
-      if (shouldReconnect.current) {
-        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts.current++
-          const delay =
-            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
-          const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
-          const reconnectDelay = delay + jitter
-
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
-          )
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
-            connectRef.current()
-          }, reconnectDelay)
-        } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
-          setConnectionStatus(
-            'Failed to connect. Please check your connection and refresh the page.'
-          )
-        }
-      }
-    }
-
-    ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
-      setConnectionStatus('Error')
-    }
-
-    ws.onmessage = (event) => {
+  const onMessage = useCallback(
+    (event: MessageEvent) => {
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
-            new CustomEvent('spotify-remote-command', {
-              detail: message,
-            })
+            new CustomEvent('spotify-remote-command', { detail: message })
           )
           return
         }
 
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
           dispatch(message)
         }
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
-    }
-  }, [wsUrl, throttledDispatch])
+    },
+    [throttledDispatch]
+  )
 
-  const disconnect = useCallback(() => {
-    shouldReconnect.current = false
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
+  const connect = useCallback(() => {
+    if (ws.current?.readyState === WebSocket.OPEN || ws.current?.readyState === WebSocket.CONNECTING) {
+      return
     }
-    if (wsRef.current) {
-      wsRef.current.close()
+
+    setStatus('CONNECTING')
+    ws.current = new WebSocket(wsUrl)
+
+    ws.current.onopen = () => {
+      console.log('[WebSocketProvider] Connected to server')
+      setStatus('OPEN')
+      // On connect, request the initial state
+      ws.current?.send(JSON.stringify({ type: 'GET_STATE' }))
     }
-    console.log('[useWebSocket] Manually disconnected.')
-  }, [])
+
+    ws.current.onmessage = onMessage
+
+    ws.current.onclose = () => {
+      console.log('[WebSocketProvider] Disconnected. Reconnecting...')
+      setStatus('CLOSED')
+      // Simple reconnect delay from the user's example
+      setTimeout(connect, 1000)
+    }
+
+    ws.current.onerror = (err) => {
+      console.error('[WebSocketProvider] Connection error', err)
+      // The onclose event will fire next, triggering reconnection logic.
+    }
+  }, [wsUrl, onMessage])
 
   useEffect(() => {
-    connectRef.current = connect
     connect()
-
     return () => {
-      disconnect()
+      // Prevent reconnection logic from firing on unmount
+      if (ws.current) {
+        ws.current.onclose = null
+        ws.current.close()
+      }
     }
-  }, [connect, disconnect])
+  }, [connect])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
+    if (ws.current?.readyState === WebSocket.OPEN) {
       console.log('[WebSocketProvider] Sending:', data)
-      ws.send(jsonStr)
+      ws.current.send(JSON.stringify(data))
     } else {
       console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
+        '[WebSocketProvider] WebSocket not open, message dropped. State:',
+        ws.current?.readyState,
         'Data:',
         data
       )
-      pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
     }
   }, [])
 
-  const contextValue = {
+  const mapStatusToString = (s: typeof status): string => {
+    switch (s) {
+      case 'CONNECTING':
+        return 'Connecting...'
+      case 'OPEN':
+        return 'Connected'
+      case 'CLOSED':
+        return 'Disconnected'
+    }
+  }
+
+  const contextValue: WebSocketContextType = {
     ...appState,
-    connectionStatus,
+    connectionStatus: mapStatusToString(status),
     sendData,
-    connect,
-    disconnect,
   }
 
   return (
@@ -298,6 +203,7 @@ export const WebSocketProvider = ({
   )
 }
 
+// --- Hook for consuming context ---
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext)
   if (!context) {

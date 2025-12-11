@@ -69,7 +69,7 @@ export const MockWebSocketProvider = ({
 }: MockProviderProps) => {
   // 1. Initialize State
   const [state, setState] = useState({ ...DEFAULT_STATE, ...initialState })
-  const [connectionStatus, setConnectionStatus] = useState('Connected')
+  const [connectionStatus] = useState('Connected')
 
   // 2. Scenario Engine
   useEffect(() => {
@@ -116,23 +116,11 @@ export const MockWebSocketProvider = ({
     }
   }, [])
 
-  const connect = useCallback(() => {
-    setConnectionStatus('Connected')
-    action('WebSocket')('Connect called')
-  }, [])
-
-  const disconnect = useCallback(() => {
-    setConnectionStatus('Disconnected')
-    action('WebSocket')('Disconnect called')
-  }, [])
-
   // 4. Construct Context
   const contextValue: WebSocketContextType = {
     ...state,
     connectionStatus,
     sendData,
-    connect,
-    disconnect,
   }
 
   return (

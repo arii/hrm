@@ -197,6 +197,7 @@ const SpotifyControls = () => {
               sx={{ mb: 2 }}
             >
               <IconButton
+                aria-label="Previous track"
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
                 data-testid="spotify-prev"
                 disabled={connectionStatus !== 'Connected'}
@@ -208,6 +209,7 @@ const SpotifyControls = () => {
                 <SkipPrevious />
               </IconButton>
               <IconButton
+                aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
                 onClick={() =>
                   sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
                 }
@@ -222,6 +224,7 @@ const SpotifyControls = () => {
                 {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               </IconButton>
               <IconButton
+                aria-label="Next track"
                 onClick={() => sendSpotifyCommand('NEXT')}
                 data-testid="spotify-next"
                 disabled={connectionStatus !== 'Connected'}

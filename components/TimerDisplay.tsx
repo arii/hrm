@@ -74,8 +74,20 @@ const TimerDisplay = ({
     phaseLabel = 'READY'
   }
 
+  const srAnnouncement =
+    phase === 'WORK'
+      ? 'Go! Work phase.'
+      : phase === 'REST'
+        ? 'Rest phase.'
+        : phase === 'PREPARE'
+          ? 'Get ready.'
+          : phase === 'COOLDOWN'
+            ? 'Cooldown.'
+            : ''
   return (
     <Card
+      component="section"
+      aria-label="Tabata Timer"
       elevation={6}
       data-testid="timer-display-container"
       sx={{
@@ -200,12 +212,30 @@ const TimerDisplay = ({
           justifyContent: 'center',
         }}
       >
+        {/* Announce phase changes to screen readers */}
+        {srAnnouncement && (
+          <Box
+            component="div"
+            aria-live="assertive"
+            sx={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              margin: '-1px',
+              padding: '0',
+              overflow: 'hidden',
+              clip: 'rect(0, 0, 0, 0)',
+              border: '0',
+            }}
+          >
+            {srAnnouncement}
+          </Box>
+        )}
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
             variant="h6"
-            aria-live="polite"
             sx={{
               mb: 1,
               color: phaseColor,
@@ -217,25 +247,24 @@ const TimerDisplay = ({
           </Typography>
         )}
 
-        {/* Giant Timer Display */}
-        <Typography
-          data-testid="timer-countdown"
-          component="div"
-          role="timer"
-          aria-live="polite"
-          aria-atomic="true"
-          sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
-            color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
-          }}
-        >
-          {displayTime}
-        </Typography>
+        {/* Giant Timer Display (Visual Only) */}
+        <Box aria-hidden="true">
+          <Typography
+            data-testid="timer-countdown"
+            component="div"
+            sx={{
+              fontFamily: 'var(--font-roboto-mono), monospace',
+              fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+              fontWeight: 800,
+              letterSpacing: '0.12rem',
+              lineHeight: 1,
+              color: phaseColor,
+              textShadow: `0 0 20px ${phaseColor}80`,
+            }}
+          >
+            {displayTime}
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   )

@@ -12,7 +12,6 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-import HrmTiles from '../components/HrmTiles'
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
@@ -41,6 +40,15 @@ const WorkoutTableViewer = dynamic(
 const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={500} />,
+})
+
+const HrmTiles = dynamic(() => import('../components/HrmTiles'), {
+  ssr: false,
+  loading: () => (
+    <Grid size={{ xs: 12, lg: 6 }}>
+      <Skeleton variant="rectangular" height={300} />
+    </Grid>
+  ),
 })
 
 const DOC_ID =
@@ -76,6 +84,7 @@ const Dashboard = () => {
 
   return (
     <Container
+      component="main" // [!code ++] CHANGE: Defines the main landmark
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{
