@@ -27,19 +27,23 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
+    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         useESM: true,
         tsconfig: {
           module: 'ES2022',
-          moduleResolution: 'node',
+          moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
         },
       },
     ],
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!uuid)', // Ensure uuid is transformed
+  ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
