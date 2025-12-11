@@ -3,12 +3,10 @@
  * Hook to manage Web Bluetooth connection to a Heart Rate Monitor (HRM) device.
  * It streams data using the provided sendData function (from useWebSocket).
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
-
-import { useWebSocket } from '@/context/WebSocketContext'
-
-import { HrmInputData, HrmInputMessage } from '../types/websocket'
+import { useCallback, useState, useRef, useEffect } from 'react'
+import { HrmInputMessage, HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'

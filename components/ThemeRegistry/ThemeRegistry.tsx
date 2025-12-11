@@ -1,11 +1,12 @@
 'use client'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
+import { useServerInsertedHTML } from 'next/navigation'
+import * as React from 'react'
+
 // --- ADD THESE IMPORTS ---
 import CssBaseline from '@mui/material/CssBaseline'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
-import { useServerInsertedHTML } from 'next/navigation'
-import * as React from 'react'
 // --- END OF NEW IMPORTS ---
 
 // This implementation is taken directly from the MUI official docs:

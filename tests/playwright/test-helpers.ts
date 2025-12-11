@@ -19,21 +19,21 @@ import { getBaseURL } from '../../utils/urls'
 
 // Re-export all utilities from the new library for backward compatibility
 export {
+  // Wait utilities
+  waitForPageReady,
+  waitForFontsLoaded,
+  waitForWebSocketConnection,
+  // Mask selectors and helpers
+  VRT_MASK_SELECTORS,
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
   // Setup utilities
   replaceIframeWithStableWorkout,
+  setupVisualRegressionTest,
+  setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
-  setupMinimalVisualRegressionTest,
-  setupVisualRegressionTest,
-  // Mask selectors and helpers
-  VRT_MASK_SELECTORS,
-  waitForFontsLoaded,
-  // Wait utilities
-  waitForPageReady,
-  waitForWebSocketConnection,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

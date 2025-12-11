@@ -1,20 +1,20 @@
-import type { Preview } from '@storybook/react'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { CssBaseline } from '@mui/material'
-import { SessionProvider } from 'next-auth/react'
-import { initialize, mswLoader } from 'msw-storybook-addon'
-import React from 'react'
-import { handlers } from '../stories/mocks/handlers'
+import type { Preview } from "@storybook/react";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
+import { SessionProvider } from "next-auth/react";
+import { initialize, mswLoader } from "msw-storybook-addon";
+import React from "react";
+import { handlers } from "../stories/mocks/handlers";
 
 // Initialize MSW
-initialize({}, handlers)
+initialize({}, handlers);
 
 // Minimal theme for storybook matching your app's dark mode
 const theme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-})
+    palette: {
+        mode: 'dark',
+    }
+});
 
 const preview: Preview = {
   parameters: {
@@ -41,6 +41,6 @@ const preview: Preview = {
       </SessionProvider>
     ),
   ],
-}
+};
 
-export default preview
+export default preview;

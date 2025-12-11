@@ -1,20 +1,20 @@
 // components/WorkoutTableViewer.tsx
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
-  Alert,
-  Box,
-  CircularProgress,
-  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Paper,
+  CircularProgress,
   Typography,
+  Alert,
+  Box,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
 
 interface WorkoutData {
   headers: string[]

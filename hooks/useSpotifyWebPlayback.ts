@@ -1,9 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-
-import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 import { useError } from '@/context/ErrorContext'
+import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {

@@ -5,9 +5,8 @@
  * a direct reference to the WebSocket server instance, preventing circular
  * dependency issues.
  */
-import { Server as WebSocketServer, WebSocket } from 'ws'
-
 import { ServerMessage } from '../types/websocket'
+import { WebSocket, Server as WebSocketServer } from 'ws'
 
 let wssInstance: WebSocketServer | null = null
 

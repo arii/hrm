@@ -9,7 +9,6 @@
  */
 import type { BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-
 import { getBaseURL } from '../../../utils/urls'
 import { waitForFontsLoaded, waitForPageReady } from './waits'
 

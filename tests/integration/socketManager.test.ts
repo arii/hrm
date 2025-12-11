@@ -1,12 +1,11 @@
 // tests/integration/socketManager.test.ts
-import { ChildProcess, execSync, spawn } from 'child_process'
-import http from 'http'
+import { spawn, ChildProcess, execSync } from 'child_process'
 import WebSocket from 'ws'
-
+import http from 'http'
 import {
-  HrmInputMessage,
-  TimerCommandMessage,
   UnifiedStateMessage,
+  TimerCommandMessage,
+  HrmInputMessage,
 } from '../../types/websocket'
 
 jest.setTimeout(60000) // 60s timeout for server start and tests

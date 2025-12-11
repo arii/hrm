@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const MAX_DELAY = 30000 // 30 seconds
 const INITIAL_DELAY = 1000 // 1 second

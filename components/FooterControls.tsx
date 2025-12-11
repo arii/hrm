@@ -1,7 +1,6 @@
 'use client'
 
 import Box from '@mui/material/Box'
-
 import BottomNavBar from './BottomNavBar'
 
 export default function FooterControls() {

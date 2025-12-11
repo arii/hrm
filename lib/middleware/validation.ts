@@ -4,8 +4,8 @@
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
 
-import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { NextResponse } from 'next/server'
 
 /**
  * Defines the type for an App Router API route handler after it has been

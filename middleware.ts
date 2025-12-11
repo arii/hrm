@@ -3,8 +3,8 @@
  * Middleware to handle reverse proxy headers for NextAuth.js
  * This ensures that HTTPS cookies work properly behind a reverse proxy.
  */
-import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 // Base path for auth routes
 const API_AUTH_BASE = '/api/auth/'

@@ -1,15 +1,13 @@
 // File: components/HrTile.tsx
 'use client'
+import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
+import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-
-import { HrTileProps } from '@/types'
-import { getHrZoneProps } from '@/utils/visualization'
-
 import StyledCard from './shared/StyledCard'
 
 // Define the style for the centered overlay

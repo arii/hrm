@@ -9,18 +9,16 @@ import {
   Box,
   Button,
   Container,
-  Fade,
-  Paper,
   TextField,
   Typography,
+  Paper,
+  Fade,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-
-import { useWebSocket } from '@/context/WebSocketContext'
-
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 
 // --- Helper Functions ---

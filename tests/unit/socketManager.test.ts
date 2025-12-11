@@ -9,13 +9,12 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { EventEmitter } from 'events'
-import { Server as WebSocketServer } from 'ws'
-
-import { SpotifyPolling } from '../../services/spotifyPolling'
-import TabataTimer from '../../services/tabataTimer'
-import { StateSnapshot } from '../../types/websocket'
 import { initSocketManager } from '../../utils/socketManager'
+import { Server as WebSocketServer } from 'ws'
+import { EventEmitter } from 'events'
+import TabataTimer from '../../services/tabataTimer'
+import { SpotifyPolling } from '../../services/spotifyPolling'
+import { StateSnapshot } from '../../types/websocket'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')

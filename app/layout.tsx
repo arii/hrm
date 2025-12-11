@@ -1,8 +1,5 @@
-import './globals.css'
-
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -13,6 +10,7 @@ import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',

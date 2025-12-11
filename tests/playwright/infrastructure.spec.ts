@@ -1,7 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
-
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**

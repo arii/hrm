@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyExecutionMessage } from '@/types/websocket'
 

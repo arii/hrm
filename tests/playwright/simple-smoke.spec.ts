@@ -1,6 +1,5 @@
 // File: tests/playwright/simple-smoke.spec.ts
-import { expect, test } from '@playwright/test'
-
+import { test, expect } from '@playwright/test'
 import { BASE_URL } from './test-helpers'
 
 test.describe('Simple Smoke Test', () => {

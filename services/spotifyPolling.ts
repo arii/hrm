@@ -1,8 +1,7 @@
-import { AccessToken, Device, SpotifyApi } from '@spotify/web-api-ts-sdk'
-
+import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
-import logger from '../utils/logger.js'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
+import logger from '../utils/logger.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {

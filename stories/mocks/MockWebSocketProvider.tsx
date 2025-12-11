@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import {
-  WebSocketContext,
-  WebSocketContextType,
-} from '@/context/WebSocketContext'
+import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketContext'
 import {
   ServerMessage,
   ClientCommandMessage,
@@ -95,7 +92,7 @@ export const MockWebSocketProvider = ({
             case 'ACTIVE_ALERTS_UPDATE':
               return { ...prev, activeAlerts: message.payload }
             case 'INITIAL_STATE':
-              return { ...prev, ...message.payload }
+               return { ...prev, ...message.payload }
             default:
               return prev
           }
@@ -115,10 +112,7 @@ export const MockWebSocketProvider = ({
 
     // Optional: Auto-respond to specific commands if needed
     if (data.type === 'TIMER_COMMAND' && data.command === 'START') {
-      setState((prev) => ({
-        ...prev,
-        timerData: { ...prev.timerData, isRunning: true },
-      }))
+        setState(prev => ({ ...prev, timerData: { ...prev.timerData, isRunning: true }}))
     }
   }, [])
 
