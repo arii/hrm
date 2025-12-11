@@ -60,8 +60,6 @@ jobs:
       # --- GLOBAL PERSISTENCE CONFIG ---
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          run_install: false
 
       - name: Configure Persistent Store
         shell: bash
@@ -173,6 +171,38 @@ jobs:
           reporter: java-junit
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
+      - name: Start Application for Performance Test
+        if: always() && steps.build.outcome == 'success'
+        run: pnpm run start
+
+      - name: Run Performance Test
+        id: perf_tests
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          set -o pipefail
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/performance-output.log
+        continue-on-error: true
+
+      - name: Publish Performance Test Results to GitHub Checks
+        uses: dorny/test-reporter@v1
+        if: always() && steps.perf_tests.outcome != 'skipped'
+        with:
+          name: Performance Tests Report
+          path: test-results/perf-results.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      - name: Upload Performance Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-metrics
+          path: test-results/performance-metrics.json
+
+      - name: Stop Application
+        if: always()
+        run: pnpm run pm2:stop
+
       - name: Run Visual Tests
         id: visual_tests
         run: |
@@ -180,22 +210,6 @@ jobs:
           pnpm run test:visual 2>&1 | tee logs/visual-output.log
         # NOTE: This generates files in the default ./blob-report directory
         continue-on-error: true
-
-      # --- NEW SECTION: PERFORMANCE PROFILING ---
-      - name: Run Performance Profiling
-        id: perf_tests
-        if: always() && steps.build.outcome == 'success' # Only run if build passed
-        run: |
-          set -o pipefail
-          # 1. Defensive Cleanup: Ensure no stray servers from visual tests are hogging port 3000
-          pnpm run pm2:delete || true
-          fuser -k 3000/tcp || true
-
-          # 2. Run the Combined Profiling Suite
-          # (Ensure 'profile:all' is defined in package.json as: "bash scripts/profile-server.sh && bash scripts/profile-frontend.sh")
-          pnpm run profile:all 2>&1 | tee logs/performance-output.log
-        continue-on-error: true
-      # ------------------------------------------
 
       - name: Publish Visual Test Results to GitHub Checks
         uses: dorny/test-reporter@v1
@@ -272,7 +286,7 @@ jobs:
             FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
           fi
           if [ "${{ steps.perf_tests.outcome }}" == "failure" ]; then
-             FAILED_CHECKS="${FAILED_CHECKS}Performance Profiling, "
+             FAILED_CHECKS="${FAILED_CHECKS}Performance Tests, "
           fi
           FAILED_CHECKS="${FAILED_CHECKS%, }"
 

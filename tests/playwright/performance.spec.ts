@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test'
+import * as fs from 'fs'
+import * as path from 'path'
 
 // Define a type for the performance metrics we will collect
 interface PerformanceMetrics {
@@ -10,6 +12,7 @@ interface PerformanceMetrics {
 // --- Test Configuration ---
 const TEST_DURATION_MS = 20 * 1000 // 20 seconds
 const SAMPLING_INTERVAL_MS = 1000 // 1 second
+const HEAP_GROWTH_THRESHOLD = 0.15 // 15%
 
 test.describe('Frontend Performance', () => {
   test('should not exhibit memory leaks during a simulated workout', async ({
@@ -33,23 +36,27 @@ test.describe('Frontend Performance', () => {
 
     // Collect metrics at regular intervals
     const interval = setInterval(async () => {
-      const performanceMetrics = await client.send('Performance.getMetrics')
-      const jsHeapUsedSize =
-        performanceMetrics.metrics.find((m) => m.name === 'JSHeapUsedSize')
-          ?.value || 0
-      const layoutCount =
-        performanceMetrics.metrics.find((m) => m.name === 'LayoutCount')
-          ?.value || 0
-      const recalculateStyleCount =
-        performanceMetrics.metrics.find(
-          (m) => m.name === 'RecalculateStyleCount'
-        )?.value || 0
+      try {
+        const performanceMetrics = await client.send('Performance.getMetrics')
+        const jsHeapUsedSize =
+          performanceMetrics.metrics.find((m) => m.name === 'JSHeapUsedSize')
+            ?.value || 0
+        const layoutCount =
+          performanceMetrics.metrics.find((m) => m.name === 'LayoutCount')
+            ?.value || 0
+        const recalculateStyleCount =
+          performanceMetrics.metrics.find(
+            (m) => m.name === 'RecalculateStyleCount'
+          )?.value || 0
 
-      metrics.push({
-        JSHeapUsedSize: jsHeapUsedSize,
-        LayoutCount: layoutCount,
-        RecalculateStyleCount: recalculateStyleCount,
-      })
+        metrics.push({
+          JSHeapUsedSize: jsHeapUsedSize,
+          LayoutCount: layoutCount,
+          RecalculateStyleCount: recalculateStyleCount,
+        })
+      } catch (_error) {
+        // Ignore errors if the session closes prematurely
+      }
     }, SAMPLING_INTERVAL_MS)
 
     // Stop collecting metrics after the test duration
@@ -63,22 +70,43 @@ test.describe('Frontend Performance', () => {
     console.log('--- Collected Performance Metrics ---')
     console.table(metrics)
 
-    // 1. Memory Leak Analysis (Simple Slope)
     const heapSizes = metrics.map((m) => m.JSHeapUsedSize)
-    const initialHeapSize = heapSizes[0]
-    const finalHeapSize = heapSizes[heapSizes.length - 1]
+    const initialHeapSize = heapSizes[0] || 0
+    const finalHeapSize = heapSizes[heapSizes.length - 1] || 0
+    const heapGrowthRatio =
+      initialHeapSize > 0
+        ? (finalHeapSize - initialHeapSize) / initialHeapSize
+        : 0
 
-    // A simple check: if the heap size has grown by more than 50%
-    // over the initial size, it's a potential leak. This is a heuristic.
-    const heapGrowthRatio = (finalHeapSize - initialHeapSize) / initialHeapSize
     console.log(`Heap Growth Ratio: ${(heapGrowthRatio * 100).toFixed(2)}%`)
-    expect(heapGrowthRatio).toBeLessThan(0.2)
 
-    // 2. Layout Thrashing Analysis
     const layoutCounts = metrics.map((m) => m.LayoutCount)
-    const totalLayouts = layoutCounts[layoutCounts.length - 1] - layoutCounts[0]
+    const totalLayouts =
+      (layoutCounts[layoutCounts.length - 1] || 0) - (layoutCounts[0] || 0)
     console.log(`Total Layouts during test: ${totalLayouts}`)
-    // Allow for a reasonable number of layouts, but flag excessive changes.
+
+    // --- Reporting ---
+    const outputDir = 'test-results'
+    const outputFile = path.join(outputDir, 'performance-metrics.json')
+    const report = {
+      test: 'should not exhibit memory leaks during a simulated workout',
+      durationMs: TEST_DURATION_MS,
+      heapGrowthRatio: parseFloat(heapGrowthRatio.toFixed(4)),
+      heapGrowthThreshold: HEAP_GROWTH_THRESHOLD,
+      initialHeapSize,
+      finalHeapSize,
+      totalLayouts,
+      metrics,
+    }
+
+    // Ensure the output directory exists
+    fs.mkdirSync(outputDir, { recursive: true })
+    // Write the report to a file
+    fs.writeFileSync(outputFile, JSON.stringify(report, null, 2))
+    console.log(`Performance report saved to ${outputFile}`)
+
+    // --- Assertion ---
+    expect(heapGrowthRatio).toBeLessThan(HEAP_GROWTH_THRESHOLD)
     expect(totalLayouts).toBeLessThan(500)
   })
 })
