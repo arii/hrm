@@ -61,7 +61,7 @@ const Dashboard = () => {
   // Signal when page is ready for testing
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.__TEST_READY__ = true
+      ;(window as any).__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
     }
   }, [])

@@ -68,7 +68,7 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState(() => {
-    if (typeof window !== 'undefined' && window.__MOCK_WEB_SOCKET_DATA__) {
+    if (typeof window !== 'undefined' && (window as any).__MOCK_WEB_SOCKET_DATA__) {
       return 'Connected (Mocked)'
     }
     return 'Connecting...'
@@ -124,10 +124,10 @@ export const WebSocketProvider = ({
   const connectRef = useRef<() => void>(() => {})
 
   useEffect(() => {
-    if (window.__MOCK_WEB_SOCKET_DATA__) {
+    if ((window as any).__MOCK_WEB_SOCKET_DATA__) {
       dispatch({
         type: 'INITIAL_STATE',
-        payload: window.__MOCK_WEB_SOCKET_DATA__,
+        payload: (window as any).__MOCK_WEB_SOCKET_DATA__,
       })
       return // Skip WebSocket connection logic
     }

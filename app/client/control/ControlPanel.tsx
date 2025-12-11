@@ -58,7 +58,7 @@ const ControlPanel = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
+        ;(window as any).__TEST_READY__ = true
         window.dispatchEvent(new CustomEvent('test-ready'))
       }
     }, 1500)
