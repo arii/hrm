@@ -3,7 +3,13 @@ import { NextResponse } from 'next/server'
 import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
-type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
+// The original type was too restrictive for dynamic route handlers.
+// This generic type allows the handler to accept additional arguments,
+// like the `params` object from Next.js dynamic routes.
+type ApiHandler<T extends unknown[] = unknown[]> = (
+  req: Request,
+  ...args: T
+) => Promise<NextResponse>
 
 /**
  * Wraps an API route handler to provide centralized error handling.
@@ -14,8 +20,10 @@ type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
  * @param handler The API route handler to wrap.
  * @returns A new handler with error handling.
  */
-export function withErrorHandler(handler: ApiHandler): ApiHandler {
-  return async (req: Request, ...args: unknown[]) => {
+export function withErrorHandler<T extends unknown[] = unknown[]>(
+  handler: ApiHandler<T>
+): ApiHandler<T> {
+  return async (req: Request, ...args: T) => {
     try {
       return await handler(req, ...args)
     } catch (error) {

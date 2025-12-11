@@ -28,11 +28,10 @@ async function getPlaylistsForCategory(
 
   const { categoryId } = params
 
-  const playlistsResponse = await spotify.browse.getCategoryPlaylists(
+  const playlistsResponse = await spotify.browse.getPlaylistsForCategory(
     categoryId,
-    {
-      limit: 50,
-    }
+    undefined,
+    50
   )
 
   const playlists = playlistsResponse.playlists.items.map((playlist) => ({

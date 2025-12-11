@@ -42,7 +42,7 @@ describe('/api/spotify/categories/[categoryId]/playlists', () => {
     })
     mockSpotifyApi.withAccessToken.mockReturnValue({
       browse: {
-        getCategoryPlaylists: mockGetCategoryPlaylists,
+        getPlaylistsForCategory: mockGetCategoryPlaylists,
       },
     } as unknown as SpotifyApi)
 
