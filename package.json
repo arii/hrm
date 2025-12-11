@@ -108,7 +108,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/express": "^5.0.5",
-    "@types/helmet": "^4.0.0",
     "@types/jest": "^30.0.0",
     "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.21",

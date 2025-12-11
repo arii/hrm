@@ -26,7 +26,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
 
     // 2. Navigate and Wait for Component
     await page.goto(`${BASE_URL}/client/control`)
-
+    await page.evaluate(() => new Promise(resolve => window.addEventListener('test-ready', resolve)))
     // Wait for both components to be ready
     await expect(page.getByTestId('spotify-controls-card')).toBeVisible({
       timeout: 10000,

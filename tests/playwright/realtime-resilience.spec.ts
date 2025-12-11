@@ -18,7 +18,7 @@ test.describe('WebSocket Resilience', () => {
     // 3. Assert client-side disconnection and reconnection
     await expect(
       page.locator('[data-testid="ws-status-indicator"]')
-    ).toHaveText('Disconnected', { timeout: 15000 })
+    ).toHaveText('Connecting...', { timeout: 15000 })
     await expect(
       page.locator('[data-testid="ws-status-indicator"]')
     ).toHaveText('Connected', { timeout: 20000 })

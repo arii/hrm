@@ -12,21 +12,14 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-<<<<<<< HEAD
+import { useAudio } from '../hooks/useAudio'
+
 const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
   ssr: false,
   loading: () => <Skeleton variant="rectangular" height={300} />,
 })
 import { useWebSocket } from '@/context/WebSocketContext'
-import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-=======
-import HrmTiles from '../components/HrmTiles'
-import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
->>>>>>> origin/leader
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -87,7 +80,7 @@ const Dashboard = () => {
 
   return (
     <Container
-      component="main" // [!code ++] CHANGE: Defines the main landmark
+      component="main"
       maxWidth="xl"
       onClick={handleInteraction}
       sx={{
