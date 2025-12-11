@@ -2,7 +2,7 @@
 
 import { TextEncoder, TextDecoder } from 'util'
 global.TextEncoder = TextEncoder
-global.TextDecoder = TextDecoder as any
+global.TextDecoder = TextDecoder as typeof global.TextDecoder
 
 import 'whatwg-fetch'
 import CategoryBrowser from '@/components/Spotify/CategoryBrowser'

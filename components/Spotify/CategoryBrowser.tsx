@@ -221,9 +221,7 @@ const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
             key={category.id}
             label={category.name}
             onClick={() => setSelectedCategory(category)}
-            color={
-              selectedCategory?.id === category.id ? 'primary' : 'default'
-            }
+            color={selectedCategory?.id === category.id ? 'primary' : 'default'}
           />
         ))}
       </Box>

@@ -1,7 +1,6 @@
 /** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/categories/[categoryId]/playlists/route'
-import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 
@@ -45,7 +44,7 @@ describe('/api/spotify/categories/[categoryId]/playlists', () => {
       browse: {
         getCategoryPlaylists: mockGetCategoryPlaylists,
       },
-    } as any)
+    } as unknown as SpotifyApi)
 
     const response = await GET(new Request('http://localhost/'), {
       params: { categoryId: 'workout' },

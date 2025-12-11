@@ -1,7 +1,6 @@
 /** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/categories/route'
-import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 
@@ -38,7 +37,7 @@ describe('/api/spotify/categories', () => {
       browse: {
         getCategories: mockGetCategories,
       },
-    } as any)
+    } as unknown as SpotifyApi)
 
     const response = await GET(new Request('http://localhost/'))
     const data = await response.json()
