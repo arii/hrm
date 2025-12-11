@@ -1,6 +1,5 @@
 // eslint.config.mjs
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals.js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import tseslint from 'typescript-eslint'
@@ -18,9 +17,6 @@ export default [
       'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors with TypeScript
     },
   },
-
-  // Next.js specific rules and configurations (includes TypeScript support)
-  nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
 
   // Apply TypeScript rules without redefining the plugin
   {
