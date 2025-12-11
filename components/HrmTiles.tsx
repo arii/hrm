@@ -41,10 +41,7 @@ const HrmTiles = () => {
 
         return (
           <Grid
-            item
-            xs={12}
-            sm={6}
-            lg={3}
+            size={{ xs: 12, sm: 6, lg: 3 }}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -68,7 +65,7 @@ const HrmTiles = () => {
   return (
     <>
       {isDisconnected && (
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Chip
             icon={<BluetoothDisconnectedIcon />}
             label="Bluetooth Disconnected"
@@ -80,14 +77,14 @@ const HrmTiles = () => {
 
       {isLoading || filteredTiles.length === 0 ? (
         <>
-          <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
             <Skeleton
               variant="rectangular"
               height={220}
               sx={{ borderRadius: 3 }}
             />
           </Grid>
-          <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
             <Skeleton
               variant="rectangular"
               height={220}
