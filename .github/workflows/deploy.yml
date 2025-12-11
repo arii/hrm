@@ -46,18 +46,14 @@ jobs:
           # 2. Package Artifact (Hybrid Strategy)
           ./scripts/package.sh
 
-      - name: 🚚 Transfer Artifact & Script
+      - name: 🚚 Transfer Artifact
         env:
           PROD_HOST: ${{ secrets.PROD_HOST }}
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_PATH: ${{ secrets.PROD_PATH }}
         run: |
-          # 1. Transfer the Release Archive
+          # Transfer the Release Archive (contains all scripts)
           scp release.tar.gz $PROD_USER@$PROD_HOST:$PROD_PATH/
-
-          # 2. Transfer the Deploy Script explicitly to ensure we use the LATEST logic
-          # We rename it to 'deploy.sh' in the root for easier execution
-          scp scripts/deploy-artifact.sh $PROD_USER@$PROD_HOST:$PROD_PATH/deploy.sh
 
       - name: 🚀 Execute Deployment
         env:
@@ -65,5 +61,5 @@ jobs:
           PROD_USER: ${{ secrets.PROD_USER }}
           PROD_PATH: ${{ secrets.PROD_PATH }}
         run: |
-          # We now run 'deploy.sh' which we just uploaded
-          ssh $PROD_USER@$PROD_HOST "chmod +x $PROD_PATH/deploy.sh && $PROD_PATH/deploy.sh"
+          # Extract tarball and run deploy script (which it contains)
+          ssh $PROD_USER@$PROD_HOST "bash -l -c 'cd $PROD_PATH && tar -xzf release.tar.gz --overwrite && ./scripts/deploy-artifact.sh'"

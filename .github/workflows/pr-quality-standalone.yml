@@ -201,7 +201,7 @@ jobs:
 
       - name: Stop Application
         if: always()
-        run: pnpm run pm2:stop
+        run: pnpm run kill-all || true
 
       - name: Run Visual Tests
         id: visual_tests

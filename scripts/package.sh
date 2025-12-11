@@ -10,7 +10,8 @@ mkdir -p release_build
 # 2. Copy the Next.js Standalone build as the base
 # This gives us a minimal .next folder and a partial node_modules
 echo "📋 Copying Standalone base..."
-cp -r .next/standalone/* release_build/
+cp -r .next/standalone/node_modules release_build/
+cp -r .next/standalone/.next release_build/
 
 # 3. Restore Client-Side Static Assets
 # Standalone excludes 'public' and '.next/static' by default; we need them.

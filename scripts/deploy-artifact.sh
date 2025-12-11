@@ -6,6 +6,12 @@ DEPLOY_DIR="$HOME/hrm"
 mkdir -p "$DEPLOY_DIR"
 cd "$DEPLOY_DIR" || { echo "❌ Directory $DEPLOY_DIR not found"; exit 1; }
 
+# Initialize NVM if it exists (for systems where Node is managed by NVM)
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  source "$NVM_DIR/nvm.sh"
+fi
+
 echo "🚀 Starting Deployment..."
 
 # ==============================================================================
@@ -50,7 +56,7 @@ tar -xzf release.tar.gz --overwrite
 
 echo "📦 Hydrating production dependencies..."
 # Use the dynamic command (pnpm or npx pnpm)
-$PNPM_CMD install --prod --frozen-lockfile --ignore-scripts
+$PNPM_CMD install --prod --ignore-scripts
 
 echo "🔄 Reloading PM2..."
 # We use 'npx pm2' to ensure we use the local dependency if global isn't there
