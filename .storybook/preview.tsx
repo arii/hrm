@@ -1,6 +1,16 @@
+// .storybook/preview.ts
 import type { Preview } from "@storybook/react";
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from '../lib/theme'; // Import your custom theme
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { theme } from "../components/theme";
+
+export const decorators = [
+  (Story) => (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Story />
+    </ThemeProvider>
+  ),
+];
 
 const preview: Preview = {
   parameters: {
@@ -10,18 +20,7 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    backgrounds: {
-      default: 'light',
-    },
   },
-  decorators: [
-    (Story) => (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Story />
-      </ThemeProvider>
-    ),
-  ],
 };
 
 export default preview;
