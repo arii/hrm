@@ -12,9 +12,6 @@ export const useAudio = (timerData: TimerData) => {
       timerData.soundEventId &&
       timerData.soundEventId !== lastSoundEventId.current
     ) {
-      console.log(
-        `[useAudio] Triggering sound: ${timerData.soundToPlay} (Event ID: ${timerData.soundEventId})`
-      )
       lastSoundEventId.current = timerData.soundEventId
 
       switch (timerData.soundToPlay) {
@@ -25,17 +22,12 @@ export const useAudio = (timerData: TimerData) => {
         case 'REST':
           audioManager.playLong() // Will respect isMuted internally
           break
-        default:
-          console.warn(
-            `[useAudio] Unknown sound type: ${timerData.soundToPlay}`
-          )
       }
     }
   }, [timerData.soundToPlay, timerData.soundEventId])
 
   // Initialize audio on first user interaction
   const initializeAudio = () => {
-    console.log('[useAudio] initializeAudio called')
     audioManager.loadAudio()
   }
 

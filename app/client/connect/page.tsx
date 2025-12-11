@@ -1,90 +1,96 @@
-/**
- * File: app/client/connect/page.tsx
- * Refactored to prioritize HR Data visibility post-connection.
- */
 'use client'
 
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  TextField,
-  Typography,
-  Paper,
-  Fade,
-} from '@mui/material'
-import { useEffect, useState } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
-import HrTile from '../../../components/HrTile'
+import { useCallback, useEffect, useState } from 'react'
+import useAutoConnect from '../../../hooks/useAutoConnect'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
+import { API_DEBUG_RESET } from '@/constants/apiEndpoints'
+import ConnectView from './ConnectView'
+import { getCsrfToken } from 'next-auth/react'
 
-// --- Helper Functions ---
+// Cookie helpers
 const setCookie = (name: string, value: string, days = 365) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
 }
 
 const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || ''
-  return ''
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=')
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
+  }, '')
 }
 
 export default function ConnectPage() {
-  // State
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-
-  // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
+
   const {
     connectAndStream,
+    disconnect,
     deviceStatus,
+    batteryLevel,
     isConnected: bluetoothConnected,
   } = useBluetoothHRM()
+  const [startAutoConnect, setStartAutoConnect] = useState(false)
 
-  // --- Effects ---
+  const connectFn = useCallback(() => {
+    const savedName = getCookie('hrm_user_name')
+    const savedAge = getCookie('hrm_user_age')
+    return connectAndStream(savedName, savedAge)
+  }, [connectAndStream])
 
-  // 1. Auto-load and Auto-connect
+  useAutoConnect(connectFn, startAutoConnect)
+
+  // Load saved values from cookies on mount and auto-connect if available
   useEffect(() => {
     const savedName = getCookie('hrm_user_name')
     const savedAge = getCookie('hrm_user_age')
     const savedDeviceId = getCookie('hrm_device_id')
-
     if (savedName) setUserName(savedName)
     if (savedAge) setUserAge(savedAge)
 
+    // Auto-connect only once when WebSocket first connects and we're not already connected
     if (
       savedName &&
       savedAge &&
       savedDeviceId &&
       connectionStatus === 'Connected' &&
-      !bluetoothConnected &&
-      !deviceStatus.includes('Connecting')
+      !bluetoothConnected
     ) {
-      connectAndStream(savedName, savedAge)
+      setStartAutoConnect(true)
     }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
+  }, [connectionStatus, bluetoothConnected, connectFn])
 
-  // 2. Sync local connection state with Bluetooth hook
+  // Signal when page is ready for testing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
   useEffect(() => {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
 
-  // --- Handlers ---
-
   const handleConnect = async () => {
-    if (!userName.trim()) return alert('Please enter your name')
-    const ageNum = parseInt(userAge)
-    if (!userAge.trim() || ageNum < 1 || ageNum > 120)
-      return alert('Invalid age')
-
+    if (!userName.trim()) {
+      alert('Please enter your name')
+      return
+    }
+    if (!userAge.trim() || parseInt(userAge) < 1 || parseInt(userAge) > 120) {
+      alert('Please enter a valid age (1-120)')
+      return
+    }
+    // Save to cookies
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
     await connectAndStream(userName, userAge)
@@ -92,13 +98,46 @@ export default function ConnectPage() {
 
   const handleDisconnect = () => {
     setIsConnected(false)
-    // Clear device ID to prevent immediate auto-reconnect loop
-    document.cookie =
-      'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    window.location.reload() // Cleanest way to reset bluetooth state hooks
+    disconnect()
   }
 
-  // --- Data Derived ---
+  const handleResetServer = async () => {
+    if (
+      confirm(
+        'Are you sure you want to reset the server? This will clear stored Spotify tokens and local device/user data.'
+      )
+    ) {
+      try {
+        // Clear client-side cookies
+        document.cookie =
+          'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie =
+          'hrm_user_age=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+        document.cookie =
+          'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+
+        // Also clear local storage if used
+        localStorage.clear()
+
+        const csrfToken = await getCsrfToken()
+        const response = await fetch(API_DEBUG_RESET, {
+          method: 'POST',
+          body: JSON.stringify({ csrfToken }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        const data = await response.json()
+        alert(data.message)
+        window.location.reload() // Reload to reflect changes
+      } catch (error) {
+        console.error('Error resetting server:', error)
+        alert('Failed to reset server.')
+      }
+    }
+  }
+
+  // Find current user's heart rate data from WebSocket
   const currentUserData = hrmData.find(
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
   )
@@ -107,163 +146,21 @@ export default function ConnectPage() {
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   return (
-    <>
-      <Container
-        maxWidth="sm"
-        sx={{
-          py: 3,
-          pb: 12, // Space for BottomNavBar
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* VIEW 1: ACTIVE SESSION (Connected) */}
-        {isConnected ? (
-          <Fade in={true}>
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-              {/* 1. Status Header */}
-              <Box sx={{ mb: 2, textAlign: 'center' }}>
-                <Typography
-                  variant="overline"
-                  color="success.main"
-                  fontWeight="bold"
-                >
-                  ● LIVE STREAMING
-                </Typography>
-              </Box>
-
-              {/* 2. Main HR Tile (Top Priority) */}
-              <Box sx={{ mb: 3 }}>
-                <HrTile
-                  name={userName}
-                  bpm={currentHR}
-                  percentMax={hrZoneProps.percentage}
-                  isAlerting={currentHR === 0}
-                  alertMessage="Waiting for data... Check device fit."
-                />
-              </Box>
-
-              {/* 3. Minimized Profile Info */}
-              <Paper
-                variant="outlined"
-                sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}
-              >
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                    >
-                      SESSION PROFILE
-                    </Typography>
-                    <Typography variant="body1" fontWeight="500">
-                      {userName}{' '}
-                      <Typography component="span" color="text.secondary">
-                        ({userAge}yo)
-                      </Typography>
-                    </Typography>
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    WS: {connectionStatus}
-                  </Typography>
-                </Box>
-              </Paper>
-
-              {/* 4. Disconnect (Pushed to bottom) */}
-              <Box sx={{ mt: 'auto' }}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="large"
-                  fullWidth
-                  onClick={handleDisconnect}
-                  sx={{
-                    borderWidth: 2,
-                    '&:hover': { borderWidth: 2 },
-                  }}
-                >
-                  STOP & DISCONNECT
-                </Button>
-              </Box>
-            </Box>
-          </Fade>
-        ) : (
-          /* VIEW 2: CONNECTION FORM (Disconnected) */
-          <Box sx={{ mt: 4 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              gutterBottom
-              align="center"
-              fontWeight="bold"
-            >
-              Connect Device
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              align="center"
-              sx={{ mb: 4 }}
-            >
-              Enter your details to calculate accurate heart rate zones.
-            </Typography>
-
-            <Box sx={{ mb: 4 }}>
-              <TextField
-                fullWidth
-                label="Athlete Name"
-                variant="outlined"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Age"
-                type="number"
-                variant="outlined"
-                value={userAge}
-                onChange={(e) => setUserAge(e.target.value)}
-                inputProps={{ min: 1, max: 120 }}
-              />
-            </Box>
-
-            {deviceStatus.includes('Failed') && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {deviceStatus}
-              </Alert>
-            )}
-
-            <Button
-              variant="contained"
-              size="large"
-              fullWidth
-              onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
-              sx={{ py: 2, fontSize: '1.1rem' }}
-            >
-              Connect Bluetooth HRM
-            </Button>
-
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary">
-                Server Status: {connectionStatus}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-      </Container>
-
-      <BottomNavBar />
-    </>
+    <ConnectView
+      userName={userName}
+      setUserName={setUserName}
+      userAge={userAge}
+      setUserAge={setUserAge}
+      isConnected={isConnected}
+      deviceStatus={deviceStatus}
+      batteryLevel={batteryLevel}
+      onConnect={handleConnect}
+      onDisconnect={handleDisconnect}
+      onResetServer={handleResetServer}
+      currentHR={currentHR}
+      hrZoneProps={hrZoneProps}
+      connectionStatus={connectionStatus}
+      bluetoothConnected={bluetoothConnected}
+    />
   )
 }
