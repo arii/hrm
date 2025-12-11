@@ -23,7 +23,7 @@ fi
 export NODE_ENV=production
 
 # 3. Set a default port if not provided by the environment
-export PORT=${PORT:-3000}
+export PORT=${1:-3000}
 
 # 4. Check for required secrets
 if [ -z "$NEXTAUTH_SECRET" ]; then
