@@ -1,8 +1,6 @@
 // tests/playwright/storybook.config.ts
 import { defineConfig } from '@playwright/test'
 
-import { defineConfig } from '@playwright/test'
-
 export default defineConfig({
   testDir: './',
   testMatch: /storybook\.spec\.ts$/,
