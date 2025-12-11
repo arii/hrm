@@ -71,6 +71,9 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
+  // Refs for heartbeat mechanism
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
@@ -124,6 +127,33 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current)
+    }
+    if (pongTimeoutRef.current) {
+      clearTimeout(pongTimeoutRef.current)
+    }
+  }, [])
+
+  const startHeartbeat = useCallback(() => {
+    stopHeartbeat() // Ensure no existing timers are running
+
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'PING' }))
+
+        // Expect a pong within 5 seconds
+        pongTimeoutRef.current = setTimeout(() => {
+          console.warn(
+            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
+          )
+          wsRef.current?.close() // Triggers the onclose reconnect logic
+        }, 5000)
+      }
+    }, 30000)
+  }, [stopHeartbeat])
+
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
@@ -167,6 +197,8 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+      // Start the client-side heartbeat
+      startHeartbeat()
     }
 
     ws.onclose = (event) => {
@@ -180,6 +212,9 @@ export const WebSocketProvider = ({
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
       }
+
+      // Stop heartbeat on disconnect
+      stopHeartbeat()
 
       if (shouldReconnect.current) {
         if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
@@ -217,6 +252,14 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
+        // Heartbeat pong check
+        if (message.type === 'PONG') {
+          if (pongTimeoutRef.current) {
+            clearTimeout(pongTimeoutRef.current)
+          }
+          return // Pong message is handled, no state dispatch needed
+        }
+
         // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
           // Dispatch a custom event that the remote execution hook can listen to
@@ -239,10 +282,12 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl, throttledDispatch])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
+    // Stop heartbeat on manual disconnect
+    stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -251,7 +296,7 @@ export const WebSocketProvider = ({
       wsRef.current.close()
     }
     console.log('[useWebSocket] Manually disconnected.')
-  }, [])
+  }, [stopHeartbeat])
 
   useEffect(() => {
     connectRef.current = connect
