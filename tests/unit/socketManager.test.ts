@@ -9,14 +9,12 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyPolling } from '../../services/spotifyPolling'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
-import TabataTimer from '../../services/tabataTimer'
-import { ServerMessage } from '../../types/websocket'
 import { initSocketManager } from '../../utils/socketManager'
-import { WebSocket, Server as WebSocketServer } from 'ws'
+import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
+import TabataTimer from '../../services/tabataTimer'
+import { SpotifyPolling } from '../../services/spotifyPolling'
+import { StateSnapshot } from '../../types/websocket'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -37,11 +35,11 @@ jest.mock('../../utils/broadcast', () => ({
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter()
-    // @ts-ignore
+    // @ts-expect-error-next-line
     wss.clients = new Set()
-    // @ts-ignore
+    // @ts-expect-error-next-line
     wss.on = jest.fn(wss.on.bind(wss))
-    // @ts-ignore
+    // @ts-expect-error-next-line
     wss.emit = jest.fn(wss.emit.bind(wss))
     return wss
   }),
@@ -66,7 +64,7 @@ class MockWebSocket extends EventEmitter {
   }
 
   // Override 'on' to correctly handle our event emitter
-  on(event: string | symbol, listener: (...args: any[]) => void): this {
+  on(event: string | symbol, listener: (...args: unknown[]) => void): this {
     super.on(event, listener)
     return this
   }
@@ -75,15 +73,23 @@ class MockWebSocket extends EventEmitter {
 describe('WebSocket Manager', () => {
   describe('Heartbeat and Watchdog', () => {
     let mockWss: WebSocketServer
-    let mockServices: any
-    let getSnapshot: any
+    let mockServices: {
+      tabataService: TabataTimer
+      spotifyService: SpotifyPolling
+    }
+    let getSnapshot: () => StateSnapshot
 
     beforeEach(() => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: { handleCommand: jest.fn(), setMode: jest.fn() },
-        spotifyService: { handleCommand: jest.fn() },
+        tabataService: {
+          handleCommand: jest.fn(),
+          setMode: jest.fn(),
+        } as unknown as TabataTimer,
+        spotifyService: {
+          handleCommand: jest.fn(),
+        } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
     })
@@ -91,16 +97,16 @@ describe('WebSocket Manager', () => {
     afterEach(() => {
       jest.useRealTimers()
       jest.clearAllMocks()
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.clients.clear()
     })
 
     it('should set lastPingTime on new connection', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs) // Manually trigger connection event
 
       expect(mockWs.lastPingTime).toBeDefined()
@@ -110,9 +116,9 @@ describe('WebSocket Manager', () => {
     it('should update lastPingTime on PING message and respond with PONG', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs)
 
       const initialPingTime = mockWs.lastPingTime
@@ -129,9 +135,9 @@ describe('WebSocket Manager', () => {
     it('should terminate a client if no ping is received within the timeout', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs)
 
       // Do NOT simulate a ping. Advance time past the client inactivity timeout (120s)
@@ -144,9 +150,9 @@ describe('WebSocket Manager', () => {
     it('should NOT terminate a client that is responsive', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
-      // @ts-ignore
+      // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs)
 
       // Simulate responsiveness by sending pings
