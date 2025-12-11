@@ -15,7 +15,14 @@ export default [
   ...tseslint.configs.recommended,
 
   // React, Hooks, and a11y recommended rules
-  reactPlugin.configs.flat.recommended,
+  {
+    ...reactPlugin.configs.flat.recommended,
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
   {
     // Correctly configure the react-hooks plugin for flat config
     plugins: {
@@ -61,6 +68,14 @@ export default [
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {},
+  },
+
+  // Override for Storybook files to disable prop-types
+  {
+    files: ['**/*.stories.tsx'],
+    rules: {
+      'react/prop-types': 'off',
+    },
   },
 
   // Ignore files and directories
