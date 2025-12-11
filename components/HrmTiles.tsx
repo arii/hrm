@@ -2,14 +2,21 @@
 'use client'
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
+import BluetoothDisconnectedIcon from '@mui/icons-material/BluetoothDisabled'
+import Chip from '@mui/material/Chip'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const { deviceStatus } = useBluetoothHRM()
+  const isDisconnected =
+    deviceStatus.includes('Disconnected') ||
+    deviceStatus.includes('Signal Lost')
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -34,7 +41,10 @@ const HrmTiles = () => {
 
         return (
           <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            item
+            xs={12}
+            sm={6}
+            lg={3}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -55,28 +65,41 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === 0) {
-    return (
-      <>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
+  return (
+    <>
+      {isDisconnected && (
+        <Grid item xs={12}>
+          <Chip
+            icon={<BluetoothDisconnectedIcon />}
+            label="Bluetooth Disconnected"
+            color="error"
+            sx={{ width: '100%', justifyContent: 'center', mb: 2 }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
-        </Grid>
-      </>
-    )
-  }
+      )}
 
-  return <>{filteredTiles}</>
+      {isLoading || filteredTiles.length === 0 ? (
+        <>
+          <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+            <Skeleton
+              variant="rectangular"
+              height={220}
+              sx={{ borderRadius: 3 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
+            <Skeleton
+              variant="rectangular"
+              height={220}
+              sx={{ borderRadius: 3 }}
+            />
+          </Grid>
+        </>
+      ) : (
+        filteredTiles
+      )}
+    </>
+  )
 }
 
 export default HrmTiles
