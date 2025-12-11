@@ -32,30 +32,31 @@ const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined)
 // 4. Create the provider component
 export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const { sendData, workoutData } = useWebSocket()
-  const [workoutState, setWorkoutState] = useState<WorkoutState>({
-    isWorkoutActive: false,
-    startTime: null,
-    endTime: null,
-    duration: 0,
-  })
+  const workoutState = workoutData
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    if (workoutData) {
-      setWorkoutState(workoutData)
-    }
-  }, [workoutData])
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const duration = workoutState.isWorkoutActive
+    ? Math.round((now - (workoutState.startTime || now)) / 1000)
+    : workoutState.duration
 
   // Start Workout Function
   const startWorkout = useCallback(() => {
     const now = Date.now()
-    const newState = {
+    const newState: WorkoutState = {
       isWorkoutActive: true,
       startTime: now,
       endTime: null,
       duration: 0,
     }
-    setWorkoutState(newState)
-    sendData({ type: 'WORKOUT_COMMAND', payload: { action: 'START', state: newState } })
+    sendData({
+      type: 'WORKOUT_COMMAND',
+      payload: { action: 'START', state: newState },
+    })
   }, [sendData])
 
   // End Workout Function
@@ -63,35 +64,24 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
     if (workoutState.startTime) {
       const now = Date.now()
       const duration = Math.round((now - workoutState.startTime) / 1000)
-      const newState = {
+      const newState: WorkoutState = {
         ...workoutState,
         isWorkoutActive: false,
         endTime: now,
         duration,
       }
-      setWorkoutState(newState)
-      sendData({ type: 'WORKOUT_COMMAND', payload: { action: 'END', state: newState } })
+      sendData({
+        type: 'WORKOUT_COMMAND',
+        payload: { action: 'END', state: newState },
+      })
     }
   }, [workoutState, sendData])
 
-  // Effect to update duration for active workouts
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-    if (workoutState.isWorkoutActive && workoutState.startTime) {
-      interval = setInterval(() => {
-        const duration = Math.round((Date.now() - workoutState.startTime!) / 1000)
-        setWorkoutState((prevState) => ({ ...prevState, duration }))
-      }, 1000)
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
-    }
-  }, [workoutState.isWorkoutActive, workoutState.startTime])
-
   const value = {
-    workoutState,
+    workoutState: {
+      ...workoutState,
+      duration,
+    },
     startWorkout,
     endWorkout,
   }
