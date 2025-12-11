@@ -1,72 +1,91 @@
-// File: middleware.ts (NextAuth Reverse Proxy Middleware)
-/**
- * Middleware to handle reverse proxy headers for NextAuth.js
- * This ensures that HTTPS cookies work properly behind a reverse proxy.
- */
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  authApiLimiter,
+  generalApiLimiter,
+  internalApiLimiter,
+  spotifyApiLimiter,
+} from './lib/middleware/rateLimiter'
+import { getToken } from 'next-auth/jwt'
+import logger from './utils/logger'
 
 // Base path for auth routes
 const API_AUTH_BASE = '/api/auth/'
 
-export function middleware(request: NextRequest) {
-  // Only handle auth routes
-  if (!request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
-    return NextResponse.next()
-  }
-
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
   const response = NextResponse.next()
 
-  // Handle reverse proxy headers for NextAuth
-  const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto')
-  const forwardedPort = request.headers.get('x-forwarded-port')
-  const host = request.headers.get('host')
-
-  // Determine the actual host being accessed
-  const actualHost = forwardedHost || host || ''
-  const actualProto = forwardedProto || 'https'
-  const actualPort = forwardedPort || ''
-
-  // Reconstruct the full URL with port for NextAuth
-  if (actualHost) {
-    // Ensure Host header includes the port if not already present and port is custom
-    let hostWithPort = actualHost
-    if (actualPort && !actualHost.includes(':')) {
-      // Add port only if it's non-standard (444 for dev, or explicitly forwarded)
-      if (actualPort !== '443') {
-        hostWithPort = `${actualHost}:${actualPort}`
-      }
+  // Apply rate limiting to all API routes
+  if (pathname.startsWith('/api/')) {
+    let limiter
+    if (pathname.startsWith('/api/auth/')) {
+      limiter = authApiLimiter
+    } else if (pathname.startsWith('/api/spotify/')) {
+      limiter = spotifyApiLimiter
+    } else if (pathname.startsWith('/api/internal/')) {
+      limiter = internalApiLimiter
+    } else {
+      limiter = generalApiLimiter
     }
 
-    response.headers.set('x-forwarded-host', hostWithPort)
-    response.headers.set('x-forwarded-proto', actualProto)
+    const token = await getToken({ req })
+    const identifier =
+      token?.sub ||
+      (req.headers.get('x-forwarded-for') as string)?.split(',')[0] ||
+      req.ip ||
+      '127.0.0.1'
+    const { success, limit, remaining, reset } = await limiter.limit(identifier)
 
-    if (actualPort) {
-      response.headers.set('x-forwarded-port', actualPort)
-    }
+    response.headers.set('X-RateLimit-Limit', limit.toString())
+    response.headers.set('X-RateLimit-Remaining', remaining.toString())
+    response.headers.set('X-RateLimit-Reset', reset.toString())
 
-    // Ensure NextAuth recognizes HTTPS
-    if (actualProto === 'https') {
-      response.headers.set('x-forwarded-ssl', 'on')
+    if (!success) {
+      logger.warn({ identifier, pathname }, 'Rate limit exceeded')
+      return new NextResponse('Too many requests', {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': limit.toString(),
+          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Reset': reset.toString(),
+        },
+      })
     }
   }
 
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[Middleware] Auth request:', {
-      pathname: request.nextUrl.pathname,
-      host: request.headers.get('host'),
-      forwardedHost,
-      forwardedProto,
-      forwardedPort,
-    })
+  // Preserve the original NextAuth reverse proxy logic
+  if (pathname.startsWith(API_AUTH_BASE)) {
+    const forwardedHost = req.headers.get('x-forwarded-host')
+    const forwardedProto = req.headers.get('x-forwarded-proto')
+    const forwardedPort = req.headers.get('x-forwarded-port')
+    const host = req.headers.get('host')
+
+    const actualHost = forwardedHost || host || ''
+    const actualProto = forwardedProto || 'https'
+    const actualPort = forwardedPort || ''
+
+    if (actualHost) {
+      let hostWithPort = actualHost
+      if (actualPort && !actualHost.includes(':')) {
+        if (actualPort !== '443') {
+          hostWithPort = `${actualHost}:${actualPort}`
+        }
+      }
+      response.headers.set('x-forwarded-host', hostWithPort)
+      response.headers.set('x-forwarded-proto', actualProto)
+      if (actualPort) {
+        response.headers.set('x-forwarded-port', actualPort)
+      }
+      if (actualProto === 'https') {
+        response.headers.set('x-forwarded-ssl', 'on')
+      }
+    }
+    return response
   }
 
   return response
 }
 
 export const config = {
-  // Note: matcher must be static strings for Next.js static analysis
-  matcher: ['/api/auth/:path*'],
+  matcher: '/api/:path*',
 }
