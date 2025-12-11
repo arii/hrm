@@ -202,5 +202,4 @@ export default [
 
   // Storybook recommended flat configs
   storybookPlugin.configs['flat/recommended'],
-  storybookPlugin.configs['flat/addon-interactions'],
 ]
