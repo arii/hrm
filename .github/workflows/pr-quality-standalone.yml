@@ -203,6 +203,13 @@ jobs:
         if: always()
         run: pnpm run kill-all || true
 
+      - name: Run Storybook Visual Tests
+        id: storybook_visual_tests
+        run: |
+          set -o pipefail
+          bash scripts/photographer.sh 2>&1 | tee logs/storybook-visual-output.log
+        continue-on-error: true
+
       - name: Run Visual Tests
         id: visual_tests
         run: |
@@ -240,7 +247,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure' || steps.storybook_visual_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
@@ -285,6 +292,9 @@ jobs:
           if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
           fi
+          if [ "${{ steps.storybook_visual_tests.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Storybook Visual Tests, "
+          fi
           if [ "${{ steps.perf_tests.outcome }}" == "failure" ]; then
              FAILED_CHECKS="${FAILED_CHECKS}Performance Tests, "
           fi
@@ -327,6 +337,9 @@ jobs:
           fi
           if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
             append_log "logs/visual-output.log" "Visual Tests"
+          fi
+          if [ "${{ steps.storybook_visual_tests.outcome }}" == "failure" ]; then
+            append_log "logs/storybook-visual-output.log" "Storybook Visual Tests"
           fi
           if [ "${{ steps.perf_tests.outcome }}" == "failure" ]; then
             append_log "logs/performance-output.log" "Performance Test Output"
@@ -372,7 +385,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure' || steps.storybook_visual_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
