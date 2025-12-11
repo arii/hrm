@@ -82,13 +82,12 @@ test.describe('Infrastructure & Scripts', () => {
     }
   })
 
-  // 4. PRODUCTION SCRIPT TEST
-  // Runs the exact shell script used in production (start-production.sh).
-  test('start-production.sh should start successfully', async () => {
+  // 4. PRODUCTION STARTUP TEST
+  // Runs the production server with PM2
+  test('Production server should start successfully with PM2', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     const PORT = 3006
-    // Mock env vars usually provided by .env.production
     const env = {
       ...process.env,
       NODE_ENV: 'production',
@@ -97,7 +96,8 @@ test.describe('Infrastructure & Scripts', () => {
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 
-    const prodServer = spawn('./start-production.sh', [], {
+    // Start the server with PM2
+    const pm2 = spawn('pnpm', ['start'], {
       detached: true,
       stdio: 'pipe',
       env,
@@ -106,8 +106,10 @@ test.describe('Infrastructure & Scripts', () => {
     try {
       await waitForPort(PORT)
     } finally {
+      // Stop the server with PM2
+      execSync('pnpm pm2:stop')
       try {
-        if (prodServer.pid) process.kill(-prodServer.pid)
+        if (pm2.pid) process.kill(-pm2.pid)
       } catch (_e) {
         // Ignore errors
       }
