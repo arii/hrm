@@ -36,9 +36,16 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(interval)
-  }, [])
+    let interval: NodeJS.Timeout | null = null
+    if (workoutState.isWorkoutActive) {
+      interval = setInterval(() => setNow(Date.now()), 1000)
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [workoutState.isWorkoutActive])
 
   const duration = workoutState.isWorkoutActive
     ? Math.round((now - (workoutState.startTime || now)) / 1000)

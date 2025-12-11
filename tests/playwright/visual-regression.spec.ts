@@ -209,7 +209,11 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // Use this specific locator in your assertion
-    await expect(stopButton).toBeVisible()
+    await dashboardPage.waitForFunction(
+      () => window.testHrm && window.testHrm.getState().timerData.isRunning,
+      { timeout: WAIT_TIMEOUTS.MEDIUM }
+    )
+    await expect(controlPage.getByTestId('stop-button')).toBeVisible()
 
     // Wait for timer to appear on dashboard
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({

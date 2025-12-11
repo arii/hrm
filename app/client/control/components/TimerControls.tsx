@@ -189,8 +189,7 @@ const TimerControls = () => {
     sendData(message)
   }
 
-  const controlsDisabled =
-    timerData.isRunning || connectionStatus !== 'Connected'
+  const controlsDisabled = connectionStatus !== 'Connected'
 
   return (
     <Card
@@ -495,7 +494,7 @@ const TimerControls = () => {
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           {!timerData.isRunning ? (
             <Button
-              data-testid="start-timer-button"
+              data-testid="start-button"
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
@@ -507,7 +506,7 @@ const TimerControls = () => {
             </Button>
           ) : (
             <Button
-              data-testid="stop-timer-button"
+              data-testid="stop-button"
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}

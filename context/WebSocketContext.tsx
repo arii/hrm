@@ -317,6 +317,14 @@ export const WebSocketProvider = ({
     }
   }, [connect, disconnect])
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' || process.env.TESTING) {
+      window.testHrm = {
+        getState: () => appState,
+      }
+    }
+  }, [appState])
+
   const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
