@@ -67,7 +67,12 @@ export const WebSocketProvider = ({
   serverUrl?: string
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...')
+  const [connectionStatus, setConnectionStatus] = useState(() => {
+    if (typeof window !== 'undefined' && window.__MOCK_WEB_SOCKET_DATA__) {
+      return 'Connected (Mocked)'
+    }
+    return 'Connecting...'
+  })
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
@@ -124,7 +129,6 @@ export const WebSocketProvider = ({
         type: 'INITIAL_STATE',
         payload: window.__MOCK_WEB_SOCKET_DATA__,
       })
-      setConnectionStatus('Connected (Mocked)')
       return // Skip WebSocket connection logic
     }
 
