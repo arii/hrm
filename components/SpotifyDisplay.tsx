@@ -1,6 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -15,14 +15,13 @@ import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import SpotifyLoginButton from './SpotifyLoginButton'
+import AuthButton from './Auth/AuthButton'
 
 interface SpotifyDevice {
   id: string
@@ -48,11 +47,6 @@ const SpotifyDisplay = () => {
       isLoggedIn,
     })
   }, [status, session, isLoggedIn])
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    window.location.reload()
-  }
 
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
@@ -206,7 +200,7 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <SpotifyLoginButton />
+        <AuthButton />
       </Box>
     )
   }
@@ -391,25 +385,7 @@ const SpotifyDisplay = () => {
               <MenuItem disabled>No devices available</MenuItem>
             )}
           </Menu>
-
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
-          >
-            Logout
-          </Button>
+          <AuthButton />
         </Box>
       </Box>
     )
