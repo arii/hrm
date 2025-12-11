@@ -145,9 +145,9 @@ export default function ConnectPage() {
       const age = parseInt(userAge) || 30
       const calories = calculateCaloriesBurned(age, hrHistoryRef.current)
 
-      const startTime = hrHistoryRef.current[0].timestamp
+      const startTime = hrHistoryRef.current[0]!.timestamp
       const endTime =
-        hrHistoryRef.current[hrHistoryRef.current.length - 1].timestamp
+        hrHistoryRef.current[hrHistoryRef.current.length - 1]!.timestamp
       const durationSeconds = (endTime - startTime) / 1000
 
       setWorkoutSummary({
