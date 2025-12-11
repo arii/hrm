@@ -91,9 +91,9 @@ export const WebSocketProvider = ({
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
   const ws = useRef<WebSocket | null>(null)
-  const [status, setStatus] = useState<
-    'CONNECTING' | 'OPEN' | 'CLOSED'
-  >('CLOSED')
+  const [status, setStatus] = useState<'CONNECTING' | 'OPEN' | 'CLOSED'>(
+    'CLOSED'
+  )
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
   const throttledDispatch = useRef(
@@ -165,7 +165,6 @@ export const WebSocketProvider = ({
   useEffect(() => {
     connectRef.current = connect
   })
-
 
   useEffect(() => {
     connectRef.current?.()
