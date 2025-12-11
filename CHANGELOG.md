@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/arii/hrm/compare/v0.2.2...v0.3.0) (2025-12-11)
+
+
+### Features
+
+* add manual release workflow for local deployment ([#1065](https://github.com/arii/hrm/issues/1065)) ([0dea948](https://github.com/arii/hrm/commit/0dea94822af6f15d0cc8d4876fe9d81f24cf11a6))
+
 ## [0.2.2](https://github.com/arii/hrm/compare/v0.2.1...v0.2.2) (2025-12-11)
 
 
