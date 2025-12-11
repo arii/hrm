@@ -1,29 +1,23 @@
-import type { StorybookConfig } from "@storybook/react-webpack5";
-import path from "path";
+import type { StorybookConfig } from "@storybook/nextjs";
 
 const config: StorybookConfig = {
-  stories: ["../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)", "../components/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  stories: ["../components/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-interactions",
     "@storybook/addon-a11y",
+    "@storybook/addon-docs"
   ],
   framework: {
-    name: "@storybook/react-webpack5",
+    name: "@storybook/nextjs",
     options: {},
   },
   staticDirs: ["../public"],
   docs: {
     autodocs: "tag",
   },
-  webpackFinal: async (config) => {
-    if (config.resolve) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        "@": path.resolve(__dirname, "../"),
-      };
-    }
-    return config;
+  features: {
+    experimentalNext: true,
   },
 };
 export default config;
