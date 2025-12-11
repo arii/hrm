@@ -65,7 +65,9 @@ describe('SpotifyDisplay', () => {
     renderWithProviders(<SpotifyDisplay />)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /login with spotify/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /login with spotify/i })
+      ).toBeInTheDocument()
     })
   })
 
@@ -75,14 +77,18 @@ describe('SpotifyDisplay', () => {
       status: 'authenticated',
     })
     mockedUseWebSocket.mockReturnValue({
-      spotifyData: { trackName: 'Awaiting Login...', artist: '', isPlaying: false },
+      spotifyData: {
+        trackName: 'Awaiting Login...',
+        artist: '',
+        isPlaying: false,
+      },
       spotifyServiceInitialized: true,
     })
 
     renderWithProviders(<SpotifyDisplay />)
 
     await waitFor(() => {
-        expect(screen.getByText('No Active Playback')).toBeInTheDocument()
+      expect(screen.getByText('No Active Playback')).toBeInTheDocument()
     })
   })
 
@@ -103,7 +109,7 @@ describe('SpotifyDisplay', () => {
     renderWithProviders(<SpotifyDisplay />)
 
     await waitFor(() => {
-        expect(screen.getByText(/Test Track — Test Artist/i)).toBeInTheDocument()
+      expect(screen.getByText(/Test Track — Test Artist/i)).toBeInTheDocument()
     })
   })
 })

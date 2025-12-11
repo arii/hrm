@@ -14,7 +14,9 @@ jest.mock('@/app/client/control/components/TimerControls', () => ({
 }))
 jest.mock('@/app/client/control/components/SpotifyControls', () => ({
   __esModule: true,
-  default: () => <div data-testid="mock-spotify-controls">Spotify Controls</div>,
+  default: () => (
+    <div data-testid="mock-spotify-controls">Spotify Controls</div>
+  ),
 }))
 
 describe('ControlPage Integration', () => {
@@ -32,6 +34,5 @@ describe('ControlPage Integration', () => {
       expect(screen.getByTestId('mock-timer-controls')).toBeInTheDocument()
       expect(screen.getByTestId('mock-spotify-controls')).toBeInTheDocument()
     })
-
   })
 })
