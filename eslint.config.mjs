@@ -2,7 +2,7 @@
 import storybook from "eslint-plugin-storybook";
 
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals'
+import nextPlugin from 'eslint-config-next/core-web-vitals.js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
