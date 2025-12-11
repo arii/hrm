@@ -11,8 +11,8 @@ type DynamicApiHandler<T> = (
 ) => Promise<NextResponse>
 
 // Type guard to check if params is a Promise
-function isPromise<T>(p: any): p is Promise<T> {
-  return p && typeof p.then === 'function'
+function isPromise<T>(p: unknown): p is Promise<T> {
+  return p instanceof Promise
 }
 
 // Overload signatures
@@ -25,8 +25,10 @@ export function withErrorHandler<T>(
 export function withErrorHandler(handler: SimpleApiHandler): SimpleApiHandler
 
 // Implementation
-export function withErrorHandler(handler: Function) {
-  return async (req: NextRequest, context: { params?: any }) => {
+export function withErrorHandler<T>(
+  handler: (req: NextRequest, context: { params: T }) => Promise<NextResponse>
+) {
+  return async (req: NextRequest, context: { params?: T | Promise<T> }) => {
     try {
       // Resolve params if it's a promise
       if (context && context.params && isPromise(context.params)) {
