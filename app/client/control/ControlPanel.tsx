@@ -21,7 +21,14 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
       sx={{ borderRadius: 1, mb: 2 }}
     />
   ),
+  ssr: false,
 })
+
+const SelectedSpotifyItemDisplay = dynamic(
+  () => import('./components/SelectedSpotifyItemDisplay'),
+  { ssr: false }
+)
+
 import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
@@ -108,6 +115,7 @@ const ControlPanel = () => {
 
         <TimerControls />
         <Box sx={{ height: 8 }} />
+        <SelectedSpotifyItemDisplay />
         <SpotifyControls />
       </Container>
     </>

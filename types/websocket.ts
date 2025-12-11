@@ -45,11 +45,20 @@ export interface SpotifyDevice {
   volume_percent: number
 }
 
+export interface SpotifySelectedItem {
+  name: string
+  owner: string
+  type: 'playlist' | 'track'
+  imageUrl: string
+}
+
 export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
-  devices: SpotifyDevice[] // <--- ADDED: Synced device list
+  albumArtUrl?: string
+  devices: SpotifyDevice[]
+  selectedItem?: SpotifySelectedItem | null
 }
 
 /**
