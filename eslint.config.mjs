@@ -5,10 +5,10 @@ import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals.js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import { globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
-export default defineConfig([
+export default tseslint.config([
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
