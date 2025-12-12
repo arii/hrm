@@ -1,22 +1,25 @@
 // components/Spotify/PlaybackControls.tsx
-import React from 'react';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import PlayArrow from '@mui/icons-material/PlayArrow';
-import Pause from '@mui/icons-material/Pause';
-import SkipNext from '@mui/icons-material/SkipNext';
-import SkipPrevious from '@mui/icons-material/SkipPrevious';
-import Shuffle from '@mui/icons-material/Shuffle';
-import Repeat from '@mui/icons-material/Repeat';
-import RepeatOne from '@mui/icons-material/RepeatOne';
-import { SpotifyCommand, SpotifyRepeatState } from '@/types/websocket';
+import React from 'react'
+import IconButton from '@mui/material/IconButton'
+import Stack from '@mui/material/Stack'
+import PlayArrow from '@mui/icons-material/PlayArrow'
+import Pause from '@mui/icons-material/Pause'
+import SkipNext from '@mui/icons-material/SkipNext'
+import SkipPrevious from '@mui/icons-material/SkipPrevious'
+import Shuffle from '@mui/icons-material/Shuffle'
+import Repeat from '@mui/icons-material/Repeat'
+import RepeatOne from '@mui/icons-material/RepeatOne'
+import { SpotifyCommand, SpotifyRepeatState } from '@/types/websocket'
 
 interface PlaybackControlsProps {
-  isPlaying: boolean;
-  shuffleState: boolean;
-  repeatState: SpotifyRepeatState;
-  onCommand: (command: SpotifyCommand, value?: string | number | boolean) => void;
-  disabled?: boolean;
+  isPlaying: boolean
+  shuffleState: boolean
+  repeatState: SpotifyRepeatState
+  onCommand: (
+    command: SpotifyCommand,
+    value?: string | number | boolean
+  ) => void
+  disabled?: boolean
 }
 
 const PlaybackControls: React.FC<PlaybackControlsProps> = ({
@@ -27,14 +30,14 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   disabled = false,
 }) => {
   const handleRepeatClick = () => {
-    let nextState: SpotifyRepeatState = 'off';
+    let nextState: SpotifyRepeatState = 'off'
     if (repeatState === 'off') {
-      nextState = 'context';
+      nextState = 'context'
     } else if (repeatState === 'context') {
-      nextState = 'track';
+      nextState = 'track'
     }
-    onCommand('SET_REPEAT_MODE', nextState);
-  };
+    onCommand('SET_REPEAT_MODE', nextState)
+  }
 
   return (
     <Stack
@@ -105,7 +108,7 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         {repeatState === 'track' ? <RepeatOne /> : <Repeat />}
       </IconButton>
     </Stack>
-  );
-};
+  )
+}
 
-export default PlaybackControls;
+export default PlaybackControls

@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyControls } from '@/hooks/useSpotifyControls'
@@ -19,18 +19,27 @@ import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
 import { SpotifyCommand } from '@/types/websocket'
+import useVolumePreference from '@/hooks/useVolumePreference'
+import { SpotifyDevice } from '@/types'
 
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus } = useWebSocket()
   const { devices = [], isPlaying, shuffleState, repeatState } = spotifyData
   const { sendCommand } = useSpotifyControls()
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [volume, setVolume] = useState(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    return activeDevice?.volume_percent ?? 50
-  });
+  // State for the user's explicit device selection. Null means we should follow the active device from props.
+  const [userSelectedDeviceId, setUserSelectedDeviceId] = useState<
+    string | null
+  >(null)
+  const { volume, setVolume } = useVolumePreference()
 
+  const activeDevice: SpotifyDevice | undefined = useMemo(
+    () => devices.find((d: SpotifyDevice) => d.is_active),
+    [devices]
+  )
+
+  // The device ID to display in the Select dropdown. Prioritize user's choice.
+  const displayDeviceId = userSelectedDeviceId ?? activeDevice?.id ?? ''
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection')
@@ -41,44 +50,42 @@ const SpotifyControls = () => {
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       sendCommand('GET_DEVICES')
     }
   }, [connectionStatus, sendCommand])
 
-
+  // Effect to synchronize the volume from the active device prop to our local volume preference.
   useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    if (activeDevice) {
-      if (activeDevice.id !== selectedDeviceId) {
-        setSelectedDeviceId(activeDevice.id);
-      }
-      if(activeDevice.volume_percent && activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
+    if (
+      activeDevice?.volume_percent !== undefined &&
+      activeDevice.volume_percent !== volume
+    ) {
+      setVolume(activeDevice.volume_percent)
     }
-  }, [devices, selectedDeviceId, volume])
+  }, [activeDevice, volume, setVolume])
 
   const handleCommand = (command: SpotifyCommand, value?: unknown) => {
     switch (command) {
       case 'SET_VOLUME':
-        sendCommand(command, { volume: value as number });
-        break;
+        sendCommand(command, { volume: value as number })
+        break
       case 'SET_REPEAT_MODE':
-        sendCommand(command, { repeatState: value as 'off' | 'track' | 'context' });
-        break;
+        sendCommand(command, {
+          repeatState: value as 'off' | 'track' | 'context',
+        })
+        break
       case 'TOGGLE_SHUFFLE':
-        sendCommand(command, { shuffleState: value as boolean });
-        break;
+        sendCommand(command, { shuffleState: value as boolean })
+        break
       case 'TRANSFER_PLAYBACK':
-        sendCommand(command, { deviceId: value as string });
-        break;
+        sendCommand(command, { deviceId: value as string })
+        break
       default:
-        sendCommand(command);
+        sendCommand(command)
     }
-  };
+  }
 
   return (
     <Card
@@ -127,9 +134,11 @@ const SpotifyControls = () => {
             />
 
             <VolumeControl
-                volume={volume}
-                onVolumeChange={setVolume}
-                onVolumeChangeCommitted={(newVolume) => handleCommand('SET_VOLUME', newVolume)}
+              volume={volume}
+              onVolumeChange={setVolume}
+              onVolumeChangeCommitted={(newVolume) =>
+                handleCommand('SET_VOLUME', newVolume)
+              }
             />
 
             {devices.length > 0 && (
@@ -139,10 +148,10 @@ const SpotifyControls = () => {
                 </Typography>
                 <FormControl fullWidth size="small">
                   <Select
-                    value={selectedDeviceId}
+                    value={displayDeviceId}
                     onChange={(e) => {
                       const deviceId = e.target.value
-                      setSelectedDeviceId(deviceId)
+                      setUserSelectedDeviceId(deviceId)
                       if (deviceId) {
                         handleCommand('TRANSFER_PLAYBACK', deviceId)
                       }
@@ -158,7 +167,7 @@ const SpotifyControls = () => {
                       },
                     }}
                   >
-                    {devices.map((device) => (
+                    {devices.map((device: SpotifyDevice) => (
                       <MenuItem key={device.id} value={device.id}>
                         {device.name} {device.is_active && '(Active)'}
                       </MenuItem>

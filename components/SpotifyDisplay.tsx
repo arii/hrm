@@ -9,30 +9,37 @@ import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
 import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 import { SpotifyCommand } from '@/types/websocket'
-
+import useVolumePreference from '@/hooks/useVolumePreference'
+import { SpotifyDevice } from '@/types'
 
 const SpotifyDisplay = () => {
   const { status } = useSession()
   const { spotifyData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
   const { sendCommand } = useSpotifyControls()
-  const { isPlaying, shuffleState, repeatState, devices = [] } = spotifyData;
+  const { isPlaying, shuffleState, repeatState, devices = [] } = spotifyData
 
-  const [volume, setVolume] = useState(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    return activeDevice?.volume_percent ?? 50
-  });
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const { volume, setVolume } = useVolumePreference()
+  const [userSelectedDeviceId, setUserSelectedDeviceId] = useState<
+    string | null
+  >(null)
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
+
+  const activeDevice: SpotifyDevice | undefined = useMemo(
+    () => devices.find((d: SpotifyDevice) => d.is_active),
+    [devices]
+  )
+
+  const displayDeviceId = userSelectedDeviceId ?? activeDevice?.id ?? ''
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -41,25 +48,21 @@ const SpotifyDisplay = () => {
 
   useEffect(() => {
     if (isLoggedIn && connectionStatus === 'Connected') {
-      sendCommand('GET_DEVICES');
+      sendCommand('GET_DEVICES')
     }
-  }, [isLoggedIn, connectionStatus, sendCommand]);
-
+  }, [isLoggedIn, connectionStatus, sendCommand])
 
   useEffect(() => {
-    const activeDevice = devices.find((device) => device.is_active)
-    if (activeDevice) {
-      if (activeDevice.id !== selectedDeviceId) {
-        setSelectedDeviceId(activeDevice.id)
-      }
-      if(activeDevice.volume_percent && activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
+    if (
+      activeDevice?.volume_percent !== undefined &&
+      activeDevice.volume_percent !== volume
+    ) {
+      setVolume(activeDevice.volume_percent)
     }
-  }, [devices, selectedDeviceId, volume])
+  }, [activeDevice, volume, setVolume])
 
   const handleDeviceSelect = (deviceId: string) => {
-    setSelectedDeviceId(deviceId)
+    setUserSelectedDeviceId(deviceId)
     sendCommand('TRANSFER_PLAYBACK', { deviceId })
     setDeviceMenuAnchor(null)
   }
@@ -67,18 +70,20 @@ const SpotifyDisplay = () => {
   const handleCommand = (command: SpotifyCommand, value?: unknown) => {
     switch (command) {
       case 'SET_VOLUME':
-        sendCommand(command, { volume: value as number });
-        break;
+        sendCommand(command, { volume: value as number })
+        break
       case 'SET_REPEAT_MODE':
-        sendCommand(command, { repeatState: value as 'off' | 'track' | 'context' });
-        break;
+        sendCommand(command, {
+          repeatState: value as 'off' | 'track' | 'context',
+        })
+        break
       case 'TOGGLE_SHUFFLE':
-        sendCommand(command, { shuffleState: value as boolean });
-        break;
+        sendCommand(command, { shuffleState: value as boolean })
+        break
       default:
-        sendCommand(command);
+        sendCommand(command)
     }
-  };
+  }
 
   if (!isLoggedIn) {
     return (
@@ -141,20 +146,22 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PlaybackControls
-                isPlaying={isPlaying}
-                shuffleState={shuffleState}
-                repeatState={repeatState}
-                onCommand={handleCommand}
-                disabled={connectionStatus !== 'Connected'}
-            />
+          <PlaybackControls
+            isPlaying={isPlaying}
+            shuffleState={shuffleState}
+            repeatState={repeatState}
+            onCommand={handleCommand}
+            disabled={connectionStatus !== 'Connected'}
+          />
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolumeControl
             volume={volume}
             onVolumeChange={setVolume}
-            onVolumeChangeCommitted={(newVolume) => handleCommand('SET_VOLUME', newVolume)}
+            onVolumeChangeCommitted={(newVolume) =>
+              handleCommand('SET_VOLUME', newVolume)
+            }
           />
           <IconButton
             size="small"
@@ -181,11 +188,11 @@ const SpotifyDisplay = () => {
             }}
           >
             {devices.length > 0 ? (
-              devices.map((device) => (
+              devices.map((device: SpotifyDevice) => (
                 <MenuItem
                   key={device.id}
                   onClick={() => handleDeviceSelect(device.id)}
-                  selected={device.is_active}
+                  selected={device.id === displayDeviceId}
                 >
                   {device.name} {device.is_active && '✓'}
                 </MenuItem>

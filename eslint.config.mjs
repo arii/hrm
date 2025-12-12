@@ -113,8 +113,15 @@ export default defineConfig([
       'react-hooks/rules-of-hooks': 'off',
     },
   },
-
   // Override for Jest unit test files
+  {
+    files: ['tests/unit/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+      },
+    },
+  },
   {
     files: ['tests/unit/**/*.{ts,tsx}'],
     languageOptions: {

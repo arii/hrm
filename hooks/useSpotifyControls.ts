@@ -1,44 +1,56 @@
 // hooks/useSpotifyControls.ts
-import { useCallback } from 'react';
-import { useWebSocket } from '@/context/WebSocketContext';
-import { SpotifyCommand, SpotifyCommandMessage, SpotifyRepeatState } from '@/types/websocket';
+import { useCallback } from 'react'
+import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  SpotifyCommand,
+  SpotifyCommandMessage,
+  SpotifyRepeatState,
+} from '@/types/websocket'
 
 type CommandPayload = {
-  volume?: number;
-  repeatState?: SpotifyRepeatState;
-  deviceId?: string;
-  playlistUri?: string;
-  shuffleState?: boolean;
-};
+  volume?: number
+  repeatState?: SpotifyRepeatState
+  deviceId?: string
+  playlistUri?: string
+  shuffleState?: boolean
+}
 
 export const useSpotifyControls = () => {
-  const { sendData, spotifyData } = useWebSocket();
-  const activeDeviceId = spotifyData.devices?.find(d => d.is_active)?.id;
+  const { sendData, spotifyData } = useWebSocket()
 
   const sendCommand = useCallback(
     (command: SpotifyCommand, payload: CommandPayload = {}) => {
+      const activeDeviceId = spotifyData.devices?.find((d) => d.is_active)?.id
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
         ...payload,
-      };
+      }
 
       // For playback commands, automatically use the active device ID if none is provided
       if (
-        ['PLAY', 'PAUSE', 'NEXT', 'PREVIOUS', 'SET_VOLUME', 'TOGGLE_SHUFFLE', 'SET_REPEAT_MODE'].includes(command) &&
+        [
+          'PLAY',
+          'PAUSE',
+          'NEXT',
+          'PREVIOUS',
+          'SET_VOLUME',
+          'TOGGLE_SHUFFLE',
+          'SET_REPEAT_MODE',
+        ].includes(command) &&
         !message.deviceId
       ) {
         if (activeDeviceId) {
-          message.deviceId = activeDeviceId;
+          message.deviceId = activeDeviceId
         }
       }
 
-      sendData(message);
+      sendData(message)
     },
-    [sendData, activeDeviceId]
-  );
+    [sendData, spotifyData.devices]
+  )
 
   return {
     sendCommand,
-  };
-};
+  }
+}
