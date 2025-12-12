@@ -14,9 +14,8 @@ import SpotifyLoginButton from './SpotifyLoginButton'
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
 import { useSpotifyControls } from '@/hooks/useSpotifyControls'
-import { SpotifyCommand } from '@/types/websocket'
+import { SpotifyCommand, SpotifyDevice } from '@/types/websocket'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { SpotifyDevice } from '@/types'
 
 const SpotifyDisplay = () => {
   const { status } = useSession()
