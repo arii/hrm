@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import BottomNavBar from '@/components/BottomNavBar'
+import Header from '@/components/Header'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
@@ -48,6 +48,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
+          <Header />
           <ErrorProvider>
             <Providers>
               <UserSettingsProvider>
@@ -59,7 +60,6 @@ export default function RootLayout({
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />
-          <BottomNavBar />
         </ThemeRegistry>
       </body>
     </html>
