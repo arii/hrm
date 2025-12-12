@@ -240,6 +240,11 @@ export default function ConnectPage() {
                     WS: {connectionStatus}
                   </Typography>
                 </Box>
+                {/* --- DEBUGGING VIEW --- */}
+                <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                  [Debug] HR History Points: {hrHistoryRef.current.length}
+                </Typography>
+                {/* -------------------- */}
               </Paper>
 
               {/* 4. Disconnect (Pushed to bottom) */}
