@@ -30,8 +30,12 @@ const ResetButton = () => {
       document.cookie =
         'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
-      // Clear local storage
-      localStorage.clear()
+      // Clear specific local storage items
+      localStorage.removeItem('hrm-volume')
+      localStorage.removeItem('hrm-muted')
+      localStorage.removeItem('pendingActions')
+      localStorage.removeItem('user-prefs')
+
 
       // Call the server-side reset API
       const response = await fetch('/api/reset', {
