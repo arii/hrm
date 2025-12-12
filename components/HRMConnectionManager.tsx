@@ -30,7 +30,7 @@ const HRMConnectionManager: React.FC = () => {
         justifyContent: 'center',
         padding: theme.spacing(4),
         border: `2px dashed ${theme.palette.grey[400]}`,
-        borderRadius: theme.shape.borderRadius * 2,
+        borderRadius: (theme.shape.borderRadius as number) * 2,
         textAlign: 'center',
         minHeight: 220, // Match the skeleton height for consistency
       })}
