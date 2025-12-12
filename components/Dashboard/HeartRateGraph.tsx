@@ -40,10 +40,7 @@ const HeartRateGraph = ({ data }: HeartRateGraphProps) => {
   }
 
   return (
-    <Box
-      data-testid="heart-rate-graph"
-      sx={{ width: '100%', height: 200 }}
-    >
+    <Box data-testid="heart-rate-graph" sx={{ width: '100%', height: 200 }}>
       <ResponsiveContainer>
         <LineChart
           data={data}
