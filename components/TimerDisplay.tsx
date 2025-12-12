@@ -7,6 +7,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
+import WorkoutTimer from './WorkoutTimer'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
@@ -201,7 +202,7 @@ const TimerDisplay = ({
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {phase !== 'IDLE' && phase !== 'RUNNING' && (
+        {phase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
             variant="h6"
@@ -236,6 +237,26 @@ const TimerDisplay = ({
         >
           {displayTime}
         </Typography>
+
+        {/* Workout Timer Footer */}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 1,
+            color: '#fff',
+          }}
+        >
+          <Typography variant="caption" sx={{ letterSpacing: 1 }}>
+            TOTAL TIME
+          </Typography>
+          <WorkoutTimer />
+        </Box>
       </CardContent>
     </Card>
   )
