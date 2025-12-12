@@ -3,40 +3,20 @@
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
-
-// Define the style for the centered overlay
-const overlayStyles = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
-}
+import ReportIcon from '@mui/icons-material/Report'
 
 const HrTile = ({
   name,
   bpm,
   percentMax,
-  isAlerting, // NEW PROP
-  alertMessage = 'Checking signal...', // Default message
+  isAlerting,
+  alertMessage = 'Checking signal...',
 }: HrTileProps) => {
-  // Get HR zone props which include the theme-based background color
-  // Note: We're passing a placeholder maxHr because the function currently requires it,
-  // but it only uses the ratio (percentMax) to determine the zone color.
-  // This could be refactored in getHrZoneProps to accept percentMax directly.
   const { backgroundColor } = getHrZoneProps(percentMax, 100)
 
   return (
@@ -61,24 +41,32 @@ const HrTile = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          position: 'relative', // IMPORTANT: Allows the overlay to be absolutely positioned
+          position: 'relative',
+          overflow: 'hidden', // Ensure the banner is contained
         }}
       >
-        {/* CONDITIONAL OVERLAY: Renders only when isAlerting is true. */}
         {isAlerting && (
-          <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
-            <CircularProgress size={30} sx={{ color: 'white' }} />
-            <Typography
-              variant="caption"
-              sx={{ mt: 1, color: 'white', textAlign: 'center' }}
-            >
-              {alertMessage}
-            </Typography>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              p: 0.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+            }}
+            data-testid="hr-tile-alert-banner"
+          >
+            <ReportIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
+            <Typography variant="caption">{alertMessage}</Typography>
           </Box>
         )}
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
-            {/* Giant Percentage - should dominate the tile */}
             <Typography
               data-testid="live-hr-percent"
               sx={{
@@ -88,9 +76,7 @@ const HrTile = ({
                 lineHeight: 0.85,
                 my: 0.5,
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
                 animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Animate only when receiving live data (bpm > 0 and not in an alert state)
                 animationPlayState:
                   bpm > 0 && !isAlerting ? 'running' : 'paused',
               }}
@@ -104,7 +90,7 @@ const HrTile = ({
                 fontWeight: 600,
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
                 transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
+                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
               }}
             >
               {bpm} BPM
@@ -116,10 +102,10 @@ const HrTile = ({
                   fontWeight: 700,
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
-                  mt: 1, // Add some margin top to separate from BPM
-                  textOverflow: 'ellipsis', // Truncate with ellipsis
-                  whiteSpace: 'nowrap', // Prevent wrapping
-                  overflow: 'hidden', // Hide overflow content
+                  mt: 1,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
                 }}
               >
                 {name}
@@ -132,9 +118,7 @@ const HrTile = ({
   )
 }
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  // Re-render only if display data changes.
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
