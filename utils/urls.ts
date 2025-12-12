@@ -14,18 +14,22 @@ export const getBaseURL = (): string => {
 }
 
 export const getWebSocketURL = (): string => {
-  // 1. Use explicit environment variable if available
+  // Use explicit environment variable if available
   if (process.env.NEXT_PUBLIC_WS_URL) {
-    return process.env.NEXT_PUBLIC_WS_URL
+    // Expect NEXT_PUBLIC_WS_URL to be a base URL (e.g., 'https://your-ws-host.com')
+    const baseUrl = process.env.NEXT_PUBLIC_WS_URL.replace(/\/$/, ''); // Ensure no trailing slash
+    const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:';
+    const host = baseUrl.replace(/^https?:\/\//, '');
+    return `${wsProtocol}//${host}/ws`;
   }
 
-  // 2. Fallback for client-side execution
+  // Fallback for client-side execution
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     return `${protocol}//${window.location.host}/ws`
   }
 
-  // 3. Fallback for server-side execution (less common for WebSocket)
+  // Fallback for server-side execution
   const baseUrl = getBaseURL()
   const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
   const host = baseUrl.replace(/^https?:\/\//, '')
@@ -33,20 +37,21 @@ export const getWebSocketURL = (): string => {
 }
 
 export const getAPIURL = (endpoint: string): string => {
-  // 1. Use explicit environment variable if available
+  // Use explicit environment variable if available
   if (process.env.NEXT_PUBLIC_API_URL) {
-    return `${process.env.NEXT_PUBLIC_API_URL}/api/${endpoint.replace(
-      /^\//,
-      ''
-    )}`
+    let baseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, ''); // Remove trailing slash if any
+    if (baseUrl.endsWith('/api')) { // Remove '/api' if present at the end
+        baseUrl = baseUrl.slice(0, -4);
+    }
+    return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`;
   }
 
-  // 2. Fallback for client-side execution
+  // Fallback for client-side execution
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`
   }
 
-  // 3. Fallback for server-side execution
+  // Fallback for server-side execution
   const baseUrl = getBaseURL()
   return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
 }
