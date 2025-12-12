@@ -17,7 +17,6 @@ import {
 import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
-import HeartRateGraphContainer from '../../../components/Dashboard/HeartRateGraphContainer'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
@@ -152,12 +151,7 @@ export default function ConnectPage() {
                 />
               </Box>
 
-              {/* 3. Heart Rate Graph */}
-              <Box sx={{ mb: 3 }}>
-                <HeartRateGraphContainer />
-              </Box>
-
-              {/* 4. Minimized Profile Info */}
+              {/* 3. Minimized Profile Info */}
               <Paper
                 variant="outlined"
                 sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}

@@ -9,13 +9,15 @@ import throttle from 'lodash.throttle'
 const GRAPH_TIME_WINDOW_MS = 60000 // 60 seconds
 const RENDER_THROTTLE_MS = 1000 // 1 second
 
+type ThrottledFunction = ReturnType<typeof throttle> & { cancel: () => void }
+
 const HeartRateGraphContainer = () => {
   const [heartRateHistory, setHeartRateHistory] = useState<
     HeartRateDataPoint[]
   >([])
   const { hrmData } = useWebSocket()
   const dataQueueRef = useRef<HeartRateDataPoint[]>([])
-  const throttledFlushRef = useRef<() => void>()
+  const throttledFlushRef = useRef<ThrottledFunction>()
 
   const currentUserData = hrmData.find((user) =>
     user.name?.includes('Bluetooth HRM')
@@ -41,7 +43,6 @@ const HeartRateGraphContainer = () => {
   useEffect(() => {
     throttledFlushRef.current = throttle(flushQueue, RENDER_THROTTLE_MS)
     return () => {
-      // @ts-expect-error - lodash.throttle types don't include the cancel method
       throttledFlushRef.current?.cancel()
     }
   }, [flushQueue])
