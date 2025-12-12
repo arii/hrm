@@ -56,6 +56,7 @@ export default function ConnectPage() {
   const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummary | null>(
     null
   )
+  const [hrHistoryCount, setHrHistoryCount] = useState(0) // State for debug view
 
   // Refs
   const hrHistoryRef = useRef<HeartRateDataPoint[]>([])
@@ -105,6 +106,7 @@ export default function ConnectPage() {
   useEffect(() => {
     if (isConnected && currentHR > 0) {
       hrHistoryRef.current.push({ timestamp: Date.now(), value: currentHR })
+      setHrHistoryCount(hrHistoryRef.current.length) // Update state for UI
     }
   }, [isConnected, currentHR])
 
@@ -133,6 +135,7 @@ export default function ConnectPage() {
     // Reset state for a new session
     hrHistoryRef.current = []
     setWorkoutSummary(null)
+    setHrHistoryCount(0)
 
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
@@ -161,6 +164,7 @@ export default function ConnectPage() {
 
     // 3. Clear session data
     hrHistoryRef.current = []
+    setHrHistoryCount(0)
     document.cookie =
       'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     // NOTE: window.location.reload() is removed to allow summary to be displayed
@@ -242,7 +246,7 @@ export default function ConnectPage() {
                 </Box>
                 {/* --- DEBUGGING VIEW --- */}
                 <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                  [Debug] HR History Points: {hrHistoryRef.current.length}
+                  [Debug] HR History Points: {hrHistoryCount}
                 </Typography>
                 {/* -------------------- */}
               </Paper>
