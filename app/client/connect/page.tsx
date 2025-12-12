@@ -133,10 +133,15 @@ export default function ConnectPage() {
 
       setHeartRateHistory((prevHistory) => {
         const newHistory = [...prevHistory, newDataPoint]
-        // Keep the history to the last 60 seconds
-        return newHistory.filter(
-          (point) => point.timestamp > now - GRAPH_TIME_WINDOW_MS
-        )
+        // Optimize filtering by removing elements from the start of the array
+        // until within the window, rather than creating a new filtered array.
+        while (
+          newHistory.length > 0 &&
+          newHistory[0].timestamp < now - GRAPH_TIME_WINDOW_MS
+        ) {
+          newHistory.shift()
+        }
+        return newHistory
       })
     }
   }, [isConnected, currentUserData])
