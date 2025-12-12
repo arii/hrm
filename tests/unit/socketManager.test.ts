@@ -2,7 +2,9 @@
  * @jest-environment node
  */
 import {
+  afterAll,
   afterEach,
+  beforeAll,
   beforeEach,
   describe,
   expect,
@@ -81,7 +83,7 @@ describe('WebSocket Manager', () => {
     let setIntervalSpy: jest.SpiedFunction<typeof setInterval>
     let watchdogCallback: () => void
 
-    beforeEach(() => {
+    beforeAll(() => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
@@ -105,13 +107,20 @@ describe('WebSocket Manager', () => {
       }
     })
 
-    afterEach(() => {
+    afterAll(() => {
       jest.useRealTimers()
+      setIntervalSpy.mockRestore()
+    })
+
+    beforeEach(() => {
+      // Clear mocks before each test, but don't re-initialize the socket manager
       jest.clearAllMocks()
-      jest.clearAllTimers()
       // @ts-expect-error-next-line
       mockWss.clients.clear()
-      setIntervalSpy.mockRestore()
+    })
+
+    afterEach(() => {
+        jest.clearAllTimers()
     })
 
     it('should set lastPingTime on new connection', () => {

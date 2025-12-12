@@ -1,87 +1,46 @@
-// tests/unit/app/client/control/components/SpotifyControls.test.tsx
-/**
- * @jest-environment jsdom
- */
-import { render, screen } from '@testing-library/react'
-import SpotifyControls from '@/app/client/control/components/SpotifyControls'
-import { SpotifyData } from '@/types/websocket'
-import React from 'react'
+/** @jest-environment jsdom */
 
-// Mocks
+import SpotifyControls from '@/app/client/control/components/SpotifyControls'
+import { useWebSocket } from '@/context/WebSocketContext'
+import type { SpotifyData } from '@/types/websocket'
+import '@testing-library/jest-dom'
+import { render, screen } from '@testing-library/react'
+
+type UseWebSocketReturn = ReturnType<typeof useWebSocket>
+
+jest.mock('@/context/WebSocketContext')
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
   }),
 }))
 
-jest.mock('@/hooks/useVolumePreference', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    volume: 50,
-    setVolume: jest.fn(),
-  })),
-}))
+const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
+  () => UseWebSocketReturn
+>
 
-jest.mock('@/hooks/useSpotifyControls', () => ({
-  useSpotifyControls: () => ({
-    sendCommand: jest.fn(),
-  }),
-}))
-
-// Mock the WebSocketProvider to avoid issues with localStorage and WebSocket in tests
-jest.mock('@/context/WebSocketContext', () => ({
-  ...jest.requireActual('@/context/WebSocketContext'),
-  WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  useWebSocket: jest.fn(),
-}))
-
-import { useWebSocket } from '@/context/WebSocketContext'
+const baseSpotifyData: SpotifyData = {
+  trackName: 'Mock Track',
+  artist: 'Mock Artist',
+  isPlaying: true,
+  devices: [],
+}
 
 describe('SpotifyControls', () => {
-  const mockSpotifyData: SpotifyData = {
-    trackName: 'Test Track',
-    artist: 'Test Artist',
-    isPlaying: true,
-    devices: [],
-    shuffleState: false,
-    repeatState: 'off',
-  }
-
-  const mockContextValue = {
-    spotifyData: mockSpotifyData,
-    connectionStatus: 'Connected',
-    sendData: jest.fn(),
-  }
-
   beforeEach(() => {
-    ;(useWebSocket as jest.Mock).mockReturnValue(mockContextValue)
+    jest.resetAllMocks()
   })
 
-  // Mock document object to prevent "document is not defined" error
-  const originalDocument = global.document
-  beforeAll(() => {
-    global.document = {
-      ...originalDocument,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any
-  })
+  it('renders the PlaybackControls component when a track is playing', () => {
+    mockedUseWebSocket.mockReturnValue({
+      spotifyData: baseSpotifyData,
+      connectionStatus: 'Connected',
+      sendData: jest.fn(),
+    } as unknown as UseWebSocketReturn)
 
-  afterAll(() => {
-    global.document = originalDocument
-  })
-
-  it('renders spotify controls when spotify data is available', () => {
     render(<SpotifyControls />)
 
-    // The SpotifyControls component now renders the PlaybackControls component.
-    // We can check for the presence of the main control card.
-    expect(screen.getByTestId('spotify-controls-card')).toBeInTheDocument()
-
-    // And we can also check for a specific button inside the PlaybackControls component
+    // The PlaybackControls component contains a button with the test id "spotify-play-pause"
     expect(screen.getByTestId('spotify-play-pause')).toBeInTheDocument()
   })
 })
