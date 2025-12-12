@@ -16,7 +16,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-
 const navLinks = [
   { label: 'Dashboard', href: '/' },
   { label: 'Phone Controls', href: '/client/control' },
