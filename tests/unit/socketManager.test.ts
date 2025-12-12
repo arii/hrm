@@ -149,8 +149,8 @@ describe('WebSocket Manager', () => {
       // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs)
 
-      // Advance time but don't simulate a ping
-      jest.advanceTimersByTime(150000)
+      // Advance time to just before the watchdog would fire automatically
+      jest.advanceTimersByTime(119999)
 
       // Manually trigger the watchdog ONLY ONCE
       if (watchdogCallback) {

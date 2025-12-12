@@ -22,6 +22,12 @@ jest.mock('@/hooks/useVolumePreference', () => ({
   })),
 }))
 
+jest.mock('@/hooks/useSpotifyControls', () => ({
+  useSpotifyControls: () => ({
+    sendCommand: jest.fn(),
+  }),
+}))
+
 // Mock the WebSocketProvider to avoid issues with localStorage and WebSocket in tests
 jest.mock('@/context/WebSocketContext', () => ({
   ...jest.requireActual('@/context/WebSocketContext'),
@@ -51,6 +57,21 @@ describe('SpotifyControls', () => {
 
   beforeEach(() => {
     ;(useWebSocket as jest.Mock).mockReturnValue(mockContextValue)
+  })
+
+  // Mock document object to prevent "document is not defined" error
+  const originalDocument = global.document
+  beforeAll(() => {
+    global.document = {
+      ...originalDocument,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any
+  })
+
+  afterAll(() => {
+    global.document = originalDocument
   })
 
   it('renders spotify controls when spotify data is available', () => {
