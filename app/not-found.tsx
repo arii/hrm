@@ -12,7 +12,7 @@ import Link from 'next/link'
  *
  * @returns {JSX.Element} The rendered 404 page component.
  */
-export default function NotFoundPage(): JSX.Element {
+export default function NotFoundPage() {
   return (
     <Container sx={{ flexGrow: 1, display: 'flex' }}>
       <Box
