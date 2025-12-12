@@ -8,6 +8,10 @@ const meta: Meta<typeof VolumeControl> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    onVolumeChange: { action: 'volume changed' },
+    onVolumeChangeCommitted: { action: 'volume committed' },
+  },
 }
 
 export default meta
@@ -15,6 +19,6 @@ type Story = StoryObj<typeof VolumeControl>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    volume: 50,
   },
 }

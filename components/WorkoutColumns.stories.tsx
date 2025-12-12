@@ -5,7 +5,7 @@ const meta: Meta<typeof WorkoutColumns> = {
   title: 'Components/WorkoutColumns',
   component: WorkoutColumns,
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
   },
   tags: ['autodocs'],
 }
@@ -15,6 +15,21 @@ type Story = StoryObj<typeof WorkoutColumns>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    columns: [
+        {
+            title: 'Strength',
+            items: [
+                { title: 'Squats', details: '3x10 @ 100kg' },
+                { title: 'Deadlifts', details: '3x5 @ 120kg' },
+            ]
+        },
+        {
+            title: 'Cardio',
+            items: [
+                { title: 'Run', details: '5km zone 2' },
+                { title: 'Rowing', details: '2000m time trial' },
+            ]
+        }
+    ]
   },
 }

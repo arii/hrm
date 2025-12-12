@@ -15,6 +15,6 @@ type Story = StoryObj<typeof HeartRateZones>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    maxHr: 190,
   },
 }

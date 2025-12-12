@@ -8,6 +8,10 @@ const meta: Meta<typeof VolumeSlider> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  argTypes: {
+    onVolumeChange: { action: 'volume changed' },
+    onToggleMute: { action: 'toggled mute' },
+  },
 }
 
 export default meta
@@ -15,6 +19,14 @@ type Story = StoryObj<typeof VolumeSlider>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    volume: 75,
+    muted: false,
+  },
+}
+
+export const Muted: Story = {
+  args: {
+    volume: 0,
+    muted: true,
   },
 }

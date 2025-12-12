@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import TimerSoundProvider from './TimerSoundProvider'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
 const meta: Meta<typeof TimerSoundProvider> = {
   title: 'Components/TimerSoundProvider',
@@ -15,6 +17,10 @@ type Story = StoryObj<typeof TimerSoundProvider>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    children: (
+        <Box sx={{ p: 4 }}>
+            <Typography>Click anywhere to initialize audio context (check console).</Typography>
+        </Box>
+    ),
   },
 }

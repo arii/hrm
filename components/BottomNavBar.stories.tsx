@@ -5,7 +5,7 @@ const meta: Meta<typeof BottomNavBar> = {
   title: 'Components/BottomNavBar',
   component: BottomNavBar,
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
   },
   tags: ['autodocs'],
 }
@@ -15,6 +15,7 @@ type Story = StoryObj<typeof BottomNavBar>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    // Component manages its own state and uses Next.js hooks (usePathname, Link).
+    // Storybook handles these gracefully in most cases, or defaults are used.
   },
 }

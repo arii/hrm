@@ -5,7 +5,7 @@ const meta: Meta<typeof FooterControls> = {
   title: 'Components/FooterControls',
   component: FooterControls,
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
   },
   tags: ['autodocs'],
 }
@@ -14,7 +14,5 @@ export default meta
 type Story = StoryObj<typeof FooterControls>
 
 export const Default: Story = {
-  args: {
-    // TODO: Add default props here
-  },
+  args: {},
 }

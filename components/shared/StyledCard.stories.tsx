@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import Typography from '@mui/material/Typography'
 import StyledCard from './StyledCard'
 
 const meta: Meta<typeof StyledCard> = {
@@ -15,6 +16,8 @@ type Story = StoryObj<typeof StyledCard>
 
 export const Default: Story = {
   args: {
-    // TODO: Add default props here
+    children: (
+        <Typography>This is a styled card content</Typography>
+    ),
   },
 }
