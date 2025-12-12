@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
+import WorkoutMetricsPanel from '../components/Dashboard/WorkoutMetricsPanel'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -95,6 +96,10 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
+
+        <Grid size={{ xs: 12 }}>
+          <WorkoutMetricsPanel />
+        </Grid>
 
         <Grid size={{ xs: 12 }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
