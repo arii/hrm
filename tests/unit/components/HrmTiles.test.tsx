@@ -52,7 +52,7 @@ describe('HrmTiles', () => {
     expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
   })
 
-  it('should render skeleton containers when hrmData is empty', () => {
+  it('should render HRMConnectionManager when hrmData is empty and status is Connected', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connected',
@@ -61,9 +61,10 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    // The component renders skeleton containers when there's no data
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
-    // And no actual HrTile components are rendered
+    // The component should now render the connection manager
+    expect(screen.getByTestId('hrm-connection-manager')).toBeInTheDocument()
+    // Skeletons and HR Tiles should not be present
+    expect(screen.queryByTestId('hr-tile-grid-item')).not.toBeInTheDocument()
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 
