@@ -25,7 +25,7 @@ export const VRT_MASK_SELECTORS = {
   /** Timer countdown display */
   timerCountdown: '[data-testid="timer-countdown"]',
   /** Timer phase label (WORK/REST) */
-  timerPhaseLabel: '[data-testid="timer-phase-label"]',
+  timerPhaseLabel: '[data-testid="timer-phase"]',
 } as const
 
 /**
