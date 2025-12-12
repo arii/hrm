@@ -7,7 +7,9 @@ import { useWebSocket } from '@/context/WebSocketContext'
 const HeartRateDisplay = () => {
   const { hrmData } = useWebSocket()
   const latestHeartRate =
-    hrmData && hrmData.length > 0 ? hrmData[hrmData.length - 1].value : '...'
+    hrmData && hrmData.length > 0
+      ? hrmData[hrmData.length - 1].value
+      : '...'
 
   return (
     <Card>
