@@ -8,7 +8,8 @@ import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
-import Typography from '@mui/import { useCallback, useEffect, useState } from 'react'
+import Typography from '@mui/material/Typography'
+import { useCallback, useEffect, useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HrmInputMessage } from '../../../types/websocket'
 
@@ -250,7 +251,6 @@ export default function MockPage() {
           </Box>
         </Card>
       </Container>
-      <BottomNavBar />
     </>
   )
 }
