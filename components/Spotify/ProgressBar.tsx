@@ -1,9 +1,8 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { debounce } from 'lodash'
 
 interface ProgressBarProps {
   progressMs: number
@@ -48,23 +47,17 @@ const ProgressBar = ({
     }
   }, [isPlaying, isDragging, durationMs])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSeek = useCallback(
-    debounce((value: number) => {
-      onSeek(value)
-    }, 200),
-    [onSeek]
-  )
-
   const handleSliderChange = (_: Event, value: number | number[]) => {
-    const newProgress = value as number
-    setInternalProgress(newProgress)
+    setInternalProgress(value as number)
     setIsDragging(true)
-    debouncedSeek(newProgress)
   }
 
-  const handleSliderChangeCommitted = () => {
+  const handleSliderChangeCommitted = (
+    _: React.SyntheticEvent | Event,
+    value: number | number[]
+  ) => {
     setIsDragging(false)
+    onSeek(value as number)
   }
 
   return (
