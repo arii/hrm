@@ -20,6 +20,7 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
     <Stack direction="row" spacing={1} alignItems="center">
       <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
       <Slider
+        aria-label="Volume"
         value={volume}
         onChange={(_, val) => onVolumeChange(val as number)}
         onChangeCommitted={(_, val) => onVolumeChangeCommitted(val as number)}
