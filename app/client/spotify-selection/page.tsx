@@ -88,12 +88,6 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistUri(uri)
   }
 
-  useEffect(() => {
-    if (hasActiveDevice) {
-      sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
-    }
-  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
-
   const sendSpotifyCommand = useCallback(
     (
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
@@ -123,6 +117,12 @@ const SpotifySelectionPage = () => {
     },
     [availableDevices, selectedDeviceId, sendData]
   )
+
+  useEffect(() => {
+    if (hasActiveDevice) {
+      sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
+    }
+  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
 
   const handlePlayPause = () => {
     if (spotifyData.isPlaying) {
