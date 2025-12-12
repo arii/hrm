@@ -1,6 +1,7 @@
 // File: components/HRMonitorStatusIndicator.tsx
 import React from 'react'
 import Chip from '@mui/material/Chip'
+import Stack from '@mui/material/Stack'
 import CircularProgress from '@mui/material/CircularProgress'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
@@ -9,91 +10,109 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
 import Tooltip from '@mui/material/Tooltip'
+import { HRMState } from '@/hooks/useBluetoothHRM'
 
 interface HRMonitorStatusIndicatorProps {
-  status: string
+  state: HRMState
   batteryLevel: number | null
 }
 
-const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
-  status,
-  batteryLevel,
-}) => {
-  const isConnected = status.startsWith('Connected')
-  const isConnecting =
-    status.toLowerCase().includes('connecting') ||
-    status.toLowerCase().includes('searching')
-  const isDisconnected = !isConnected && !isConnecting
-  const isError =
-    status.toLowerCase().includes('failed') ||
-    status.toLowerCase().includes('error')
-
-  let statusIcon
-  let statusColor:
+const getStatusDisplay = (
+  state: HRMState
+): {
+  icon: React.ReactElement
+  color:
     | 'default'
     | 'primary'
     | 'secondary'
     | 'error'
     | 'info'
     | 'success'
-    | 'warning' = 'default'
-
-  if (isConnected) {
-    statusIcon = <CheckCircleIcon />
-    statusColor = 'success'
-  } else if (isConnecting) {
-    statusIcon = <CircularProgress size={20} />
-    statusColor = 'info'
-  } else if (isError) {
-    statusIcon = <ErrorIcon />
-    statusColor = 'error'
-  } else if (isDisconnected) {
-    statusIcon = <LinkOffIcon />
-    statusColor = 'warning'
+    | 'warning'
+  label: string
+} => {
+  switch (state.status) {
+    case 'CONNECTED':
+      return {
+        icon: <CheckCircleIcon />,
+        color: 'success',
+        label: `Connected: ${state.deviceName}`,
+      }
+    case 'CONNECTING':
+      return {
+        icon: <CircularProgress size={20} />,
+        color: 'info',
+        label: state.errorMessage || `Connecting: ${state.deviceName}...`,
+      }
+    case 'SEARCHING':
+      return {
+        icon: <CircularProgress size={20} />,
+        color: 'info',
+        label: 'Searching for device...',
+      }
+    case 'DISCONNECTED':
+      return {
+        icon: <LinkOffIcon />,
+        color: 'warning',
+        label: 'Disconnected',
+      }
+    case 'ERROR':
+      return {
+        icon: <ErrorIcon />,
+        color: 'error',
+        label: `Error: ${state.errorMessage}`,
+      }
+    default:
+      return {
+        icon: <LinkOffIcon />,
+        color: 'default',
+        label: 'Unknown Status',
+      }
   }
+}
 
-  const getBatteryIcon = () => {
-    if (batteryLevel === null) return null
-    let icon = <BatteryFullIcon />
-    const title = `Battery: ${batteryLevel}%`
+const BatteryIndicator: React.FC<{ level: number | null }> = ({ level }) => {
+  if (level === null) return null
 
-    if (batteryLevel > 95) {
-      icon = <BatteryChargingFullIcon />
-    } else if (batteryLevel <= 20) {
-      icon = <BatteryAlertIcon color="error" />
-    }
-
-    return (
-      <Tooltip title={title}>
-        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 8 }}>
-          {icon}
-        </div>
-      </Tooltip>
-    )
+  let icon = <BatteryFullIcon />
+  if (level > 95) {
+    icon = <BatteryChargingFullIcon />
+  } else if (level <= 20) {
+    icon = <BatteryAlertIcon color="error" />
   }
-
-  const batteryIcon = getBatteryIcon()
 
   return (
-    <Chip
-      icon={statusIcon}
-      label={status}
-      color={statusColor}
-      variant="outlined"
-      {...(batteryIcon && {
-        deleteIcon: batteryIcon,
-        onDelete: () => {}, // onDelete is required for deleteIcon to be rendered
-      })}
-      sx={{
-        fontSize: '1rem',
-        padding: '10px 15px',
-        height: 'auto',
-        '& .MuiChip-label': {
-          whiteSpace: 'normal',
-          lineHeight: '1.2',
-        },
-      }}
-    />
+    <Tooltip title={`Battery: ${level}%`}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>{icon}</div>
+    </Tooltip>
+  )
+}
+
+const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
+  state,
+  batteryLevel,
+}) => {
+  const { icon, color, label } = getStatusDisplay(state)
+
+  return (
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Chip
+        icon={icon}
+        label={label}
+        color={color}
+        variant="outlined"
+        sx={(theme) => ({
+          ...theme.typography.body1,
+          padding: theme.spacing(1, 1.5),
+          height: 'auto',
+          '& .MuiChip-label': {
+            whiteSpace: 'normal',
+            lineHeight: 1.25,
+          },
+        })}
+      />
+      <BatteryIndicator level={batteryLevel} />
+    </Stack>
   )
 }
 

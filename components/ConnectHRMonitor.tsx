@@ -3,18 +3,23 @@ import React from 'react'
 import Button from '@mui/material/Button'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import CircularProgress from '@mui/material/CircularProgress'
+import { HRMStatus } from '@/hooks/useBluetoothHRM'
 
 interface ConnectHRMonitorProps {
-  isConnected: boolean
+  status: HRMStatus
   connect: () => void
   disconnect: () => void
 }
 
 const ConnectHRMonitor: React.FC<ConnectHRMonitorProps> = ({
-  isConnected,
+  status,
   connect,
   disconnect,
 }) => {
+  const isConnected = status === 'CONNECTED'
+  const isConnecting = status === 'SEARCHING' || status === 'CONNECTING'
+
   const handleConnect = () => {
     if (!isConnected) {
       connect()
@@ -23,18 +28,44 @@ const ConnectHRMonitor: React.FC<ConnectHRMonitorProps> = ({
     }
   }
 
+  const getButtonContent = () => {
+    if (isConnecting) {
+      return (
+        <>
+          <CircularProgress size={24} sx={{ color: 'inherit', mr: 1 }} />
+          Connecting...
+        </>
+      )
+    }
+    if (isConnected) {
+      return (
+        <>
+          <BluetoothDisabledIcon sx={{ mr: 1 }} />
+          Disconnect HR Monitor
+        </>
+      )
+    }
+    return (
+      <>
+        <BluetoothIcon sx={{ mr: 1 }} />
+        Connect HR Monitor
+      </>
+    )
+  }
+
   return (
     <Button
       variant="contained"
       color={isConnected ? 'error' : 'primary'}
       onClick={handleConnect}
-      startIcon={isConnected ? <BluetoothDisabledIcon /> : <BluetoothIcon />}
-      sx={{
-        fontSize: '1.1rem',
-        padding: '12px 24px',
-      }}
+      disabled={isConnecting}
+      sx={(theme) => ({
+        ...theme.typography.h6,
+        padding: theme.spacing(1.5, 3),
+        minWidth: '280px',
+      })}
     >
-      {isConnected ? 'Disconnect HR Monitor' : 'Connect HR Monitor'}
+      {getButtonContent()}
     </Button>
   )
 }

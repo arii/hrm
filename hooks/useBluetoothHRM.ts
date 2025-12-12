@@ -8,6 +8,19 @@ import { HrmInputMessage, HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
+export type HRMStatus =
+  | 'DISCONNECTED'
+  | 'SEARCHING'
+  | 'CONNECTING'
+  | 'CONNECTED'
+  | 'ERROR'
+
+export interface HRMState {
+  status: HRMStatus
+  deviceName?: string
+  errorMessage?: string
+}
+
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -52,12 +65,14 @@ const getCookie = (name: string): string => {
 const useBluetoothHRM = () => {
   // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket()
-  const [deviceStatus, setDeviceStatus] = useState('Disconnected')
+  const [hrmState, setHrmState] = useState<HRMState>({
+    status: 'DISCONNECTED',
+  })
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
 
   // Refs to track state without dependency cycles or for event handlers
-  const statusRef = useRef(deviceStatus)
+  const statusRef = useRef(hrmState.status)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
@@ -69,8 +84,8 @@ const useBluetoothHRM = () => {
   >(null)
 
   useEffect(() => {
-    statusRef.current = deviceStatus
-  }, [deviceStatus])
+    statusRef.current = hrmState.status
+  }, [hrmState.status])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -86,15 +101,16 @@ const useBluetoothHRM = () => {
   // Watchdog for stale data
   useEffect(() => {
     const interval = setInterval(() => {
-      if (
-        statusRef.current.startsWith('Connected') &&
-        lastDataTime.current > 0
-      ) {
+      if (statusRef.current === 'CONNECTED' && lastDataTime.current > 0) {
         const timeSinceLastData = Date.now() - lastDataTime.current
         // If no data for > 10 seconds, consider it stale/lost
         if (timeSinceLastData > 10000) {
           console.warn('Bluetooth data stale. Forcing reconnection...')
-          setDeviceStatus('Connection unstable (Stale Data). Reconnecting...')
+          setHrmState({
+            status: 'CONNECTING',
+            deviceName: deviceRef.current?.name,
+            errorMessage: 'Connection unstable. Reconnecting...',
+          })
           // Force disconnect to trigger the ondisconnect handler which handles reconnection
           if (deviceRef.current?.gatt?.connected) {
             deviceRef.current.gatt.disconnect()
@@ -114,7 +130,7 @@ const useBluetoothHRM = () => {
       deviceRef.current.gatt.disconnect()
     }
 
-    setDeviceStatus('Disconnected')
+    setHrmState({ status: 'DISCONNECTED' })
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
@@ -122,16 +138,15 @@ const useBluetoothHRM = () => {
   }, [])
 
   const handleConnectionError = useCallback((error: unknown) => {
-    let userFriendlyMessage =
-      'An unknown error occurred during Bluetooth connection.'
+    let errorMessage = 'An unknown error occurred during Bluetooth connection.'
     if (error instanceof DOMException) {
-      userFriendlyMessage = `Bluetooth error: ${error.name}`
+      errorMessage = `Bluetooth error: ${error.name}`
       if (error.name === 'NotFoundError')
-        userFriendlyMessage = 'No device found/selected.'
+        errorMessage = 'No device found/selected.'
     } else if (error instanceof Error) {
-      userFriendlyMessage = `Error: ${error.message}`
+      errorMessage = `Error: ${error.message}`
     }
-    setDeviceStatus(`Failed: ${userFriendlyMessage}`)
+    setHrmState({ status: 'ERROR', errorMessage })
   }, [])
 
   const onDisconnected = useCallback(() => {
@@ -139,7 +154,11 @@ const useBluetoothHRM = () => {
 
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
-      setDeviceStatus('Signal Lost. Retrying connection...')
+      setHrmState({
+        status: 'CONNECTING',
+        deviceName: deviceRef.current?.name,
+        errorMessage: 'Signal Lost. Retrying...',
+      })
 
       const deviceToReconnect = deviceRef.current
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -148,7 +167,7 @@ const useBluetoothHRM = () => {
         }
       }, 2000)
     } else {
-      setDeviceStatus('Disconnected (Signal Lost)')
+      setHrmState({ status: 'DISCONNECTED' })
     }
   }, [])
 
@@ -156,7 +175,7 @@ const useBluetoothHRM = () => {
     async (device: BluetoothDevice) => {
       try {
         deviceRef.current = device
-        setDeviceStatus(`Connecting to: ${device.name}...`)
+        setHrmState({ status: 'CONNECTING', deviceName: device.name })
 
         const server = await device.gatt!.connect()
 
@@ -221,7 +240,7 @@ const useBluetoothHRM = () => {
 
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
-        setDeviceStatus(`Connected to: ${device.name}`)
+        setHrmState({ status: 'CONNECTED', deviceName: device.name })
         setSavedDevice(device)
         isManualDisconnect.current = false // Reset manual flag
         return true
@@ -242,17 +261,23 @@ const useBluetoothHRM = () => {
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: string): Promise<boolean> => {
       // Update user details for streaming
-      userDetailsRef.current = { name: userName || '', age: userAge || '' }
+      userDetailsRef.current = {
+        name: userName || '',
+        age: userAge || '',
+      }
 
-      if (statusRef.current.startsWith('Connected')) return true
+      if (statusRef.current === 'CONNECTED') return true
 
       if (connectionStatus !== 'Connected') {
-        setDeviceStatus('Waiting for WebSocket connection...')
+        setHrmState({
+          status: 'ERROR',
+          errorMessage: 'WebSocket not connected.',
+        })
         return false
       }
 
       try {
-        setDeviceStatus('Searching for device...')
+        setHrmState({ status: 'SEARCHING' })
         let device = savedDevice
 
         if (!device) {
@@ -279,7 +304,7 @@ const useBluetoothHRM = () => {
         }
 
         if (!device) {
-          setDeviceStatus('No device selected.')
+          setHrmState({ status: 'DISCONNECTED' })
           return false
         }
 
@@ -295,10 +320,9 @@ const useBluetoothHRM = () => {
   return {
     connectAndStream,
     disconnect,
-    deviceStatus,
+    hrmState,
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
-    isConnected: deviceStatus.startsWith('Connected'),
   }
 }
 

@@ -82,7 +82,7 @@ const HrmTiles = () => {
   if (filteredTiles.length === 0) {
     return (
       <Grid
-        size={{ xs: 12, md: 6, lg: 4 }}
+        size={{ xs: 12, sm: 6, lg: 3 }}
         data-testid="hrm-connection-manager"
       >
         <HRMConnectionManager />
