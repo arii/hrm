@@ -44,7 +44,7 @@ export default function ConnectPage() {
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
-  const { connectAndStream, hrmState, batteryLevel } = useBluetoothHRM()
+  const { connectAndStream, hrmState } = useBluetoothHRM()
   const { status: deviceStatus, errorMessage } = hrmState
   const bluetoothConnected = deviceStatus === 'CONNECTED'
 
