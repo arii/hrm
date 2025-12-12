@@ -133,7 +133,11 @@ const SpotifyDisplay = () => {
           const devices = await response.json()
           const deviceArray = Array.isArray(devices) ? devices : []
           setAvailableDevices(deviceArray)
-        } catch (error)          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
+        } catch (error) {
+          console.error(
+            '[Dashboard] Failed to fetch Spotify devices:',
+            error
+          )
         }
       }
       fetchDevices()
