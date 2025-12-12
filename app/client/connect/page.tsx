@@ -16,6 +16,7 @@ import {
 } from '@mui/material'
 import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
+import WorkoutMetricsPanel from '../../../components/Dashboard/WorkoutMetricsPanel'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -149,6 +150,10 @@ export default function ConnectPage() {
                   isAlerting={currentHR === 0}
                   alertMessage="Waiting for data... Check device fit."
                 />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <WorkoutMetricsPanel />
               </Box>
 
               {/* 3. Minimized Profile Info */}
