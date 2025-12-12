@@ -248,11 +248,17 @@ export default function ConnectPage() {
               size="large"
               fullWidth
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={!userName.trim() || !userAge.trim() || deviceStatus.includes('Retrying')}
               sx={{ py: 2, fontSize: '1.1rem' }}
             >
-              Connect Bluetooth HRM
+              {deviceStatus.includes('Retrying') ? 'Reconnecting...' : 'Connect Bluetooth HRM'}
             </Button>
+            {deviceStatus.includes('Retrying') && (
+              <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">{deviceStatus}</Typography>
+              </Box>
+            )}
 
             <Box sx={{ mt: 4, textAlign: 'center' }}>
               <Typography variant="caption" color="text.secondary">

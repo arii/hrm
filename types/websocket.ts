@@ -232,6 +232,10 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const HrmDisconnectMessageSchema = z.object({
+  type: z.literal('HRM_DISCONNECT'),
+});
+
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
@@ -240,5 +244,6 @@ export const ClientCommandMessageSchema = z.union([
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
-])
+  PingMessageSchema,
+  HrmDisconnectMessageSchema,
+]);

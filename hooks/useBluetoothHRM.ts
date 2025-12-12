@@ -114,12 +114,13 @@ const useBluetoothHRM = () => {
       deviceRef.current.gatt.disconnect()
     }
 
+    sendData({ type: 'HRM_DISCONNECT' });
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
     setCookie('hrm_device_id', '', -1)
-  }, [])
+  }, [sendData])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let userFriendlyMessage =
@@ -136,6 +137,7 @@ const useBluetoothHRM = () => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
+    sendData({ type: 'HRM_DISCONNECT' });
 
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
@@ -150,7 +152,7 @@ const useBluetoothHRM = () => {
     } else {
       setDeviceStatus('Disconnected (Signal Lost)')
     }
-  }, [])
+  }, [sendData])
 
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
