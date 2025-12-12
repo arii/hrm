@@ -21,6 +21,7 @@ import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
+import ResetButton from './components/ResetButton'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -264,7 +265,7 @@ export default function ConnectPage() {
             >
               {isAutoConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
             </Button>
-
+            <ResetButton />
             <Box sx={{ mt: 4, textAlign: 'center' }}>
               <Typography variant="caption" color="text.secondary">
                 Server Status: {connectionStatus}
