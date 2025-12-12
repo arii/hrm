@@ -4,25 +4,25 @@
 import { Button } from '@mui/material'
 
 /**
- * A client-side component that renders a button to reset client and server state.
+ * A client-side component that renders a button to reset Bluetooth connection data.
  *
- * - Clears all relevant cookies and localStorage.
- * - Sends a request to the `/api/reset` endpoint to clear server-side state.
+ * - Clears user name, age, and device ID cookies.
+ * - Clears user settings (including the device ID) from localStorage.
  * - Prompts the user for confirmation before proceeding.
  * - Reloads the page upon successful completion.
  */
 const ResetButton = () => {
-  const handleReset = async () => {
+  const handleReset = () => {
     if (
       !window.confirm(
-        'Are you sure you want to clear all stored data? This will remove your saved name, age, and Bluetooth device pairing. This action is recommended if you are experiencing persistent connection issues.'
+        'Are you sure you want to clear connection data? This will remove your saved name, age, and Bluetooth device pairing. This action is recommended if you are experiencing persistent connection issues.'
       )
     ) {
       return
     }
 
     try {
-      // Clear client-side cookies
+      // Clear client-side cookies related to the connection
       document.cookie =
         'hrm_user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
       document.cookie =
@@ -30,32 +30,15 @@ const ResetButton = () => {
       document.cookie =
         'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
-      // Clear specific local storage items
-      localStorage.removeItem('hrm-volume')
-      localStorage.removeItem('hrm-muted')
-      localStorage.removeItem('pendingActions')
+      // Clear the user settings from local storage, which contains the device ID
       localStorage.removeItem('user-settings')
 
-      // Call the server-side reset API
-      const response = await fetch('/api/reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'An unknown error occurred.')
-      }
-
-      alert('Storage cleared successfully. The page will now reload.')
+      alert('Connection data cleared successfully. The page will now reload.')
       window.location.reload()
     } catch (error) {
-      console.error('Error resetting application:', error)
+      console.error('Error clearing connection data:', error)
       alert(
-        `Failed to reset application: ${
+        `Failed to clear connection data: ${
           error instanceof Error ? error.message : String(error)
         }`
       )
@@ -70,7 +53,7 @@ const ResetButton = () => {
       onClick={handleReset}
       sx={{ mt: 2 }}
     >
-      Clear Stored Data & Reset
+      Clear Connection Data
     </Button>
   )
 }
