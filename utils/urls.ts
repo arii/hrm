@@ -23,7 +23,9 @@ export const getWebSocketURL = (): string => {
 
   // Server-side fallback
   const wsProtocol = getBaseURL().startsWith('https:') ? 'wss:' : 'ws:'
-  const host = getBaseURL().replace(/^https?:\/\//, '').split(':')[0]
+  const host = getBaseURL()
+    .replace(/^https?:\/\//, '')
+    .split(':')[0]
   const wsPort = process.env.WS_PORT || '3002'
   return `${wsProtocol}//${host}:${wsPort}/ws`
 }

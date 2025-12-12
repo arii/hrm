@@ -292,7 +292,9 @@ app
     })
 
     wsServer.listen(wsPort, hostname, () => {
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${wsPort}/ws`)
+      logger.info(
+        `> WebSocket Server listening on ws://${hostname}:${wsPort}/ws`
+      )
     })
   })
   .catch((err: Error) => {
