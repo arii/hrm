@@ -4,8 +4,9 @@ import net from 'net'
 import http from 'http'
 import { WAIT_TIMEOUTS } from './lib/waits'
 import WebSocket from 'ws'
+import getPort from 'get-port'
 
-const PORT = 3007
+let PORT: number
 let serverProcess: ChildProcess
 
 const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
@@ -30,7 +31,8 @@ const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
 }
 
 test.beforeAll(async () => {
-  console.log('Starting server for port tests...')
+  PORT = await getPort({ port: 3000 })
+  console.log(`Starting server for port tests on dynamic port: ${PORT}...`)
   const env = {
     ...process.env,
     NODE_ENV: 'production',
@@ -47,7 +49,7 @@ test.beforeAll(async () => {
 
   serverProcess.on('error', (err) => {
     console.error('Failed to start server process:', err)
-    process.exit(1)
+    throw new Error(`Server failed to start: ${err.message}`)
   })
 
   await waitForPort(PORT)
