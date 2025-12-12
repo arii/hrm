@@ -41,9 +41,11 @@ const config = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!uuid)', // Ensure uuid is transformed
+  ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
-    '^uuid$': '<rootDir>/tests/unit/mocks/uuid.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },

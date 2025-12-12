@@ -99,7 +99,7 @@ export type ServerMessage =
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | {
-      type: 'SERVER_ERROR'
+      type: 'SPOTIFY_API_ERROR'
       payload: { message: string }
     }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
