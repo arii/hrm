@@ -181,7 +181,13 @@ const useBluetoothHRM = () => {
     async (device: BluetoothDevice) => {
       try {
         deviceRef.current = device
-        setHrmState({ status: 'CONNECTING', deviceName: device.name })
+        const newState: HRMState = {
+          status: 'CONNECTING',
+        }
+        if (device.name) {
+          newState.deviceName = device.name
+        }
+        setHrmState(newState)
 
         const server = await device.gatt!.connect()
 
