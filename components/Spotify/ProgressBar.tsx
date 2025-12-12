@@ -1,14 +1,14 @@
 'use client'
-import { useEffect, useState } from 'react'
 import Slider from '@mui/material/Slider'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
 interface ProgressBarProps {
-  progressMs: number
+  displayProgress: number
   durationMs: number
-  isPlaying: boolean
   onSeek: (positionMs: number) => void
+  onSeekStart: () => void
+  onSeekEnd: (positionMs: number) => void
 }
 
 const formatTime = (ms: number) => {
@@ -19,59 +19,36 @@ const formatTime = (ms: number) => {
 }
 
 const ProgressBar = ({
-  progressMs,
+  displayProgress,
   durationMs,
-  isPlaying,
   onSeek,
+  onSeekStart,
+  onSeekEnd,
 }: ProgressBarProps) => {
-  const [internalProgress, setInternalProgress] = useState(progressMs)
-  const [isDragging, setIsDragging] = useState(false)
-
-  useEffect(() => {
-    if (!isDragging) {
-      setInternalProgress(progressMs)
-    }
-  }, [progressMs, isDragging])
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-    if (isPlaying && !isDragging) {
-      interval = setInterval(() => {
-        setInternalProgress((prev) => Math.min(prev + 1000, durationMs))
-      }, 1000)
-    }
-    return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
-    }
-  }, [isPlaying, isDragging, durationMs])
-
   const handleSliderChange = (_: Event, value: number | number[]) => {
-    setInternalProgress(value as number)
-    setIsDragging(true)
+    onSeek(value as number)
   }
 
   const handleSliderChangeCommitted = (
     _: React.SyntheticEvent | Event,
     value: number | number[]
   ) => {
-    setIsDragging(false)
-    onSeek(value as number)
+    onSeekEnd(value as number)
   }
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {formatTime(internalProgress)}
+        {formatTime(displayProgress)}
       </Typography>
       <Slider
         aria-label="Track progress"
-        value={internalProgress}
+        value={displayProgress}
         min={0}
         max={durationMs}
         onChange={handleSliderChange}
         onChangeCommitted={handleSliderChangeCommitted}
+        onMouseDown={onSeekStart}
         sx={{
           color: 'primary.main',
           '& .MuiSlider-thumb': {

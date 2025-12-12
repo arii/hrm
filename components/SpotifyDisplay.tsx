@@ -73,6 +73,10 @@ const SpotifyDisplay = () => {
     null
   )
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
+  const [displayProgress, setDisplayProgress] = useState(
+    spotifyData.progressMs || 0
+  )
+  const [isDragging, setIsDragging] = useState(false)
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
@@ -163,6 +167,28 @@ const SpotifyDisplay = () => {
     }
   }, [availableDevices, selectedDeviceId])
 
+  useEffect(() => {
+    if (!isDragging) {
+      setDisplayProgress(spotifyData.progressMs || 0)
+    }
+  }, [spotifyData.progressMs, isDragging])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+    if (spotifyData.isPlaying && !isDragging) {
+      interval = setInterval(() => {
+        setDisplayProgress((prev) =>
+          Math.min(prev + 1000, spotifyData.durationMs || 0)
+        )
+      }, 1000)
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [spotifyData.isPlaying, isDragging, spotifyData.durationMs])
+
   const sendSpotifyCommand = useCallback(
     (
       command:
@@ -191,12 +217,18 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand(command)
   }
 
-  const handleSeek = useCallback(
-    (positionMs: number) => {
-      sendSpotifyCommand('SEEK', undefined, positionMs)
-    },
-    [sendSpotifyCommand]
-  )
+  const handleSeek = (positionMs: number) => {
+    setDisplayProgress(positionMs)
+  }
+
+  const handleSeekStart = () => {
+    setIsDragging(true)
+  }
+
+  const handleSeekEnd = (positionMs: number) => {
+    sendSpotifyCommand('SEEK', undefined, positionMs)
+    setIsDragging(false)
+  }
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
@@ -301,10 +333,11 @@ const SpotifyDisplay = () => {
               )}
             </Box>
             <ProgressBar
-              progressMs={spotifyData.progressMs || 0}
+              displayProgress={displayProgress}
               durationMs={spotifyData.durationMs || 0}
-              isPlaying={spotifyData.isPlaying}
               onSeek={handleSeek}
+              onSeekStart={handleSeekStart}
+              onSeekEnd={handleSeekEnd}
             />
           </Box>
         </Box>

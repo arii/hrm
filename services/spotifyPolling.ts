@@ -260,8 +260,9 @@ export class SpotifyPolling {
       const durationMs = item?.duration_ms || 0
 
       const progressChanged =
-        progressMs < this.lastProgressMs! ||
-        progressMs > this.lastProgressMs! + 5000
+        this.lastProgressMs !== null &&
+        (progressMs < this.lastProgressMs ||
+          progressMs > this.lastProgressMs + 5000)
 
       // Only broadcast if track ID, playback state, or progress has changed
       if (
