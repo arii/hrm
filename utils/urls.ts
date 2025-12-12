@@ -14,13 +14,18 @@ export const getBaseURL = (): string => {
 }
 
 export const getWebSocketURL = (): string => {
+  // 1. Use explicit environment variable if available
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL
+  }
+
+  // 2. Fallback for client-side execution
   if (typeof window !== 'undefined') {
-    // Client-side: use current host with appropriate protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     return `${protocol}//${window.location.host}/ws`
   }
 
-  // Server-side fallback
+  // 3. Fallback for server-side execution (less common for WebSocket)
   const baseUrl = getBaseURL()
   const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
   const host = baseUrl.replace(/^https?:\/\//, '')
@@ -28,12 +33,20 @@ export const getWebSocketURL = (): string => {
 }
 
 export const getAPIURL = (endpoint: string): string => {
+  // 1. Use explicit environment variable if available
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return `${process.env.NEXT_PUBLIC_API_URL}/api/${endpoint.replace(
+      /^\//,
+      ''
+    )}`
+  }
+
+  // 2. Fallback for client-side execution
   if (typeof window !== 'undefined') {
-    // Client-side: use current origin (allows localhost access in production)
     return `${window.location.origin}/api/${endpoint.replace(/^\//, '')}`
   }
 
-  // Server-side: use environment variable for internal API calls
+  // 3. Fallback for server-side execution
   const baseUrl = getBaseURL()
   return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
 }
