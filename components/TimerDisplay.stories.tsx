@@ -11,11 +11,23 @@ const meta: Meta<typeof TimerDisplay> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-        <WebSocketContext.Provider value={{ connectionStatus: 'Connected', hrmData: [], activeAlerts: [], timerState: {}, spotifyData: {}, isConnected: true } as any}>
-            <Story />
-        </WebSocketContext.Provider>
-    )
-  ]
+      <WebSocketContext.Provider
+        value={
+          {
+            connectionStatus: 'Connected',
+            hrmData: [],
+            activeAlerts: [],
+            timerState: {},
+            spotifyData: {},
+            isConnected: true,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any
+        }
+      >
+        <Story />
+      </WebSocketContext.Provider>
+    ),
+  ],
 }
 
 export default meta

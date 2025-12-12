@@ -19,10 +19,14 @@ export const Default: Story = {
   args: {
     options: { key: 'mui' },
     children: (
-        <Box sx={{ p: 4, border: '1px solid black', borderRadius: 2 }}>
-            <Typography variant="h4" color="primary">Themed Component</Typography>
-            <Typography>This text should be styled by the Material UI theme.</Typography>
-        </Box>
-    )
+      <Box sx={{ p: 4, border: '1px solid black', borderRadius: 2 }}>
+        <Typography variant="h4" color="primary">
+          Themed Component
+        </Typography>
+        <Typography>
+          This text should be styled by the Material UI theme.
+        </Typography>
+      </Box>
+    ),
   },
 }

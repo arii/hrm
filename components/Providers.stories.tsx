@@ -18,12 +18,13 @@ type Story = StoryObj<typeof Providers>
 export const Default: Story = {
   args: {
     children: (
-        <Box sx={{ p: 4, border: '1px solid grey' }}>
-            <Typography variant="h4">Context Provided Content</Typography>
-            <Typography>
-                This content is wrapped in SessionProvider, WebSocketProvider, and ThemeProvider.
-            </Typography>
-        </Box>
-    )
+      <Box sx={{ p: 4, border: '1px solid grey' }}>
+        <Typography variant="h4">Context Provided Content</Typography>
+        <Typography>
+          This content is wrapped in SessionProvider, WebSocketProvider, and
+          ThemeProvider.
+        </Typography>
+      </Box>
+    ),
   },
 }

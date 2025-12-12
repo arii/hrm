@@ -15,19 +15,23 @@ export default meta
 type Story = StoryObj<typeof ErrorBoundary>
 
 const BuggyComponent = () => {
-    throw new Error('I crashed!')
+  throw new Error('I crashed!')
 }
 
 export const Default: Story = {
   args: {
-    fallback: <Typography color="error">Something went wrong (Fallback UI)</Typography>,
-    children: <Typography>Everything is fine (Child Content)</Typography>
+    fallback: (
+      <Typography color="error">Something went wrong (Fallback UI)</Typography>
+    ),
+    children: <Typography>Everything is fine (Child Content)</Typography>,
   },
 }
 
 export const WithError: Story = {
   args: {
-    fallback: <Typography color="error">Something went wrong (Fallback UI)</Typography>,
-    children: <BuggyComponent />
+    fallback: (
+      <Typography color="error">Something went wrong (Fallback UI)</Typography>
+    ),
+    children: <BuggyComponent />,
   },
 }

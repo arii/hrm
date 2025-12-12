@@ -16,7 +16,8 @@ type Story = StoryObj<typeof GoogleDocViewer>
 export const Default: Story = {
   args: {
     title: 'Example Document',
-    embedUrl: 'https://docs.google.com/document/d/195Z9-3Q3Z5Z9-3Q3Z5Z9-3Q3Z5Z9-3Q/preview',
+    embedUrl:
+      'https://docs.google.com/document/d/195Z9-3Q3Z5Z9-3Q3Z5Z9-3Q3Z5Z9-3Q/preview',
     height: 400,
     isShrunk: false,
   },

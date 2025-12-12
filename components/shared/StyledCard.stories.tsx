@@ -16,8 +16,6 @@ type Story = StoryObj<typeof StyledCard>
 
 export const Default: Story = {
   args: {
-    children: (
-        <Typography>This is a styled card content</Typography>
-    ),
+    children: <Typography>This is a styled card content</Typography>,
   },
 }

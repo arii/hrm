@@ -18,9 +18,11 @@ type Story = StoryObj<typeof TimerSoundProvider>
 export const Default: Story = {
   args: {
     children: (
-        <Box sx={{ p: 4 }}>
-            <Typography>Click anywhere to initialize audio context (check console).</Typography>
-        </Box>
+      <Box sx={{ p: 4 }}>
+        <Typography>
+          Click anywhere to initialize audio context (check console).
+        </Typography>
+      </Box>
     ),
   },
 }

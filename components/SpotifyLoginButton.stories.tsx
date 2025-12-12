@@ -14,6 +14,5 @@ export default meta
 type Story = StoryObj<typeof SpotifyLoginButton>
 
 export const Default: Story = {
-  args: {
-  },
+  args: {},
 }
