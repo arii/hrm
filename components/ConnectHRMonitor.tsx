@@ -56,13 +56,11 @@ const ConnectHRMonitor: React.FC<ConnectHRMonitorProps> = ({
   return (
     <Button
       variant="contained"
+      size="large"
       color={isConnected ? 'error' : 'primary'}
       onClick={handleConnect}
       disabled={isConnecting}
       sx={(theme) => ({
-        fontSize: theme.typography.h6.fontSize,
-        fontWeight: theme.typography.h6.fontWeight,
-        lineHeight: theme.typography.h6.lineHeight,
         padding: theme.spacing(1.5, 3),
         minWidth: '280px',
       })}
