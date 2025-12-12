@@ -12,7 +12,6 @@ interface VolumeSliderProps {
   muted: boolean
   onVolumeChange: (volume: number) => void
   onToggleMute: () => void
-  onVolumeChangeCommitted: (volume: number) => void
 }
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
@@ -20,20 +19,12 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   muted,
   onVolumeChange,
   onToggleMute,
-  onVolumeChangeCommitted,
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event, value: number | number[]) => {
       onVolumeChange(value as number)
     },
     [onVolumeChange]
-  )
-
-  const handleVolumeChangeCommitted = useCallback(
-    (_: React.SyntheticEvent | Event, value: number | number[]) => {
-      onVolumeChangeCommitted(value as number)
-    },
-    [onVolumeChangeCommitted]
   )
 
   return (
@@ -52,7 +43,6 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       <Slider
         value={volume}
         onChange={handleVolumeChange}
-        onChangeCommitted={handleVolumeChangeCommitted}
         min={0}
         max={100}
         size="small"
@@ -63,7 +53,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
             width: 12,
             height: 12,
           },
-          '& .MuiSlider-track': { height: 3 },
+          '& .M_uiSlider-track': { height: 3 },
           '& .MuiSlider-rail': { height: 3 },
         }}
         aria-labelledby="volume-slider"

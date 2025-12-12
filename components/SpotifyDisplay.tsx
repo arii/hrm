@@ -21,6 +21,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyDevice {
   id: string
@@ -36,6 +37,8 @@ const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const debouncedVolume = useDebounce(volume, 500)
 
   // Debug: Log session status changes
   useEffect(() => {
@@ -52,7 +55,6 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,
@@ -97,8 +99,10 @@ const SpotifyDisplay = () => {
   )
 
   useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
+    // This effect handles ALL volume changes, debouncing them to prevent spamming the API.
+    // This includes direct user interaction with the slider and cross-tab synchronization.
+    sendVolumeCommand(debouncedVolume)
+  }, [debouncedVolume, sendVolumeCommand])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
@@ -129,8 +133,7 @@ const SpotifyDisplay = () => {
           const devices = await response.json()
           const deviceArray = Array.isArray(devices) ? devices : []
           setAvailableDevices(deviceArray)
-        } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
+        } catch (error)          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
         }
       }
       fetchDevices()
@@ -321,7 +324,6 @@ const SpotifyDisplay = () => {
             muted={muted}
             onVolumeChange={setVolume}
             onToggleMute={toggleMute}
-            onVolumeChangeCommitted={sendVolumeCommand}
           />
           <IconButton
             size="small"
