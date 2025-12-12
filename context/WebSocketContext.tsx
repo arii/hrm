@@ -101,7 +101,7 @@ export const WebSocketProvider = ({
         // This message type is handled by useSpotifyRemoteExecution hook
         // We don't need to update state here, just pass it through
         return state
-      case 'SPOTIFY_ERROR':
+      case 'SERVER_ERROR':
         addError(message.payload.message)
         return state
       default:
