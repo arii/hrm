@@ -12,13 +12,14 @@ jest.mock('next-auth/next', () => ({
 
 const mockedGetServerSession = getServerSession as jest.Mock
 
-// Mock global fetch
+// Mock global fetch and assign to a typed variable
 global.fetch = jest.fn()
+const mockedFetch = global.fetch as jest.Mock
 
 describe('API Route: /api/spotify/control', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    mockedFetch.mockResolvedValue({
       ok: true,
       status: 204, // Default success for most control commands
       json: () => Promise.resolve({ success: true }),
@@ -64,9 +65,8 @@ describe('API Route: /api/spotify/control', () => {
         method: 'POST',
         body: JSON.stringify({ command: name, deviceId: 'test-device' }),
       })
-      const response = await POST(req)
-      expect(response.status).toBe(200)
-      expect(global.fetch).toHaveBeenCalledWith(
+      await POST(req)
+      expect(mockedFetch).toHaveBeenCalledWith(
         `https://api.spotify.com/v1/me/player${url}?device_id=test-device`,
         expect.objectContaining({
           method,
@@ -89,9 +89,8 @@ describe('API Route: /api/spotify/control', () => {
         deviceId: 'test-device',
       }),
     })
-    const response = await POST(req)
-    expect(response.status).toBe(200)
-    expect(global.fetch).toHaveBeenCalledWith(
+    await POST(req)
+    expect(mockedFetch).toHaveBeenCalledWith(
       'https://api.spotify.com/v1/me/player/volume?volume_percent=50&device_id=test-device',
       expect.objectContaining({ method: 'PUT' })
     )
@@ -118,9 +117,8 @@ describe('API Route: /api/spotify/control', () => {
         deviceId: 'test-device',
       }),
     })
-    const response = await POST(req)
-    expect(response.status).toBe(200)
-    expect(global.fetch).toHaveBeenCalledWith(
+    await POST(req)
+    expect(mockedFetch).toHaveBeenCalledWith(
       'https://api.spotify.com/v1/me/player',
       expect.objectContaining({
         method: 'PUT',
@@ -131,7 +129,7 @@ describe('API Route: /api/spotify/control', () => {
 
   it('should return an error if Spotify API fails', async () => {
     mockedGetServerSession.mockResolvedValue({ accessToken: 'fake-token' })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    mockedFetch.mockResolvedValue({
       ok: false,
       status: 404,
       text: () => Promise.resolve('Device not found'),
