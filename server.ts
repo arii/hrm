@@ -26,7 +26,8 @@ import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : 3001 // Explicitly handle undefined and convert to number
+const wsPort: number = process.env.WS_PORT ? +process.env.WS_PORT : 3002
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
@@ -63,6 +64,7 @@ app
   .prepare()
   .then(async () => {
     const server = createServer(expressApp)
+    const wsServer = createServer() // Dedicated server for WebSocket
 
     // --- Rate Limiting Setup ---
     // Skip rate limiting for tests to avoid flakes
@@ -231,8 +233,21 @@ app
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
+    // --- Start Servers ---
+
+    // Handle server errors (e.g., port already in use)
+    server.on('error', (err: Error) => {
+      logger.error({ err }, 'Next.js server error')
+      process.exit(1)
+    })
+
+    wsServer.on('error', (err: Error) => {
+      logger.error({ err }, 'WebSocket server error')
+      process.exit(1)
+    })
+
+    // Attach the WebSocket upgrade handler to the dedicated WS server
+    wsServer.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
@@ -264,25 +279,20 @@ app
           wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
             wss.emit('connection', ws, req)
           })
+        } else {
+          socket.destroy()
         }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
-
-    // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
-    server.on('error', (err: Error) => {
-      logger.error({ err }, 'Server error')
-      process.exit(1)
-    })
 
     // Begin listening
     server.listen(port, hostname, () => {
       // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
+    })
+
+    wsServer.listen(wsPort, hostname, () => {
+      logger.info(`> WebSocket Server listening on ws://${hostname}:${wsPort}/ws`)
     })
   })
   .catch((err: Error) => {

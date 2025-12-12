@@ -162,7 +162,7 @@ pnpm run dev
 
 The server will start and you should see output indicating:
 - Next.js app running on http://127.0.0.1:3000
-- WebSocket server on ws://127.0.0.1:3000/ws
+- WebSocket server on ws://127.0.0.1:3002/ws
 - Spotify polling service initialized
 - Tabata timer service initialized
 
@@ -223,7 +223,7 @@ pnpm run dev
 The server will start with:
 
 - Next.js app on http://127.0.0.1:3000
-- WebSocket server on ws://127.0.0.1:3000/ws
+- WebSocket server on ws://127.0.0.1:3002/ws
 - Spotify polling service
 - Tabata timer service
 

@@ -9,6 +9,7 @@ const nextConfig = {
   output: 'standalone',
   env: {
     TESTING: process.env.TESTING,
+    NEXT_PUBLIC_WS_PORT: process.env.NEXT_PUBLIC_WS_PORT,
   },
   async redirects() {
     return [

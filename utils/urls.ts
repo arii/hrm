@@ -15,16 +15,17 @@ export const getBaseURL = (): string => {
 
 export const getWebSocketURL = (): string => {
   if (typeof window !== 'undefined') {
-    // Client-side: use current host with appropriate protocol
+    // Client-side: use current hostname with the dedicated WS port
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${window.location.host}/ws`
+    const wsPort = process.env.NEXT_PUBLIC_WS_PORT || '3002'
+    return `${protocol}//${window.location.hostname}:${wsPort}/ws`
   }
 
   // Server-side fallback
-  const baseUrl = getBaseURL()
-  const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
-  const host = baseUrl.replace(/^https?:\/\//, '')
-  return `${wsProtocol}//${host}/ws`
+  const wsProtocol = getBaseURL().startsWith('https:') ? 'wss:' : 'ws:'
+  const host = getBaseURL().replace(/^https?:\/\//, '').split(':')[0]
+  const wsPort = process.env.WS_PORT || '3002'
+  return `${wsProtocol}//${host}:${wsPort}/ws`
 }
 
 export const getAPIURL = (endpoint: string): string => {
