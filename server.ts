@@ -72,6 +72,7 @@ expressApp.use(
         "'self'",
         'ws:',
         'wss:',
+        'ws://127.0.0.1:3000',
         'https://api.spotify.com',
         'https://events.mapbox.com',
       ],
