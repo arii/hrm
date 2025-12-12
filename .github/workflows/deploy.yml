@@ -35,6 +35,21 @@ jobs:
       - name: 📥 Install Dependencies
         run: pnpm install
 
+      - name: 🔐 Generate .env.production
+        run: |
+          echo "Generating .env.production..."
+          cat <<EOF > .env.production
+          NODE_ENV=production
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
+          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+          SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_CALLBACK_URL=${{ secrets.SPOTIFY_CALLBACK_URL }}
+          INTERNAL_TOKEN_DELIVERY_SECRET=${{ secrets.INTERNAL_TOKEN_DELIVERY_SECRET }}
+          GOOGLE_DOC_WORKOUT_URL=${{ secrets.GOOGLE_DOC_WORKOUT_URL }}
+          NEXT_PUBLIC_USE_NATIVE_TABLE=${{ secrets.NEXT_PUBLIC_USE_NATIVE_TABLE }}
+          EOF
+
       - name: 🏗️ Build Standalone Artifact
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
