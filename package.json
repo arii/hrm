@@ -53,7 +53,9 @@
     "depcheck": "depcheck",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
+    "verify:storybook": "npx ts-node --esm scripts/verify-storybook-coverage.ts",
+    "storybook:scaffold": "npx ts-node --esm scripts/scaffold-story.ts",
+    "storybook:coverage": "npx ts-node --esm scripts/verify-storybook-coverage.ts",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
     "prepare": "husky"
   },
