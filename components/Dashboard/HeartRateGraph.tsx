@@ -9,10 +9,41 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { format } from 'date-fns'
+import { useTheme } from '@mui/material/styles'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
 const HeartRateGraph = ({ data }: HeartRateGraphProps) => {
+  const theme = useTheme()
+
+  const formatXAxisTick = (tick: number) => {
+    return format(new Date(tick), 'HH:mm:ss')
+  }
+
+  if (data.length === 0) {
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: 200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="body1" color="text.secondary">
+          No heart rate data available.
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
-    <div data-testid="heart-rate-graph" style={{ width: '100%', height: 200 }}>
+    <Box
+      data-testid="heart-rate-graph"
+      sx={{ width: '100%', height: 200 }}
+    >
       <ResponsiveContainer>
         <LineChart
           data={data}
@@ -23,19 +54,18 @@ const HeartRateGraph = ({ data }: HeartRateGraphProps) => {
             bottom: 5,
           }}
         >
-          <XAxis dataKey="timestamp" />
-          <YAxis />
+          <XAxis dataKey="timestamp" tickFormatter={formatXAxisTick} />
+          <YAxis domain={[0, 'dataMax + 10']} />
           <Tooltip isAnimationActive={false} />
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#8884d8"
-            activeDot={{ r: 8 }}
+            stroke={theme.palette.primary.main}
             isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
-    </div>
+    </Box>
   )
 }
 

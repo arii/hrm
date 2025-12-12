@@ -24,12 +24,12 @@ import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
 import { HeartRateDataPoint } from '@/types'
 
+const GRAPH_TIME_WINDOW_MS = 60000 // 60 seconds
+
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(
-    value
-  )}; expires=${expires}; path=/`
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
 }
 
 const getCookie = (name: string): string => {
@@ -123,8 +123,9 @@ export default function ConnectPage() {
   // 4. Update heart rate history
   useEffect(() => {
     if (isConnected && currentUserData) {
+      const now = Date.now()
       const newDataPoint = {
-        timestamp: Date.now(),
+        timestamp: now,
         value: currentUserData.value,
       }
       // This effect synchronizes with an external data source (WebSocket).
@@ -134,7 +135,7 @@ export default function ConnectPage() {
         const newHistory = [...prevHistory, newDataPoint]
         // Keep the history to the last 60 seconds
         return newHistory.filter(
-          (point) => point.timestamp > Date.now() - 60000
+          (point) => point.timestamp > now - GRAPH_TIME_WINDOW_MS
         )
       })
     }
