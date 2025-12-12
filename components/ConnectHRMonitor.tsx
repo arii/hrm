@@ -60,7 +60,9 @@ const ConnectHRMonitor: React.FC<ConnectHRMonitorProps> = ({
       onClick={handleConnect}
       disabled={isConnecting}
       sx={(theme) => ({
-        ...theme.typography.h6,
+        fontSize: theme.typography.h6.fontSize,
+        fontWeight: theme.typography.h6.fontWeight,
+        lineHeight: theme.typography.h6.lineHeight,
         padding: theme.spacing(1.5, 3),
         minWidth: '280px',
       })}
