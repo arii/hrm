@@ -9,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import React from 'react'
 
 const HeartRateGraph = ({ data }: HeartRateGraphProps) => {
   return (
