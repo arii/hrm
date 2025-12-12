@@ -1,2 +1,2 @@
 // tests/unit/mocks/uuid.ts
-export const v4 = () => 'mock-uuid';
+export const v4 = () => 'mock-uuid'
