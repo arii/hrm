@@ -154,19 +154,11 @@ jobs:
           reporter: java-junit
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
-      - name: Run Backend Port Test
-        id: backend_port_test
+      - name: Run Port Health Checks
+        id: port_tests
         run: |
           set -o pipefail
-          pnpm run test:backend:port 2>&1 | tee logs/backend-port-test-output.log
-        continue-on-error: true
-
-      - name: Run WebSocket Port Test
-        id: websocket_port_test
-        run: |
-          set -o pipefail
-          pnpm run test:websocket:port 2>&1 | tee logs/websocket-port-test-output.log
-        continue-on-error: true
+          pnpm run test:ports 2>&1 | tee logs/port-tests-output.log
 
       - name: Run Unit Tests
         id: unit_tests
