@@ -21,7 +21,7 @@ import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
 import { calculateCaloriesBurned } from '@/utils/calculations'
-import WorkoutSummaryDisplay from '@/components/WorkoutSummaryDisplay'
+import LiveWorkoutStats from '@/components/LiveWorkoutStats'
 
 // --- Interfaces ---
 interface HeartRateDataPoint {
@@ -29,10 +29,6 @@ interface HeartRateDataPoint {
   value: number
 }
 
-interface WorkoutSummary {
-  duration: string
-  caloriesBurned: number
-}
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -53,10 +49,8 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummary | null>(
-    null
-  )
-  const [hrHistoryCount, setHrHistoryCount] = useState(0) // State for debug view
+  const [liveDuration, setLiveDuration] = useState('00:00:00')
+  const [liveCalories, setLiveCalories] = useState(0)
 
   // Refs
   const hrHistoryRef = useRef<HeartRateDataPoint[]>([])
@@ -106,9 +100,24 @@ export default function ConnectPage() {
   useEffect(() => {
     if (isConnected && currentHR > 0) {
       hrHistoryRef.current.push({ timestamp: Date.now(), value: currentHR })
-      setHrHistoryCount(hrHistoryRef.current.length) // Update state for UI
     }
-  }, [isConnected, currentHR])
+
+    // Live Stats Calculation
+    if (isConnected && hrHistoryRef.current.length > 1) {
+      const age = parseInt(userAge) || 30
+      const calories = calculateCaloriesBurned(age, hrHistoryRef.current)
+      setLiveCalories(calories)
+
+      const startTime = hrHistoryRef.current[0]!.timestamp
+      const now = Date.now()
+      const durationSeconds = (now - startTime) / 1000
+      setLiveDuration(formatDuration(durationSeconds))
+    } else {
+      // Reset when not connected or not enough data
+      setLiveDuration('00:00:00')
+      setLiveCalories(0)
+    }
+  }, [isConnected, currentHR, userAge])
 
   // --- Helper Functions ---
   const formatDuration = (seconds: number): string => {
@@ -134,8 +143,6 @@ export default function ConnectPage() {
 
     // Reset state for a new session
     hrHistoryRef.current = []
-    setWorkoutSummary(null)
-    setHrHistoryCount(0)
 
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
@@ -143,31 +150,14 @@ export default function ConnectPage() {
   }
 
   const handleDisconnect = () => {
-    // 1. Calculate Summary
-    if (hrHistoryRef.current.length > 1) {
-      const age = parseInt(userAge) || 30
-      const calories = calculateCaloriesBurned(age, hrHistoryRef.current)
-
-      const startTime = hrHistoryRef.current[0]!.timestamp
-      const endTime =
-        hrHistoryRef.current[hrHistoryRef.current.length - 1]!.timestamp
-      const durationSeconds = (endTime - startTime) / 1000
-
-      setWorkoutSummary({
-        duration: formatDuration(durationSeconds),
-        caloriesBurned: calories,
-      })
-    }
-
     // 2. Update State
     setIsConnected(false)
 
     // 3. Clear session data
     hrHistoryRef.current = []
-    setHrHistoryCount(0)
     document.cookie =
       'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-    // NOTE: window.location.reload() is removed to allow summary to be displayed
+    window.location.reload() // Re-introducing reload for a clean state reset
   }
 
   // --- Data Derived ---
@@ -212,10 +202,13 @@ export default function ConnectPage() {
                 />
               </Box>
 
-              {/* 3. Minimized Profile Info */}
+              {/* 3. Live Workout Stats */}
+              <LiveWorkoutStats duration={liveDuration} calories={liveCalories} />
+
+              {/* 4. Minimized Profile Info */}
               <Paper
                 variant="outlined"
-                sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}
+                sx={{ p: 2, mt: 2, bgcolor: 'background.paper' }}
               >
                 <Box
                   display="flex"
@@ -244,15 +237,10 @@ export default function ConnectPage() {
                     WS: {connectionStatus}
                   </Typography>
                 </Box>
-                {/* --- DEBUGGING VIEW --- */}
-                <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                  [Debug] HR History Points: {hrHistoryCount}
-                </Typography>
-                {/* -------------------- */}
               </Paper>
 
-              {/* 4. Disconnect (Pushed to bottom) */}
-              <Box sx={{ mt: 'auto' }}>
+              {/* 5. Disconnect (Pushed to bottom) */}
+              <Box sx={{ mt: 'auto', pt: 2 }}>
                 <Button
                   variant="outlined"
                   color="error"
@@ -272,18 +260,6 @@ export default function ConnectPage() {
         ) : (
           /* VIEW 2: CONNECTION FORM (Disconnected) */
           <Box sx={{ mt: 4 }}>
-            {/* Ephemeral Workout Summary */}
-            {workoutSummary && (
-              <Fade in={true}>
-                <div>
-                  <WorkoutSummaryDisplay
-                    duration={workoutSummary.duration}
-                    caloriesBurned={workoutSummary.caloriesBurned}
-                  />
-                </div>
-              </Fade>
-            )}
-
             <Typography
               variant="h4"
               component="h1"
