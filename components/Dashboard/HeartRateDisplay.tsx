@@ -1,12 +1,13 @@
 // src/components/Dashboard/HeartRateDisplay.tsx
-'use client';
+'use client'
 
-import { Card, CardContent, Typography } from '@mui/material';
-import { useWebSocket } from '@/context/WebSocketContext';
+import { Card, CardContent, Typography } from '@mui/material'
+import { useWebSocket } from '@/context/WebSocketContext'
 
 const HeartRateDisplay = () => {
-  const { hrmData } = useWebSocket();
-  const latestHeartRate = hrmData.length > 0 ? hrmData[hrmData.length - 1].value : '...';
+  const { hrmData } = useWebSocket()
+  const latestHeartRate =
+    hrmData.length > 0 ? hrmData[hrmData.length - 1].value : '...'
 
   return (
     <Card>
@@ -15,7 +16,7 @@ const HeartRateDisplay = () => {
         <Typography variant="h4">{latestHeartRate} BPM</Typography>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default HeartRateDisplay;
+export default HeartRateDisplay

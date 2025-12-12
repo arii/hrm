@@ -1,20 +1,20 @@
 // src/components/Dashboard/AverageHeartRateDisplay.tsx
-'use client';
+'use client'
 
-import { Card, CardContent, Typography } from '@mui/material';
-import { useWebSocket } from '@/context/WebSocketContext';
-import { useMemo } from 'react';
+import { Card, CardContent, Typography } from '@mui/material'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { useMemo } from 'react'
 
 const AverageHeartRateDisplay = () => {
-  const { hrmData } = useWebSocket();
+  const { hrmData } = useWebSocket()
 
   const averageHeartRate = useMemo(() => {
     if (hrmData.length === 0) {
-      return '...';
+      return '...'
     }
-    const sum = hrmData.reduce((acc, data) => acc + data.value, 0);
-    return Math.round(sum / hrmData.length);
-  }, [hrmData]);
+    const sum = hrmData.reduce((acc, data) => acc + data.value, 0)
+    return Math.round(sum / hrmData.length)
+  }, [hrmData])
 
   return (
     <Card>
@@ -23,7 +23,7 @@ const AverageHeartRateDisplay = () => {
         <Typography variant="h4">{averageHeartRate} BPM</Typography>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default AverageHeartRateDisplay;
+export default AverageHeartRateDisplay

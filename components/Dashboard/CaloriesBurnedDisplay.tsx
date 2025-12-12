@@ -1,11 +1,11 @@
 // src/components/Dashboard/CaloriesBurnedDisplay.tsx
-'use client';
+'use client'
 
-import { Card, CardContent, Typography } from '@mui/material';
+import { Card, CardContent, Typography } from '@mui/material'
 
 const CaloriesBurnedDisplay = () => {
   // Placeholder for calorie calculation logic
-  const caloriesBurned = '...';
+  const caloriesBurned = '...'
 
   return (
     <Card>
@@ -14,7 +14,7 @@ const CaloriesBurnedDisplay = () => {
         <Typography variant="h4">{caloriesBurned} kcal</Typography>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default CaloriesBurnedDisplay;
+export default CaloriesBurnedDisplay

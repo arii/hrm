@@ -1,12 +1,12 @@
 // src/components/Dashboard/WorkoutMetricsPanel.tsx
 'use client'
 
-import { Card, CardContent, Grid, Typography } from '@mui/material';
-import HeartRateDisplay from './HeartRateDisplay';
-import AverageHeartRateDisplay from './AverageHeartRateDisplay';
-import MaxHeartRateDisplay from './MaxHeartRateDisplay';
-import CaloriesBurnedDisplay from './CaloriesBurnedDisplay';
-import LiveWorkoutTimerDisplay from './LiveWorkoutTimerDisplay';
+import { Card, CardContent, Grid, Typography } from '@mui/material'
+import HeartRateDisplay from './HeartRateDisplay'
+import AverageHeartRateDisplay from './AverageHeartRateDisplay'
+import MaxHeartRateDisplay from './MaxHeartRateDisplay'
+import CaloriesBurnedDisplay from './CaloriesBurnedDisplay'
+import LiveWorkoutTimerDisplay from './LiveWorkoutTimerDisplay'
 
 const WorkoutMetricsPanel = () => {
   return (
@@ -34,7 +34,7 @@ const WorkoutMetricsPanel = () => {
         </Grid>
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
-export default WorkoutMetricsPanel;
+export default WorkoutMetricsPanel
