@@ -45,6 +45,8 @@ const INITIAL_STATE: AppState = {
     artist: '',
     isPlaying: false,
     devices: [],
+    shuffleState: false,
+    repeatState: 'off',
   },
   activeAlerts: [],
   spotifyServiceInitialized: true,
