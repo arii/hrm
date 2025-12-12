@@ -23,6 +23,7 @@ export const useUserPreferences = () => {
     userName: '',
     userAge: '',
     deviceId: '',
+    maxHr: 0,
   })
 
   const maxHr = 220 - (parseInt(prefs.userAge) || 0)
