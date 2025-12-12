@@ -14,6 +14,7 @@ import SpotifyLoginButton from './SpotifyLoginButton'
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
 import { useSpotifyControls } from '@/hooks/useSpotifyControls'
+import { SpotifyCommand } from '@/types/websocket'
 
 
 const SpotifyDisplay = () => {
@@ -23,7 +24,10 @@ const SpotifyDisplay = () => {
   const { sendCommand } = useSpotifyControls()
   const { isPlaying, shuffleState, repeatState, devices = [] } = spotifyData;
 
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolume] = useState(() => {
+    const activeDevice = devices.find((d) => d.is_active)
+    return activeDevice?.volume_percent ?? 50
+  });
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -56,9 +60,25 @@ const SpotifyDisplay = () => {
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
-    sendCommand('TRANSFER_PLAYBACK', deviceId)
+    sendCommand('TRANSFER_PLAYBACK', { deviceId })
     setDeviceMenuAnchor(null)
   }
+
+  const handleCommand = (command: SpotifyCommand, value?: unknown) => {
+    switch (command) {
+      case 'SET_VOLUME':
+        sendCommand(command, { volume: value as number });
+        break;
+      case 'SET_REPEAT_MODE':
+        sendCommand(command, { repeatState: value as 'off' | 'track' | 'context' });
+        break;
+      case 'TOGGLE_SHUFFLE':
+        sendCommand(command, { shuffleState: value as boolean });
+        break;
+      default:
+        sendCommand(command);
+    }
+  };
 
   if (!isLoggedIn) {
     return (
@@ -125,7 +145,7 @@ const SpotifyDisplay = () => {
                 isPlaying={isPlaying}
                 shuffleState={shuffleState}
                 repeatState={repeatState}
-                onCommand={sendCommand}
+                onCommand={handleCommand}
                 disabled={connectionStatus !== 'Connected'}
             />
         </Box>
@@ -134,7 +154,7 @@ const SpotifyDisplay = () => {
           <VolumeControl
             volume={volume}
             onVolumeChange={setVolume}
-            onVolumeChangeCommitted={(newVolume) => sendCommand('SET_VOLUME', newVolume)}
+            onVolumeChangeCommitted={(newVolume) => handleCommand('SET_VOLUME', newVolume)}
           />
           <IconButton
             size="small"

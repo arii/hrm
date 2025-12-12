@@ -42,12 +42,13 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
+    '/node_modules/(?!uuid|next-auth|jose)', // Ensure these are transformed
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    'next-auth': '<rootDir>/tests/unit/__mocks__/next-auth.js',
   },
   testTimeout: 10000,
 }

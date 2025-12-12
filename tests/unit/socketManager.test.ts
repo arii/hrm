@@ -142,43 +142,43 @@ describe('WebSocket Manager', () => {
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {
-      const mockWs = new MockWebSocket()
-      // @ts-expect-error-next-line
-      mockWss.clients.add(mockWs)
-      // @ts-expect-error-next-line
-      mockWss.emit('connection', mockWs)
+        const mockWs = new MockWebSocket();
+        // @ts-expect-error-next-line
+        mockWss.clients.add(mockWs);
+        // @ts-expect-error-next-line
+        mockWss.emit('connection', mockWs);
 
-      // Advance time but don't simulate a ping
-      jest.advanceTimersByTime(150000)
+        // Advance time but don't simulate a ping
+        jest.advanceTimersByTime(150000);
 
-      // Manually trigger the watchdog ONLY ONCE
-      if (watchdogCallback) {
-        watchdogCallback()
-      }
+        // Manually trigger the watchdog ONLY ONCE
+        if (watchdogCallback) {
+          watchdogCallback();
+        }
 
-      expect(mockWs.terminate).toHaveBeenCalledTimes(1)
-    })
+        expect(mockWs.terminate).toHaveBeenCalledTimes(1);
+      });
 
-    it('should NOT terminate a client that is responsive', () => {
-      const mockWs = new MockWebSocket()
-      // @ts-expect-error-next-line
-      mockWss.clients.add(mockWs)
-      // @ts-expect-error-next-line
-      mockWss.emit('connection', mockWs)
+      it('should NOT terminate a client that is responsive', () => {
+        const mockWs = new MockWebSocket();
+        // @ts-expect-error-next-line
+        mockWss.clients.add(mockWs);
+        // @ts-expect-error-next-line
+        mockWss.emit('connection', mockWs);
 
-      // Simulate a ping to show responsiveness
-      const message = JSON.stringify({ type: 'PING' })
-      mockWs.emit('message', message.toString())
+        // Simulate a ping to show responsiveness
+        const message = JSON.stringify({ type: 'PING' });
+        mockWs.emit('message', message.toString());
 
-      // Advance time
-      jest.advanceTimersByTime(150000)
+        // Advance time
+        jest.advanceTimersByTime(150000);
 
-      // Manually trigger the watchdog
-      if (watchdogCallback) {
-        watchdogCallback()
-      }
+        // Manually trigger the watchdog
+        if (watchdogCallback) {
+          watchdogCallback();
+        }
 
-      expect(mockWs.terminate).not.toHaveBeenCalled()
-    })
+        expect(mockWs.terminate).not.toHaveBeenCalled();
+      });
   })
 })

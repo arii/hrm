@@ -18,6 +18,7 @@ import { useSpotifyControls } from '@/hooks/useSpotifyControls'
 
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
+import { SpotifyCommand } from '@/types/websocket'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -25,7 +26,10 @@ const SpotifyControls = () => {
   const { devices = [], isPlaying, shuffleState, repeatState } = spotifyData
   const { sendCommand } = useSpotifyControls()
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolume] = useState(() => {
+    const activeDevice = devices.find((d) => d.is_active)
+    return activeDevice?.volume_percent ?? 50
+  });
 
 
   const handleBrowseClick = () => {
@@ -57,6 +61,24 @@ const SpotifyControls = () => {
     }
   }, [devices, selectedDeviceId, volume])
 
+  const handleCommand = (command: SpotifyCommand, value?: unknown) => {
+    switch (command) {
+      case 'SET_VOLUME':
+        sendCommand(command, { volume: value as number });
+        break;
+      case 'SET_REPEAT_MODE':
+        sendCommand(command, { repeatState: value as 'off' | 'track' | 'context' });
+        break;
+      case 'TOGGLE_SHUFFLE':
+        sendCommand(command, { shuffleState: value as boolean });
+        break;
+      case 'TRANSFER_PLAYBACK':
+        sendCommand(command, { deviceId: value as string });
+        break;
+      default:
+        sendCommand(command);
+    }
+  };
 
   return (
     <Card
@@ -100,14 +122,14 @@ const SpotifyControls = () => {
               isPlaying={isPlaying}
               shuffleState={shuffleState}
               repeatState={repeatState}
-              onCommand={sendCommand}
+              onCommand={handleCommand}
               disabled={connectionStatus !== 'Connected'}
             />
 
             <VolumeControl
                 volume={volume}
                 onVolumeChange={setVolume}
-                onVolumeChangeCommitted={(newVolume) => sendCommand('SET_VOLUME', newVolume)}
+                onVolumeChangeCommitted={(newVolume) => handleCommand('SET_VOLUME', newVolume)}
             />
 
             {devices.length > 0 && (
@@ -122,7 +144,7 @@ const SpotifyControls = () => {
                       const deviceId = e.target.value
                       setSelectedDeviceId(deviceId)
                       if (deviceId) {
-                        sendCommand('TRANSFER_PLAYBACK', deviceId)
+                        handleCommand('TRANSFER_PLAYBACK', deviceId)
                       }
                     }}
                     disabled={connectionStatus !== 'Connected'}
