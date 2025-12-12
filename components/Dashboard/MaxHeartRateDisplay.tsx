@@ -9,7 +9,7 @@ const MaxHeartRateDisplay = () => {
   const { hrmData } = useWebSocket()
 
   const maxHeartRate = useMemo(() => {
-    if (hrmData.length === 0) {
+    if (!hrmData || hrmData.length === 0) {
       return '...'
     }
     return Math.max(...hrmData.map((data) => data.value))

@@ -9,7 +9,7 @@ const AverageHeartRateDisplay = () => {
   const { hrmData } = useWebSocket()
 
   const averageHeartRate = useMemo(() => {
-    if (hrmData.length === 0) {
+    if (!hrmData || hrmData.length === 0) {
       return '...'
     }
     const sum = hrmData.reduce((acc, data) => acc + data.value, 0)
