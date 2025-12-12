@@ -63,7 +63,6 @@ export default function ConnectPage() {
   const handleDisconnect = () => {
     saveSetting('deviceId', '')
     disconnect()
-    window.location.reload()
   }
 
   const handleResetServer = () => {

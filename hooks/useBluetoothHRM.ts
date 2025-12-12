@@ -7,6 +7,7 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage, HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserPreferences } from './useUserPreferences'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -33,24 +34,6 @@ const parseHeartRate = (value: DataView): number => {
   return heartRate
 }
 
-// Cookie helpers for device persistence
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
-  }
-}
-
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
-
 const useBluetoothHRM = () => {
   // We assume the useWebSocket hook is available and provides the sendData function
   const { sendData, connectionStatus } = useWebSocket()
@@ -58,6 +41,7 @@ const useBluetoothHRM = () => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [deviceId, setDeviceId] = useState<string | undefined>(undefined)
+  const [prefs, setPrefs] = useUserPreferences()
 
   // Refs to track state without dependency cycles or for event handlers
   const statusRef = useRef(deviceStatus)
@@ -122,8 +106,8 @@ const useBluetoothHRM = () => {
     setBatteryLevel(null)
     deviceRef.current = null
     setDeviceId(undefined)
-    setCookie('hrm_device_id', '', -1)
-  }, [])
+    setPrefs({ ...prefs, deviceId: '' })
+  }, [prefs, setPrefs])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let userFriendlyMessage =
@@ -261,7 +245,7 @@ const useBluetoothHRM = () => {
         let device = savedDevice
 
         if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
+          const savedDeviceId = prefs.deviceId
           // Try to retrieve known devices if supported
           if (
             savedDeviceId &&
@@ -279,7 +263,7 @@ const useBluetoothHRM = () => {
               filters: [{ services: [HR_SERVICE_UUID] }],
               optionalServices: [BATTERY_SERVICE_UUID],
             })
-            setCookie('hrm_device_id', device.id)
+            setPrefs({ ...prefs, deviceId: device.id })
           }
         }
 
@@ -294,7 +278,14 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [connectionStatus, savedDevice, connectToGatt, handleConnectionError] // Dependencies
+    [
+      connectionStatus,
+      savedDevice,
+      connectToGatt,
+      handleConnectionError,
+      prefs,
+      setPrefs,
+    ] // Dependencies
   )
 
   return {

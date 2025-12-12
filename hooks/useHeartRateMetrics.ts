@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { HrmData } from '../types/websocket'
+import { HEART_RATE_HISTORY_SIZE } from '@/utils/constants'
 
 export const useHeartRateMetrics = (clientId: string, hrmData: HrmData[]) => {
   const [heartRateHistory, setHeartRateHistory] = useState<number[]>([])
@@ -19,8 +20,10 @@ export const useHeartRateMetrics = (clientId: string, hrmData: HrmData[]) => {
       const newHeartRate = userHrmData.value
       setHeartRateHistory((prevHistory) => {
         const newHistory = [...prevHistory, newHeartRate]
-        if (newHistory.length > 100) {
-          return newHistory.slice(newHistory.length - 100)
+        if (newHistory.length > HEART_RATE_HISTORY_SIZE) {
+          return newHistory.slice(
+            newHistory.length - HEART_RATE_HISTORY_SIZE
+          )
         }
         return newHistory
       })

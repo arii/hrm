@@ -17,6 +17,7 @@ import MaxHeartRateDisplay from './HeartRate/MaxHeartRateDisplay'
 import HeartRateZoneIndicator from './HeartRate/HeartRateZoneIndicator'
 import { getHrZoneProps } from '@/utils/visualization'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
+import { useUserPreferences } from '@/hooks/useUserPreferences'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -37,7 +38,6 @@ const overlayStyles = {
 interface HrTileProps {
   clientId: string
   name: string
-  maxHr?: number
   isAlerting: boolean
   alertMessage?: string
 }
@@ -45,13 +45,14 @@ interface HrTileProps {
 const HrTile = ({
   clientId,
   name,
-  maxHr,
   isAlerting,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const { hrmData } = useWebSocket()
   const { currentHeartRate, averageHeartRate, maxHeartRate } =
     useHeartRateMetrics(clientId, hrmData)
+  const [prefs] = useUserPreferences()
+  const { maxHr } = prefs
 
   const percentMax = currentHeartRate
     ? Math.round((currentHeartRate / (maxHr || MAX_HR_DEFAULT)) * 100)
@@ -140,7 +141,6 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.clientId === nextProps.clientId &&
     prevProps.name === nextProps.name &&
-    prevProps.maxHr === nextProps.maxHr &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

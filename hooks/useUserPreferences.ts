@@ -10,6 +10,7 @@ export interface UserPreferences {
   userName: string
   userAge: string
   deviceId: string
+  maxHr: number;
 }
 
 export const useUserPreferences = () => {
@@ -24,5 +25,7 @@ export const useUserPreferences = () => {
     deviceId: '',
   })
 
-  return [prefs, setPrefs] as const
+  const maxHr = 220 - (parseInt(prefs.userAge) || 0)
+
+  return [{ ...prefs, maxHr }, setPrefs] as const
 }

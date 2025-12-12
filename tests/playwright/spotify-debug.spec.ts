@@ -18,7 +18,7 @@ test.describe('Spotify Debug UI', () => {
     await expect(page.getByText('Server Token Status')).toBeVisible()
   })
 
-  test.skip('token endpoint responds', async ({ request }) => {
+  test('token endpoint responds', async ({ request }) => {
     const res = await request.get(`${BASE}/api/debug/spotify-token`)
     expect(res.ok()).toBeTruthy()
     const data = await res.json()

@@ -33,7 +33,6 @@ const HrmTiles = () => {
             <HrTile
               clientId={user.clientId}
               name={user.name || ''}
-              maxHr={user.maxHr}
               isAlerting={!!matchingAlert}
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
