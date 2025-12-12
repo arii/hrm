@@ -13,11 +13,11 @@ export const formatDuration = (totalSeconds: number): string => {
 export const calculateEstimatedCalories = (
   hr: number,
   age: number,
+  weightKg: number,
   timeSeconds: number
 ): number => {
-  if (hr <= 0 || timeSeconds <= 0) return 0
+  if (hr <= 0 || timeSeconds <= 0 || weightKg <= 0) return 0
   const timeMinutes = timeSeconds / 60
-  const weightKg = 70 // Placeholder
   let kcalPerMinute =
     (age * 0.2017 + weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
   kcalPerMinute = Math.max(0.5, kcalPerMinute)

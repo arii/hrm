@@ -41,6 +41,7 @@ export default function ConnectPage() {
   // State
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
+  const [userWeight, setUserWeight] = useState('')
   const [isConnected, setIsConnected] = useState(false)
 
   // Hooks
@@ -57,8 +58,10 @@ export default function ConnectPage() {
   useEffect(() => {
     const savedName = getCookie('hrm_user_name')
     const savedAge = getCookie('hrm_user_age')
+    const savedWeight = getCookie('hrm_user_weight')
     if (savedName) setUserName(savedName)
     if (savedAge) setUserAge(savedAge)
+    if (savedWeight) setUserWeight(savedWeight)
   }, [])
 
   // 2. Define the auto-connection logic using useAutoConnect
@@ -92,9 +95,13 @@ export default function ConnectPage() {
     const ageNum = parseInt(userAge)
     if (!userAge.trim() || ageNum < 1 || ageNum > 120)
       return alert('Invalid age')
+    const weightNum = parseInt(userWeight)
+    if (!userWeight.trim() || weightNum < 1 || weightNum > 300)
+      return alert('Invalid weight')
 
     setCookie('hrm_user_name', userName.trim())
     setCookie('hrm_user_age', userAge.trim())
+    setCookie('hrm_user_weight', userWeight.trim())
     await connectAndStream(userName, userAge)
   }
 
@@ -111,16 +118,18 @@ export default function ConnectPage() {
     (user) => user.name === userName || user.name?.includes('Bluetooth HRM')
   )
   const currentHR = currentUserData?.value || 0
-  const maxHr = 220 - (parseInt(userAge) || 30)
+  const age = parseInt(userAge) || 30
+  const weight = parseInt(userWeight) || 70
+  const maxHr = 220 - age
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   // *** NEW: Workout Metrics Calculations ***
-  const age = parseInt(userAge) || 30
   const totalTimeSeconds = timerData?.timeElapsed || 0
   const formattedDuration = formatDuration(totalTimeSeconds)
   const estimatedCalories = calculateEstimatedCalories(
     currentHR,
     age,
+    weight,
     totalTimeSeconds
   )
   const formattedCalories = Math.round(estimatedCalories).toLocaleString()
@@ -196,7 +205,6 @@ export default function ConnectPage() {
                   </Typography>
                 </Box>
               </Paper>
-              {/* *** NEW: Display Workout Duration and Calories *** */}
               <Box
                 sx={{
                   mt: 3,
@@ -236,11 +244,10 @@ export default function ConnectPage() {
                   color="text.secondary"
                   sx={{ display: 'block', mt: 1 }}
                 >
-                  * Calorie estimate is based on the current heart rate and age,
-                  assuming an average user profile.
+                  * Calorie estimate is based on your provided heart rate, age,
+                  and weight.
                 </Typography>
               </Box>
-              {/* ************************************************** */}
               {/* 4. Disconnect (Pushed to bottom) */}
               <Box sx={{ mt: 'auto' }}>
                 <Button
@@ -297,6 +304,16 @@ export default function ConnectPage() {
                 value={userAge}
                 onChange={(e) => setUserAge(e.target.value)}
                 inputProps={{ min: 1, max: 120 }}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Weight (kg)"
+                type="number"
+                variant="outlined"
+                value={userWeight}
+                onChange={(e) => setUserWeight(e.target.value)}
+                inputProps={{ min: 1, max: 300 }}
               />
             </Box>
             {isAutoConnecting && (
@@ -315,7 +332,12 @@ export default function ConnectPage() {
               size="large"
               fullWidth
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim() || isAutoConnecting}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                !userWeight.trim() ||
+                isAutoConnecting
+              }
               sx={{ py: 2, fontSize: '1.1rem' }}
             >
               {isAutoConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
