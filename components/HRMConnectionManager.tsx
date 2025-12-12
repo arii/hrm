@@ -6,7 +6,7 @@ import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 
-import useBluetoothHRM, { HRMState } from '@/hooks/useBluetoothHRM'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import ConnectHRMonitor from './ConnectHRMonitor'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 
