@@ -120,7 +120,7 @@ describe('WebSocket Manager', () => {
     })
 
     afterEach(() => {
-        jest.clearAllTimers()
+      jest.clearAllTimers()
     })
 
     it('should set lastPingTime on new connection', () => {
