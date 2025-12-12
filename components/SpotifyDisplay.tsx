@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -20,7 +20,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
-import VolumeSlider from './PlaybackControls/VolumeSlider'
+import SharedVolumeControl from './shared/SharedVolumeControl'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyDevice {
@@ -35,9 +35,9 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, sendData, connectionStatus }_h = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { volume, muted } = spotifyData
   const debouncedVolume = useDebounce(volume, 500)
 
   // Debug: Log session status changes
@@ -320,12 +320,7 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeSlider
-            volume={volume}
-            muted={muted}
-            onVolumeChange={setVolume}
-            onToggleMute={toggleMute}
-          />
+          <SharedVolumeControl />
           <IconButton
             size="small"
             onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
