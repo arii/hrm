@@ -133,13 +133,15 @@ export default function ConnectPage() {
 
       setHeartRateHistory((prevHistory) => {
         const newHistory = [...prevHistory, newDataPoint]
-        // Optimize filtering by removing elements from the start of the array
-        // until within the window, rather than creating a new filtered array.
-        while (
-          newHistory.length > 0 &&
-          newHistory[0].timestamp < now - GRAPH_TIME_WINDOW_MS
-        ) {
-          newHistory.shift()
+        // Optimize filtering by removing elements from the start of the array.
+        // This is more performant than `filter` as it avoids creating a new array.
+        while (newHistory.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          if (newHistory[0]!.timestamp < now - GRAPH_TIME_WINDOW_MS) {
+            newHistory.shift()
+          } else {
+            break // The rest of the points are within the time window
+          }
         }
         return newHistory
       })
