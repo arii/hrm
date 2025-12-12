@@ -14,7 +14,7 @@ import {
   Paper,
   Fade,
 } from '@mui/material'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
@@ -41,7 +41,8 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const initialAutoConnectAttempted = useRef(false)
+  const [initialAutoConnectAttempted, setInitialAutoConnectAttempted] =
+    useState(false)
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
@@ -76,7 +77,7 @@ export default function ConnectPage() {
     !bluetoothConnected &&
     !!userName &&
     !!userAge &&
-    !initialAutoConnectAttempted.current
+    !initialAutoConnectAttempted
 
   const { isConnecting: isAutoConnecting, attempts: autoConnectAttempts } =
     useAutoConnect(autoConnectFn, shouldStartAutoConnect)
@@ -84,7 +85,7 @@ export default function ConnectPage() {
   // Once an auto-connect attempt starts, prevent it from restarting
   useEffect(() => {
     if (isAutoConnecting) {
-      initialAutoConnectAttempted.current = true
+      setInitialAutoConnectAttempted(true)
     }
   }, [isAutoConnecting])
 
@@ -96,7 +97,7 @@ export default function ConnectPage() {
   // 4. Reset auto-connect flag if WebSocket disconnects
   useEffect(() => {
     if (connectionStatus === 'Disconnected' || connectionStatus === 'Error') {
-      initialAutoConnectAttempted.current = false
+      setInitialAutoConnectAttempted(false)
     }
   }, [connectionStatus])
 
