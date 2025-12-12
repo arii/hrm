@@ -21,6 +21,7 @@ import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
+import { formatDuration, calculateEstimatedCalories } from '@/utils/workout'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -34,32 +35,6 @@ const getCookie = (name: string): string => {
   const parts = value.split(`; ${name}=`)
   if (parts.length === 2) return parts.pop()?.split(';').shift() || ''
   return ''
-}
-
-const formatDuration = (totalSeconds: number): string => {
-  const seconds = Math.floor(totalSeconds)
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainingSeconds = seconds % 60
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${remainingSeconds}s`
-  }
-  return `${minutes}m ${remainingSeconds}s`
-}
-
-const calculateEstimatedCalories = (
-  hr: number,
-  age: number,
-  timeSeconds: number
-): number => {
-  if (hr <= 0 || timeSeconds <= 0) return 0
-  const timeMinutes = timeSeconds / 60
-  const weightKg = 70 // Placeholder
-  let kcalPerMinute =
-    (age * 0.2017 + weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
-  kcalPerMinute = Math.max(0.5, kcalPerMinute)
-  return Math.max(0, kcalPerMinute * timeMinutes)
 }
 
 export default function ConnectPage() {
