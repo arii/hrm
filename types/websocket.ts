@@ -161,6 +161,10 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface HrmDisconnectMessage {
+  type: 'HRM_DISCONNECT';
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
@@ -170,6 +174,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | HrmDisconnectMessage
 
 import { z } from 'zod'
 
