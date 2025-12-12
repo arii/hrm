@@ -14,12 +14,13 @@ import {
   Paper,
   Fade,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
+import useAutoConnect from '../../../hooks/useAutoConnect'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -51,28 +52,34 @@ export default function ConnectPage() {
 
   // --- Effects ---
 
-  // 1. Auto-load and Auto-connect
+  // 1. Load user data from cookies on initial render
   useEffect(() => {
     const savedName = getCookie('hrm_user_name')
     const savedAge = getCookie('hrm_user_age')
-    const savedDeviceId = getCookie('hrm_device_id')
-
     if (savedName) setUserName(savedName)
     if (savedAge) setUserAge(savedAge)
+  }, [])
 
-    if (
-      savedName &&
-      savedAge &&
-      savedDeviceId &&
-      connectionStatus === 'Connected' &&
-      !bluetoothConnected &&
-      !deviceStatus.includes('Connecting')
-    ) {
-      connectAndStream(savedName, savedAge)
+  // 2. Define the auto-connection logic using useAutoConnect
+  const autoConnectFn = useCallback(async () => {
+    // Ensure we have the latest user data from state for the connection attempt
+    if (userName && userAge) {
+      return await connectAndStream(userName, userAge)
     }
-  }, [connectionStatus, connectAndStream, bluetoothConnected, deviceStatus])
+    return false // Can't connect without user data
+  }, [connectAndStream, userName, userAge])
 
-  // 2. Sync local connection state with Bluetooth hook
+  const shouldStartAutoConnect =
+    !!getCookie('hrm_device_id') &&
+    connectionStatus === 'Connected' &&
+    !bluetoothConnected &&
+    !!userName &&
+    !!userAge
+
+  const { isConnecting: isAutoConnecting, attempts: autoConnectAttempts } =
+    useAutoConnect(autoConnectFn, shouldStartAutoConnect)
+
+  // 3. Sync local connection state with Bluetooth hook
   useEffect(() => {
     setIsConnected(bluetoothConnected)
   }, [bluetoothConnected])
@@ -236,7 +243,11 @@ export default function ConnectPage() {
                 inputProps={{ min: 1, max: 120 }}
               />
             </Box>
-
+            {isAutoConnecting && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Attempting to auto-reconnect... (Attempt: {autoConnectAttempts})
+              </Alert>
+            )}
             {deviceStatus.includes('Failed') && (
               <Alert severity="error" sx={{ mb: 3 }}>
                 {deviceStatus}
@@ -248,10 +259,10 @@ export default function ConnectPage() {
               size="large"
               fullWidth
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim()}
+              disabled={!userName.trim() || !userAge.trim() || isAutoConnecting}
               sx={{ py: 2, fontSize: '1.1rem' }}
             >
-              Connect Bluetooth HRM
+              {isAutoConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
             </Button>
 
             <Box sx={{ mt: 4, textAlign: 'center' }}>

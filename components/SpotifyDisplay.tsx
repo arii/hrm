@@ -7,8 +7,6 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
-import VolumeUp from '@mui/icons-material/VolumeUp'
-import VolumeOff from '@mui/icons-material/VolumeOff'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -19,10 +17,11 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
-import Slider from '@mui/material/Slider'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
+import VolumeSlider from './PlaybackControls/VolumeSlider'
+import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyDevice {
   id: string
@@ -38,6 +37,8 @@ const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const debouncedVolume = useDebounce(volume, 500)
 
   // Debug: Log session status changes
   useEffect(() => {
@@ -54,7 +55,6 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,
@@ -99,8 +99,10 @@ const SpotifyDisplay = () => {
   )
 
   useEffect(() => {
-    sendVolumeCommand(volume)
-  }, [volume, sendVolumeCommand])
+    // This effect handles ALL volume changes, debouncing them to prevent spamming the API.
+    // This includes direct user interaction with the slider and cross-tab synchronization.
+    sendVolumeCommand(debouncedVolume)
+  }, [debouncedVolume, sendVolumeCommand])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
@@ -318,41 +320,12 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* MUTE TOGGLE BUTTON */}
-          <IconButton
-            size="small"
-            onClick={toggleMute}
-            sx={{
-              color: muted ? 'error.main' : 'grey.400',
-              '&:hover': { color: 'white' },
-            }}
-          >
-            {muted ? (
-              <VolumeOff fontSize="small" />
-            ) : (
-              <VolumeUp fontSize="small" />
-            )}
-          </IconButton>
-          <Slider
-            value={volume}
-            onChange={(_, val) => setVolume(val as number)}
-            onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
-            min={0}
-            max={100}
-            size="small"
-            sx={{
-              width: 80,
-              color: '#1DB954',
-              '& .MuiSlider-thumb': {
-                backgroundColor: 'white',
-                width: 12,
-                height: 12,
-              },
-              '& .MuiSlider-track': { height: 3 },
-              '& .MuiSlider-rail': { height: 3 },
-            }}
+          <VolumeSlider
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
           />
-
           <IconButton
             size="small"
             onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
