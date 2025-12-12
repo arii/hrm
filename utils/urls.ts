@@ -10,7 +10,8 @@ export const getBaseURL = (): string => {
   }
 
   // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
-  return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+  const port = process.env.PORT || 3001
+  return process.env.NEXTAUTH_URL || `http://127.0.0.1:${port}`
 }
 
 export const getWebSocketURL = (): string => {
