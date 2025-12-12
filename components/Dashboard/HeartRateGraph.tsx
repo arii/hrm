@@ -25,12 +25,13 @@ const HeartRateGraph = ({ data }: HeartRateGraphProps) => {
         >
           <XAxis dataKey="timestamp" />
           <YAxis />
-          <Tooltip />
+          <Tooltip isAnimationActive={false} />
           <Line
             type="monotone"
             dataKey="value"
             stroke="#8884d8"
             activeDot={{ r: 8 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
