@@ -19,7 +19,9 @@ test.describe('Spotify Authentication', () => {
     await expect(page.getByText(/server token status/i)).toBeVisible()
   })
 
-  test('login button redirects to Spotify with correct scopes', async ({ page }) => {
+  test('login button redirects to Spotify with correct scopes', async ({
+    page,
+  }) => {
     await page.goto(`${BASE}/debug/spotify`)
     // The button is not a link (<a>), it's a <button> that triggers signIn()
     const loginButton = page.getByRole('button', { name: /sign in/i })
