@@ -13,7 +13,9 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+
 
 const navLinks = [
   { label: 'Dashboard', href: '/' },
@@ -22,6 +24,7 @@ const navLinks = [
 ]
 
 export default function Header() {
+  const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleMobileMenuToggle = () => {
@@ -29,7 +32,7 @@ export default function Header() {
   }
 
   return (
-    <AppBar position="static">
+    <AppBar position="sticky">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           <Link href="/" passHref>
@@ -58,6 +61,8 @@ export default function Header() {
               color="inherit"
               component={Link}
               href={link.href}
+              variant={pathname === link.href ? 'outlined' : 'text'}
+              aria-current={pathname === link.href ? 'page' : undefined}
             >
               {link.label}
             </Button>
@@ -79,7 +84,12 @@ export default function Header() {
           <List>
             {navLinks.map((link) => (
               <ListItem key={link.label} disablePadding>
-                <ListItemButton component={Link} href={link.href}>
+                <ListItemButton
+                  component={Link}
+                  href={link.href}
+                  selected={pathname === link.href}
+                  aria-current={pathname === link.href ? 'page' : undefined}
+                >
                   <ListItemText primary={link.label} />
                 </ListItemButton>
               </ListItem>
