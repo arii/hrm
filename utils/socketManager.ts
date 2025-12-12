@@ -189,15 +189,17 @@ const handleIncomingMessage = (
       }
       case 'HRM_DISCONNECT': {
         if (hrmClients.has(clientId)) {
-            hrmClients.delete(clientId);
-            console.log(`[socketManager] HRM_DISCONNECT - Removed client ${clientId}`);
-            broadcast({
-                type: 'HRM_UPDATE',
-                payload: Array.from(hrmClients.values()),
-            });
+          hrmClients.delete(clientId)
+          console.log(
+            `[socketManager] HRM_DISCONNECT - Removed client ${clientId}`
+          )
+          broadcast({
+            type: 'HRM_UPDATE',
+            payload: Array.from(hrmClients.values()),
+          })
         }
-        break;
-    }
+        break
+      }
 
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {

@@ -114,7 +114,7 @@ const useBluetoothHRM = () => {
       deviceRef.current.gatt.disconnect()
     }
 
-    sendData({ type: 'HRM_DISCONNECT' });
+    sendData({ type: 'HRM_DISCONNECT' })
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(null)
@@ -137,7 +137,7 @@ const useBluetoothHRM = () => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
-    sendData({ type: 'HRM_DISCONNECT' });
+    sendData({ type: 'HRM_DISCONNECT' })
 
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')

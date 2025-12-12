@@ -234,7 +234,7 @@ export const PingMessageSchema = z.object({
 
 export const HrmDisconnectMessageSchema = z.object({
   type: z.literal('HRM_DISCONNECT'),
-});
+})
 
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
@@ -246,4 +246,4 @@ export const ClientCommandMessageSchema = z.union([
   ClientRegistrationMessageSchema,
   PingMessageSchema,
   HrmDisconnectMessageSchema,
-]);
+])

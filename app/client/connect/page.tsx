@@ -13,6 +13,7 @@ import {
   Typography,
   Paper,
   Fade,
+  CircularProgress,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
@@ -248,15 +249,30 @@ export default function ConnectPage() {
               size="large"
               fullWidth
               onClick={handleConnect}
-              disabled={!userName.trim() || !userAge.trim() || deviceStatus.includes('Retrying')}
+              disabled={
+                !userName.trim() ||
+                !userAge.trim() ||
+                deviceStatus.includes('Retrying')
+              }
               sx={{ py: 2, fontSize: '1.1rem' }}
             >
-              {deviceStatus.includes('Retrying') ? 'Reconnecting...' : 'Connect Bluetooth HRM'}
+              {deviceStatus.includes('Retrying')
+                ? 'Reconnecting...'
+                : 'Connect Bluetooth HRM'}
             </Button>
             {deviceStatus.includes('Retrying') && (
-              <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  my: 2,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
                 <CircularProgress size={20} sx={{ mr: 1 }} />
-                <Typography variant="body2" color="text.secondary">{deviceStatus}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {deviceStatus}
+                </Typography>
               </Box>
             )}
 
