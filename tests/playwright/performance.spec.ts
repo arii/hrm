@@ -22,6 +22,9 @@ test.describe('Frontend Performance', () => {
     // Navigate to the mock client page to simulate HRM data
     await page.goto('/client/mock')
 
+    // Wait for the WebSocket to connect, which enables the button
+    await expect(page.getByText('Server Status: Connected')).toBeVisible()
+
     // Start the mock HRM data stream
     await page.getByRole('button', { name: 'START Continuous Stream' }).click()
 
