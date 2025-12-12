@@ -64,12 +64,10 @@ expressApp.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "'unsafe-eval'",
-        "'unsafe-inline'",
-        'https://sdk.scdn.co',
-      ],
+      scriptSrc: ["'self'", 'https://sdk.scdn.co'],
+      // NOTE: 'unsafe-inline' is retained for style-src as it is required by Material-UI for dynamic styling.
+      // This is a known trade-off when using CSS-in-JS libraries.
+      styleSrc: ["'self'", "'unsafe-inline'"],
       connectSrc: [
         "'self'",
         'ws:',
@@ -79,6 +77,11 @@ expressApp.use(
       ],
       imgSrc: ["'self'", 'data:', 'https://i.scdn.co'],
       frameSrc: ["'self'", 'https://sdk.scdn.co'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: [],
     },
   })
 )
