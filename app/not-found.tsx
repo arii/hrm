@@ -25,10 +25,10 @@ export default function NotFoundPage(): JSX.Element {
           width: '100%', // Ensure the box takes the full width of the container
         }}
       >
-        <Typography variant="h1" component="h1" gutterBottom>
+        <Typography variant="h1" gutterBottom>
           404
         </Typography>
-        <Typography variant="h5" component="h2" gutterBottom>
+        <Typography variant="h5" gutterBottom>
           Page Not Found
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
