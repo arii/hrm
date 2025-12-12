@@ -7,6 +7,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
+import MuteButton from '@/components/MuteButton'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
@@ -104,6 +105,7 @@ const TimerDisplay = ({
           zIndex: 2,
         }}
       >
+        <MuteButton sx={{ color: '#fff' }} />
         <Typography
           variant="caption"
           sx={{ color: '#fff' }}

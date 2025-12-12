@@ -4,16 +4,14 @@
  * and send Spotify playback commands. Simulates a mobile interface.
  */
 'use client'
-import { VolumeOff, VolumeUp } from '@mui/icons-material'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
-import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import useVolumePreference from '@/hooks/useVolumePreference'
+import MuteButton from '../../components/MuteButton'
 import dynamic from 'next/dynamic'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
@@ -29,7 +27,6 @@ import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
-  const { muted, toggleMute } = useVolumePreference()
 
   // Register this client as a controller
   useEffect(() => {
@@ -118,14 +115,7 @@ const ControlPanel = () => {
           </Typography>
 
           {/* Mute Button */}
-          <IconButton
-            onClick={toggleMute}
-            size="small"
-            sx={{ color: 'text.secondary' }}
-            aria-label={muted ? 'Unmute' : 'Mute'}
-          >
-            {muted ? <VolumeOff /> : <VolumeUp />}
-          </IconButton>
+          <MuteButton />
         </Box>
 
         <TimerControls />
