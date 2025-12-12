@@ -48,6 +48,8 @@
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
+    "test:backend:port": "playwright test tests/playwright/ports.spec.ts --grep 'should confirm backend server is listening on the configured port'",
+    "test:websocket:port": "playwright test tests/playwright/ports.spec.ts --grep 'should confirm WebSocket server is listening on the configured port'",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "npm run verify",
     "depcheck": "depcheck",
