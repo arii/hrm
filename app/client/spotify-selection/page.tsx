@@ -81,7 +81,7 @@ const SpotifySelectionPage = () => {
     if (hasActiveDevice) {
       sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
     }
-  }, [debouncedVolume, hasActiveDevice])
+  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
