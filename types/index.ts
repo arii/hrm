@@ -53,6 +53,15 @@ export interface SpotifyPlaylistItem {
   uri: string
 }
 
+export interface HeartRateDataPoint {
+  timestamp: number
+  value: number
+}
+
+export interface HeartRateGraphProps {
+  data: HeartRateDataPoint[]
+}
+
 export interface SpotifyPlaylist {
   name: string
   uri: string
