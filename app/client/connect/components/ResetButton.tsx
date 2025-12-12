@@ -36,7 +36,6 @@ const ResetButton = () => {
       localStorage.removeItem('pendingActions')
       localStorage.removeItem('user-settings')
 
-
       // Call the server-side reset API
       const response = await fetch('/api/reset', {
         method: 'POST',
