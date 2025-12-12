@@ -21,7 +21,10 @@ import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
-import { formatDuration, calculateEstimatedCalories } from '@/utils/workout'
+import {
+  formatDurationHHMMSS,
+  calculateCaloriesBurned,
+} from '@/utils/fitnessCalculations'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -125,8 +128,8 @@ export default function ConnectPage() {
 
   // *** NEW: Workout Metrics Calculations ***
   const totalTimeSeconds = timerData?.timeElapsed || 0
-  const formattedDuration = formatDuration(totalTimeSeconds)
-  const estimatedCalories = calculateEstimatedCalories(
+  const formattedDuration = formatDurationHHMMSS(totalTimeSeconds)
+  const estimatedCalories = calculateCaloriesBurned(
     currentHR,
     age,
     weight,

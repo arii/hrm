@@ -1,4 +1,4 @@
-export const formatDuration = (totalSeconds: number): string => {
+export const formatDurationHHMMSS = (totalSeconds: number): string => {
   const seconds = Math.floor(totalSeconds)
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
@@ -10,7 +10,7 @@ export const formatDuration = (totalSeconds: number): string => {
   return `${minutes}m ${remainingSeconds}s`
 }
 
-export const calculateEstimatedCalories = (
+export const calculateCaloriesBurned = (
   hr: number,
   age: number,
   weightKg: number,
