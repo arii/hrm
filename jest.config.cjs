@@ -47,10 +47,11 @@ const config = {
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@/(.*)$': '<rootDir>/$1',
     '^@/app/(.*)$': '<rootDir>/app/$1',
+    '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
 }
 
 module.exports = config
