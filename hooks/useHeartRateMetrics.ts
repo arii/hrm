@@ -21,9 +21,7 @@ export const useHeartRateMetrics = (clientId: string, hrmData: HrmData[]) => {
       setHeartRateHistory((prevHistory) => {
         const newHistory = [...prevHistory, newHeartRate]
         if (newHistory.length > HEART_RATE_HISTORY_SIZE) {
-          return newHistory.slice(
-            newHistory.length - HEART_RATE_HISTORY_SIZE
-          )
+          return newHistory.slice(newHistory.length - HEART_RATE_HISTORY_SIZE)
         }
         return newHistory
       })

@@ -10,7 +10,7 @@ export interface UserPreferences {
   userName: string
   userAge: string
   deviceId: string
-  maxHr: number;
+  maxHr: number
 }
 
 export const useUserPreferences = () => {

@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { renderHook, act } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import { useHeartRateMetrics } from '@/hooks/useHeartRateMetrics'
 import { HrmData } from '@/types/websocket'
 
@@ -13,7 +13,9 @@ describe('useHeartRateMetrics', () => {
   })
 
   it('should update currentHeartRate when hrmData changes', () => {
-    const hrmData: HrmData[] = [{ clientId: 'user1', name: 'Ariel', value: 150 }]
+    const hrmData: HrmData[] = [
+      { clientId: 'user1', name: 'Ariel', value: 150 },
+    ]
     const { result, rerender } = renderHook(
       ({ clientId, hrmData }) => useHeartRateMetrics(clientId, hrmData),
       { initialProps: { clientId: 'user1', hrmData: [] } }
@@ -25,9 +27,15 @@ describe('useHeartRateMetrics', () => {
   })
 
   it('should calculate average and max heart rate', () => {
-    const hrmData1: HrmData[] = [{ clientId: 'user1', name: 'Ariel', value: 150 }]
-    const hrmData2: HrmData[] = [{ clientId: 'user1', name: 'Ariel', value: 160 }]
-    const hrmData3: HrmData[] = [{ clientId: 'user1', name: 'Ariel', value: 170 }]
+    const hrmData1: HrmData[] = [
+      { clientId: 'user1', name: 'Ariel', value: 150 },
+    ]
+    const hrmData2: HrmData[] = [
+      { clientId: 'user1', name: 'Ariel', value: 160 },
+    ]
+    const hrmData3: HrmData[] = [
+      { clientId: 'user1', name: 'Ariel', value: 170 },
+    ]
 
     const { result, rerender } = renderHook(
       ({ clientId, hrmData }) => useHeartRateMetrics(clientId, hrmData),
@@ -67,7 +75,11 @@ describe('useHeartRateMetrics', () => {
       rerender({ clientId: 'user1', hrmData: [data] })
     }
 
-    const expectedAverage = Array.from({ length: 100 }, (_, i) => 209 - i).reduce((a, b) => a + b, 0) / 100
+    const expectedAverage =
+      Array.from({ length: 100 }, (_, i) => 209 - i).reduce(
+        (a, b) => a + b,
+        0
+      ) / 100
     expect(result.current.averageHeartRate).toBe(Math.round(expectedAverage))
     expect(result.current.maxHeartRate).toBe(209)
   })
