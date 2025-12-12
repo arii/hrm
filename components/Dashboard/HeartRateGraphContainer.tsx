@@ -1,43 +1,55 @@
 // File: components/Dashboard/HeartRateGraphContainer.tsx
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import HeartRateGraph from './HeartRateGraph'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HeartRateDataPoint } from '@/types'
+import throttle from 'lodash.throttle'
 
 const GRAPH_TIME_WINDOW_MS = 60000 // 60 seconds
+const RENDER_THROTTLE_MS = 1000 // 1 second
 
 const HeartRateGraphContainer = () => {
-  const [heartRateHistory, setHeartRateHistory] = useState<
-    HeartRateDataPoint[]
-  >([])
+  const [heartRateHistory, setHeartRateHistory] = useState<HeartRateDataPoint[]>([])
   const { hrmData } = useWebSocket()
-  const currentUserData = hrmData.find((user) =>
-    user.name?.includes('Bluetooth HRM')
+  const dataQueueRef = useRef<HeartRateDataPoint[]>([])
+
+  const currentUserData = useMemo(
+    () => hrmData.find((user) => user.name?.includes('Bluetooth HRM')),
+    [hrmData]
+  )
+
+  const flushQueue = useCallback(() => {
+    setHeartRateHistory((prevHistory) => {
+      const now = Date.now()
+      const combined = [...prevHistory, ...dataQueueRef.current]
+      dataQueueRef.current = [] // Clear the queue
+
+      // Efficiently filter out old data points
+      while (
+        combined.length > 0 &&
+        combined[0]!.timestamp < now - GRAPH_TIME_WINDOW_MS
+      ) {
+        combined.shift()
+      }
+      return combined
+    })
+  }, [])
+
+  const throttledFlush = useMemo(
+    () => throttle(flushQueue, RENDER_THROTTLE_MS),
+    [flushQueue]
   )
 
   useEffect(() => {
-    if (currentUserData) {
-      const now = Date.now()
-      const newDataPoint = {
-        timestamp: now,
+    if (currentUserData && typeof currentUserData.value === 'number') {
+      dataQueueRef.current.push({
+        timestamp: Date.now(),
         value: currentUserData.value,
-      }
-      // This effect synchronizes with an external data source (WebSocket).
-      // Disabling the rule is acceptable here as this is the intended use.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHeartRateHistory((prevHistory) => {
-        const newHistory = [...prevHistory, newDataPoint]
-        while (
-          newHistory.length > 0 &&
-          newHistory[0]!.timestamp < now - GRAPH_TIME_WINDOW_MS
-        ) {
-          newHistory.shift()
-        }
-        return newHistory
       })
+      throttledFlush()
     }
-  }, [currentUserData])
+  }, [currentUserData, throttledFlush])
 
   return <HeartRateGraph data={heartRateHistory} />
 }
