@@ -14,10 +14,17 @@ const GlobalLoadingIndicator: React.FC = () => {
       aria-labelledby="loading-indicator-title"
       aria-describedby="loading-indicator-description"
     >
-      <Typography id="loading-indicator-title" component="h2" sx={{ display: 'none' }}>
+      <Typography
+        id="loading-indicator-title"
+        component="h2"
+        sx={{ display: 'none' }}
+      >
         Loading
       </Typography>
-      <Typography id="loading-indicator-description" sx={{ display: 'none' }}>
+      <Typography
+        id="loading-indicator-description"
+        sx={{ display: 'none' }}
+      >
         Please wait while the content is loading.
       </Typography>
       <CircularProgress color="inherit" />
