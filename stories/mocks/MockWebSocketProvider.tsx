@@ -38,6 +38,8 @@ const DEFAULT_STATE: MockAppState = {
     artist: 'Mock Artist',
     isPlaying: false,
     devices: [],
+    shuffleState: false,
+    repeatState: 'off',
   },
   activeAlerts: [],
   spotifyServiceInitialized: true,
