@@ -1,6 +1,6 @@
 // File: components/Dashboard/HeartRateGraphContainer.tsx
 'use client'
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import HeartRateGraph from './HeartRateGraph'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { HeartRateDataPoint } from '@/types'
@@ -10,13 +10,15 @@ const GRAPH_TIME_WINDOW_MS = 60000 // 60 seconds
 const RENDER_THROTTLE_MS = 1000 // 1 second
 
 const HeartRateGraphContainer = () => {
-  const [heartRateHistory, setHeartRateHistory] = useState<HeartRateDataPoint[]>([])
+  const [heartRateHistory, setHeartRateHistory] = useState<
+    HeartRateDataPoint[]
+  >([])
   const { hrmData } = useWebSocket()
   const dataQueueRef = useRef<HeartRateDataPoint[]>([])
+  const throttledFlushRef = useRef<() => void>()
 
-  const currentUserData = useMemo(
-    () => hrmData.find((user) => user.name?.includes('Bluetooth HRM')),
-    [hrmData]
+  const currentUserData = hrmData.find((user) =>
+    user.name?.includes('Bluetooth HRM')
   )
 
   const flushQueue = useCallback(() => {
@@ -36,10 +38,13 @@ const HeartRateGraphContainer = () => {
     })
   }, [])
 
-  const throttledFlush = useMemo(
-    () => throttle(flushQueue, RENDER_THROTTLE_MS),
-    [flushQueue]
-  )
+  useEffect(() => {
+    throttledFlushRef.current = throttle(flushQueue, RENDER_THROTTLE_MS)
+    return () => {
+      // @ts-expect-error - lodash.throttle types don't include the cancel method
+      throttledFlushRef.current?.cancel()
+    }
+  }, [flushQueue])
 
   useEffect(() => {
     if (currentUserData && typeof currentUserData.value === 'number') {
@@ -47,9 +52,9 @@ const HeartRateGraphContainer = () => {
         timestamp: Date.now(),
         value: currentUserData.value,
       })
-      throttledFlush()
+      throttledFlushRef.current?.()
     }
-  }, [currentUserData, throttledFlush])
+  }, [currentUserData])
 
   return <HeartRateGraph data={heartRateHistory} />
 }
