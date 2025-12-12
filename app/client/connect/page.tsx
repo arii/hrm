@@ -27,7 +27,7 @@ export default function ConnectPage() {
 
   const setUserName = (name: string) => setPrefs({ ...prefs, userName: name })
   const setUserAge = (age: string) => setPrefs({ ...prefs, userAge: age })
-  const saveSetting = (key: string, value: any) =>
+  const saveSetting = (key: string, value: string) =>
     setPrefs({ ...prefs, [key]: value })
 
   const autoConnectFn = useCallback(async () => {

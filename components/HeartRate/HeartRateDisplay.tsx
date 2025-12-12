@@ -1,8 +1,8 @@
-import React from 'react';
-import { Typography } from '@mui/material';
+import React from 'react'
+import { Typography } from '@mui/material'
 
 interface HeartRateDisplayProps {
-  bpm: number | null;
+  bpm: number | null
 }
 
 const HeartRateDisplay: React.FC<HeartRateDisplayProps> = ({ bpm }) => {
@@ -10,7 +10,7 @@ const HeartRateDisplay: React.FC<HeartRateDisplayProps> = ({ bpm }) => {
     <Typography variant="h4" component="div">
       {bpm !== null ? bpm : '--'}
     </Typography>
-  );
-};
+  )
+}
 
-export default HeartRateDisplay;
+export default HeartRateDisplay

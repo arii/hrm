@@ -1,16 +1,22 @@
 // File: components/HrTile.tsx
 'use client'
-import { memo } from 'react';
-import { Box, CardContent, CircularProgress, Tooltip, Typography } from '@mui/material';
-import { useHeartRateMetrics } from '@/hooks/useHeartRateMetrics';
-import { useWebSocket } from '@/context/WebSocketContext';
-import StyledCard from './shared/StyledCard';
-import HeartRateDisplay from './HeartRate/HeartRateDisplay';
-import AverageHeartRateDisplay from './HeartRate/AverageHeartRateDisplay';
-import MaxHeartRateDisplay from './HeartRate/MaxHeartRateDisplay';
-import HeartRateZoneIndicator from './HeartRate/HeartRateZoneIndicator';
-import { getHrZoneProps } from '@/utils/visualization';
-import { MAX_HR_DEFAULT } from '@/utils/constants';
+import { memo } from 'react'
+import {
+  Box,
+  CardContent,
+  CircularProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import { useHeartRateMetrics } from '@/hooks/useHeartRateMetrics'
+import { useWebSocket } from '@/context/WebSocketContext'
+import StyledCard from './shared/StyledCard'
+import HeartRateDisplay from './HeartRate/HeartRateDisplay'
+import AverageHeartRateDisplay from './HeartRate/AverageHeartRateDisplay'
+import MaxHeartRateDisplay from './HeartRate/MaxHeartRateDisplay'
+import HeartRateZoneIndicator from './HeartRate/HeartRateZoneIndicator'
+import { getHrZoneProps } from '@/utils/visualization'
+import { MAX_HR_DEFAULT } from '@/utils/constants'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -26,14 +32,14 @@ const overlayStyles = {
   alignItems: 'center',
   zIndex: 10,
   borderRadius: 'inherit',
-};
+}
 
 interface HrTileProps {
-  clientId: string;
-  name: string;
-  maxHr?: number;
-  isAlerting: boolean;
-  alertMessage?: string;
+  clientId: string
+  name: string
+  maxHr?: number
+  isAlerting: boolean
+  alertMessage?: string
 }
 
 const HrTile = ({
@@ -43,14 +49,18 @@ const HrTile = ({
   isAlerting,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
-  const { hrmData } = useWebSocket();
-  const { currentHeartRate, averageHeartRate, maxHeartRate } = useHeartRateMetrics(clientId, hrmData);
+  const { hrmData } = useWebSocket()
+  const { currentHeartRate, averageHeartRate, maxHeartRate } =
+    useHeartRateMetrics(clientId, hrmData)
 
   const percentMax = currentHeartRate
     ? Math.round((currentHeartRate / (maxHr || MAX_HR_DEFAULT)) * 100)
-    : 0;
+    : 0
 
-  const { backgroundColor } = getHrZoneProps(currentHeartRate || 0, maxHr || MAX_HR_DEFAULT);
+  const { backgroundColor } = getHrZoneProps(
+    currentHeartRate || 0,
+    maxHr || MAX_HR_DEFAULT
+  )
 
   return (
     <Tooltip
@@ -91,12 +101,17 @@ const HrTile = ({
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
             <HeartRateDisplay bpm={currentHeartRate} />
-            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}
+            >
               <AverageHeartRateDisplay avgBpm={averageHeartRate} />
               <MaxHeartRateDisplay maxBpm={maxHeartRate} />
             </Box>
             <Box sx={{ mt: 1 }}>
-              <HeartRateZoneIndicator bpm={currentHeartRate} maxHr={maxHr || MAX_HR_DEFAULT} />
+              <HeartRateZoneIndicator
+                bpm={currentHeartRate}
+                maxHr={maxHr || MAX_HR_DEFAULT}
+              />
             </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
@@ -118,8 +133,8 @@ const HrTile = ({
         </Box>
       </StyledCard>
     </Tooltip>
-  );
-};
+  )
+}
 
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
@@ -128,7 +143,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.maxHr === nextProps.maxHr &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
-  );
-};
+  )
+}
 
-export default memo(HrTile, arePropsEqual);
+export default memo(HrTile, arePropsEqual)

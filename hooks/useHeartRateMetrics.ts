@@ -1,28 +1,44 @@
-import { useState, useEffect } from 'react';
-import { HrmData } from '../types/websocket';
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { HrmData } from '../types/websocket'
 
 export const useHeartRateMetrics = (clientId: string, hrmData: HrmData[]) => {
-  const [heartRateHistory, setHeartRateHistory] = useState<number[]>([]);
-  const [averageHeartRate, setAverageHeartRate] = useState<number>(0);
-  const [maxHeartRate, setMaxHeartRate] = useState<number>(0);
-  const [currentHeartRate, setCurrentHeartRate] = useState<number | null>(null);
+  const [heartRateHistory, setHeartRateHistory] = useState<number[]>([])
+  const clientIdRef = useRef(clientId)
+  const hrmDataRef = useRef(hrmData)
 
   useEffect(() => {
-    const userHrmData = hrmData.find((user) => user.clientId === clientId);
+    clientIdRef.current = clientId
+    hrmDataRef.current = hrmData
+  }, [clientId, hrmData])
+
+  useEffect(() => {
+    const userHrmData = hrmDataRef.current.find(
+      (user) => user.clientId === clientIdRef.current
+    )
     if (userHrmData && userHrmData.value !== null) {
-      const newHeartRate = userHrmData.value;
-      setCurrentHeartRate(newHeartRate);
-      setHeartRateHistory((prevHistory) => [...prevHistory, newHeartRate]);
+      const newHeartRate = userHrmData.value
+      setHeartRateHistory((prevHistory) => {
+        const newHistory = [...prevHistory, newHeartRate]
+        if (newHistory.length > 100) {
+          return newHistory.slice(newHistory.length - 100)
+        }
+        return newHistory
+      })
     }
-  }, [clientId, hrmData]);
+  }, [hrmData])
 
-  useEffect(() => {
+  const userHrmData = hrmData.find((user) => user.clientId === clientId)
+  const currentHeartRate = userHrmData?.value ?? null
+
+  const { averageHeartRate, maxHeartRate } = useMemo(() => {
     if (heartRateHistory.length > 0) {
-      const sum = heartRateHistory.reduce((a, b) => a + b, 0);
-      setAverageHeartRate(Math.round(sum / heartRateHistory.length));
-      setMaxHeartRate(Math.max(...heartRateHistory));
+      const sum = heartRateHistory.reduce((a, b) => a + b, 0)
+      const average = Math.round(sum / heartRateHistory.length)
+      const max = Math.max(...heartRateHistory)
+      return { averageHeartRate: average, maxHeartRate: max }
     }
-  }, [heartRateHistory]);
+    return { averageHeartRate: 0, maxHeartRate: 0 }
+  }, [heartRateHistory])
 
-  return { currentHeartRate, averageHeartRate, maxHeartRate };
-};
+  return { currentHeartRate, averageHeartRate, maxHeartRate }
+}

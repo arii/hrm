@@ -20,14 +20,14 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   isConnected: boolean
   deviceStatus: string
-  batteryLevel: number | null;
-  onConnect: () => void;
-  onDisconnect: () => void;
-  onResetServer: () => void;
-  currentHR: number;
-  connectionStatus: string;
-  bluetoothConnected: boolean;
-  clientId: string; // TODO: This should be passed down from the page
+  batteryLevel: number | null
+  onConnect: () => void
+  onDisconnect: () => void
+  onResetServer: () => void
+  currentHR: number
+  connectionStatus: string
+  bluetoothConnected: boolean
+  clientId: string // TODO: This should be passed down from the page
 }
 
 export default function ConnectView({
@@ -47,11 +47,11 @@ export default function ConnectView({
   clientId,
 }: ConnectViewProps) {
   const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />;
-    if (level > 50) return <BatteryChargingFullIcon color="action" />;
-    if (level > 20) return <BatteryStdIcon color="warning" />;
-    return <BatteryAlertIcon color="error" />;
-  };
+    if (level > 90) return <BatteryFullIcon color="success" />
+    if (level > 50) return <BatteryChargingFullIcon color="action" />
+    if (level > 20) return <BatteryStdIcon color="warning" />
+    return <BatteryAlertIcon color="error" />
+  }
 
   return (
     <>
@@ -237,5 +237,5 @@ export default function ConnectView({
       </Container>
       <BottomNavBar />
     </>
-  );
+  )
 }

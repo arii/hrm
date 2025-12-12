@@ -2,14 +2,14 @@
 import useLocalStorage from './useLocalStorage'
 
 export interface UserPreferences {
-  theme: 'dark' | 'light';
-  volumeLevel: number;
-  defaultWorkDuration: number;
-  defaultRestDuration: number;
-  favoritePlaylist: string | null;
-  userName: string;
-  userAge: string;
-  deviceId: string;
+  theme: 'dark' | 'light'
+  volumeLevel: number
+  defaultWorkDuration: number
+  defaultRestDuration: number
+  favoritePlaylist: string | null
+  userName: string
+  userAge: string
+  deviceId: string
 }
 
 export const useUserPreferences = () => {
@@ -22,7 +22,7 @@ export const useUserPreferences = () => {
     userName: '',
     userAge: '',
     deviceId: '',
-  });
+  })
 
   return [prefs, setPrefs] as const
 }

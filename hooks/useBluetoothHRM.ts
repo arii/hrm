@@ -37,7 +37,9 @@ const parseHeartRate = (value: DataView): number => {
 const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+    document.cookie = `${name}=${encodeURIComponent(
+      value
+    )}; expires=${expires}; path=/`
   }
 }
 
@@ -55,6 +57,7 @@ const useBluetoothHRM = () => {
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [deviceId, setDeviceId] = useState<string | undefined>(undefined)
 
   // Refs to track state without dependency cycles or for event handlers
   const statusRef = useRef(deviceStatus)
@@ -118,6 +121,7 @@ const useBluetoothHRM = () => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
+    setDeviceId(undefined)
     setCookie('hrm_device_id', '', -1)
   }, [])
 
@@ -156,6 +160,7 @@ const useBluetoothHRM = () => {
     async (device: BluetoothDevice) => {
       try {
         deviceRef.current = device
+        setDeviceId(device.id)
         setDeviceStatus(`Connecting to: ${device.name}...`)
 
         const server = await device.gatt!.connect()
@@ -299,7 +304,7 @@ const useBluetoothHRM = () => {
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
-    deviceId: deviceRef.current?.id,
+    deviceId,
   }
 }
 
