@@ -29,8 +29,20 @@ interface HeartRateDataPoint {
   value: number
 }
 
-
 // --- Helper Functions ---
+const formatDuration = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600)
+    .toString()
+    .padStart(2, '0')
+  const m = Math.floor((seconds % 3600) / 60)
+    .toString()
+    .padStart(2, '0')
+  const s = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, '0')
+  return `${h}:${m}:${s}`
+}
+
 const setCookie = (name: string, value: string, days = 365) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
@@ -119,20 +131,6 @@ export default function ConnectPage() {
     }
   }, [isConnected, currentHR, userAge])
 
-  // --- Helper Functions ---
-  const formatDuration = (seconds: number): string => {
-    const h = Math.floor(seconds / 3600)
-      .toString()
-      .padStart(2, '0')
-    const m = Math.floor((seconds % 3600) / 60)
-      .toString()
-      .padStart(2, '0')
-    const s = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, '0')
-    return `${h}:${m}:${s}`
-  }
-
   // --- Handlers ---
 
   const handleConnect = async () => {
@@ -203,7 +201,10 @@ export default function ConnectPage() {
               </Box>
 
               {/* 3. Live Workout Stats */}
-              <LiveWorkoutStats duration={liveDuration} calories={liveCalories} />
+              <LiveWorkoutStats
+                duration={liveDuration}
+                calories={liveCalories}
+              />
 
               {/* 4. Minimized Profile Info */}
               <Paper
