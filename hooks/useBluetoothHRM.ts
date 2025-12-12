@@ -299,6 +299,7 @@ const useBluetoothHRM = () => {
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
+    deviceId: deviceRef.current?.id,
   }
 }
 

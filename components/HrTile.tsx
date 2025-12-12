@@ -1,14 +1,16 @@
 // File: components/HrTile.tsx
 'use client'
-import { HrTileProps } from '@/types'
-import Box from '@mui/material/Box'
-import CardContent from '@mui/material/CardContent'
-import CircularProgress from '@mui/material/CircularProgress'
-import Tooltip from '@mui/material/Tooltip'
-import { getHrZoneProps } from '@/utils/visualization'
-import Typography from '@mui/material/Typography'
-import { memo } from 'react'
-import StyledCard from './shared/StyledCard'
+import { memo } from 'react';
+import { Box, CardContent, CircularProgress, Tooltip, Typography } from '@mui/material';
+import { useHeartRateMetrics } from '@/hooks/useHeartRateMetrics';
+import { useWebSocket } from '@/context/WebSocketContext';
+import StyledCard from './shared/StyledCard';
+import HeartRateDisplay from './HeartRate/HeartRateDisplay';
+import AverageHeartRateDisplay from './HeartRate/AverageHeartRateDisplay';
+import MaxHeartRateDisplay from './HeartRate/MaxHeartRateDisplay';
+import HeartRateZoneIndicator from './HeartRate/HeartRateZoneIndicator';
+import { getHrZoneProps } from '@/utils/visualization';
+import { MAX_HR_DEFAULT } from '@/utils/constants';
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -17,41 +19,52 @@ const overlayStyles = {
   left: 0,
   width: '100%',
   height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark, semi-transparent overlay
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 10,
-  borderRadius: 'inherit', // Match card border radius from StyledCard
+  borderRadius: 'inherit',
+};
+
+interface HrTileProps {
+  clientId: string;
+  name: string;
+  maxHr?: number;
+  isAlerting: boolean;
+  alertMessage?: string;
 }
 
 const HrTile = ({
+  clientId,
   name,
-  bpm,
-  percentMax,
-  isAlerting, // NEW PROP
-  alertMessage = 'Checking signal...', // Default message
+  maxHr,
+  isAlerting,
+  alertMessage = 'Checking signal...',
 }: HrTileProps) => {
-  // Get HR zone props which include the theme-based background color
-  // Note: We're passing a placeholder maxHr because the function currently requires it,
-  // but it only uses the ratio (percentMax) to determine the zone color.
-  // This could be refactored in getHrZoneProps to accept percentMax directly.
-  const { backgroundColor } = getHrZoneProps(percentMax, 100)
+  const { hrmData } = useWebSocket();
+  const { currentHeartRate, averageHeartRate, maxHeartRate } = useHeartRateMetrics(clientId, hrmData);
+
+  const percentMax = currentHeartRate
+    ? Math.round((currentHeartRate / (maxHr || MAX_HR_DEFAULT)) * 100)
+    : 0;
+
+  const { backgroundColor } = getHrZoneProps(currentHeartRate || 0, maxHr || MAX_HR_DEFAULT);
 
   return (
     <Tooltip
       title={
         isAlerting
           ? alertMessage
-          : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+          : `Name: ${name}, BPM: ${currentHeartRate}, % Max HR: ${percentMax}%`
       }
       arrow
     >
       <StyledCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
+        aria-label={`Heart rate monitor for ${name}: ${currentHeartRate} beats per minute, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
           color: '#fff',
@@ -61,10 +74,9 @@ const HrTile = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          position: 'relative', // IMPORTANT: Allows the overlay to be absolutely positioned
+          position: 'relative',
         }}
       >
-        {/* CONDITIONAL OVERLAY: Renders only when isAlerting is true. */}
         {isAlerting && (
           <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
             <CircularProgress size={30} sx={{ color: 'white' }} />
@@ -78,37 +90,14 @@ const HrTile = ({
         )}
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
-            {/* Giant Percentage - should dominate the tile */}
-            <Typography
-              data-testid="live-hr-percent"
-              sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Animate only when receiving live data (bpm > 0 and not in an alert state)
-                animationPlayState:
-                  bpm > 0 && !isAlerting ? 'running' : 'paused',
-              }}
-            >
-              {percentMax}%
-            </Typography>
-            <Typography
-              data-testid="live-hr-value"
-              variant="h6"
-              sx={{
-                fontWeight: 600,
-                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
-                transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
-              }}
-            >
-              {bpm} BPM
-            </Typography>
+            <HeartRateDisplay bpm={currentHeartRate} />
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
+              <AverageHeartRateDisplay avgBpm={averageHeartRate} />
+              <MaxHeartRateDisplay maxBpm={maxHeartRate} />
+            </Box>
+            <Box sx={{ mt: 1 }}>
+              <HeartRateZoneIndicator bpm={currentHeartRate} maxHr={maxHr || MAX_HR_DEFAULT} />
+            </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
@@ -116,10 +105,10 @@ const HrTile = ({
                   fontWeight: 700,
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
-                  mt: 1, // Add some margin top to separate from BPM
-                  textOverflow: 'ellipsis', // Truncate with ellipsis
-                  whiteSpace: 'nowrap', // Prevent wrapping
-                  overflow: 'hidden', // Hide overflow content
+                  mt: 1,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
                 }}
               >
                 {name}
@@ -129,19 +118,17 @@ const HrTile = ({
         </Box>
       </StyledCard>
     </Tooltip>
-  )
-}
+  );
+};
 
-// Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  // Re-render only if display data changes.
   return (
+    prevProps.clientId === nextProps.clientId &&
     prevProps.name === nextProps.name &&
-    prevProps.bpm === nextProps.bpm &&
-    prevProps.percentMax === nextProps.percentMax &&
+    prevProps.maxHr === nextProps.maxHr &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
-  )
-}
+  );
+};
 
-export default memo(HrTile, arePropsEqual)
+export default memo(HrTile, arePropsEqual);
