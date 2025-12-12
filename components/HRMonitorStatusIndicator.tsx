@@ -102,7 +102,6 @@ const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
         color={color}
         variant="outlined"
         sx={(theme) => ({
-          ...theme.typography.body1,
           padding: theme.spacing(1, 1.5),
           height: 'auto',
           '& .MuiChip-label': {
