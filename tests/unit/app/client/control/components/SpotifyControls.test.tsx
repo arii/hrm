@@ -1,46 +1,44 @@
-/** @jest-environment jsdom */
-
-import SpotifyControls from '@/app/client/control/components/SpotifyControls'
-import { useWebSocket } from '@/context/WebSocketContext'
-import type { SpotifyData } from '@/types/websocket'
-import '@testing-library/jest-dom'
+// tests/unit/app/client/control/components/SpotifyControls.test.tsx
+/**
+ * @jest-environment jsdom
+ */
 import { render, screen } from '@testing-library/react'
+import { WebSocketContext } from '@/context/WebSocketContext'
+import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 
-type UseWebSocketReturn = ReturnType<typeof useWebSocket>
-
-jest.mock('@/context/WebSocketContext')
+// Mocks
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
   }),
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
-  () => UseWebSocketReturn
->
-
-const baseSpotifyData: SpotifyData = {
-  trackName: 'Mock Track',
-  artist: 'Mock Artist',
-  isPlaying: true,
-  devices: [],
-}
-
 describe('SpotifyControls', () => {
-  beforeEach(() => {
-    jest.resetAllMocks()
-  })
+  const mockContextValue = {
+    spotifyData: {
+      trackName: 'Test Track',
+      artist: 'Test Artist',
+      isPlaying: true,
+      devices: [],
+      shuffleState: false,
+      repeatState: 'off' as 'off',
+    },
+    connectionStatus: 'Connected',
+    sendData: jest.fn(),
+  }
 
-  it('renders the PlaybackControls component when a track is playing', () => {
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: baseSpotifyData,
-      connectionStatus: 'Connected',
-      sendData: jest.fn(),
-    } as unknown as UseWebSocketReturn)
+  it('renders spotify controls when spotify data is available', () => {
+    render(
+      <WebSocketContext.Provider value={mockContextValue as any}>
+        <SpotifyControls />
+      </WebSocketContext.Provider>
+    )
 
-    render(<SpotifyControls />)
+    // The SpotifyControls component now renders the PlaybackControls component.
+    // We can check for the presence of the main control card.
+    expect(screen.getByTestId('spotify-controls-card')).toBeInTheDocument()
 
-    // The PlaybackControls component contains a button with the test id "spotify-play-pause"
+    // And we can also check for a specific button inside the PlaybackControls component
     expect(screen.getByTestId('spotify-play-pause')).toBeInTheDocument()
   })
 })

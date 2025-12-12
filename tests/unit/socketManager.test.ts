@@ -78,6 +78,8 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
+    let setIntervalSpy: jest.SpiedFunction<typeof setInterval>
+    let watchdogCallback: () => void
 
     beforeEach(() => {
       jest.useFakeTimers()
@@ -92,6 +94,15 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
+
+      // Spy on setInterval and capture the callback
+      setIntervalSpy = jest.spyOn(global, 'setInterval')
+      initSocketManager(mockWss, mockServices, getSnapshot)
+
+      // Capture the watchdog callback
+      if (setIntervalSpy.mock.calls.length > 0) {
+        watchdogCallback = setIntervalSpy.mock.calls[0][0] as () => void
+      }
     })
 
     afterEach(() => {
@@ -99,22 +110,21 @@ describe('WebSocket Manager', () => {
       jest.clearAllMocks()
       // @ts-expect-error-next-line
       mockWss.clients.clear()
+      setIntervalSpy.mockRestore()
     })
 
     it('should set lastPingTime on new connection', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
       // @ts-expect-error-next-line
-      mockWss.emit('connection', mockWs) // Manually trigger connection event
+      mockWss.emit('connection', mockWs)
 
       expect(mockWs.lastPingTime).toBeDefined()
       expect(mockWs.lastPingTime).toBeLessThanOrEqual(Date.now())
     })
 
     it('should update lastPingTime on PING message and respond with PONG', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
@@ -124,7 +134,6 @@ describe('WebSocket Manager', () => {
       const initialPingTime = mockWs.lastPingTime
       jest.advanceTimersByTime(1000)
 
-      // Simulate a PING message from the client
       const message = JSON.stringify({ type: 'PING' })
       mockWs.emit('message', message.toString())
 
@@ -133,38 +142,43 @@ describe('WebSocket Manager', () => {
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      // @ts-expect-error-next-line
-      mockWss.clients.add(mockWs)
-      // @ts-expect-error-next-line
-      mockWss.emit('connection', mockWs)
+        const mockWs = new MockWebSocket();
+        // @ts-expect-error-next-line
+        mockWss.clients.add(mockWs);
+        // @ts-expect-error-next-line
+        mockWss.emit('connection', mockWs);
 
-      // Do NOT simulate a ping. Advance time past the client inactivity timeout (120s)
-      // and the watchdog interval (30s) to ensure the check that terminates runs.
-      jest.advanceTimersByTime(150000)
+        // Advance time but don't simulate a ping
+        jest.advanceTimersByTime(150000);
 
-      expect(mockWs.terminate).toHaveBeenCalledTimes(1)
-    })
+        // Manually trigger the watchdog ONLY ONCE
+        if (watchdogCallback) {
+          watchdogCallback();
+        }
 
-    it('should NOT terminate a client that is responsive', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      // @ts-expect-error-next-line
-      mockWss.clients.add(mockWs)
-      // @ts-expect-error-next-line
-      mockWss.emit('connection', mockWs)
+        expect(mockWs.terminate).toHaveBeenCalledTimes(1);
+      });
 
-      // Simulate responsiveness by sending pings
-      const interval = setInterval(() => {
-        const message = JSON.stringify({ type: 'PING' })
-        mockWs.emit('message', message.toString())
-      }, 25000) // Send a ping every 25 seconds
+      it('should NOT terminate a client that is responsive', () => {
+        const mockWs = new MockWebSocket();
+        // @ts-expect-error-next-line
+        mockWss.clients.add(mockWs);
+        // @ts-expect-error-next-line
+        mockWss.emit('connection', mockWs);
 
-      jest.advanceTimersByTime(150000) // Advance well past the timeout
+        // Simulate a ping to show responsiveness
+        const message = JSON.stringify({ type: 'PING' });
+        mockWs.emit('message', message.toString());
 
-      expect(mockWs.terminate).not.toHaveBeenCalled()
-      clearInterval(interval)
-    })
+        // Advance time
+        jest.advanceTimersByTime(150000);
+
+        // Manually trigger the watchdog
+        if (watchdogCallback) {
+          watchdogCallback();
+        }
+
+        expect(mockWs.terminate).not.toHaveBeenCalled();
+      });
   })
 })

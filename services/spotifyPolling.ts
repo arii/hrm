@@ -24,6 +24,8 @@ type SpotifyCommand =
   | 'SET_VOLUME'
   | 'PAUSE'
   | 'GET_DEVICES'
+  | 'TOGGLE_SHUFFLE'
+  | 'SET_REPEAT_MODE'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -52,12 +54,16 @@ export class SpotifyPolling {
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
+  private lastShuffleState: boolean | null = null
+  private lastRepeatState: string | null = null
 
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
-    devices: [], // <--- ADDED
+    devices: [],
+    shuffleState: false,
+    repeatState: 'off',
   }
 
   private sdk: SpotifyApi | null = null
@@ -218,6 +224,8 @@ export class SpotifyPolling {
             trackName: 'Nothing is currently playing.',
             artist: '',
             isPlaying: false,
+            shuffleState: false,
+            repeatState: 'off',
           }
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
@@ -252,19 +260,27 @@ export class SpotifyPolling {
       }
 
       const isPlaying = playbackState.is_playing
+      const shuffleState = playbackState.shuffle_state
+      const repeatState = playbackState.repeat_state
 
       // Only broadcast if track ID or playback state has changed
       if (
         item?.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
+        isPlaying !== this.lastPlaybackState ||
+        shuffleState !== this.lastShuffleState ||
+        repeatState !== this.lastRepeatState
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
+        this.lastShuffleState = shuffleState
+        this.lastRepeatState = repeatState
         this.state = {
           ...this.state,
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
+          shuffleState: shuffleState,
+          repeatState: repeatState,
         }
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
@@ -327,7 +343,8 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    repeatState?: 'off' | 'track' | 'context'
   ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -341,7 +358,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri, repeatState)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
@@ -353,7 +370,8 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    repeatState?: 'off' | 'track' | 'context'
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
@@ -397,6 +415,14 @@ export class SpotifyPolling {
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+        }
+        break
+      case 'TOGGLE_SHUFFLE':
+        await this.sdk!.player.setShuffle(!this.state.shuffleState, deviceId)
+        break;
+      case 'SET_REPEAT_MODE':
+        if (repeatState) {
+          await this.sdk!.player.setRepeatMode(repeatState, deviceId)
         }
         break
       case 'LOGIN':
