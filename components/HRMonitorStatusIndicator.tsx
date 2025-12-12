@@ -72,14 +72,18 @@ const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
     )
   }
 
+  const batteryIcon = getBatteryIcon()
+
   return (
     <Chip
       icon={statusIcon}
       label={status}
       color={statusColor}
       variant="outlined"
-      deleteIcon={getBatteryIcon()}
-      onDelete={() => {}} // onDelete is required for deleteIcon to be rendered
+      {...(batteryIcon && {
+        deleteIcon: batteryIcon,
+        onDelete: () => {}, // onDelete is required for deleteIcon to be rendered
+      })}
       sx={{
         fontSize: '1rem',
         padding: '10px 15px',
