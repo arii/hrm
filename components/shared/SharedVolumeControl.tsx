@@ -1,19 +1,28 @@
 // components/shared/SharedVolumeControl.tsx
 'use client'
-import useVolumePreference from '@/hooks/useVolumePreference';
-import VolumeSlider from '../PlaybackControls/VolumeSlider';
+import VolumeSlider from '../PlaybackControls/VolumeSlider'
 
-const SharedVolumeControl = () => {
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference();
+interface SharedVolumeControlProps {
+  volume: number
+  muted: boolean
+  onVolumeChange: (volume: number) => void
+  onToggleMute: () => void
+}
 
+const SharedVolumeControl: React.FC<SharedVolumeControlProps> = ({
+  volume,
+  muted,
+  onVolumeChange,
+  onToggleMute,
+}) => {
   return (
     <VolumeSlider
       volume={volume}
       muted={muted}
-      onVolumeChange={setVolume}
-      onToggleMute={toggleMute}
+      onVolumeChange={onVolumeChange}
+      onToggleMute={onToggleMute}
     />
-  );
-};
+  )
+}
 
-export default SharedVolumeControl;
+export default SharedVolumeControl

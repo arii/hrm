@@ -13,6 +13,7 @@ import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
 import SharedVolumeControl from '@/components/shared/SharedVolumeControl'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -27,6 +28,7 @@ import TimerControls from './components/TimerControls'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
 
   // Register this client as a controller
   useEffect(() => {
@@ -109,7 +111,12 @@ const ControlPanel = () => {
 
         <TimerControls />
         <Box sx={{ p: 2 }}>
-          <SharedVolumeControl />
+          <SharedVolumeControl
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
+          />
         </Box>
         <SpotifyControls />
       </Container>
