@@ -11,7 +11,6 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
 
 interface ConnectViewProps {
   userName: string
@@ -235,7 +234,6 @@ export default function ConnectView({
           </Typography>
         </Box>
       </Container>
-      <BottomNavBar />
     </>
   )
 }
