@@ -16,19 +16,19 @@ const WorkoutMetricsPanel = () => {
           Workout Metrics
         </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid xs={12} sm={6} md={2.4}>
             <HeartRateDisplay />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid xs={12} sm={6} md={2.4}>
             <AverageHeartRateDisplay />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid xs={12} sm={6} md={2.4}>
             <MaxHeartRateDisplay />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid xs={12} sm={6} md={2.4}>
             <CaloriesBurnedDisplay />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid xs={12} sm={6} md={2.4}>
             <LiveWorkoutTimerDisplay />
           </Grid>
         </Grid>
