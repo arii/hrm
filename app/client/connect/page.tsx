@@ -44,11 +44,9 @@ export default function ConnectPage() {
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
-  const {
-    connectAndStream,
-    deviceStatus,
-    isConnected: bluetoothConnected,
-  } = useBluetoothHRM()
+  const { connectAndStream, hrmState, batteryLevel } = useBluetoothHRM()
+  const { status: deviceStatus, errorMessage } = hrmState
+  const bluetoothConnected = deviceStatus === 'CONNECTED'
 
   // --- Effects ---
 
@@ -248,9 +246,9 @@ export default function ConnectPage() {
                 Attempting to auto-reconnect... (Attempt: {autoConnectAttempts})
               </Alert>
             )}
-            {deviceStatus.includes('Failed') && (
+            {deviceStatus === 'ERROR' && (
               <Alert severity="error" sx={{ mb: 3 }}>
-                {deviceStatus}
+                {errorMessage}
               </Alert>
             )}
 
