@@ -34,7 +34,7 @@ const ResetButton = () => {
       localStorage.removeItem('hrm-volume')
       localStorage.removeItem('hrm-muted')
       localStorage.removeItem('pendingActions')
-      localStorage.removeItem('user-prefs')
+      localStorage.removeItem('user-settings')
 
 
       // Call the server-side reset API
