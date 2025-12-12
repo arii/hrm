@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import ThemeRegistry from './ThemeRegistry'
 
 const meta: Meta<typeof ThemeRegistry> = {
-  title: 'Components/ThemeRegistry',
+  title: 'Components/ThemeRegistry/ThemeRegistry',
   component: ThemeRegistry,
   parameters: {
     layout: 'centered',

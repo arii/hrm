@@ -11,6 +11,7 @@ if (!componentPath) {
 }
 
 const absolutePath = path.resolve(process.cwd(), componentPath);
+const componentsRoot = path.resolve(process.cwd(), 'components');
 
 if (!fs.existsSync(absolutePath)) {
   console.error(`Component file not found at ${absolutePath}`);
@@ -28,11 +29,16 @@ if (fs.existsSync(storyPath)) {
   process.exit(1);
 }
 
+// Calculate relative path for title generation (e.g., Spotify/PlaylistSelector)
+let relativeDir = path.relative(componentsRoot, dirName);
+if (relativeDir === '.') relativeDir = '';
+const titlePath = relativeDir ? `${relativeDir}/${componentName}` : componentName;
+
 const content = `import type { Meta, StoryObj } from '@storybook/react'
 import ${componentName} from './${componentName}'
 
 const meta: Meta<typeof ${componentName}> = {
-  title: 'Components/${componentName}',
+  title: 'Components/${titlePath}',
   component: ${componentName},
   parameters: {
     layout: 'centered',

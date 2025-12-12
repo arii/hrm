@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import StyledCard from './StyledCard'
 
 const meta: Meta<typeof StyledCard> = {
-  title: 'Components/StyledCard',
+  title: 'Components/shared/StyledCard',
   component: StyledCard,
   parameters: {
     layout: 'centered',

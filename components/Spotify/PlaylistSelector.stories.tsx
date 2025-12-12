@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import PlaylistSelector from './PlaylistSelector'
 
 const meta: Meta<typeof PlaylistSelector> = {
-  title: 'Components/PlaylistSelector',
+  title: 'Components/Spotify/PlaylistSelector',
   component: PlaylistSelector,
   parameters: {
     layout: 'centered',
