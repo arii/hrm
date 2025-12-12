@@ -16,8 +16,7 @@ export const LoadingProvider: React.FC<{ children: ReactNode }> = ({
   const [loadingCount, setLoadingCount] = useState(0)
 
   const startLoading = () => setLoadingCount((count) => count + 1)
-  const stopLoading = () =>
-    setLoadingCount((count) => Math.max(0, count - 1))
+  const stopLoading = () => setLoadingCount((count) => Math.max(0, count - 1))
 
   const isLoading = loadingCount > 0
 

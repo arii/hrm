@@ -7,7 +7,7 @@ export const useApi = () => {
   const { startLoading, stopLoading } = useLoading()
 
   const apiFetch = useCallback(
-    async <T,>(url: string, options?: RequestInit): Promise<T> => {
+    async <T>(url: string, options?: RequestInit): Promise<T> => {
       startLoading()
       try {
         const response = await fetch(url, options)
