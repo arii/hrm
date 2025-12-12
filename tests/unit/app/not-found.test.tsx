@@ -5,10 +5,12 @@ import NotFoundPage from '@/app/not-found'
 
 // Mock Next.js Link component for testing
 jest.mock('next/link', () => {
-  return ({ children, href }) => {
-    return <a href={href}>{children}</a>
-  }
-})
+  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  );
+  MockLink.displayName = 'MockLink';
+  return MockLink;
+});
 
 describe('NotFoundPage', () => {
   it('renders the 404 headings and a link to the homepage', () => {
