@@ -5,9 +5,6 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Stack from '@mui/material/Stack'
-import { alpha } from '@mui/material/styles'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
@@ -114,19 +111,18 @@ const TimerDisplay = ({
         {/* Mode Indicator (Left) */}
         <Box>
           {phase !== 'IDLE' && (
-            <Chip
-              label={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-              size="small"
-              // Status role to indicate information
-              role="status"
+            <Typography
+              variant="overline"
               sx={{
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                color: '#fff',
+                color: '#9CA3AF', // Neutral gray
                 fontWeight: 700,
-                letterSpacing: 1,
+                letterSpacing: 2,
                 fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                lineHeight: 1,
               }}
-            />
+            >
+              {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            </Typography>
           )}
         </Box>
 
@@ -166,7 +162,7 @@ const TimerDisplay = ({
       {/* Main Content: Timer */}
       <CardContent
         sx={{
-          p: { xs: 1, md: 2 }, // Reduced padding to give more space for header/footer
+          p: { xs: 0, md: 1 }, // Minimized padding to keep content tight
           textAlign: 'center',
           flex: 1,
           display: 'flex',
@@ -182,7 +178,7 @@ const TimerDisplay = ({
             variant="h6"
             aria-live="polite"
             sx={{
-              mb: 1,
+              mb: 0,
               color: phaseColor,
               fontWeight: 700,
               letterSpacing: 2,
@@ -202,7 +198,7 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' }, // Reverted to 6rem for XS based on review feedback
+            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
             fontWeight: 800,
             letterSpacing: '0.12rem',
             lineHeight: 1,
@@ -225,36 +221,23 @@ const TimerDisplay = ({
             px: 2,
           }}
         >
-          <Stack direction="row" spacing={2}>
-            <Chip
-              label={`WORK: ${workDuration}s`}
-              // Status role to indicate information
-              role="status"
-              sx={{
-                backgroundColor: alpha(DURATION_WORK_COLOR, 0.15),
-                color: DURATION_WORK_COLOR,
-                borderColor: DURATION_WORK_COLOR,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                fontWeight: 700,
-                fontSize: { xs: '0.7rem', sm: '0.8rem' },
-              }}
-            />
-            <Chip
-              label={`REST: ${restDuration}s`}
-              // Status role to indicate information
-              role="status"
-              sx={{
-                backgroundColor: alpha(DURATION_REST_COLOR, 0.15),
-                color: DURATION_REST_COLOR,
-                borderColor: DURATION_REST_COLOR,
-                borderWidth: 1,
-                borderStyle: 'solid',
-                fontWeight: 700,
-                fontSize: { xs: '0.7rem', sm: '0.8rem' },
-              }}
-            />
-          </Stack>
+          <Typography
+            variant="body2"
+            component="div"
+            sx={{
+              fontWeight: 700,
+              letterSpacing: 1,
+              fontSize: { xs: '0.8rem', sm: '0.9rem' },
+              color: '#D1D5DB', // Light gray default
+            }}
+          >
+            <Box component="span" sx={{ color: DURATION_WORK_COLOR, mr: 2 }}>
+              WORK: {workDuration}s
+            </Box>
+            <Box component="span" sx={{ color: DURATION_REST_COLOR }}>
+              REST: {restDuration}s
+            </Box>
+          </Typography>
         </Box>
       )}
     </Card>
