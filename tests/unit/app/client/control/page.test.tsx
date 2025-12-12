@@ -1,7 +1,6 @@
 /** @jest-environment jsdom */
 
 import ControlPage from '@/app/client/control/page'
-import { ErrorProvider } from '@/context/ErrorContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
 import '@testing-library/jest-dom'
@@ -24,11 +23,9 @@ describe('ControlPage Integration', () => {
   it('should render all child components within the providers', async () => {
     render(
       <SessionProvider session={null}>
-        <ErrorProvider>
-          <WebSocketProvider>
-            <ControlPage />
-          </WebSocketProvider>
-        </ErrorProvider>
+        <WebSocketProvider>
+          <ControlPage />
+        </WebSocketProvider>
       </SessionProvider>
     )
 
