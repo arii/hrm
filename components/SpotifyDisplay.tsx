@@ -322,6 +322,7 @@ const SpotifyDisplay = () => {
           <IconButton
             size="small"
             onClick={toggleMute}
+            aria-label={muted ? 'Unmute' : 'Mute'}
             sx={{
               color: muted ? 'error.main' : 'grey.400',
               '&:hover': { color: 'white' },
@@ -334,6 +335,7 @@ const SpotifyDisplay = () => {
             )}
           </IconButton>
           <Slider
+            aria-label="Volume"
             value={volume}
             onChange={(_, val) => setVolume(val as number)}
             onChangeCommitted={(_, val) => sendVolumeCommand(val as number)}
