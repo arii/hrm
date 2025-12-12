@@ -5,6 +5,8 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
+import Stack from '@mui/material/Stack'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
@@ -83,6 +85,7 @@ const TimerDisplay = ({
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
+        flexDirection: 'column',
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
@@ -92,106 +95,71 @@ const TimerDisplay = ({
             : 'none',
       }}
     >
-      {/* Status Indicator */}
+      {/* Header: Mode & Status */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 1,
+          px: 2,
+          pt: 2,
           zIndex: 2,
         }}
       >
-        <Typography
-          variant="caption"
-          sx={{ color: '#fff' }}
-          data-testid="ws-status-indicator"
-        >
-          {connectionStatus}
-        </Typography>
+        {/* Mode Indicator (Left) */}
+        <Box>
+          {phase !== 'IDLE' && (
+            <Chip
+              label={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                fontWeight: 700,
+                letterSpacing: 1,
+                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Status Indicator (Right) */}
         <Box
           sx={{
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            backgroundColor:
-              connectionStatus === 'Connected'
-                ? '#10B981'
-                : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
-            animation:
-              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
           }}
-        />
+        >
+          <Typography
+            variant="caption"
+            sx={{ color: '#fff', fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
+            data-testid="ws-status-indicator"
+          >
+            {connectionStatus}
+          </Typography>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              backgroundColor:
+                connectionStatus === 'Connected'
+                  ? '#10B981'
+                  : connectionStatus === 'Reconnecting...'
+                    ? '#F59E0B'
+                    : '#EF4444',
+              animation:
+                connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
+            }}
+          />
+        </Box>
       </Box>
-      {/* Mode Indicator - Rotated on left side */}
-      {phase !== 'IDLE' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
-        </Box>
-      )}
 
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
-        </Box>
-      )}
-
+      {/* Main Content: Timer */}
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          p: { xs: 1, md: 2 }, // Reduced padding to give more space for header/footer
           textAlign: 'center',
           flex: 1,
           display: 'flex',
@@ -211,6 +179,7 @@ const TimerDisplay = ({
               color: phaseColor,
               fontWeight: 700,
               letterSpacing: 2,
+              fontSize: { xs: '1rem', sm: '1.25rem' },
             }}
           >
             {phaseLabel}
@@ -226,7 +195,7 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontSize: { xs: '5rem', sm: '8rem', md: '10rem' }, // Slightly reduced xs for safety
             fontWeight: 800,
             letterSpacing: '0.12rem',
             lineHeight: 1,
@@ -237,6 +206,46 @@ const TimerDisplay = ({
           {displayTime}
         </Typography>
       </CardContent>
+
+      {/* Footer: Tabata Durations */}
+      {mode === 'TABATA' && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            pb: 2,
+            px: 2,
+          }}
+        >
+          <Stack direction="row" spacing={2}>
+            <Chip
+              label={`WORK: ${workDuration}s`}
+              sx={{
+                backgroundColor: 'rgba(239, 68, 68, 0.15)', // Red tint
+                color: '#EF4444',
+                borderColor: '#EF4444',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                fontWeight: 700,
+                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+              }}
+            />
+            <Chip
+              label={`REST: ${restDuration}s`}
+              sx={{
+                backgroundColor: 'rgba(34, 197, 94, 0.15)', // Green tint
+                color: '#22C55E',
+                borderColor: '#22C55E',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                fontWeight: 700,
+                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+              }}
+            />
+          </Stack>
+        </Box>
+      )}
     </Card>
   )
 }

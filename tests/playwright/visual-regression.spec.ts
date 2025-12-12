@@ -212,7 +212,11 @@ test.describe('Visual Regression Tests', () => {
     await expect(stopButton).toBeVisible()
 
     // Wait for timer to appear on dashboard
-    await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
+    // Updated to match new Chip-based layout which splits Work/Rest into separate elements
+    await expect(dashboardPage.getByText(/WORK:/)).toBeVisible({
+      timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
+    })
+    await expect(dashboardPage.getByText(/REST:/)).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
