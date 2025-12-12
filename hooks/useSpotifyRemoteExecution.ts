@@ -31,8 +31,8 @@ export const useSpotifyRemoteExecution = (
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
-    const handleCustomEvent = (event: CustomEvent) => {
-      const message = event.detail as SpotifyExecutionMessage
+    const handleCustomEvent = (event: Event) => {
+      const message = (event as CustomEvent<SpotifyExecutionMessage>).detail
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
@@ -95,16 +95,10 @@ export const useSpotifyRemoteExecution = (
     }
 
     if (typeof window !== 'undefined') {
-      window.addEventListener(
-        'spotify-remote-command',
-        handleCustomEvent as EventListener
-      )
+      window.addEventListener('spotify-remote-command', handleCustomEvent)
 
       return () => {
-        window.removeEventListener(
-          'spotify-remote-command',
-          handleCustomEvent as EventListener
-        )
+        window.removeEventListener('spotify-remote-command', handleCustomEvent)
       }
     }
 
