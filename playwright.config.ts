@@ -55,7 +55,7 @@ export default defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'cross-env TESTING=true npm run start',
+    command: 'cross-env TESTING=true node dist/server.mjs',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: true,
     timeout: 120 * 1000,
