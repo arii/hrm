@@ -23,37 +23,42 @@ export const HR_ZONES = [
   {
     name: 'Warm-up',
     min: 0.5,
-    color: 'text-blue-600', // Darker blue for better contrast
+    color: 'text-blue-600',
     progressColor: theme.palette.secondary.main, // #1976D2
     bgColor: theme.palette.secondary.light, // #E3F2FD
+    textColor: theme.palette.secondary.dark, // #0D47A1
   },
   {
     name: 'Fat Burn',
     min: 0.6,
-    color: 'text-green-600', // Darker green
+    color: 'text-green-600',
     progressColor: theme.palette.success.main, // #388E3C
     bgColor: theme.palette.success.light, // #E8F5E9
+    textColor: theme.palette.success.dark, // #1B5E20
   },
   {
     name: 'Cardio',
     min: 0.7,
-    color: 'text-yellow-600', // Darker yellow/orange
+    color: 'text-yellow-600',
     progressColor: theme.palette.warning.main, // #FBC02D
     bgColor: theme.palette.warning.light, // #FFFDE7
+    textColor: '#E65100', // High contrast orange for yellow bg
   },
   {
     name: 'Peak',
     min: 0.85,
-    color: 'text-red-600', // Darker red
+    color: 'text-red-600',
     progressColor: theme.palette.error.main, // #D32F2F
-    bgColor: theme.palette.error.light, // #EF5350 (or lighter #FFEBEE)
+    bgColor: theme.palette.primary.light, // #FFEBEE (Very light red)
+    textColor: theme.palette.error.dark, // #C62828
   },
   {
     name: 'Max',
     min: 0.95,
-    color: 'text-purple-600', // Darker purple
+    color: 'text-purple-600',
     progressColor: '#7B1FA2', // Darker Purple
     bgColor: '#F3E5F5', // Light Purple
+    textColor: '#4A148C', // Very Dark Purple
   },
 ]
 
@@ -73,6 +78,7 @@ interface HrZoneProps {
   color: string // Tailwind text color class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
+  textColor: string // Hex color for text
   bpm: number
 }
 
@@ -90,6 +96,7 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: theme.palette.grey[400],
       backgroundColor: theme.palette.grey[200],
+      textColor: theme.palette.grey[700],
       bpm: 0,
     }
   }
@@ -112,6 +119,7 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: theme.palette.grey[400],
       backgroundColor: theme.palette.grey[200],
+      textColor: theme.palette.grey[700],
       bpm: currentHr,
     }
   }
@@ -122,6 +130,7 @@ export const getHrZoneProps = (
     color: zone.color,
     progressColor: zone.progressColor,
     backgroundColor: zone.bgColor,
+    textColor: zone.textColor,
     bpm: currentHr,
   }
 }

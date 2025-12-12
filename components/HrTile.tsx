@@ -37,7 +37,7 @@ const HrTile = ({
   // Note: We're passing a placeholder maxHr because the function currently requires it,
   // but it only uses the ratio (percentMax) to determine the zone color.
   // This could be refactored in getHrZoneProps to accept percentMax directly.
-  const { backgroundColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
 
   return (
     <Tooltip
@@ -54,7 +54,7 @@ const HrTile = ({
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
-          color: '#fff',
+          color: textColor, // Use the high-contrast text color from visualization util
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
@@ -87,7 +87,7 @@ const HrTile = ({
                 fontWeight: 900,
                 lineHeight: 0.85,
                 my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)', // Subtle shadow
                 // ADDED: Pulse animation
                 animation: 'subtle-pulse 2s infinite ease-in-out',
                 // Animate only when receiving live data (bpm > 0 and not in an alert state)
