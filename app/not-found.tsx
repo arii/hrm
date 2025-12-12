@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -8,7 +6,7 @@ import Typography from '@mui/material/Typography'
 import Link from 'next/link'
 
 /**
- * Renders a 404 Not Found page.
+ * Renders a 404 Not Found page as a Next.js Server Component.
  * This component is displayed when a user tries to access a page that does not exist.
  * It provides a clear message and a link to navigate back to the homepage.
  *
@@ -16,15 +14,15 @@ import Link from 'next/link'
  */
 export default function NotFoundPage(): JSX.Element {
   return (
-    <Container>
+    <Container sx={{ flexGrow: 1, display: 'flex' }}>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '80vh',
           textAlign: 'center',
+          width: '100%', // Ensure the box takes the full width of the container
         }}
       >
         <Typography variant="h1" component="h1" gutterBottom>
