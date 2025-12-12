@@ -48,6 +48,7 @@ const config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
   },
   testTimeout: 10000,
 }
