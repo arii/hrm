@@ -35,7 +35,7 @@ interface SpotifyDevice {
 
 const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
-  const { spotifyData, sendData, connectionStatus }_h = useWebSocket()
+  const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
   const { volume, muted } = spotifyData
   const debouncedVolume = useDebounce(volume, 500)
