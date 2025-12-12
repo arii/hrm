@@ -209,6 +209,7 @@ const SpotifyControls = () => {
             <Stack direction="row" spacing={1} alignItems="center">
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
               <Slider
+                aria-label="Volume"
                 value={volume}
                 onChange={(_, val) => {
                   setIsDragging(true)

@@ -41,6 +41,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
       </IconButton>
       <Slider
+        aria-label="Volume"
         value={volume}
         onChange={handleVolumeChange}
         min={0}

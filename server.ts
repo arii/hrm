@@ -25,6 +25,7 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -56,6 +57,31 @@ const expressApp = express()
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
+
+// Secure headers with Helmet
+expressApp.use(helmet())
+expressApp.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-eval'",
+        "'unsafe-inline'",
+        'https://sdk.scdn.co',
+      ],
+      connectSrc: [
+        "'self'",
+        'ws:',
+        'wss:',
+        'https://api.spotify.com',
+        'https://events.mapbox.com',
+      ],
+      imgSrc: ["'self'", 'data:', 'https://i.scdn.co'],
+      frameSrc: ["'self'", 'https://sdk.scdn.co'],
+    },
+  })
+)
 
 // --- Main Application Setup ---
 

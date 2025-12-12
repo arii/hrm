@@ -78,6 +78,7 @@ const TimerDisplay = ({
     <Card
       elevation={6}
       data-testid="timer-display-container"
+      aria-label="Tabata Timer"
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
@@ -92,6 +93,25 @@ const TimerDisplay = ({
             : 'none',
       }}
     >
+      <div
+        aria-live="assertive"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          margin: '-1px',
+          padding: '0',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          border: '0',
+        }}
+      >
+        {phase === 'WORK'
+          ? 'Go! Work phase.'
+          : phase === 'REST'
+            ? 'Rest phase.'
+            : ''}
+      </div>
       {/* Status Indicator */}
       <Box
         sx={{
