@@ -51,7 +51,11 @@ const ResetButton = () => {
       window.location.reload()
     } catch (error) {
       console.error('Error resetting application:', error)
-      alert(`Failed to reset application: ${error instanceof Error ? error.message : String(error)}`)
+      alert(
+        `Failed to reset application: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      )
     }
   }
 

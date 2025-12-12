@@ -41,9 +41,9 @@ export async function POST() {
     // Clear Spotify tokens file
     try {
       await fs.unlink(TOKENS_FILE_PATH)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If the file doesn't exist, that's fine, just log it.
-      if (error.code !== 'ENOENT') {
+      if ((error as { code: string }).code !== 'ENOENT') {
         throw error // Re-throw other errors
       }
       console.log('Spotify tokens file not found, nothing to clear.')
