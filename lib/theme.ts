@@ -16,51 +16,55 @@ import { createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
   // Color Palette - Vibrant fitness-focused colors
+  // Updated to align with Frontend Improvement Plan Phase 1
   palette: {
     primary: {
-      main: '#F44336', // Red - matches Peak HR zone, high energy
-      light: '#EF5350',
-      dark: '#D32F2F',
+      main: '#D32F2F', // Red - matches Peak HR zone (Zone 4)
+      light: '#FFEBEE', // Very light red for backgrounds
+      dark: '#C62828',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#2196F3', // Blue - matches Warm-up zone
-      light: '#42A5F5',
-      dark: '#1976D2',
+      main: '#1976D2', // Blue - matches Warm-up zone (Zone 1)
+      light: '#E3F2FD', // Very light blue for backgrounds
+      dark: '#0D47A1',
       contrastText: '#FFFFFF',
     },
     success: {
-      main: '#4CAF50', // Green - matches Fat Burn zone
-      light: '#66BB6A',
-      dark: '#388E3C',
+      main: '#388E3C', // Green - matches Fat Burn zone (Zone 2)
+      light: '#E8F5E9', // Very light green for backgrounds
+      dark: '#1B5E20',
+      contrastText: '#FFFFFF',
     },
     warning: {
-      main: '#FFEB3B', // Yellow - matches Cardio zone
-      light: '#FFF176',
-      dark: '#FBC02D',
+      main: '#FBC02D', // Yellow - matches Cardio zone (Zone 3)
+      light: '#FFFDE7', // Very light yellow for backgrounds
+      dark: '#F57F17',
       contrastText: '#000000',
     },
     error: {
-      main: '#F44336', // Red - matches Peak zone
+      main: '#D32F2F', // Red
       light: '#EF5350',
-      dark: '#D32F2F',
+      dark: '#C62828',
     },
     info: {
-      main: '#2196F3', // Blue
+      main: '#0288D1', // Light Blue
+      light: '#E1F5FE',
+      dark: '#01579B',
     },
     // Background colors
     background: {
-      default: '#F5F5F5', // Light grey for main background
+      default: '#FAFAFA', // Slightly cleaner light grey
       paper: '#FFFFFF',
     },
     // Text colors
     text: {
-      primary: '#212121',
-      secondary: '#757575',
+      primary: '#121212', // Higher contrast
+      secondary: '#616161',
       disabled: '#BDBDBD',
     },
     // Dividers
-    divider: '#E0E0E0',
+    divider: '#EEEEEE',
   },
 
   // Typography - Clear hierarchy
@@ -79,15 +83,15 @@ const theme = createTheme({
     h1: {
       fontSize: '4rem', // 64px
       fontWeight: 700,
-      lineHeight: 1.2,
+      lineHeight: 1.1,
       letterSpacing: '-0.02em',
     },
 
-    // Section headings
+    // Section headings (HR Percentage)
     h2: {
       fontSize: '2.5rem', // 40px
       fontWeight: 600,
-      lineHeight: 1.3,
+      lineHeight: 1.2,
       letterSpacing: '-0.01em',
     },
 
@@ -95,7 +99,7 @@ const theme = createTheme({
     h3: {
       fontSize: '2rem', // 32px
       fontWeight: 600,
-      lineHeight: 1.4,
+      lineHeight: 1.3,
     },
 
     // Subsection headings
@@ -112,11 +116,12 @@ const theme = createTheme({
       lineHeight: 1.5,
     },
 
-    // Small headings
+    // Small headings (HR Label)
     h6: {
-      fontSize: '1rem', // 16px
-      fontWeight: 600,
-      lineHeight: 1.5,
+      fontSize: '1.1rem', // 17.6px (Close to 1.1rem requested)
+      fontWeight: 500,
+      lineHeight: 1.6,
+      letterSpacing: '0.01em',
     },
 
     // Body text
@@ -125,9 +130,10 @@ const theme = createTheme({
       lineHeight: 1.5,
     },
 
-    // Secondary body text
+    // Secondary body text (Control labels)
     body2: {
-      fontSize: '0.875rem', // 14px
+      fontSize: '0.95rem', // ~15px
+      fontWeight: 500,
       lineHeight: 1.5,
     },
 
@@ -143,6 +149,7 @@ const theme = createTheme({
     caption: {
       fontSize: '0.75rem', // 12px
       lineHeight: 1.5,
+      color: '#757575',
     },
 
     // Overlines (labels above content)
@@ -155,40 +162,40 @@ const theme = createTheme({
   },
 
   // Spacing - 8px grid system
-  spacing: 8, // Base unit = 8px, theme.spacing(1) = 8px, theme.spacing(2) = 16px, etc.
+  spacing: 8, // Base unit = 8px
 
   // Shape - Consistent border radius
   shape: {
     borderRadius: 8, // 8px rounded corners for cards, buttons
   },
 
-  // Shadows - Consistent elevation
+  // Shadows - Consistent elevation (Subtle gradients and shadows)
   shadows: [
     'none',
-    '0 1px 2px 0 rgba(0, 0, 0, 0.05)', // elevation 1
-    '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // elevation 2
-    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // elevation 3
-    '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // elevation 4
-    '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // elevation 5
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 6
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 7
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 8
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 9
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 10
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 11
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 12
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 13
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 14
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 15
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 16
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 17
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 18
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 19
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 20
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 21
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 22
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 23
-    '0 25px 50px -12px rgba(0, 0, 0, 0.25)', // elevation 24
+    '0px 2px 4px rgba(0,0,0,0.05)', // elevation 1
+    '0px 4px 8px rgba(0,0,0,0.05)', // elevation 2
+    '0px 8px 16px rgba(0,0,0,0.05)', // elevation 3
+    '0px 12px 24px rgba(0,0,0,0.05)', // elevation 4
+    '0px 16px 32px rgba(0,0,0,0.05)', // elevation 5
+    '0px 20px 40px rgba(0,0,0,0.05)', // elevation 6
+    '0px 24px 48px rgba(0,0,0,0.05)', // elevation 7
+    '0px 28px 56px rgba(0,0,0,0.05)', // elevation 8
+    '0px 32px 64px rgba(0,0,0,0.05)', // elevation 9
+    '0px 36px 72px rgba(0,0,0,0.05)', // elevation 10
+    '0px 40px 80px rgba(0,0,0,0.05)', // elevation 11
+    '0px 44px 88px rgba(0,0,0,0.05)', // elevation 12
+    '0px 48px 96px rgba(0,0,0,0.05)', // elevation 13
+    '0px 52px 104px rgba(0,0,0,0.05)', // elevation 14
+    '0px 56px 112px rgba(0,0,0,0.05)', // elevation 15
+    '0px 60px 120px rgba(0,0,0,0.05)', // elevation 16
+    '0px 64px 128px rgba(0,0,0,0.05)', // elevation 17
+    '0px 68px 136px rgba(0,0,0,0.05)', // elevation 18
+    '0px 72px 144px rgba(0,0,0,0.05)', // elevation 19
+    '0px 76px 152px rgba(0,0,0,0.05)', // elevation 20
+    '0px 80px 160px rgba(0,0,0,0.05)', // elevation 21
+    '0px 84px 168px rgba(0,0,0,0.05)', // elevation 22
+    '0px 88px 176px rgba(0,0,0,0.05)', // elevation 23
+    '0px 92px 184px rgba(0,0,0,0.05)', // elevation 24
   ],
 
   // Component-specific overrides
@@ -203,17 +210,20 @@ const theme = createTheme({
           fontWeight: 600,
           textTransform: 'none',
           boxShadow: 'none',
+          transition: 'all 0.2s ease-in-out', // Smooth transition
           '&:hover': {
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
+            transform: 'translateY(-1px)', // Subtle lift effect
+          },
+          '&:focus-visible': {
+            outline: '2px solid #1976D2', // Focus state
+            outlineOffset: '2px',
           },
         },
         contained: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          boxShadow: '0px 2px 4px rgba(0,0,0,0.05)',
           '&:hover': {
-            boxShadow:
-              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0px 6px 12px rgba(0,0,0,0.1)',
           },
         },
         sizeLarge: {
@@ -233,15 +243,22 @@ const theme = createTheme({
         root: {
           minWidth: 48, // Accessible touch target
           minHeight: 48,
+          transition: 'background-color 0.2s ease-in-out',
+          '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          },
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12, // Slightly more rounded for cards
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          borderRadius: 12,
+          boxShadow: '0px 2px 4px rgba(0,0,0,0.05)',
+          transition: 'box-shadow 0.2s ease-in-out',
+          '&:hover': {
+            boxShadow: '0px 4px 8px rgba(0,0,0,0.08)',
+          },
         },
       },
     },
@@ -251,19 +268,13 @@ const theme = createTheme({
           borderRadius: 12,
         },
         elevation1: {
-          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+          boxShadow: '0px 2px 4px rgba(0,0,0,0.05)',
         },
         elevation2: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          boxShadow: '0px 4px 8px rgba(0,0,0,0.05)',
         },
         elevation3: {
-          boxShadow:
-            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        },
-        elevation4: {
-          boxShadow:
-            '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0px 8px 16px rgba(0,0,0,0.05)',
         },
       },
     },
@@ -271,6 +282,13 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#1976D2', // Hover state
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderWidth: 2,
+            borderColor: '#1976D2', // Focus state
+          },
         },
       },
     },
@@ -291,8 +309,14 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          boxShadow:
-            '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+          boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          scrollBehavior: 'smooth',
         },
       },
     },

@@ -4,7 +4,7 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
-import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
+import { WorkoutData, WorkoutItem } from '../types/index'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 
@@ -23,37 +23,37 @@ export const HR_ZONES = [
   {
     name: 'Warm-up',
     min: 0.5,
-    color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main, // Darker blue
-    bgColor: theme.palette.secondary.main, // Darker blue
+    color: 'text-blue-600', // Darker blue for better contrast
+    progressColor: theme.palette.secondary.main, // #1976D2
+    bgColor: theme.palette.secondary.light, // #E3F2FD
   },
   {
     name: 'Fat Burn',
     min: 0.6,
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
+    color: 'text-green-600', // Darker green
+    progressColor: theme.palette.success.main, // #388E3C
+    bgColor: theme.palette.success.light, // #E8F5E9
   },
   {
     name: 'Cardio',
     min: 0.7,
-    color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark, // Darker orange/yellow
-    bgColor: theme.palette.warning.dark, // Darker orange/yellow
+    color: 'text-yellow-600', // Darker yellow/orange
+    progressColor: theme.palette.warning.main, // #FBC02D
+    bgColor: theme.palette.warning.light, // #FFFDE7
   },
   {
     name: 'Peak',
     min: 0.85,
-    color: 'text-red-500',
-    progressColor: theme.palette.primary.main,
-    bgColor: theme.palette.primary.main,
+    color: 'text-red-600', // Darker red
+    progressColor: theme.palette.error.main, // #D32F2F
+    bgColor: theme.palette.error.light, // #EF5350 (or lighter #FFEBEE)
   },
   {
     name: 'Max',
     min: 0.95,
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
+    color: 'text-purple-600', // Darker purple
+    progressColor: '#7B1FA2', // Darker Purple
+    bgColor: '#F3E5F5', // Light Purple
   },
 ]
 
@@ -63,8 +63,8 @@ export const ZONE_COLORS = {
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
   green: theme.palette.success.main, // Zone 2: Fat Burn
   yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
+  red: theme.palette.error.main, // Zone 4: Peak
+  purple: '#7B1FA2', // Zone 5: Max
 }
 
 interface HrZoneProps {
@@ -88,8 +88,8 @@ export const getHrZoneProps = (
       zone: 'No Data',
       percentage: 0,
       color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
+      progressColor: theme.palette.grey[400],
+      backgroundColor: theme.palette.grey[200],
       bpm: 0,
     }
   }
@@ -110,8 +110,8 @@ export const getHrZoneProps = (
       zone: 'Unknown',
       percentage: percentageOfMax,
       color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
+      progressColor: theme.palette.grey[400],
+      backgroundColor: theme.palette.grey[200],
       bpm: currentHr,
     }
   }
@@ -143,45 +143,46 @@ export const getTimerProps = (
     case 'PREPARE':
       return {
         text: 'GET READY',
-        color: 'warning', // MUI color for yellow/warning
+        color: 'warning',
         backgroundColor: 'bg-yellow-500/10',
-        progressColor: '#f59e0b',
+        progressColor: theme.palette.warning.main,
       }
     case 'WORK':
       return {
         text: 'WORK',
-        color: 'error', // MUI color for red
+        color: 'error',
         backgroundColor: 'bg-red-500/10',
-        progressColor: '#ef4444',
+        progressColor: theme.palette.error.main,
       }
     case 'REST':
       return {
         text: 'REST',
-        color: 'success', // MUI color for green
+        color: 'success',
         backgroundColor: 'bg-green-500/10',
-        progressColor: '#22c55e',
+        progressColor: theme.palette.success.main,
       }
     case 'RUNNING':
       return {
         text: 'RUNNING',
-        color: 'primary', // MUI color for blue/primary
+        // Use 'secondary' for blue
+        color: 'secondary',
         backgroundColor: 'bg-blue-500/10',
-        progressColor: '#2563eb',
+        progressColor: theme.palette.secondary.main,
       }
     case 'COOLDOWN':
       return {
         text: 'COOLDOWN',
-        color: 'info', // MUI color for blue/info
-        backgroundColor: 'bg-blue-500/10',
-        progressColor: '#3b82f6',
+        color: 'info',
+        backgroundColor: 'bg-blue-400/10',
+        progressColor: theme.palette.info.main,
       }
     case 'IDLE':
     default:
       return {
         text: 'READY',
-        color: 'secondary', // MUI color for gray/secondary
+        color: 'secondary',
         backgroundColor: 'bg-gray-200',
-        progressColor: '#6b7280',
+        progressColor: theme.palette.grey[500],
       }
   }
 }
