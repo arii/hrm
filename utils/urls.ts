@@ -17,10 +17,10 @@ export const getWebSocketURL = (): string => {
   // Use explicit environment variable if available
   if (process.env.NEXT_PUBLIC_WS_URL) {
     // Expect NEXT_PUBLIC_WS_URL to be a base URL (e.g., 'https://your-ws-host.com')
-    const baseUrl = process.env.NEXT_PUBLIC_WS_URL.replace(/\/$/, ''); // Ensure no trailing slash
-    const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:';
-    const host = baseUrl.replace(/^https?:\/\//, '');
-    return `${wsProtocol}//${host}/ws`;
+    const baseUrl = process.env.NEXT_PUBLIC_WS_URL.replace(/\/$/, '') // Ensure no trailing slash
+    const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
+    const host = baseUrl.replace(/^https?:\/\//, '')
+    return `${wsProtocol}//${host}/ws`
   }
 
   // Fallback for client-side execution
@@ -39,11 +39,12 @@ export const getWebSocketURL = (): string => {
 export const getAPIURL = (endpoint: string): string => {
   // Use explicit environment variable if available
   if (process.env.NEXT_PUBLIC_API_URL) {
-    let baseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, ''); // Remove trailing slash if any
-    if (baseUrl.endsWith('/api')) { // Remove '/api' if present at the end
-        baseUrl = baseUrl.slice(0, -4);
+    let baseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') // Remove trailing slash if any
+    if (baseUrl.endsWith('/api')) {
+      // Remove '/api' if present at the end
+      baseUrl = baseUrl.slice(0, -4)
     }
-    return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`;
+    return `${baseUrl}/api/${endpoint.replace(/^\//, '')}`
   }
 
   // Fallback for client-side execution
