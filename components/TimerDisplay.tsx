@@ -7,6 +7,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import Stack from '@mui/material/Stack'
+import { alpha } from '@mui/material/styles'
 import { memo } from 'react'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
@@ -20,6 +21,10 @@ export interface TimerDisplayProps {
   soundEventId?: number // Sound cue trigger
   volume?: number // Master volume
 }
+
+// Define duration colors as constants for maintainability
+const DURATION_WORK_COLOR = '#EF4444' // Red
+const DURATION_REST_COLOR = '#22C55E' // Green
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -112,6 +117,8 @@ const TimerDisplay = ({
             <Chip
               label={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
               size="small"
+              // Status role to indicate information
+              role="status"
               sx={{
                 backgroundColor: 'rgba(255,255,255,0.1)',
                 color: '#fff',
@@ -195,7 +202,7 @@ const TimerDisplay = ({
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '5rem', sm: '8rem', md: '10rem' }, // Slightly reduced xs for safety
+            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' }, // Reverted to 6rem for XS based on review feedback
             fontWeight: 800,
             letterSpacing: '0.12rem',
             lineHeight: 1,
@@ -221,10 +228,12 @@ const TimerDisplay = ({
           <Stack direction="row" spacing={2}>
             <Chip
               label={`WORK: ${workDuration}s`}
+              // Status role to indicate information
+              role="status"
               sx={{
-                backgroundColor: 'rgba(239, 68, 68, 0.15)', // Red tint
-                color: '#EF4444',
-                borderColor: '#EF4444',
+                backgroundColor: alpha(DURATION_WORK_COLOR, 0.15),
+                color: DURATION_WORK_COLOR,
+                borderColor: DURATION_WORK_COLOR,
                 borderWidth: 1,
                 borderStyle: 'solid',
                 fontWeight: 700,
@@ -233,10 +242,12 @@ const TimerDisplay = ({
             />
             <Chip
               label={`REST: ${restDuration}s`}
+              // Status role to indicate information
+              role="status"
               sx={{
-                backgroundColor: 'rgba(34, 197, 94, 0.15)', // Green tint
-                color: '#22C55E',
-                borderColor: '#22C55E',
+                backgroundColor: alpha(DURATION_REST_COLOR, 0.15),
+                color: DURATION_REST_COLOR,
+                borderColor: DURATION_REST_COLOR,
                 borderWidth: 1,
                 borderStyle: 'solid',
                 fontWeight: 700,
