@@ -12,7 +12,7 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
-import SharedVolumeControl from '@/components/shared/SharedVolumeControl'
+import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
@@ -111,7 +111,7 @@ const ControlPanel = () => {
 
         <TimerControls />
         <Box sx={{ p: 2 }}>
-          <SharedVolumeControl
+          <VolumeSlider
             volume={volume}
             muted={muted}
             onVolumeChange={setVolume}

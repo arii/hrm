@@ -22,7 +22,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
-import SharedVolumeControl from './shared/SharedVolumeControl'
+import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyDevice {
@@ -322,7 +322,7 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SharedVolumeControl
+          <VolumeSlider
             volume={volume}
             muted={muted}
             onVolumeChange={setVolume}
