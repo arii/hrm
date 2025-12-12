@@ -19,6 +19,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import { useError } from './ErrorContext'
 
 interface AppState {
   hrmData: HrmData[]
@@ -66,6 +67,7 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
+  const { addError } = useError()
   const wsUrl = serverUrl || getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -98,6 +100,9 @@ export const WebSocketProvider = ({
       case 'EXECUTE_SPOTIFY':
         // This message type is handled by useSpotifyRemoteExecution hook
         // We don't need to update state here, just pass it through
+        return state
+      case 'SPOTIFY_ERROR':
+        addError(message.payload.message)
         return state
       default:
         return state

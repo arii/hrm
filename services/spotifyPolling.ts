@@ -287,6 +287,10 @@ export class SpotifyPolling {
       }
 
       logger.error({ err: error }, 'Error fetching currently playing track')
+      this.broadcastUpdate({
+        type: 'SPOTIFY_ERROR',
+        payload: { message: 'Failed to get playback state.' },
+      })
     }
   }
 
@@ -320,6 +324,10 @@ export class SpotifyPolling {
       logger.debug('Devices refreshed:', this.state.devices.length)
     } catch (error) {
       logger.error({ err: error }, 'Error fetching Spotify devices')
+      this.broadcastUpdate({
+        type: 'SPOTIFY_ERROR',
+        payload: { message: 'Failed to refresh Spotify devices.' },
+      })
     }
   }
 
@@ -345,6 +353,12 @@ export class SpotifyPolling {
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
+        this.broadcastUpdate({
+          type: 'SPOTIFY_ERROR',
+          payload: {
+            message: `Spotify command ${command} failed.`,
+          },
+        })
       }
     })()
   }

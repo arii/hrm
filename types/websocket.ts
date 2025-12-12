@@ -98,6 +98,10 @@ export type ServerMessage =
   | { type: 'HRM_UPDATE'; payload: HrmData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
+  | {
+      type: 'SPOTIFY_ERROR'
+      payload: { message: string }
+    }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
   | { type: 'SPOTIFY_SERVICE_INIT_UPDATE'; payload: boolean }
   | { type: 'PONG' } // Add PONG message type for server-to-client heartbeat
