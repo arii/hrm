@@ -33,9 +33,11 @@ export default function NotFoundPage() {
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Sorry, the page you are looking for does not exist.
         </Typography>
-        <Button variant="contained" color="primary" component={Link} href="/">
-          Go to Homepage
-        </Button>
+        <Link href="/" passHref>
+          <Button variant="contained" color="primary">
+            Go to Homepage
+          </Button>
+        </Link>
       </Box>
     </Container>
   )
