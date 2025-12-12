@@ -266,7 +266,7 @@ export class SpotifyPolling {
 
       const isPlaying = playbackState.is_playing
       const shuffleState = playbackState.shuffle_state
-      const repeatState = playbackState.repeat_state
+      const repeatState = playbackState.repeat_state as SpotifyRepeatState
 
       // Only broadcast if track ID or playback state has changed
       if (
@@ -429,7 +429,7 @@ export class SpotifyPolling {
         }
         break
       case 'TOGGLE_SHUFFLE':
-        await this.sdk!.player.setShuffleMode(
+        await this.sdk!.player.togglePlaybackShuffle(
           !this.state.shuffleState,
           deviceId
         )
