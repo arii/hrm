@@ -2,7 +2,7 @@
 import React from 'react'
 import Button from '@mui/material/Button'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
-import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import LinkOffIcon from '@mui/icons-material/LinkOff'
 import CircularProgress from '@mui/material/CircularProgress'
 import { HRMStatus } from '@/hooks/useBluetoothHRM'
 
@@ -40,7 +40,7 @@ const ConnectHRMonitor: React.FC<ConnectHRMonitorProps> = ({
     if (isConnected) {
       return (
         <>
-          <BluetoothDisabledIcon sx={{ mr: 1 }} />
+          <LinkOffIcon sx={{ mr: 1 }} />
           Disconnect HR Monitor
         </>
       )

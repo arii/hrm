@@ -248,7 +248,7 @@ export default function ConnectPage() {
             )}
             {deviceStatus === 'ERROR' && (
               <Alert severity="error" sx={{ mb: 3 }}>
-                {errorMessage}
+                {errorMessage || 'An unknown Bluetooth error occurred.'}
               </Alert>
             )}
 
