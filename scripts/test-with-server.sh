@@ -41,7 +41,7 @@ trap cleanup EXIT INT TERM
 # Export environment variable for testing
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
-export NEXTAUTH_URL="http://127.0.0.1:3000"
+export NEXTAUTH_URL="http://127.0.0.1:${PORT}"
 
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
