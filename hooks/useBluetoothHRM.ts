@@ -1,5 +1,6 @@
 // File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
+import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -226,14 +227,17 @@ const useBluetoothHRM = () => {
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
 
+            const data: HrmInputData = {
+              value: heartRate,
+              maxHr: calculatedMaxHr,
+              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+            }
+            if (age && !isNaN(parseInt(age))) {
+              data.age = parseInt(age)
+            }
             sendData({
               type: 'HRM_INPUT',
-              data: {
-                value: heartRate,
-                maxHr: calculatedMaxHr,
-                name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-                age: age ? parseInt(age) : undefined,
-              },
+              data,
             })
           }
         )
