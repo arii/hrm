@@ -28,7 +28,7 @@ const config = {
   ],
   transform: {
     '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
+    '^.+\\.[jt]sx?$': [
       'ts-jest',
       {
         useESM: true,
@@ -37,6 +37,7 @@ const config = {
           moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          allowJs: true,
         },
       },
     ],
