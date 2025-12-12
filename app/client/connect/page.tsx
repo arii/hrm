@@ -259,9 +259,7 @@ export default function ConnectPage() {
               size="large"
               fullWidth
               onClick={handleConnect}
-              disabled={
-                !userName.trim() || !userAge.trim() || isAutoConnecting
-              }
+              disabled={!userName.trim() || !userAge.trim() || isAutoConnecting}
               sx={{ py: 2, fontSize: '1.1rem' }}
             >
               {isAutoConnecting ? 'Connecting...' : 'Connect Bluetooth HRM'}
