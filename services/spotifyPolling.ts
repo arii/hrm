@@ -1,5 +1,10 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
+import {
+  ServerMessage,
+  SpotifyData,
+  SpotifyDevice,
+  SpotifyRepeatState,
+} from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -55,7 +60,7 @@ export class SpotifyPolling {
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
   private lastShuffleState: boolean | null = null
-  private lastRepeatState: string | null = null
+  private lastRepeatState: SpotifyRepeatState | null = null
 
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
@@ -424,7 +429,7 @@ export class SpotifyPolling {
         }
         break
       case 'TOGGLE_SHUFFLE':
-        await this.sdk!.player.setShuffle(!this.state.shuffleState, deviceId)
+        await this.sdk!.player.setShuffleMode(!this.state.shuffleState, deviceId)
         break
       case 'SET_REPEAT_MODE':
         if (repeatState) {
