@@ -1,10 +1,6 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
-import Pause from '@mui/icons-material/Pause'
-import PlayArrow from '@mui/icons-material/PlayArrow'
-import SkipNext from '@mui/icons-material/SkipNext'
-import SkipPrevious from '@mui/icons-material/SkipPrevious'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
@@ -12,7 +8,6 @@ import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
-import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Slider from '@mui/material/Slider'
@@ -22,7 +17,8 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import PlaybackControls from './PlaybackControls'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -119,6 +115,20 @@ const SpotifyControls = () => {
     [resolveTargetDeviceId, sendData]
   )
 
+  const handlePlaybackCommand = useCallback(
+    (command: SpotifyCommand) => {
+      if (
+        command === 'PLAY' ||
+        command === 'PAUSE' ||
+        command === 'NEXT' ||
+        command === 'PREVIOUS'
+      ) {
+        sendSpotifyCommand(command)
+      }
+    },
+    [sendSpotifyCommand]
+  )
+
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
@@ -190,49 +200,11 @@ const SpotifyControls = () => {
               </Typography>
             </Box>
 
-            <Stack
-              direction="row"
-              spacing={1}
-              justifyContent="center"
-              sx={{ mb: 2 }}
-            >
-              <IconButton
-                onClick={() => sendSpotifyCommand('PREVIOUS')}
-                data-testid="spotify-prev"
-                disabled={connectionStatus !== 'Connected'}
-                sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
-                }}
-              >
-                <SkipPrevious />
-              </IconButton>
-              <IconButton
-                onClick={() =>
-                  sendSpotifyCommand(spotifyData.isPlaying ? 'PAUSE' : 'PLAY')
-                }
-                data-testid="spotify-play-pause"
-                disabled={connectionStatus !== 'Connected'}
-                sx={{
-                  color: 'white',
-                  backgroundColor: '#1DB954',
-                  '&:hover': { backgroundColor: '#169944' },
-                }}
-              >
-                {spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
-              </IconButton>
-              <IconButton
-                onClick={() => sendSpotifyCommand('NEXT')}
-                data-testid="spotify-next"
-                disabled={connectionStatus !== 'Connected'}
-                sx={{
-                  color: 'white',
-                  '&:hover': { backgroundColor: 'grey.700' },
-                }}
-              >
-                <SkipNext />
-              </IconButton>
-            </Stack>
+            <PlaybackControls
+              isPlaying={spotifyData.isPlaying}
+              onCommand={handlePlaybackCommand}
+              disabled={connectionStatus !== 'Connected'}
+            />
 
             <Stack direction="row" spacing={1} alignItems="center">
               <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
