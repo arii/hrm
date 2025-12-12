@@ -106,11 +106,14 @@ const useBluetoothHRM = () => {
         // If no data for > 10 seconds, consider it stale/lost
         if (timeSinceLastData > 10000) {
           console.warn('Bluetooth data stale. Forcing reconnection...')
-          setHrmState({
+          const newState: HRMState = {
             status: 'CONNECTING',
-            deviceName: deviceRef.current?.name,
             errorMessage: 'Connection unstable. Reconnecting...',
-          })
+          }
+          if (deviceRef.current?.name) {
+            newState.deviceName = deviceRef.current.name
+          }
+          setHrmState(newState)
           // Force disconnect to trigger the ondisconnect handler which handles reconnection
           if (deviceRef.current?.gatt?.connected) {
             deviceRef.current.gatt.disconnect()
@@ -154,11 +157,14 @@ const useBluetoothHRM = () => {
 
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
-      setHrmState({
+      const newState: HRMState = {
         status: 'CONNECTING',
-        deviceName: deviceRef.current?.name,
         errorMessage: 'Signal Lost. Retrying...',
-      })
+      }
+      if (deviceRef.current?.name) {
+        newState.deviceName = deviceRef.current.name
+      }
+      setHrmState(newState)
 
       const deviceToReconnect = deviceRef.current
       reconnectTimeoutRef.current = setTimeout(() => {
