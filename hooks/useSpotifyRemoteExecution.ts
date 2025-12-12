@@ -138,5 +138,6 @@ export const useSpotifyRemoteExecution = (
         window.removeEventListener('spotify-remote-command', handleCustomEvent)
       }
     }
+    return undefined
   }, [player, sendData, handleCustomEvent])
 }
