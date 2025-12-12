@@ -13,8 +13,13 @@ declare module 'next-auth' {
 }
 
 /**
- * Safe helper to extract hostname from NEXTAUTH_URL
- * Returns undefined if URL is invalid to prevent cookie domain errors
+ * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
+ * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
+ * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
+ * allowing the browser to default to the current domain.
+ *
+ * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
+ *                               should not be set.
  */
 function getCookieDomain(): string | undefined {
   if (!process.env.NEXTAUTH_URL) {
@@ -195,10 +200,28 @@ export const authOptions: AuthOptions = {
   useSecureCookies: process.env.NODE_ENV === 'production',
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
+    /**
+     * Callback executed on a successful sign-in.
+     *
+     * @returns {boolean} Always returns true to allow sign-in.
+     */
     async signIn() {
       // Always allow Spotify sign-in
       return true
     },
+    /**
+     * Callback for creating and managing the JSON Web Token (JWT).
+     *
+     * This function is called whenever a JWT is created (i.e., at sign-in) or
+     * updated (i.e., whenever a session is accessed in the client). It is
+     * responsible for persisting the Spotify access token and refresh token
+     * in the JWT.
+     *
+     * @param {object} params - The parameters for the JWT callback.
+     * @param {JWT} params.token - The JWT token.
+     * @param {Account | null} params.account - The account object from the provider.
+     * @returns {Promise<JWT>} The updated JWT.
+     */
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
@@ -287,6 +310,17 @@ export const authOptions: AuthOptions = {
       console.log('[AUTH] Access token expired, refreshing...')
       return await refreshAccessToken(token)
     },
+    /**
+     * Callback for creating and managing the user session.
+     *
+     * This function is called whenever a session is checked. It passes the
+     * access token from the JWT to the client-side session object.
+     *
+     * @param {object} params - The parameters for the session callback.
+     * @param {Session} params.session - The session object.
+     * @param {JWT} params.token - The JWT token.
+     * @returns {Promise<Session>} The updated session object.
+     */
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
       console.log(
