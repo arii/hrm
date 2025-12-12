@@ -17,14 +17,11 @@ import {
 import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
-import HeartRateGraph from '../../../components/Dashboard/HeartRateGraph'
+import HeartRateGraphContainer from '../../../components/Dashboard/HeartRateGraphContainer'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
-import { HeartRateDataPoint } from '@/types'
-
-const GRAPH_TIME_WINDOW_MS = 60000 // 60 seconds
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -45,9 +42,6 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
-  const [heartRateHistory, setHeartRateHistory] = useState<
-    HeartRateDataPoint[]
-  >([])
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
@@ -120,34 +114,6 @@ export default function ConnectPage() {
   const maxHr = 220 - (parseInt(userAge) || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
-  // 4. Update heart rate history
-  useEffect(() => {
-    if (isConnected && currentUserData) {
-      const now = Date.now()
-      const newDataPoint = {
-        timestamp: now,
-        value: currentUserData.value,
-      }
-      // This effect synchronizes with an external data source (WebSocket).
-      // Disabling the rule is acceptable here as this is the intended use.
-
-      setHeartRateHistory((prevHistory) => {
-        const newHistory = [...prevHistory, newDataPoint]
-        // Optimize filtering by removing elements from the start of the array.
-        // This is more performant than `filter` as it avoids creating a new array.
-        while (newHistory.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          if (newHistory[0]!.timestamp < now - GRAPH_TIME_WINDOW_MS) {
-            newHistory.shift()
-          } else {
-            break // The rest of the points are within the time window
-          }
-        }
-        return newHistory
-      })
-    }
-  }, [isConnected, currentUserData])
-
   return (
     <>
       <Container
@@ -188,7 +154,7 @@ export default function ConnectPage() {
 
               {/* 3. Heart Rate Graph */}
               <Box sx={{ mb: 3 }}>
-                <HeartRateGraph data={heartRateHistory} />
+                <HeartRateGraphContainer />
               </Box>
 
               {/* 4. Minimized Profile Info */}
