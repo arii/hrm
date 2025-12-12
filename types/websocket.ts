@@ -35,7 +35,7 @@ export interface TimerData {
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }
 
-export type SpotifyRepeatState = 'off' | 'track' | 'context';
+export type SpotifyRepeatState = 'off' | 'track' | 'context'
 
 export type SpotifyCommand =
   | 'PLAY'
@@ -46,7 +46,7 @@ export type SpotifyCommand =
   | 'SET_VOLUME'
   | 'GET_DEVICES'
   | 'TOGGLE_SHUFFLE'
-  | 'SET_REPEAT_MODE';
+  | 'SET_REPEAT_MODE'
 
 // 1. Update SpotifyData to include the device list
 export interface SpotifyDevice {
@@ -60,12 +60,12 @@ export interface SpotifyDevice {
 }
 
 export interface SpotifyData {
-  trackName: string;
-  artist: string;
-  isPlaying: boolean;
-  devices: SpotifyDevice[];
-  shuffleState: boolean;
-  repeatState: SpotifyRepeatState;
+  trackName: string
+  artist: string
+  isPlaying: boolean
+  devices: SpotifyDevice[]
+  shuffleState: boolean
+  repeatState: SpotifyRepeatState
 }
 
 /**
@@ -147,7 +147,7 @@ export interface SpotifyCommandMessage {
   deviceId?: string
   volume?: number
   playlistUri?: string
-  repeatState?: SpotifyRepeatState;
+  repeatState?: SpotifyRepeatState
 }
 
 export interface GetStateMessage {
@@ -229,8 +229,10 @@ export const SpotifyCommandMessageSchema = z.object({
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
-  repeatState: z.union([z.literal('off'), z.literal('track'), z.literal('context')]).optional(),
-});
+  repeatState: z
+    .union([z.literal('off'), z.literal('track'), z.literal('context')])
+    .optional(),
+})
 
 export const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),

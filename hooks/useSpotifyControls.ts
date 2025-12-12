@@ -19,7 +19,7 @@ export const useSpotifyControls = () => {
   const activeDeviceId = spotifyData.devices?.find(d => d.is_active)?.id;
 
   const sendCommand = useCallback(
-    (command: SpotifyCommand, value?: any) => {
+    (command: SpotifyCommand, value?: string | number | boolean) => {
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,

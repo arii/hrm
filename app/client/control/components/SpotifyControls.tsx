@@ -48,12 +48,14 @@ const SpotifyControls = () => {
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     if (activeDevice) {
+      if (activeDevice.id !== selectedDeviceId) {
         setSelectedDeviceId(activeDevice.id);
-        if(activeDevice.volume_percent) {
-            setVolume(activeDevice.volume_percent)
-        }
+      }
+      if(activeDevice.volume_percent && activeDevice.volume_percent !== volume) {
+        setVolume(activeDevice.volume_percent)
+      }
     }
-  }, [devices])
+  }, [devices, selectedDeviceId, volume])
 
 
   return (

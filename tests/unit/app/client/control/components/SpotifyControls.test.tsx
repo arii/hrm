@@ -5,6 +5,7 @@
 import { render, screen } from '@testing-library/react'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
+import { SpotifyData } from '@/types/websocket'
 
 // Mocks
 jest.mock('next/navigation', () => ({
@@ -14,22 +15,24 @@ jest.mock('next/navigation', () => ({
 }))
 
 describe('SpotifyControls', () => {
+  const mockSpotifyData: SpotifyData = {
+    trackName: 'Test Track',
+    artist: 'Test Artist',
+    isPlaying: true,
+    devices: [],
+    shuffleState: false,
+    repeatState: 'off',
+  }
+
   const mockContextValue = {
-    spotifyData: {
-      trackName: 'Test Track',
-      artist: 'Test Artist',
-      isPlaying: true,
-      devices: [],
-      shuffleState: false,
-      repeatState: 'off' as 'off',
-    },
+    spotifyData: mockSpotifyData,
     connectionStatus: 'Connected',
     sendData: jest.fn(),
   }
 
   it('renders spotify controls when spotify data is available', () => {
     render(
-      <WebSocketContext.Provider value={mockContextValue as any}>
+      <WebSocketContext.Provider value={mockContextValue}>
         <SpotifyControls />
       </WebSocketContext.Provider>
     )

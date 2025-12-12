@@ -2,7 +2,6 @@
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSession, signOut } from 'next-auth/react'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -10,7 +9,7 @@ import IconButton from '@mui/material/IconButton'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import PlaybackControls from '@/components/Spotify/PlaybackControls'
 import VolumeControl from '@/components/Spotify/VolumeControl'
@@ -46,12 +45,14 @@ const SpotifyDisplay = () => {
   useEffect(() => {
     const activeDevice = devices.find((device) => device.is_active)
     if (activeDevice) {
-      setSelectedDeviceId(activeDevice.id)
-      if(activeDevice.volume_percent) {
+      if (activeDevice.id !== selectedDeviceId) {
+        setSelectedDeviceId(activeDevice.id)
+      }
+      if(activeDevice.volume_percent && activeDevice.volume_percent !== volume) {
         setVolume(activeDevice.volume_percent)
       }
     }
-  }, [devices])
+  }, [devices, selectedDeviceId, volume])
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)

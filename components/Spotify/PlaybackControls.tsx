@@ -15,7 +15,7 @@ interface PlaybackControlsProps {
   isPlaying: boolean;
   shuffleState: boolean;
   repeatState: SpotifyRepeatState;
-  onCommand: (command: SpotifyCommand, value?: any) => void;
+  onCommand: (command: SpotifyCommand, value?: string | number | boolean) => void;
   disabled?: boolean;
 }
 
@@ -44,7 +44,7 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
       alignItems="center"
     >
       <IconButton
-        onClick={() => onCommand('TOGGLE_SHUFFLE')}
+        onClick={() => onCommand('TOGGLE_SHUFFLE', !shuffleState)}
         disabled={disabled}
         sx={{
           color: shuffleState ? '#1DB954' : 'white',

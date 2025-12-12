@@ -358,7 +358,13 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri, repeatState)
+        await this.executeSpotifyCommand(
+          command,
+          deviceId,
+          volume,
+          playlistUri,
+          repeatState
+        )
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
@@ -419,7 +425,7 @@ export class SpotifyPolling {
         break
       case 'TOGGLE_SHUFFLE':
         await this.sdk!.player.setShuffle(!this.state.shuffleState, deviceId)
-        break;
+        break
       case 'SET_REPEAT_MODE':
         if (repeatState) {
           await this.sdk!.player.setRepeatMode(repeatState, deviceId)

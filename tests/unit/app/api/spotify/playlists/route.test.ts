@@ -4,9 +4,7 @@
 import { GET } from '@/app/api/spotify/playlists/route'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
-import { ApiError } from '@/lib/errors'
 
 jest.mock('next-auth/next')
 jest.mock('@spotify/web-api-ts-sdk')
