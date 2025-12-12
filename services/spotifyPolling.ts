@@ -429,7 +429,10 @@ export class SpotifyPolling {
         }
         break
       case 'TOGGLE_SHUFFLE':
-        await this.sdk!.player.setShuffleMode(!this.state.shuffleState, deviceId)
+        await this.sdk!.player.setShuffleMode(
+          !this.state.shuffleState,
+          deviceId
+        )
         break
       case 'SET_REPEAT_MODE':
         if (repeatState) {
