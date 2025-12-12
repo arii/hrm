@@ -20,12 +20,23 @@ const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
   batteryLevel,
 }) => {
   const isConnected = status.startsWith('Connected')
-  const isConnecting = status.toLowerCase().includes('connecting') || status.toLowerCase().includes('searching')
+  const isConnecting =
+    status.toLowerCase().includes('connecting') ||
+    status.toLowerCase().includes('searching')
   const isDisconnected = !isConnected && !isConnecting
-  const isError = status.toLowerCase().includes('failed') || status.toLowerCase().includes('error')
+  const isError =
+    status.toLowerCase().includes('failed') ||
+    status.toLowerCase().includes('error')
 
   let statusIcon
-  let statusColor: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default'
+  let statusColor:
+    | 'default'
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning' = 'default'
 
   if (isConnected) {
     statusIcon = <CheckCircleIcon />
@@ -44,12 +55,12 @@ const HRMonitorStatusIndicator: React.FC<HRMonitorStatusIndicatorProps> = ({
   const getBatteryIcon = () => {
     if (batteryLevel === null) return null
     let icon = <BatteryFullIcon />
-    let title = `Battery: ${batteryLevel}%`
+    const title = `Battery: ${batteryLevel}%`
 
     if (batteryLevel > 95) {
-        icon = <BatteryChargingFullIcon />
+      icon = <BatteryChargingFullIcon />
     } else if (batteryLevel <= 20) {
-        icon = <BatteryAlertIcon color="error" />
+      icon = <BatteryAlertIcon color="error" />
     }
 
     return (

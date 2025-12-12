@@ -81,7 +81,10 @@ const HrmTiles = () => {
   // If not loading and there are no HR tiles, show the connection manager
   if (filteredTiles.length === 0) {
     return (
-      <Grid size={{ xs: 12, md: 6, lg: 4 }} data-testid="hrm-connection-manager">
+      <Grid
+        size={{ xs: 12, md: 6, lg: 4 }}
+        data-testid="hrm-connection-manager"
+      >
         <HRMConnectionManager />
       </Grid>
     )
