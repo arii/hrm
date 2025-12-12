@@ -69,19 +69,23 @@ test.afterAll(async () => {
 test.describe('Port Health Checks', () => {
   test('should confirm backend server is responsive', async () => {
     const url = `http://127.0.0.1:${PORT}/api/health`
-    const response = await new Promise<{ statusCode?: number; body: string }>((resolve, reject) => {
-      http.get(url, (res) => {
-        let data = ''
-        res.on('data', (chunk) => {
-          data += chunk
-        })
-        res.on('end', () => {
-          resolve({ statusCode: res.statusCode, body: data })
-        })
-      }).on('error', (err) => {
-        reject(err)
-      })
-    })
+    const response = await new Promise<{ statusCode?: number; body: string }>(
+      (resolve, reject) => {
+        http
+          .get(url, (res) => {
+            let data = ''
+            res.on('data', (chunk) => {
+              data += chunk
+            })
+            res.on('end', () => {
+              resolve({ statusCode: res.statusCode, body: data })
+            })
+          })
+          .on('error', (err) => {
+            reject(err)
+          })
+      }
+    )
 
     expect(response.statusCode).toBe(200)
     expect(JSON.parse(response.body)).toEqual({ status: 'ok' })
