@@ -15,7 +15,6 @@ import {
   Fade,
 } from '@mui/material'
 import { useEffect, useState, useCallback } from 'react'
-import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -273,8 +272,6 @@ export default function ConnectPage() {
           </Box>
         )}
       </Container>
-
-      <BottomNavBar />
     </>
   )
 }
