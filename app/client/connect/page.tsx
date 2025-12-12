@@ -17,15 +17,19 @@ import {
 import { useEffect, useState, useCallback } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import HrTile from '../../../components/HrTile'
+import HeartRateGraph from '../../../components/Dashboard/HeartRateGraph'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
+import { HeartRateDataPoint } from '@/types'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`
+  document.cookie = `${name}=${encodeURIComponent(
+    value
+  )}; expires=${expires}; path=/`
 }
 
 const getCookie = (name: string): string => {
@@ -41,6 +45,9 @@ export default function ConnectPage() {
   const [userName, setUserName] = useState('')
   const [userAge, setUserAge] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [heartRateHistory, setHeartRateHistory] = useState<
+    HeartRateDataPoint[]
+  >([])
 
   // Hooks
   const { connectionStatus, hrmData } = useWebSocket()
@@ -113,6 +120,26 @@ export default function ConnectPage() {
   const maxHr = 220 - (parseInt(userAge) || 30)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
+  // 4. Update heart rate history
+  useEffect(() => {
+    if (isConnected && currentUserData) {
+      const newDataPoint = {
+        timestamp: Date.now(),
+        value: currentUserData.value,
+      }
+      // This effect synchronizes with an external data source (WebSocket).
+      // Disabling the rule is acceptable here as this is the intended use.
+
+      setHeartRateHistory((prevHistory) => {
+        const newHistory = [...prevHistory, newDataPoint]
+        // Keep the history to the last 60 seconds
+        return newHistory.filter(
+          (point) => point.timestamp > Date.now() - 60000
+        )
+      })
+    }
+  }, [isConnected, currentUserData])
+
   return (
     <>
       <Container
@@ -151,7 +178,12 @@ export default function ConnectPage() {
                 />
               </Box>
 
-              {/* 3. Minimized Profile Info */}
+              {/* 3. Heart Rate Graph */}
+              <Box sx={{ mb: 3 }}>
+                <HeartRateGraph data={heartRateHistory} />
+              </Box>
+
+              {/* 4. Minimized Profile Info */}
               <Paper
                 variant="outlined"
                 sx={{ p: 2, mb: 2, bgcolor: 'background.paper' }}

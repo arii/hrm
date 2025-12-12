@@ -14,11 +14,9 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
-import HeartRateGraph from '../components/Dashboard/HeartRateGraph'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HeartRateDataPoint } from '@/types'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -47,28 +45,11 @@ const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
-  const { timerData, hrmData } = useWebSocket()
-  const [heartRateHistory, setHeartRateHistory] = useState<HeartRateDataPoint[]>([])
+  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   useVolumePreference()
   const { initializeAudio } = useAudio(timerData)
-
-  useEffect(() => {
-    if (hrmData.length > 0) {
-      const newDataPoint = {
-        timestamp: Date.now(),
-        value: hrmData[0].value,
-      }
-      setHeartRateHistory((prevHistory) => {
-        const newHistory = [...prevHistory, newDataPoint]
-        // Keep the history to the last 60 seconds
-        return newHistory.filter(
-          (point) => point.timestamp > Date.now() - 60000
-        )
-      })
-    }
-  }, [hrmData])
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -114,10 +95,6 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
-
-        <Grid size={{ xs: 12 }}>
-            <HeartRateGraph data={heartRateHistory} />
-        </Grid>
 
         <Grid size={{ xs: 12 }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
