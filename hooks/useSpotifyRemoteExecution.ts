@@ -67,7 +67,11 @@ export const useSpotifyRemoteExecution = (
               response = await fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'SET_VOLUME', volume, deviceId }),
+                body: JSON.stringify({
+                  command: 'SET_VOLUME',
+                  volume,
+                  deviceId,
+                }),
               })
             }
             break
