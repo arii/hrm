@@ -28,7 +28,9 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should return a list of devices using a user session token', async () => {
-    mockedGetServerSession.mockResolvedValue({ accessToken: 'user-access-token' })
+    mockedGetServerSession.mockResolvedValue({
+      accessToken: 'user-access-token',
+    })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: () =>
@@ -37,7 +39,9 @@ describe('API Route: /api/spotify/devices', () => {
         }),
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/devices'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/devices')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -72,7 +76,9 @@ describe('API Route: /api/spotify/devices', () => {
         }),
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/devices'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/devices')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -98,7 +104,9 @@ describe('API Route: /api/spotify/devices', () => {
       }
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/devices'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/devices')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(401)
@@ -106,14 +114,18 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should return an error if the Spotify API fetch fails', async () => {
-    mockedGetServerSession.mockResolvedValue({ accessToken: 'user-access-token' })
+    mockedGetServerSession.mockResolvedValue({
+      accessToken: 'user-access-token',
+    })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,
       text: () => Promise.resolve('Spotify API Error'),
     })
 
-    const response = await GET(new Request('http://localhost/api/spotify/devices'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/devices')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(500)
@@ -123,7 +135,9 @@ describe('API Route: /api/spotify/devices', () => {
   it('should return 500 on internal server error', async () => {
     mockedGetServerSession.mockRejectedValue(new Error('Internal Error'))
 
-    const response = await GET(new Request('http://localhost/api/spotify/devices'))
+    const response = await GET(
+      new Request('http://localhost/api/spotify/devices')
+    )
     const data = await response.json()
 
     expect(response.status).toBe(500)
