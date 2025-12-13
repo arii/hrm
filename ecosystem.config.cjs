@@ -3,8 +3,8 @@ module.exports = {
   apps: [
     {
       name: 'hrm-server',
-      script: './.next/standalone/server.js',
-      interpreter: 'node',
+      script: './start-production.sh',
+      interpreter: 'bash',
       instances: 1,
       autorestart: true,
       watch: false,
