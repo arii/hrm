@@ -23,9 +23,12 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   ),
 })
 import TimerControls from './components/TimerControls'
+import useVolumePreference from '@/hooks/useVolumePreference'
+import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
 
   // Register this client as a controller
   useEffect(() => {
@@ -107,7 +110,21 @@ const ControlPanel = () => {
         </Box>
 
         <TimerControls />
-        <Box sx={{ height: 8 }} />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            py: 1,
+          }}
+        >
+          <VolumeSlider
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
+          />
+        </Box>
         <SpotifyControls />
       </Container>
     </>
