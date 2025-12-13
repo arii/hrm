@@ -25,7 +25,6 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onResetServer: () => void
   onForgetDevice: () => Promise<void> // Added this
   isSupported: boolean // Added this
   currentHR: number
@@ -44,7 +43,6 @@ export default function ConnectView({
   batteryLevel,
   onConnect,
   onDisconnect,
-  onResetServer,
   onForgetDevice,
   isSupported,
   currentHR,
@@ -66,7 +64,6 @@ export default function ConnectView({
     setIsResetting(true)
     try {
       await onForgetDevice() // 1. Forget Bluetooth
-      onResetServer() // 2. Reset Server
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {

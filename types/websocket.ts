@@ -163,11 +163,6 @@ export interface PingMessage {
   type: 'PING'
 }
 
-export interface ResetMessage {
-  type: 'RESET'
-  data: Record<string, never>
-}
-
 export type ClientCommandMessage =
   | HrmInputMessage
   | TimerCommandMessage
@@ -177,7 +172,6 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
-  | ResetMessage
 
 import { z } from 'zod'
 
@@ -240,11 +234,6 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
-export const ResetMessageSchema = z.object({
-  type: z.literal('RESET'),
-  data: z.object({}),
-})
-
 export const ClientCommandMessageSchema = z.union([
   HrmInputMessageSchema,
   TimerCommandMessageSchema,
@@ -254,5 +243,4 @@ export const ClientCommandMessageSchema = z.union([
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
-  ResetMessageSchema,
 ])

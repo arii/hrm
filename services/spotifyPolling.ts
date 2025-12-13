@@ -165,24 +165,6 @@ export class SpotifyPolling {
     }
   }
 
-  public reset() {
-    this.stopPolling()
-    this.lastTrackId = null
-    this.lastPlaybackState = null
-    this.state = {
-      trackName: 'Awaiting Login...',
-      artist: '',
-      isPlaying: false,
-      devices: [],
-    }
-    this.sdk = null
-    this.tokenManager.reset()
-    this.broadcastUpdate({
-      type: 'SPOTIFY_UPDATE',
-      payload: this.getState(),
-    })
-  }
-
   public cleanup() {
     this.stopPolling()
     if (this.tokenRefreshInterval) {

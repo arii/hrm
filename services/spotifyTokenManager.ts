@@ -91,18 +91,6 @@ export class SpotifyTokenManager {
     }
   }
 
-  public reset() {
-    this.currentToken = null
-    try {
-      if (fs.existsSync(this.tokenFile)) {
-        fs.unlinkSync(this.tokenFile)
-        console.log('Spotify token file deleted.')
-      }
-    } catch (err) {
-      console.error('Failed to delete Spotify token file:', err)
-    }
-  }
-
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false
 

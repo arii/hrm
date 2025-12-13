@@ -21,14 +21,10 @@ export default function ConnectPage() {
     isSupported, // Ensure this is destructured
   } = useBluetoothHRM()
 
-  const { connectionStatus, sendData, hrmData } = useWebSocket()
+  const { connectionStatus, hrmData } = useWebSocket()
 
   const handleConnect = () => {
     connectAndStream(userName, userAge)
-  }
-
-  const handleResetServer = () => {
-    sendData({ type: 'RESET', data: {} })
   }
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
@@ -46,7 +42,6 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onResetServer={handleResetServer}
       // Pass the new props here:
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
