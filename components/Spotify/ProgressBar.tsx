@@ -40,15 +40,24 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         aria-label="Track progress"
         sx={{
           color: 'common.white',
+          height: 48, // Ensure the slider itself has enough height for the touch target
           '& .MuiSlider-thumb': {
             width: 12,
             height: 12,
             transition: '0.3s cubic-bezier(.47,1.64,.41,.8)',
-            '&:before': {
-              boxShadow: '0 2px 12px 0 rgba(0,0,0,0.4)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: 'transparent',
             },
             '&:hover, &.Mui-focusVisible': {
-              boxShadow: `0px 0px 0px 8px 'rgb(255 255 255 / 16%)'`,
+              boxShadow: (theme) => `0px 0px 0px 8px ${theme.palette.action.hover}`,
             },
             '&.Mui-active': {
               width: 20,

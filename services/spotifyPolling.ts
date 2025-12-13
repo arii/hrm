@@ -31,6 +31,15 @@ type SpotifyCommand =
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
+interface SpotifyCommandOptions {
+  deviceId?: string
+  volume?: number
+  playlistUri?: string
+  shuffleState?: boolean
+  repeatState?: 'off' | 'track' | 'context'
+  positionMs?: number
+}
+
 export interface SpotifyTokenResponse {
   access_token: string
   token_type: string
@@ -335,15 +344,7 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
-    command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    playlistUri?: string,
-    shuffleState?: boolean,
-    repeatState?: 'off' | 'track' | 'context',
-    positionMs?: number
-  ) {
+  public handleCommand(command: SpotifyCommand, options: SpotifyCommandOptions = {}) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
@@ -356,15 +357,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(
-          command,
-          deviceId,
-          volume,
-          playlistUri,
-          shuffleState,
-          repeatState,
-          positionMs
-        )
+        await this.executeSpotifyCommand(command, options)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
@@ -374,13 +367,16 @@ export class SpotifyPolling {
 
   private async executeSpotifyCommand(
     command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    playlistUri?: string,
-    shuffleState?: boolean,
-    repeatState?: 'off' | 'track' | 'context',
-    positionMs?: number
+    options: SpotifyCommandOptions
   ) {
+    const {
+      deviceId,
+      volume,
+      playlistUri,
+      shuffleState,
+      repeatState,
+      positionMs,
+    } = options
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
 
