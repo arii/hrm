@@ -49,7 +49,7 @@ async function main() {
   }
 
   if (preset === 'review') {
-    await runReviewPreset(genAI, contextContent, outputFile);
+    await runReviewPreset(genAI, contextContent, outputFile ?? null);
   } else {
     // Default/Generic mode
     let finalTask = task;
@@ -66,7 +66,7 @@ async function main() {
       console.error('Usage: npx tsx scripts/gemini-client.ts --task "task description" OR --task-file "path/to/task.txt" [--context "file1.md,file2.md"] [--output "output.md"]');
       process.exit(1);
     }
-    await runGenericTask(genAI, finalTask, contextContent, outputFile);
+    await runGenericTask(genAI, finalTask, contextContent, outputFile ?? null);
   }
 }
 
