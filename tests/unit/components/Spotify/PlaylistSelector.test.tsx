@@ -26,7 +26,10 @@ describe('PlaylistSelector', () => {
   it('should fetch and display playlists on render', async () => {
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={jest.fn()} />
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={jest.fn()}
+        />
       </ErrorProvider>
     )
 
@@ -40,7 +43,10 @@ describe('PlaylistSelector', () => {
     const onPlaylistSelected = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={onPlaylistSelected} onPlaylistPlay={jest.fn()} />
+        <PlaylistSelector
+          onPlaylistSelected={onPlaylistSelected}
+          onPlaylistPlay={jest.fn()}
+        />
       </ErrorProvider>
     )
 
@@ -54,7 +60,10 @@ describe('PlaylistSelector', () => {
     const onPlaylistPlay = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={onPlaylistPlay} />
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={onPlaylistPlay}
+        />
       </ErrorProvider>
     )
 
