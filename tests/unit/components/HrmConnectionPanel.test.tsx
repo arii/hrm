@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import HrmTiles from '@/components/HrmTiles'
+import HrmConnectionPanel from '@/components/HrmConnectionPanel'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
@@ -32,7 +32,7 @@ const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
 const mockedUseUserPreferences = useUserPreferences as jest.Mock
 
-describe('HrmTiles', () => {
+describe('HrmConnectionPanel', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     mockedUseBluetoothHRM.mockReturnValue({
@@ -55,7 +55,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -69,7 +69,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
 
     // The component renders the connection UI and one skeleton tile
     expect(
@@ -100,7 +100,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
 
     expect(
       screen.getByText('Connect Your Heart Rate Monitor')
@@ -120,7 +120,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
 
     // Only the 'Valid User' tile should be rendered
     const tiles = screen.getAllByTestId('mock-hr-tile')
@@ -145,7 +145,7 @@ describe('HrmTiles', () => {
       isSupported: true,
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
     await userEvent.click(screen.getByText('Connect HR Monitor'))
     expect(connectAndStream).toHaveBeenCalled()
   })
@@ -166,7 +166,7 @@ describe('HrmTiles', () => {
       isSupported: true,
     })
 
-    render(<HrmTiles />)
+    render(<HrmConnectionPanel />)
     await userEvent.click(screen.getByText('Disconnect HR Monitor'))
     expect(disconnect).toHaveBeenCalled()
   })

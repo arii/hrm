@@ -12,3 +12,4 @@ export const BATTERY_LEVEL_LOW = 20
 export const CONNECT_HR_MONITOR_TITLE = 'Connect Your Heart Rate Monitor'
 export const UNSUPPORTED_BLUETOOTH_TOOLTIP =
   'This browser does not support Web Bluetooth. Please use Chrome, Edge, or Opera.'
+export const BLUETOOTH_NOT_SUPPORTED_TEXT = 'Bluetooth Not Supported'

@@ -6,7 +6,10 @@ import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import { UNSUPPORTED_BLUETOOTH_TOOLTIP } from '@/utils/constants'
+import {
+  BLUETOOTH_NOT_SUPPORTED_TEXT,
+  UNSUPPORTED_BLUETOOTH_TOOLTIP,
+} from '@/utils/constants'
 
 interface ConnectHRMonitorButtonProps {
   connect: () => void
@@ -30,7 +33,7 @@ const ConnectHRMonitorButton = ({
             disabled
             startIcon={<BluetoothDisabledIcon />}
           >
-            Bluetooth Not Supported
+            {BLUETOOTH_NOT_SUPPORTED_TEXT}
           </Button>
         </Box>
       </Tooltip>

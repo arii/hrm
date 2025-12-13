@@ -17,7 +17,7 @@ import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
 
-const HrmTiles = () => {
+const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -132,4 +132,4 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-export default HrmTiles
+export default HrmConnectionPanel
