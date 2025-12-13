@@ -52,8 +52,9 @@ export default function ConnectPage() {
       }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
-      workoutDuration={timerState?.workoutDuration || '00:00:00'}
-      caloriesBurned={timerState?.caloriesBurned || 0}
+      workoutDuration={timerState.workoutDuration}
+      caloriesBurned={timerState.caloriesBurned.toFixed(0)}
+      isWorkoutActive={timerState.isWorkoutActive}
     />
   )
 }

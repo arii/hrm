@@ -7,7 +7,7 @@ import WhatshotIcon from '@mui/icons-material/Whatshot'
 
 interface WorkoutSummaryProps {
   duration: string
-  caloriesBurned: number
+  caloriesBurned: string
 }
 
 export default function WorkoutSummary({
@@ -64,7 +64,7 @@ export default function WorkoutSummary({
             <Typography variant="subtitle1">Calories</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
-            {caloriesBurned.toFixed(0)}
+            {caloriesBurned}
           </Typography>
         </Box>
       </Stack>

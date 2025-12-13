@@ -33,7 +33,8 @@ interface ConnectViewProps {
   connectionStatus: string
   bluetoothConnected: boolean
   workoutDuration: string
-  caloriesBurned: number
+  caloriesBurned: string
+  isWorkoutActive: boolean
 }
 
 export default function ConnectView({
@@ -54,6 +55,7 @@ export default function ConnectView({
   bluetoothConnected,
   workoutDuration,
   caloriesBurned,
+  isWorkoutActive,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -145,11 +147,13 @@ export default function ConnectView({
         )}
 
         {/* Workout Summary Display */}
-        {isConnected && workoutDuration && workoutDuration !== '00:00:00' && (
-          <WorkoutSummary
-            duration={workoutDuration}
-            caloriesBurned={caloriesBurned}
-          />
+        {isConnected && isWorkoutActive && (
+          <Box role="status" aria-live="polite">
+            <WorkoutSummary
+              duration={workoutDuration}
+              caloriesBurned={caloriesBurned}
+            />
+          </Box>
         )}
 
         {/* Enhanced Status Messages */}
