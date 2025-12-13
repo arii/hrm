@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
   useReducer,
-  useMemo,
 } from 'react'
 import {
   ClientCommandMessage,
@@ -20,7 +19,6 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
-import { formatDuration } from '../utils/time'
 
 interface WebSocketState {
   hrmData: HrmData[]
@@ -53,11 +51,6 @@ const INITIAL_STATE: WebSocketState = {
 }
 
 export interface WebSocketContextType extends WebSocketState {
-  timerState: {
-    workoutDuration: string
-    caloriesBurned: string
-    isWorkoutActive: boolean
-  }
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
@@ -344,27 +337,8 @@ export const WebSocketProvider = ({
     }
   }, [])
 
-  // TODO: Replace this with a more accurate, user-specific calorie calculation.
-  // This is a placeholder based on the average METs for moderate activity for a 70kg individual.
-  // It is not medically accurate and does not account for user's weight, age, or heart rate.
-  const APPROX_CALORIES_PER_MINUTE = 8
-
-  const timerState = useMemo(() => {
-    const { timeElapsed } = appState.timerData
-    const caloriesBurned =
-      (timeElapsed / 60) * APPROX_CALORIES_PER_MINUTE
-    const isWorkoutActive = timeElapsed > 0
-
-    return {
-      workoutDuration: formatDuration(timeElapsed),
-      caloriesBurned: caloriesBurned.toFixed(0),
-      isWorkoutActive,
-    }
-  }, [appState.timerData])
-
   const contextValue = {
     ...appState,
-    timerState,
     connectionStatus,
     sendData,
     connect,
