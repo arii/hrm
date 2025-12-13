@@ -17,10 +17,8 @@ const useAutoConnect = (
   onStatusChange: StatusCallback,
   options: AutoConnectOptions = {}
 ) => {
-  const {
-    initialDelay = INITIAL_DELAY_DEFAULT,
-    maxDelay = MAX_DELAY_DEFAULT,
-  } = options
+  const { initialDelay = INITIAL_DELAY_DEFAULT, maxDelay = MAX_DELAY_DEFAULT } =
+    options
   const [isConnecting, setIsConnecting] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)

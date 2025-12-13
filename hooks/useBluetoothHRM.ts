@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
