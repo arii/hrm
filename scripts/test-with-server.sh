@@ -6,7 +6,8 @@
 set -e
 
 # Configuration
-PORT=${PORT:-3000}
+PORT=$(node scripts/get-available-port.mjs)
+export PORT
 TIMEOUT=60000
 SERVER_LOG="/tmp/hrm-server.log"
 PID_FILE="/tmp/hrm-server.pid"

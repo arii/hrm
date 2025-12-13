@@ -5,8 +5,7 @@
 
 set -e
 
-PORT=${PORT:-3000}
-BASE_URL="${BASE_URL:-http://127.0.0.1:${PORT}}"
+BASE_URL="${BASE_URL:-http://127.0.0.1:3000}"
 BOLD="\033[1m"
 GREEN="\033[0;32m"
 RED="\033[0;31m"
