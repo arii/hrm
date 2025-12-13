@@ -1,8 +1,10 @@
+
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useAutoConnect from './useAutoConnect'
+import { getCookie, setCookie } from '../utils/cookies'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -13,23 +15,6 @@ const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
-}
-
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
-  }
-}
-
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
 }
 
 const withTimeout = <T>(
@@ -204,22 +189,19 @@ const useBluetoothHRM = () => {
           'characteristicvaluechanged',
           (event: Event) => {
             const target = event.target as BluetoothRemoteGATTCharacteristic
-            if (!target.value) return
-
-            const heartRate = parseHeartRate(target.value)
-            lastDataTime.current = Date.now()
-
-            const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
-
-            const data: HrmInputData = {
-              value: heartRate,
-              maxHr: calculatedMaxHr,
-              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+            if (target.value) {
+              const heartRate = parseHeartRate(target.value)
+              lastDataTime.current = Date.now()
+              const { name, age } = userDetailsRef.current || {}
+              const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
+              const data: HrmInputData = {
+                value: heartRate,
+                maxHr: calculatedMaxHr,
+                name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+              }
+              if (age && !isNaN(parseInt(age))) data.age = parseInt(age)
+              sendData({ type: 'HRM_INPUT', data })
             }
-            if (age && !isNaN(parseInt(age))) data.age = parseInt(age)
-
-            sendData({ type: 'HRM_INPUT', data })
           }
         )
 
@@ -259,7 +241,7 @@ const useBluetoothHRM = () => {
         setDeviceStatus('Signal Lost. Retrying...')
       }
     },
-    { initialDelay: 2000, maxDelay: 10000 }
+    { initialDelay: 2000, maxDelay: 60000 }
   )
 
   const connectAndStream = useCallback(
