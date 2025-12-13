@@ -28,7 +28,13 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   )
 
   return (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ width: 120 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      sx={{ width: 120 }}
+      data-testid="volume-slider"
+    >
       <IconButton
         size="small"
         onClick={onToggleMute}
