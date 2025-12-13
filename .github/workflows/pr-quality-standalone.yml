@@ -46,7 +46,16 @@ jobs:
           clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
 
       - name: Install GitHub CLI
-        uses: actions4gh/setup-gh@v1
+        run: |
+          mkdir -p $HOME/.local/bin
+          # Download GitHub CLI binary
+          GH_VERSION=2.63.0
+          curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz
+          tar xvf gh.tar.gz
+          # Move binary to local bin
+          mv gh_${GH_VERSION}_linux_amd64/bin/gh $HOME/.local/bin/
+          # Add to PATH for this and future steps
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Define Dynamic Cache Path
         shell: bash
