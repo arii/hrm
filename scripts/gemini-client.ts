@@ -15,6 +15,14 @@ const contextFiles = getArg('--context')?.split(',') || [];
 const outputFile = getArg('--output');
 const preset = getArg('--preset');
 
+// List of models to try in order
+const MODEL_FALLBACKS = [
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-001',
+  'gemini-1.5-pro',
+  'gemini-pro'
+];
+
 async function main() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -23,9 +31,6 @@ async function main() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-1.5-flash-001 as a standard efficient model version that is widely available
-  const modelName = 'gemini-1.5-flash-001';
-  const model = genAI.getGenerativeModel({ model: modelName });
 
   let contextContent = '';
   for (const file of contextFiles) {
@@ -41,18 +46,49 @@ async function main() {
   }
 
   if (preset === 'review') {
-    await runReviewPreset(model, contextContent, outputFile);
+    await runReviewPreset(genAI, contextContent, outputFile);
   } else {
     // Default/Generic mode
     if (!task) {
       console.error('Usage: npx tsx scripts/gemini-client.ts --task "task description" [--context "file1.md,file2.md"] [--output "output.md"]');
       process.exit(1);
     }
-    await runGenericTask(model, task, contextContent, outputFile);
+    await runGenericTask(genAI, task, contextContent, outputFile);
   }
 }
 
-async function runGenericTask(model: any, task: string, contextContent: string, outputFile: string | null) {
+async function generateContentWithFallback(genAI: GoogleGenerativeAI, prompt: string, config?: any) {
+  let lastError;
+
+  for (const modelName of MODEL_FALLBACKS) {
+    console.log(`Attempting to use model: ${modelName}...`);
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...config
+      });
+      console.log(`Successfully generated content using ${modelName}.`);
+      return result.response.text();
+    } catch (error: any) {
+      lastError = error;
+      const isNotFound = error.message?.includes('404') || error.status === 404;
+      const isBadRequest = error.message?.includes('400') || error.status === 400; // Sometimes invalid model is 400
+
+      if (isNotFound || isBadRequest) {
+        console.warn(`Model ${modelName} failed (Not Found/Invalid). Trying next model...`);
+        continue;
+      }
+
+      // If it's another error (e.g., auth, quota), throw immediately
+      throw error;
+    }
+  }
+
+  throw new Error(`All models failed. Last error: ${lastError?.message}`);
+}
+
+async function runGenericTask(genAI: GoogleGenerativeAI, task: string, contextContent: string, outputFile: string | null) {
   const prompt = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
@@ -65,15 +101,14 @@ ${task}
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generateContentWithFallback(genAI, prompt);
     await writeOutput(text, outputFile);
   } catch (error) {
     handleError(error);
   }
 }
 
-async function runReviewPreset(model: any, contextContent: string, outputFile: string | null) {
+async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string, outputFile: string | null) {
   const prTitle = process.env.PR_TITLE || 'Unknown Title';
   const prAuthor = process.env.PR_AUTHOR || 'Unknown Author';
   const prHeadRef = process.env.PR_HEAD_REF || 'unknown-head';
@@ -139,8 +174,7 @@ async function runReviewPreset(model: any, contextContent: string, outputFile: s
   `;
 
   try {
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    const text = await generateContentWithFallback(genAI, prompt, {
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -157,7 +191,6 @@ async function runReviewPreset(model: any, contextContent: string, outputFile: s
       }
     });
 
-    const text = result.response.text();
     await writeOutput(text, outputFile);
   } catch (error) {
     handleError(error);
@@ -175,13 +208,10 @@ async function writeOutput(content: string, outputFile: string | null) {
 
 function handleError(error: any) {
   console.error('Error generating content:', error);
-  if (error instanceof GoogleGenerativeAIError) {
-    if (error.message.includes('404') || error.message.includes('Not Found')) {
-      console.error('\nPOSSIBLE CAUSE: The model "gemini-1.5-flash-001" might not be available for your API key or region.');
-      console.error('Please check your Google AI Studio account and ensure you have access to this model.');
-      // Note: The SDK does not seem to expose a simple public listModels method on the client instance directly
-      // in the type definitions we inspected, so we are providing this guidance instead.
-    }
+  if (error instanceof GoogleGenerativeAIError || error.message?.includes('404')) {
+    console.error('\nPOSSIBLE CAUSE: All attempted models failed.');
+    console.error('Please check your Google AI Studio account and ensure you have access to the Gemini models.');
+    console.error(`Tried models: ${MODEL_FALLBACKS.join(', ')}`);
   }
   process.exit(1);
 }
