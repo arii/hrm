@@ -13,6 +13,10 @@
  * Zone 4 (80-90% Max HR): ~13 kcal/min
  * Zone 5 (>90% Max HR): ~16 kcal/min
  *
+ * The calorie values are based on the concept of Metabolic Equivalents (METs), where
+ * different intensity levels of exercise correspond to different energy expenditure rates.
+ * Source: https://www.acefitness.org/resources/pros/expert-articles/5473/how-to-use-mets-to-calculate-calories-burned/
+ *
  * @param averageHr - The user's average heart rate during the workout.
  * @param userAge - The user's age, used to calculate max heart rate.
  * @param durationInSeconds - The total duration of the workout in seconds.
