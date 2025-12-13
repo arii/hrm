@@ -58,7 +58,9 @@ export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
-  devices: SpotifyDevice[] // <--- ADDED: Synced device list
+  devices: SpotifyDevice[]
+  contextName?: string
+  contextType?: string
 }
 
 /**
