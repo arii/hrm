@@ -32,7 +32,7 @@ importers:
         specifier: ^11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1)
       '@google/genai':
-        specifier: ^1.33.0
+        specifier: 1.33.0
         version: 1.33.0
       '@mui/icons-material':
         specifier: ^7.3.6

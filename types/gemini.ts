@@ -1,135 +1,133 @@
 // types/gemini.ts
 
 export interface ReleaseNoteResult {
-  version: string;
-  markdown: string;
+  version: string
+  markdown: string
   categories: {
-    features: string[];
-    fixes: string[];
-    chores: string[];
-  };
+    features: string[]
+    fixes: string[]
+    chores: string[]
+  }
 }
 
 // Other types from services/geminiService.ts
 export interface GithubIssue {
-  number: number;
-  title: string;
-  body: string | null;
-  labels: { name: string }[];
-  state: "open" | "closed";
-  created_at: string;
+  number: number
+  title: string
+  body: string | null
+  labels: { name: string }[]
+  state: 'open' | 'closed'
+  created_at: string
 }
 
 export interface GithubPullRequest {
-  number: number;
-  title: string;
+  number: number
+  title: string
   user: {
-    login: string;
-  };
-  merged_at: string | null;
-  body: string | null;
+    login: string
+  }
+  merged_at: string | null
+  body: string | null
   head: {
-    ref: string;
-  };
-  created_at: string;
-  draft: boolean;
-  html_url: string;
-  state: "open" | "closed";
-  mergeable: boolean | null;
+    ref: string
+  }
+  created_at: string
+  draft: boolean
+  html_url: string
+  state: 'open' | 'closed'
+  mergeable: boolean | null
 }
 
 export interface ProposedIssue {
-  title: string;
-  body: string;
-  reason: string;
-  priority: 'High' | 'Medium' | 'Low';
-  effort: 'Small' | 'Medium' | 'Large';
-  labels: string[];
+  title: string
+  body: string
+  reason: string
+  priority: 'High' | 'Medium' | 'Low'
+  effort: 'Small' | 'Medium' | 'Large'
+  labels: string[]
 }
 
 export interface PrActionRecommendation {
-  prNumber: number;
-  action: 'close' | 'prioritize' | 'comment';
-  reason: string;
-  suggestedComment: string;
+  prNumber: number
+  action: 'close' | 'prioritize' | 'comment'
+  reason: string
+  suggestedComment: string
 }
 
 export interface LinkSuggestion {
-  prNumber: number;
-  issueNumber: number;
-  confidence: string;
-  reason: string;
+  prNumber: number
+  issueNumber: number
+  confidence: string
+  reason: string
 }
 
 export interface CleanupAnalysisResult {
-  report: string;
+  report: string
   actions: {
-    issueNumber: number;
-    action: 'close' | 'comment';
-    reason: string;
-    prReference?: number;
-    commentBody: string;
-    confidence: 'high' | 'medium' | 'low';
-  }[];
+    issueNumber: number
+    action: 'close' | 'comment'
+    reason: string
+    prReference?: number
+    commentBody: string
+    confidence: 'high' | 'medium' | 'low'
+  }[]
 }
 
 export interface RedundancyAnalysisResult {
-  summary: string;
+  summary: string
   redundantIssues: {
-    issueNumber: number;
-    reason: string;
-  }[];
+    issueNumber: number
+    reason: string
+  }[]
   consolidatedIssues: {
-    title: string;
-    body: string;
-    labels: string[];
-    reason: string;
-    replacesIssueNumbers: number[];
-  }[];
+    title: string
+    body: string
+    labels: string[]
+    reason: string
+    replacesIssueNumbers: number[]
+  }[]
 }
 
 export interface TriageAnalysisResult {
-  report: string;
+  report: string
   actions: {
-    issueNumber: number;
-    title: string;
-    suggestedLabels: string[];
-    reason: string;
-    priority: 'High' | 'Medium' | 'Low';
-    effort: 'Small' | 'Medium' | 'Large';
-    category: string;
-  }[];
+    issueNumber: number
+    title: string
+    suggestedLabels: string[]
+    reason: string
+    priority: 'High' | 'Medium' | 'Low'
+    effort: 'Small' | 'Medium' | 'Large'
+    category: string
+  }[]
 }
 
 export interface BranchCleanupResult {
-  report: string;
+  report: string
   candidates: {
-    branchName: string;
-    reason: string;
-    type: 'merged' | 'stale' | 'abandoned';
-    confidence: 'high' | 'medium' | 'low';
-  }[];
+    branchName: string
+    reason: string
+    type: 'merged' | 'stale' | 'abandoned'
+    confidence: 'high' | 'medium' | 'low'
+  }[]
 }
 
 export interface JulesSession {
-  name: string;
-  title: string;
-  state: string;
-  createTime: string;
+  name: string
+  title: string
+  state: string
+  createTime: string
   outputs?: {
     pullRequest?: {
-      url: string;
-    };
-  }[];
+      url: string
+    }
+  }[]
 }
 
 export interface JulesAgentAction {
-  sessionName: string;
-  action: 'delete' | 'recover' | 'publish' | 'message';
-  reason: string;
-  suggestedCommand: string;
+  sessionName: string
+  action: 'delete' | 'recover' | 'publish' | 'message'
+  reason: string
+  suggestedCommand: string
 }
 
-export interface EnrichedPullRequest extends GithubPullRequest {
-  // Add any additional enriched properties here
-}
+export type EnrichedPullRequest = GithubPullRequest
