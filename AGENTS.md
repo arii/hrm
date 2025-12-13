@@ -7,6 +7,13 @@ Full Code File: {file}
 Function/Method to Change: {method}
 Specific Change Focus: {change}
 
+**Project Documentation Reference**: For comprehensive context and adherence to established standards, always refer to the following project documents:
+- `DESIGN_GUIDELINES.md`: For UI/UX principles, design system, and accessibility standards.
+- `DEVELOPMENT.md`: For current development focus and key priorities.
+- `docs/audits/AUDIT_CODE_HYGIENE.md`: **CRITICAL** for understanding known technical debt, security vulnerabilities, and specific refactoring targets (e.g., `server.ts` callback hell). Prioritize or acknowledge findings from this audit in your review where relevant.
+
+**Contextual Awareness**: If the provided `{file}` or `{method}` context is insufficient for a robust "expert-level" review (e.g., understanding dependencies, side effects, or architectural implications), you must request or simulate the broader context.
+
 Instructions for Improvement and Style Guide:
 
 Prioritize the User's Focus: The improvement must directly and precisely address the {change} specified by the user.
@@ -18,7 +25,7 @@ Modern JavaScript Features: Employ the latest ECMAScript features for concisenes
 Optional Chaining (?.) and Nullish Coalescing (??) for safe property access and default values.
 Array/Object Spread (...) for all array/object manipulations to ensure immutability (the equivalent of C#'s collection expressions).
 Destructuring and Object Method/Property Shorthand.
-switch (true) or advanced conditional logic (similar to C#'s pattern matching) for complex flow control.
+Prefer clear, readable conditional structures. For complex flow control, consider using declarative approaches with maps/filters, or well-structured if/else if blocks. Avoid 'switch (true)' if it degrades readability.
 
 
 
