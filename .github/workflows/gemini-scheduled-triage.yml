@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: write
 
 jobs:
   scheduled_triage:
@@ -27,8 +26,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue list --state open --limit 50 --json number,title,updatedAt,url > issues.json
-          # Filter for issues older than 30 days (simplified logic for now, passing list to Gemini)
+          gh issue list --state open --limit 100 --json number,title,updatedAt,url > issues.json
 
       - name: Run Gemini Analysis
         env:
@@ -54,5 +52,6 @@ jobs:
                  body: body
                });
              } catch (e) {
-               console.log('No report generated');
+               console.error('No report generated:', e);
+               core.setFailed('Failed to create triage report');
              }

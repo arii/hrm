@@ -27,11 +27,7 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          # Escape title and body slightly to avoid command line injection issues,
-          # but really the script should handle it. Passing via env vars might be safer if the script supported it.
-          # For simplicity we pass as args, quoting carefully.
-
-          # Better approach: Write content to temp file to avoid quoting hell
+          # Safe content handling via temporary file
           echo "Title: $ISSUE_TITLE" > issue_content.txt
           echo "Body:" >> issue_content.txt
           echo "$ISSUE_BODY" >> issue_content.txt
@@ -57,5 +53,6 @@ jobs:
                  body: body
                });
              } catch (e) {
-               console.log('No triage result found or error posting comment');
+               console.error('Failed to post comment:', e);
+               core.setFailed('No triage result found or error posting comment');
              }

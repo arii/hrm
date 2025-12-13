@@ -5,7 +5,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  issues: write
+  pull-requests: read
 
 jobs:
   review:
@@ -73,5 +74,6 @@ jobs:
               }
 
             } catch (e) {
-              console.log('Error processing review result:', e);
+              console.error('Error processing review result:', e);
+              core.setFailed('Failed to process Gemini review result');
             }

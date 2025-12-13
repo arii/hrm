@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   invoke:
@@ -55,5 +55,6 @@ jobs:
                  body: body
                });
              } catch (e) {
-               console.log('No reply generated');
+               console.error('Failed to post reply:', e);
+               core.setFailed('No reply generated or error posting comment');
              }
