@@ -51,7 +51,7 @@
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "npm run verify",
     "depcheck": "depcheck",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --open",
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
