@@ -28,15 +28,15 @@ jobs:
           version: 8
 
       - name: Install dependencies
-        run: |
-          pnpm install @google/genai
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Release Notes
         id: generate_notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: node .github/scripts/release-generator.js
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: "gemini-1.5-flash"
+        run: pnpm exec ts-node --esm .github/scripts/generate-release-notes.ts
 
       - name: Create Release
         uses: actions/create-release@v1

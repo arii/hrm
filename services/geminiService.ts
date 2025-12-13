@@ -41,8 +41,9 @@ export const generateReleaseNotes = async (
     ${JSON.stringify(prSummaries)}
   `;
 
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: modelName,
     contents: prompt,
     config: {
       temperature: 0.3,
@@ -88,8 +89,9 @@ export const enrichPrDescription = async (pr: GithubPullRequest): Promise<{ titl
     Output JSON with improved 'title', 'body', and a brief 'analysis' of what was fixed.
   `;
 
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: modelName,
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -156,8 +158,9 @@ export const suggestStrategicIssues = async (
     specificPrompt += `\n\nUSER GUIDANCE (Prioritize this): "${userGuidance}"`;
   }
 
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: modelName,
     contents: `
       Based on the current list of issues and pull requests, suggest new issues to create.
 
@@ -203,7 +206,8 @@ export const analyzeIssueRedundancy = async (issues: GithubIssue[]): Promise<Red
   const client = getClient();
   const issueSummary = issues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 300) : "No description", labels: i.labels.map(l => l.name).join(", ") }));
   const prompt = `You are a senior project manager analyzing a GitHub repository. I have a list of open issues. Your goal is to identify: 1. Duplicate issues that can be closed. 2. Groups of related issues. Output a structured JSON response. Issues Data: ${JSON.stringify(issueSummary)}`;
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { summary: { type: Type.STRING }, redundantIssues: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, reason: { type: Type.STRING } }, required: ['issueNumber', 'reason'] } }, consolidatedIssues: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, body: { type: Type.STRING }, labels: { type: Type.ARRAY, items: { type: Type.STRING } }, reason: { type: Type.STRING }, replacesIssueNumbers: { type: Type.ARRAY, items: { type: Type.INTEGER } } }, required: ['title', 'body', 'labels', 'reason', 'replacesIssueNumbers'] } } }, required: ['summary', 'redundantIssues', 'consolidatedIssues'] } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: prompt, config: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { summary: { type: Type.STRING }, redundantIssues: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, reason: { type: Type.STRING } }, required: ['issueNumber', 'reason'] } }, consolidatedIssues: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { title: { type: Type.STRING }, body: { type: Type.STRING }, labels: { type: Type.ARRAY, items: { type: Type.STRING } }, reason: { type: Type.STRING }, replacesIssueNumbers: { type: Type.ARRAY, items: { type: Type.INTEGER } } }, required: ['title', 'body', 'labels', 'reason', 'replacesIssueNumbers'] } } }, required: ['summary', 'redundantIssues', 'consolidatedIssues'] } } });
   return JSON.parse(response.text || "{}") as RedundancyAnalysisResult;
 };
 
@@ -211,7 +215,8 @@ export const identifyRedundantCandidates = async (issues: GithubIssue[]): Promis
   if (!issues || issues.length === 0) return [];
   const client = getClient();
   const issueSummary = issues.map(i => ({ id: i.number, title: i.title, body: i.body ? i.body.substring(0, 100) : "" }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Analyze these issues and identify ones that are likely duplicates. Return ONLY a JSON array of issue numbers to CLOSE. Issues: ${JSON.stringify(issueSummary)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.INTEGER } } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Analyze these issues and identify ones that are likely duplicates. Return ONLY a JSON array of issue numbers to CLOSE. Issues: ${JSON.stringify(issueSummary)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.INTEGER } } } });
   return JSON.parse(response.text || "[]") as number[];
 };
 
@@ -219,7 +224,8 @@ export const analyzePullRequests = async (prs: GithubPullRequest[]): Promise<str
   if (!prs || prs.length === 0) return "No Pull Requests to analyze.";
   const client = getClient();
   const prSummary = prs.map(p => ({ number: p.number, title: p.title, author: p.user.login, branch: p.head.ref, created: p.created_at, draft: p.draft, body: p.body ? p.body.substring(0, 200) : "No description" }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `You are a Lead DevOps Engineer. Analyze these Pull Requests. Provide a concise Markdown executive summary. PR Data: ${JSON.stringify(prSummary)}` });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `You are a Lead DevOps Engineer. Analyze these Pull Requests. Provide a concise Markdown executive summary. PR Data: ${JSON.stringify(prSummary)}` });
   return response.text || "No analysis generated.";
 };
 
@@ -228,14 +234,16 @@ export const generateCleanupReport = async (openIssues: GithubIssue[], closedPrs
   const client = getClient();
   const recentClosedPrs = closedPrs.slice(0, 30).map(p => ({ number: p.number, title: p.title, merged_at: p.merged_at, body: p.body ? p.body.substring(0, 300) : "" }));
   const currentOpenIssues = openIssues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 100) : "" }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Determine if any OPEN issues should be closed by CLOSED Pull Requests. Open Issues: ${JSON.stringify(currentOpenIssues)} Recently Closed PRs: ${JSON.stringify(recentClosedPrs)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, actions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, action: { type: Type.STRING, enum: ['close', 'comment'] }, reason: { type: Type.STRING }, prReference: { type: Type.INTEGER, nullable: true }, commentBody: { type: Type.STRING }, confidence: { type: Type.STRING, enum: ['high', 'medium', 'low'] } }, required: ['issueNumber', 'action', 'reason', 'confidence'] } } }, required: ['report', 'actions'] } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Determine if any OPEN issues should be closed by CLOSED Pull Requests. Open Issues: ${JSON.stringify(currentOpenIssues)} Recently Closed PRs: ${JSON.stringify(recentClosedPrs)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, actions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, action: { type: Type.STRING, enum: ['close', 'comment'] }, reason: { type: Type.STRING }, prReference: { type: Type.INTEGER, nullable: true }, commentBody: { type: Type.STRING }, confidence: { type: Type.STRING, enum: ['high', 'medium', 'low'] } }, required: ['issueNumber', 'action', 'reason', 'confidence'] } } }, required: ['report', 'actions'] } } });
   return JSON.parse(response.text || "{}") as CleanupAnalysisResult;
 };
 
 export const analyzeBranchCleanup = async (branches: string[], mergedPrs: { ref: string, number: number }[]): Promise<BranchCleanupResult> => {
   if (!branches || branches.length === 0) return { report: "No branches.", candidates: [] };
   const client = getClient();
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Identify Zombie and Stale branches. Data: ${JSON.stringify({ branches, mergedPrs })}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, candidates: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { branchName: { type: Type.STRING }, reason: { type: Type.STRING }, type: { type: Type.STRING, enum: ['merged', 'stale', 'abandoned'] }, confidence: { type: Type.STRING, enum: ['high', 'medium', 'low'] } }, required: ['branchName', 'reason', 'type', 'confidence'] } } }, required: ['report', 'candidates'] } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Identify Zombie and Stale branches. Data: ${JSON.stringify({ branches, mergedPrs })}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, candidates: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { branchName: { type: Type.STRING }, reason: { type: Type.STRING }, type: { type: Type.STRING, enum: ['merged', 'stale', 'abandoned'] }, confidence: { type: Type.STRING, enum: ['high', 'medium', 'low'] } }, required: ['branchName', 'reason', 'type', 'confidence'] } } }, required: ['report', 'candidates'] } } });
   return JSON.parse(response.text || "{}") as BranchCleanupResult;
 };
 
@@ -243,7 +251,8 @@ export const generateTriageReport = async (issues: GithubIssue[]): Promise<Triag
   if (!issues || issues.length === 0) return { report: "No issues.", actions: [] };
   const client = getClient();
   const issueData = issues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 150) : "", labels: i.labels.map(l => l.name), created_at: i.created_at }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Create a prioritized Triage Report. Issues: ${JSON.stringify(issueData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, actions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, title: { type: Type.STRING }, suggestedLabels: { type: Type.ARRAY, items: { type: Type.STRING } }, reason: { type: Type.STRING }, priority: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] }, effort: { type: Type.STRING, enum: ['Small', 'Medium', 'Large'] }, category: { type: Type.STRING } }, required: ['issueNumber', 'title', 'suggestedLabels', 'reason', 'priority', 'effort', 'category'] } } }, required: ['report', 'actions'] } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Create a prioritized Triage Report. Issues: ${JSON.stringify(issueData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.OBJECT, properties: { report: { type: Type.STRING }, actions: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { issueNumber: { type: Type.INTEGER }, title: { type: Type.STRING }, suggestedLabels: { type: Type.ARRAY, items: { type: Type.STRING } }, reason: { type: Type.STRING }, priority: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] }, effort: { type: Type.STRING, enum: ['Small', 'Medium', 'Large'] }, category: { type: Type.STRING } }, required: ['issueNumber', 'title', 'suggestedLabels', 'reason', 'priority', 'effort', 'category'] } } }, required: ['report', 'actions'] } } });
   return JSON.parse(response.text || "{}") as TriageAnalysisResult;
 };
 
@@ -251,7 +260,8 @@ export const auditPullRequests = async (prs: GithubPullRequest[]): Promise<PrAct
   if (!prs || prs.length === 0) return [];
   const client = getClient();
   const prData = prs.map(p => ({ number: p.number, title: p.title, created: p.created_at, draft: p.draft, user: p.user.login }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Review these open PRs. PRs: ${JSON.stringify(prData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { prNumber: { type: Type.INTEGER }, action: { type: Type.STRING, enum: ['close', 'prioritize', 'comment'] }, reason: { type: Type.STRING }, suggestedComment: { type: Type.STRING } }, required: ['prNumber', 'action', 'reason'] } } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Review these open PRs. PRs: ${JSON.stringify(prData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { prNumber: { type: Type.INTEGER }, action: { type: Type.STRING, enum: ['close', 'prioritize', 'comment'] }, reason: { type: Type.STRING }, suggestedComment: { type: Type.STRING } }, required: ['prNumber', 'action', 'reason'] } } } });
   return JSON.parse(response.text || "[]") as PrActionRecommendation[];
 };
 
@@ -260,7 +270,8 @@ export const findIssuePrLinks = async (issues: GithubIssue[], prs: GithubPullReq
   const client = getClient();
   const issueData = issues.map(i => ({ id: i.number, title: i.title }));
   const prData = prs.map(p => ({ id: p.number, title: p.title }));
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Match PRs to Issues. Issues: ${JSON.stringify(issueData)} PRs: ${JSON.stringify(prData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { prNumber: { type: Type.INTEGER }, issueNumber: { type: Type.INTEGER }, confidence: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ['prNumber', 'issueNumber', 'confidence', 'reason'] } } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Match PRs to Issues. Issues: ${JSON.stringify(issueData)} PRs: ${JSON.stringify(prData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { prNumber: { type: Type.INTEGER }, issueNumber: { type: Type.INTEGER }, confidence: { type: Type.STRING }, reason: { type: Type.STRING } }, required: ['prNumber', 'issueNumber', 'confidence', 'reason'] } } } });
   return JSON.parse(response.text || "[]") as LinkSuggestion[];
 };
 
@@ -269,7 +280,8 @@ export const analyzeJulesSessions = async (sessions: JulesSession[], prs: Enrich
   const client = getClient();
   const prMap = new Map(prs.map(p => [p.html_url, p]));
   const sessionData = sessions.map(s => { const prUrl = s.outputs?.find(o => o.pullRequest)?.pullRequest?.url; let prContext = "No PR linked"; let hasConflicts = false; if (prUrl) { const pr = prMap.get(prUrl); if (pr) { prContext = `Linked PR #${pr.number} is ${pr.state.toUpperCase()}.`; if (pr.mergeable === false) { hasConflicts = true; prContext += " HAS MERGE CONFLICTS."; } else if (pr.merged_at) { prContext += " MERGED."; } } else { prContext = "PR exists but status unknown."; } } return { name: s.name, title: s.title, state: s.state, createTime: s.createTime, prContext: prContext, hasConflicts: hasConflicts, lastStatus: s.state }; });
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `Analyze sessions. Sessions: ${JSON.stringify(sessionData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { sessionName: { type: Type.STRING }, action: { type: Type.STRING, enum: ['delete', 'recover', 'publish', 'message'] }, reason: { type: Type.STRING }, suggestedCommand: { type: Type.STRING } }, required: ['sessionName', 'action', 'reason'] } } } });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `Analyze sessions. Sessions: ${JSON.stringify(sessionData)}`, config: { responseMimeType: 'application/json', responseSchema: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { sessionName: { type: Type.STRING }, action: { type: Type.STRING, enum: ['delete', 'recover', 'publish', 'message'] }, reason: { type: Type.STRING }, suggestedCommand: { type: Type.STRING } }, required: ['sessionName', 'action', 'reason'] } } } });
   return JSON.parse(response.text || "[]") as JulesAgentAction[];
 };
 
@@ -277,6 +289,7 @@ export const generateRepoBriefing = async (stats: any, velocity: { opened: numbe
   const client = getClient();
   const activitySummary = recentActivity.slice(0, 10).map(i => `[${i.state}] ${i.title}`);
   const context = { totalOpenIssues: stats.openIssuesCount, totalOpenPRs: stats.openPRsCount, velocity: velocity, stalePRCount: stalePrs.length, recentActivity: activitySummary };
-  const response = await client.models.generateContent({ model: 'gemini-2.5-flash', contents: `You are a CTO. Write a 3-sentence summary. Stats: ${JSON.stringify(context)}` });
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const response = await client.models.generateContent({ model: modelName, contents: `You are a CTO. Write a 3-sentence summary. Stats: ${JSON.stringify(context)}` });
   return response.text || "Repo is stable.";
 };
