@@ -1,20 +1,22 @@
 // components/WorkoutMetricsPanel.tsx
-import React from 'react';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
+import React from 'react'
+import Paper from '@mui/material/Paper'
+import Grid from '@mui/material/Grid'
 
-import TimerDisplay from './TimerDisplay';
-import HeartRateDisplay from './HeartRateDisplay';
-import AverageHeartRateDisplay from './AverageHeartRateDisplay';
-import MaxHeartRateDisplay from './MaxHeartRateDisplay';
-import CaloriesBurnedDisplay from './CaloriesBurnedDisplay';
-import { TimerData } from '@/types/websocket';
+import TimerDisplay from './TimerDisplay'
+import HeartRateDisplay from './HeartRateDisplay'
+import AverageHeartRateDisplay from './AverageHeartRateDisplay'
+import MaxHeartRateDisplay from './MaxHeartRateDisplay'
+import CaloriesBurnedDisplay from './CaloriesBurnedDisplay'
+import { TimerData } from '@/types/websocket'
 
 interface WorkoutMetricsPanelProps {
-  timerData: TimerData;
+  timerData: TimerData
 }
 
-const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({ timerData }) => {
+const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({
+  timerData,
+}) => {
   return (
     <Paper elevation={2} sx={{ p: 2 }}>
       <Grid container spacing={2}>
@@ -47,7 +49,7 @@ const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({ timerData }) 
         </Grid>
       </Grid>
     </Paper>
-  );
-};
+  )
+}
 
-export default WorkoutMetricsPanel;
+export default WorkoutMetricsPanel
