@@ -15,12 +15,27 @@ const hostname = process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'
 export function startWebSocketServer(wss: WebSocketServer) {
     const server = createServer();
 
+    const getClientIp = (req: IncomingMessage): string | undefined => {
+      const xForwardedFor = req.headers['x-forwarded-for'];
+      if (xForwardedFor) {
+        const ips = Array.isArray(xForwardedFor)
+          ? xForwardedFor.map(ip => ip.trim())
+          : xForwardedFor.split(',').map(ip => ip.trim());
+
+        for (let i = ips.length - 1; i >= 0; i--) {
+          const ip = ips[i];
+          if (ip) return ip;
+        }
+      }
+      return req.socket.remoteAddress;
+    };
+
     const wsConnections = new Map<string, number>();
     const WS_MAX_CONNECTIONS = 5;
 
     server.on('upgrade', (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '');
-        const ip = (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() || req.socket.remoteAddress;
+        const ip = getClientIp(req);
 
         if (process.env.TESTING !== 'true' && ip) {
             const count = wsConnections.get(ip) || 0;

@@ -339,6 +339,7 @@ Create a `.env.local` file in the root directory for local development secrets a
 ### Core Configuration
 -   `PORT`: The port for the main Next.js application server. Defaults to `3000`.
 -   `WS_PORT`: The dedicated port for the WebSocket server. Defaults to `3001`.
+-   `HOST`: The hostname the server will bind to. Defaults to `127.0.0.1` in development and `0.0.0.0` in production.
 -   `NEXTAUTH_URL`: The canonical URL for your application, used for OAuth callbacks. For local development, this should be `http://127.0.0.1:3000`.
 -   `NEXTAUTH_SECRET`: A secret key for signing NextAuth.js tokens. Generate one with `openssl rand -base64 32`.
 
