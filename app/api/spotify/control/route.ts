@@ -66,8 +66,12 @@ export async function POST(req: NextRequest) {
         break
       case 'SET_VOLUME':
         // Volume requires a query param 'volume_percent'
-        if (volume === undefined)
-          throw new Error('Volume required for SET_VOLUME')
+        if (volume === undefined) {
+          return NextResponse.json(
+            { error: 'Volume parameter is required for SET_VOLUME' },
+            { status: 400 }
+          )
+        }
         url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
         method = 'PUT'
         break
