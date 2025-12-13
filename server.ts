@@ -10,8 +10,6 @@ import { createServer } from 'http'
 import next from 'next'
 import path from 'path'
 import { WebSocketServer } from 'ws'
-import type { IncomingMessage } from 'http'
-import type { Duplex } from 'stream'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
