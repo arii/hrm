@@ -1,7 +1,7 @@
 // hooks/useWorkoutMetrics.ts
 import { useState, useEffect, useMemo } from 'react'
-import { calculateCaloriesBurned } from '../utils/health'
-import { formatDuration } from '../utils/time'
+import { calculateCaloriesBurned } from '@/utils/health'
+import { formatDuration } from '@/utils/time'
 
 interface UseWorkoutMetricsProps {
   currentHR: number
@@ -18,13 +18,12 @@ export function useWorkoutMetrics({
   const [hrCount, setHrCount] = useState<number>(0)
 
   useEffect(() => {
-    if (currentHR > 0) {
-      setHrSum((prevSum) => prevSum + currentHR)
-      setHrCount((prevCount) => prevCount + 1)
-    }
     if (timeElapsed === 0) {
       setHrSum(0)
       setHrCount(0)
+    } else if (currentHR > 0) {
+      setHrSum((prevSum) => prevSum + currentHR)
+      setHrCount((prevCount) => prevCount + 1)
     }
   }, [currentHR, timeElapsed])
 
