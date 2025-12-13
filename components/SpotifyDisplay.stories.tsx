@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import SpotifyDisplay from './SpotifyDisplay'
-import { WebSocketContext } from '@/context/WebSocketContext'
+import {
+  WebSocketContext,
+  WebSocketContextType,
+} from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
 
 const meta: Meta<typeof SpotifyDisplay> = {
@@ -22,7 +25,7 @@ const meta: Meta<typeof SpotifyDisplay> = {
 export default meta
 type Story = StoryObj<typeof SpotifyDisplay>
 
-const mockWebSocketValue = {
+const mockWebSocketValue: Partial<WebSocketContextType> = {
   spotifyData: {
     isPlaying: false,
     trackName: 'Test Track',
@@ -30,6 +33,7 @@ const mockWebSocketValue = {
     albumArt: '',
     progressMs: 0,
     durationMs: 1000,
+    devices: [],
   },
   sendData: () => {},
   connectionStatus: 'Connected',
@@ -39,8 +43,9 @@ export const Unauthenticated: Story = {
   decorators: [
     (Story) => (
       <SessionProvider session={null}>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <WebSocketContext.Provider value={mockWebSocketValue as any}>
+        <WebSocketContext.Provider
+          value={mockWebSocketValue as WebSocketContextType}
+        >
           <Story />
         </WebSocketContext.Provider>
       </SessionProvider>
@@ -55,8 +60,9 @@ export const Authenticated: Story = {
       <SessionProvider
         session={{ user: { name: 'Test User' }, expires: '9999999999' }}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <WebSocketContext.Provider value={mockWebSocketValue as any}>
+        <WebSocketContext.Provider
+          value={mockWebSocketValue as WebSocketContextType}
+        >
           <Story />
         </WebSocketContext.Provider>
       </SessionProvider>
@@ -79,8 +85,7 @@ export const Playing: Story = {
                 ...mockWebSocketValue.spotifyData,
                 isPlaying: true,
               },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any
+            } as WebSocketContextType
           }
         >
           <Story />

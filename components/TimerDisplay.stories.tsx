@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import TimerDisplay from './TimerDisplay'
-import { WebSocketContext } from '@/context/WebSocketContext'
+import {
+  WebSocketContext,
+  WebSocketContextType,
+} from '@/context/WebSocketContext'
 
 const meta: Meta<typeof TimerDisplay> = {
   title: 'Components/TimerDisplay',
@@ -17,11 +20,14 @@ const meta: Meta<typeof TimerDisplay> = {
             connectionStatus: 'Connected',
             hrmData: [],
             activeAlerts: [],
-            timerState: {},
+            timerData: {}, // Changed from timerState to match WebSocketContextType
             spotifyData: {},
-            isConnected: true,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any
+            activeAlerts: [],
+            spotifyServiceInitialized: true,
+            sendData: () => {},
+            connect: () => {},
+            disconnect: () => {},
+          } as unknown as WebSocketContextType
         }
       >
         <Story />

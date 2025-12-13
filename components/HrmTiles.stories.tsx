@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import HrmTiles from './HrmTiles'
-import { WebSocketContext } from '@/context/WebSocketContext'
+import {
+  WebSocketContext,
+  WebSocketContextType,
+} from '@/context/WebSocketContext'
 import Grid from '@mui/material/Grid2'
 import { ReactNode } from 'react'
 
@@ -30,21 +33,33 @@ const MockWebSocketProvider = ({
   value,
 }: {
   children: ReactNode
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any
+  value: Partial<WebSocketContextType>
 }) => (
-  <WebSocketContext.Provider value={value}>
+  <WebSocketContext.Provider value={value as WebSocketContextType}>
     {children}
   </WebSocketContext.Provider>
 )
 
-const defaultContext = {
+const defaultContext: Partial<WebSocketContextType> = {
   hrmData: [],
   connectionStatus: 'Connected',
   activeAlerts: [],
-  timerState: {},
-  spotifyData: {},
-  isConnected: true,
+  timerData: {
+    isRunning: false,
+    currentPhase: 'IDLE',
+    timeRemaining: 0,
+    timeElapsed: 0,
+    mode: 'TABATA',
+    workDuration: 30,
+    restDuration: 10,
+    soundEventId: 0,
+  },
+  spotifyData: {
+    trackName: 'Awaiting Login...',
+    artist: '',
+    isPlaying: false,
+    devices: [],
+  },
 }
 
 export const Loading: Story = {

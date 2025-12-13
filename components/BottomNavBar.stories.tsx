@@ -6,6 +6,12 @@ const meta: Meta<typeof BottomNavBar> = {
   component: BottomNavBar,
   parameters: {
     layout: 'padded',
+    nextjs: {
+      appDirectory: true,
+      navigation: {
+        pathname: '/',
+      },
+    },
   },
   tags: ['autodocs'],
 }
@@ -13,9 +19,35 @@ const meta: Meta<typeof BottomNavBar> = {
 export default meta
 type Story = StoryObj<typeof BottomNavBar>
 
-export const Default: Story = {
-  args: {
-    // Component manages its own state and uses Next.js hooks (usePathname, Link).
-    // Storybook handles these gracefully in most cases, or defaults are used.
+export const Dashboard: Story = {
+  parameters: {
+    nextjs: {
+      navigation: {
+        pathname: '/',
+      },
+    },
   },
+  args: {},
+}
+
+export const Controls: Story = {
+  parameters: {
+    nextjs: {
+      navigation: {
+        pathname: '/client/control',
+      },
+    },
+  },
+  args: {},
+}
+
+export const StreamHr: Story = {
+  parameters: {
+    nextjs: {
+      navigation: {
+        pathname: '/client/connect',
+      },
+    },
+  },
+  args: {},
 }
