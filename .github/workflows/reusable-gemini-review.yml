@@ -1,12 +1,11 @@
-name: Gemini Code Review
+name: Reusable Gemini Review
 on:
-  pull_request:
-    types: [opened, synchronize]
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+  workflow_call:
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      ARI_PAT:
+        required: true
 
 jobs:
   review:
@@ -93,6 +92,10 @@ jobs:
           script: |
             const fs = require('fs');
             try {
+              if (!fs.existsSync('review_result.json')) {
+                console.log('No review result file found. Likely skipped.');
+                return;
+              }
               const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
               const { reviewComment, labels } = result;
 

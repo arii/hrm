@@ -1,0 +1,16 @@
+name: Gemini Initial Review
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  initial-review:
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ARI_PAT: ${{ secrets.ARI_PAT }}

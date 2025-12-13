@@ -388,3 +388,14 @@ jobs:
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
+
+  # ===========================================================================
+  # FOLLOW-UP GEMINI REVIEW (Runs only if tests pass)
+  # ===========================================================================
+  followup-review:
+    needs: test
+    if: github.event_name == 'pull_request' && needs.test.result == 'success'
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ARI_PAT: ${{ secrets.ARI_PAT }}
