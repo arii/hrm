@@ -32,6 +32,36 @@ declare module 'next-auth/jwt' {
   }
 }
 
+/**
+ * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
+ * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
+ * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
+ * allowing the browser to default to the current domain.
+ *
+ * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
+ *                               should not be set.
+ */
+function getCookieDomain(): string | undefined {
+  if (!process.env.NEXTAUTH_URL) {
+    return undefined
+  }
+  try {
+    const url = new URL(process.env.NEXTAUTH_URL)
+    // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return undefined
+    }
+    return url.hostname
+  } catch (e) {
+    console.error(
+      'Failed to parse NEXTAUTH_URL for cookie domain:',
+      process.env.NEXTAUTH_URL,
+      e
+    )
+    return undefined
+  }
+}
+
 // Define the scopes required for the application's Spotify features.
 const SPOTIFY_SCOPES = [
   'user-read-private',
@@ -130,6 +160,18 @@ export const authOptions: AuthOptions = {
   session: {
     // We use JWT for session management for performance and to hold tokens.
     strategy: 'jwt',
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: getCookieDomain(),
+      },
+    },
   },
   callbacks: {
     /**
