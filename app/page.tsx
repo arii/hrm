@@ -81,7 +81,7 @@ const Dashboard = () => {
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* Workout Goal Progress */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <WorkoutGoalProgress
             currentProgress={75}
             targetGoal={150}
@@ -90,7 +90,7 @@ const Dashboard = () => {
         </Grid>
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid item xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
