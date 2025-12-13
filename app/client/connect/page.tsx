@@ -31,10 +31,10 @@ export default function ConnectPage() {
   // Auto-connect Effect
   useEffect(() => {
     // Attempt connection only if:
-    // 1. We have stored credentials
+    // 1. We have stored credentials (name and age)
     // 2. We are supported and not already connected
     // 3. WebSocket is ready
-    if (isMounted && isSupported && userName && !isConnected && connectionStatus === 'Connected') {
+    if (isMounted && isSupported && userName && userAge && !isConnected && connectionStatus === 'Connected') {
       // Pass 'true' for isAutoConnect to prevent the picker popup
       connectAndStream(userName, userAge, true)
     }

@@ -160,29 +160,35 @@ const useBluetoothHRM = () => {
         const value = await batteryChar.readValue()
         setBatteryLevel(value.getUint8(0))
         await batteryChar.startNotifications()
-        batteryChar.addEventListener('characteristicvaluechanged', (e: any) => {
-          setBatteryLevel(e.target.value.getUint8(0))
+        batteryChar.addEventListener('characteristicvaluechanged', (e: Event) => {
+          const target = e.target as BluetoothRemoteGATTCharacteristic
+          if (target.value) {
+            setBatteryLevel(target.value.getUint8(0))
+          }
         })
       } catch (err) { /* Battery service optional */ }
 
       await characteristic.startNotifications()
       lastDataTime.current = Date.now()
 
-      characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
-        const heartRate = parseHeartRate(event.target.value)
-        lastDataTime.current = Date.now()
+      characteristic.addEventListener('characteristicvaluechanged', (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic
+        if (target.value) {
+          const heartRate = parseHeartRate(target.value)
+          lastDataTime.current = Date.now()
 
-        const { name, age } = userDetailsRef.current || {}
-        const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
+          const { name, age } = userDetailsRef.current || {}
+          const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
 
-        const data: HrmInputData = {
-          value: heartRate,
-          maxHr: calculatedMaxHr,
-          name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+          const data: HrmInputData = {
+            value: heartRate,
+            maxHr: calculatedMaxHr,
+            name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+          }
+          if (age && !isNaN(parseInt(age))) data.age = parseInt(age)
+
+          sendData({ type: 'HRM_INPUT', data })
         }
-        if (age && !isNaN(parseInt(age))) data.age = parseInt(age)
-
-        sendData({ type: 'HRM_INPUT', data })
       })
 
       device.addEventListener('gattserverdisconnected', onDisconnected)
