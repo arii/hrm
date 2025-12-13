@@ -55,7 +55,7 @@ const INITIAL_STATE: WebSocketState = {
 export interface WebSocketContextType extends WebSocketState {
   timerState: {
     workoutDuration: string
-    caloriesBurned: number
+    caloriesBurned: string
     isWorkoutActive: boolean
   }
   connectionStatus: string
@@ -344,16 +344,20 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  // TODO: Replace this with a more accurate, user-specific calorie calculation.
+  // This is a placeholder based on the average METs for moderate activity for a 70kg individual.
+  // It is not medically accurate and does not account for user's weight, age, or heart rate.
+  const APPROX_CALORIES_PER_MINUTE = 8
+
   const timerState = useMemo(() => {
     const { timeElapsed } = appState.timerData
-    // Example calories burned calculation (replace with a more accurate formula if available)
-    // This is a very rough estimate. A better formula would use HR, age, weight, etc.
-    const caloriesBurned = (timeElapsed / 60) * 8 // Assuming ~8 calories per minute
+    const caloriesBurned =
+      (timeElapsed / 60) * APPROX_CALORIES_PER_MINUTE
     const isWorkoutActive = timeElapsed > 0
 
     return {
       workoutDuration: formatDuration(timeElapsed),
-      caloriesBurned,
+      caloriesBurned: caloriesBurned.toFixed(0),
       isWorkoutActive,
     }
   }, [appState.timerData])

@@ -61,7 +61,7 @@ export default function WorkoutSummary({
             color="text.secondary"
           >
             <WhatshotIcon />
-            <Typography variant="subtitle1">Calories</Typography>
+            <Typography variant="subtitle1">Calories (est.)</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
             {caloriesBurned}
