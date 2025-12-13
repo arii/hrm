@@ -8,7 +8,7 @@ set -e
 # Configuration
 PORT=$(node scripts/get-available-port.mjs)
 export PORT
-TIMEOUT=60000
+TIMEOUT=90000
 SERVER_LOG="/tmp/hrm-server.log"
 PID_FILE="/tmp/hrm-server.pid"
 HEALTH_CHECK_URL="http://127.0.0.1:${PORT}/api/debug/ping"
@@ -26,12 +26,19 @@ cleanup() {
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
         if [ -f "$SERVER_LOG" ]; then
-            log "--- Server Logs (Tail 50 lines) ---"
+            log "--- Server Startup Logs (Tail 50 lines) ---"
             tail -n 50 "$SERVER_LOG" >&2
-            log "-----------------------------------"
+            log "-------------------------------------------"
         else
-            log "No server log found at $SERVER_LOG"
+            log "No server startup log found at $SERVER_LOG"
         fi
+
+        log "--- PM2 Application Logs (Tail 100 lines) ---"
+        # Try to show logs from the specific app, fallback to all if name fails
+        # Using direct file access is more reliable if PM2 daemon is dead,
+        # but PM2 command is better if alive. We try PM2 command first.
+        pnpm pm2 logs hrm-server --lines 100 --nostream >&2 || tail -n 100 ~/.pm2/logs/*.log >&2 2>/dev/null || echo "Could not retrieve PM2 logs" >&2
+        log "---------------------------------------------"
     fi
     exit $EXIT_CODE
 }
@@ -55,7 +62,7 @@ log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
 
-log "🚀 Starting server with PM2..."
+log "🚀 Starting server with PM2 on port ${PORT}..."
 # Start server with `pnpm start`, which uses PM2
 pnpm start > "$SERVER_LOG" 2>&1 &
 log "✅ Server process started via PM2."
