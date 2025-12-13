@@ -5,6 +5,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { memo, useCallback } from 'react'
 
 interface VolumeSliderProps {
@@ -40,12 +41,12 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       </Typography>
       <IconButton
         onClick={onToggleMute}
-        sx={{
+        sx={(theme) => ({
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
-          width: 48,
-          height: 48,
-        }}
+          width: theme.spacing(6),
+          height: theme.spacing(6),
+        })}
         aria-label={muted ? 'Unmute' : 'Mute'}
       >
         {muted ? <VolumeOff /> : <VolumeUp />}
