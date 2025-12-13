@@ -269,7 +269,7 @@ test.describe('Visual Regression Tests', () => {
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await mockPage.click('button:has-text("START")')
+    await mockPage.getByTestId('streaming-start-button').click()
     await expect(
       mockPage.locator('button:has-text("STOP Streaming")')
     ).toBeVisible()
