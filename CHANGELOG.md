@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0](https://github.com/arii/hrm/compare/v0.5.0...v0.6.0) (2025-12-13)
+
+
+### Features
+
+* Add Playwright tests for Web Bluetooth connection ([#1304](https://github.com/arii/hrm/issues/1304)) ([7b8cade](https://github.com/arii/hrm/commit/7b8cadec846494f8e77f421f8ff117915d14a73b))
+* enhance Storybook with auto-open and Button stories ([#1275](https://github.com/arii/hrm/issues/1275)) ([329428b](https://github.com/arii/hrm/commit/329428b5627b8db157a77de1987595ba28c50a26))
+* Implement Gemini-Powered Release Management Workflow ([#1303](https://github.com/arii/hrm/issues/1303)) ([acd97aa](https://github.com/arii/hrm/commit/acd97aa4519383279fe7d18aaf098ab28b429f25))
+
 ## [0.5.0](https://github.com/arii/hrm/compare/v0.4.1...v0.5.0) (2025-12-13)
 
 
