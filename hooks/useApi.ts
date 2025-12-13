@@ -17,7 +17,6 @@ export const useApi = () => {
         const data: T = await response.json()
         return data
       } catch (error) {
-        console.error('API request failed:', error)
         throw error
       } finally {
         stopLoading()
