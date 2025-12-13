@@ -76,8 +76,12 @@ export async function POST(req: NextRequest) {
         method = 'PUT'
         break
       case 'TRANSFER_PLAYBACK':
-        if (!deviceId)
-          throw new Error('Device ID required for TRANSFER_PLAYBACK')
+        if (!deviceId) {
+          return NextResponse.json(
+            { error: 'Device ID required for TRANSFER_PLAYBACK' },
+            { status: 400 }
+          )
+        }
         url = `${SPOTIFY_API_BASE}`
         method = 'PUT'
         // Transfer requires a specific body structure

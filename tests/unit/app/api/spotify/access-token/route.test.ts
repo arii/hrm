@@ -5,12 +5,6 @@ import { GET } from '@/app/api/spotify/access-token/route'
 import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 
-// Mock 'next-auth' to prevent TypeError during initialization
-jest.mock('next-auth', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
-
 // Mock 'next-auth/next' for getServerSession
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),

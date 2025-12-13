@@ -75,6 +75,15 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.error).toBe('Volume parameter is required for SET_VOLUME')
   })
 
+  it('should return 400 if TRANSFER_PLAYBACK is missing deviceId', async () => {
+    const req = createRequest({ command: 'TRANSFER_PLAYBACK' }) // Missing 'deviceId'
+    const response = await POST(req)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('Device ID required for TRANSFER_PLAYBACK')
+  })
+
   it('should handle PLAY command successfully', async () => {
     const req = createRequest({ command: 'PLAY', deviceId: 'test-device' })
     const response = await POST(req)
@@ -112,9 +121,8 @@ describe('API Route: /api/spotify/control', () => {
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
     const fetchOptions = mockedFetch.mock.calls[0][1]
-    expect(fetchOptions.body).toBe(
-      JSON.stringify({ device_ids: ['new-device'], play: true })
-    )
+    const body = JSON.parse(fetchOptions.body as string)
+    expect(body).toEqual({ device_ids: ['new-device'], play: true })
   })
 
   it('should forward Spotify API errors', async () => {
