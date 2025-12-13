@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/arii/hrm/compare/v0.5.0...v0.6.0) (2025-12-13)
+
+
+### Features
+
+* enhance Storybook with auto-open and Button stories ([#1275](https://github.com/arii/hrm/issues/1275)) ([329428b](https://github.com/arii/hrm/commit/329428b5627b8db157a77de1987595ba28c50a26))
+
 ## [0.5.0](https://github.com/arii/hrm/compare/v0.4.1...v0.5.0) (2025-12-13)
 
 
