@@ -5,6 +5,7 @@ export interface HrTileProps {
   name: string
   bpm: number
   percentMax: number // 0-100
+  maxHr: number
 
   // NEW: Flag to trigger the visual diagnostic state
   isAlerting: boolean

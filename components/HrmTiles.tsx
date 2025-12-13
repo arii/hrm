@@ -3,7 +3,6 @@
 import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
-import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
@@ -20,11 +19,9 @@ const HrmTiles = () => {
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const hrZoneProps = getHrZoneProps(
-          user.value,
-          user.maxHr || MAX_HR_DEFAULT
+        const percentMax = Math.round(
+          (user.value / (user.maxHr || MAX_HR_DEFAULT)) * 100
         )
-
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
           (alert) =>
@@ -41,7 +38,8 @@ const HrmTiles = () => {
             <HrTile
               name={user.name || ''}
               bpm={user.value}
-              percentMax={hrZoneProps.percentage}
+              percentMax={percentMax}
+              maxHr={user.maxHr || MAX_HR_DEFAULT}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}

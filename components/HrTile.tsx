@@ -5,10 +5,10 @@ import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
+import HeartRateZoneIndicator from './HeartRateZoneIndicator'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -33,12 +33,6 @@ const HrTile = ({
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
 }: HrTileProps) => {
-  // Get HR zone props which include the theme-based background color
-  // Note: We're passing a placeholder maxHr because the function currently requires it,
-  // but it only uses the ratio (percentMax) to determine the zone color.
-  // This could be refactored in getHrZoneProps to accept percentMax directly.
-  const { backgroundColor } = getHrZoneProps(percentMax, 100)
-
   return (
     <Tooltip
       title={
@@ -53,7 +47,6 @@ const HrTile = ({
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
         sx={{
-          backgroundColor: backgroundColor,
           color: '#fff',
           textAlign: 'center',
           minHeight: 180,
@@ -79,24 +72,7 @@ const HrTile = ({
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
-            <Typography
-              data-testid="live-hr-percent"
-              sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Animate only when receiving live data (bpm > 0 and not in an alert state)
-                animationPlayState:
-                  bpm > 0 && !isAlerting ? 'running' : 'paused',
-              }}
-            >
-              {percentMax}%
-            </Typography>
+            <HeartRateZoneIndicator currentHr={bpm} maxHr={100} />
             <Typography
               data-testid="live-hr-value"
               variant="h6"
