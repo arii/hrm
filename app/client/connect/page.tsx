@@ -32,23 +32,25 @@ export default function ConnectPage() {
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-  const [hrHistory, setHrHistory] = useState<number[]>([])
+  const [hrSum, setHrSum] = useState<number>(0)
+  const [hrCount, setHrCount] = useState<number>(0)
 
   useEffect(() => {
     if (currentHR > 0) {
-      setHrHistory((prevHistory) => [...prevHistory, currentHR])
+      setHrSum((prevSum) => prevSum + currentHR)
+      setHrCount((prevCount) => prevCount + 1)
     }
     // Reset history if workout ends
     if (timerData.timeElapsed === 0) {
-      setHrHistory([])
+      setHrSum(0)
+      setHrCount(0)
     }
   }, [currentHR, timerData.timeElapsed])
 
   const workoutState = useMemo(() => {
     const { timeElapsed } = timerData
     const isWorkoutActive = timeElapsed > 0
-    const averageHr =
-      hrHistory.reduce((acc, curr) => acc + curr, 0) / hrHistory.length || 0
+    const averageHr = hrCount > 0 ? hrSum / hrCount : 0
 
     const caloriesBurned = userAge
       ? calculateCaloriesBurned(averageHr, parseInt(userAge), timeElapsed)
@@ -59,7 +61,7 @@ export default function ConnectPage() {
       caloriesBurned: caloriesBurned.toFixed(0),
       isWorkoutActive,
     }
-  }, [timerData, userAge, hrHistory])
+  }, [timerData, userAge, hrSum, hrCount])
 
   return (
     <ConnectView

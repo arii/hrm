@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { calculateCaloriesBurned } from '../../../utils/health'
 
 describe('calculateCaloriesBurned', () => {

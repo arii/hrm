@@ -23,11 +23,13 @@
  * @returns An estimated number of calories burned.
  */
 
-const CALORIES_PER_MINUTE_ZONE1 = 4
-const CALORIES_PER_MINUTE_ZONE2 = 7
-const CALORIES_PER_MINUTE_ZONE3 = 10
-const CALORIES_PER_MINUTE_ZONE4 = 13
-const CALORIES_PER_MINUTE_ZONE5 = 16
+import {
+  CALORIES_PER_MINUTE_ZONE1,
+  CALORIES_PER_MINUTE_ZONE2,
+  CALORIES_PER_MINUTE_ZONE3,
+  CALORIES_PER_MINUTE_ZONE4,
+  CALORIES_PER_MINUTE_ZONE5,
+} from '../constants/health'
 
 export const calculateCaloriesBurned = (
   averageHr: number,

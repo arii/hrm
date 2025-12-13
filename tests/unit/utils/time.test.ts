@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { formatDuration } from '../../../utils/time'
 
 describe('formatDuration', () => {
