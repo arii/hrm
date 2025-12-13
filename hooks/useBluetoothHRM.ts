@@ -1,21 +1,41 @@
+// File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
-import useAutoConnect from './useAutoConnect'
-import { getCookie, setCookie } from '../utils/cookies'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
+// ... (Keep existing parseHeartRate and cookie helpers) ...
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
+const setCookie = (name: string, value: string, days = 365) => {
+  if (typeof document !== 'undefined') {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString()
+    document.cookie = `${name}=${encodeURIComponent(
+      value
+    )}; expires=${expires}; path=/`
+  }
+}
+
+const getCookie = (name: string): string => {
+  if (typeof document === 'undefined') return ''
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=')
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
+  }, '')
+}
+
+/**
+ * Helper to race a promise against a timeout
+ */
 const withTimeout = <T>(
   promise: Promise<T>,
   ms: number,
@@ -44,23 +64,27 @@ const useBluetoothHRM = () => {
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
-  const [shouldReconnect, setShouldReconnect] = useState(false)
 
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const connectToGattRef = useRef<
+    ((device: BluetoothDevice) => Promise<boolean>) | null
+  >(null)
 
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
+  // Cleanup
   useEffect(() => {
     return () => {
-      if (deviceRef.current?.gatt?.connected) {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (deviceRef.current?.gatt?.connected)
         deviceRef.current.gatt.disconnect()
-      }
     }
   }, [])
 
@@ -69,26 +93,23 @@ const useBluetoothHRM = () => {
     const interval = setInterval(() => {
       if (
         statusRef.current.startsWith('Connected') &&
-        lastDataTime.current > 0 &&
-        !shouldReconnect
+        lastDataTime.current > 0
       ) {
         if (Date.now() - lastDataTime.current > 10000) {
           console.warn('Bluetooth data stale. Forcing reconnection...')
-          if (deviceRef.current?.gatt?.connected) {
+          setDeviceStatus('Connection unstable. Reconnecting...')
+          if (deviceRef.current?.gatt?.connected)
             deviceRef.current.gatt.disconnect()
-          }
         }
       }
     }, 2000)
     return () => clearInterval(interval)
-  }, [shouldReconnect])
+  }, [])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
-    setShouldReconnect(false)
-    if (deviceRef.current?.gatt?.connected) {
-      deviceRef.current.gatt.disconnect()
-    }
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
@@ -117,17 +138,22 @@ const useBluetoothHRM = () => {
   const handleConnectionError = useCallback((error: unknown) => {
     let msg = 'An unknown error occurred.'
     if (error instanceof DOMException) {
-      if (error.name === 'NotFoundError')
+      if (error.name === 'NotFoundError') {
         msg = 'Connection cancelled. No device selected.'
-      else if (error.name === 'SecurityError')
+      } else if (error.name === 'SecurityError') {
         msg = 'Security error. Use HTTPS or localhost.'
-      else if (error.name === 'NetworkError')
+      } else if (error.name === 'NetworkError') {
         msg = 'Connection failed. Device might be too far or low battery.'
-      else msg = `Bluetooth error: ${error.name}`
+      } else {
+        msg = `Bluetooth error: ${error.name}`
+      }
     } else if (error instanceof Error) {
-      if (error.message.includes('timeout'))
+      // Handle our custom timeout error
+      if (error.message.includes('timeout')) {
         msg = 'Connection timed out. Wake up device and try again.'
-      else msg = `Error: ${error.message}`
+      } else {
+        msg = `Error: ${error.message}`
+      }
     }
     setDeviceStatus(`Failed: ${msg}`)
   }, [])
@@ -136,7 +162,12 @@ const useBluetoothHRM = () => {
     setBatteryLevel(null)
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
-      setShouldReconnect(true)
+      setDeviceStatus('Signal Lost. Retrying...')
+      const deviceToReconnect = deviceRef.current
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (connectToGattRef.current)
+          connectToGattRef.current(deviceToReconnect)
+      }, 2000)
     } else {
       setDeviceStatus('Disconnected')
     }
@@ -148,6 +179,8 @@ const useBluetoothHRM = () => {
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
+        // Use a timeout for the initial GATT connection to avoid infinite hanging
+        // 10 seconds is usually enough for a healthy BLE connection
         const server = await withTimeout(
           device.gatt!.connect(),
           10000,
@@ -170,11 +203,10 @@ const useBluetoothHRM = () => {
           await batteryChar.startNotifications()
           batteryChar.addEventListener(
             'characteristicvaluechanged',
-            (e: Event) => {
-              const target = e.target as BluetoothRemoteGATTCharacteristic
-              if (target.value) {
-                setBatteryLevel(target.value.getUint8(0))
-              }
+            (e: unknown) => {
+              const event = e as Event
+              const target = event.target as BluetoothRemoteGATTCharacteristic
+              setBatteryLevel(target.value!.getUint8(0))
             }
           )
         } catch (_err) {
@@ -186,21 +218,27 @@ const useBluetoothHRM = () => {
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
-          (event: Event) => {
-            const target = event.target as BluetoothRemoteGATTCharacteristic
-            if (target.value) {
-              const heartRate = parseHeartRate(target.value)
-              lastDataTime.current = Date.now()
-              const { name, age } = userDetailsRef.current || {}
-              const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
-              const data: HrmInputData = {
-                value: heartRate,
-                maxHr: calculatedMaxHr,
-                name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-              }
-              if (age && !isNaN(parseInt(age))) data.age = parseInt(age)
-              sendData({ type: 'HRM_INPUT', data })
+          (event: unknown) => {
+            const e = event as Event
+            const target = e.target as BluetoothRemoteGATTCharacteristic
+            const heartRate = parseHeartRate(target.value!)
+            lastDataTime.current = Date.now()
+
+            const { name, age } = userDetailsRef.current || {}
+            const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
+
+            const data: HrmInputData = {
+              value: heartRate,
+              maxHr: calculatedMaxHr,
+              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
             }
+            if (age && !isNaN(parseInt(age))) {
+              data.age = parseInt(age)
+            }
+            sendData({
+              type: 'HRM_INPUT',
+              data,
+            })
           }
         )
 
@@ -209,7 +247,6 @@ const useBluetoothHRM = () => {
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
-        setShouldReconnect(false)
         isManualDisconnect.current = false
         return true
       } catch (error) {
@@ -220,35 +257,12 @@ const useBluetoothHRM = () => {
     [onDisconnected, sendData]
   )
 
-  const reconnectFn = useCallback(async (): Promise<boolean> => {
-    if (!deviceRef.current) return false
-    try {
-      return await connectToGatt(deviceRef.current)
-    } catch (error) {
-      console.warn('Auto-reconnect attempt failed:', error)
-      return false
-    }
+  useEffect(() => {
+    connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
-  useAutoConnect(
-    reconnectFn,
-    shouldReconnect,
-    (isReconnecting, reconnectAttempts) => {
-      if (isReconnecting && reconnectAttempts > 0) {
-        setDeviceStatus(`Signal Lost. Retrying (${reconnectAttempts})...`)
-      } else if (!isReconnecting && shouldReconnect) {
-        setDeviceStatus('Signal Lost. Retrying...')
-      }
-    },
-    { initialDelay: 2000, maxDelay: 60000 }
-  )
-
   const connectAndStream = useCallback(
-    async (
-      userName?: string,
-      userAge?: string,
-      isAutoConnect = false
-    ): Promise<boolean> => {
+    async (userName?: string, userAge?: string): Promise<boolean> => {
       userDetailsRef.current = { name: userName || '', age: userAge || '' }
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {
@@ -278,14 +292,11 @@ const useBluetoothHRM = () => {
           }
         }
 
-        if (!device && isAutoConnect) {
-          setDeviceStatus('Ready to connect')
-          return false
-        }
-
         if (!device) {
           setDeviceStatus('Scanning for devices...')
           try {
+            // Note: acceptAllDevices is an alternative if filters fail,
+            // but strict filtering is better for UX to avoid showing non-HRM devices.
             device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [HR_SERVICE_UUID] }],
               optionalServices: [BATTERY_SERVICE_UUID],
@@ -317,7 +328,7 @@ const useBluetoothHRM = () => {
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
-    isSupported,
+    isSupported, // Export this flag
   }
 }
 
