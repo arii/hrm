@@ -10,10 +10,7 @@ interface WorkoutSummaryProps {
   caloriesBurned: number
 }
 
-const WorkoutSummary = ({
-  duration,
-  caloriesBurned,
-}: WorkoutSummaryProps) => {
+const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
   return (
     <Paper
       elevation={3}
