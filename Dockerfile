@@ -16,7 +16,11 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the application source code to the working directory
 COPY . .
 
+# Use an ARG for the port, with a default value
+ARG PORT=3000
+# Set the ENV variable from the ARG
+ENV PORT=$PORT
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE $PORT
 
 # The command to run the application will be specified in the docker-compose.yml file
