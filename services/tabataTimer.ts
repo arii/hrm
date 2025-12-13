@@ -285,6 +285,10 @@ class TabataTimer {
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
+
+  public reset() {
+    this.stopTimer()
+  }
 }
 
 export default TabataTimer

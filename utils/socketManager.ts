@@ -141,6 +141,16 @@ const handleIncomingMessage = (
         break
       }
 
+      case 'RESET': {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.reset()
+        }
+        if (spotifyServiceInstance) {
+          spotifyServiceInstance.reset()
+        }
+        break
+      }
+
       case 'GET_STATE': {
         // The client is requesting the full current state.
         const stateSnapshot = getUnifiedStateSnapshot()
