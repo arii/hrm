@@ -26,7 +26,21 @@ import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3001 // Explicitly handle undefined and convert to number
+function getPort(defaultPort: number): number {
+  const envPort = process.env.PORT
+  if (envPort) {
+    const parsedPort = parseInt(envPort, 10)
+    if (!isNaN(parsedPort) && parsedPort > 0) {
+      return parsedPort
+    }
+    logger.warn(
+      `Invalid PORT environment variable '${envPort}'. Using default port ${defaultPort}.`
+    )
+  }
+  return defaultPort
+}
+
+const port: number = getPort(3001)
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
