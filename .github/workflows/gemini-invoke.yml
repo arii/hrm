@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   invoke:
@@ -49,7 +49,6 @@ jobs:
       - name: Reply to Comment
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.ARI_PAT }}
           script: |
              const fs = require('fs');
              try {
