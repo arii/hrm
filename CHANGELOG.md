@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/arii/hrm/compare/v0.4.1...v0.5.0) (2025-12-13)
+
+
+### Features
+
+* Add AGENTS.md for agentic instructions ([#1285](https://github.com/arii/hrm/issues/1285)) ([ec9a59b](https://github.com/arii/hrm/commit/ec9a59b8af972c3638095a05ac81733bf5fd8b2d))
+
 ## [0.4.1](https://github.com/arii/hrm/compare/v0.4.0...v0.4.1) (2025-12-13)
 
 
