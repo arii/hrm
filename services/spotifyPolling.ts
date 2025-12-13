@@ -267,7 +267,10 @@ export class SpotifyPolling {
       const progressMs = playbackState.progress_ms || 0
       const durationMs = item?.duration_ms || 0
       const shuffleState = playbackState.shuffle_state
-      const repeatState = playbackState.repeat_state
+      const repeatState = playbackState.repeat_state as
+        | 'off'
+        | 'track'
+        | 'context'
 
       // Broadcast if track, playback state, or significant progress has changed
       if (
