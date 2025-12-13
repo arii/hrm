@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import dynamic from 'next/dynamic'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
@@ -23,9 +24,11 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   ),
 })
 import TimerControls from './components/TimerControls'
+import VolumeSlider from '../../../components/PlaybackControls/VolumeSlider'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
 
   // Register this client as a controller
   useEffect(() => {
@@ -107,6 +110,17 @@ const ControlPanel = () => {
         </Box>
 
         <TimerControls />
+        <Box
+          sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+          data-testid="volume-controls-section"
+        >
+          <VolumeSlider
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
+          />
+        </Box>
         <Box sx={{ height: 8 }} />
         <SpotifyControls />
       </Container>

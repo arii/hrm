@@ -1,7 +1,6 @@
 // File: app/client/control/components/TimerControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
-import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
   SpotifyCommandMessage,
@@ -25,7 +24,6 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -72,7 +70,6 @@ const stepperButtonSx = {
 
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -494,18 +491,6 @@ const TimerControls = () => {
             </Box>
           </Stack>
         )}
-
-        <Box
-          sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
-          data-testid="volume-controls-section"
-        >
-          <VolumeSlider
-            volume={volume}
-            muted={muted}
-            onVolumeChange={setVolume}
-            onToggleMute={toggleMute}
-          />
-        </Box>
 
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           {!timerData.isRunning ? (

@@ -206,33 +206,6 @@ const SpotifyControls = () => {
               disabled={connectionStatus !== 'Connected'}
             />
 
-            <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
-              <Slider
-                value={volume}
-                onChange={(_, val) => {
-                  setIsDragging(true)
-                  setVolume(val as number)
-                }}
-                onChangeCommitted={(_, val) => {
-                  setIsDragging(false)
-                  sendVolumeCommand(val as number)
-                }}
-                min={0}
-                max={100}
-                size="small"
-                sx={{
-                  color: '#1DB954',
-                  '& .MuiSlider-thumb': { backgroundColor: 'white' },
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ color: 'grey.400', minWidth: '3ch' }}
-              >
-                {volume}
-              </Typography>
-            </Stack>
             {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
