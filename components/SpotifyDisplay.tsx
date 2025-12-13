@@ -22,7 +22,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
-import SpotifyPlaybackContextDisplay from './Spotify/SpotifyPlaybackContextDisplay'
 
 interface SpotifyDevice {
   id: string
@@ -248,15 +247,9 @@ const SpotifyDisplay = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {displayTrackName} {displayArtist}
-            </Typography>
-            <SpotifyPlaybackContextDisplay
-              contextName={spotifyData.contextName}
-              contextType={spotifyData.contextType}
-            />
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {displayTrackName} {displayArtist}
+          </Typography>
           {spotifyAuthenticated && !isReady && (
             <Typography
               variant="caption"
