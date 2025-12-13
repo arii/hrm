@@ -23,6 +23,7 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { getClientIp } from './utils/network.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000
 const wsPort: number = process.env.WS_PORT ? +process.env.WS_PORT : 3001
@@ -125,6 +126,8 @@ app
     }
 
     // --- Static Asset Serving (Production Only) ---
+    // In production, serve the Next.js static assets directly from the .next/static folder.
+    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
@@ -132,6 +135,7 @@ app
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
+          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
@@ -178,11 +182,7 @@ app
     const WS_MAX_CONNECTIONS = 5
 
     wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-      const ip =
-        (req.headers['x-forwarded-for'] as string)
-          ?.split(',')
-          .shift()
-          ?.trim() || req.socket.remoteAddress
+      const ip = getClientIp(req);
 
       if (process.env.TESTING !== 'true' && ip) {
         const count = wsConnections.get(ip) || 0
@@ -220,22 +220,6 @@ app
     )
 
     expressApp.use(async (req: Request, res: Response) => {
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        setTimeout(async () => {
-          if (spotifyService) {
-            spotifyService.setRefreshToken('signal')
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
-      }
       return nextRequestHandler(req, res)
     })
 
