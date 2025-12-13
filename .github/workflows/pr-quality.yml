@@ -162,6 +162,12 @@ jobs:
 
       - name: Run Unit Tests
         run: pnpm run test:unit
+      - name: Run Backend Port Test
+        run: pnpm run test:backend:port
+      - name: Run WebSocket Port Test
+        run: pnpm run test:websocket:port
+      - name: Run Port Conflict Test
+        run: pnpm run test:port-conflict
 
   # ===========================================================================
   # JOB 4: VISUAL REGRESSION TESTS
