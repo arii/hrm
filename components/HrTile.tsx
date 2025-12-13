@@ -8,6 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import CurrentHeartRateDisplay from './CurrentHeartRateDisplay'
 import StyledCard from './shared/StyledCard'
 
 // Define the style for the centered overlay
@@ -78,37 +79,24 @@ const HrTile = ({
         )}
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
-            {/* Giant Percentage - should dominate the tile */}
+            {/* The new primary heart rate display */}
+            <CurrentHeartRateDisplay bpm={bpm} isAlerting={isAlerting} />
+
+            {/* Secondary display for percentage */}
             <Typography
               data-testid="live-hr-percent"
-              sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Animate only when receiving live data (bpm > 0 and not in an alert state)
-                animationPlayState:
-                  bpm > 0 && !isAlerting ? 'running' : 'paused',
-              }}
-            >
-              {percentMax}%
-            </Typography>
-            <Typography
-              data-testid="live-hr-value"
               variant="h6"
               sx={{
                 fontWeight: 600,
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
                 transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
+                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
               }}
             >
-              {bpm} BPM
+              {percentMax}% Max
             </Typography>
+
+            {/* User's name, if available and not a placeholder */}
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
