@@ -64,3 +64,20 @@ async function fetchRealTimeData(sessionId: string): Promise<HrmSessionData> {
     return { sessionId, metrics: [], status: 'error' };
   }
 }
+```
+
+---
+
+### Agent Instruction Maintainability
+
+**Verifying Changes to Agent Instructions:**
+
+Changes to this file directly impact the AI agent's behavior. To verify updates, follow this process:
+1.  **Define a Test Case**: Select a representative code snippet from the repository that requires review or refactoring.
+2.  **Run the Agent**: Provide the selected code snippet and this instruction set to the AI agent.
+3.  **Evaluate the Output**: Assess the agent's response against the updated instructions. The output should reflect the new guidance.
+4.  **Iterate**: If the agent's output is not satisfactory, refine the instructions in this file and repeat the process until the desired behavior is achieved.
+
+**Future Improvements:**
+
+The current approach of statically listing project documentation for the agent's reference creates a tight coupling. A future goal is to enable the agent to dynamically access and integrate all relevant project documentation, reducing redundancy and ensuring the agent always has the most up-to-date context.
