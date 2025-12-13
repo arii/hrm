@@ -143,8 +143,8 @@ const TimerDisplay = ({
           </Typography>
           <Box
             sx={{
-              width: 10,
-              height: 10,
+              width: 12,
+              height: 12,
               borderRadius: '50%',
               backgroundColor:
                 connectionStatus === 'Connected'
@@ -162,7 +162,7 @@ const TimerDisplay = ({
       {/* Main Content: Timer */}
       <CardContent
         sx={{
-          p: { xs: 0, md: 1 }, // Minimized padding to keep content tight
+          p: { xs: 1, md: 2 }, // Minimized padding to keep content tight
           textAlign: 'center',
           flex: 1,
           display: 'flex',
