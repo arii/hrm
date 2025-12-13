@@ -73,7 +73,7 @@ export interface HrZoneProps {
   color: string // Tailwind text color class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
-  bpm: number
+  bpm: number | null
 }
 
 /**

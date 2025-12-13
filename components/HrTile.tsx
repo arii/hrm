@@ -40,7 +40,7 @@ const HrTile = ({
   // Note: We're passing a placeholder maxHr because the function currently requires it,
   // but it only uses the ratio (percentMax) to determine the zone color.
   // This could be refactored in getHrZoneProps to accept percentMax directly.
-  const { backgroundColor } = getHrZoneProps(bpm, 100)
+  const { backgroundColor } = getHrZoneProps(percentMax, 100)
 
   return (
     <Tooltip
@@ -95,7 +95,7 @@ const HrTile = ({
                 animation: 'subtle-pulse 2s infinite ease-in-out',
                 // Animate only when receiving live data (bpm > 0 and not in an alert state)
                 animationPlayState:
-                  bpm > 0 && !isAlerting ? 'running' : 'paused',
+                  bpm !== null && bpm > 0 && !isAlerting ? 'running' : 'paused',
               }}
             >
               {percentMax}%

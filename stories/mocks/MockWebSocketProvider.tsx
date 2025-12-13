@@ -129,6 +129,7 @@ export const MockWebSocketProvider = ({
   // 4. Construct Context
   const contextValue: WebSocketContextType = {
     ...state,
+    hrmDataHistory: {}, // Add the missing property
     connectionStatus,
     sendData,
     connect,
