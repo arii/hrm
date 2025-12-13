@@ -36,7 +36,10 @@ const HrmTiles = () => {
 
         return (
           <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            item
+            xs={12}
+            sm={6}
+            lg={3}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -62,14 +65,17 @@ const HrmTiles = () => {
       <>
         {[...Array(2)].map((_, index) => (
           <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            item
+            xs={12}
+            sm={6}
+            lg={3}
             key={index}
             data-testid="hr-tile-grid-item-skeleton"
           >
             <Skeleton
               variant="rectangular"
               height={220}
-              sx={{ borderRadius: 3 }}
+              sx={{ borderRadius: '12px' }}
             />
           </Grid>
         ))}
@@ -79,7 +85,7 @@ const HrmTiles = () => {
 
   if (filteredTiles.length === 0) {
     return (
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         <EmptyStateDisplay
           icon={<MonitorHeartIcon />}
           message="No active heart rate monitors."

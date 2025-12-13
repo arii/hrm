@@ -15,7 +15,7 @@ export interface WorkoutColumnsProps {
 const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
   if (!columns || columns.length === 0) {
     return (
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         <Paper sx={{ p: 3, mt: 2 }}>
           <EmptyStateDisplay
             icon={<FitnessCenterIcon />}
@@ -30,12 +30,11 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
     <Grid container spacing={2}>
       {columns.map((col, idx) => (
         <Grid
+          item
           key={idx}
-          size={{
-            xs: 12,
-            sm: 6,
-            md: Math.max(12 / columns.length, 3),
-          }}
+          xs={12}
+          sm={6}
+          md={Math.max(12 / columns.length, 3)}
         >
           <Paper sx={{ p: 3, minHeight: 200 }}>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>

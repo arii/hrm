@@ -24,7 +24,7 @@ const EmptyStateDisplay = ({ message, icon }: EmptyStateDisplayProps) => {
       }}
     >
       {icon && (
-        <Box sx={{ mb: 1, '& .MuiSvgIcon-root': { fontSize: '3rem' } }}>
+        <Box sx={{ mb: 1, '& .MuiSvgIcon-root': { fontSize: '2.5rem' } }}>
           {icon}
         </Box>
       )}
