@@ -217,9 +217,9 @@ describe('SpotifyPolling Service', () => {
   describe('Token Management', () => {
     it('should not execute commands if SDK is not initialized', async () => {
       // Override the mock to return null token for this test
-      ;(SpotifyTokenManager.getSystemAccessToken as jest.Mock).mockResolvedValue(
-        null
-      )
+      ;(
+        SpotifyTokenManager.getSystemAccessToken as jest.Mock
+      ).mockResolvedValue(null)
 
       // Create a new service instance which will fail to initialize the SDK
       const newService = await SpotifyPolling.create(broadcastMock)

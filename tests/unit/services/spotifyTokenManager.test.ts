@@ -2,6 +2,15 @@
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { db } from '@/lib/db'
 
+// Define a mock type for the Account model to avoid using `any`
+type MockAccount = {
+  id: string
+  userId: string
+  provider: string
+  isSystemToken: boolean
+  access_token: string | null
+}
+
 // Mock the db client from the setup file
 const mockDb = db as jest.Mocked<typeof db>
 
@@ -18,15 +27,14 @@ describe('SpotifyTokenManager', () => {
   })
 
   it('should return the access token for the designated system token', async () => {
-    const mockAccount = {
+    const mockAccount: MockAccount = {
       id: '1',
       userId: 'user1',
       provider: 'spotify',
       isSystemToken: true,
       access_token: 'system_access_token',
-      // ... other account fields
     }
-    mockDb.account.findFirst.mockResolvedValue(mockAccount as any)
+    mockDb.account.findFirst.mockResolvedValue(mockAccount)
 
     const accessToken = await SpotifyTokenManager.getSystemAccessToken()
 
@@ -40,18 +48,17 @@ describe('SpotifyTokenManager', () => {
   })
 
   it('should fall back to the first available Spotify account if no system token is designated', async () => {
-    const mockAccount = {
+    const mockAccount: MockAccount = {
       id: '2',
       userId: 'user2',
       provider: 'spotify',
       isSystemToken: false,
       access_token: 'fallback_access_token',
-      // ... other account fields
     }
     // First call for system token returns null, second call for any spotify account returns the mock
     mockDb.account.findFirst
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockAccount as any)
+      .mockResolvedValueOnce(mockAccount)
 
     const accessToken = await SpotifyTokenManager.getSystemAccessToken()
 
@@ -84,15 +91,14 @@ describe('SpotifyTokenManager', () => {
   })
 
   it('should return null if the found account has no access token', async () => {
-    const mockAccount = {
+    const mockAccount: MockAccount = {
       id: '3',
       userId: 'user3',
       provider: 'spotify',
       isSystemToken: true,
       access_token: null, // No access token
-      // ... other account fields
     }
-    mockDb.account.findFirst.mockResolvedValue(mockAccount as any)
+    mockDb.account.findFirst.mockResolvedValue(mockAccount)
 
     const accessToken = await SpotifyTokenManager.getSystemAccessToken()
 

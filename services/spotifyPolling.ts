@@ -3,15 +3,6 @@ import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager' // Changed import
 import logger from '../utils/logger.js'
 
-// (Utility functions like safeParseJSON remain unchanged)
-function safeParseJSON(input: string): unknown {
-  try {
-    return JSON.parse(input)
-  } catch {
-    return input
-  }
-}
-
 type SpotifyCommand =
   | 'PLAY'
   | 'NEXT'
@@ -328,8 +319,8 @@ export class SpotifyPolling {
 
   // Error logging remains the same...
   private async logSpotifyCommandError(
-    command: SpotifyCommand,
-    error: unknown
+    _command: SpotifyCommand,
+    _error: unknown
   ) {
     // ... (This complex error logging function is kept as is)
   }
