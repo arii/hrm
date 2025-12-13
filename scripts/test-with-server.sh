@@ -21,6 +21,14 @@ log() {
 cleanup() {
     EXIT_CODE=$?
     log "🛑 Shutting down server..."
+
+    # Debug: Check if anything is listening on the port
+    if [ $EXIT_CODE -ne 0 ]; then
+        log "--- Port Status ---"
+        lsof -i :${PORT} >&2 || echo "No process listening on port ${PORT}" >&2
+        log "-------------------"
+    fi
+
     pnpm pm2 kill || true
 
     if [ $EXIT_CODE -ne 0 ]; then
@@ -34,10 +42,8 @@ cleanup() {
         fi
 
         log "--- PM2 Application Logs (Tail 100 lines) ---"
-        # Try to show logs from the specific app, fallback to all if name fails
-        # Using direct file access is more reliable if PM2 daemon is dead,
-        # but PM2 command is better if alive. We try PM2 command first.
-        pnpm pm2 logs hrm-server --lines 100 --nostream >&2 || tail -n 100 ~/.pm2/logs/*.log >&2 2>/dev/null || echo "Could not retrieve PM2 logs" >&2
+        # Directly tail the log files to avoid PM2 daemon connection issues
+        tail -n 100 ~/.pm2/logs/*.log >&2 2>/dev/null || echo "Could not retrieve PM2 log files from ~/.pm2/logs/" >&2
         log "---------------------------------------------"
     fi
     exit $EXIT_CODE
@@ -63,8 +69,10 @@ pnpm pm2 kill || true
 
 
 log "🚀 Starting server with PM2 on port ${PORT}..."
-# Start server with `pnpm start`, which uses PM2
-pnpm start > "$SERVER_LOG" 2>&1 &
+# Start server with `pnpm start`, which uses PM2.
+# Do NOT run in background (&) because pm2 start returns immediately,
+# and backgrounding pnpm might cause process group cleanup issues in CI.
+pnpm start > "$SERVER_LOG" 2>&1
 log "✅ Server process started via PM2."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
