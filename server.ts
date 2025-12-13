@@ -25,6 +25,7 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -56,6 +57,34 @@ const expressApp = express()
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
+
+// Secure headers with Helmet
+expressApp.use(helmet())
+expressApp.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://sdk.scdn.co'],
+      // NOTE: 'unsafe-inline' is retained for style-src as it is required by Material-UI for dynamic styling.
+      // This is a known trade-off when using CSS-in-JS libraries.
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: [
+        "'self'",
+        'ws:',
+        'wss:',
+        'https://api.spotify.com',
+        'https://events.mapbox.com',
+      ],
+      imgSrc: ["'self'", 'data:', 'https://i.scdn.co'],
+      frameSrc: ["'self'", 'https://sdk.scdn.co'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  })
+)
 
 // --- Main Application Setup ---
 

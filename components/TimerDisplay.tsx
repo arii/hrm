@@ -106,11 +106,15 @@ const TimerDisplay = ({
           border: '0',
         }}
       >
-        {phase === 'WORK'
-          ? 'Go! Work phase.'
-          : phase === 'REST'
-            ? 'Rest phase.'
-            : ''}
+        {phase === 'PREPARE'
+          ? 'Get ready'
+          : phase === 'WORK'
+            ? 'Work phase started'
+            : phase === 'REST'
+              ? 'Rest phase started'
+              : phase === 'COOLDOWN'
+                ? 'Cooldown phase started'
+                : ''}
       </div>
       {/* Status Indicator */}
       <Box

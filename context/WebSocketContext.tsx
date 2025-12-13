@@ -20,7 +20,7 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
-interface WebSocketState {
+interface AppState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
@@ -28,7 +28,7 @@ interface WebSocketState {
   spotifyServiceInitialized?: boolean
 }
 
-const INITIAL_STATE: WebSocketState = {
+const INITIAL_STATE: AppState = {
   hrmData: [],
   timerData: {
     isRunning: false,
@@ -50,7 +50,7 @@ const INITIAL_STATE: WebSocketState = {
   spotifyServiceInitialized: true,
 }
 
-export interface WebSocketContextType extends WebSocketState {
+export interface WebSocketContextType extends AppState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
@@ -81,25 +81,16 @@ export const WebSocketProvider = ({
   const JITTER_FACTOR = 0.2 // 20% jitter
 
   // Unified State Object managed by a reducer
-  const reducer = (
-    state: WebSocketState,
-    message: ServerMessage
-  ): WebSocketState => {
+  const reducer = (state: AppState, message: ServerMessage): AppState => {
     switch (message.type) {
       case 'INITIAL_STATE':
         return { ...state, ...message.payload }
       case 'HRM_UPDATE':
         return { ...state, hrmData: message.payload }
       case 'TIMER_UPDATE':
-        return {
-          ...state,
-          timerData: { ...state.timerData, ...message.payload },
-        }
+        return { ...state, timerData: message.payload }
       case 'SPOTIFY_UPDATE':
-        return {
-          ...state,
-          spotifyData: { ...state.spotifyData, ...message.payload },
-        }
+        return { ...state, spotifyData: message.payload }
       case 'ACTIVE_ALERTS_UPDATE':
         return { ...state, activeAlerts: message.payload }
       case 'SPOTIFY_SERVICE_INIT_UPDATE':
