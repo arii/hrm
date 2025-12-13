@@ -52,17 +52,12 @@ export class SpotifyPolling {
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
-  // Add cache for context to avoid redundant API calls
-  private lastContextUri: string | null = null
-  private lastContextName: string | null = null
 
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
-    devices: [],
-    contextName: undefined,
-    contextType: undefined,
+    devices: [], // <--- ADDED
   }
 
   private sdk: SpotifyApi | null = null
@@ -258,50 +253,10 @@ export class SpotifyPolling {
 
       const isPlaying = playbackState.is_playing
 
-      let contextName: string | undefined = undefined
-      let contextType: string | undefined = playbackState.context?.type
-
-      // If context exists, resolve its name
-      if (contextType && playbackState.context?.uri) {
-        // Use cache if URI hasn't changed
-        if (this.lastContextUri === playbackState.context.uri) {
-          contextName = this.lastContextName ?? undefined
-        } else {
-          // Fetch new context name
-          try {
-            if (contextType === 'playlist') {
-              const playlist = await this.sdk.playlists.getPlaylist(
-                playbackState.context.uri.split(':').pop()!
-              )
-              contextName = playlist.name
-            } else if (contextType === 'album') {
-              const album = await this.sdk.albums.get(
-                playbackState.context.uri.split(':').pop()!
-              )
-              contextName = album.name
-            } else if (contextType === 'artist') {
-              const artist = await this.sdk.artists.get(
-                playbackState.context.uri.split(':').pop()!
-              )
-              contextName = artist.name
-            }
-            // Update cache
-            this.lastContextUri = playbackState.context.uri
-            this.lastContextName = contextName ?? null
-          } catch (e) {
-            logger.warn({ err: e }, 'Could not fetch Spotify context name')
-            // Clear cache on error
-            this.lastContextUri = null
-            this.lastContextName = null
-          }
-        }
-      }
-
-      // Broadcast if track, state, or context has changed
+      // Only broadcast if track ID or playback state has changed
       if (
         item?.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState ||
-        contextName !== this.state.contextName
+        isPlaying !== this.lastPlaybackState
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
@@ -310,8 +265,6 @@ export class SpotifyPolling {
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
-          contextName,
-          contextType,
         }
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
