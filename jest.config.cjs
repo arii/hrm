@@ -50,6 +50,7 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  globalSetup: '<rootDir>/tests/unit/setup-ports.ts',
 }
 
 module.exports = config
