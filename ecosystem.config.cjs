@@ -13,11 +13,15 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: process.env.PORT, // Pass the PORT environment variable to the process
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET, // Pass NEXTAUTH_SECRET for auth
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL, // Pass NEXTAUTH_URL
       },
       // Redundant but kept for compatibility with existing scripts
       env_production: {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       },
     },
   ],
