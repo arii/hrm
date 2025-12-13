@@ -32,14 +32,10 @@ const HrTile = ({
   maxHr,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
-}: HrT ileProps) => {
+}: HrTileProps) => {
   return (
     <Tooltip
-      title={
-        isAlerting
-          ? alertMessage
-          : `Name: ${name}, BPM: ${bpm}`
-      }
+      title={isAlerting ? alertMessage : `Name: ${name}, BPM: ${bpm}`}
       arrow
     >
       <StyledCard
@@ -114,7 +110,6 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
-    prevProps.percentMax === nextProps.percentMax &&
     prevProps.maxHr === nextProps.maxHr &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
