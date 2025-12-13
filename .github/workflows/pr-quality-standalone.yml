@@ -80,7 +80,6 @@ jobs:
       - name: Create Runtime Envs
         run: |
           mkdir -p logs  coverage playwright-report test-results
-          echo "NEXTAUTH_URL=http://127.0.0.1:3000" > .env.local
           echo "NEXTAUTH_SECRET=ci-secret-${{ env.SESSION_ID }}" >> .env.local
 
       - name: Run Setup Script
