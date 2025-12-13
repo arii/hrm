@@ -2,6 +2,8 @@
 # File: scripts/kill-all.sh
 # Kill all HRM-related processes for clean test runs
 
+PORT="${PORT:-3000}"
+
 echo "🛑 Stopping all HRM processes..."
 
 # Stop PM2 processes
@@ -44,8 +46,8 @@ fi
 sleep 2
 
 # Check if ports are still in use and kill them
-echo "Checking for processes on port 3000..."
-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+echo "Checking for processes on port ${PORT}..."
+lsof -ti:${PORT} | xargs kill -9 2>/dev/null || true
 
 echo "✅ All processes stopped"
 echo ""

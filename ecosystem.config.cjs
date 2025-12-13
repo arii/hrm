@@ -12,10 +12,12 @@ module.exports = {
       // STRICT CHANGE: Default to production immediately
       env: {
         NODE_ENV: 'production',
+        PORT: process.env.PORT, // Pass the PORT environment variable to the process
       },
       // Redundant but kept for compatibility with existing scripts
       env_production: {
         NODE_ENV: 'production',
+        PORT: process.env.PORT,
       },
     },
   ],
