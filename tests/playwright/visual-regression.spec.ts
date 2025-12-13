@@ -273,7 +273,7 @@ test.describe('Visual Regression Tests', () => {
     try {
       await expect(startButton).toBeVisible()
       await startButton.click()
-    } catch (error) {
+    } catch (_error) {
       console.warn('Failed to click start button, retrying...')
       await expect(startButton).toBeVisible()
       await startButton.click()
