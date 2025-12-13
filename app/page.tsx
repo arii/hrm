@@ -14,7 +14,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
+import { useTabataSounds } from '../hooks/useTabataSounds'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 
@@ -49,7 +49,7 @@ const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   useVolumePreference()
-  const { initializeAudio } = useAudio(timerData)
+  const { initializeAudio } = useTabataSounds(timerData)
 
   const handleInteraction = () => {
     if (!audioInitialized) {

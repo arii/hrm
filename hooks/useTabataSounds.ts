@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { TimerData } from '../types/websocket'
 
-export const useAudio = (timerData: TimerData) => {
+export const useTabataSounds = (timerData: TimerData) => {
   const lastSoundEventId = useRef<number>(0)
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export const useAudio = (timerData: TimerData) => {
       timerData.soundEventId !== lastSoundEventId.current
     ) {
       console.log(
-        `[useAudio] Triggering sound: ${timerData.soundToPlay} (Event ID: ${timerData.soundEventId})`
+        `[useTabataSounds] Triggering sound: ${timerData.soundToPlay} (Event ID: ${timerData.soundEventId})`
       )
       lastSoundEventId.current = timerData.soundEventId
 
@@ -27,7 +27,7 @@ export const useAudio = (timerData: TimerData) => {
           break
         default:
           console.warn(
-            `[useAudio] Unknown sound type: ${timerData.soundToPlay}`
+            `[useTabataSounds] Unknown sound type: ${timerData.soundToPlay}`
           )
       }
     }
@@ -35,7 +35,7 @@ export const useAudio = (timerData: TimerData) => {
 
   // Initialize audio on first user interaction
   const initializeAudio = () => {
-    console.log('[useAudio] initializeAudio called')
+    console.log('[useTabataSounds] initializeAudio called')
     audioManager.loadAudio()
   }
 
