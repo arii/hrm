@@ -1,19 +1,19 @@
 // File: tests/playwright/lib/bluetooth-mocks.ts
 import { Page } from '@playwright/test'
 
-type EventListener = (event: { target: { value: DataView } }) => void
-
 export const injectBluetoothMocks = async (page: Page) => {
   await page.addInitScript(() => {
     // 2. Internal State for the Mock
-    const _pairedDevices: MockBluetoothDevice[] = []
+    let _pairedDevices: MockBluetoothDevice[] = []
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic {
+    class MockBluetoothRemoteGATTCharacteristic
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
-      listeners: { [key: string]: EventListener[] } = {}
+      listeners: { [key: string]: MockEventListener[] } = {}
 
       constructor(service: MockBluetoothRemoteGATTService) {
         this.service = service
@@ -27,7 +27,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         return this
       }
 
-      addEventListener(type: string, listener: EventListener) {
+      addEventListener(type: string, listener: MockEventListener) {
         if (!this.listeners[type]) this.listeners[type] = []
         this.listeners[type].push(listener)
       }
@@ -47,7 +47,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTService {
+    class MockBluetoothRemoteGATTService
+      implements MockBluetoothRemoteGATTService
+    {
       device: MockBluetoothDevice
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
@@ -63,7 +65,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTServer {
+    class MockBluetoothRemoteGATTServer
+      implements MockBluetoothRemoteGATTServer
+    {
       device: MockBluetoothDevice
       connected = false
 
@@ -99,7 +103,7 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothDevice {
+    class MockBluetoothDevice implements MockBluetoothDevice {
       id: string
       name: string
       gatt: MockBluetoothRemoteGATTServer
@@ -126,7 +130,7 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // 3. Mock Navigator.Bluetooth
-    const mockBluetooth = {
+    const mockBluetooth: Navigator['bluetooth'] = {
       getAvailability: async () => true,
 
       getDevices: async () => {
@@ -147,18 +151,13 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Inject
-    // @ts-expect-error - Mock is injected in test setup
     navigator.bluetooth = mockBluetooth
-    // @ts-expect-error - Mock is injected in test setup
     window.MockBluetoothDevice = MockBluetoothDevice
-    // @ts-expect-error - Mock is injected in test setup
     window.bluetoothTestHelpers = {
-      simulateHeartRate: (bpm: number) => {
+      simulateHeartRate: async (bpm: number) => {
         if (_connectedDevice && _connectedDevice.gatt.connected) {
-          // We assume the implementation gets the primary service and characteristic
-          // This is a simplification; a real mock might track created services
-          const service = new MockBluetoothRemoteGATTService(
-            _connectedDevice,
+          // Simulate the app's actual retrieval path
+          const service = await _connectedDevice.gatt.getPrimaryService(
             'heart_rate'
           )
           service.characteristic.emitValue(bpm)

@@ -23,7 +23,6 @@ test.describe('Bluetooth HRM Connection', () => {
 
     // Simulate receiving a heart rate value to complete the connection flow
     await connectPage.evaluate(() => {
-      // @ts-expect-error - Mock is injected in test setup
       window.bluetoothTestHelpers.simulateHeartRate(78)
     })
 
@@ -53,14 +52,11 @@ test.describe('Bluetooth HRM Connection', () => {
       },
     ])
     await connectPage.evaluate(() => {
-      // @ts-expect-error - Mock is injected in test setup
       const badDevice = new window.MockBluetoothDevice(
         'stale-device-id',
         'Stale HRM'
       )
-      // @ts-expect-error - Mock is injected in test setup
       badDevice._shouldFailConnection = true
-      // @ts-expect-error - Mock is injected in test setup
       navigator.bluetooth.getDevices = async () => [badDevice]
     })
 
@@ -81,7 +77,6 @@ test.describe('Bluetooth HRM Connection', () => {
     // and then pop a new device picker. Our mock resolves this picker instantly
     // with a *new*, working device. We then simulate its heart rate.
     await connectPage.evaluate(() => {
-      // @ts-expect-error - Mock is injected in test setup
       window.bluetoothTestHelpers.simulateHeartRate(88)
     })
 
@@ -104,7 +99,6 @@ test.describe('Bluetooth HRM Connection', () => {
 
     // Simulate heart rate to complete connection
     await connectPage.evaluate(() => {
-      // @ts-expect-error - Mock is injected in test setup
       window.bluetoothTestHelpers.simulateHeartRate(75)
     })
 
