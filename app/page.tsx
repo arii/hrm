@@ -7,9 +7,9 @@
 'use client'
 import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
+import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
@@ -22,7 +22,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
 const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
   ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={80} />, // Optional: Render nothing while loading to avoid layout shift
+  loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
 })
 
 const DOC_URL =
@@ -32,13 +32,13 @@ const WorkoutTableViewer = dynamic(
   () => import('../components/WorkoutTableViewer'),
   {
     ssr: false,
-    loading: () => <Skeleton variant="rectangular" height={500} />,
+    loading: () => <DashboardSectionLoadingSkeleton height={500} />,
   }
 )
 
 const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
   ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={500} />,
+  loading: () => <DashboardSectionLoadingSkeleton height={500} />,
 })
 
 const DOC_ID =

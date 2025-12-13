@@ -5,8 +5,8 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
+import DashboardSectionLoadingSkeleton from './DashboardSectionLoadingSkeleton'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -59,18 +59,10 @@ const HrmTiles = () => {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
+          <DashboardSectionLoadingSkeleton height={220} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
+          <DashboardSectionLoadingSkeleton height={220} />
         </Grid>
       </>
     )
