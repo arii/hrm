@@ -44,6 +44,12 @@ export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:${PORT}"
 
+# Ensure build exists
+if [ ! -f "dist/server.mjs" ]; then
+    log "📦 Build artifact not found. Building server..."
+    pnpm run build:server
+fi
+
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
