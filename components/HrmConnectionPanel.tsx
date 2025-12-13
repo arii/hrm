@@ -2,11 +2,9 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
-import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import { useUserPreferences } from '@/hooks/useUserPreferences'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
@@ -24,10 +22,10 @@ const HrmConnectionPanel = () => {
     isConnected,
     isSupported,
   } = useBluetoothHRM()
-  const { user } = useUserPreferences()
 
   const handleConnect = () => {
-    connectAndStream(user.name, user.age.toString())
+    // TODO: Get user name and age from a reliable source
+    connectAndStream('Local User', '30')
   }
 
   const filteredTiles = useMemo(() => {
@@ -51,13 +49,16 @@ const HrmConnectionPanel = () => {
         )
 
         return (
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            lg={3}
+          <Box
             key={user.clientId}
             data-testid="hr-tile-grid-item"
+            sx={{
+              width: {
+                xs: '100%',
+                sm: 'calc(50% - 8px)',
+                lg: 'calc(25% - 12px)',
+              },
+            }}
           >
             <HrTile
               name={user.name || ''}
@@ -66,7 +67,7 @@ const HrmConnectionPanel = () => {
               isAlerting={!!matchingAlert}
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
-          </Grid>
+          </Box>
         )
       })
   }, [hrmData, activeAlerts])
@@ -81,47 +82,45 @@ const HrmConnectionPanel = () => {
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
-        <Grid item xs={12} md={6}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-              height: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-            <HRMonitorStatusIndicator
-              deviceStatus={deviceStatus}
-              batteryLevel={batteryLevel}
-            />
-            <ConnectHRMonitorButton
-              connect={handleConnect}
-              disconnect={disconnect}
-              isConnected={isConnected}
-              isSupported={isSupported}
-            />
-          </Box>
-        </Grid>
-        <Grid
-          item
-          xs={12}
-          sm={6}
-          lg={3}
+        <Box
+          sx={{
+            width: { xs: '100%', md: 'calc(50% - 8px)' },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            p: 2,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            height: '100%',
+            justifyContent: 'center',
+          }}
+        >
+          <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
+          <HRMonitorStatusIndicator
+            deviceStatus={deviceStatus}
+            batteryLevel={batteryLevel}
+          />
+          <ConnectHRMonitorButton
+            connect={handleConnect}
+            disconnect={disconnect}
+            isConnected={isConnected}
+            isSupported={isSupported}
+          />
+        </Box>
+        <Box
           data-testid="hr-tile-grid-item"
-          sx={{ display: { xs: 'none', md: 'block' } }}
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            width: { sm: 'calc(50% - 8px)', lg: 'calc(25% - 12px)' },
+          }}
         >
           <Skeleton
             variant="rectangular"
             height={220}
             sx={{ borderRadius: 3 }}
           />
-        </Grid>
+        </Box>
       </>
     )
   }
