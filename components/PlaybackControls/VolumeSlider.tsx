@@ -56,7 +56,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
           '& .M_uiSlider-track': { height: 3 },
           '& .MuiSlider-rail': { height: 3 },
         }}
-        aria-labelledby="volume-slider"
+        aria-label="Volume"
       />
     </Stack>
   )

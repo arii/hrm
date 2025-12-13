@@ -26,6 +26,7 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
         min={0}
         max={100}
         size="small"
+        aria-label="Volume"
         sx={{
           color: '#1DB954',
           '& .MuiSlider-thumb': {
