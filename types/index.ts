@@ -57,3 +57,5 @@ export interface SpotifyPlaylist {
   name: string
   uri: string
 }
+
+export * from './github';
