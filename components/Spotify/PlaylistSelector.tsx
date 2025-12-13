@@ -3,7 +3,6 @@ import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
-import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
@@ -20,6 +19,7 @@ import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
+import { useError } from '@/context/ErrorContext'
 
 interface PlaylistItemProps {
   playlist: Playlist
@@ -135,18 +135,17 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const [searchResults, setSearchResults] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null
   )
+  const { addError } = useError()
 
   const debouncedSearch = useDebounce(searchQuery, 500)
 
   useEffect(() => {
     const fetchPlaylists = async () => {
       setLoading(true)
-      setError(null)
       try {
         const response = await fetch(API_SPOTIFY_PLAYLISTS)
         if (!response.ok) {
@@ -164,17 +163,15 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         setPresetPlaylists(presets)
         setUserPlaylists(user)
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to fetch playlists'
-        setError(message)
         console.error('Error fetching playlists:', error)
+        addError('Failed to fetch playlists. Please try again.')
       } finally {
         setLoading(false)
       }
     }
 
     fetchPlaylists()
-  }, [])
+  }, [addError])
 
   // Fetch search results when user types
   useEffect(() => {
@@ -196,6 +193,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         setSearchResults(data.items || [])
       } catch (error) {
         console.error('Error searching playlists:', error)
+        addError('Failed to search playlists. Please try again.')
         setSearchResults([])
       } finally {
         setSearchLoading(false)
@@ -203,7 +201,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
 
     fetchSearchResults()
-  }, [debouncedSearch])
+  }, [debouncedSearch, addError])
 
   const allPlaylists = useMemo(() => {
     return [...presetPlaylists, ...userPlaylists]
@@ -253,14 +251,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         <CircularProgress />
         <Typography sx={{ ml: 2 }}>Loading playlists...</Typography>
       </Box>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error}
-      </Alert>
     )
   }
 

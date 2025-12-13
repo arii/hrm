@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyExecutionMessage } from '@/types/websocket'
+import { useError } from '@/context/ErrorContext'
 
 // Define the shape of the player object from useSpotifyWebPlayback hook
 interface SpotifyPlayerInstance {
@@ -22,6 +23,7 @@ export const useSpotifyRemoteExecution = (
   player: SpotifyPlayerInstance | null
 ): void => {
   const { sendData } = useWebSocket()
+  const { addError } = useError()
 
   useEffect(() => {
     if (!player) return
@@ -31,32 +33,34 @@ export const useSpotifyRemoteExecution = (
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
-    const handleCustomEvent = (event: CustomEvent) => {
-      const message = event.detail as SpotifyExecutionMessage
+    const handleCustomEvent = async (event: Event) => {
+      const customEvent = event as CustomEvent
+      const message = customEvent.detail as SpotifyExecutionMessage
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
         try {
+          let response: Response | undefined
+
           switch (command) {
             case 'PLAY':
             case 'PAUSE':
-              // Use the Spotify Web API for playback control
-              fetch('/api/spotify/control', {
+              response = await fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: command }),
               })
               break
             case 'NEXT':
-              fetch('/api/spotify/control', {
+              response = await fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'NEXT' }),
               })
               break
             case 'PREVIOUS':
-              fetch('/api/spotify/control', {
+              response = await fetch('/api/spotify/control', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'PREVIOUS' }),
@@ -66,8 +70,8 @@ export const useSpotifyRemoteExecution = (
               if (volume !== undefined) {
                 // Use both the local player and the API for volume control
                 const vol = volume > 1 ? volume / 100 : volume
-                player.setVolume(vol)
-                fetch('/api/spotify/control', {
+                await player.setVolume(vol)
+                response = await fetch('/api/spotify/control', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -80,7 +84,7 @@ export const useSpotifyRemoteExecution = (
               break
             case 'TRANSFER_PLAYBACK':
               if (deviceId) {
-                fetch('/api/spotify/control', {
+                response = await fetch('/api/spotify/control', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'TRANSFER', deviceId }),
@@ -88,27 +92,33 @@ export const useSpotifyRemoteExecution = (
               }
               break
           }
+
+          if (response && !response.ok) {
+            const errorData = await response.json()
+            throw new Error(
+              errorData.message || `Spotify command '${command}' failed`
+            )
+          }
         } catch (execError) {
           console.error('[Dashboard] Command execution failed:', execError)
+          const message =
+            execError instanceof Error
+              ? execError.message
+              : 'An unknown error occurred'
+          addError(`Spotify Error: ${message}`)
         }
       }
     }
 
     if (typeof window !== 'undefined') {
-      window.addEventListener(
-        'spotify-remote-command',
-        handleCustomEvent as EventListener
-      )
+      window.addEventListener('spotify-remote-command', handleCustomEvent)
 
       return () => {
-        window.removeEventListener(
-          'spotify-remote-command',
-          handleCustomEvent as EventListener
-        )
+        window.removeEventListener('spotify-remote-command', handleCustomEvent)
       }
     }
 
     // Return undefined explicitly for server-side rendering
     return undefined
-  }, [player, sendData])
+  }, [player, sendData, addError])
 }
