@@ -152,6 +152,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           throw new Error('Failed to fetch playlists')
         }
         const data = await response.json()
+        console.log('--- TEST DATA ---', JSON.stringify(data));
         const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
           ...p,
           isPreset: true,

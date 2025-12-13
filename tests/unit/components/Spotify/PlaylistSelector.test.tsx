@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 // tests/unit/components/Spotify/PlaylistSelector.test.tsx
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
@@ -26,55 +29,42 @@ describe('PlaylistSelector', () => {
   it('should fetch and display playlists on render', async () => {
     render(
       <ErrorProvider>
-        <PlaylistSelector
-          onPlaylistSelected={jest.fn()}
-          onPlaylistPlay={jest.fn()}
-        />
+        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={jest.fn()} />
       </ErrorProvider>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText('Preset Playlist 1')).toBeInTheDocument()
-      expect(screen.getByText('User Playlist 1')).toBeInTheDocument()
-    })
+    expect(await screen.findByText(/Preset Playlist 1/i)).toBeInTheDocument()
+    expect(await screen.findByText(/User Playlist 1/i)).toBeInTheDocument()
   })
 
   it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
     const onPlaylistSelected = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector
-          onPlaylistSelected={onPlaylistSelected}
-          onPlaylistPlay={jest.fn()}
-        />
+        <PlaylistSelector onPlaylistSelected={onPlaylistSelected} onPlaylistPlay={jest.fn()} />
       </ErrorProvider>
     )
 
-    await waitFor(() => {
-      fireEvent.click(screen.getByText('User Playlist 1'))
-      expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
-    })
+    const userPlaylistItem = await screen.findByText(/User Playlist 1/i)
+    fireEvent.click(userPlaylistItem)
+    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
   })
 
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
     const onPlaylistPlay = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector
-          onPlaylistSelected={jest.fn()}
-          onPlaylistPlay={onPlaylistPlay}
-        />
+        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={onPlaylistPlay} />
       </ErrorProvider>
     )
 
-    await waitFor(() => {
-      // Find the play button associated with "Preset Playlist 1"
-      const playlistItem = screen.getByText('Preset Playlist 1').closest('li')
-      const playButton = playlistItem?.querySelector('[aria-label="play"]')
-      if (playButton) {
-        fireEvent.click(playButton)
-      }
-      expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
-    })
+    const presetPlaylistItem = await screen.findByText(/Preset Playlist 1/i)
+    // Find the play button associated with "Preset Playlist 1"
+    const playlistItem = presetPlaylistItem.closest('li')
+    const playButton = playlistItem?.querySelector('[aria-label="play"]')
+    if (playButton) {
+      fireEvent.click(playButton)
+    }
+    expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
   })
 })
