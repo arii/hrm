@@ -25,7 +25,7 @@
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
     "test:unit": "jest tests/unit --coverage",
-    "test:backend:port": "jest tests/unit/socketManager.test.ts tests/unit/spotifyPolling.test.ts tests/unit/tabataTimer.test.ts tests/unit/services",
+    "test:backend:port": "jest tests/unit/socketManager.test.ts tests/unit/spotifyPolling.test.ts tests/unit/tabataTimer.test.ts 'tests/unit/services/**/*.test.ts'",
     "test:websocket:port": "jest tests/unit/socketManager.test.ts",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
