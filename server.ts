@@ -35,7 +35,7 @@ const hostname =
 
 const dev = process.env.NODE_ENV !== 'production'
 
-// --- Production Security Check ---
+// === CRITICAL SECURITY CHECK ===
 // Ensure NEXTAUTH_SECRET is present in production to prevent runtime errors
 if (!dev && !process.env.NEXTAUTH_SECRET) {
   console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
