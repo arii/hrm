@@ -26,8 +26,8 @@ export const useSpotifyRemoteExecution = (
   const { addError } = useError()
 
   const handleCustomEvent = useCallback(
-    async (event: CustomEvent) => {
-      const message = event.detail as SpotifyExecutionMessage
+    async (event: Event) => {
+      const message = (event as CustomEvent<SpotifyExecutionMessage>).detail
       if (message.type !== 'EXECUTE_SPOTIFY') return
 
       const { command, volume, deviceId } = message.payload
@@ -115,7 +115,7 @@ export const useSpotifyRemoteExecution = (
               `Spotify command '${command}' failed with status ${response.status}.`
           )
         }
-      } catch (execError: any) {
+      } catch (execError: unknown) {
         console.error(
           `[Dashboard] Command execution for '${command}' failed:`,
           execError
