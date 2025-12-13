@@ -240,7 +240,12 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Start streaming the mock data
-    await mockPage.getByRole('button', { name: 'START', exact: true }).click()
+    const startButton = mockPage.getByRole('button', {
+      name: 'START',
+      exact: true,
+    })
+    await expect(startButton).toBeVisible()
+    await startButton.click()
 
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
