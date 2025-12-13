@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, GoogleGenerativeAIError } from '@google/generative-ai';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 
@@ -23,8 +23,9 @@ async function main() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-1.5-flash as a standard efficient model
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  // Using gemini-1.5-flash-001 as a standard efficient model version that is widely available
+  const modelName = 'gemini-1.5-flash-001';
+  const model = genAI.getGenerativeModel({ model: modelName });
 
   let contextContent = '';
   for (const file of contextFiles) {
@@ -68,8 +69,7 @@ ${task}
     const text = result.response.text();
     await writeOutput(text, outputFile);
   } catch (error) {
-    console.error('Error generating content:', error);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -160,8 +160,7 @@ async function runReviewPreset(model: any, contextContent: string, outputFile: s
     const text = result.response.text();
     await writeOutput(text, outputFile);
   } catch (error) {
-    console.error('Error generating content:', error);
-    process.exit(1);
+    handleError(error);
   }
 }
 
@@ -172,6 +171,19 @@ async function writeOutput(content: string, outputFile: string | null) {
   } else {
     console.log(content);
   }
+}
+
+function handleError(error: any) {
+  console.error('Error generating content:', error);
+  if (error instanceof GoogleGenerativeAIError) {
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.error('\nPOSSIBLE CAUSE: The model "gemini-1.5-flash-001" might not be available for your API key or region.');
+      console.error('Please check your Google AI Studio account and ensure you have access to this model.');
+      // Note: The SDK does not seem to expose a simple public listModels method on the client instance directly
+      // in the type definitions we inspected, so we are providing this guidance instead.
+    }
+  }
+  process.exit(1);
 }
 
 main();
