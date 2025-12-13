@@ -3,9 +3,6 @@ import { test, expect } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 
 test.describe('Bluetooth HRM Connection', () => {
-  // Increase the timeout for this specific test file due to the slow server warm-up fixture
-  test.setTimeout(30000)
-
   test.beforeEach(async ({ connectPage }) => {
     await injectBluetoothMocks(connectPage)
     await connectPage.goto('/client/connect')
