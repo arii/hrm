@@ -2,12 +2,10 @@
 
 // We use `interface` with no members for forward declaration.
 // This is a common pattern for defining complex, interdependent types.
-interface MockBluetoothDevice {
-  _brand: 'MockBluetoothDevice'
-}
-interface MockBluetoothRemoteGATTService {
-  _brand: 'MockBluetoothRemoteGATTService'
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface MockBluetoothDevice {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface MockBluetoothRemoteGATTService {}
 
 // Type for the mock characteristic, representing a GATT characteristic.
 interface MockBluetoothRemoteGATTCharacteristic {
