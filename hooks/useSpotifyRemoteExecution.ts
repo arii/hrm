@@ -116,7 +116,10 @@ export const useSpotifyRemoteExecution = (
           )
         }
       } catch (execError: unknown) {
-        console.error('[Dashboard] Command execution failed:', execError)
+        console.error(
+          `[Dashboard] Command execution for '${command}' failed:`,
+          execError
+        )
         addError(
           (execError as Error).message ||
             'An unexpected error occurred during Spotify operation.'
