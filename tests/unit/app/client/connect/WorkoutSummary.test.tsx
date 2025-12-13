@@ -4,14 +4,19 @@
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import WorkoutSummary from '../../../../../app/client/connect/WorkoutSummary'
+import {
+  CALORIES_LABEL,
+  DURATION_LABEL,
+  WORKOUT_SUMMARY_TITLE,
+} from '../../../../../constants/ui'
 
 describe('WorkoutSummary', () => {
   it('should render the duration and calories burned', () => {
     render(<WorkoutSummary duration="01:23:45" caloriesBurned="345" />)
-    expect(screen.getByText('Workout Summary')).toBeInTheDocument()
-    expect(screen.getByText('Duration')).toBeInTheDocument()
+    expect(screen.getByText(WORKOUT_SUMMARY_TITLE)).toBeInTheDocument()
+    expect(screen.getByText(DURATION_LABEL)).toBeInTheDocument()
     expect(screen.getByText('01:23:45')).toBeInTheDocument()
-    expect(screen.getByText('Calories (est.)')).toBeInTheDocument()
+    expect(screen.getByText(CALORIES_LABEL)).toBeInTheDocument()
     expect(screen.getByText('345')).toBeInTheDocument()
   })
 
