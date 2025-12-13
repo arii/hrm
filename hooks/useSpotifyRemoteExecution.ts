@@ -57,11 +57,6 @@ export const useSpotifyRemoteExecution = (
               if (player) {
                 player.setVolume(volume / 100).catch((e: Error) => {
                   console.error('Error setting local volume:', e)
-                  addError(
-                    `Failed to set volume on local player: ${
-                      e.message || 'unknown error'
-                    }.`
-                  )
                 })
               }
               response = await fetch('/api/spotify/control', {
@@ -120,10 +115,20 @@ export const useSpotifyRemoteExecution = (
           `[Dashboard] Command execution for '${command}' failed:`,
           execError
         )
-        addError(
-          (execError as Error).message ||
-            'An unexpected error occurred during Spotify operation.'
-        )
+        let errorMessage = 'An unexpected error occurred during Spotify operation.'
+        if (execError instanceof Error) {
+          errorMessage = execError.message
+        } else if (typeof execError === 'string') {
+          errorMessage = execError
+        } else if (
+          typeof execError === 'object' &&
+          execError !== null &&
+          'message' in execError &&
+          typeof (execError as { message: unknown }).message === 'string'
+        ) {
+          errorMessage = (execError as { message: string }).message
+        }
+        addError(errorMessage)
       }
     },
     [addError, player]

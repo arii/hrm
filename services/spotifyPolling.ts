@@ -291,7 +291,7 @@ export class SpotifyPolling {
         type: 'SPOTIFY_API_ERROR',
         payload: {
           message:
-            'Failed to get current playback state. Please try again later.',
+            'Could not get current playback state. Please check your Spotify app.',
         },
       })
     }
@@ -330,8 +330,7 @@ export class SpotifyPolling {
       this.broadcastUpdate({
         type: 'SPOTIFY_API_ERROR',
         payload: {
-          message:
-            'Failed to refresh Spotify devices. Please check your connection.',
+          message: 'Could not refresh Spotify devices. Please try again.',
         },
       })
     }
@@ -362,7 +361,7 @@ export class SpotifyPolling {
         this.broadcastUpdate({
           type: 'SPOTIFY_API_ERROR',
           payload: {
-            message: `Spotify command ${command} failed. Please try again.`,
+            message: `Spotify command ${command} failed. Please check your Spotify app.`,
           },
         })
       }
