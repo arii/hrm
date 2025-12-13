@@ -4,7 +4,6 @@ import { useState } from 'react'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
-import { formatDuration } from '../../../utils/formatters'
 import ConnectView from './ConnectView'
 
 export default function ConnectPage() {
@@ -22,7 +21,7 @@ export default function ConnectPage() {
     isSupported, // Ensure this is destructured
   } = useBluetoothHRM()
 
-  const { connectionStatus, hrmData, timerData } = useWebSocket()
+  const { connectionStatus, hrmData } = useWebSocket()
 
   const handleConnect = () => {
     connectAndStream(userName, userAge)
@@ -34,8 +33,6 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      workoutDuration={formatDuration(timerData.timeElapsed)}
-      caloriesBurned={timerData.caloriesBurned}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}

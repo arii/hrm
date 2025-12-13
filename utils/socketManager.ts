@@ -180,6 +180,16 @@ const handleIncomingMessage = (
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
             hrmClients.get(clientId)
           )
+          if (tabataServiceInstance) {
+            const hrmUpdate: { age?: number; heartRate?: number } = {}
+            if (message.data.age !== undefined) {
+              hrmUpdate.age = message.data.age
+            }
+            if (message.data.value != null) {
+              hrmUpdate.heartRate = message.data.value
+            }
+            tabataServiceInstance.updateHrmData(hrmUpdate)
+          }
         }
         broadcast({
           type: 'HRM_UPDATE',

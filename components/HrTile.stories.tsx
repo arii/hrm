@@ -19,6 +19,7 @@ export const Resting: Story = {
     name: 'User 1',
     bpm: 65,
     percentMax: 35,
+    isAlerting: false,
   },
 }
 
@@ -27,6 +28,7 @@ export const HighIntensity: Story = {
     name: 'Athlete A',
     bpm: 185,
     percentMax: 95,
+    isAlerting: false,
   },
 }
 
@@ -35,5 +37,6 @@ export const LongNameTruncation: Story = {
     name: 'Christopher "The Machine" Richardson',
     bpm: 120,
     percentMax: 60,
+    isAlerting: false,
   },
 }

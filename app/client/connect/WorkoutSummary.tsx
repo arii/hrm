@@ -4,7 +4,6 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
 import TimerIcon from '@mui/icons-material/Timer'
-import { useTheme } from '@mui/material/styles'
 
 interface WorkoutSummaryProps {
   duration: string
@@ -15,7 +14,6 @@ export default function WorkoutSummary({
   duration,
   caloriesBurned,
 }: WorkoutSummaryProps) {
-  const theme = useTheme()
   return (
     <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom align="center">
@@ -46,9 +44,7 @@ export default function WorkoutSummary({
             spacing={1}
             color="text.secondary"
           >
-            <LocalFireDepartmentIcon
-              sx={{ color: theme.palette.primary.main }}
-            />
+            <LocalFireDepartmentIcon sx={{ color: 'primary.main' }} />
             <Typography variant="h5">{caloriesBurned.toFixed(0)}</Typography>
           </Stack>
           <Typography variant="caption">Calories</Typography>

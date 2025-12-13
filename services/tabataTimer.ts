@@ -31,6 +31,8 @@ interface DualModeTimerState {
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
   caloriesBurned: number
+  age?: number
+  currentHeartRate?: number
 }
 
 class TabataTimer {
@@ -109,6 +111,11 @@ class TabataTimer {
 
   // --- Core Timer Logic ---
 
+  public updateHrmData(data: { age?: number; heartRate?: number }) {
+    if (data.age) this.timerState.age = data.age
+    if (data.heartRate) this.timerState.currentHeartRate = data.heartRate
+  }
+
   private updateTimer = () => {
     if (!this.timerState.isRunning || !this.startTime) return
 
@@ -119,9 +126,23 @@ class TabataTimer {
       // COUNT UP (STOPWATCH)
       const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
       this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
-      // TODO: Implement a more accurate calorie expenditure model.
-      // This is a placeholder calculation.
-      this.timerState.caloriesBurned = this.timerState.timeElapsed * 0.1
+      // Calorie calculation using heart rate and age
+      if (
+        this.timerState.age &&
+        this.timerState.currentHeartRate &&
+        this.timerState.currentHeartRate > 0
+      ) {
+        // Formula for men: C = ((-55.0969 + (0.6309 * H) + (0.1988 * W) + (0.2017 * A)) / 4.184) * 60 * T
+        // Using average weight (70kg) and assuming male for this placeholder
+        // TODO: Allow user to set weight and gender for a more accurate calculation
+        const caloriesPerMinute =
+          (-55.0969 +
+            0.6309 * this.timerState.currentHeartRate +
+            0.1988 * 70 +
+            0.2017 * this.timerState.age) /
+          4.184
+        this.timerState.caloriesBurned += caloriesPerMinute / 60
+      }
     }
 
     // This applies to TABATA and PREPARE modes (which count down)

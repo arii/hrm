@@ -44,6 +44,7 @@
     "tests/playwright",
     "playwright.config.ts",
     ".stories",
-    "**/*.stories.tsx"
+    "**/*.stories.tsx",
+    "scripts"
   ]
 }
