@@ -19,8 +19,8 @@ const ToastContainer: React.FC = () => {
       sx={{
         position: 'fixed',
         zIndex: 1400,
-        right: '24px',
-        bottom: '24px',
+        right: (theme) => theme.spacing(3),
+        bottom: (theme) => theme.spacing(3),
       }}
     >
       {toasts.map((toast, index) => (

@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import Alert, { AlertColor } from '@mui/material/Alert'
+import { useTheme } from '@mui/material/styles'
 
 interface ToastProps {
   id: number
@@ -22,6 +23,7 @@ const Toast: React.FC<ToastProps> = ({
   index,
 }) => {
   const [open, setOpen] = useState(true)
+  const theme = useTheme()
 
   const handleClose = (
     event?: React.SyntheticEvent | Event,
@@ -38,11 +40,6 @@ const Toast: React.FC<ToastProps> = ({
     onClose(id)
   }
 
-  // Set open to true when the component mounts or the id changes
-  useEffect(() => {
-    setOpen(true)
-  }, [id])
-
   return (
     <Snackbar
       open={open}
@@ -50,7 +47,9 @@ const Toast: React.FC<ToastProps> = ({
       onClose={handleClose}
       TransitionProps={{ onExited: handleExited }}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      style={{ bottom: `${20 + index * 70}px` }} // Stack toasts vertically
+      style={{
+        bottom: `${theme.spacing(2.5) + index * parseInt(theme.spacing(8.75))}`,
+      }} // Stack toasts vertically
     >
       <Alert
         onClose={handleClose}
