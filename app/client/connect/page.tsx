@@ -22,6 +22,11 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
 import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
+import {
+  formatDurationHHMMSS,
+  calculateCaloriesBurned,
+} from '@/utils/fitnessCalculations'
+import WorkoutSummary from '@/components/WorkoutSummary'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -118,35 +123,9 @@ export default function ConnectPage() {
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   // *** NEW: Workout Metrics Calculations ***
-  const formatDuration = (totalSeconds: number): string => {
-    const seconds = Math.floor(totalSeconds)
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${remainingSeconds}s`
-    }
-    return `${minutes}m ${remainingSeconds}s`
-  }
-
-  const calculateEstimatedCalories = (
-    hr: number,
-    age: number,
-    weightKg: number,
-    timeSeconds: number
-  ): number => {
-    if (hr <= 0 || timeSeconds <= 0 || weightKg <= 0) return 0
-    const timeMinutes = timeSeconds / 60
-    let kcalPerMinute =
-      (age * 0.2017 + weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
-    kcalPerMinute = Math.max(0.5, kcalPerMinute)
-    return Math.max(0, kcalPerMinute * timeMinutes)
-  }
-
   const totalTimeSeconds = workoutDuration
-  const formattedDuration = formatDuration(totalTimeSeconds)
-  const estimatedCalories = calculateEstimatedCalories(
+  const formattedDuration = formatDurationHHMMSS(totalTimeSeconds)
+  const estimatedCalories = calculateCaloriesBurned(
     currentHR,
     age,
     weight,
@@ -225,51 +204,10 @@ export default function ConnectPage() {
                   </Typography>
                 </Box>
               </Paper>
-              {/* *** NEW: Display Workout Duration and Calories *** */}
-              <Box
-                sx={{
-                  mt: 3,
-                  p: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Workout Summary
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body1" fontWeight="bold">
-                    Duration:
-                  </Typography>
-                  <Typography variant="body1" data-testid="workout-duration">
-                    {formattedDuration}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1" fontWeight="bold">
-                    Est. Calories Burned:
-                  </Typography>
-                  <Typography variant="body1" data-testid="estimated-calories">
-                    {formattedCalories} Kcal
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', mt: 1 }}
-                >
-                  * Calorie estimate is based on your provided heart rate, age,
-                  and weight.
-                </Typography>
-              </Box>
-              {/* ************************************************** */}
+              <WorkoutSummary
+                formattedDuration={formattedDuration}
+                formattedCalories={formattedCalories}
+              />
               {/* 4. Disconnect (Pushed to bottom) */}
               <Box sx={{ mt: 'auto' }}>
                 <Button
