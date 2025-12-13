@@ -1,9 +1,10 @@
+import { Typography, Box } from '@mui/material';
+
 const MaxHeartRateDisplay = () => {
   return (
-    <div>
-      <p>Max Heart Rate: <strong>-- bpm</strong></p>
-    </div>
+    <Box>
+      <Typography variant="body1">Max Heart Rate: <Typography component="strong" variant="body1">-- bpm</Typography></Typography>
+    </Box>
   );
 };
-
 export default MaxHeartRateDisplay;

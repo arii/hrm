@@ -1,9 +1,10 @@
+import { Typography, Box } from '@mui/material';
+
 const CaloriesBurnedDisplay = () => {
   return (
-    <div>
-      <p>Calories Burned: <strong>-- kcal</strong></p>
-    </div>
+    <Box>
+      <Typography variant="body1">Calories Burned: <Typography component="strong" variant="body1">-- kcal</Typography></Typography>
+    </Box>
   );
 };
-
 export default CaloriesBurnedDisplay;
