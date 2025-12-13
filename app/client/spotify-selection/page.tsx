@@ -15,7 +15,6 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useEffect, useState, useCallback } from 'react'
-import VolumeSlider from '../../../components/PlaybackControls/VolumeSlider'
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -75,7 +74,7 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { volume } = useVolumePreference()
   const debouncedVolume = useDebounce(volume, 500)
 
   const handlePlaylistSelected = (uri: string) => {
