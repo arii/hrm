@@ -1,0 +1,49 @@
+name: Gemini Dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task description'
+        required: true
+      context_files:
+        description: 'Comma-separated list of context files'
+        required: false
+        default: 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch_task:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create Task File
+        env:
+          TASK_INPUT: ${{ inputs.task }}
+        run: echo "$TASK_INPUT" > task_input.txt
+
+      - name: Run Gemini Task
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CONTEXT_INPUT: ${{ inputs.context_files }}
+        run: |
+          npx tsx scripts/gemini-client.ts \
+            --task-file "task_input.txt" \
+            --context "$CONTEXT_INPUT" \
+            --output "dispatch_result.md"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-result
+          path: dispatch_result.md
