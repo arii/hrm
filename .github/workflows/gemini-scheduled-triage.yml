@@ -1,0 +1,62 @@
+name: Gemini Scheduled Triage
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Weekly on Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scheduled_triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch Stale Issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue list --state open --limit 100 --json number,title,updatedAt,url > issues.json
+
+      - name: Create Task Input
+        run: |
+          echo "Analyze these open issues and identify stale ones (older than 30 days) or those needing attention based on project goals. Suggest actions. Issues:" > task_input.txt
+          cat issues.json >> task_input.txt
+
+      - name: Run Gemini Analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SCHEDULED_CONTEXT_FILES: ${{ vars.SCHEDULED_CONTEXT_FILES || 'README.md,FRONTEND_IMPROVEMENT_PLAN.md' }}
+        run: |
+          npx tsx scripts/gemini-client.ts \
+            --task-file "task_input.txt" \
+            --context "$SCHEDULED_CONTEXT_FILES" \
+            --output "report.md"
+
+      - name: Create Report Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+             const fs = require('fs');
+             try {
+               const body = fs.readFileSync('report.md', 'utf8');
+               await github.rest.issues.create({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 title: 'Weekly Gemini Triage Report',
+                 body: body
+               });
+             } catch (e) {
+               console.error('No report generated:', e);
+               core.setFailed('Failed to create triage report');
+             }
