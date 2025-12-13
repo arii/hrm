@@ -15,8 +15,8 @@ The agent's work is guided by the following principles:
 1.  **Relevance Assessment**: Review open and recently closed issues to determine if they are still relevant. Issues can become obsolete due to architectural shifts, feature deprecation, or dependency changes.
 2.  **Actionability Check**: Every issue should represent a concrete, actionable task. The agent will flag issues that are vague, lack sufficient detail, or have unclear acceptance criteria.
 3.  **Consolidation & Atomization**:
-    *   **Consolidate**: Identify and merge duplicate issues, preserving important context and linking the original issues.
-    *   **Atomize**: Break down large, monolithic "epic" issues into smaller, more manageable sub-tasks, often represented as a checklist in a primary tracking issue.
+    - **Consolidate**: Identify and merge duplicate issues, preserving important context and linking the original issues.
+    - **Atomize**: Break down large, monolithic "epic" issues into smaller, more manageable sub-tasks, often represented as a checklist in a primary tracking issue.
 4.  **Contextual Updates**: Enrich existing issues with new information. If a recent PR or code change impacts an open issue, the agent will add comments, code snippets, or link to the relevant commits to provide up-to-date context for the developer who will eventually work on it.
 5.  **Lifecycle Management**: Propose the closure of issues that are resolved but not closed, confirmed as obsolete, or deemed out of scope.
 
@@ -68,6 +68,7 @@ git log --oneline --grep="#123"
 After formulating a plan, the agent uses `gh` commands to modify issues on GitHub. All actions are accompanied by a clear comment explaining the rationale.
 
 #### **Commenting and Closing:**
+
 ```bash
 # Add an analysis comment to an issue
 gh issue comment 123 --body "### Agent Analysis
@@ -78,6 +79,7 @@ gh issue close 124 --comment "Closing this issue as obsolete. The underlying fea
 ```
 
 #### **Editing and Consolidating:**
+
 ```bash
 # Update the title and body of an issue
 gh issue edit 125 --title "Refactor: Update Timer Service to use new Event Store" --body "The timer service needs to be updated..."
@@ -88,7 +90,9 @@ gh issue close 126
 ```
 
 #### **Creating Checklists for Atomic Tasks:**
+
 When a large issue is broken down, the agent edits the primary issue to include a task list.
+
 ```bash
 # Read existing body
 BODY=$(gh issue view 127 --json body -q .body)
