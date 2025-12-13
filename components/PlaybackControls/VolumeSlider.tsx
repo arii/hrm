@@ -2,6 +2,7 @@
 'use client'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
+import { visuallyHidden } from '@mui/utils'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
@@ -36,7 +37,7 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       sx={{ width: 120 }}
       data-testid="volume-slider"
     >
-      <Typography id="volume-slider-label" className="sr-only">
+      <Typography id="volume-slider-label" sx={visuallyHidden}>
         Volume
       </Typography>
       <IconButton
