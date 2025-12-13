@@ -19,7 +19,6 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -185,32 +184,6 @@ const SpotifyDisplay = () => {
     setSelectedDeviceId(deviceId)
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <Box
-        sx={{
-          backgroundColor: 'grey.900',
-          color: 'common.white',
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'fixed',
-          bottom: 56,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          boxShadow: 3,
-          width: '100%',
-        }}
-      >
-        <SpotifyLoginButton />
-      </Box>
-    )
   }
 
   // If we are logged in, we show the player bar.
