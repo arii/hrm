@@ -141,7 +141,7 @@ export default function ConnectView({
 
         {/* Enhanced Status Messages */}
         {deviceStatus &&
-          (!isConnected || deviceStatus.includes('Failed')) &&
+          !isConnected &&
           !deviceStatus.includes('Disconnected') && (
             <Alert
               severity={deviceStatus.includes('Failed') ? 'error' : 'info'}

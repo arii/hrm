@@ -287,8 +287,6 @@ const useBluetoothHRM = () => {
               } catch (err) {
                 console.warn('Reconnect failed. clearing preference.', err)
                 setCookie('hrm_device_id', '', -1)
-                // Explicitly set a user-facing error message
-                setDeviceStatus('Failed: Could not reconnect to saved device.')
               }
             }
           }
