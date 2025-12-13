@@ -96,10 +96,10 @@ importers:
         version: 4.1.13
     devDependencies:
       '@actions/core':
-        specifier: ^2.0.1
+        specifier: 2.0.1
         version: 2.0.1
       '@actions/github':
-        specifier: ^6.0.1
+        specifier: 6.0.1
         version: 6.0.1
       '@chromatic-com/storybook':
         specifier: ^4.1.3
