@@ -11,27 +11,16 @@ import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
-import SpeakerIcon from '@mui/icons-material/Speaker'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
-
-interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
+import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import { SpotifyDevice } from '@/types'
 
 const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
@@ -71,7 +60,6 @@ const SpotifyDisplay = () => {
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
   )
-  const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
@@ -326,45 +314,13 @@ const SpotifyDisplay = () => {
             onVolumeChange={setVolume}
             onToggleMute={toggleMute}
           />
-          <IconButton
-            size="small"
-            onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
-            sx={{
-              color: 'common.white',
-              '&:hover': { backgroundColor: 'grey.800' },
-            }}
-            aria-label="Select playback device"
-          >
-            <SpeakerIcon fontSize="small" />
-          </IconButton>
-          <Menu
-            anchorEl={deviceMenuAnchor}
-            open={deviceMenuOpen}
-            onClose={() => setDeviceMenuAnchor(null)}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-          >
-            {availableDevices.length > 0 ? (
-              availableDevices.map((device) => (
-                <MenuItem
-                  key={device.id}
-                  onClick={() => handleDeviceSelect(device.id)}
-                  selected={device.is_active}
-                >
-                  {device.name} {device.is_active && '✓'}
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem disabled>No devices available</MenuItem>
-            )}
-          </Menu>
-
+          <SpotifyDeviceSelectorWrapper
+            availableDevices={availableDevices}
+            deviceMenuAnchor={deviceMenuAnchor}
+            onDeviceSelect={handleDeviceSelect}
+            onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
+            onMenuClose={() => setDeviceMenuAnchor(null)}
+          />
           <Button
             variant="outlined"
             size="small"
