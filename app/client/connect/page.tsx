@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
@@ -32,15 +32,15 @@ export default function ConnectPage() {
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-  const hrHistory = useRef<number[]>([])
+  const [hrHistory, setHrHistory] = useState<number[]>([])
 
   useEffect(() => {
     if (currentHR > 0) {
-      hrHistory.current.push(currentHR)
+      setHrHistory((prevHistory) => [...prevHistory, currentHR])
     }
     // Reset history if workout ends
     if (timerData.timeElapsed === 0) {
-      hrHistory.current = []
+      setHrHistory([])
     }
   }, [currentHR, timerData.timeElapsed])
 
@@ -48,8 +48,7 @@ export default function ConnectPage() {
     const { timeElapsed } = timerData
     const isWorkoutActive = timeElapsed > 0
     const averageHr =
-      hrHistory.current.reduce((acc, curr) => acc + curr, 0) /
-        hrHistory.current.length || 0
+      hrHistory.reduce((acc, curr) => acc + curr, 0) / hrHistory.length || 0
 
     const caloriesBurned = userAge
       ? calculateCaloriesBurned(averageHr, parseInt(userAge), timeElapsed)
@@ -60,7 +59,7 @@ export default function ConnectPage() {
       caloriesBurned: caloriesBurned.toFixed(0),
       isWorkoutActive,
     }
-  }, [timerData, userAge])
+  }, [timerData, userAge, hrHistory])
 
   return (
     <ConnectView

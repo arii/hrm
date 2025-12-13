@@ -46,7 +46,7 @@ export default function WorkoutSummary({
             spacing={1}
             color="text.secondary"
           >
-            <TimerIcon />
+            <TimerIcon aria-hidden="true" />
             <Typography variant="subtitle1">Duration</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
@@ -60,7 +60,7 @@ export default function WorkoutSummary({
             spacing={1}
             color="text.secondary"
           >
-            <WhatshotIcon />
+            <WhatshotIcon aria-hidden="true" />
             <Typography variant="subtitle1">Calories (est.)</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
