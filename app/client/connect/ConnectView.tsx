@@ -14,6 +14,8 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useState } from 'react'
+import { TimerData } from '../../../types/websocket'
+import WorkoutMetricsPanel from '../../../components/WorkoutMetricsPanel'
 
 interface ConnectViewProps {
   userName: string
@@ -31,6 +33,7 @@ interface ConnectViewProps {
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
   bluetoothConnected: boolean
+  timerData: TimerData
 }
 
 export default function ConnectView({
@@ -49,6 +52,7 @@ export default function ConnectView({
   hrZoneProps,
   connectionStatus,
   bluetoothConnected,
+  timerData,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -227,6 +231,7 @@ export default function ConnectView({
               percentMax={hrZoneProps.percentage}
               isAlerting={false}
             />
+            <WorkoutMetricsPanel timerData={timerData} />
           </Box>
         )}
 

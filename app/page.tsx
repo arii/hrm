@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
-import WorkoutMetricsPanel from '../components/WorkoutMetricsPanel'
+import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -79,9 +79,17 @@ const Dashboard = () => {
       <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
-        {/* 1. WORKOUT METRICS PANEL */}
-        <Grid size={{ xs: 12 }}>
-          <WorkoutMetricsPanel timerData={timerData} />
+        {/* 1. TABATA TIMER - Componentized */}
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <TimerDisplay
+            phase={timerData.currentPhase}
+            timeRemaining={timerData.timeRemaining}
+            timeElapsed={timerData.timeElapsed}
+            mode={timerData.mode}
+            workDuration={timerData.workDuration}
+            restDuration={timerData.restDuration}
+            soundEventId={timerData.soundEventId}
+          />
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>

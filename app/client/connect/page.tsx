@@ -21,7 +21,7 @@ export default function ConnectPage() {
     isSupported, // Ensure this is destructured
   } = useBluetoothHRM()
 
-  const { connectionStatus, hrmData } = useWebSocket()
+  const { connectionStatus, hrmData, timerData } = useWebSocket()
 
   const handleConnect = () => {
     connectAndStream(userName, userAge)
@@ -52,6 +52,7 @@ export default function ConnectPage() {
       }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
+      timerData={timerData}
     />
   )
 }
