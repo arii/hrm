@@ -10,8 +10,6 @@ export interface HrTileProps {
   isAlerting: boolean
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
-  onClick: () => void
-  isSelected: boolean
 }
 
 export interface HeartRateZonesProps {

@@ -19,7 +19,57 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
-import { reducer, INITIAL_STATE, WebSocketState } from './webSocketReducer'
+import { HRM_HISTORY_LENGTH } from '@/utils/constants'
+
+// --- State and Reducer ---
+
+export interface HrmDataPoint {
+  value: number
+  timestamp: number
+}
+
+export interface HrmSessionStats {
+  avgHr: number
+  maxHr: number
+  // Internal properties for calculation
+  totalSamples: number
+  sumHr: number
+}
+
+interface WebSocketState {
+  hrmData: HrmData[]
+  timerData: TimerData
+  spotifyData: SpotifyData
+  activeAlerts: ActiveAlert[]
+  spotifyServiceInitialized?: boolean
+  // New state for HR metrics
+  hrmDataHistory: { [clientId: string]: HrmDataPoint[] }
+  hrmSessionStats: { [clientId: string]: HrmSessionStats }
+}
+
+const INITIAL_STATE: WebSocketState = {
+  hrmData: [],
+  hrmDataHistory: {},
+  hrmSessionStats: {},
+  timerData: {
+    isRunning: false,
+    currentPhase: 'IDLE',
+    timeRemaining: 0,
+    timeElapsed: 0,
+    mode: 'TABATA',
+    workDuration: 30,
+    restDuration: 10,
+    soundEventId: 0,
+  },
+  spotifyData: {
+    trackName: 'Awaiting Login...',
+    artist: '',
+    isPlaying: false,
+    devices: [],
+  },
+  activeAlerts: [],
+  spotifyServiceInitialized: true,
+}
 
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
@@ -50,6 +100,80 @@ export const WebSocketProvider = ({
   const MAX_RECONNECT_ATTEMPTS = 10
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
   const JITTER_FACTOR = 0.2 // 20% jitter
+
+  // Unified State Object managed by a reducer
+  const reducer = (
+    state: WebSocketState,
+    message: ServerMessage
+  ): WebSocketState => {
+    switch (message.type) {
+      case 'INITIAL_STATE':
+        // The payload for INITIAL_STATE is just the state snapshot, not the full WebSocketState
+        return {
+          ...state,
+          ...message.payload,
+          // Explicitly reset session-specific data
+          hrmDataHistory: {},
+          hrmSessionStats: {},
+        };
+      case 'HRM_UPDATE': {
+        const now = Date.now();
+        const newHistory = { ...state.hrmDataHistory };
+        const newStats = { ...state.hrmSessionStats };
+
+        for (const user of message.payload) {
+          const clientId = user.clientId;
+          const value = user.value;
+
+          // Update history
+          const history = newHistory[clientId] || [];
+          const newHistoryPoint = { value, timestamp: now };
+          newHistory[clientId] = [...history, newHistoryPoint].slice(-HRM_HISTORY_LENGTH);
+
+          // Update stats
+          const stats = newStats[clientId] || { totalSamples: 0, sumHr: 0, maxHr: 0, avgHr: 0 };
+          const newTotalSamples = stats.totalSamples + 1;
+          const newSumHr = stats.sumHr + value;
+          const newMaxHr = Math.max(stats.maxHr, value);
+          const newAvgHr = newSumHr / newTotalSamples;
+
+          newStats[clientId] = {
+            totalSamples: newTotalSamples,
+            sumHr: newSumHr,
+            maxHr: newMaxHr,
+            avgHr: newAvgHr,
+          };
+        }
+
+        return {
+          ...state,
+          hrmData: message.payload,
+          hrmDataHistory: newHistory,
+          hrmSessionStats: newStats,
+        };
+      }
+      case 'TIMER_UPDATE':
+        return {
+          ...state,
+          timerData: { ...state.timerData, ...message.payload },
+        }
+      case 'SPOTIFY_UPDATE':
+        return {
+          ...state,
+          spotifyData: { ...state.spotifyData, ...message.payload },
+        }
+      case 'ACTIVE_ALERTS_UPDATE':
+        return { ...state, activeAlerts: message.payload }
+      case 'SPOTIFY_SERVICE_INIT_UPDATE':
+        return { ...state, spotifyServiceInitialized: message.payload }
+      case 'EXECUTE_SPOTIFY':
+        // This message type is handled by useSpotifyRemoteExecution hook
+        // We don't need to update state here, just pass it through
+        return state
+      default:
+        return state
+    }
+  }
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 

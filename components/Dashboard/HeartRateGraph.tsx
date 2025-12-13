@@ -41,7 +41,7 @@ const HeartRateGraph: React.FC<HeartRateGraphProps> = ({ data }) => {
         <Typography variant="h5" component="div">
           Heart Rate Trend
         </Typography>
-        <Box sx={{ mt: (theme) => theme.spacing(2) }}>
+        <Box sx={{ mt: 2 }}>
           <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="A line graph showing the recent trend of heart rate data.">
             {data.length > 1 ? (
               <path d={pathData} fill="none" stroke="currentColor" strokeWidth="2" />

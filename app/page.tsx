@@ -14,7 +14,6 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
-import WorkoutMetricsPanel from '@/components/Dashboard/WorkoutMetricsPanel'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -46,14 +45,11 @@ const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
-  const { timerData, hrmData, hrmDataHistory, hrmSessionStats } = useWebSocket()
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   useVolumePreference()
   const { initializeAudio } = useAudio(timerData)
-
-  const selectedUser = hrmData.find(user => user.clientId === selectedClientId);
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -97,18 +93,8 @@ const Dashboard = () => {
         </Grid>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmTiles onTileClick={setSelectedClientId} selectedClientId={selectedClientId} />
+          <HrmTiles />
         </ErrorBoundary>
-
-        {selectedUser && (
-            <Grid size={{ xs: 12 }}>
-                <WorkoutMetricsPanel
-                    user={selectedUser}
-                    history={hrmDataHistory[selectedUser.clientId] || []}
-                    stats={hrmSessionStats[selectedUser.clientId] || { avgHr: 0, maxHr: 0, totalSamples: 0, sumHr: 0 }}
-                />
-            </Grid>
-        )}
 
         <Grid size={{ xs: 12 }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (

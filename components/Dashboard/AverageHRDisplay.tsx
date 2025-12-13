@@ -14,7 +14,7 @@ const AverageHRDisplay: React.FC<AverageHRDisplayProps> = ({ avgHr }) => {
           Average HR
         </Typography>
         <Typography variant="h3" component="p">
-          {avgHr}
+          {Math.round(avgHr)}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           BPM
