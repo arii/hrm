@@ -19,9 +19,12 @@ export const getBaseURL = (): string => {
     // Client-side: use current origin
     return window.location.origin
   }
-
-  // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
-  return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+  // Server-side: Use NEXTAUTH_URL if available, otherwise construct from PORT
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL
+  }
+  const port = process.env.PORT || 3000
+  return `http://127.0.0.1:${port}`
 }
 
 export const getWebSocketURL = (): string => {
