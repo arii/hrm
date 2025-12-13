@@ -1,5 +1,6 @@
 // components/Spotify/SpotifyControls.tsx
 import React from 'react'
+import Image from 'next/image'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -77,7 +78,7 @@ const SpotifyControls: React.FC = () => {
   return (
     <Box sx={{ width: '100%', p: 2 }} aria-label="Spotify Controls">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-        <img
+        <Image
           src={spotifyData.albumArtUrl || '/default-album-art.png'}
           alt={spotifyData.trackName}
           width={56}

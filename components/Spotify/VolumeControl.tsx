@@ -18,7 +18,9 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
 }) => {
   return (
     <Stack direction="row" spacing={1} alignItems="center">
-      <VolumeUp sx={{ color: 'grey.400', fontSize: 20, '&:hover': { color: 'white' } }} />
+      <VolumeUp
+        sx={{ color: 'grey.400', fontSize: 20, '&:hover': { color: 'white' } }}
+      />
       <Slider
         value={volume}
         onChange={(_, val) => onVolumeChange(val as number)}
