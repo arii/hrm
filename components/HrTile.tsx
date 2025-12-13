@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import CurrentHeartRateDisplay from './CurrentHeartRateDisplay'
+import CurrentHeartRateDisplay from '@/app/client/components/CurrentHeartRateDisplay'
 import StyledCard from './shared/StyledCard'
 
 // Define the style for the centered overlay
@@ -93,7 +93,7 @@ const HrTile = ({
                   'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
               }}
             >
-              {percentMax}% Max
+              {percentMax}%
             </Typography>
 
             {/* User's name, if available and not a placeholder */}
