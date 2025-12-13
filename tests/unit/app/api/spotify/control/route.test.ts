@@ -2,7 +2,6 @@
 /** @jest-environment node */
 
 import { POST } from '@/app/api/spotify/control/route'
-import { authOptions } from '@/lib/auth'
 import { getServerSession } from 'next-auth/next'
 
 // Mock 'next-auth/next' for getServerSession

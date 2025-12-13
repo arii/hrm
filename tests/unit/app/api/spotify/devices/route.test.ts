@@ -36,7 +36,11 @@ describe('API Route: /api/spotify/devices', () => {
     jest.clearAllMocks()
     // Set up a new mock instance for each test
     MockedSpotifyTokenManager.mockClear()
-    tokenManagerInstance = new (SpotifyTokenManager as any)()
+    tokenManagerInstance =
+      new (MockedSpotifyTokenManager as jest.Mock<SpotifyTokenManager>)(
+        'client-id',
+        'client-secret'
+      )
     MockedSpotifyTokenManager.mockImplementation(() => tokenManagerInstance)
   })
 
