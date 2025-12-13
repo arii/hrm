@@ -24,14 +24,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install @google/genai @actions/github @actions/core
+          pnpm install --frozen-lockfile
 
       - name: Generate Release Notes
         id: generate_notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: node .github/scripts/release-generator.js
+        run: pnpm exec ts-node --esm .github/scripts/release-notes-runner.ts
 
       - name: Create Release
         uses: actions/create-release@v1

@@ -24,7 +24,7 @@ export const generateReleaseNotes = async (
     title: p.title,
     author: p.user.login,
     merged_at: p.merged_at,
-    body: p.body ? p.body.substring(0, 200) : ""
+    body: p.body,
   }));
 
   const prompt = `
@@ -125,7 +125,7 @@ export const suggestStrategicIssues = async (
     prs: prs.slice(0, 20).map(p => p.title),
   };
 
-  const contextBlock = projectContext ? `\n\nProject Context / Guidelines:\n${projectContext.substring(0, 2000)}` : "";
+  const contextBlock = projectContext ? `\n\nProject Context / Guidelines:\n${projectContext}` : "";
 
   let specificPrompt = "";
   switch (mode) {
@@ -206,7 +206,7 @@ export const analyzeIssueRedundancy = async (issues: GithubIssue[]): Promise<Red
     return { summary: "No issues to analyze.", redundantIssues: [], consolidatedIssues: [] };
   }
   const genAI = getClient();
-  const issueSummary = issues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 300) : "No description", labels: i.labels.map(l => l.name).join(", ") }));
+  const issueSummary = issues.map(i => ({ number: i.number, title: i.title, body: i.body, labels: i.labels.map(l => l.name).join(", ") }));
   const prompt = `You are a senior project manager analyzing a GitHub repository. I have a list of open issues. Your goal is to identify: 1. Duplicate issues that can be closed. 2. Groups of related issues. Output a structured JSON response. Issues Data: ${JSON.stringify(issueSummary)}`;
 
   const model = genAI.getGenerativeModel({
@@ -258,7 +258,7 @@ export const analyzeIssueRedundancy = async (issues: GithubIssue[]): Promise<Red
 export const identifyRedundantCandidates = async (issues: GithubIssue[]): Promise<number[]> => {
   if (!issues || issues.length === 0) return [];
   const genAI = getClient();
-  const issueSummary = issues.map(i => ({ id: i.number, title: i.title, body: i.body ? i.body.substring(0, 100) : "" }));
+  const issueSummary = issues.map(i => ({ id: i.number, title: i.title, body: i.body }));
   const prompt = `Analyze these issues and identify ones that are likely duplicates. Return ONLY a JSON array of issue numbers to CLOSE. Issues: ${JSON.stringify(issueSummary)}`;
 
   const model = genAI.getGenerativeModel({
@@ -281,7 +281,7 @@ export const identifyRedundantCandidates = async (issues: GithubIssue[]): Promis
 export const analyzePullRequests = async (prs: GithubPullRequest[]): Promise<string> => {
   if (!prs || prs.length === 0) return "No Pull Requests to analyze.";
   const genAI = getClient();
-  const prSummary = prs.map(p => ({ number: p.number, title: p.title, author: p.user.login, branch: p.head.ref, created: p.created_at, draft: p.draft, body: p.body ? p.body.substring(0, 200) : "No description" }));
+  const prSummary = prs.map(p => ({ number: p.number, title: p.title, author: p.user.login, branch: p.head.ref, created: p.created_at, draft: p.draft, body: p.body }));
   const prompt = `You are a Lead DevOps Engineer. Analyze these Pull Requests. Provide a concise Markdown executive summary. PR Data: ${JSON.stringify(prSummary)}`;
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const result = await model.generateContent(prompt);
@@ -291,8 +291,8 @@ export const analyzePullRequests = async (prs: GithubPullRequest[]): Promise<str
 export const generateCleanupReport = async (openIssues: GithubIssue[], closedPrs: GithubPullRequest[]): Promise<CleanupAnalysisResult> => {
   if (!openIssues || openIssues.length === 0 || !closedPrs || closedPrs.length === 0) return { report: "Insufficient data.", actions: [] };
   const genAI = getClient();
-  const recentClosedPrs = closedPrs.slice(0, 30).map(p => ({ number: p.number, title: p.title, merged_at: p.merged_at, body: p.body ? p.body.substring(0, 300) : "" }));
-  const currentOpenIssues = openIssues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 100) : "" }));
+  const recentClosedPrs = closedPrs.slice(0, 30).map(p => ({ number: p.number, title: p.title, merged_at: p.merged_at, body: p.body }));
+  const currentOpenIssues = openIssues.map(i => ({ number: i.number, title: i.title, body: i.body }));
   const prompt = `Determine if any OPEN issues should be closed by CLOSED Pull Requests. Open Issues: ${JSON.stringify(currentOpenIssues)} Recently Closed PRs: ${JSON.stringify(recentClosedPrs)}`;
 
   const model = genAI.getGenerativeModel({
@@ -371,7 +371,7 @@ export const analyzeBranchCleanup = async (branches: string[], mergedPrs: { ref:
 export const generateTriageReport = async (issues: GithubIssue[]): Promise<TriageAnalysisResult> => {
   if (!issues || issues.length === 0) return { report: "No issues.", actions: [] };
   const genAI = getClient();
-  const issueData = issues.map(i => ({ number: i.number, title: i.title, body: i.body ? i.body.substring(0, 150) : "", labels: i.labels.map(l => l.name), created_at: i.created_at }));
+  const issueData = issues.map(i => ({ number: i.number, title: i.title, body: i.body, labels: i.labels.map(l => l.name), created_at: i.created_at }));
   const prompt = `Create a prioritized Triage Report. Issues: ${JSON.stringify(issueData)}`;
 
   const model = genAI.getGenerativeModel({
