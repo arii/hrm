@@ -17,7 +17,7 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { StateSnapshot } from '../../types/websocket'
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('../../services/systemAccountAccessor')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),

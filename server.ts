@@ -93,7 +93,10 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed. Shutting down server.')
+      logger.error(
+        { err: e },
+        'SpotifyPolling initialization failed. Shutting down server.'
+      )
       process.exit(1)
     }
     const tabataService = new TabataTimer(broadcast)

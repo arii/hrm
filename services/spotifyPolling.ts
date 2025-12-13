@@ -1,6 +1,6 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
-import { SpotifyTokenManager } from './spotifyTokenManager' // Changed import
+import { SystemAccountAccessor } from './systemAccountAccessor'
 import logger from '../utils/logger.js'
 
 type SpotifyCommand =
@@ -56,7 +56,7 @@ export class SpotifyPolling {
   }
 
   private async initializeSdk() {
-    const account = await SpotifyTokenManager.getSystemAccount()
+    const account = await SystemAccountAccessor.getSystemAccount()
     if (account && account.access_token) {
       const sdkToken: AccessToken = {
         access_token: account.access_token,

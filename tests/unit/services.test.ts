@@ -14,14 +14,14 @@ import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import { SystemAccountAccessor } from '../../services/systemAccountAccessor'
 import { Account } from '@prisma/client'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
-jest.mock('../../services/spotifyTokenManager')
+jest.mock('../../services/systemAccountAccessor')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -64,7 +64,7 @@ describe('Services Integration', () => {
       refresh_token: 'test_refresh_token',
       token_type: 'Bearer',
     }
-    ;(SpotifyTokenManager.getSystemAccount as jest.Mock).mockResolvedValue(
+    ;(SystemAccountAccessor.getSystemAccount as jest.Mock).mockResolvedValue(
       mockAccount
     )
 

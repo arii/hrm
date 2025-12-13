@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import { SystemAccountAccessor } from '../../services/systemAccountAccessor'
 import { SpotifyData } from '../../types/websocket'
 import logger from '../../utils/logger'
 import { Account } from '@prisma/client'
@@ -17,8 +17,8 @@ jest.mock('../../utils/logger', () => ({
   error: jest.fn(),
 }))
 
-// Mock the SpotifyTokenManager module
-jest.mock('../../services/spotifyTokenManager')
+// Mock the SystemAccountAccessor module
+jest.mock('../../services/systemAccountAccessor')
 
 const mockPlayer: { [key: string]: jest.Mock } = {
   getCurrentlyPlayingTrack: jest
@@ -84,7 +84,7 @@ describe('SpotifyPolling Service', () => {
       refresh_token: 'mock_refresh_token',
       token_type: 'Bearer',
     }
-    ;(SpotifyTokenManager.getSystemAccount as jest.Mock).mockResolvedValue(
+    ;(SystemAccountAccessor.getSystemAccount as jest.Mock).mockResolvedValue(
       mockAccount
     )
 
@@ -224,9 +224,9 @@ describe('SpotifyPolling Service', () => {
   describe('Token Management', () => {
     it('should not execute commands if SDK is not initialized', async () => {
       // Override the mock to return null token for this test
-      ;(
-        SpotifyTokenManager.getSystemAccount as jest.Mock
-      ).mockResolvedValue(null)
+      ;(SystemAccountAccessor.getSystemAccount as jest.Mock).mockResolvedValue(
+        null
+      )
 
       // Create a new service instance which will fail to initialize the SDK
       const newService = await SpotifyPolling.create(broadcastMock)
