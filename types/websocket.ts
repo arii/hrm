@@ -43,6 +43,7 @@ export type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'GET_DEVICES'
+  | 'LOGIN'
 // 1. Update SpotifyData to include the device list
 export interface SpotifyDevice {
   id: string
@@ -214,7 +215,8 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('GET_DEVICES'),
+    z.literal('LOGIN'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
