@@ -60,7 +60,7 @@ jobs:
              echo "EXISTING_COMMENTS=" >> $GITHUB_ENV
           fi
         env:
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: Run Gemini Review
         env:
