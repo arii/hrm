@@ -6,7 +6,6 @@
 import { TimerData } from '../types/websocket'
 import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
 
 // Define types for MUI color props
 type MuiColor =
@@ -16,8 +15,6 @@ type MuiColor =
   | 'warning'
   | 'info'
   | 'success'
-
-
 interface TimerProps {
   text: string
   color: MuiColor

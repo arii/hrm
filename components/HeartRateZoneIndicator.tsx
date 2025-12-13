@@ -123,7 +123,7 @@ const HeartRateZoneIndicator: React.FC<HeartRateZoneIndicatorProps> = ({
   currentHr,
   maxHr,
 }) => {
-  const { zone, backgroundColor, percentage } = getHr_zone_props(currentHr, maxHr)
+  const { zone, backgroundColor, percentage } = getHrZoneProps(currentHr, maxHr)
 
   return (
     <Box
