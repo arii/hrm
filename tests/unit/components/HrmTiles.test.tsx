@@ -29,6 +29,7 @@ describe('HrmTiles', () => {
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
       connectionStatus: 'Connected',
       activeAlerts: [],
+      hrmDataHistory: {},
     })
 
     render(<HrmTiles />)
@@ -43,6 +44,7 @@ describe('HrmTiles', () => {
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: null }],
       connectionStatus: 'Connected',
       activeAlerts: [],
+      hrmDataHistory: {},
     })
 
     render(<HrmTiles />)
@@ -57,6 +59,7 @@ describe('HrmTiles', () => {
       hrmData: [],
       connectionStatus: 'Connected',
       activeAlerts: [],
+      hrmDataHistory: {},
     })
 
     render(<HrmTiles />)
@@ -72,6 +75,7 @@ describe('HrmTiles', () => {
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
       connectionStatus: 'Connecting...',
       activeAlerts: [],
+      hrmDataHistory: {},
     })
 
     render(<HrmTiles />)
@@ -89,6 +93,7 @@ describe('HrmTiles', () => {
       ],
       connectionStatus: 'Connected',
       activeAlerts: [],
+      hrmDataHistory: {},
     })
 
     render(<HrmTiles />)

@@ -17,11 +17,13 @@ import {
   TimerData,
   ServerMessage,
   ActiveAlert,
+  HeartRateDataPoint,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
 interface WebSocketState {
   hrmData: HrmData[]
+  hrmDataHistory: Record<string, HeartRateDataPoint[]>
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
@@ -30,6 +32,7 @@ interface WebSocketState {
 
 const INITIAL_STATE: WebSocketState = {
   hrmData: [],
+  hrmDataHistory: {},
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE',
@@ -87,9 +90,31 @@ export const WebSocketProvider = ({
   ): WebSocketState => {
     switch (message.type) {
       case 'INITIAL_STATE':
+        // TODO: Handle hrmDataHistory initialization if needed
         return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
+      case 'HRM_UPDATE': {
+        const now = Date.now()
+        const historyCutoff = now - 60000 // 60 seconds ago
+        const newHistory = { ...state.hrmDataHistory }
+
+        for (const user of message.payload) {
+          if (user.clientId) {
+            const userHistory = newHistory[user.clientId] || []
+            // Add new data point
+            userHistory.push({ timestamp: now, value: user.value })
+            // Filter out old data points
+            newHistory[user.clientId] = userHistory.filter(
+              (point) => point.timestamp >= historyCutoff
+            )
+          }
+        }
+
+        return {
+          ...state,
+          hrmData: message.payload,
+          hrmDataHistory: newHistory,
+        }
+      }
       case 'TIMER_UPDATE':
         return {
           ...state,

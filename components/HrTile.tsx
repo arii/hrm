@@ -1,6 +1,7 @@
 // File: components/HrTile.tsx
 'use client'
 import { HrTileProps } from '@/types'
+import { HeartRateDataPoint } from '@/types/websocket'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -8,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import HeartRateGraph from './Dashboard/HeartRateGraph'
 import StyledCard from './shared/StyledCard'
 
 // Define the style for the centered overlay
@@ -32,12 +34,13 @@ const HrTile = ({
   percentMax,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
-}: HrTileProps) => {
+  history = [],
+}: HrTileProps & { history?: HeartRateDataPoint[] }) => {
   // Get HR zone props which include the theme-based background color
   // Note: We're passing a placeholder maxHr because the function currently requires it,
   // but it only uses the ratio (percentMax) to determine the zone color.
   // This could be refactored in getHrZoneProps to accept percentMax directly.
-  const { backgroundColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor } = getHrZoneProps(bpm, 100)
 
   return (
     <Tooltip
@@ -126,6 +129,9 @@ const HrTile = ({
               </Typography>
             )}
           </CardContent>
+        </Box>
+        <Box sx={{ position: 'absolute', bottom: 0, width: '100%', p: 1 }}>
+          <HeartRateGraph data={history} />
         </Box>
       </StyledCard>
     </Tooltip>

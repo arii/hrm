@@ -90,7 +90,7 @@ export const getHrZoneProps = (
       color: 'text-gray-400',
       progressColor: '#9ca3af',
       backgroundColor: '#9ca3af',
-      bpm: 0,
+      bpm: null,
     }
   }
 

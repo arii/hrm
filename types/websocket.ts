@@ -14,6 +14,11 @@ export interface HrmData {
   age?: number
 }
 
+export interface HeartRateDataPoint {
+  timestamp: number
+  value: number | null
+}
+
 export type TimerMode = 'STOPWATCH' | 'TABATA'
 export type TimerPhase =
   | 'IDLE'
