@@ -34,7 +34,7 @@ export interface GithubPullRequest {
   created_at: string
   draft: boolean
   html_url: string
-  state: 'open' | 'closed'
+  state: 'open' | 'closed' | 'merged'
   mergeable: boolean | null
 }
 

@@ -42,7 +42,7 @@ export const generateReleaseNotes = async (
     title: p.title,
     author: p.user.login,
     merged_at: p.merged_at,
-    body: p.body ? p.body.substring(0, 200) : '',
+    body: p.body ? p.body.substring(0, 1000) : '',
   }))
 
   const prompt = `

@@ -30,13 +30,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Release Notes Script
+        run: pnpm exec tsc .github/scripts/generate-release-notes.ts --outDir dist/release-notes-script --module commonjs
+
       - name: Generate Release Notes
         id: generate_notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: "gemini-1.5-flash"
-        run: pnpm exec ts-node --esm .github/scripts/generate-release-notes.ts
+        run: node dist/release-notes-script/generate-release-notes.js
 
       - name: Create Release
         uses: actions/create-release@v1

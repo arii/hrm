@@ -1,90 +1,107 @@
 // .github/scripts/generate-release-notes.ts
-import { execSync } from "child_process";
-import * as fs from "fs";
-import { generateReleaseNotes } from "../../services/geminiService";
-import { GithubPullRequest } from "../../types/gemini";
-import * as github from "@actions/github";
-import * as core from "@actions/core";
+import { execSync } from 'child_process'
+import * as fs from 'fs'
+import { generateReleaseNotes } from '../../services/geminiService'
+import { GithubPullRequest } from '../../types/gemini'
+import * as github from '@actions/github'
+import * as core from '@actions/core'
 
 const main = async () => {
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN
   if (!token) {
-    core.setFailed("GITHUB_TOKEN is not set");
-    return;
+    core.setFailed('GITHUB_TOKEN is not set')
+    return
   }
-  const octokit = github.getOctokit(token);
+  const octokit = github.getOctokit(token)
 
-  const currentTag = process.env.GITHUB_REF?.replace("refs/tags/", "") || "";
+  const currentTag = process.env.GITHUB_REF?.replace('refs/tags/', '') || ''
   if (!currentTag) {
-    core.setFailed("GITHUB_REF environment variable is not set.");
-    return;
+    core.setFailed('GITHUB_REF environment variable is not set.')
+    return
   }
 
-  let previousTag = "";
+  let previousTag = ''
+  let previousTagDate: string
   try {
-    previousTag = execSync(`git describe --tags --abbrev=0 ${currentTag}^`).toString().trim();
+    previousTag = execSync(
+      `git describe --tags --abbrev=0 ${currentTag}^`
+    ).toString().trim()
+    previousTagDate = execSync(`git log -1 --format=%aI ${previousTag}`)
+      .toString()
+      .trim()
   } catch (error) {
-    core.warning("No previous tag found. Using the initial commit as the baseline.");
+    core.warning(
+      'No previous tag found. Using the initial commit as the baseline.'
+    )
     if (error instanceof Error) {
-      core.warning(`"git describe" failed with error: ${error.message}`);
+      core.warning(`"git describe" failed with error: ${error.message}`)
     }
-    previousTag = execSync("git rev-list --max-parents=0 HEAD").toString().trim();
+    const initialCommit = execSync('git rev-list --max-parents=0 HEAD')
+      .toString()
+      .trim()
+    previousTagDate = execSync(`git log -1 --format=%aI ${initialCommit}`)
+      .toString()
+      .trim()
   }
 
-  core.info(`Generating release notes for ${currentTag} (since ${previousTag})...`);
+  const currentTagDate = execSync(`git log -1 --format=%aI ${currentTag}`)
+    .toString()
+    .trim()
 
-  const logOutput = execSync(
-    `git log ${previousTag}..${currentTag} --merges --pretty=format:"%H"`
-  ).toString();
+  core.info(
+    `Generating release notes for ${currentTag} (since ${previousTag})...`
+  )
 
-  const mergeCommits = logOutput.split("\n").filter((s) => s.trim());
+  const allMergedPrs = await octokit.paginate(octokit.rest.pulls.list, {
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    state: 'closed',
+    sort: 'updated',
+    direction: 'desc',
+    per_page: 100,
+  })
 
-  const prs: GithubPullRequest[] = [];
-  for (const commit of mergeCommits) {
-    const { data: associatedPrs } = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      commit_sha: commit,
-    });
-    if (associatedPrs.length > 0) {
-      // Typically there is only one PR per merge commit
-      const pr = associatedPrs[0];
-      prs.push({
-        number: pr.number,
-        title: pr.title,
-        user: { login: pr.user?.login || "" },
-        merged_at: pr.merged_at,
-        body: pr.body || "",
-        head: { ref: pr.head.ref },
-        created_at: pr.created_at,
-        draft: pr.draft || false,
-        html_url: pr.html_url,
-        state: "closed",
-        mergeable: null,
-      });
-    }
+  const relevantPrs = allMergedPrs.filter((pr) => {
+    return (
+      pr.merged_at &&
+      new Date(pr.merged_at) > new Date(previousTagDate) &&
+      new Date(pr.merged_at) <= new Date(currentTagDate)
+    )
+  })
+
+  if (relevantPrs.length === 0) {
+    core.info('No merged PRs found in this range.')
+    fs.writeFileSync('release_notes.md', 'No significant changes found.')
+    process.exit(0)
   }
 
-
-  if (prs.length === 0) {
-    core.info("No merged PRs found in this range.");
-    fs.writeFileSync("release_notes.md", "No significant changes found.");
-    process.exit(0);
-  }
+  const prs: GithubPullRequest[] = relevantPrs.map((pr) => ({
+    number: pr.number,
+    title: pr.title,
+    user: { login: pr.user?.login || '' },
+    merged_at: pr.merged_at,
+    body: pr.body || '',
+    head: { ref: pr.head.ref },
+    created_at: pr.created_at,
+    draft: pr.draft || false,
+    html_url: pr.html_url,
+    state: 'merged',
+    mergeable: null,
+  }))
 
   try {
-    const result = await generateReleaseNotes(prs, currentTag);
-    const finalOutput = `${result.markdown}\n\n*Generated by Gemini Release Agent*`;
-    fs.writeFileSync("release_notes.md", finalOutput);
-    core.info("✅ release_notes.md created successfully.");
+    const result = await generateReleaseNotes(prs, currentTag)
+    const finalOutput = `${result.markdown}\n\n*Generated by Gemini Release Agent*`
+    fs.writeFileSync('release_notes.md', finalOutput)
+    core.info('✅ release_notes.md created successfully.')
   } catch (error) {
     if (error instanceof Error) {
-      core.setFailed(`Error generating release notes: ${error.message}`);
+      core.setFailed(`Error generating release notes: ${error.message}`)
     } else {
-      core.setFailed("Unknown error generating release notes.");
+      core.setFailed('Unknown error generating release notes.')
     }
-    process.exit(1);
+    process.exit(1)
   }
-};
+}
 
-main();
+main()
