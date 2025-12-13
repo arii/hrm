@@ -37,6 +37,9 @@ cleanup() {
 # Trap signals for cleanup
 trap cleanup EXIT INT TERM
 
+# Kill any process on port 3000
+kill $(lsof -t -i:3000) 2>/dev/null || true
+
 # Export environment variable for testing
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
@@ -48,9 +51,9 @@ pnpm pm2 kill || true
 
 
 log "🚀 Starting server with PM2..."
-# Start server with `pnpm start`, which uses PM2
-pnpm start > "$SERVER_LOG" 2>&1 &
-log "✅ Server process started via PM2."
+# Start server with `start-production.sh`
+bash ./start-production.sh > "$SERVER_LOG" 2>&1 &
+log "✅ Server process started."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
 if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
