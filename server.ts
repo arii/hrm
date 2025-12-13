@@ -138,15 +138,24 @@ app
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
 
+    const getClientIp = (req: IncomingMessage): string => {
+      const xForwardedFor = req.headers['x-forwarded-for'] as string
+      if (xForwardedFor) {
+        const ips = xForwardedFor.split(',').map((ip) => ip.trim())
+        for (let i = ips.length - 1; i >= 0; i--) {
+          if (ips[i] !== '127.0.0.1') {
+            return ips[i]
+          }
+        }
+      }
+      return req.socket.remoteAddress || 'unknown'
+    }
+
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-        const ip =
-          (req.headers['x-forwarded-for'] as string)
-            ?.split(',')
-            .shift()
-            ?.trim() || req.socket.remoteAddress
+        const ip = getClientIp(req)
 
         if (process.env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
