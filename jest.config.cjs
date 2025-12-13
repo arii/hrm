@@ -37,7 +37,6 @@ const config = {
           moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
-          allowJs: true,
         },
       },
     ],
