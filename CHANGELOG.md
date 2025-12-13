@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.1](https://github.com/arii/hrm/compare/v0.4.0...v0.4.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* remove package-lock.json from pnpm project ([#1295](https://github.com/arii/hrm/issues/1295)) ([00e84b4](https://github.com/arii/hrm/commit/00e84b490d61a7e06d5317660b62d8c2193a964d))
+
+## [0.4.0](https://github.com/arii/hrm/compare/v0.3.0...v0.4.0) (2025-12-13)
+
+
+### Features
+
+* Create audit reports from specialized AI agents ([#1250](https://github.com/arii/hrm/issues/1250)) ([a11b019](https://github.com/arii/hrm/commit/a11b0191597042f7974ba6caf200743949e329f0))
+* Reintroduce Reset Button ([#1247](https://github.com/arii/hrm/issues/1247)) ([90de26c](https://github.com/arii/hrm/commit/90de26c0604948ab8fac2f6e920d613150120197))
+* Use configurable API and WebSocket URLs ([#1231](https://github.com/arii/hrm/issues/1231)) ([6d5c7db](https://github.com/arii/hrm/commit/6d5c7db7a4bd1362160fd1ddb3f9fda37dd93136))
+
+
+### Bug Fixes
+
+* useWebSocket to useReducer with proper state and merge logic ([#1227](https://github.com/arii/hrm/issues/1227)) ([47d1e79](https://github.com/arii/hrm/commit/47d1e79e909fc078cb2ffe6e1020ac9f688eefec))
+
 ## [0.3.0](https://github.com/arii/hrm/compare/v0.2.2...v0.3.0) (2025-12-11)
 
 ### Features

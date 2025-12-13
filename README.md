@@ -449,7 +449,7 @@ graph TD
 6. **Audio Testing**: Test timer sounds on both dashboard and control panel. Audio only plays on dashboard, not control panel.
 7. **Layout Consistency**: Timer always takes 50% width, HR tiles 25% each, Google Doc has fixed 500px height.
 
-For more detailed guidelines, especially for AI agents, see [.github/copilot-instructions.md](.github/copilot-instructions.md).
+For more detailed guidelines, especially for AI agents, see [.github/prompts/AGENTS.md](.github/prompts/AGENTS.md).
 
 ## Contributing
 
