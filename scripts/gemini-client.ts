@@ -4,9 +4,9 @@ import path from 'path';
 
 // Simple arg parsing
 const args = process.argv.slice(2);
-const getArg = (key: string) => {
+const getArg = (key: string): string | null => {
   const index = args.indexOf(key);
-  if (index !== -1 && index + 1 < args.length) return args[index + 1];
+  if (index !== -1 && index + 1 < args.length) return args[index + 1] as string;
   return null;
 };
 
