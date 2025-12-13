@@ -5,9 +5,7 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
-import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
+import { Box, Container, Skeleton } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -77,20 +75,20 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2, md: 3 } }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* Workout Goal Progress */}
-        <Grid size={{ xs: 12 }}>
+        <Box>
           <WorkoutGoalProgress
             currentProgress={75}
             targetGoal={150}
             label="Weekly Active Minutes"
           />
-        </Grid>
+        </Box>
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Grid size={{ xs: 12, lg: 6 }}>
+        <Box sx={{ width: { xs: '100%', lg: '50%' } }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -100,13 +98,13 @@ const Dashboard = () => {
             restDuration={timerData.restDuration}
             soundEventId={timerData.soundEventId}
           />
-        </Grid>
+        </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmTiles />
         </ErrorBoundary>
 
-        <Grid size={{ xs: 12 }}>
+        <Box>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
@@ -118,8 +116,8 @@ const Dashboard = () => {
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
