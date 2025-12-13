@@ -39,6 +39,7 @@ const INITIAL_STATE: WebSocketState = {
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
+    caloriesBurned: 0,
   },
   spotifyData: {
     trackName: 'Awaiting Login...',
