@@ -52,7 +52,7 @@ describe('HrmTiles', () => {
     expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
   })
 
-  it('should render skeleton containers when hrmData is empty', () => {
+  it('should render the empty state message when hrmData is empty', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connected',
@@ -61,8 +61,10 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    // The component renders skeleton containers when there's no data
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
+    // The component renders the empty state display
+    expect(
+      screen.getByText('No active heart rate monitors.')
+    ).toBeInTheDocument()
     // And no actual HrTile components are rendered
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
@@ -76,7 +78,9 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
+    expect(
+      screen.getAllByTestId('hr-tile-grid-item-skeleton')
+    ).toHaveLength(2)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 

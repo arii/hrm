@@ -7,6 +7,8 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart'
+import EmptyStateDisplay from './shared/EmptyStateDisplay'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -55,24 +57,34 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === 0) {
+  if (isLoading) {
     return (
       <>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
-        </Grid>
+        {[...Array(2)].map((_, index) => (
+          <Grid
+            size={{ xs: 12, sm: 6, lg: 3 }}
+            key={index}
+            data-testid="hr-tile-grid-item-skeleton"
+          >
+            <Skeleton
+              variant="rectangular"
+              height={220}
+              sx={{ borderRadius: 3 }}
+            />
+          </Grid>
+        ))}
       </>
+    )
+  }
+
+  if (filteredTiles.length === 0) {
+    return (
+      <Grid size={{ xs: 12 }}>
+        <EmptyStateDisplay
+          icon={<MonitorHeartIcon />}
+          message="No active heart rate monitors."
+        />
+      </Grid>
     )
   }
 
