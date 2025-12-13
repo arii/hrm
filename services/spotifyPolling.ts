@@ -344,7 +344,10 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(command: SpotifyCommand, options: SpotifyCommandOptions = {}) {
+  public handleCommand(
+    command: SpotifyCommand,
+    options: SpotifyCommandOptions = {}
+  ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
@@ -423,10 +426,7 @@ export class SpotifyPolling {
         break
       case 'SET_SHUFFLE':
         if (shuffleState !== undefined) {
-          await this.sdk!.player.togglePlaybackShuffle(
-            shuffleState,
-            deviceId
-          )
+          await this.sdk!.player.togglePlaybackShuffle(shuffleState, deviceId)
         }
         break
       case 'SET_REPEAT':

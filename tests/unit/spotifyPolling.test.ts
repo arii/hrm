@@ -146,7 +146,9 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle PAUSE command', async () => {
-      await spotifyService.handleCommand('PAUSE', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('PAUSE', {
+        deviceId: 'test_device_id',
+      })
       expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test_device_id')
     })
 
@@ -375,7 +377,9 @@ describe('SpotifyPolling Service', () => {
 
     it('should support PAUSE command when timer stops', async () => {
       // Simulate timer stop triggering PAUSE
-      await spotifyService.handleCommand('PAUSE', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('PAUSE', {
+        deviceId: 'test_device_id',
+      })
       expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test_device_id')
     })
 
@@ -385,7 +389,9 @@ describe('SpotifyPolling Service', () => {
       // Simulate rapid commands that might happen during workout
       await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
       await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
-      await spotifyService.handleCommand('PAUSE', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('PAUSE', {
+        deviceId: 'test_device_id',
+      })
 
       // Should have made 3 calls to the player methods
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledTimes(1)

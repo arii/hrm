@@ -21,8 +21,8 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({
       repeatState === 'off'
         ? 'context'
         : repeatState === 'context'
-        ? 'track'
-        : 'off'
+          ? 'track'
+          : 'off'
     onToggleRepeat(nextState)
   }
 

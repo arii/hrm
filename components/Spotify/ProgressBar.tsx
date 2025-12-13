@@ -57,7 +57,8 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
               backgroundColor: 'transparent',
             },
             '&:hover, &.Mui-focusVisible': {
-              boxShadow: (theme) => `0px 0px 0px 8px ${theme.palette.action.hover}`,
+              boxShadow: (theme) =>
+                `0px 0px 0px 8px ${theme.palette.action.hover}`,
             },
             '&.Mui-active': {
               width: 20,
