@@ -1,18 +1,24 @@
 import React from 'react'
 import { Typography, Box } from '@mui/material'
 
-const MaxHeartRateDisplay = React.memo(() => {
-  return (
-    <Box>
-      <Typography variant="body1">
-        Max Heart Rate:{' '}
-        <Typography component="strong" variant="body1">
-          -- bpm
+interface MaxHeartRateDisplayProps {
+  maxBpm: number | null
+}
+
+const MaxHeartRateDisplay = React.memo<MaxHeartRateDisplayProps>(
+  ({ maxBpm }) => {
+    return (
+      <Box>
+        <Typography variant="body1">
+          Max Heart Rate:{' '}
+          <Typography component="strong" variant="body1">
+            {maxBpm ?? '--'} bpm
+          </Typography>
         </Typography>
-      </Typography>
-    </Box>
-  )
-})
+      </Box>
+    )
+  }
+)
 
 MaxHeartRateDisplay.displayName = 'MaxHeartRateDisplay'
 export default MaxHeartRateDisplay

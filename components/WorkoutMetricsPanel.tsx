@@ -9,10 +9,18 @@ import { TimerData } from '../types/websocket'
 
 interface WorkoutMetricsPanelProps {
   timerData: TimerData
+  bpm: number | null
+  avgBpm: number | null
+  maxBpm: number | null
+  calories: number | null
 }
 
 const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({
   timerData,
+  bpm,
+  avgBpm,
+  maxBpm,
+  calories,
 }) => {
   return (
     <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
@@ -31,16 +39,16 @@ const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({
         <Grid size={{ xs: 12, md: 6 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 6 }}>
-              <HeartRateDisplay />
+              <HeartRateDisplay bpm={bpm} />
             </Grid>
             <Grid size={{ xs: 6 }}>
-              <AverageHeartRateDisplay />
+              <AverageHeartRateDisplay avgBpm={avgBpm} />
             </Grid>
             <Grid size={{ xs: 6 }}>
-              <MaxHeartRateDisplay />
+              <MaxHeartRateDisplay maxBpm={maxBpm} />
             </Grid>
             <Grid size={{ xs: 6 }}>
-              <CaloriesBurnedDisplay />
+              <CaloriesBurnedDisplay calories={calories} />
             </Grid>
           </Grid>
         </Grid>

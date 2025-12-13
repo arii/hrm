@@ -231,7 +231,13 @@ export default function ConnectView({
               percentMax={hrZoneProps.percentage}
               isAlerting={false}
             />
-            <WorkoutMetricsPanel timerData={timerData} />
+            <WorkoutMetricsPanel
+              timerData={timerData}
+              bpm={currentHR}
+              avgBpm={null}
+              maxBpm={null}
+              calories={null}
+            />
           </Box>
         )}
 
