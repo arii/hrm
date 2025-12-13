@@ -1,79 +1,71 @@
-/** @jest-environment jsdom */
-
+// tests/unit/components/Spotify/PlaylistSelector.test.tsx
+import React from 'react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
-import '@testing-library/jest-dom'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { ErrorProvider } from '@/context/ErrorContext'
+
+// Mock the fetch function
+global.fetch = jest.fn()
 
 const mockPlaylists = {
   presetPlaylists: [
-    { id: '1', name: 'Chill Hits', uri: 'spotify:playlist:1' },
-    { id: '2', name: 'Rock Classics', uri: 'spotify:playlist:2' },
+    { name: 'Preset Playlist 1', uri: 'spotify:playlist:preset1' },
   ],
-  userPlaylists: [{ id: '3', name: 'Focus Flow', uri: 'spotify:playlist:3' }],
+  userPlaylists: [{ name: 'User Playlist 1', uri: 'spotify:playlist:user1' }],
 }
 
 describe('PlaylistSelector', () => {
   beforeEach(() => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockPlaylists),
-      })
-    ) as jest.Mock
+    ;(fetch as jest.Mock).mockClear()
+    ;(fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockPlaylists),
+    })
   })
 
   it('should fetch and display playlists on render', async () => {
     render(
-      <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
-        onPlaylistPlay={jest.fn()}
-      />
+      <ErrorProvider>
+        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={jest.fn()} />
+      </ErrorProvider>
     )
 
-    // Wait for the playlists to be fetched and rendered
     await waitFor(() => {
-      expect(screen.getByText('Chill Hits')).toBeInTheDocument()
-      expect(screen.getByText('Rock Classics')).toBeInTheDocument()
-      expect(screen.getByText('Focus Flow')).toBeInTheDocument()
+      expect(screen.getByText('Preset Playlist 1')).toBeInTheDocument()
+      expect(screen.getByText('User Playlist 1')).toBeInTheDocument()
     })
   })
 
   it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
     const onPlaylistSelected = jest.fn()
     render(
-      <PlaylistSelector
-        onPlaylistSelected={onPlaylistSelected}
-        onPlaylistPlay={jest.fn()}
-      />
+      <ErrorProvider>
+        <PlaylistSelector onPlaylistSelected={onPlaylistSelected} onPlaylistPlay={jest.fn()} />
+      </ErrorProvider>
     )
-    const user = userEvent.setup()
 
-    const rockClassicsItem = await screen.findByText('Rock Classics')
-    await user.click(rockClassicsItem)
-
-    // Verify the callback was called with the correct URI
-    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
+    await waitFor(() => {
+      fireEvent.click(screen.getByText('User Playlist 1'))
+      expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
+    })
   })
 
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
     const onPlaylistPlay = jest.fn()
     render(
-      <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
-        onPlaylistPlay={onPlaylistPlay}
-      />
+      <ErrorProvider>
+        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={onPlaylistPlay} />
+      </ErrorProvider>
     )
-    const user = userEvent.setup()
 
-    const focusFlowItem = await screen.findByText('Focus Flow')
-    const listItem = focusFlowItem.closest('li')
-    if (!listItem) throw new Error('Playlist item not found')
-
-    const playButton = within(listItem).getByRole('button', { name: /play/i })
-
-    await user.click(playButton)
-
-    expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:3')
+    await waitFor(() => {
+      // Find the play button associated with "Preset Playlist 1"
+      const playlistItem = screen.getByText('Preset Playlist 1').closest('li')
+      const playButton = playlistItem?.querySelector('[aria-label="play"]')
+      if (playButton) {
+        fireEvent.click(playButton)
+      }
+      expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
+    })
   })
 })
