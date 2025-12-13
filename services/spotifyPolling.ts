@@ -56,16 +56,15 @@ export class SpotifyPolling {
   }
 
   private async initializeSdk() {
-    const tokenString = await SpotifyTokenManager.getSystemAccessToken()
-    if (tokenString) {
-      // The SDK needs an AccessToken object, not just the string.
-      // We create a minimal one. The SDK won't self-refresh; we rely on our
-      // interval to pull the latest token from the DB.
+    const account = await SpotifyTokenManager.getSystemAccount()
+    if (account && account.access_token) {
       const sdkToken: AccessToken = {
-        access_token: tokenString,
-        token_type: 'Bearer',
-        expires_in: 3600, // Dummy value
-        refresh_token: '', // Not used by the polling service
+        access_token: account.access_token,
+        token_type: account.token_type || 'Bearer',
+        expires_in: account.expires_at
+          ? account.expires_at - Math.floor(Date.now() / 1000)
+          : 3600,
+        refresh_token: account.refresh_token || '',
       }
       this.setupSdk(sdkToken)
       logger.debug(

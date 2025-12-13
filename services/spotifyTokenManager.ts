@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { Account } from '@prisma/client'
 
 /**
  * Manages retrieval of Spotify API tokens from the database.
@@ -7,7 +8,7 @@ import { db } from '@/lib/db'
  */
 export class SpotifyTokenManager {
   /**
-   * Retrieves the Access Token designated for System/Studio playback.
+   * Retrieves the Account object designated for System/Studio playback.
    * This is the central method for the backend to get credentials for Spotify API calls.
    *
    * Logic:
@@ -15,9 +16,9 @@ export class SpotifyTokenManager {
    * 2. If no explicit token is found, fall back to the first available Spotify account.
    *    This simplifies setup for single-user instances where designating a system token is redundant.
    *
-   * @returns {Promise<string | null>} The access token if found, otherwise null.
+   * @returns {Promise<Account | null>} The Account object if found, otherwise null.
    */
-  static async getSystemAccessToken(): Promise<string | null> {
+  static async getSystemAccount(): Promise<Account | null> {
     // 1. Try to find the explicitly designated system token first.
     let account = await db.account.findFirst({
       where: {
@@ -48,10 +49,6 @@ export class SpotifyTokenManager {
       return null
     }
 
-    // Optional: Could add a check here for token expiry (`account.expires_at`)
-    // and log a warning if it's stale, though NextAuth should keep it fresh
-    // during active user sessions.
-
-    return account.access_token
+    return account
   }
 }

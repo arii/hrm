@@ -26,7 +26,7 @@ describe('SpotifyTokenManager', () => {
     jest.restoreAllMocks()
   })
 
-  it('should return the access token for the designated system token', async () => {
+  it('should return the account for the designated system token', async () => {
     const mockAccount: MockAccount = {
       id: '1',
       userId: 'user1',
@@ -36,7 +36,7 @@ describe('SpotifyTokenManager', () => {
     }
     mockDb.account.findFirst.mockResolvedValue(mockAccount)
 
-    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+    const account = await SpotifyTokenManager.getSystemAccount()
 
     expect(mockDb.account.findFirst).toHaveBeenCalledWith({
       where: {
@@ -44,7 +44,7 @@ describe('SpotifyTokenManager', () => {
         isSystemToken: true,
       },
     })
-    expect(accessToken).toBe('system_access_token')
+    expect(account).toEqual(mockAccount)
   })
 
   it('should fall back to the first available Spotify account if no system token is designated', async () => {
@@ -60,7 +60,7 @@ describe('SpotifyTokenManager', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(mockAccount)
 
-    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+    const account = await SpotifyTokenManager.getSystemAccount()
 
     expect(mockDb.account.findFirst).toHaveBeenCalledTimes(2)
     expect(mockDb.account.findFirst).toHaveBeenCalledWith({
@@ -74,17 +74,17 @@ describe('SpotifyTokenManager', () => {
         provider: 'spotify',
       },
     })
-    expect(accessToken).toBe('fallback_access_token')
+    expect(account).toEqual(mockAccount)
   })
 
   it('should return null if no Spotify accounts are found in the database', async () => {
     // Both calls return null
     mockDb.account.findFirst.mockResolvedValue(null)
 
-    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+    const account = await SpotifyTokenManager.getSystemAccount()
 
     expect(mockDb.account.findFirst).toHaveBeenCalledTimes(2)
-    expect(accessToken).toBeNull()
+    expect(account).toBeNull()
     expect(console.warn).toHaveBeenCalledWith(
       '[TokenManager] No Spotify account found in the database.'
     )
@@ -100,10 +100,10 @@ describe('SpotifyTokenManager', () => {
     }
     mockDb.account.findFirst.mockResolvedValue(mockAccount)
 
-    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+    const account = await SpotifyTokenManager.getSystemAccount()
 
     expect(mockDb.account.findFirst).toHaveBeenCalledTimes(1)
-    expect(accessToken).toBeNull()
+    expect(account).toBeNull()
     expect(console.warn).toHaveBeenCalledWith(
       `[TokenManager] Spotify account found for user ${mockAccount.userId}, but it has no access token.`
     )

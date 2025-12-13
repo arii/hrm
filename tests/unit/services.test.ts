@@ -15,6 +15,7 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import { Account } from '@prisma/client'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
@@ -56,9 +57,15 @@ describe('Services Integration', () => {
       broadcastedMessages.push(message)
     }
 
-    // NEW: Mock the static method directly
-    ;(SpotifyTokenManager.getSystemAccessToken as jest.Mock).mockResolvedValue(
-      'test_access_token'
+    // NEW: Mock the static method directly to return a mock Account object
+    const mockAccount: Partial<Account> = {
+      access_token: 'test_access_token',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'test_refresh_token',
+      token_type: 'Bearer',
+    }
+    ;(SpotifyTokenManager.getSystemAccount as jest.Mock).mockResolvedValue(
+      mockAccount
     )
 
     // Mock SDK instance

@@ -7,6 +7,7 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
 import logger from '../../utils/logger'
+import { Account } from '@prisma/client'
 
 // Mock the logger
 jest.mock('../../utils/logger', () => ({
@@ -76,9 +77,15 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_POLLING_INTERVAL_MS = '100' // Use a short interval for testing
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
-    // NEW: Mock the static method directly
-    ;(SpotifyTokenManager.getSystemAccessToken as jest.Mock).mockResolvedValue(
-      'mock_access_token'
+    // NEW: Mock the static method directly to return a mock Account object
+    const mockAccount: Partial<Account> = {
+      access_token: 'mock_access_token',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'mock_refresh_token',
+      token_type: 'Bearer',
+    }
+    ;(SpotifyTokenManager.getSystemAccount as jest.Mock).mockResolvedValue(
+      mockAccount
     )
 
     // Initialize the service and await its creation, which includes SDK setup
@@ -218,7 +225,7 @@ describe('SpotifyPolling Service', () => {
     it('should not execute commands if SDK is not initialized', async () => {
       // Override the mock to return null token for this test
       ;(
-        SpotifyTokenManager.getSystemAccessToken as jest.Mock
+        SpotifyTokenManager.getSystemAccount as jest.Mock
       ).mockResolvedValue(null)
 
       // Create a new service instance which will fail to initialize the SDK

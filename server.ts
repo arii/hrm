@@ -13,6 +13,7 @@ import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 
 // Service Imports
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -43,6 +44,7 @@ logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 const nextRequestHandler = app.getRequestHandler()
 const expressApp = express()
 expressApp.set('trust proxy', true)
+expressApp.use(helmet())
 
 app
   .prepare()
@@ -55,10 +57,22 @@ app
         max: 200,
         standardHeaders: true,
         legacyHeaders: false,
-        keyGenerator: (req: Request) =>
-          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-          req.socket.remoteAddress ||
-          'unknown',
+        keyGenerator: (req: Request) => {
+          const xForwardedFor = req.headers['x-forwarded-for'] as string
+          if (xForwardedFor) {
+            // Iterate from right to left to find the first non-trusted proxy IP
+            const ips = xForwardedFor.split(',').map((ip) => ip.trim())
+            // This example assumes '127.0.0.1' is the trusted proxy for simplicity,
+            // but in production, you'd use a configurable list of trusted proxy IPs.
+            for (let i = ips.length - 1; i >= 0; i--) {
+              if (ips[i] !== '127.0.0.1') {
+                // Replace with actual trusted proxy check
+                return ips[i]
+              }
+            }
+          }
+          return req.socket.remoteAddress || 'unknown'
+        },
         message: { error: 'Too many requests, please try again later.' },
       })
       expressApp.use('/api/', apiLimiter)
@@ -79,20 +93,8 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({ type: 'SPOTIFY_SERVICE_INIT_UPDATE', payload: false })
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        isReady: () => false,
-        getState: () => ({
-          trackName: 'Service Error',
-          artist: '',
-          isPlaying: false,
-          devices: [],
-        }),
-      } as unknown as SpotifyPolling
+      logger.error({ err: e }, 'SpotifyPolling initialization failed. Shutting down server.')
+      process.exit(1)
     }
     const tabataService = new TabataTimer(broadcast)
 
