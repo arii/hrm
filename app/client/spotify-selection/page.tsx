@@ -208,12 +208,6 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
-            <VolumeSlider
-              volume={volume}
-              muted={muted}
-              onVolumeChange={setVolume}
-              onToggleMute={toggleMute}
-            />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2, minWidth: 200 }}>
