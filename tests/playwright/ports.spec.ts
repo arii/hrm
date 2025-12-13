@@ -32,7 +32,6 @@ const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
 
 test.beforeAll(async () => {
   PORT = await getPort({ port: 3000 })
-  console.log(`Starting server for port tests on dynamic port: ${PORT}...`)
   const env = {
     ...process.env,
     NODE_ENV: 'production',
@@ -53,11 +52,9 @@ test.beforeAll(async () => {
   })
 
   await waitForPort(PORT)
-  console.log('Server started for port tests.')
 })
 
 test.afterAll(async () => {
-  console.log('Stopping server for port tests...')
   if (serverProcess && serverProcess.pid) {
     try {
       process.kill(-serverProcess.pid)
@@ -65,7 +62,6 @@ test.afterAll(async () => {
       console.error('Failed to kill server process for port tests:', e)
     }
   }
-  console.log('Server stopped for port tests.')
 })
 
 test.describe('Port Health Checks', () => {
