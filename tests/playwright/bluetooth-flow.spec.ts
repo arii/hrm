@@ -41,13 +41,10 @@ test.describe('Bluetooth HRM Connection', () => {
     await connectPage.reload()
 
     // 2. Pre-seed the mock with a "known" device that FAILS connection
-    await connectPage.evaluate(() => {
+    await connectPage.evaluate(async () => {
       // Access the internal mock state we setup in injectBluetoothMocks
-      // @ts-ignore
-      const badDevice = navigator.bluetooth.requestDevice({}) // Creates the default mock
-      // @ts-ignore
+      const badDevice = await navigator.bluetooth.requestDevice({}) // Creates the default mock
       badDevice._shouldFailConnection = true // Trigger the failure logic
-      // @ts-ignore
       navigator.bluetooth.getDevices = async () => [badDevice]
     })
 
@@ -64,7 +61,7 @@ test.describe('Bluetooth HRM Connection', () => {
     // Note: In a real test, the "requestDevice" picker would block.
     // But our mock resolves it instantly.
 
-    await expect(connectPage.getByText('Connected! Heart rate data is being streamed')).toBeVisible({ timeout: 10000 })
+    await expect(connectPage.getByText('Connected! Heart rate data is being streamed')).toBeVisible()
 
     // Verify the "bad" cookie was replaced (conceptually, the hook does this)
   })
