@@ -1,3 +1,4 @@
+
 // File: components/Dashboard/HeartRateGraph.tsx
 'use client'
 import React from 'react'
@@ -6,18 +7,22 @@ import { HeartRateDataPoint } from '../../types/websocket'
 
 interface HeartRateGraphProps {
   data: HeartRateDataPoint[]
+  width?: number
+  height?: number
 }
 
-const HeartRateGraph: React.FC<HeartRateGraphProps> = ({ data }) => {
+const HeartRateGraph: React.FC<HeartRateGraphProps> = ({
+  data,
+  width = 100,
+  height = 40,
+}) => {
   const theme = useTheme()
 
   if (data.length < 2) {
     return null // Not enough data to draw a graph
   }
 
-  const width = 100
-  const height = 40
-  const graphPadding = 8 // Use numeric value for padding, adhering to 8px grid
+  const graphPadding = 0 // Padding is handled by the parent Box component
 
   const maxHr = Math.max(...data.map((p) => p.value || 0), 100)
   const minHr = Math.min(...data.map((p) => p.value || 0), 60)
@@ -46,7 +51,7 @@ const HeartRateGraph: React.FC<HeartRateGraphProps> = ({ data }) => {
 
   const scaleY = (hr: number | null) => {
     if (hr === null) {
-      return height - graphPadding
+      return height / 2 // Position null values in the middle
     }
     if (maxHr === minHr) {
       return height / 2 // Avoid division by zero
