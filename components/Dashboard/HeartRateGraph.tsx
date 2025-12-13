@@ -1,4 +1,3 @@
-
 // File: components/Dashboard/HeartRateGraph.tsx
 'use client'
 import React from 'react'
@@ -22,7 +21,7 @@ const HeartRateGraph: React.FC<HeartRateGraphProps> = ({
     return null // Not enough data to draw a graph
   }
 
-  const graphPadding = 0 // Padding is handled by the parent Box component
+  const graphPadding = 8 // Use 8px padding to adhere to the design system
 
   const maxHr = Math.max(...data.map((p) => p.value || 0), 100)
   const minHr = Math.min(...data.map((p) => p.value || 0), 60)
