@@ -10,8 +10,10 @@ import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
+import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
+import { useState } from 'react'
 
 interface ConnectViewProps {
   userName: string
@@ -23,7 +25,8 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onResetServer: () => void
+  onForgetDevice: () => Promise<void> // Added this
+  isSupported: boolean // Added this
   currentHR: number
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
@@ -40,17 +43,51 @@ export default function ConnectView({
   batteryLevel,
   onConnect,
   onDisconnect,
-  onResetServer,
+  onForgetDevice,
+  isSupported,
   currentHR,
   hrZoneProps,
   connectionStatus,
   bluetoothConnected,
 }: ConnectViewProps) {
+  const [isResetting, setIsResetting] = useState(false)
+
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
     if (level > 50) return <BatteryChargingFullIcon color="action" />
     if (level > 20) return <BatteryStdIcon color="warning" />
     return <BatteryAlertIcon color="error" />
+  }
+
+  // New: Combined Reset Handler
+  const handleFullReset = async () => {
+    setIsResetting(true)
+    try {
+      await onForgetDevice() // 1. Forget Bluetooth
+    } catch (error) {
+      console.error('Reset failed:', error)
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  // New: Browser Support Check
+  if (!isSupported) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
+        <BluetoothDisabledIcon
+          sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
+        />
+        <Typography variant="h5" gutterBottom>
+          Bluetooth Not Supported
+        </Typography>
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Your browser does not support Web Bluetooth. Please use Google Chrome,
+          Edge, or Bluefy (on iOS).
+        </Alert>
+        <BottomNavBar />
+      </Container>
+    )
   }
 
   return (
@@ -60,7 +97,6 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
-        {/* Inputs (Hidden when connected) */}
         {!isConnected ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
             <TextField
@@ -103,7 +139,7 @@ export default function ConnectView({
           </Box>
         )}
 
-        {/* Status Messages */}
+        {/* Enhanced Status Messages */}
         {deviceStatus &&
           !isConnected &&
           !deviceStatus.includes('Disconnected') && (
@@ -115,7 +151,6 @@ export default function ConnectView({
             </Alert>
           )}
 
-        {/* Connection Controls */}
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           {!isConnected ? (
             <Button
@@ -161,7 +196,6 @@ export default function ConnectView({
                   </Stack>
                 )}
               </Box>
-
               <Button
                 variant="outlined"
                 size="large"
@@ -170,7 +204,6 @@ export default function ConnectView({
               >
                 Disconnect
               </Button>
-
               {deviceStatus !== 'Connected' && (
                 <Typography variant="caption" color="text.secondary">
                   Status: {deviceStatus}
@@ -180,7 +213,6 @@ export default function ConnectView({
           )}
         </Box>
 
-        {/* Success / Streaming State */}
         {isConnected && bluetoothConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
@@ -198,13 +230,6 @@ export default function ConnectView({
           </Box>
         )}
 
-        {isConnected && currentHR === 0 && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            Connected but no heart rate detected. Make sure your heart rate
-            monitor is properly positioned and active.
-          </Alert>
-        )}
-
         <Typography
           variant="body2"
           color="text.secondary"
@@ -214,7 +239,7 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        {/* Reset Server Button */}
+        {/* Updated Reset Section */}
         <Box
           sx={{
             textAlign: 'center',
@@ -223,15 +248,20 @@ export default function ConnectView({
             borderTop: '1px solid #eee',
           }}
         >
-          <Button variant="contained" color="error" onClick={onResetServer}>
-            Reset Server
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleFullReset}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Resetting...' : 'Reset System & Device'}
           </Button>
           <Typography
             variant="caption"
             display="block"
             sx={{ mt: 1, color: 'text.secondary' }}
           >
-            Use this if you encounter persistent issues.
+            Resets server state AND forgets Bluetooth device connection.
           </Typography>
         </Box>
       </Container>
