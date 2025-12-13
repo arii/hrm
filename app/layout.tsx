@@ -9,6 +9,8 @@ import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
+import { ToastProvider } from '@/context/ToastContext'
+import ToastDisplay from '@/components/ToastDisplay'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
 const inter = Inter({
@@ -49,14 +51,17 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
-            <Providers>
-              <UserSettingsProvider>
-                <ErrorBoundary fallback={<ErrorFallback />}>
-                  <TimerSoundProvider>{children}</TimerSoundProvider>
-                </ErrorBoundary>
-              </UserSettingsProvider>
-            </Providers>
-            <ErrorDisplay />
+            <ToastProvider>
+              <Providers>
+                <UserSettingsProvider>
+                  <ErrorBoundary fallback={<ErrorFallback />}>
+                    <TimerSoundProvider>{children}</TimerSoundProvider>
+                  </ErrorBoundary>
+                </UserSettingsProvider>
+              </Providers>
+              <ErrorDisplay />
+              <ToastDisplay />
+            </ToastProvider>
           </ErrorProvider>
           <Footer />
           <BottomNavBar />

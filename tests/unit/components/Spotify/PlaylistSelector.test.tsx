@@ -2,8 +2,20 @@
 
 import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import '@testing-library/jest-dom'
+import { ToastProvider } from '@/context/ToastContext'
 import { render, screen, waitFor, within } from '@testing-library/react'
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'mock-uuid'),
+}))
 import userEvent from '@testing-library/user-event'
+
+const mockAddToast = jest.fn()
+jest.mock('@/context/ToastContext', () => ({
+  ...jest.requireActual('@/context/ToastContext'),
+  useToast: () => ({
+    addToast: mockAddToast,
+  }),
+}))
 
 const mockPlaylists = {
   presetPlaylists: [
@@ -25,10 +37,12 @@ describe('PlaylistSelector', () => {
 
   it('should fetch and display playlists on render', async () => {
     render(
-      <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
-        onPlaylistPlay={jest.fn()}
-      />
+      <ToastProvider>
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={jest.fn()}
+        />
+      </ToastProvider>
     )
 
     // Wait for the playlists to be fetched and rendered
@@ -42,10 +56,12 @@ describe('PlaylistSelector', () => {
   it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
     const onPlaylistSelected = jest.fn()
     render(
-      <PlaylistSelector
-        onPlaylistSelected={onPlaylistSelected}
-        onPlaylistPlay={jest.fn()}
-      />
+      <ToastProvider>
+        <PlaylistSelector
+          onPlaylistSelected={onPlaylistSelected}
+          onPlaylistPlay={jest.fn()}
+        />
+      </ToastProvider>
     )
     const user = userEvent.setup()
 
@@ -59,10 +75,12 @@ describe('PlaylistSelector', () => {
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
     const onPlaylistPlay = jest.fn()
     render(
-      <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
-        onPlaylistPlay={onPlaylistPlay}
-      />
+      <ToastProvider>
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={onPlaylistPlay}
+        />
+      </ToastProvider>
     )
     const user = userEvent.setup()
 
@@ -75,5 +93,31 @@ describe('PlaylistSelector', () => {
     await user.click(playButton)
 
     expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:3')
+  })
+
+  it('should call addToast with an error message when the fetch fails', async () => {
+    // Override the default fetch mock to simulate an error
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+      })
+    ) as jest.Mock
+
+    render(
+      <ToastProvider>
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={jest.fn()}
+        />
+      </ToastProvider>
+    )
+
+    // Wait for the error toast to be called
+    await waitFor(() => {
+      expect(mockAddToast).toHaveBeenCalledWith(
+        'Failed to fetch playlists. Please try again.',
+        'error'
+      )
+    })
   })
 })

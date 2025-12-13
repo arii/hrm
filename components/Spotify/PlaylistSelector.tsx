@@ -3,7 +3,6 @@ import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import Search from '@mui/icons-material/Search'
-import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
@@ -18,6 +17,7 @@ import Paper from '@mui/material/Paper'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
+import { useToast } from '@/context/ToastContext'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
 
@@ -135,8 +135,8 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   const [searchResults, setSearchResults] = useState<Playlist[]>([])
   const [loading, setLoading] = useState(true)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const { addToast } = useToast()
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
     null
   )
@@ -146,7 +146,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
   useEffect(() => {
     const fetchPlaylists = async () => {
       setLoading(true)
-      setError(null)
       try {
         const response = await fetch(API_SPOTIFY_PLAYLISTS)
         if (!response.ok) {
@@ -164,9 +163,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         setPresetPlaylists(presets)
         setUserPlaylists(user)
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to fetch playlists'
-        setError(message)
+        addToast('Failed to fetch playlists. Please try again.', 'error')
         console.error('Error fetching playlists:', error)
       } finally {
         setLoading(false)
@@ -174,7 +171,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
     }
 
     fetchPlaylists()
-  }, [])
+  }, [addToast])
 
   // Fetch search results when user types
   useEffect(() => {
@@ -253,14 +250,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         <CircularProgress />
         <Typography sx={{ ml: 2 }}>Loading playlists...</Typography>
       </Box>
-    )
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error}
-      </Alert>
     )
   }
 
