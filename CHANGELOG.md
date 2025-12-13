@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/arii/hrm/compare/v0.4.1...v0.5.0) (2025-12-13)
+
+
+### Features
+
+* Add AGENTS.md for agentic instructions ([#1285](https://github.com/arii/hrm/issues/1285)) ([ec9a59b](https://github.com/arii/hrm/commit/ec9a59b8af972c3638095a05ac81733bf5fd8b2d))
+
+## [0.4.1](https://github.com/arii/hrm/compare/v0.4.0...v0.4.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* remove package-lock.json from pnpm project ([#1295](https://github.com/arii/hrm/issues/1295)) ([00e84b4](https://github.com/arii/hrm/commit/00e84b490d61a7e06d5317660b62d8c2193a964d))
+
 ## [0.4.0](https://github.com/arii/hrm/compare/v0.3.0...v0.4.0) (2025-12-13)
 
 
