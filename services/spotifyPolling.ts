@@ -269,7 +269,7 @@ export class SpotifyPolling {
         | 'context'
         | 'track'
       const albumArtUrl =
-        item && 'album' in item ? item.album.images[0]?.url : null
+        (item && 'album' in item ? item.album.images[0]?.url : null) || null
 
       const progressChanged =
         this.lastKnownProgress === null ||
@@ -454,7 +454,7 @@ export class SpotifyPolling {
         break
       case 'SET_SHUFFLE':
         if (shuffleState !== undefined) {
-          await this.sdk!.player.toggleShuffle(shuffleState, deviceId)
+          await this.sdk!.player.setShuffle(shuffleState, deviceId)
         }
         break
       case 'SET_REPEAT':

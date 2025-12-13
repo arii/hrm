@@ -244,7 +244,7 @@ const handleIncomingMessage = (
             repeatState,
           } = commandMsg
           spotifyServiceInstance.handleCommand(command, {
-            deviceId: deviceId,
+            deviceId: deviceId as string | undefined,
             volume: volume,
             playlistUri: playlistUri,
             positionMs: positionMs,
