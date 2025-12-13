@@ -39,7 +39,6 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       await warmupPage.goto(`${BASE_URL}/client/connect`)
       await waitForPageReady(warmupPage)
 
-      await context.close()
       console.log('✅ Server endpoints warmed up')
 
       await applyFixture()

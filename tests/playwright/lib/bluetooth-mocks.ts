@@ -8,12 +8,10 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 2. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic
-      implements MockBluetoothRemoteGATTCharacteristic
-    {
+    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
-      listeners: { [key: string]: ((event: any) => void)[] } = {}
+      listeners: { [key: string]: ((event: Event) => void)[] } = {}
 
       constructor(service: MockBluetoothRemoteGATTService) {
         this.service = service
@@ -42,16 +40,14 @@ export const injectBluetoothMocks = async (page: Page) => {
         view.setUint8(1, uint8Value) // HR Value
         this.value = view
 
-        const event = { target: { value: this.value } }
+        const event = { target: { value: this.value } } as unknown as Event
         if (this.listeners['characteristicvaluechanged']) {
           this.listeners['characteristicvaluechanged'].forEach((l) => l(event))
         }
       }
     }
 
-    class MockBluetoothRemoteGATTService
-      implements MockBluetoothRemoteGATTService
-    {
+    class MockBluetoothRemoteGATTService implements MockBluetoothRemoteGATTService {
       device: MockBluetoothDevice
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
@@ -62,14 +58,12 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.characteristic = new MockBluetoothRemoteGATTCharacteristic(this)
       }
 
-      async getCharacteristic(uuid: string) {
+      async getCharacteristic(_uuid: string) {
         return this.characteristic
       }
     }
 
-    class MockBluetoothRemoteGATTServer
-      implements MockBluetoothRemoteGATTServer
-    {
+    class MockBluetoothRemoteGATTServer implements MockBluetoothRemoteGATTServer {
       device: MockBluetoothDevice
       connected = false
       private services: Map<string, MockBluetoothRemoteGATTService> = new Map()
@@ -101,7 +95,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         _connectedDevice = null
         if (this.device.listeners['gattserverdisconnected']) {
           this.device.listeners['gattserverdisconnected'].forEach((l) =>
-            l({ target: this.device })
+            l({ target: this.device } as unknown as Event)
           )
         }
       }
@@ -118,7 +112,7 @@ export const injectBluetoothMocks = async (page: Page) => {
       id: string
       name: string
       gatt: MockBluetoothRemoteGATTServer
-      listeners: { [key: string]: ((event: any) => void)[] } = {}
+      listeners: { [key: string]: ((event: Event) => void)[] } = {}
       _shouldFailConnection = false
 
       constructor(id: string, name: string) {
@@ -132,7 +126,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         listener: (event: { target: MockBluetoothDevice }) => void
       ) {
         if (!this.listeners[type]) this.listeners[type] = []
-        this.listeners[type].push(listener)
+        this.listeners[type].push(listener as (event: Event) => void)
       }
 
       async forget() {
@@ -151,7 +145,7 @@ export const injectBluetoothMocks = async (page: Page) => {
         return [..._pairedDevices]
       },
 
-      requestDevice: async (options?: any) => {
+      requestDevice: async (_options?: unknown) => {
         const device = new MockBluetoothDevice('mock-device-id-123', 'Mock HRM')
         if (!_pairedDevices.find((d) => d.id === device.id)) {
           _pairedDevices.push(device)
@@ -161,8 +155,8 @@ export const injectBluetoothMocks = async (page: Page) => {
     }
 
     // Inject without ts-ignore
-    navigator.bluetooth = mockBluetooth;
-    (window as any).mockBluetoothInstance = {
+    navigator.bluetooth = mockBluetooth
+    window.mockBluetoothInstance = {
       _getConnectedDevice: () => _connectedDevice,
     }
   })
@@ -170,7 +164,7 @@ export const injectBluetoothMocks = async (page: Page) => {
 
 export const simulateHeartRate = (page: Page, bpm: number) => {
   return page.evaluate((bpmValue) => {
-    const mock = (window as any).mockBluetoothInstance
+    const mock = window.mockBluetoothInstance
     if (mock) {
       const connectedDevice = mock._getConnectedDevice()
       if (connectedDevice && connectedDevice.gatt.connected) {
