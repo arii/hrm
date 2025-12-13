@@ -22,6 +22,8 @@ When a new issue is opened, you will:
     *   `feature`: A new feature request.
     *   `documentation`: Improvements or additions to documentation.
     *   `enhancement`: Improvement to an existing feature.
+    *   `chore`: Internal maintenance, dependency updates, or build process changes.
+    *   `refactor`: Restructuring code without changing external behavior.
     *   `question`: Further information is requested.
     *   `wontfix`: The issue will not be worked on.
     *   `duplicate`: This issue is a duplicate of another.
