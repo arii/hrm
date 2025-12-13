@@ -236,10 +236,7 @@ export default function ConnectView({
         )}
 
         {isConnected && duration && (
-          <WorkoutSummary
-            duration={duration}
-            caloriesBurned={caloriesBurned}
-          />
+          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
 
         <Typography
