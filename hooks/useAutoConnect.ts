@@ -4,11 +4,20 @@ const MAX_DELAY = 30000 // 30 seconds
 const INITIAL_DELAY = 1000 // 1 second
 
 type ConnectFn = () => Promise<boolean>
+type StatusCallback = (isConnecting: boolean, attempts: number) => void
 
-const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
+const useAutoConnect = (
+  connectFn: ConnectFn,
+  start: boolean,
+  onStatusChange: StatusCallback
+) => {
   const [isConnecting, setIsConnecting] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    onStatusChange(isConnecting, attempts)
+  }, [isConnecting, attempts, onStatusChange])
 
   useEffect(() => {
     let isMounted = true

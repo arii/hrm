@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import useLocalStorage from '../../../hooks/useLocalStorage' // Import this
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -13,8 +13,7 @@ export default function ConnectPage() {
   const [userAge, setUserAge] = useLocalStorage<string>('hrm_user_age', '')
 
   // Hydration mismatch fix: prevent rendering persistent data until client-side
-  const [isMounted, setIsMounted] = useState(false)
-  useEffect(() => setIsMounted(true), [])
+  const isMounted = typeof window !== 'undefined'
 
   const {
     connectAndStream,
@@ -23,7 +22,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
-    isSupported
+    isSupported,
   } = useBluetoothHRM()
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -34,11 +33,25 @@ export default function ConnectPage() {
     // 1. We have stored credentials
     // 2. We are supported and not already connected
     // 3. WebSocket is ready
-    if (isMounted && isSupported && userName && !isConnected && connectionStatus === 'Connected') {
+    if (
+      isMounted &&
+      isSupported &&
+      userName &&
+      !isConnected &&
+      connectionStatus === 'Connected'
+    ) {
       // Pass 'true' for isAutoConnect to prevent the picker popup
       connectAndStream(userName, userAge, true)
     }
-  }, [isMounted, isSupported, userName, userAge, isConnected, connectionStatus, connectAndStream])
+  }, [
+    isMounted,
+    isSupported,
+    userName,
+    userAge,
+    isConnected,
+    connectionStatus,
+    connectAndStream,
+  ])
 
   const handleConnect = () => {
     // Manual connection: pass 'false' (or nothing) to allow picker

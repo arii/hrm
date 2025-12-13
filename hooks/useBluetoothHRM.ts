@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
@@ -58,7 +57,9 @@ const useBluetoothHRM = () => {
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
-  const [isSupported, setIsSupported] = useState(false)
+  const [isSupported] = useState(
+    () => typeof navigator !== 'undefined' && !!navigator.bluetooth
+  )
   const [shouldReconnect, setShouldReconnect] = useState(false)
 
   const statusRef = useRef(deviceStatus)
@@ -70,10 +71,6 @@ const useBluetoothHRM = () => {
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
-
-  useEffect(() => {
-    setIsSupported(typeof navigator !== 'undefined' && !!navigator.bluetooth)
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -179,23 +176,24 @@ const useBluetoothHRM = () => {
         )
 
         try {
-          const batteryService = await server.getPrimaryService(
-            BATTERY_SERVICE_UUID
-          )
+          const batteryService =
+            await server.getPrimaryService(BATTERY_SERVICE_UUID)
           const batteryChar = await batteryService.getCharacteristic(
             BATTERY_LEVEL_CHARACTERISTIC_UUID
           )
           const value = await batteryChar.readValue()
           setBatteryLevel(value.getUint8(0))
           await batteryChar.startNotifications()
-          batteryChar.addEventListener('characteristicvaluechanged', (e: Event) => {
+          batteryChar.addEventListener(
+            'characteristicvaluechanged',
+            (e: Event) => {
               const target = e.target as BluetoothRemoteGATTCharacteristic
               if (target.value) {
                 setBatteryLevel(target.value.getUint8(0))
               }
             }
           )
-        } catch (err) {
+        } catch (_err) {
           /* Battery service optional */
         }
 
@@ -244,22 +242,24 @@ const useBluetoothHRM = () => {
   const reconnectFn = useCallback(async (): Promise<boolean> => {
     if (!deviceRef.current) return false
     try {
-        return await connectToGatt(deviceRef.current)
+      return await connectToGatt(deviceRef.current)
     } catch (error) {
-        console.warn('Auto-reconnect attempt failed:', error)
-        return false
+      console.warn('Auto-reconnect attempt failed:', error)
+      return false
     }
-  }, [connectToGatt]);
+  }, [connectToGatt])
 
-  const { isConnecting: isReconnecting, attempts: reconnectAttempts } = useAutoConnect(reconnectFn, shouldReconnect);
-
-  useEffect(() => {
-    if (isReconnecting && reconnectAttempts > 0) {
+  useAutoConnect(
+    reconnectFn,
+    shouldReconnect,
+    (isReconnecting, reconnectAttempts) => {
+      if (isReconnecting && reconnectAttempts > 0) {
         setDeviceStatus(`Signal Lost. Retrying (${reconnectAttempts})...`)
-    } else if (!isReconnecting && shouldReconnect) {
+      } else if (!isReconnecting && shouldReconnect) {
         setDeviceStatus('Signal Lost. Retrying...')
+      }
     }
-  }, [isReconnecting, reconnectAttempts, shouldReconnect]);
+  )
 
   const connectAndStream = useCallback(
     async (
