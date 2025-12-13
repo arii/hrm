@@ -19,6 +19,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import AuthButton from './AuthButton'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -49,11 +50,6 @@ const SpotifyDisplay = () => {
       isLoggedIn,
     })
   }, [status, session, isLoggedIn])
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    window.location.reload()
-  }
 
   const lastSentVolumeRef = useRef<string | null>(null)
   const {
@@ -208,7 +204,7 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <SpotifyLoginButton />
+        <AuthButton />
       </Box>
     )
   }
@@ -365,24 +361,7 @@ const SpotifyDisplay = () => {
             )}
           </Menu>
 
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
-          >
-            Logout
-          </Button>
+          <AuthButton />
         </Box>
       </Box>
     )
