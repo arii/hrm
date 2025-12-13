@@ -78,9 +78,7 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    expect(
-      screen.getAllByTestId('hr-tile-grid-item-skeleton')
-    ).toHaveLength(2)
+    expect(screen.getAllByTestId('hr-tile-grid-item-skeleton')).toHaveLength(2)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 

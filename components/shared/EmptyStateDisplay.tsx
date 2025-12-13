@@ -1,11 +1,11 @@
 // components/shared/EmptyStateDisplay.tsx
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { ReactNode } from 'react';
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import { ReactNode } from 'react'
 
 interface EmptyStateDisplayProps {
-  message: string;
-  icon?: ReactNode;
+  message: string
+  icon?: ReactNode
 }
 
 const EmptyStateDisplay = ({ message, icon }: EmptyStateDisplayProps) => {
@@ -30,7 +30,7 @@ const EmptyStateDisplay = ({ message, icon }: EmptyStateDisplayProps) => {
       )}
       <Typography variant="body1">{message}</Typography>
     </Box>
-  );
-};
+  )
+}
 
-export default EmptyStateDisplay;
+export default EmptyStateDisplay
