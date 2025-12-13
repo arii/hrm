@@ -202,15 +202,15 @@ export class SpotifyTokenManager {
           scope: accessToken.scope,
           obtainedAt: Date.now(),
         },
-      };
+      }
     } else {
-      this.currentToken.payload.access_token = accessToken.access_token;
-      this.currentToken.payload.refresh_token = accessToken.refresh_token;
-      this.currentToken.payload.expires_in = accessToken.expires_in;
-      this.currentToken.payload.scope = accessToken.scope;
-      this.currentToken.payload.obtainedAt = Date.now();
+      this.currentToken.payload.access_token = accessToken.access_token
+      this.currentToken.payload.refresh_token = accessToken.refresh_token
+      this.currentToken.payload.expires_in = accessToken.expires_in
+      this.currentToken.payload.scope = accessToken.scope
+      this.currentToken.payload.obtainedAt = Date.now()
     }
-    writeTokenFileSafe(this.tokenFile, this.currentToken);
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
   }
 
   getSdkAccessToken(): AccessToken | null {

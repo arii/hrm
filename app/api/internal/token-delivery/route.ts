@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const payload = await req.json()
 
     if (spotifyServiceInstance) {
-      await spotifyServiceInstance.updateTokens(payload);
+      await spotifyServiceInstance.updateTokens(payload)
     }
 
     logger.info(

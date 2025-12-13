@@ -141,10 +141,10 @@ export class SpotifyPolling {
   }
 
   public async updateTokens(accessToken: AccessToken) {
-    logger.debug('Received new tokens, updating SDK.');
-    this.tokenManager.setTokens(accessToken);
-    await this.initializeSdk();
-    await this.forcePollAndBroadcast();
+    logger.debug('Received new tokens, updating SDK.')
+    this.tokenManager.setTokens(accessToken)
+    await this.initializeSdk()
+    await this.forcePollAndBroadcast()
   }
 
   // --- Polling Logic ---

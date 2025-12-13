@@ -21,7 +21,7 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
+import { API_INTERNAL_TOKEN_DELIVERY as _API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 import { getClientIp } from './utils/network.js'
 
@@ -150,17 +150,8 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
+      logger.error({ err: e }, 'SpotifyPolling initialization failed. Exiting.')
+      process.exit(1)
     }
     const tabataService = new TabataTimer(broadcast)
 
@@ -182,7 +173,7 @@ app
     const WS_MAX_CONNECTIONS = 5
 
     wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-      const ip = getClientIp(req);
+      const ip = getClientIp(req)
 
       if (process.env.TESTING !== 'true' && ip) {
         const count = wsConnections.get(ip) || 0
