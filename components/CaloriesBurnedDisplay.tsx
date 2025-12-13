@@ -1,6 +1,7 @@
+import React from 'react'
 import { Typography, Box } from '@mui/material'
 
-const CaloriesBurnedDisplay = () => {
+const CaloriesBurnedDisplay = React.memo(() => {
   return (
     <Box>
       <Typography variant="body1">
@@ -11,5 +12,7 @@ const CaloriesBurnedDisplay = () => {
       </Typography>
     </Box>
   )
-}
+})
+
+CaloriesBurnedDisplay.displayName = 'CaloriesBurnedDisplay'
 export default CaloriesBurnedDisplay

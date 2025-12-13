@@ -1,6 +1,7 @@
+import React from 'react'
 import { Typography, Box } from '@mui/material'
 
-const AverageHeartRateDisplay = () => {
+const AverageHeartRateDisplay = React.memo(() => {
   return (
     <Box>
       <Typography variant="body1">
@@ -11,5 +12,7 @@ const AverageHeartRateDisplay = () => {
       </Typography>
     </Box>
   )
-}
+})
+
+AverageHeartRateDisplay.displayName = 'AverageHeartRateDisplay'
 export default AverageHeartRateDisplay

@@ -1,6 +1,7 @@
+import React from 'react'
 import { Typography, Box } from '@mui/material'
 
-const MaxHeartRateDisplay = () => {
+const MaxHeartRateDisplay = React.memo(() => {
   return (
     <Box>
       <Typography variant="body1">
@@ -11,5 +12,7 @@ const MaxHeartRateDisplay = () => {
       </Typography>
     </Box>
   )
-}
+})
+
+MaxHeartRateDisplay.displayName = 'MaxHeartRateDisplay'
 export default MaxHeartRateDisplay
