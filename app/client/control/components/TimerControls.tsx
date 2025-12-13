@@ -69,6 +69,8 @@ const stepperButtonSx = {
   height: 48,
 }
 
+const STEP_SIZE = 5
+
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   // Local state is source of truth for editing
@@ -353,10 +355,12 @@ const TimerControls = () => {
                 justifyContent="center"
                 spacing={1}
               >
-                <Tooltip title="Decrease by 5s">
+                <Tooltip title={`Decrease by ${STEP_SIZE}s`}>
                   <IconButton
                     color="primary"
-                    onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
+                    onClick={() =>
+                      setWorkTime((prev) => Math.max(0, prev - STEP_SIZE))
+                    }
                     aria-label="Decrease work duration"
                     disabled={controlsDisabled}
                     sx={stepperButtonSx}
@@ -377,7 +381,7 @@ const TimerControls = () => {
                   }}
                   inputProps={{
                     min: 0,
-                    step: 5,
+                    step: STEP_SIZE,
                     style: { textAlign: 'center' },
                     'data-testid': 'work-duration-input',
                   }}
@@ -404,10 +408,10 @@ const TimerControls = () => {
                   }}
                   aria-label="Work duration in seconds"
                 />
-                <Tooltip title="Increase by 5s">
+                <Tooltip title={`Increase by ${STEP_SIZE}s`}>
                   <IconButton
                     color="primary"
-                    onClick={() => setWorkTime((prev) => prev + 5)}
+                    onClick={() => setWorkTime((prev) => prev + STEP_SIZE)}
                     aria-label="Increase work duration"
                     disabled={controlsDisabled}
                     sx={stepperButtonSx}
@@ -435,10 +439,12 @@ const TimerControls = () => {
                 justifyContent="center"
                 spacing={1}
               >
-                <Tooltip title="Decrease by 5s">
+                <Tooltip title={`Decrease by ${STEP_SIZE}s`}>
                   <IconButton
                     color="primary"
-                    onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                    onClick={() =>
+                      setRestTime((prev) => Math.max(0, prev - STEP_SIZE))
+                    }
                     aria-label="Decrease rest duration"
                     disabled={controlsDisabled}
                     sx={stepperButtonSx}
@@ -458,7 +464,7 @@ const TimerControls = () => {
                   }}
                   inputProps={{
                     min: 0,
-                    step: 5,
+                    step: STEP_SIZE,
                     style: { textAlign: 'center' },
                     'data-testid': 'rest-duration-input',
                   }}
@@ -485,10 +491,10 @@ const TimerControls = () => {
                   }}
                   aria-label="Rest duration in seconds"
                 />
-                <Tooltip title="Increase by 5s">
+                <Tooltip title={`Increase by ${STEP_SIZE}s`}>
                   <IconButton
                     color="primary"
-                    onClick={() => setRestTime((prev) => prev + 5)}
+                    onClick={() => setRestTime((prev) => prev + STEP_SIZE)}
                     aria-label="Increase rest duration"
                     disabled={controlsDisabled}
                     sx={stepperButtonSx}
