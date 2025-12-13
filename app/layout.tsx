@@ -55,11 +55,11 @@ export default function RootLayout({
                   <TimerSoundProvider>{children}</TimerSoundProvider>
                 </ErrorBoundary>
               </UserSettingsProvider>
-              <BottomNavBar />
             </Providers>
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />
+          <BottomNavBar />
         </ThemeRegistry>
       </body>
     </html>

@@ -19,6 +19,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import UserGreetingDisplay from './UserGreetingDisplay'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -184,6 +185,10 @@ const SpotifyDisplay = () => {
     setSelectedDeviceId(deviceId)
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
+  }
+
+  if (!isLoggedIn) {
+    return <UserGreetingDisplay />
   }
 
   // If we are logged in, we show the player bar.

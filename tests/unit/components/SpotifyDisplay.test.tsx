@@ -52,7 +52,7 @@ describe('SpotifyDisplay', () => {
     ) as jest.Mock
   })
 
-  it('should render null when not logged in', async () => {
+  it('should render the login button when not logged in', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
       spotifyData: { trackName: '', artist: '', isPlaying: false },
@@ -62,10 +62,12 @@ describe('SpotifyDisplay', () => {
       isAuthenticated: false,
     })
 
-    const { container } = renderWithProviders(<SpotifyDisplay />)
+    renderWithProviders(<SpotifyDisplay />)
 
     await waitFor(() => {
-      expect(container.firstChild).toBeNull()
+      expect(
+        screen.getByRole('button', { name: /login with spotify/i })
+      ).toBeInTheDocument()
     })
   })
 
