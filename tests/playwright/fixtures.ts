@@ -4,19 +4,12 @@
  */
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
-import { getBaseURL, waitForPageReady } from './lib'
-
-const BASE_URL = getBaseURL()
 
 type PageFixtures = {
   dashboardPage: Page
   controlPage: Page
   mockPage: Page
   connectPage: Page
-}
-
-type WorkerFixtures = {
-  setupPages: void
 }
 
 export const test = base.extend<PageFixtures>({
