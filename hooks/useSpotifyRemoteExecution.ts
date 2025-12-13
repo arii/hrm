@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyExecutionMessage } from '@/types/websocket'
+import { useToast } from './useToast'
 
 // Define the shape of the player object from useSpotifyWebPlayback hook
 interface SpotifyPlayerInstance {
@@ -22,6 +23,33 @@ export const useSpotifyRemoteExecution = (
   player: SpotifyPlayerInstance | null
 ): void => {
   const { sendData } = useWebSocket()
+  const { addToast } = useToast()
+
+  const executeApiCommand = useCallback(
+    async (body: object) => {
+      try {
+        const response = await fetch('/api/spotify/control', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          const message = errorData.error || 'An unknown API error occurred.'
+          addToast(message, 'error')
+          console.error('[Dashboard] API Command failed:', message)
+        }
+      } catch (error) {
+        console.error('[Dashboard] Network error executing command:', error)
+        addToast(
+          'Failed to send command. Please check your connection.',
+          'error'
+        )
+      }
+    },
+    [addToast]
+  )
 
   useEffect(() => {
     if (!player) return
@@ -37,59 +65,36 @@ export const useSpotifyRemoteExecution = (
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
-        try {
-          switch (command) {
-            case 'PLAY':
-            case 'PAUSE':
-              // Use the Spotify Web API for playback control
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: command }),
+        switch (command) {
+          case 'PLAY':
+          case 'PAUSE':
+            executeApiCommand({ command: command })
+            break
+          case 'NEXT':
+            executeApiCommand({ command: 'NEXT' })
+            break
+          case 'PREVIOUS':
+            executeApiCommand({ command: 'PREVIOUS' })
+            break
+          case 'SET_VOLUME':
+            if (volume !== undefined) {
+              const vol = volume > 1 ? volume / 100 : volume
+              player.setVolume(vol).catch((err) => {
+                console.error('Failed to set local volume', err)
+                addToast('Failed to set local player volume.', 'error')
               })
-              break
-            case 'NEXT':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'NEXT' }),
+              executeApiCommand({
+                command: 'SET_VOLUME',
+                volume: volume,
+                deviceId,
               })
-              break
-            case 'PREVIOUS':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'PREVIOUS' }),
-              })
-              break
-            case 'SET_VOLUME':
-              if (volume !== undefined) {
-                // Use both the local player and the API for volume control
-                const vol = volume > 1 ? volume / 100 : volume
-                player.setVolume(vol)
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    command: 'SET_VOLUME',
-                    volume: volume,
-                    deviceId,
-                  }),
-                })
-              }
-              break
-            case 'TRANSFER_PLAYBACK':
-              if (deviceId) {
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ command: 'TRANSFER', deviceId }),
-                })
-              }
-              break
-          }
-        } catch (execError) {
-          console.error('[Dashboard] Command execution failed:', execError)
+            }
+            break
+          case 'TRANSFER_PLAYBACK':
+            if (deviceId) {
+              executeApiCommand({ command: 'TRANSFER', deviceId })
+            }
+            break
         }
       }
     }
@@ -110,5 +115,5 @@ export const useSpotifyRemoteExecution = (
 
     // Return undefined explicitly for server-side rendering
     return undefined
-  }, [player, sendData])
+  }, [player, sendData, addToast, executeApiCommand])
 }
