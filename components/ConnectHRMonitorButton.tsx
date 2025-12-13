@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import { UNSUPPORTED_BLUETOOTH_TOOLTIP } from '@/utils/constants'
 
 interface ConnectHRMonitorButtonProps {
   connect: () => void
@@ -22,7 +23,7 @@ const ConnectHRMonitorButton = ({
 }: ConnectHRMonitorButtonProps) => {
   if (!isSupported) {
     return (
-      <Tooltip title="This browser does not support Web Bluetooth. Please use Chrome, Edge, or Opera.">
+      <Tooltip title={UNSUPPORTED_BLUETOOTH_TOOLTIP}>
         <Box>
           <Button
             variant="contained"

@@ -7,3 +7,8 @@ export const MAX_HR_DEFAULT = 185
 export const BATTERY_LEVEL_FULL = 70
 export const BATTERY_LEVEL_HIGH = 40
 export const BATTERY_LEVEL_LOW = 20
+
+// UI Text
+export const CONNECT_HR_MONITOR_TITLE = 'Connect Your Heart Rate Monitor'
+export const UNSUPPORTED_BLUETOOTH_TOOLTIP =
+  'This browser does not support Web Bluetooth. Please use Chrome, Edge, or Opera.'

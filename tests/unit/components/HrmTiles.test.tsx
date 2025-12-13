@@ -4,6 +4,7 @@ import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
@@ -126,5 +127,47 @@ describe('HrmTiles', () => {
     expect(tiles).toHaveLength(1)
     expect(within(tiles[0]).getByText('Valid User')).toBeInTheDocument()
     expect(within(tiles[0]).getByText('130')).toBeInTheDocument()
+  })
+
+  it('should call connectAndStream when the connect button is clicked', async () => {
+    const connectAndStream = jest.fn()
+    mockedUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Connected',
+      activeAlerts: [],
+    })
+    mockedUseBluetoothHRM.mockReturnValue({
+      connectAndStream,
+      disconnect: jest.fn(),
+      deviceStatus: 'Disconnected',
+      batteryLevel: null,
+      isConnected: false,
+      isSupported: true,
+    })
+
+    render(<HrmTiles />)
+    await userEvent.click(screen.getByText('Connect HR Monitor'))
+    expect(connectAndStream).toHaveBeenCalled()
+  })
+
+  it('should call disconnect when the disconnect button is clicked', async () => {
+    const disconnect = jest.fn()
+    mockedUseWebSocket.mockReturnValue({
+      hrmData: [],
+      connectionStatus: 'Connected',
+      activeAlerts: [],
+    })
+    mockedUseBluetoothHRM.mockReturnValue({
+      connectAndStream: jest.fn(),
+      disconnect,
+      deviceStatus: 'Connected',
+      batteryLevel: 80,
+      isConnected: true,
+      isSupported: true,
+    })
+
+    render(<HrmTiles />)
+    await userEvent.click(screen.getByText('Disconnect HR Monitor'))
+    expect(disconnect).toHaveBeenCalled()
   })
 })

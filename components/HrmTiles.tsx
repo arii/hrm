@@ -8,7 +8,10 @@ import Typography from '@mui//material/Typography'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import useUserPreferences from '@/hooks/useUserPreferences'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { MAX_HR_DEFAULT } from '@/utils/constants'
+import {
+  CONNECT_HR_MONITOR_TITLE,
+  MAX_HR_DEFAULT,
+} from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
@@ -76,6 +79,8 @@ const HrmTiles = () => {
     connectionStatus === 'Reconnecting...'
 
   // If no tiles are available, show connection UI and skeletons
+  // Note: This UI currently assumes a single, primary HRM connection.
+  // Future iterations may need to address a multi-device connection strategy.
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
@@ -93,7 +98,7 @@ const HrmTiles = () => {
               justifyContent: 'center',
             }}
           >
-            <Typography variant="h6">Connect Your Heart Rate Monitor</Typography>
+            <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
             <HRMonitorStatusIndicator
               deviceStatus={deviceStatus}
               batteryLevel={batteryLevel}
