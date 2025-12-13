@@ -29,23 +29,23 @@ const overlayStyles = {
 const HrTile = ({
   name,
   bpm,
-  percentMax,
+  maxHr,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
-}: HrTileProps) => {
+}: HrT ileProps) => {
   return (
     <Tooltip
       title={
         isAlerting
           ? alertMessage
-          : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+          : `Name: ${name}, BPM: ${bpm}`
       }
       arrow
     >
       <StyledCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
+        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute`}
         sx={{
           color: '#fff',
           textAlign: 'center',
@@ -72,7 +72,7 @@ const HrTile = ({
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
-            <HeartRateZoneIndicator currentHr={bpm} maxHr={100} />
+            <HeartRateZoneIndicator currentHr={bpm} maxHr={maxHr} />
             <Typography
               data-testid="live-hr-value"
               variant="h6"
@@ -115,6 +115,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.maxHr === nextProps.maxHr &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
 import ConnectView from './ConnectView'
 
 export default function ConnectPage() {
@@ -28,8 +27,6 @@ export default function ConnectPage() {
   }
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   return (
     <ConnectView
@@ -46,10 +43,6 @@ export default function ConnectPage() {
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
-      }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
     />

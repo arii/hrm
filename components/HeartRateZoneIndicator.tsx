@@ -11,37 +11,37 @@ export const HR_ZONES = [
   {
     name: 'Warm-up',
     min: 0.5,
-    color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main, // Darker blue
-    bgColor: theme.palette.secondary.main, // Darker blue
+    color: theme.palette.secondary.light,
+    progressColor: theme.palette.secondary.main,
+    bgColor: theme.palette.secondary.main,
   },
   {
     name: 'Fat Burn',
     min: 0.6,
-    color: 'text-green-500',
+    color: theme.palette.success.light,
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
   },
   {
     name: 'Cardio',
     min: 0.7,
-    color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark, // Darker orange/yellow
-    bgColor: theme.palette.warning.dark, // Darker orange/yellow
+    color: theme.palette.warning.light,
+    progressColor: theme.palette.warning.main,
+    bgColor: theme.palette.warning.dark,
   },
   {
     name: 'Peak',
     min: 0.85,
-    color: 'text-red-500',
+    color: theme.palette.primary.light,
     progressColor: theme.palette.primary.main,
     bgColor: theme.palette.primary.main,
   },
   {
     name: 'Max',
     min: 0.95,
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
+    color: theme.palette.error.dark,
+    progressColor: theme.palette.error.dark,
+    bgColor: theme.palette.error.dark,
   },
 ]
 
@@ -52,15 +52,15 @@ export const ZONE_COLORS = {
   green: theme.palette.success.main, // Zone 2: Fat Burn
   yellow: theme.palette.warning.main, // Zone 3: Cardio
   red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
+  purple: theme.palette.error.dark, // Zone 5: Max
 }
 
 export interface HrZoneProps {
   zone: string
   percentage: number
-  color: string // Tailwind text color class
-  progressColor: string // Hex color for MUI components
-  backgroundColor: string // Hex color for background
+  color: string
+  progressColor: string
+  backgroundColor: string
   bpm: number
 }
 
@@ -75,9 +75,9 @@ export const getHrZoneProps = (
     return {
       zone: 'No Data',
       percentage: 0,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
+      color: theme.palette.text.secondary,
+      progressColor: theme.palette.text.secondary,
+      backgroundColor: theme.palette.text.secondary,
       bpm: 0,
     }
   }
@@ -97,9 +97,9 @@ export const getHrZoneProps = (
     return {
       zone: 'Unknown',
       percentage: percentageOfMax,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
+      color: theme.palette.text.secondary,
+      progressColor: theme.palette.text.secondary,
+      backgroundColor: theme.palette.text.secondary,
       bpm: currentHr,
     }
   }
@@ -123,7 +123,10 @@ const HeartRateZoneIndicator: React.FC<HeartRateZoneIndicatorProps> = ({
   currentHr,
   maxHr,
 }) => {
-  const { zone, backgroundColor, percentage } = getHrZoneProps(currentHr, maxHr)
+  const { zone, backgroundColor, percentage } = getHrZoneProps(
+    currentHr,
+    maxHr
+  )
 
   return (
     <Box

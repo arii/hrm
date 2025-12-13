@@ -19,9 +19,6 @@ const HrmTiles = () => {
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const percentMax = Math.round(
-          (user.value / (user.maxHr || MAX_HR_DEFAULT)) * 100
-        )
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
           (alert) =>
@@ -38,7 +35,6 @@ const HrmTiles = () => {
             <HrTile
               name={user.name || ''}
               bpm={user.value}
-              percentMax={percentMax}
               maxHr={user.maxHr || MAX_HR_DEFAULT}
               isAlerting={!!matchingAlert}
               // Conditionally add alertMessage to avoid passing `undefined`
