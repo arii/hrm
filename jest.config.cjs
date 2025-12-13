@@ -2,7 +2,7 @@
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
+  roots: ['<rootDir>/tests/unit', '<rootDir>/tests/integration'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: "coverage",
@@ -50,6 +50,8 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  maxWorkers: 1,
+  globalSetup: '<rootDir>/tests/integration/jest.global-setup.js',
 }
 
 module.exports = config

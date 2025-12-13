@@ -1,5 +1,5 @@
 // tests/integration/socketManager.test.ts
-import { spawn, ChildProcess, execSync } from 'child_process'
+import { spawn, ChildProcess } from 'child_process'
 import WebSocket from 'ws'
 import http from 'http'
 import {
@@ -17,18 +17,17 @@ describe('WebSocket Full Integration Test', () => {
   const healthCheckUrl = `http://127.0.0.1:${PORT}/health/ready`
 
   beforeAll((done) => {
-    try {
-      execSync('pnpm run build:server', { stdio: 'inherit' })
-    } catch (error) {
-      return done(error as Error)
-    }
-
     serverProcess = spawn('node', ['dist/server.mjs'], {
-      env: { ...process.env, PORT: `${PORT}`, NODE_ENV: 'production' },
+      env: {
+        ...process.env,
+        PORT: `${PORT}`,
+        NODE_ENV: 'production',
+        NEXTAUTH_SECRET: 'test-secret-for-socket-manager-test',
+        TESTING: 'true',
+      },
       detached: true,
     })
 
-    // Silence verbose server output in tests, but log errors
     serverProcess.stdout?.on('data', (_data: Buffer) => {})
     serverProcess.stderr?.on('data', (data: Buffer) =>
       console.error(`[Server ERR]: ${data.toString().trim()}`)
@@ -37,21 +36,10 @@ describe('WebSocket Full Integration Test', () => {
 
     const checkHealth = () => {
       const req = http.get(healthCheckUrl, (res) => {
-        if (res.statusCode === 200) {
-          console.log('Server is ready.')
+        if (res.statusCode === 200 || res.statusCode === 503) {
           clearInterval(interval)
           clearTimeout(timeout)
           done()
-        } else {
-          // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
-          if (res.statusCode === 503) {
-            console.log(
-              'Server is running but unhealthy (as expected without Spotify).'
-            )
-            clearInterval(interval)
-            clearTimeout(timeout)
-            done()
-          }
         }
       })
       req.on('error', () => {})
@@ -88,15 +76,12 @@ describe('WebSocket Full Integration Test', () => {
       receivedMessages.push(message)
     })
 
-    // Use a sequence of events to test the workflow
     const runWorkflow = async () => {
-      // 1. Wait for initial connection and state update
       await new Promise((resolve) => setTimeout(resolve, 500))
       expect(receivedMessages.length).toBeGreaterThanOrEqual(1)
       const initialState = receivedMessages[0]
       expect(initialState.type).toBe('STATE_UPDATE')
 
-      // 2. Send HR data
       const hrmInput: HrmInputMessage = {
         type: 'HRM_INPUT',
         data: { value: 135, name: 'Workflow Test' },
@@ -110,18 +95,16 @@ describe('WebSocket Full Integration Test', () => {
       expect(clientData).toBeDefined()
       expect(clientData?.value).toBe(135)
 
-      // 3. Start the timer
       const startCommand: TimerCommandMessage = {
         type: 'TIMER_COMMAND',
         command: 'START',
       }
       ws.send(JSON.stringify(startCommand))
-      await new Promise((resolve) => setTimeout(resolve, 1500)) // Wait for prepare phase
+      await new Promise((resolve) => setTimeout(resolve, 1500))
       lastMessage = receivedMessages[receivedMessages.length - 1]
       expect(lastMessage.timerData?.isRunning).toBe(true)
       expect(lastMessage.timerData?.currentPhase).toBe('PREPARE')
 
-      // 4. Stop the timer
       const stopCommand: TimerCommandMessage = {
         type: 'TIMER_COMMAND',
         command: 'STOP',
