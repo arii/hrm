@@ -18030,7 +18030,7 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
-      react-is: 16.13.1
+      react-is: 16.8.6
 
   prop-types@15.8.1:
     dependencies:

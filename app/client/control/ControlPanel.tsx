@@ -13,6 +13,7 @@ import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import dynamic from 'next/dynamic'
+import VolumeSlider from '../../../components/PlaybackControls/VolumeSlider'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -24,7 +25,6 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   ),
 })
 import TimerControls from './components/TimerControls'
-import VolumeSlider from '../../../components/PlaybackControls/VolumeSlider'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
