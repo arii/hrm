@@ -39,7 +39,9 @@ export const test = base.extend<PageFixtures, WorkerFixtures>({
       await warmupPage.goto(`${BASE_URL}/client/connect`)
       await waitForPageReady(warmupPage)
 
-      await context.close()
+      // Do NOT close the context here. This worker-scoped fixture provides the
+      // context for the tests that depend on it. Closing it prematurely
+      // causes all dependent tests to fail with a timeout.
       console.log('✅ Server endpoints warmed up')
 
       await applyFixture()
