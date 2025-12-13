@@ -82,7 +82,11 @@ const Dashboard = () => {
 
         {/* Workout Goal Progress */}
         <Grid item xs={12}>
-            <WorkoutGoalProgress currentProgress={75} targetGoal={150} label="Weekly Active Minutes" />
+          <WorkoutGoalProgress
+            currentProgress={75}
+            targetGoal={150}
+            label="Weekly Active Minutes"
+          />
         </Grid>
 
         {/* 1. TABATA TIMER - Componentized */}
