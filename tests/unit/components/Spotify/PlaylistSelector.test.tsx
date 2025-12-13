@@ -3,7 +3,7 @@
  */
 // tests/unit/components/Spotify/PlaylistSelector.test.tsx
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import { ErrorProvider } from '@/context/ErrorContext'
 
@@ -29,7 +29,10 @@ describe('PlaylistSelector', () => {
   it('should fetch and display playlists on render', async () => {
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={jest.fn()} />
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={jest.fn()}
+        />
       </ErrorProvider>
     )
 
@@ -41,7 +44,10 @@ describe('PlaylistSelector', () => {
     const onPlaylistSelected = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={onPlaylistSelected} onPlaylistPlay={jest.fn()} />
+        <PlaylistSelector
+          onPlaylistSelected={onPlaylistSelected}
+          onPlaylistPlay={jest.fn()}
+        />
       </ErrorProvider>
     )
 
@@ -54,7 +60,10 @@ describe('PlaylistSelector', () => {
     const onPlaylistPlay = jest.fn()
     render(
       <ErrorProvider>
-        <PlaylistSelector onPlaylistSelected={jest.fn()} onPlaylistPlay={onPlaylistPlay} />
+        <PlaylistSelector
+          onPlaylistSelected={jest.fn()}
+          onPlaylistPlay={onPlaylistPlay}
+        />
       </ErrorProvider>
     )
 
