@@ -12,7 +12,7 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 
 2. **Install dependencies**
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Set up environment variables**
@@ -23,7 +23,7 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 
 4. **Start development server**
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 ## Code Style and Standards
@@ -43,24 +43,24 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ### Code Formatting
 - We use Prettier for code formatting
 - ESLint for code linting
-- Run `npm run format` before committing
-- Run `npm run lint:fix` to fix linting issues
+- Run `pnpm run format` before committing
+- Run `pnpm run lint:fix` to fix linting issues
 
 ## Testing
 
 ### Running Tests
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 
 # Run tests in watch mode
-npm run test:watch
+pnpm run test:watch
 
 # Run visual regression tests
-npm run test:visual
+pnpm run test:visual
 ```
 
 ### Writing Tests
@@ -114,10 +114,10 @@ test: add unit tests for timer utilities
 
 3. **Test your changes**
    ```bash
-   npm run lint
-   npm run test:coverage
-   npm run build
-   npm run test:visual
+   pnpm run lint
+   pnpm run test:coverage
+   pnpm run build
+   pnpm run test:visual
    ```
 
 4. **Commit your changes**
