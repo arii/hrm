@@ -28,7 +28,8 @@ const CurrentHeartRateDisplay = ({
           my: 0.5,
           textShadow: '0 2px 4px rgba(0,0,0,0.2)',
           animation: 'subtle-pulse 2s infinite ease-in-out',
-          animationPlayState: isBpmAvailable && !isAlerting ? 'running' : 'paused',
+          animationPlayState:
+            isBpmAvailable && !isAlerting ? 'running' : 'paused',
           color: 'white', // Assuming it will be on a colored background
         }}
       >
