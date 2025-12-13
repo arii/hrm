@@ -35,34 +35,41 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       sx={{ width: 120 }}
       data-testid="volume-slider"
     >
+      <Typography id="volume-slider-label" className="sr-only">
+        Volume
+      </Typography>
       <IconButton
-        size="small"
         onClick={onToggleMute}
         sx={{
           color: muted ? 'error.main' : 'grey.400',
           '&:hover': { color: 'white' },
+          width: 48,
+          height: 48,
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
       >
-        {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
+        {muted ? <VolumeOff /> : <VolumeUp />}
       </IconButton>
       <Slider
-        value={volume}
+        value={muted ? 0 : volume}
         onChange={handleVolumeChange}
         min={0}
         max={100}
-        size="small"
+        aria-labelledby="volume-slider-label"
+        aria-valuetext={muted ? 'Muted' : `${volume}%`}
         sx={{
           color: '#1DB954',
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
-            width: 12,
-            height: 12,
+            width: 24,
+            height: 24,
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: '0px 0px 0px 8px rgba(29, 185, 84, 0.16)',
+            },
           },
-          '& .M_uiSlider-track': { height: 3 },
-          '& .MuiSlider-rail': { height: 3 },
+          '& .MuiSlider-track': { height: 4 },
+          '& .MuiSlider-rail': { height: 4 },
         }}
-        aria-labelledby="volume-slider"
       />
     </Stack>
   )
