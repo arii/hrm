@@ -26,7 +26,7 @@ import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : 3001 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
@@ -145,6 +145,8 @@ app
     }
 
     // 1. Initialize WebSocket Server
+    // The WebSocket server is integrated with the main HTTP server.
+    // It does not have a separate port and is attached via the server's 'upgrade' event.
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
