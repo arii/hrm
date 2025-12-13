@@ -43,6 +43,10 @@ export type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'GET_DEVICES'
+  | 'SET_SHUFFLE'
+  | 'SET_REPEAT'
+  | 'SEEK_TO_POSITION'
+
 // 1. Update SpotifyData to include the device list
 export interface SpotifyDevice {
   id: string
@@ -59,6 +63,10 @@ export interface SpotifyData {
   artist: string
   isPlaying: boolean
   devices: SpotifyDevice[] // <--- ADDED: Synced device list
+  progressMs?: number
+  durationMs?: number
+  shuffleState?: boolean
+  repeatState?: 'off' | 'track' | 'context'
 }
 
 /**
@@ -214,11 +222,17 @@ export const SpotifyCommandMessageSchema = z.object({
     z.literal('PREVIOUS'),
     z.literal('TRANSFER_PLAYBACK'),
     z.literal('SET_VOLUME'),
-    z.literal('GET_DEVICES'), // <--- ADDED
+    z.literal('GET_DEVICES'),
+    z.literal('SET_SHUFFLE'),
+    z.literal('SET_REPEAT'),
+    z.literal('SEEK_TO_POSITION'),
   ]),
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
+  shuffleState: z.boolean().optional(),
+  repeatState: z.enum(['off', 'track', 'context']).optional(),
+  positionMs: z.number().optional(),
 })
 
 export const GetStateMessageSchema = z.object({

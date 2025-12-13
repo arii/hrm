@@ -48,6 +48,9 @@ const mockPlayer: { [key: string]: jest.Mock } = {
   getAvailableDevices: jest
     .fn()
     .mockImplementation(() => Promise.resolve({ devices: [] })),
+  togglePlaybackShuffle: jest.fn().mockImplementation(() => Promise.resolve()),
+  setRepeatMode: jest.fn().mockImplementation(() => Promise.resolve()),
+  seekToPosition: jest.fn().mockImplementation(() => Promise.resolve()),
 }
 
 jest.mock('@spotify/web-api-ts-sdk', () => ({
@@ -78,6 +81,9 @@ describe('SpotifyPolling Service', () => {
     mockPlayer.setPlaybackVolume.mockClear()
     mockPlayer.getAvailableDevices.mockClear()
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
+    mockPlayer.togglePlaybackShuffle.mockClear()
+    mockPlayer.setRepeatMode.mockClear()
+    mockPlayer.seekToPosition.mockClear()
 
     broadcastedStates = []
     broadcastMock = jest.fn((message) => {
@@ -158,6 +164,53 @@ describe('SpotifyPolling Service', () => {
       const deviceId = 'test_device_123'
       await spotifyService.handleCommand('PLAY', deviceId)
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
+    })
+  })
+
+  describe('Playback Control', () => {
+    it('should handle SET_SHUFFLE command', async () => {
+      await spotifyService.handleCommand(
+        'SET_SHUFFLE',
+        'test_device_id',
+        undefined,
+        undefined,
+        true
+      )
+      expect(mockPlayer.togglePlaybackShuffle).toHaveBeenCalledWith(
+        true,
+        'test_device_id'
+      )
+    })
+
+    it('should handle SET_REPEAT command', async () => {
+      await spotifyService.handleCommand(
+        'SET_REPEAT',
+        'test_device_id',
+        undefined,
+        undefined,
+        undefined,
+        'track'
+      )
+      expect(mockPlayer.setRepeatMode).toHaveBeenCalledWith(
+        'track',
+        'test_device_id'
+      )
+    })
+
+    it('should handle SEEK_TO_POSITION command', async () => {
+      await spotifyService.handleCommand(
+        'SEEK_TO_POSITION',
+        'test_device_id',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        60000
+      )
+      expect(mockPlayer.seekToPosition).toHaveBeenCalledWith(
+        60000,
+        'test_device_id'
+      )
     })
   })
 

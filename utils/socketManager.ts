@@ -238,7 +238,10 @@ const handleIncomingMessage = (
             commandMsg.command,
             commandMsg.deviceId,
             commandMsg.volume,
-            commandMsg.playlistUri
+            commandMsg.playlistUri,
+            commandMsg.shuffleState,
+            commandMsg.repeatState,
+            commandMsg.positionMs
           )
         }
         break
