@@ -264,7 +264,10 @@ export class SpotifyPolling {
       const progressMs = playbackState.progress_ms || 0
       const durationMs = item?.duration_ms || 1
       const shuffleState = playbackState.shuffle_state
-      const repeatState = playbackState.repeat_state
+      const repeatState = playbackState.repeat_state as
+        | 'off'
+        | 'context'
+        | 'track'
       const albumArtUrl =
         item && 'album' in item ? item.album.images[0]?.url : null
 
@@ -451,7 +454,7 @@ export class SpotifyPolling {
         break
       case 'SET_SHUFFLE':
         if (shuffleState !== undefined) {
-          await this.sdk!.player.setShuffle(shuffleState, deviceId)
+          await this.sdk!.player.toggleShuffle(shuffleState, deviceId)
         }
         break
       case 'SET_REPEAT':

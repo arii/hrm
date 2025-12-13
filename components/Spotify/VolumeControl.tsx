@@ -18,7 +18,7 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
 }) => {
   return (
     <Stack direction="row" spacing={1} alignItems="center">
-      <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+      <VolumeUp sx={{ color: 'grey.400', fontSize: 20, '&:hover': { color: 'white' } }} />
       <Slider
         value={volume}
         onChange={(_, val) => onVolumeChange(val as number)}
@@ -27,7 +27,7 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
         max={100}
         size="small"
         sx={{
-          color: '#1DB954',
+          color: 'success.main',
           '& .MuiSlider-thumb': {
             backgroundColor: 'white',
             '&:hover, &.Mui-focusVisible': {

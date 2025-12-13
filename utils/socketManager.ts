@@ -244,12 +244,12 @@ const handleIncomingMessage = (
             repeatState,
           } = commandMsg
           spotifyServiceInstance.handleCommand(command, {
-            deviceId,
-            volume,
-            playlistUri,
-            positionMs,
-            shuffleState,
-            repeatState,
+            deviceId: deviceId,
+            volume: volume,
+            playlistUri: playlistUri,
+            positionMs: positionMs,
+            shuffleState: shuffleState,
+            repeatState: repeatState,
           })
         }
         break
