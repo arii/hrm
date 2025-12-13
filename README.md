@@ -57,12 +57,12 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 This repository is configured with a VS Code DevContainer, which provides a fully automated, "one-click" setup.
 
 1.  **Prerequisites**:
-    *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-    *   [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+    - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+    - [Visual Studio Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 
 2.  **Launch**:
-    *   Open the repository in VS Code.
-    *   Click the "Reopen in Container" button when prompted.
+    - Open the repository in VS Code.
+    - Click the "Reopen in Container" button when prompted.
 
 That's it. The container will build, install all dependencies (`npm ci` and Playwright), and create a `.env.local` file for you. Once the container is ready, you can start the development server:
 
@@ -161,6 +161,7 @@ pnpm run dev
 ```
 
 The server will start and you should see output indicating:
+
 - Next.js app running on http://127.0.0.1:3000
 - WebSocket server on ws://127.0.0.1:3000/ws
 - Spotify polling service initialized
@@ -169,6 +170,7 @@ The server will start and you should see output indicating:
 **7. Verify the Setup**
 
 Open your browser and navigate to:
+
 - **Dashboard**: http://127.0.0.1:3000
 - **Mock HRM Client**: http://127.0.0.1:3000/mock
 - **Phone Controls**: http://127.0.0.1:3000/phone
@@ -195,7 +197,6 @@ If you encounter issues during setup:
 - **Environment variable issues**: Double-check that `.env.local` exists and contains valid values
 
 For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
-
 
 > **⚠️ Package Manager Change**: This project now uses **pnpm** instead of npm. All `npm` commands are blocked to prevent `package-lock.json` creation.
 
@@ -337,19 +338,23 @@ This workspace is pre-configured for a seamless development experience with VS C
 Create a `.env.local` file in the root directory for local development secrets and configuration.
 
 ### Core Configuration
--   `PORT`: The port for the main Next.js application server. Defaults to `3000`.
--   `WS_PORT`: The dedicated port for the WebSocket server. Defaults to `3001`.
--   `HOST`: The hostname the server will bind to. Defaults to `127.0.0.1` in development and `0.0.0.0` in production.
--   `NEXTAUTH_URL`: The canonical URL for your application, used for OAuth callbacks. For local development, this should be `http://127.0.0.1:3000`.
--   `NEXTAUTH_SECRET`: A secret key for signing NextAuth.js tokens. Generate one with `openssl rand -base64 32`.
+
+- `PORT`: The port for the main Next.js application server. Defaults to `3000`.
+- `WS_PORT`: The dedicated port for the WebSocket server. Defaults to `3001`.
+- `HOST`: The hostname the server will bind to. Defaults to `127.0.0.1` in development and `0.0.0.0` in production.
+- `NEXTAUTH_URL`: The canonical URL for your application, used for OAuth callbacks. For local development, this should be `http://127.0.0.1:3000`.
+- `NEXTAUTH_SECRET`: A secret key for signing NextAuth.js tokens. Generate one with `openssl rand -base64 32`.
 
 ### Frontend URLs (Public)
+
 These variables are exposed to the browser and are prefixed with `NEXT_PUBLIC_`.
--   `NEXT_PUBLIC_API_URL`: The absolute URL for the backend API. If not set, the frontend will use the same host and port it was served from.
--   `NEXT_PUBLIC_WS_URL`: The absolute URL for the WebSocket server. This takes precedence over `NEXT_PUBLIC_WS_PORT`.
--   `NEXT_PUBLIC_WS_PORT`: The port for the WebSocket server, used if `NEXT_PUBLIC_WS_URL` is not set. Defaults to `3001`.
+
+- `NEXT_PUBLIC_API_URL`: The absolute URL for the backend API. If not set, the frontend will use the same host and port it was served from.
+- `NEXT_PUBLIC_WS_URL`: The absolute URL for the WebSocket server. This takes precedence over `NEXT_PUBLIC_WS_PORT`.
+- `NEXT_PUBLIC_WS_PORT`: The port for the WebSocket server, used if `NEXT_PUBLIC_WS_URL` is not set. Defaults to `3001`.
 
 ### Example `.env.local`
+
 ```env
 # Server Ports
 PORT=3000
@@ -554,6 +559,7 @@ MIT
 When deploying in production, using Nginx as a reverse proxy is essential for TLS termination (HTTPS) and load balancing. Configuring Nginx for a unified HTTP/WebSocket backend requires specific header settings to upgrade the connection successfully.
 
 Below is the recommended Nginx configuration. This assumes:
+
 - Nginx is listening on port 443 (HTTPS).
 - Your HRM application is running internally on `http://127.0.0.1:3000`.
 
@@ -636,13 +642,16 @@ The `Upgrade` and `Connection` headers are critical for the WebSocket handshake.
 To ensure the stability of the stateful WebSocket server, all contributions must adhere to the following standards.
 
 ### Commit Convention
+
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `feat:` New features (e.g., `feat: add tabata countdown audio`)
 - `fix:` Bug fixes (e.g., `fix: sync spotify volume slider`)
 - `chore:` Maintenance (e.g., `chore: update .gitignore`)
 - `docs:` Documentation updates
 
 ### 🚀 Production Deployment Checklist
+
 **Do not run `deploy.sh` manually from a dirty tree.**
 
 1.  **Clean & Verify**:

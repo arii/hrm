@@ -4,15 +4,8 @@
  */
 
 /**
- * Builds a WebSocket URL from a standard HTTP/S base URL.
- * @param baseUrl The base URL (e.g., 'https://example.com').
- * @returns The full WebSocket URL (e.g., 'wss://example.com/ws').
+ * Centralized URL configuration for development and production environments
  */
-const buildWebSocketUrl = (baseUrl: string): string => {
-  const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
-  const host = baseUrl.replace(/^https?:\/\//, '')
-  return `${wsProtocol}//${host}/ws`
-}
 
 export const getBaseURL = (): string => {
   if (typeof window !== 'undefined') {
@@ -27,22 +20,22 @@ export const getBaseURL = (): string => {
 export const getWebSocketURL = (): string => {
   // Priority 1: Explicit full URL from environment variables
   if (process.env.NEXT_PUBLIC_WS_URL) {
-    return process.env.NEXT_PUBLIC_WS_URL;
+    return process.env.NEXT_PUBLIC_WS_URL
   }
 
   // Priority 2: Construct URL from hostname and dedicated WS port (if available)
   if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const hostname = window.location.hostname;
-    const port = process.env.NEXT_PUBLIC_WS_PORT || '3001'; // Default to 3001 on client-side if not set
-    return `${protocol}//${hostname}:${port}/ws`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const hostname = window.location.hostname
+    const port = process.env.NEXT_PUBLIC_WS_PORT || '3001' // Default to 3001 on client-side if not set
+    return `${protocol}//${hostname}:${port}/ws`
   }
 
   // Priority 3: Server-side fallback (e.g., for SSR or API routes)
   // Note: This assumes the WS server is on the same host as the main app server.
-  const host = process.env.HOST || '127.0.0.1';
-  const port = process.env.WS_PORT || '3001';
-  return `ws://${host}:${port}/ws`;
+  const host = process.env.HOST || '127.0.0.1'
+  const port = process.env.WS_PORT || '3001'
+  return `ws://${host}:${port}/ws`
 }
 
 export const getAPIURL = (endpoint: string): string => {
