@@ -27,9 +27,7 @@ import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 
-// The server port is configurable via the PORT environment variable.
-// The WebSocket server shares this port and is not configured separately.
-const port: number = process.env.PORT ? +process.env.PORT : 3001 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
