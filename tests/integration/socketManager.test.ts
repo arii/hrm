@@ -36,6 +36,11 @@ describe('WebSocket Full Integration Test', () => {
 
     const checkHealth = () => {
       const req = http.get(healthCheckUrl, (res) => {
+        // For this specific test, a 503 is acceptable. The `/health/ready` endpoint
+        // reports 503 if a non-critical service like Spotify fails to initialize,
+        // which is expected in a test environment without Spotify credentials.
+        // The core WebSocket and Timer functionalities tested here are independent
+        // of Spotify, so the server is considered "ready enough" for this test's purpose.
         if (res.statusCode === 200 || res.statusCode === 503) {
           clearInterval(interval)
           clearTimeout(timeout)
