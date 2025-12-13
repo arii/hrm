@@ -240,10 +240,7 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Start streaming the mock data
-    const startButton = mockPage.getByRole('button', {
-      name: 'START',
-      exact: true,
-    })
+    const startButton = mockPage.getByTestId('streaming-start-button')
     await expect(startButton).toBeVisible()
     await startButton.click()
 
