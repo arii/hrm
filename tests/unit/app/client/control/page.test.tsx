@@ -8,17 +8,14 @@ import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 // Mock child components that have complex internal logic
-jest.mock(
-  '@/app/client/control/components/WorkoutSessionControls',
-  () => ({
-    __esModule: true,
-    default: () => (
-      <div data-testid="mock-workout-session-controls">
-        Workout Session Controls
-      </div>
-    ),
-  })
-)
+jest.mock('@/app/client/control/components/WorkoutSessionControls', () => ({
+  __esModule: true,
+  default: () => (
+    <div data-testid="mock-workout-session-controls">
+      Workout Session Controls
+    </div>
+  ),
+}))
 jest.mock('@/app/client/control/components/SpotifyControls', () => ({
   __esModule: true,
   default: () => (
