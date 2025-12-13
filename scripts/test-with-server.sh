@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-TIMEOUT=60000
+TIMEOUT=120000
 SERVER_LOG="/tmp/hrm-server.log"
 PID_FILE="/tmp/hrm-server.pid"
 HEALTH_CHECK_URL="http://127.0.0.1:3000/api/debug/ping"

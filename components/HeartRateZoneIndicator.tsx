@@ -2,7 +2,6 @@
 'use client'
 import React from 'react'
 import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
 import theme from '@/lib/theme'
 
 // --- Constants ---
@@ -123,21 +122,27 @@ const HeartRateZoneIndicator: React.FC<HeartRateZoneIndicatorProps> = ({
   currentHr,
   maxHr,
 }) => {
-  const { zone, backgroundColor, percentage } = getHrZoneProps(currentHr, maxHr)
+  const { zone, percentage } = getHrZoneProps(currentHr, maxHr)
 
   return (
-    <Box
-      sx={{
-        backgroundColor: backgroundColor,
-        color: '#fff',
-        padding: '1rem',
-        borderRadius: '8px',
-        textAlign: 'center',
-      }}
-    >
+    <>
+      <Typography
+        data-testid="live-hr-percent"
+        sx={{
+          fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+          fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
+          fontWeight: 900,
+          lineHeight: 0.85,
+          my: 0.5,
+          textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          animation: 'subtle-pulse 2s infinite ease-in-out',
+          animationPlayState: currentHr > 0 ? 'running' : 'paused',
+        }}
+      >
+        {percentage}%
+      </Typography>
       <Typography variant="h6">{zone}</Typography>
-      <Typography variant="h4">{percentage}%</Typography>
-    </Box>
+    </>
   )
 }
 
