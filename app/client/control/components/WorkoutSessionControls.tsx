@@ -1,4 +1,4 @@
-// File: app/client/control/components/TimerControls.tsx
+// File: app/client/control/components/WorkoutSessionControls.tsx
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -68,7 +68,7 @@ const stepperButtonSx = {
   height: 48,
 }
 
-const TimerControls = () => {
+const WorkoutSessionControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
@@ -524,4 +524,4 @@ const TimerControls = () => {
   )
 }
 
-export default TimerControls
+export default WorkoutSessionControls

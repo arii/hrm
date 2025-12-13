@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import TimerControls from '@/app/client/control/components/TimerControls'
+import WorkoutSessionControls from '@/app/client/control/components/WorkoutSessionControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
@@ -27,7 +27,7 @@ const baseTimerData: TimerData = {
   soundEventId: 0,
 }
 
-describe('TimerControls', () => {
+describe('WorkoutSessionControls', () => {
   beforeEach(() => {
     jest.resetAllMocks()
 
@@ -55,7 +55,7 @@ describe('TimerControls', () => {
       sendData,
     } as unknown as UseWebSocketReturn)
 
-    render(<TimerControls />)
+    render(<WorkoutSessionControls />)
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
