@@ -7,7 +7,6 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import { AlertColor } from '@mui/material/Alert'
 
 interface ToastInfo {
@@ -35,7 +34,11 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
 
   const addToast = useCallback(
     (message: string, severity: AlertColor = 'info') => {
-      const newToast: ToastInfo = { id: uuidv4(), message, severity }
+      const newToast: ToastInfo = {
+        id: `${Date.now()}-${Math.random()}`,
+        message,
+        severity,
+      }
       setToasts((prevToasts) => [...prevToasts, newToast])
     },
     []
