@@ -1,7 +1,17 @@
 import { ApiError } from '@/lib/errors'
+import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
 import logger from '@/utils/logger'
-import { spotifyServiceInstance } from '@/utils/socketManager'
+
+/**
+ * Internal endpoint for NextAuth to post refresh tokens.
+ * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
+ * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ */
+
+const LOG_DIR = path.resolve(process.cwd(), 'logs')
+const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,9 +23,15 @@ export async function POST(req: NextRequest) {
 
     const payload = await req.json()
 
-    if (spotifyServiceInstance) {
-      await spotifyServiceInstance.updateTokens(payload)
+    // ensure logs dir
+    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
+
+    // write timestamped record (overwrite with latest)
+    const record = {
+      receivedAt: Date.now(),
+      payload,
     }
+    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
     logger.info(
       { subject: payload.sub ?? payload.provider },

@@ -189,30 +189,6 @@ export class SpotifyTokenManager {
     return this.currentToken?.payload.refresh_token ?? null
   }
 
-  setTokens(accessToken: AccessToken) {
-    if (!this.currentToken) {
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'spotify',
-          sub: 'unknown',
-          access_token: accessToken.access_token,
-          refresh_token: accessToken.refresh_token,
-          expires_in: accessToken.expires_in,
-          scope: accessToken.scope,
-          obtainedAt: Date.now(),
-        },
-      }
-    } else {
-      this.currentToken.payload.access_token = accessToken.access_token
-      this.currentToken.payload.refresh_token = accessToken.refresh_token
-      this.currentToken.payload.expires_in = accessToken.expires_in
-      this.currentToken.payload.scope = accessToken.scope
-      this.currentToken.payload.obtainedAt = Date.now()
-    }
-    writeTokenFileSafe(this.tokenFile, this.currentToken)
-  }
-
   getSdkAccessToken(): AccessToken | null {
     if (!this.currentToken) return null
     return {

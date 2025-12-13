@@ -337,12 +337,6 @@ This workspace is pre-configured for a seamless development experience with VS C
 Create a `.env.local` file in the root directory for secrets:
 
 ```env
-# Server Configuration
-PORT=3000
-WS_PORT=3001
-NEXT_PUBLIC_API_URL=http://127.0.0.1:3000
-NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-
 # Spotify OAuth credentials (from developer.spotify.com/dashboard)
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret

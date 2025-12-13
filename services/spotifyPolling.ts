@@ -140,13 +140,6 @@ export class SpotifyPolling {
     setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
-  public async updateTokens(accessToken: AccessToken) {
-    logger.debug('Received new tokens, updating SDK.')
-    this.tokenManager.setTokens(accessToken)
-    await this.initializeSdk()
-    await this.forcePollAndBroadcast()
-  }
-
   // --- Polling Logic ---
 
   // Expose start/stop polling publicly (used by server to control lifecycle)
