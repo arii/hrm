@@ -21,11 +21,7 @@ import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
 import useAutoConnect from '../../../hooks/useAutoConnect'
-import {
-  formatDurationHHMMSS,
-  calculateCaloriesBurned,
-} from '@/utils/fitnessCalculations'
-import WorkoutSummary from '@/components/WorkoutSummary'
+import { useWorkoutTimer } from '@/hooks/useWorkoutTimer'
 
 // --- Helper Functions ---
 const setCookie = (name: string, value: string, days = 365) => {
@@ -43,13 +39,16 @@ const getCookie = (name: string): string => {
 
 export default function ConnectPage() {
   // State
-  const [userName, setUserName] = useState('')
-  const [userAge, setUserAge] = useState('')
-  const [userWeight, setUserWeight] = useState('')
+  const [userName, setUserName] = useState(() => getCookie('hrm_user_name'))
+  const [userAge, setUserAge] = useState(() => getCookie('hrm_user_age'))
+  const [userWeight, setUserWeight] = useState(() =>
+    getCookie('hrm_user_weight')
+  )
   const [isConnected, setIsConnected] = useState(false)
 
   // Hooks
-  const { connectionStatus, hrmData, timerData } = useWebSocket()
+  const { connectionStatus, hrmData } = useWebSocket()
+  const [workoutDuration, setWorkoutDuration] = useWorkoutTimer(isConnected)
   const {
     connectAndStream,
     deviceStatus,
@@ -57,16 +56,6 @@ export default function ConnectPage() {
   } = useBluetoothHRM()
 
   // --- Effects ---
-
-  // 1. Load user data from cookies on initial render
-  useEffect(() => {
-    const savedName = getCookie('hrm_user_name')
-    const savedAge = getCookie('hrm_user_age')
-    const savedWeight = getCookie('hrm_user_weight')
-    if (savedName) setUserName(savedName)
-    if (savedAge) setUserAge(savedAge)
-    if (savedWeight) setUserWeight(savedWeight)
-  }, [])
 
   // 2. Define the auto-connection logic using useAutoConnect
   const autoConnectFn = useCallback(async () => {
@@ -111,6 +100,7 @@ export default function ConnectPage() {
 
   const handleDisconnect = () => {
     setIsConnected(false)
+    setWorkoutDuration(0)
     // Clear device ID to prevent immediate auto-reconnect loop
     document.cookie =
       'hrm_device_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
@@ -128,9 +118,35 @@ export default function ConnectPage() {
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   // *** NEW: Workout Metrics Calculations ***
-  const totalTimeSeconds = timerData?.timeElapsed || 0
-  const formattedDuration = formatDurationHHMMSS(totalTimeSeconds)
-  const estimatedCalories = calculateCaloriesBurned(
+  const formatDuration = (totalSeconds: number): string => {
+    const seconds = Math.floor(totalSeconds)
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const remainingSeconds = seconds % 60
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${remainingSeconds}s`
+    }
+    return `${minutes}m ${remainingSeconds}s`
+  }
+
+  const calculateEstimatedCalories = (
+    hr: number,
+    age: number,
+    weightKg: number,
+    timeSeconds: number
+  ): number => {
+    if (hr <= 0 || timeSeconds <= 0 || weightKg <= 0) return 0
+    const timeMinutes = timeSeconds / 60
+    let kcalPerMinute =
+      (age * 0.2017 + weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
+    kcalPerMinute = Math.max(0.5, kcalPerMinute)
+    return Math.max(0, kcalPerMinute * timeMinutes)
+  }
+
+  const totalTimeSeconds = workoutDuration
+  const formattedDuration = formatDuration(totalTimeSeconds)
+  const estimatedCalories = calculateEstimatedCalories(
     currentHR,
     age,
     weight,
@@ -209,10 +225,51 @@ export default function ConnectPage() {
                   </Typography>
                 </Box>
               </Paper>
-              <WorkoutSummary
-                formattedDuration={formattedDuration}
-                formattedCalories={formattedCalories}
-              />
+              {/* *** NEW: Display Workout Duration and Calories *** */}
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Workout Summary
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body1" fontWeight="bold">
+                    Duration:
+                  </Typography>
+                  <Typography variant="body1" data-testid="workout-duration">
+                    {formattedDuration}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" fontWeight="bold">
+                    Est. Calories Burned:
+                  </Typography>
+                  <Typography variant="body1" data-testid="estimated-calories">
+                    {formattedCalories} Kcal
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1 }}
+                >
+                  * Calorie estimate is based on your provided heart rate, age,
+                  and weight.
+                </Typography>
+              </Box>
+              {/* ************************************************** */}
               {/* 4. Disconnect (Pushed to bottom) */}
               <Box sx={{ mt: 'auto' }}>
                 <Button

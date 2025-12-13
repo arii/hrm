@@ -109,9 +109,14 @@ class TabataTimer {
   private updateTimer = () => {
     if (!this.timerState.isRunning || !this.startTime) return
 
-    // Universal Elapsed Time Calculation (applies to both modes)
-    const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-    this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+    if (
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase === 'RUNNING'
+    ) {
+      // COUNT UP (STOPWATCH)
+      const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
+      this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+    }
 
     // This applies to TABATA and PREPARE modes (which count down)
     if (
