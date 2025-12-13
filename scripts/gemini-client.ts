@@ -128,6 +128,8 @@ async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string
   const prBaseRef = process.env.PR_BASE_REF || 'unknown-base';
   const prDescription = process.env.PR_DESCRIPTION || 'No description.';
   const diffFile = process.env.PR_DIFF_FILE;
+  const linkedIssueBody = process.env.LINKED_ISSUE_BODY;
+  const existingComments = process.env.EXISTING_COMMENTS;
 
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset');
@@ -146,10 +148,52 @@ async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string
   const maxDiffLength = 50000;
   const truncatedDiff = diff.length > maxDiffLength ? diff.substring(0, maxDiffLength) + "\n...[DIFF TRUNCATED]" : diff;
 
+  let reviewTypeInstructions = '';
+  if (existingComments) {
+    reviewTypeInstructions = `
+      **Review Type:** Subsequent Review
+
+      **Instructions for THIS review:**
+      This is a follow-up review. The user has pushed new changes after your previous feedback.
+      Your task is to re-evaluate the Pull Request.
+      1.  **Acknowledge Previous Feedback:** Briefly mention the previous comments.
+      2.  **Focus on Resolution:** Determine if your previous concerns have been addressed in the new diff.
+      3.  **Avoid Repetition:** DO NOT repeat feedback for issues that have been fixed.
+      4.  **New Issues:** Identify any new issues introduced in this update.
+      5.  **Be Concise:** Keep the review focused on the changes since the last one.
+
+      **Previous Review Comments (for your context):**
+      \`\`\`
+      ${existingComments}
+      \`\`\`
+    `;
+  } else {
+    reviewTypeInstructions = `
+      **Review Type:** Initial Review
+
+      **Instructions for THIS review:**
+      This is the first time you are reviewing this Pull Request.
+      Provide a thorough and critical analysis of the code changes.
+      Focus on code quality, security, and adherence to project guidelines.
+    `;
+  }
+
+  if (linkedIssueBody) {
+    reviewTypeInstructions += `
+      **Linked Issue Context:**
+      The following context is from the issue linked to this PR (#${process.env.ISSUE_NUMBER}). Use it to verify that the PR's changes fully address the issue's requirements.
+      \`\`\`
+      ${linkedIssueBody}
+      \`\`\`
+    `;
+  }
+
   const prompt = `
     **Role:** You are a Principal Software Engineer acting as a strict, critical code reviewer.
 
     **Task:** Review the following Pull Request Diff.
+
+    ${reviewTypeInstructions}
 
     **Context:**
     - **PR Title:** ${prTitle}

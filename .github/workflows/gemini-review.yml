@@ -29,9 +29,45 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Get Additional Context
+        id: context
+        run: |
+          # Get linked issue body
+          ISSUE_NUMBER=$(gh pr view ${{ github.event.pull_request.number }} --json closingIssuesReferences --jq '.closingIssuesReferences[0].number')
+          if [ -n "$ISSUE_NUMBER" ] && [ "$ISSUE_NUMBER" != "null" ]; then
+            echo "Found linked issue: $ISSUE_NUMBER"
+            ISSUE_BODY=$(gh issue view $ISSUE_NUMBER --json body --jq '.body')
+            echo "LINKED_ISSUE_BODY<<EOF" >> $GITHUB_ENV
+            echo "$ISSUE_BODY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
+          else
+            echo "No linked issue found."
+            echo "LINKED_ISSUE_BODY=" >> $GITHUB_ENV
+            echo "ISSUE_NUMBER=" >> $GITHUB_ENV
+          fi
+          # Get existing review comments from this bot (user 'arii')
+          COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '[.comments[] | select(.author.login == "arii") | .body] | .[]')
+          if [ -n "$COMMENTS" ]; then
+             echo "Found existing comments."
+             # Format for prompt by joining with a separator
+             FORMATTED_COMMENTS=$(echo "$COMMENTS" | paste -sd '---' -)
+             echo "EXISTING_COMMENTS<<EOF" >> $GITHUB_ENV
+             echo "$FORMATTED_COMMENTS" >> $GITHUB_ENV
+             echo "EOF" >> $GITHUB_ENV
+          else
+             echo "No existing comments from bot found."
+             echo "EXISTING_COMMENTS=" >> $GITHUB_ENV
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
+          EXISTING_COMMENTS: ${{ env.EXISTING_COMMENTS }}
+          ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
