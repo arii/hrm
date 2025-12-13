@@ -1,4 +1,3 @@
-// UI Refactor
 // File: app/page.tsx (Main Viewer Dashboard)
 /**
  * Main Viewer Dashboard: The primary output page for the trainer or viewer.
