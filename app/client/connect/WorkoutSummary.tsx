@@ -4,6 +4,11 @@ import Stack from '@mui/material/Stack'
 import Paper from '@mui/material/Paper'
 import TimerIcon from '@mui/icons-material/Timer'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
+import {
+  WORKOUT_SUMMARY_TITLE,
+  DURATION_LABEL,
+  CALORIES_LABEL,
+} from '../../../constants/ui'
 
 interface WorkoutSummaryProps {
   duration: string
@@ -30,7 +35,7 @@ export default function WorkoutSummary({
         align="center"
         fontWeight="bold"
       >
-        Workout Summary
+        {WORKOUT_SUMMARY_TITLE}
       </Typography>
       <Stack
         direction="row"
@@ -47,7 +52,7 @@ export default function WorkoutSummary({
             color="text.secondary"
           >
             <TimerIcon aria-hidden="true" />
-            <Typography variant="subtitle1">Duration</Typography>
+            <Typography variant="subtitle1">{DURATION_LABEL}</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
             {duration}
@@ -61,7 +66,7 @@ export default function WorkoutSummary({
             color="text.secondary"
           >
             <WhatshotIcon aria-hidden="true" />
-            <Typography variant="subtitle1">Calories (est.)</Typography>
+            <Typography variant="subtitle1">{CALORIES_LABEL}</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
             {caloriesBurned === '0' ? '---' : caloriesBurned}
