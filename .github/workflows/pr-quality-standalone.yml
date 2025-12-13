@@ -45,6 +45,9 @@ jobs:
           fetch-depth: 0
           clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
 
+      - name: Install GitHub CLI
+        uses: actions4gh/setup-gh@v1
+
       - name: Define Dynamic Cache Path
         shell: bash
         # This expands $HOME (e.g., /home/ari) and saves it to the workflow env
