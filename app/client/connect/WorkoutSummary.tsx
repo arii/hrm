@@ -64,7 +64,7 @@ export default function WorkoutSummary({
             <Typography variant="subtitle1">Calories (est.)</Typography>
           </Stack>
           <Typography variant="h5" fontWeight="medium">
-            {caloriesBurned}
+            {caloriesBurned === '0' ? '---' : caloriesBurned}
           </Typography>
         </Box>
       </Stack>

@@ -18,6 +18,13 @@
  * @param durationInSeconds - The total duration of the workout in seconds.
  * @returns An estimated number of calories burned.
  */
+
+const CALORIES_PER_MINUTE_ZONE1 = 4
+const CALORIES_PER_MINUTE_ZONE2 = 7
+const CALORIES_PER_MINUTE_ZONE3 = 10
+const CALORIES_PER_MINUTE_ZONE4 = 13
+const CALORIES_PER_MINUTE_ZONE5 = 16
+
 export const calculateCaloriesBurned = (
   averageHr: number,
   userAge: number,
@@ -32,15 +39,15 @@ export const calculateCaloriesBurned = (
 
   let caloriesPerMinute: number
   if (hrPercentage < 60) {
-    caloriesPerMinute = 4 // Zone 1
+    caloriesPerMinute = CALORIES_PER_MINUTE_ZONE1
   } else if (hrPercentage < 70) {
-    caloriesPerMinute = 7 // Zone 2
+    caloriesPerMinute = CALORIES_PER_MINUTE_ZONE2
   } else if (hrPercentage < 80) {
-    caloriesPerMinute = 10 // Zone 3
+    caloriesPerMinute = CALORIES_PER_MINUTE_ZONE3
   } else if (hrPercentage < 90) {
-    caloriesPerMinute = 13 // Zone 4
+    caloriesPerMinute = CALORIES_PER_MINUTE_ZONE4
   } else {
-    caloriesPerMinute = 16 // Zone 5
+    caloriesPerMinute = CALORIES_PER_MINUTE_ZONE5
   }
 
   const durationInMinutes = durationInSeconds / 60
