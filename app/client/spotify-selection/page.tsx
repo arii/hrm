@@ -14,9 +14,9 @@ import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
+import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -74,8 +74,7 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume } = useVolumePreference()
-  const debouncedVolume = useDebounce(volume, 500)
+  const { volume, setVolume } = useVolumePreference()
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
@@ -87,41 +86,32 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistUri(uri)
   }
 
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
-      options: { playlistUri?: string; volume?: number; token?: string } = {}
-    ) => {
-      // Always include a deviceId, fallback to active device if not set
-      let deviceId = selectedDeviceId
-      if (!deviceId && availableDevices.length > 0) {
-        const activeDevice = availableDevices.find((d) => d.is_active)
-        const firstDevice = availableDevices[0]
-        deviceId = activeDevice ? activeDevice.id : firstDevice?.id || ''
-        if (deviceId) {
-          setSelectedDeviceId(deviceId)
-        }
+  const sendSpotifyCommand = (
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
+    options: { playlistUri?: string; volume?: number; token?: string } = {}
+  ) => {
+    // Always include a deviceId, fallback to active device if not set
+    let deviceId = selectedDeviceId
+    if (!deviceId && availableDevices.length > 0) {
+      const activeDevice = availableDevices.find((d) => d.is_active)
+      const firstDevice = availableDevices[0]
+      deviceId = activeDevice ? activeDevice.id : firstDevice?.id || ''
+      if (deviceId) {
+        setSelectedDeviceId(deviceId)
       }
-      if (!deviceId) {
-        console.warn('No deviceId available, command not sent.')
-        return
-      }
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        deviceId,
-        ...options,
-      }
-      sendData(message)
-    },
-    [availableDevices, selectedDeviceId, sendData]
-  )
-
-  useEffect(() => {
-    if (hasActiveDevice) {
-      sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
     }
-  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
+    if (!deviceId) {
+      console.warn('No deviceId available, command not sent.')
+      return
+    }
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command,
+      deviceId,
+      ...options,
+    }
+    sendData(message)
+  }
 
   const handlePlayPause = () => {
     if (spotifyData.isPlaying) {
@@ -207,6 +197,14 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
+            <VolumeControl
+              volume={volume}
+              onVolumeChange={setVolume}
+              onVolumeChangeCommitted={(newVolume) =>
+                hasActiveDevice &&
+                sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
+              }
+            />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2, minWidth: 200 }}>

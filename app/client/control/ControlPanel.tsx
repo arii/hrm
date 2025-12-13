@@ -10,10 +10,10 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import Head from 'next/head'
 import { useEffect } from 'react'
+import useVolumePreference from '@/hooks/useVolumePreference'
+import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
-import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
-import useVolumePreference from '@/hooks/useVolumePreference'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (

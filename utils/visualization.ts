@@ -67,7 +67,7 @@ export const ZONE_COLORS = {
   purple: '#9C27B0', // Zone 5: Max
 }
 
-export interface HrZoneProps {
+interface HrZoneProps {
   zone: string
   percentage: number
   color: string // Tailwind text color class
