@@ -2,3 +2,8 @@
 // Centralized constants for the application.
 
 export const MAX_HR_DEFAULT = 185
+
+// Battery level thresholds for UI icons
+export const BATTERY_LEVEL_FULL = 70
+export const BATTERY_LEVEL_HIGH = 40
+export const BATTERY_LEVEL_LOW = 20

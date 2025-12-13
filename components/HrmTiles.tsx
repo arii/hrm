@@ -4,8 +4,9 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import Typography from '@mui/material/Typography'
+import Typography from '@mui//material/Typography'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import useUserPreferences from '@/hooks/useUserPreferences'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
@@ -23,10 +24,10 @@ const HrmTiles = () => {
     isConnected,
     isSupported,
   } = useBluetoothHRM()
+  const { user } = useUserPreferences()
 
   const handleConnect = () => {
-    // TODO: Replace with actual user data from context/state
-    connectAndStream('Local User', '30')
+    connectAndStream(user.name, user.age.toString())
   }
 
   const filteredTiles = useMemo(() => {
@@ -51,7 +52,10 @@ const HrmTiles = () => {
 
         return (
           <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            item
+            xs={12}
+            sm={6}
+            lg={3}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -75,7 +79,7 @@ const HrmTiles = () => {
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Box
             sx={{
               display: 'flex',
@@ -103,7 +107,10 @@ const HrmTiles = () => {
           </Box>
         </Grid>
         <Grid
-          size={{ xs: 12, sm: 6, lg: 3 }}
+          item
+          xs={12}
+          sm={6}
+          lg={3}
           data-testid="hr-tile-grid-item"
           sx={{ display: { xs: 'none', md: 'block' } }}
         >

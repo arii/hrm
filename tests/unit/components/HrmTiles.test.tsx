@@ -11,6 +11,10 @@ jest.mock('@/hooks/useBluetoothHRM', () => ({
   __esModule: true,
   default: jest.fn(),
 }))
+jest.mock('@/hooks/useUserPreferences', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
 jest.mock('@/components/HrTile', () => ({
   __esModule: true,
   default: ({ name, bpm }: { name: string; bpm: number | null }) => (
@@ -22,8 +26,10 @@ jest.mock('@/components/HrTile', () => ({
 }))
 
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import useUserPreferences from '@/hooks/useUserPreferences'
 const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
+const mockedUseUserPreferences = useUserPreferences as jest.Mock
 
 describe('HrmTiles', () => {
   beforeEach(() => {
@@ -35,6 +41,9 @@ describe('HrmTiles', () => {
       batteryLevel: null,
       isConnected: false,
       isSupported: true,
+    })
+    mockedUseUserPreferences.mockReturnValue({
+      user: { name: 'Test User', age: 30 },
     })
   })
 

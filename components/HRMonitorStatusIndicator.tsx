@@ -12,6 +12,11 @@ import CircularProgress from '@mui/material/CircularProgress'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
+import {
+  BATTERY_LEVEL_FULL,
+  BATTERY_LEVEL_HIGH,
+  BATTERY_LEVEL_LOW,
+} from '@/utils/constants'
 
 interface HRMonitorStatusIndicatorProps {
   deviceStatus: string
@@ -24,9 +29,9 @@ const HRMonitorStatusIndicator = ({
 }: HRMonitorStatusIndicatorProps) => {
   const getBatteryIcon = (level: number | null) => {
     if (level === null) return null
-    if (level > 70) return <BatteryFullIcon fontSize="small" />
-    if (level > 40) return <Battery50Icon fontSize="small" />
-    if (level > 20) return <Battery20Icon fontSize="small" />
+    if (level > BATTERY_LEVEL_FULL) return <BatteryFullIcon fontSize="small" />
+    if (level > BATTERY_LEVEL_HIGH) return <Battery50Icon fontSize="small" />
+    if (level > BATTERY_LEVEL_LOW) return <Battery20Icon fontSize="small" />
     return <BatteryAlertIcon fontSize="small" />
   }
 
@@ -60,8 +65,12 @@ const HRMonitorStatusIndicator = ({
         borderRadius: 1,
         bgcolor: 'action.hover',
       }}
+      role="status"
+      aria-live="polite"
     >
-      {getStatusIcon(deviceStatus)}
+      <Box sx={{ display: 'flex' }} aria-label={`Status: ${deviceStatus}`}>
+        {getStatusIcon(deviceStatus)}
+      </Box>
       <Typography variant="body2" sx={{ flexGrow: 1 }}>
         {deviceStatus}
       </Typography>

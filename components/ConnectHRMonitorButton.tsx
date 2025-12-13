@@ -42,6 +42,8 @@ const ConnectHRMonitorButton = ({
       color="secondary"
       onClick={disconnect}
       startIcon={<BluetoothDisabledIcon />}
+      aria-label="Disconnect Heart Rate Monitor"
+      sx={{ minHeight: '48px' }}
     >
       Disconnect HR Monitor
     </Button>
@@ -51,6 +53,8 @@ const ConnectHRMonitorButton = ({
       color="primary"
       onClick={connect}
       startIcon={<BluetoothIcon />}
+      aria-label="Connect Heart Rate Monitor"
+      sx={{ minHeight: '48px' }}
     >
       Connect HR Monitor
     </Button>
