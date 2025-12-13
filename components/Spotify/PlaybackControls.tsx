@@ -1,28 +1,28 @@
 // components/Spotify/PlaybackControls.tsx
-import React from 'react';
-import IconButton from '@mui/material/IconButton';
-import Box from '@mui/material/Box';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import ShuffleIcon from '@mui/icons-material/Shuffle';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import RepeatOneIcon from '@mui/icons-material/RepeatOne';
-import VolumeControl from './VolumeControl';
+import React from 'react'
+import IconButton from '@mui/material/IconButton'
+import Box from '@mui/material/Box'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import PauseIcon from '@mui/icons-material/Pause'
+import SkipNextIcon from '@mui/icons-material/SkipNext'
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
+import ShuffleIcon from '@mui/icons-material/Shuffle'
+import RepeatIcon from '@mui/icons-material/Repeat'
+import RepeatOneIcon from '@mui/icons-material/RepeatOne'
+import VolumeControl from './VolumeControl'
 
 interface PlaybackControlsProps {
-  isPlaying: boolean;
-  shuffleState: boolean;
-  repeatState: 'off' | 'context' | 'track';
-  onPlayPause: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onToggleShuffle: () => void;
-  onToggleRepeat: () => void;
-  volume: number;
-  onVolumeChange: (volume: number) => void;
-  onVolumeChangeCommitted: (volume: number) => void;
+  isPlaying: boolean
+  shuffleState: boolean
+  repeatState: 'off' | 'context' | 'track'
+  onPlayPause: () => void
+  onNext: () => void
+  onPrevious: () => void
+  onToggleShuffle: () => void
+  onToggleRepeat: () => void
+  volume: number
+  onVolumeChange: (volume: number) => void
+  onVolumeChangeCommitted: (volume: number) => void
 }
 
 const PlaybackControls: React.FC<PlaybackControlsProps> = ({
@@ -90,7 +90,7 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         onVolumeChangeCommitted={onVolumeChangeCommitted}
       />
     </Box>
-  );
-};
+  )
+}
 
-export default PlaybackControls;
+export default PlaybackControls

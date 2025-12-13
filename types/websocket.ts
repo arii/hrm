@@ -235,7 +235,9 @@ export const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(),
   positionMs: z.number().min(0).optional(),
   shuffleState: z.boolean().optional(),
-  repeatState: z.union([z.literal('off'), z.literal('context'), z.literal('track')]).optional(),
+  repeatState: z
+    .union([z.literal('off'), z.literal('context'), z.literal('track')])
+    .optional(),
 })
 
 export const GetStateMessageSchema = z.object({

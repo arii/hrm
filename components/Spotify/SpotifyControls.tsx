@@ -1,78 +1,78 @@
 // components/Spotify/SpotifyControls.tsx
-import React from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { useWebSocket } from '@/context/WebSocketContext';
-import { SpotifyCommandMessage } from '@/types/websocket';
-import ProgressBar from './ProgressBar';
-import PlaybackControls from './PlaybackControls';
-import useVolumePreference from '@/hooks/useVolumePreference';
+import React from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
+import ProgressBar from './ProgressBar'
+import PlaybackControls from './PlaybackControls'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 const SpotifyControls: React.FC = () => {
-  const { spotifyData, sendData } = useWebSocket();
-  const { volume, setVolume } = useVolumePreference();
+  const { spotifyData, sendData } = useWebSocket()
+  const { volume, setVolume } = useVolumePreference()
 
   const handleSeek = (positionMs: number) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'SEEK_TO_POSITION',
       positionMs,
-    };
-    sendData(message);
-  };
+    }
+    sendData(message)
+  }
 
   const handlePlayPause = () => {
-    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY';
-    sendData({ type: 'SPOTIFY_COMMAND', command } as SpotifyCommandMessage);
-  };
+    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
+    sendData({ type: 'SPOTIFY_COMMAND', command } as SpotifyCommandMessage)
+  }
 
   const handleNext = () => {
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'NEXT',
-    } as SpotifyCommandMessage);
-  };
+    } as SpotifyCommandMessage)
+  }
 
   const handlePrevious = () => {
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'PREVIOUS',
-    } as SpotifyCommandMessage);
-  };
+    } as SpotifyCommandMessage)
+  }
 
   const handleToggleShuffle = () => {
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'SET_SHUFFLE',
       shuffleState: !spotifyData.shuffleState,
-    } as SpotifyCommandMessage);
-  };
+    } as SpotifyCommandMessage)
+  }
 
   const handleToggleRepeat = () => {
-    let nextRepeatState: 'off' | 'context' | 'track' = 'off';
+    let nextRepeatState: 'off' | 'context' | 'track' = 'off'
     if (spotifyData.repeatState === 'off') {
-      nextRepeatState = 'context';
+      nextRepeatState = 'context'
     } else if (spotifyData.repeatState === 'context') {
-      nextRepeatState = 'track';
+      nextRepeatState = 'track'
     }
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'SET_REPEAT',
       repeatState: nextRepeatState,
-    } as SpotifyCommandMessage);
-  };
+    } as SpotifyCommandMessage)
+  }
 
   const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
-  };
+    setVolume(newVolume)
+  }
 
   const handleVolumeChangeCommitted = (newVolume: number) => {
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'SET_VOLUME',
       volume: newVolume,
-    } as SpotifyCommandMessage);
-  };
+    } as SpotifyCommandMessage)
+  }
 
   return (
     <Box sx={{ width: '100%', p: 2 }} aria-label="Spotify Controls">
@@ -111,7 +111,7 @@ const SpotifyControls: React.FC = () => {
         onVolumeChangeCommitted={handleVolumeChangeCommitted}
       />
     </Box>
-  );
-};
+  )
+}
 
-export default SpotifyControls;
+export default SpotifyControls

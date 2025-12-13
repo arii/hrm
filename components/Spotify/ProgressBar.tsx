@@ -1,41 +1,41 @@
 // components/Spotify/ProgressBar.tsx
-import React from 'react';
-import Slider from '@mui/material/Slider';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import React from 'react'
+import Slider from '@mui/material/Slider'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 interface ProgressBarProps {
-  progressMs: number;
-  durationMs: number;
-  onSeek: (positionMs: number) => void;
+  progressMs: number
+  durationMs: number
+  onSeek: (positionMs: number) => void
 }
 
 const formatTime = (ms: number) => {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
 
 const ProgressBar: React.FC<ProgressBarProps> = ({
   progressMs,
   durationMs,
   onSeek,
 }) => {
-  const [seeking, setSeeking] = React.useState(false);
-  const [seekValue, setSeekValue] = React.useState(0);
+  const [seeking, setSeeking] = React.useState(false)
+  const [seekValue, setSeekValue] = React.useState(0)
 
   const handleChange = (event: Event, newValue: number | number[]) => {
-    setSeekValue(newValue as number);
-  };
+    setSeekValue(newValue as number)
+  }
 
   const handleChangeCommitted = (
     event: React.SyntheticEvent | Event,
     newValue: number | number[]
   ) => {
-    onSeek(newValue as number);
-    setSeeking(false);
-  };
+    onSeek(newValue as number)
+    setSeeking(false)
+  }
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
@@ -76,7 +76,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         {formatTime(durationMs)}
       </Typography>
     </Box>
-  );
-};
+  )
+}
 
-export default ProgressBar;
+export default ProgressBar
