@@ -334,9 +334,26 @@ This workspace is pre-configured for a seamless development experience with VS C
 
 ## Environment Variables
 
-Create a `.env.local` file in the root directory for secrets:
+Create a `.env.local` file in the root directory for local development secrets and configuration.
 
+### Core Configuration
+-   `PORT`: The port for the main Next.js application server. Defaults to `3000`.
+-   `WS_PORT`: The dedicated port for the WebSocket server. Defaults to `3001`.
+-   `NEXTAUTH_URL`: The canonical URL for your application, used for OAuth callbacks. For local development, this should be `http://127.0.0.1:3000`.
+-   `NEXTAUTH_SECRET`: A secret key for signing NextAuth.js tokens. Generate one with `openssl rand -base64 32`.
+
+### Frontend URLs (Public)
+These variables are exposed to the browser and are prefixed with `NEXT_PUBLIC_`.
+-   `NEXT_PUBLIC_API_URL`: The absolute URL for the backend API. If not set, the frontend will use the same host and port it was served from.
+-   `NEXT_PUBLIC_WS_URL`: The absolute URL for the WebSocket server. This takes precedence over `NEXT_PUBLIC_WS_PORT`.
+-   `NEXT_PUBLIC_WS_PORT`: The port for the WebSocket server, used if `NEXT_PUBLIC_WS_URL` is not set. Defaults to `3001`.
+
+### Example `.env.local`
 ```env
+# Server Ports
+PORT=3000
+WS_PORT=3001
+
 # Spotify OAuth credentials (from developer.spotify.com/dashboard)
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret

@@ -6,13 +6,11 @@
  */
 
 import express, { Request, Response } from 'express'
-import { createServer, IncomingMessage } from 'http'
-import { Socket } from 'net'
+import { createServer } from 'http'
 import next from 'next'
 import path from 'path'
-import { parse } from 'url'
-import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
+import { startWebSocketServer } from './websocketServer.js'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -226,49 +224,10 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
-    const wsConnections = new Map<string, number>()
-    const WS_MAX_CONNECTIONS = 5
-
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
-      'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
-        const ip =
-          (req.headers['x-forwarded-for'] as string)
-            ?.split(',')
-            .shift()
-            ?.trim() || req.socket.remoteAddress
-
-        if (process.env.TESTING !== 'true' && ip) {
-          const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS) {
-            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
-            socket.destroy()
-            return
-          }
-          wsConnections.set(ip, count + 1)
-
-          socket.on('close', () => {
-            const currentCount = wsConnections.get(ip) || 0
-            if (currentCount > 0) {
-              wsConnections.set(ip, currentCount - 1)
-            }
-          })
-        }
-
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
-          })
-        }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
-      }
-    )
+    // --- Start WebSocket Server ---
+    startWebSocketServer(wss)
 
     // --- Start Server ---
 
@@ -282,7 +241,6 @@ app
     server.listen(port, hostname, () => {
       // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
   })
   .catch((err: Error) => {

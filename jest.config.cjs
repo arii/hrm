@@ -2,24 +2,23 @@
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  coverageDirectory: "coverage",
-  reporters : ["default", 
+  coverageDirectory: 'coverage',
+  reporters: [
+    'default',
     [
-      "jest-junit",
+      'jest-junit',
       {
-        outputDirectory: "./test-results", // The directory where the XML file will be saved
-        outputName: "unit-results.xml", // The name of the JUnit XML file
-        suiteNameTemplate: "{filepath}", // Optional: customize the suite name
-        classNameTemplate: "{classname}", // Optional: customize the class name
-        titleTemplate: "{title}", // Optional: customize the test title
+        outputDirectory: './test-results', // The directory where the XML file will be saved
+        outputName: 'unit-results.xml', // The name of the JUnit XML file
+        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
+        classNameTemplate: '{classname}', // Optional: customize the class name
+        titleTemplate: '{title}', // Optional: customize the test title
       },
     ],
-    
   ],
-
+  testPathIgnorePatterns: ['/node_modules/', '/tests/playwright/'],
   collectCoverageFrom: [
     'services/**/*.ts',
     'utils/socketManager.ts',

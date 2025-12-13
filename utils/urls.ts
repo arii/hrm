@@ -25,20 +25,24 @@ export const getBaseURL = (): string => {
 }
 
 export const getWebSocketURL = (): string => {
-  // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
-  if (envWsUrl && envWsUrl.length > 0) {
-    return buildWebSocketUrl(envWsUrl)
+  // Priority 1: Explicit full URL from environment variables
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL;
   }
 
-  // 2. Fallback for client-side execution, deriving from the browser's location.
+  // Priority 2: Construct URL from hostname and dedicated WS port (if available)
   if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${window.location.host}/ws`
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const hostname = window.location.hostname;
+    const port = process.env.NEXT_PUBLIC_WS_PORT || '3001'; // Default to 3001 on client-side if not set
+    return `${protocol}//${hostname}:${port}/ws`;
   }
 
-  // 3. Fallback for server-side execution, deriving from the base application URL.
-  return buildWebSocketUrl(getBaseURL())
+  // Priority 3: Server-side fallback (e.g., for SSR or API routes)
+  // Note: This assumes the WS server is on the same host as the main app server.
+  const host = process.env.HOST || '127.0.0.1';
+  const port = process.env.WS_PORT || '3001';
+  return `ws://${host}:${port}/ws`;
 }
 
 export const getAPIURL = (endpoint: string): string => {
