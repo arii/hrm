@@ -59,7 +59,7 @@ export const generateReleaseNotes = async (
     ${JSON.stringify(prSummaries)}
   `
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: prompt,
@@ -109,7 +109,7 @@ export const enrichPrDescription = async (
     Output JSON with improved 'title', 'body', and a brief 'analysis' of what was fixed.
   `
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: prompt,
@@ -196,7 +196,7 @@ export const suggestStrategicIssues = async (
     specificPrompt += `\n\nUSER GUIDANCE (Prioritize this): "${userGuidance}"`
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `
@@ -257,7 +257,7 @@ export const analyzeIssueRedundancy = async (
     labels: i.labels.map((l) => l.name).join(', '),
   }))
   const prompt = `You are a senior project manager analyzing a GitHub repository. I have a list of open issues. Your goal is to identify: 1. Duplicate issues that can be closed. 2. Groups of related issues. Output a structured JSON response. Issues Data: ${JSON.stringify(issueSummary)}`
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: prompt,
@@ -320,7 +320,7 @@ export const identifyRedundantCandidates = async (
     title: i.title,
     body: i.body ? i.body.substring(0, 100) : '',
   }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Analyze these issues and identify ones that are likely duplicates. Return ONLY a JSON array of issue numbers to CLOSE. Issues: ${JSON.stringify(issueSummary)}`,
@@ -346,7 +346,7 @@ export const analyzePullRequests = async (
     draft: p.draft,
     body: p.body ? p.body.substring(0, 200) : 'No description',
   }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `You are a Lead DevOps Engineer. Analyze these Pull Requests. Provide a concise Markdown executive summary. PR Data: ${JSON.stringify(prSummary)}`,
@@ -377,7 +377,7 @@ export const generateCleanupReport = async (
     title: i.title,
     body: i.body ? i.body.substring(0, 100) : '',
   }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Determine if any OPEN issues should be closed by CLOSED Pull Requests. Open Issues: ${JSON.stringify(currentOpenIssues)} Recently Closed PRs: ${JSON.stringify(recentClosedPrs)}`,
@@ -420,7 +420,7 @@ export const analyzeBranchCleanup = async (
   if (!branches || branches.length === 0)
     return { report: 'No branches.', candidates: [] }
   const client = getClient()
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Identify Zombie and Stale branches. Data: ${JSON.stringify({ branches, mergedPrs })}`,
@@ -470,7 +470,7 @@ export const generateTriageReport = async (
     labels: i.labels.map((l) => l.name),
     created_at: i.created_at,
   }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Create a prioritized Triage Report. Issues: ${JSON.stringify(issueData)}`,
@@ -533,7 +533,7 @@ export const auditPullRequests = async (
     draft: p.draft,
     user: p.user.login,
   }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Review these open PRs. PRs: ${JSON.stringify(prData)}`,
@@ -568,7 +568,7 @@ export const findIssuePrLinks = async (
   const client = getClient()
   const issueData = issues.map((i) => ({ id: i.number, title: i.title }))
   const prData = prs.map((p) => ({ id: p.number, title: p.title }))
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Match PRs to Issues. Issues: ${JSON.stringify(issueData)} PRs: ${JSON.stringify(prData)}`,
@@ -627,7 +627,7 @@ export const analyzeJulesSessions = async (
       lastStatus: s.state,
     }
   })
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `Analyze sessions. Sessions: ${JSON.stringify(sessionData)}`,
@@ -676,7 +676,7 @@ export const generateRepoBriefing = async (
     stalePRCount: stalePrs.length,
     recentActivity: activitySummary,
   }
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: `You are a CTO. Write a 3-sentence summary. Stats: ${JSON.stringify(context)}`,

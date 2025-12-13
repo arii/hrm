@@ -29,8 +29,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install actions dependencies
-        run: pnpm install @actions/core @actions/github
 
       - name: Generate Release Notes
         id: generate_notes
