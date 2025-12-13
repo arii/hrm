@@ -6,6 +6,8 @@ import path from 'path';
 const args = process.argv.slice(2);
 const getArg = (key: string): string | null => {
   const index = args.indexOf(key);
+  // Assert `as string` is safe here because `args[index + 1]` is guaranteed
+  // not to be `undefined` due to the `index + 1 < args.length` check.
   if (index !== -1 && index + 1 < args.length) return args[index + 1] as string;
   return null;
 };
