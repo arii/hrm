@@ -9,7 +9,7 @@ import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useAutoConnect from '../../../hooks/useAutoConnect'
 import ConnectView from './ConnectView'
-import { useUserPreferences } from '../../../hooks/useUserPreferences'
+import useUserSettings from '@/hooks/useUserSettings'
 
 export default function ConnectPage() {
   const { connectionStatus } = useWebSocket()
@@ -22,13 +22,14 @@ export default function ConnectPage() {
     deviceId,
   } = useBluetoothHRM()
 
-  const [prefs, setPrefs] = useUserPreferences()
-  const { userName, userAge, deviceId: savedDeviceId } = prefs
-
-  const setUserName = (name: string) => setPrefs({ ...prefs, userName: name })
-  const setUserAge = (age: string) => setPrefs({ ...prefs, userAge: age })
-  const saveSetting = (key: string, value: string) =>
-    setPrefs({ ...prefs, [key]: value })
+  const {
+    userName,
+    setUserName,
+    userAge,
+    setUserAge,
+    deviceId: savedDeviceId,
+    saveSetting,
+  } = useUserSettings()
 
   const autoConnectFn = useCallback(async () => {
     if (userName && userAge) {

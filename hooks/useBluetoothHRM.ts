@@ -7,7 +7,7 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputMessage, HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { useUserPreferences } from './useUserPreferences'
+import useUserSettings from './useUserSettings'
 
 // Heart Rate Service UUIDs (Standard Bluetooth Low Energy)
 const HR_SERVICE_UUID = 'heart_rate'
@@ -41,7 +41,7 @@ const useBluetoothHRM = () => {
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [deviceId, setDeviceId] = useState<string | undefined>(undefined)
-  const [prefs, setPrefs] = useUserPreferences()
+  const { deviceId: savedDeviceId, saveSetting } = useUserSettings()
 
   // Refs to track state without dependency cycles or for event handlers
   const statusRef = useRef(deviceStatus)
@@ -106,8 +106,8 @@ const useBluetoothHRM = () => {
     setBatteryLevel(null)
     deviceRef.current = null
     setDeviceId(undefined)
-    setPrefs({ ...prefs, deviceId: '' })
-  }, [prefs, setPrefs])
+    saveSetting('deviceId', '')
+  }, [saveSetting])
 
   const handleConnectionError = useCallback((error: unknown) => {
     let userFriendlyMessage =
@@ -245,7 +245,6 @@ const useBluetoothHRM = () => {
         let device = savedDevice
 
         if (!device) {
-          const savedDeviceId = prefs.deviceId
           // Try to retrieve known devices if supported
           if (
             savedDeviceId &&
@@ -263,7 +262,7 @@ const useBluetoothHRM = () => {
               filters: [{ services: [HR_SERVICE_UUID] }],
               optionalServices: [BATTERY_SERVICE_UUID],
             })
-            setPrefs({ ...prefs, deviceId: device.id })
+            saveSetting('deviceId', device.id)
           }
         }
 
@@ -283,8 +282,8 @@ const useBluetoothHRM = () => {
       savedDevice,
       connectToGatt,
       handleConnectionError,
-      prefs,
-      setPrefs,
+      savedDeviceId,
+      saveSetting,
     ] // Dependencies
   )
 
