@@ -47,10 +47,13 @@ const DOC_ID =
 
 const Dashboard = () => {
   const { timerData, hrmData, hrmDataHistory, hrmSessionStats } = useWebSocket()
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   useVolumePreference()
   const { initializeAudio } = useAudio(timerData)
+
+  const selectedUser = hrmData.find(user => user.clientId === selectedClientId);
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -66,8 +69,6 @@ const Dashboard = () => {
       window.dispatchEvent(new CustomEvent('test-ready'))
     }
   }, [])
-
-  const primaryUser = hrmData && hrmData.length > 0 ? hrmData[0] : null;
 
   return (
     <Container
@@ -95,14 +96,18 @@ const Dashboard = () => {
           />
         </Grid>
 
-        {primaryUser && hrmDataHistory[primaryUser.clientId] && hrmSessionStats[primaryUser.clientId] && (
-          <Grid size={{ xs: 12 }}>
-            <WorkoutMetricsPanel
-              user={primaryUser}
-              history={hrmDataHistory[primaryUser.clientId]}
-              stats={hrmSessionStats[primaryUser.clientId]}
-            />
-          </Grid>
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmTiles onTileClick={setSelectedClientId} selectedClientId={selectedClientId} />
+        </ErrorBoundary>
+
+        {selectedUser && (
+            <Grid size={{ xs: 12 }}>
+                <WorkoutMetricsPanel
+                    user={selectedUser}
+                    history={hrmDataHistory[selectedUser.clientId] || []}
+                    stats={hrmSessionStats[selectedUser.clientId] || { avgHr: 0, maxHr: 0, totalSamples: 0, sumHr: 0 }}
+                />
+            </Grid>
         )}
 
         <Grid size={{ xs: 12 }}>

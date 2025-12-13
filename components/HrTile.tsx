@@ -32,6 +32,8 @@ const HrTile = ({
   percentMax,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
+  onClick,
+  isSelected,
 }: HrTileProps) => {
   // Get HR zone props which include the theme-based background color
   // Note: We're passing a placeholder maxHr because the function currently requires it,
@@ -49,6 +51,7 @@ const HrTile = ({
       arrow
     >
       <StyledCard
+        onClick={onClick}
         data-testid="hr-tile-card"
         role="region"
         aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
@@ -62,6 +65,10 @@ const HrTile = ({
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative', // IMPORTANT: Allows the overlay to be absolutely positioned
+          boxShadow: isSelected ? 12 : 6,
+          transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          cursor: 'pointer',
         }}
       >
         {/* CONDITIONAL OVERLAY: Renders only when isAlerting is true. */}
@@ -140,7 +147,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.isSelected === nextProps.isSelected
   )
 }
 

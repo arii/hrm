@@ -17,13 +17,13 @@ const HeartRateZoneIndicator: React.FC<HeartRateZoneIndicatorProps> = ({ bpm, ma
         <Typography variant="h5" component="div">
           Heart Rate Zone
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-          <Box sx={{ width: 20, height: 20, backgroundColor: zoneProps.color, mr: 1 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: (theme) => theme.spacing(2) }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: zoneProps.color, mr: (theme) => theme.spacing(1) }} aria-hidden="true" />
           <Typography variant="h4" component="p">
             {zoneProps.name}
           </Typography>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: (theme) => theme.spacing(1) }}>
           {zoneProps.percentage}% of Max HR
         </Typography>
       </CardContent>

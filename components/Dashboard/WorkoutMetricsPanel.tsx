@@ -21,8 +21,8 @@ const WorkoutMetricsPanel: React.FC<WorkoutMetricsPanelProps> = ({ user, history
   }
 
   return (
-    <Paper data-testid="workout-metrics-panel" elevation={3} sx={{ p: 2, backgroundColor: 'background.paper' }}>
-      <Typography variant="h4" gutterBottom component="div" sx={{ mb: 2 }}>
+    <Paper data-testid="workout-metrics-panel" elevation={3} sx={{ p: (theme) => theme.spacing(2), backgroundColor: 'background.paper' }}>
+      <Typography variant="h4" gutterBottom component="div" sx={{ mb: (theme) => theme.spacing(2) }}>
         {user.name}'s Workout Metrics
       </Typography>
       <Grid container spacing={2}>

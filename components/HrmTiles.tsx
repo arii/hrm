@@ -8,7 +8,12 @@ import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { useMemo } from 'react'
 
-const HrmTiles = () => {
+interface HrmTilesProps {
+    onTileClick: (clientId: string) => void;
+    selectedClientId: string | null;
+}
+
+const HrmTiles: React.FC<HrmTilesProps> = ({ onTileClick, selectedClientId }) => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
@@ -43,13 +48,15 @@ const HrmTiles = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               isAlerting={!!matchingAlert}
+              onClick={() => onTileClick(user.clientId)}
+              isSelected={user.clientId === selectedClientId}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, onTileClick, selectedClientId])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
