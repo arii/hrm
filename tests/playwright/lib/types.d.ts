@@ -49,11 +49,17 @@ interface MockBluetooth {
   getAvailability(): Promise<boolean>
   getDevices(): Promise<MockBluetoothDevice[]>
   requestDevice(options?: any): Promise<MockBluetoothDevice>
-  _simulateHeartRate(bpm: number): void
 }
 
 // Extend the global Navigator interface to include our custom mock.
 // This teaches TypeScript that `navigator.bluetooth` can have our mock's shape.
 interface Navigator {
   bluetooth: MockBluetooth
+}
+
+// Extend the global Window interface to include our custom mock instance.
+interface Window {
+  mockBluetoothInstance: {
+    _getConnectedDevice: () => MockBluetoothDevice | null
+  }
 }

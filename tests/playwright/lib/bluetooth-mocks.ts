@@ -158,19 +158,28 @@ export const injectBluetoothMocks = async (page: Page) => {
         }
         return device
       },
-
-      _simulateHeartRate: (bpm: number) => {
-        if (_connectedDevice && _connectedDevice.gatt.connected) {
-          _connectedDevice.gatt
-            .getPrimaryService('heart_rate')
-            .then((service) => {
-              service.characteristic.emitValue(bpm)
-            })
-        }
-      },
     }
 
     // Inject without ts-ignore
-    navigator.bluetooth = mockBluetooth
+    navigator.bluetooth = mockBluetooth;
+    (window as any).mockBluetoothInstance = {
+      _getConnectedDevice: () => _connectedDevice,
+    }
   })
+}
+
+export const simulateHeartRate = (page: Page, bpm: number) => {
+  return page.evaluate((bpmValue) => {
+    const mock = (window as any).mockBluetoothInstance
+    if (mock) {
+      const connectedDevice = mock._getConnectedDevice()
+      if (connectedDevice && connectedDevice.gatt.connected) {
+        connectedDevice.gatt
+          .getPrimaryService('heart_rate')
+          .then((service: MockBluetoothRemoteGATTService) => {
+            service.characteristic.emitValue(bpmValue)
+          })
+      }
+    }
+  }, bpm)
 }
