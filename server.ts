@@ -144,12 +144,15 @@ app
 
     // 1. Initialize WebSocket Server
     // A separate WebSocket server is used for architectural clarity and to allow for
-    // independent scaling and deployment of the real-time and HTTP services.
+    // independent scaling and deployment of the real-time and HTTP services. This
+    // approach avoids potential conflicts with the main Next.js server and allows
+    // for dedicated monitoring and resource allocation for the WebSocket connections.
     const wss = new WebSocketServer({ port: wsPort, host: hostname })
 
     // --- WebSocket Connection Rate Limiting ---
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
+    const TRUSTED_PROXIES = ['127.0.0.1'] // Add trusted proxy IPs here
 
     wss.on('connection', (ws, req) => {
       const ipHeader = req.headers['x-forwarded-for'] as string
@@ -157,7 +160,13 @@ app
 
       if (ipHeader) {
         const addresses = ipHeader.split(',').map((addr) => addr.trim())
-        ip = addresses[addresses.length - 1]
+        for (let i = addresses.length - 1; i >= 0; i--) {
+          const currentIp = addresses[i]
+          if (!TRUSTED_PROXIES.includes(currentIp)) {
+            ip = currentIp
+            break
+          }
+        }
       }
 
       if (process.env.TESTING !== 'true' && ip) {
