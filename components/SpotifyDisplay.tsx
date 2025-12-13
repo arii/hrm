@@ -5,7 +5,7 @@ import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommandMessage, SpotifyCommand } from '@/types/websocket'
+import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -21,9 +21,6 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
-import ProgressBar from './Spotify/ProgressBar'
-import ShuffleButton from './Spotify/ShuffleButton'
-import RepeatButton from './Spotify/RepeatButton'
 import { useDebounce } from '@/hooks/useDebounce'
 
 interface SpotifyDevice {
@@ -168,13 +165,13 @@ const SpotifyDisplay = () => {
   }, [availableDevices, selectedDeviceId])
 
   const sendSpotifyCommand = (
-    command: SpotifyCommand,
-    payload: Omit<SpotifyCommandMessage, 'type' | 'command'> = {}
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
+    targetDeviceId?: string
   ) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command,
-      ...payload,
+      ...(targetDeviceId && { deviceId: targetDeviceId }),
     }
     sendData(message)
   }
@@ -186,20 +183,8 @@ const SpotifyDisplay = () => {
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
-    sendSpotifyCommand('TRANSFER_PLAYBACK', { deviceId })
+    sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
     setDeviceMenuAnchor(null)
-  }
-
-  const handleSeek = (positionMs: number) => {
-    sendSpotifyCommand('SEEK_TO_POSITION', { positionMs })
-  }
-
-  const handleToggleShuffle = (shuffleState: boolean) => {
-    sendSpotifyCommand('SET_SHUFFLE', { shuffleState })
-  }
-
-  const handleToggleRepeat = (repeatState: 'off' | 'track' | 'context') => {
-    sendSpotifyCommand('SET_REPEAT', { repeatState })
   }
 
   if (!isLoggedIn) {
@@ -250,9 +235,8 @@ const SpotifyDisplay = () => {
           py: 1.5,
           borderRadius: 2,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           position: 'fixed',
           bottom: 56,
           left: 0,
@@ -262,180 +246,143 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            mb: 1,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {displayTrackName} {displayArtist}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {displayTrackName} {displayArtist}
+          </Typography>
+          {spotifyAuthenticated && !isReady && (
+            <Typography
+              variant="caption"
+              sx={{
+                opacity: 0.8,
+                backgroundColor: 'info.main',
+                color: 'common.white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              🔄 Connecting Player...
             </Typography>
-            {spotifyAuthenticated && !isReady && (
-              <Typography
-                variant="caption"
-                sx={{
-                  opacity: 0.8,
-                  backgroundColor: 'info.main',
-                  color: 'common.white',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                }}
-              >
-                🔄 Connecting Player...
-              </Typography>
-            )}
-            {isReady && deviceId && (
-              <Typography
-                variant="caption"
-                sx={{
-                  opacity: 0.8,
-                  backgroundColor: 'success.main',
-                  color: 'common.white',
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: 1,
-                }}
-              >
-                🎵 Browser Player Active
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <ProgressBar
-              progressMs={spotifyData.progressMs || 0}
-              durationMs={spotifyData.durationMs || 1}
-              onSeek={handleSeek}
-            />
-          </Box>
+          )}
+          {isReady && deviceId && (
+            <Typography
+              variant="caption"
+              sx={{
+                opacity: 0.8,
+                backgroundColor: 'success.main',
+                color: 'common.white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              🎵 Browser Player Active
+            </Typography>
+          )}
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShuffleButton
-              shuffleState={spotifyData.shuffleState || false}
-              onToggleShuffle={handleToggleShuffle}
-            />
-            <RepeatButton
-              repeatState={spotifyData.repeatState || 'off'}
-              onToggleRepeat={handleToggleRepeat}
-            />
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => sendSpotifyCommand('PREVIOUS')}
+            sx={{
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
+            }}
+            aria-label="Previous track"
+          >
+            <SkipPreviousIcon />
+          </IconButton>
+          <IconButton
+            size="medium"
+            onClick={handlePlayPauseToggle}
+            sx={{
+              color: 'common.white',
+              backgroundColor: 'grey.700',
+              '&:hover': { backgroundColor: 'grey.600' },
+            }}
+            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
+          >
+            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => sendSpotifyCommand('NEXT')}
+            sx={{
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
+            }}
+            aria-label="Next track"
+          >
+            <SkipNextIcon />
+          </IconButton>
+        </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={() => sendSpotifyCommand('PREVIOUS')}
-              sx={{
-                color: 'common.white',
-                '&:hover': { backgroundColor: 'grey.800' },
-              }}
-              aria-label="Previous track"
-            >
-              <SkipPreviousIcon />
-            </IconButton>
-            <IconButton
-              size="medium"
-              onClick={handlePlayPauseToggle}
-              sx={{
-                color: 'common.white',
-                backgroundColor: 'grey.700',
-                '&:hover': { backgroundColor: 'grey.600' },
-              }}
-              aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
-            >
-              {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => sendSpotifyCommand('NEXT')}
-              sx={{
-                color: 'common.white',
-                '&:hover': { backgroundColor: 'grey.800' },
-              }}
-              aria-label="Next track"
-            >
-              <SkipNextIcon />
-            </IconButton>
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <VolumeSlider
+            volume={volume}
+            muted={muted}
+            onVolumeChange={setVolume}
+            onToggleMute={toggleMute}
+          />
+          <IconButton
+            size="small"
+            onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
+            sx={{
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
+            }}
+            aria-label="Select playback device"
+          >
+            <SpeakerIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={deviceMenuAnchor}
+            open={deviceMenuOpen}
+            onClose={() => setDeviceMenuAnchor(null)}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+          >
+            {availableDevices.length > 0 ? (
+              availableDevices.map((device) => (
+                <MenuItem
+                  key={device.id}
+                  onClick={() => handleDeviceSelect(device.id)}
+                  selected={device.is_active}
+                >
+                  {device.name} {device.is_active && '✓'}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled>No devices available</MenuItem>
+            )}
+          </Menu>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <VolumeSlider
-              volume={volume}
-              muted={muted}
-              onVolumeChange={setVolume}
-              onToggleMute={toggleMute}
-            />
-            <IconButton
-              size="small"
-              onClick={(e) => setDeviceMenuAnchor(e.currentTarget)}
-              sx={{
-                color: 'common.white',
-                '&:hover': { backgroundColor: 'grey.800' },
-              }}
-              aria-label="Select playback device"
-            >
-              <SpeakerIcon fontSize="small" />
-            </IconButton>
-            <Menu
-              anchorEl={deviceMenuAnchor}
-              open={deviceMenuOpen}
-              onClose={() => setDeviceMenuAnchor(null)}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-            >
-              {availableDevices.length > 0 ? (
-                availableDevices.map((device) => (
-                  <MenuItem
-                    key={device.id}
-                    onClick={() => handleDeviceSelect(device.id)}
-                    selected={device.is_active}
-                  >
-                    {device.name} {device.is_active && '✓'}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>No devices available</MenuItem>
-              )}
-            </Menu>
-
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleLogout}
-              sx={{
-                color: 'common.white',
-                borderColor: 'grey.600',
-                '&:hover': {
-                  borderColor: 'grey.500',
-                  backgroundColor: 'grey.800',
-                },
-                minWidth: 'auto',
-                px: 1.5,
-                fontSize: '0.75rem',
-              }}
-            >
-              Logout
-            </Button>
-          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleLogout}
+            sx={{
+              color: 'common.white',
+              borderColor: 'grey.600',
+              '&:hover': {
+                borderColor: 'grey.500',
+                backgroundColor: 'grey.800',
+              },
+              minWidth: 'auto',
+              px: 1.5,
+              fontSize: '0.75rem',
+            }}
+          >
+            Logout
+          </Button>
         </Box>
       </Box>
     )

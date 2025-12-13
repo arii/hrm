@@ -1,5 +1,10 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
-import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
+import {
+  ServerMessage,
+  SpotifyData,
+  SpotifyDevice,
+  SpotifyCommand,
+} from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
@@ -24,21 +29,9 @@ type SpotifyCommand =
   | 'SET_VOLUME'
   | 'PAUSE'
   | 'GET_DEVICES'
-  | 'SET_SHUFFLE'
-  | 'SET_REPEAT'
-  | 'SEEK_TO_POSITION'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
-
-interface SpotifyCommandOptions {
-  deviceId?: string
-  volume?: number
-  playlistUri?: string
-  shuffleState?: boolean
-  repeatState?: 'off' | 'track' | 'context'
-  positionMs?: number
-}
 
 export interface SpotifyTokenResponse {
   access_token: string
@@ -264,19 +257,11 @@ export class SpotifyPolling {
       }
 
       const isPlaying = playbackState.is_playing
-      const progressMs = playbackState.progress_ms || 0
-      const durationMs = item?.duration_ms || 0
-      const shuffleState = playbackState.shuffle_state
-      const repeatState = playbackState.repeat_state as
-        | 'off'
-        | 'track'
-        | 'context'
 
-      // Broadcast if track, playback state, or significant progress has changed
+      // Only broadcast if track ID or playback state has changed
       if (
         item?.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState ||
-        Math.abs(progressMs - (this.state.progressMs || 0)) > 2000 // Update every 2s of progress
+        isPlaying !== this.lastPlaybackState
       ) {
         this.lastTrackId = item?.id || null
         this.lastPlaybackState = isPlaying
@@ -285,10 +270,6 @@ export class SpotifyPolling {
           trackName: trackName,
           artist: artistName,
           isPlaying: isPlaying,
-          progressMs,
-          durationMs,
-          shuffleState,
-          repeatState,
         }
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
@@ -349,7 +330,9 @@ export class SpotifyPolling {
 
   public handleCommand(
     command: SpotifyCommand,
-    options: SpotifyCommandOptions = {}
+    deviceId?: string,
+    volume?: number,
+    playlistUri?: string
   ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -363,7 +346,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, options)
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
@@ -373,16 +356,10 @@ export class SpotifyPolling {
 
   private async executeSpotifyCommand(
     command: SpotifyCommand,
-    options: SpotifyCommandOptions
+    deviceId?: string,
+    volume?: number,
+    playlistUri?: string
   ) {
-    const {
-      deviceId,
-      volume,
-      playlistUri,
-      shuffleState,
-      repeatState,
-      positionMs,
-    } = options
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
 
@@ -425,21 +402,6 @@ export class SpotifyPolling {
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
           await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
-        }
-        break
-      case 'SET_SHUFFLE':
-        if (shuffleState !== undefined) {
-          await this.sdk!.player.togglePlaybackShuffle(shuffleState, deviceId)
-        }
-        break
-      case 'SET_REPEAT':
-        if (repeatState !== undefined) {
-          await this.sdk!.player.setRepeatMode(repeatState, deviceId)
-        }
-        break
-      case 'SEEK_TO_POSITION':
-        if (positionMs !== undefined) {
-          await this.sdk!.player.seekToPosition(positionMs, deviceId)
         }
         break
       case 'LOGIN':
