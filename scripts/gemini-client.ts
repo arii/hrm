@@ -164,9 +164,12 @@ async function runReviewPreset(
 
   // 1. Loop Detection / Skip Logic
   const labelsList = prLabels.split(',').map((l) => l.trim())
-  if (labelsList.includes('ready-for-approval')) {
+  if (
+    labelsList.includes('ready-for-approval') ||
+    labelsList.includes('abandon')
+  ) {
     console.log(
-      'PR is already marked as "ready-for-approval". Skipping review.'
+      'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
     )
     // Write a "no-op" result so the workflow doesn't fail
     await writeOutput(
