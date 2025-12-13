@@ -1,5 +1,5 @@
 // hooks/useWorkoutMetrics.ts
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 import { calculateCaloriesBurned } from '@/utils/health'
 import { formatDuration } from '@/utils/time'
 
@@ -9,25 +9,50 @@ interface UseWorkoutMetricsProps {
   timeElapsed: number
 }
 
+interface HrState {
+  hrSum: number
+  hrCount: number
+}
+
+type HrAction =
+  | { type: 'ADD_HR'; payload: number }
+  | { type: 'RESET' }
+
+const initialState: HrState = {
+  hrSum: 0,
+  hrCount: 0,
+}
+
+function hrReducer(state: HrState, action: HrAction): HrState {
+  switch (action.type) {
+    case 'ADD_HR':
+      return {
+        hrSum: state.hrSum + action.payload,
+        hrCount: state.hrCount + 1,
+      }
+    case 'RESET':
+      return initialState
+    default:
+      return state
+  }
+}
+
 export function useWorkoutMetrics({
   currentHR,
   userAge,
   timeElapsed,
 }: UseWorkoutMetricsProps) {
-  const [hrSum, setHrSum] = useState<number>(0)
-  const [hrCount, setHrCount] = useState<number>(0)
+  const [state, dispatch] = useReducer(hrReducer, initialState)
 
   useEffect(() => {
     if (timeElapsed === 0) {
-      setHrSum(0)
-      setHrCount(0)
+      dispatch({ type: 'RESET' })
     } else if (currentHR > 0) {
-      setHrSum((prevSum) => prevSum + currentHR)
-      setHrCount((prevCount) => prevCount + 1)
+      dispatch({ type: 'ADD_HR', payload: currentHR })
     }
   }, [currentHR, timeElapsed])
 
-  const averageHr = hrCount > 0 ? hrSum / hrCount : 0
+  const averageHr = state.hrCount > 0 ? state.hrSum / state.hrCount : 0
   const isWorkoutActive = timeElapsed > 0
 
   const caloriesBurned = userAge
