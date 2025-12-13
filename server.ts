@@ -143,10 +143,6 @@ app
     }
 
     // 1. Initialize WebSocket Server
-    // A separate WebSocket server is used for architectural clarity and to allow for
-    // independent scaling and deployment of the real-time and HTTP services. This
-    // approach avoids potential conflicts with the main Next.js server and allows
-    // for dedicated monitoring and resource allocation for the WebSocket connections.
     const wss = new WebSocketServer({ port: wsPort, host: hostname })
 
     // --- WebSocket Connection Rate Limiting ---

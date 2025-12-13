@@ -12,8 +12,9 @@ jest.setTimeout(60000) // 60s timeout for server start and tests
 
 describe('WebSocket Full Integration Test', () => {
   let serverProcess: ChildProcess
-  const PORT = 3005 // Use a fresh port
-  const wsUrl = `ws://127.0.0.1:${PORT}/ws`
+  const PORT = 3000 // Main HTTP server port
+  const WS_PORT = 3002 // WebSocket server port
+  const wsUrl = `ws://127.0.0.1:${WS_PORT}`
   const healthCheckUrl = `http://127.0.0.1:${PORT}/health/ready`
 
   beforeAll((done) => {
@@ -24,7 +25,12 @@ describe('WebSocket Full Integration Test', () => {
     }
 
     serverProcess = spawn('node', ['dist/server.mjs'], {
-      env: { ...process.env, PORT: `${PORT}`, NODE_ENV: 'production' },
+      env: {
+        ...process.env,
+        PORT: `${PORT}`,
+        WS_PORT: `${WS_PORT}`,
+        NODE_ENV: 'production',
+      },
       detached: true,
     })
 
