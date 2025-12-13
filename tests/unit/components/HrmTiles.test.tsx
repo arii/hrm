@@ -1,17 +1,12 @@
 /** @jest-environment jsdom */
 
-import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
-jest.mock('@/hooks/useBluetoothHRM', () => ({
-  __esModule: true,
-  default: jest.fn(),
-}))
 jest.mock('@/components/HrTile', () => ({
   __esModule: true,
   default: ({ name, bpm }: { name: string; bpm: number | null }) => (
@@ -22,21 +17,11 @@ jest.mock('@/components/HrTile', () => ({
   ),
 }))
 
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 const mockedUseWebSocket = useWebSocket as jest.Mock
-const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
 
-describe('HrmConnectionPanel', () => {
+describe('HrmTiles', () => {
   beforeEach(() => {
     jest.resetAllMocks()
-    mockedUseBluetoothHRM.mockReturnValue({
-      connectAndStream: jest.fn(),
-      disconnect: jest.fn(),
-      deviceStatus: 'Disconnected',
-      batteryLevel: null,
-      isConnected: false,
-      isSupported: true,
-    })
   })
 
   it('should render HRM data correctly for a user', () => {
@@ -46,7 +31,7 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
 
-    render(<HrmConnectionPanel />)
+    render(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -60,43 +45,38 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
 
-    render(<HrmConnectionPanel />)
+    render(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
     expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
   })
 
-  it('should render connection UI and one skeleton when hrmData is empty', () => {
+  it('should render skeleton containers when hrmData is empty', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connected',
       activeAlerts: [],
     })
 
-    render(<HrmConnectionPanel />)
+    render(<HrmTiles />)
 
-    // The component renders the connection UI and one skeleton tile
-    expect(
-      screen.getByText('Connect Your Heart Rate Monitor')
-    ).toBeInTheDocument()
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
+    // The component renders skeleton containers when there's no data
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
+    // And no actual HrTile components are rendered
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 
-  it('should render connection UI when connection status is not "Connected"', () => {
+  it('should render skeleton containers when connection status is not "Connected"', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
       connectionStatus: 'Connecting...',
       activeAlerts: [],
     })
 
-    render(<HrmConnectionPanel />)
+    render(<HrmTiles />)
 
-    expect(
-      screen.getByText('Connect Your Heart Rate Monitor')
-    ).toBeInTheDocument()
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 
@@ -111,54 +91,12 @@ describe('HrmConnectionPanel', () => {
       activeAlerts: [],
     })
 
-    render(<HrmConnectionPanel />)
+    render(<HrmTiles />)
 
     // Only the 'Valid User' tile should be rendered
     const tiles = screen.getAllByTestId('mock-hr-tile')
     expect(tiles).toHaveLength(1)
     expect(within(tiles[0]).getByText('Valid User')).toBeInTheDocument()
     expect(within(tiles[0]).getByText('130')).toBeInTheDocument()
-  })
-
-  it('should call connectAndStream when the connect button is clicked', async () => {
-    const connectAndStream = jest.fn()
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-    mockedUseBluetoothHRM.mockReturnValue({
-      connectAndStream,
-      disconnect: jest.fn(),
-      deviceStatus: 'Disconnected',
-      batteryLevel: null,
-      isConnected: false,
-      isSupported: true,
-    })
-
-    render(<HrmConnectionPanel />)
-    await userEvent.click(screen.getByText('Connect HR Monitor'))
-    expect(connectAndStream).toHaveBeenCalled()
-  })
-
-  it('should call disconnect when the disconnect button is clicked', async () => {
-    const disconnect = jest.fn()
-    mockedUseWebSocket.mockReturnValue({
-      hrmData: [],
-      connectionStatus: 'Connected',
-      activeAlerts: [],
-    })
-    mockedUseBluetoothHRM.mockReturnValue({
-      connectAndStream: jest.fn(),
-      disconnect,
-      deviceStatus: 'Connected',
-      batteryLevel: 80,
-      isConnected: true,
-      isSupported: true,
-    })
-
-    render(<HrmConnectionPanel />)
-    await userEvent.click(screen.getByText('Disconnect HR Monitor'))
-    expect(disconnect).toHaveBeenCalled()
   })
 })
