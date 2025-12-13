@@ -16,3 +16,4 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
+- **Two-Port Architecture**: The backend has been refactored to use a two-port architecture. The main HTTP server runs on the `PORT` environment variable (defaulting to 3000), and the WebSocket server runs on the `WS_PORT` environment variable (defaulting to 3002). This separation allows for independent scaling and deployment of the two services.

@@ -23,7 +23,7 @@ import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3001 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 const wsPort: number = process.env.WS_PORT ? +process.env.WS_PORT : 3002
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
@@ -152,7 +152,8 @@ app
     // --- WebSocket Connection Rate Limiting ---
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
-    const TRUSTED_PROXIES = ['127.0.0.1'] // Add trusted proxy IPs here
+    const TRUSTED_PROXIES_ENV = process.env.TRUSTED_WS_PROXIES_CSV || '127.0.0.1'
+    const TRUSTED_PROXIES = TRUSTED_PROXIES_ENV.split(',').map((ip) => ip.trim())
 
     wss.on('connection', (ws, req) => {
       const ipHeader = req.headers['x-forwarded-for'] as string

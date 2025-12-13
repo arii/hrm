@@ -3,6 +3,17 @@
  * Centralized URL configuration for development and production environments
  */
 
+/**
+ * Builds a WebSocket URL from a standard HTTP/S base URL.
+ * @param baseUrl The base URL (e.g., 'https://example.com').
+ * @returns The full WebSocket URL (e.g., 'wss://example.com/ws').
+ */
+const buildWebSocketUrl = (baseUrl: string): string => {
+  const wsProtocol = baseUrl.startsWith('https:') ? 'wss:' : 'ws:'
+  const host = baseUrl.replace(/^https?:\/\//, '')
+  return `${wsProtocol}//${host}/ws`
+}
+
 export const getBaseURL = (): string => {
   if (typeof window !== 'undefined') {
     // Client-side: use current origin
@@ -17,26 +28,17 @@ export const getWebSocketURL = (): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
   const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
   if (envWsUrl && envWsUrl.length > 0) {
-    return envWsUrl
-  }
-
-  // Common logic for client and server fallbacks
-  const getWsUrl = (hostname: string, protocol: string): string => {
-    const wsProtocol = protocol.startsWith('https:') ? 'wss:' : 'ws:'
-    // Use NEXT_PUBLIC_WS_PORT on the client, and WS_PORT on the server, defaulting to 3002
-    const port =
-      process.env.NEXT_PUBLIC_WS_PORT || process.env.WS_PORT || '3002'
-    return `${wsProtocol}//${hostname}:${port}`
+    return buildWebSocketUrl(envWsUrl)
   }
 
   // 2. Fallback for client-side execution, deriving from the browser's location.
   if (typeof window !== 'undefined') {
-    return getWsUrl(window.location.hostname, window.location.protocol)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}/ws`
   }
 
   // 3. Fallback for server-side execution, deriving from the base application URL.
-  const baseUrl = new URL(getBaseURL())
-  return getWsUrl(baseUrl.hostname, baseUrl.protocol)
+  return buildWebSocketUrl(getBaseURL())
 }
 
 export const getAPIURL = (endpoint: string): string => {

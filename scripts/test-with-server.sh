@@ -9,7 +9,7 @@ set -e
 TIMEOUT=60000
 SERVER_LOG="/tmp/hrm-server.log"
 PID_FILE="/tmp/hrm-server.pid"
-HEALTH_CHECK_URL="http://127.0.0.1:3001/api/debug/ping"
+HEALTH_CHECK_URL="http://127.0.0.1:3000/api/debug/ping"
 
 # Helper for logging to stderr (so it doesn't interfere with stdout piping)
 log() {
@@ -40,8 +40,7 @@ trap cleanup EXIT INT TERM
 # Export environment variable for testing
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
-export NEXTAUTH_URL="http://127.0.0.1:3001"
-export NEXT_PUBLIC_WS_PORT=3002
+export NEXTAUTH_URL="http://127.0.0.1:3000"
 
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
