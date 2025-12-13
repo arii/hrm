@@ -32,7 +32,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 nohup.out
-logs/spotify_tokens.json
 logs/*
 
 # Misc / System / Editor
@@ -61,3 +60,8 @@ diff.txt
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
+
+# Database
+*.db
+*.db-journal
+/prisma/migrations

@@ -56,18 +56,10 @@ describe('Services Integration', () => {
       broadcastedMessages.push(message)
     }
 
-    // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'test_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
-    }))
+    // NEW: Mock the static method directly
+    ;(SpotifyTokenManager.getSystemAccessToken as jest.Mock).mockResolvedValue(
+      'test_access_token'
+    )
 
     // Mock SDK instance
     mockSdk = {

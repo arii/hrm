@@ -1,109 +1,105 @@
 // File: tests/unit/services/spotifyTokenManager.test.ts
-import {
-  SpotifyTokenManager,
-  TokenRecord,
-} from '../../../services/spotifyTokenManager'
-import fs from 'fs'
-import path from 'path'
+import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
+import { db } from '@/lib/db'
 
-jest.mock('fs')
+// Mock the db client from the setup file
+const mockDb = db as jest.Mocked<typeof db>
 
 describe('SpotifyTokenManager', () => {
-  const logDir = '/tmp/logs'
-  const tokenFile = path.join(logDir, 'spotify_tokens.json')
-  const clientId = 'test_client_id'
-  const clientSecret = 'test_client_secret'
-
   beforeEach(() => {
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
-    ;(fs.readFileSync as jest.Mock).mockClear()
-    ;(fs.writeFileSync as jest.Mock).mockClear()
+    // Reset mocks before each test
+    jest.clearAllMocks()
     jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  it('should load tokens from file on initialization', () => {
-    const tokenRecord: TokenRecord = {
-      receivedAt: Date.now(),
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: Date.now(),
-      },
+  it('should return the access token for the designated system token', async () => {
+    const mockAccount = {
+      id: '1',
+      userId: 'user1',
+      provider: 'spotify',
+      isSystemToken: true,
+      access_token: 'system_access_token',
+      // ... other account fields
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    mockDb.account.findFirst.mockResolvedValue(mockAccount as any)
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    expect(fs.readFileSync).toHaveBeenCalledWith(tokenFile, 'utf8')
-    expect(tokenManager.getUserId()).toBe('test_user')
-  })
+    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
 
-  it('should refresh the access token if it is expired', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
+    expect(mockDb.account.findFirst).toHaveBeenCalledWith({
+      where: {
         provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
+        isSystemToken: true,
       },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
-
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: 'new_access_token',
-          expires_in: 3600,
-          refresh_token: 'new_refresh_token',
-        }),
     })
-
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
-
-    expect(global.fetch).toHaveBeenCalled()
-    expect(accessToken).toBe('new_access_token')
-    expect(fs.writeFileSync).toHaveBeenCalled()
+    expect(accessToken).toBe('system_access_token')
   })
 
-  it('should not refresh the access token if it is still valid', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now, // Not expired
-      },
+  it('should fall back to the first available Spotify account if no system token is designated', async () => {
+    const mockAccount = {
+      id: '2',
+      userId: 'user2',
+      provider: 'spotify',
+      isSystemToken: false,
+      access_token: 'fallback_access_token',
+      // ... other account fields
     }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+    // First call for system token returns null, second call for any spotify account returns the mock
+    mockDb.account.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(mockAccount as any)
 
-    global.fetch = jest.fn()
+    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
+    expect(mockDb.account.findFirst).toHaveBeenCalledTimes(2)
+    expect(mockDb.account.findFirst).toHaveBeenCalledWith({
+      where: {
+        provider: 'spotify',
+        isSystemToken: true,
+      },
+    })
+    expect(mockDb.account.findFirst).toHaveBeenCalledWith({
+      where: {
+        provider: 'spotify',
+      },
+    })
+    expect(accessToken).toBe('fallback_access_token')
+  })
 
-    expect(global.fetch).not.toHaveBeenCalled()
-    expect(accessToken).toBe('access_token')
+  it('should return null if no Spotify accounts are found in the database', async () => {
+    // Both calls return null
+    mockDb.account.findFirst.mockResolvedValue(null)
+
+    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+
+    expect(mockDb.account.findFirst).toHaveBeenCalledTimes(2)
+    expect(accessToken).toBeNull()
+    expect(console.warn).toHaveBeenCalledWith(
+      '[TokenManager] No Spotify account found in the database.'
+    )
+  })
+
+  it('should return null if the found account has no access token', async () => {
+    const mockAccount = {
+      id: '3',
+      userId: 'user3',
+      provider: 'spotify',
+      isSystemToken: true,
+      access_token: null, // No access token
+      // ... other account fields
+    }
+    mockDb.account.findFirst.mockResolvedValue(mockAccount as any)
+
+    const accessToken = await SpotifyTokenManager.getSystemAccessToken()
+
+    expect(mockDb.account.findFirst).toHaveBeenCalledTimes(1)
+    expect(accessToken).toBeNull()
+    expect(console.warn).toHaveBeenCalledWith(
+      `[TokenManager] Spotify account found for user ${mockAccount.userId}, but it has no access token.`
+    )
   })
 })

@@ -1,67 +1,59 @@
-// File: lib/auth.ts (NextAuth Configuration - Shared)
-import { Account, AuthOptions, Session } from 'next-auth'
+import { AuthOptions } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import { getAPIURL } from '../utils/urls'
+import { PrismaAdapter } from '@next-auth/prisma-adapter'
+import { db } from '@/lib/db'
 
-// Extend the Session type to include accessToken and error
+// Extend the Session and User types to include properties used in the app
 declare module 'next-auth' {
   interface Session {
     accessToken?: string
     error?: string
-  }
-}
-
-/**
- * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
- * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
- * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
- * allowing the browser to default to the current domain.
- *
- * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
- *                               should not be set.
- */
-function getCookieDomain(): string | undefined {
-  if (!process.env.NEXTAUTH_URL) {
-    return undefined
-  }
-  try {
-    const url = new URL(process.env.NEXTAUTH_URL)
-    // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
-    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
-      return undefined
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
     }
-    return url.hostname
-  } catch (e) {
-    console.error(
-      'Failed to parse NEXTAUTH_URL for cookie domain:',
-      process.env.NEXTAUTH_URL,
-      e
-    )
-    return undefined
+  }
+
+  interface User {
+    id: string
   }
 }
 
-/**
- * @file NextAuth configuration for Spotify authentication.
- * @module lib/auth
- */
+declare module 'next-auth/jwt' {
+  interface JWT {
+    accessToken?: string
+    refreshToken?: string
+    accessTokenExpires?: number
+    error?: string
+    sub: string
+  }
+}
+
+// Define the scopes required for the application's Spotify features.
+const SPOTIFY_SCOPES = [
+  'user-read-private',
+  'user-top-read',
+  'user-read-email',
+  'user-read-playback-state',
+  'user-modify-playback-state',
+  'user-read-currently-playing',
+  'streaming', // Required for Web Playback SDK
+].join(',')
 
 /**
- * Refreshes an expired Spotify access token using a refresh token.
+ * Refreshes an expired Spotify access token using the refresh token.
+ * This function is critical for maintaining an active session and for
+ * allowing background services to access the Spotify API.
  *
- * This function is invoked by the NextAuth JWT callback when an access token
- * is expired. It posts to Spotify's token endpoint to get a new access token
- * and updates the token object with the new credentials.
- *
- * @param {JWT} token The JWT from NextAuth containing the expired accessToken
- *                    and the valid refreshToken.
- * @returns {Promise<JWT>} The updated JWT with a new accessToken and expiry,
- *                         or the original token with an error flag if refresh fails.
+ * @param {JWT} token The JWT from NextAuth containing user and token info.
+ * @returns {Promise<JWT>} The updated JWT with a new access token and expiry,
+ *                         or the original token with an error if refresh fails.
  */
-async function refreshAccessToken(token: JWT) {
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    // FIX: Use the correct Spotify endpoint
     const url = 'https://accounts.spotify.com/api/token'
     const response = await fetch(url, {
       method: 'POST',
@@ -70,9 +62,7 @@ async function refreshAccessToken(token: JWT) {
         Authorization:
           'Basic ' +
           Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID +
-              ':' +
-              process.env.SPOTIFY_CLIENT_SECRET
+            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
           ).toString('base64'),
       },
       body: new URLSearchParams({
@@ -87,256 +77,104 @@ async function refreshAccessToken(token: JWT) {
       throw refreshedTokens
     }
 
-    // Update the token object with new values from Spotify
+    // CRITICAL: Persist the newly refreshed tokens to the database.
+    // This allows background workers (like the Spotify polling service)
+    // to always have a fresh token.
+    if (token.sub) {
+      const account = await db.account.findFirst({
+        where: { userId: token.sub, provider: 'spotify' },
+      })
+
+      if (account) {
+        await db.account.update({
+          where: { id: account.id },
+          data: {
+            access_token: refreshedTokens.access_token,
+            expires_at: Math.floor(
+              Date.now() / 1000 + refreshedTokens.expires_in
+            ),
+            refresh_token:
+              refreshedTokens.refresh_token ?? account.refresh_token, // Spotify may not always return a new refresh token
+          },
+        })
+        console.log(`[DB] Updated Spotify tokens for user ${token.sub}`)
+      }
+    }
+
+    // Return the updated token for the client-side session.
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      // Note: Spotify might or might not send a new refresh token.
-      // If it does, use it. If not, keep the old one.
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     }
   } catch (error) {
     console.error('[AUTH REFRESH ERROR]', error)
-    // If refresh fails, return the original token and an error property
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
-    }
+    return { ...token, error: 'RefreshAccessTokenError' }
   }
 }
 
-// Define scopes required: user-read-playback-state to poll the current track,
-// user-modify-playback-state to control playback (play/pause/skip),
-// streaming for Web Playback SDK (play music in browser).
-const SPOTIFY_SCOPES = [
-  'user-read-private',
-  'user-top-read',
-  'user-read-email',
-  'user-read-playback-state',
-  'user-modify-playback-state',
-  'user-read-currently-playing',
-  'streaming', // Required for Web Playback SDK
-].join(',')
-
 /**
  * Configuration options for NextAuth.js.
- *
- * This object defines the authentication providers, callbacks, and other settings
- * for managing user sessions and authentication flows. It is configured to use the
- * Spotify provider with specific scopes required for the application's features.
- *
- * @type {AuthOptions}
+ * This object defines providers, callbacks, and the database adapter.
  */
 export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(db),
   providers: [
     SpotifyProvider({
-      id: 'spotify',
-      name: 'Spotify',
-      clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
-      authorization: {
-        params: {
-          scope: SPOTIFY_SCOPES,
-        },
-      },
+      clientId: process.env.SPOTIFY_CLIENT_ID!,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+      authorization: { params: { scope: SPOTIFY_SCOPES } },
     }),
   ],
-  // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: getCookieDomain(),
-      },
-    },
-    callbackUrl: {
-      name: `next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: getCookieDomain(),
-      },
-    },
-    csrfToken: {
-      name: `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: getCookieDomain(),
-      },
-    },
-    pkceCodeVerifier: {
-      name: `next-auth.pkce.code_verifier`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 900, // 15 minutes
-        domain: getCookieDomain(),
-      },
-    },
-    state: {
-      name: `next-auth.state`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 900, // 15 minutes
-        domain: getCookieDomain(),
-      },
-    },
+  session: {
+    // We use JWT for session management for performance and to hold tokens.
+    strategy: 'jwt',
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
-  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     /**
-     * Callback executed on a successful sign-in.
-     *
-     * @returns {boolean} Always returns true to allow sign-in.
+     * The JWT callback is executed when a token is created or updated.
+     * It's responsible for populating the JWT with the necessary data
+     * from the user's account upon sign-in and for handling token rotation.
      */
-    async signIn() {
-      // Always allow Spotify sign-in
-      return true
-    },
-    /**
-     * Callback for creating and managing the JSON Web Token (JWT).
-     *
-     * This function is called whenever a JWT is created (i.e., at sign-in) or
-     * updated (i.e., whenever a session is accessed in the client). It is
-     * responsible for persisting the Spotify access token and refresh token
-     * in the JWT.
-     *
-     * @param {object} params - The parameters for the JWT callback.
-     * @param {JWT} params.token - The JWT token.
-     * @param {Account | null} params.account - The account object from the provider.
-     * @returns {Promise<JWT>} The updated JWT.
-     */
-    async jwt({ token, account }: { token: JWT; account: Account | null }) {
-      // 1. Initial sign-in
-      if (account) {
-        console.log('[AUTH JWT] Initial sign-in - Full account object:', {
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-          hasAccessToken: !!account.access_token,
-          hasProfile: !!account.profile,
-          profileKeys: account.profile
-            ? Object.keys(account.profile)
-            : 'NO PROFILE',
-          profileEmail: (account.profile as Record<string, unknown>)?.email,
-          profileDisplayName: (account.profile as Record<string, unknown>)
-            ?.display_name,
-        })
-        console.log(
-          '[AUTH JWT] Initial token before modification:',
-          Object.keys(token)
-        )
-
-        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
-          try {
-            const tokenPayload = {
-              provider: account.provider,
-              sub: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
-              obtainedAt: Date.now(),
-            }
-
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tokenPayload),
-            })
-            const responseBody = await response.text()
-            if (response.ok) {
-              console.log(
-                'Internal token delivery successful. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            } else {
-              console.error(
-                'Internal token delivery failed. Status:',
-                response.status,
-                'Body:',
-                responseBody
-              )
-            }
-          } catch (e) {
-            console.error('Internal token delivery failed:', e)
-          }
-        }
-
-        // Return token with Spotify account data
-        const updatedToken = {
-          ...token,
-          accessToken: account.access_token,
-          accessTokenExpires:
-            Date.now() + (Number(account.expires_in) || 3600) * 1000,
-          refreshToken: account.refresh_token,
-        }
-        console.log(
-          '[AUTH JWT] Returning token with keys:',
-          Object.keys(updatedToken),
-          'has sub:',
-          !!updatedToken.sub
-        )
-        return updatedToken
-      }
-
-      // 2. Token is still valid - return it as-is
-      // Add a 60-second buffer to be safe
-      if (Date.now() < (token.accessTokenExpires as number) - 60000) {
+    async jwt({ token, account, user }) {
+      // 1. Initial sign-in:
+      // The user and account objects are only available on the first login.
+      // The Prisma adapter automatically saves the Account and User to the DB.
+      // We just need to populate the JWT with the token information.
+      if (account && user) {
+        token.accessToken = account.access_token
+        token.refreshToken = account.refresh_token
+        token.accessTokenExpires = account.expires_at! * 1000
+        token.sub = user.id // Ensure the JWT subject matches the User ID in the DB
         return token
       }
 
-      // 3. Token is expired - try to refresh it
+      // 2. Token is still valid:
+      // If the access token has not expired yet (with a 60s buffer), return it.
+      if (
+        token.accessTokenExpires &&
+        Date.now() < token.accessTokenExpires - 60000
+      ) {
+        return token
+      }
+
+      // 3. Token is expired:
+      // If the token is expired, we need to refresh it.
       console.log('[AUTH] Access token expired, refreshing...')
       return await refreshAccessToken(token)
     },
     /**
-     * Callback for creating and managing the user session.
-     *
-     * This function is called whenever a session is checked. It passes the
-     * access token from the JWT to the client-side session object.
-     *
-     * @param {object} params - The parameters for the session callback.
-     * @param {Session} params.session - The session object.
-     * @param {JWT} params.token - The JWT token.
-     * @returns {Promise<Session>} The updated session object.
+     * The session callback is executed when a client checks its session.
+     * It's responsible for exposing a subset of the JWT data to the client.
      */
-    async session({ session, token }: { session: Session; token: JWT }) {
-      // Pass the updated token and error info to the session object
-      console.log(
-        '[AUTH SESSION] Creating session, token keys:',
-        Object.keys(token)
-      )
+    async session({ session, token }) {
+      // Expose the User ID and any token errors to the client-side session object.
+      session.user.id = token.sub
       session.accessToken = token.accessToken as string
-      session.error = token.error as string // Pass any refresh errors
-      console.log(
-        '[AUTH SESSION] Session created with accessToken:',
-        !!session.accessToken
-      )
+      session.error = token.error as string
       return session
     },
   },
-  // Ensure the token can be accessed securely
-  secret:
-    process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET,
 }
