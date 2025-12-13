@@ -253,7 +253,7 @@ describe('Services Integration', () => {
     it('should support Spotify volume commands', async () => {
       // The service now manages SDK internally, no need to set accessToken manually if mocks are set up
 
-      spotifyService.handleCommand('SET_VOLUME', undefined, 75)
+      spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
 
       // Verify mock called
       expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()

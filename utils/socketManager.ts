@@ -234,12 +234,23 @@ const handleIncomingMessage = (
 
         // Also handle locally for backward compatibility
         if (spotifyServiceInstance) {
-          spotifyServiceInstance.handleCommand(
-            commandMsg.command,
-            commandMsg.deviceId,
-            commandMsg.volume,
-            commandMsg.playlistUri
-          )
+          const {
+            command,
+            deviceId,
+            volume,
+            playlistUri,
+            positionMs,
+            shuffleState,
+            repeatState,
+          } = commandMsg
+          spotifyServiceInstance.handleCommand(command, {
+            deviceId,
+            volume,
+            playlistUri,
+            positionMs,
+            shuffleState,
+            repeatState,
+          })
         }
         break
       }

@@ -19,6 +19,10 @@ jest.mock('@/components/SpotifyLoginButton', () => ({
   __esModule: true,
   default: () => <button>Login with Spotify</button>,
 }))
+jest.mock('@/components/Spotify/SpotifyControls', () => ({
+  __esModule: true,
+  default: () => <div data-testid="spotify-controls" />,
+}))
 jest.mock('@/context/WebSocketContext')
 jest.mock('next-auth/react')
 jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
@@ -71,28 +75,7 @@ describe('SpotifyDisplay', () => {
     })
   })
 
-  it('should render "No Active Playback" when logged in but trackName is "Awaiting Login..."', async () => {
-    mockedUseSession.mockReturnValue({
-      data: { accessToken: 'fake-token' },
-      status: 'authenticated',
-    })
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: {
-        trackName: 'Awaiting Login...',
-        artist: '',
-        isPlaying: false,
-      },
-      spotifyServiceInitialized: true,
-    })
-
-    renderWithProviders(<SpotifyDisplay />)
-
-    await waitFor(() => {
-      expect(screen.getByText('No Active Playback')).toBeInTheDocument()
-    })
-  })
-
-  it('should render the track name and artist when a track is playing', async () => {
+  it('should render the SpotifyControls when logged in', async () => {
     mockedUseSession.mockReturnValue({
       data: { accessToken: 'fake-token' },
       status: 'authenticated',
@@ -109,7 +92,7 @@ describe('SpotifyDisplay', () => {
     renderWithProviders(<SpotifyDisplay />)
 
     await waitFor(() => {
-      expect(screen.getByText(/Test Track — Test Artist/i)).toBeInTheDocument()
+      expect(screen.getByTestId('spotify-controls')).toBeInTheDocument()
     })
   })
 })
