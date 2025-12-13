@@ -13,6 +13,7 @@ import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
+import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
 
 interface ConnectViewProps {
@@ -31,6 +32,8 @@ interface ConnectViewProps {
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
   bluetoothConnected: boolean
+  workoutDuration: string
+  caloriesBurned: number
 }
 
 export default function ConnectView({
@@ -49,6 +52,8 @@ export default function ConnectView({
   hrZoneProps,
   connectionStatus,
   bluetoothConnected,
+  workoutDuration,
+  caloriesBurned,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -137,6 +142,14 @@ export default function ConnectView({
               Age: {userAge}
             </Typography>
           </Box>
+        )}
+
+        {/* Workout Summary Display */}
+        {isConnected && workoutDuration && workoutDuration !== '00:00:00' && (
+          <WorkoutSummary
+            duration={workoutDuration}
+            caloriesBurned={caloriesBurned}
+          />
         )}
 
         {/* Enhanced Status Messages */}
