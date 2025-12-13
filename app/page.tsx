@@ -75,7 +75,13 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2, md: 3 } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 2, sm: 2, md: 3 },
+        }}
+      >
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* Workout Goal Progress */}
