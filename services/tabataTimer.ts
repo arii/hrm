@@ -119,6 +119,8 @@ class TabataTimer {
       // COUNT UP (STOPWATCH)
       const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
       this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+      // TODO: Implement a more accurate calorie expenditure model.
+      // This is a placeholder calculation.
       this.timerState.caloriesBurned = this.timerState.timeElapsed * 0.1
     }
 

@@ -46,7 +46,9 @@ export default function WorkoutSummary({
             spacing={1}
             color="text.secondary"
           >
-            <LocalFireDepartmentIcon sx={{ color: theme.palette.error.main }} />
+            <LocalFireDepartmentIcon
+              sx={{ color: theme.palette.primary.main }}
+            />
             <Typography variant="h5">{caloriesBurned.toFixed(0)}</Typography>
           </Stack>
           <Typography variant="caption">Calories</Typography>
