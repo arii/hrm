@@ -30,7 +30,7 @@ jobs:
         id: generate_notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: pnpm exec ts-node --esm .github/scripts/release-notes-runner.ts
 
       - name: Create Release

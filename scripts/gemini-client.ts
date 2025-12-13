@@ -101,7 +101,7 @@ async function generateContentWithFallback(genAI: GoogleGenerativeAI, prompt: st
   throw new Error(`All models failed. Last error: ${lastError?.message}`);
 }
 
-async function runGenericTask(genAI: GoogleGenerativeAI, task: string, contextContent: string, outputFile: string | null | undefined) {
+async function runGenericTask(genAI: GoogleGenerativeAI, task: string, contextContent: string, outputFile: string | null) {
   const prompt = `
 You are an AI assistant helping with a software project.
 Please use the provided context files to inform your response.
@@ -121,7 +121,7 @@ ${task}
   }
 }
 
-async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string, outputFile: string | null | undefined) {
+async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string, outputFile: string | null) {
   const prTitle = process.env.PR_TITLE || 'Unknown Title';
   const prAuthor = process.env.PR_AUTHOR || 'Unknown Author';
   const prHeadRef = process.env.PR_HEAD_REF || 'unknown-head';
@@ -210,7 +210,7 @@ async function runReviewPreset(genAI: GoogleGenerativeAI, contextContent: string
   }
 }
 
-async function writeOutput(content: string, outputFile: string | null | undefined) {
+async function writeOutput(content: string, outputFile: string | null) {
   if (outputFile) {
     await writeFile(path.resolve(process.cwd(), outputFile), content);
     console.log(`Output written to ${outputFile}`);
