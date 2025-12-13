@@ -4,10 +4,11 @@ import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import '@testing-library/jest-dom'
 import { ToastProvider } from '@/context/ToastContext'
 import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mock-uuid'),
 }))
-import userEvent from '@testing-library/user-event'
 
 const mockAddToast = jest.fn()
 jest.mock('@/context/ToastContext', () => ({
