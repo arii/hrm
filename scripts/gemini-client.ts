@@ -173,7 +173,7 @@ async function runReviewPreset(
     )
     // Write a "no-op" result so the workflow doesn't fail
     await writeOutput(
-      JSON.stringify({ reviewComment: null, labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [] }),
       outputFile
     )
     return
@@ -181,7 +181,11 @@ async function runReviewPreset(
 
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
-    process.exit(1)
+    await writeOutput(
+      JSON.stringify({ reviewComment: '', labels: [] }),
+      outputFile
+    )
+    return
   }
 
   let diff = ''
@@ -195,7 +199,7 @@ async function runReviewPreset(
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
     await writeOutput(
-      JSON.stringify({ reviewComment: null, labels: [] }),
+      JSON.stringify({ reviewComment: '', labels: [] }),
       outputFile
     )
     return
