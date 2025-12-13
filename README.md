@@ -257,7 +257,7 @@ only required when you want to inspect the output ahead of time.
 - **`services/spotifyPolling.ts`**: Spotify API polling and playback control service
 - **`utils/audioManager.ts`**: Audio system for timer beep sounds
 - **`hooks/useWebSocket.ts`**: Client-side WebSocket connection hook
-- **`hooks/useAudio.ts`**: Audio playback hook with volume control
+- **`hooks/useTabataSounds.ts`**: Audio playback hook with volume control
 - **`hooks/useVolumePreference.ts`**: Synchronized volume preference across tabs
 - **`components/TimerDisplay.tsx`**: Large timer display with rotated side labels
 - **`components/HrmTiles.tsx`**: Dashboard wrapper that renders live heart rate tiles with skeleton fallbacks
@@ -484,7 +484,7 @@ Track progress by updating the respective markdown plans after each milestone.
 
 - Copied original HRM audio files from product_hrm
 - Implemented AudioManager class for centralized sound control
-- Added useAudio hook for React components
+- Added useTabataSounds hook for React components
 - Proper sound mapping: shortBeep (countdown) and longBeep (transitions)
 
 ### UI/UX Enhancements
