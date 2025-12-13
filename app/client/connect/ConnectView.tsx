@@ -27,7 +27,7 @@ interface ConnectViewProps {
   currentHR: number
   connectionStatus: string
   bluetoothConnected: boolean
-  clientId: string // TODO: This should be passed down from the page
+  clientId: string;
 }
 
 export default function ConnectView({

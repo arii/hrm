@@ -12,7 +12,7 @@ interface PerformanceMetrics {
 // --- Test Configuration ---
 const TEST_DURATION_MS = 20 * 1000 // 20 seconds
 const SAMPLING_INTERVAL_MS = 1000 // 1 second
-const HEAP_GROWTH_THRESHOLD = 0.25 // 25%
+const HEAP_GROWTH_THRESHOLD = 0.15 // 15%
 
 test.describe('Frontend Performance', () => {
   test('should not exhibit memory leaks during a simulated workout', async ({

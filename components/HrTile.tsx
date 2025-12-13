@@ -101,6 +101,24 @@ const HrTile = ({
         )}
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
+            <Typography
+              data-testid="live-hr-percent"
+              sx={{
+                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
+                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
+                fontWeight: 900,
+                lineHeight: 0.85,
+                my: 0.5,
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                animation: 'subtle-pulse 2s infinite ease-in-out',
+                animationPlayState:
+                  currentHeartRate && currentHeartRate > 0 && !isAlerting
+                    ? 'running'
+                    : 'paused',
+              }}
+            >
+              {percentMax}%
+            </Typography>
             <HeartRateDisplay bpm={currentHeartRate} />
             <Box
               sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}
