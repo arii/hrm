@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/arii/hrm/compare/v0.4.0...v0.4.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* remove package-lock.json from pnpm project ([#1295](https://github.com/arii/hrm/issues/1295)) ([00e84b4](https://github.com/arii/hrm/commit/00e84b490d61a7e06d5317660b62d8c2193a964d))
+
 ## [0.4.0](https://github.com/arii/hrm/compare/v0.3.0...v0.4.0) (2025-12-13)
 
 
