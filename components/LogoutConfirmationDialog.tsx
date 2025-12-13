@@ -32,10 +32,10 @@ const LogoutConfirmationDialog: React.FC<LogoutConfirmationDialogProps> = ({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={onClose} color="secondary">
           Cancel
         </Button>
-        <Button onClick={onConfirm} color="primary" autoFocus>
+        <Button onClick={onConfirm} color="error" autoFocus>
           Logout
         </Button>
       </DialogActions>

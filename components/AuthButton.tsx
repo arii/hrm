@@ -20,9 +20,7 @@ const AuthButton: React.FC = () => {
   };
 
   const handleConfirmLogout = () => {
-    signOut({ redirect: false }).then(() => {
-        window.location.reload();
-    });
+    signOut({ redirect: false });
     setDialogOpen(false);
   };
 
@@ -43,10 +41,10 @@ const AuthButton: React.FC = () => {
           onClick={handleLogoutClick}
           sx={{
             color: 'common.white',
-            borderColor: 'grey.600',
+            borderColor: (theme) => theme.palette.grey[600],
             '&:hover': {
-              borderColor: 'grey.500',
-              backgroundColor: 'grey.800',
+              borderColor: (theme) => theme.palette.grey[500],
+              backgroundColor: (theme) => theme.palette.grey[800],
             },
             minWidth: 'auto',
             px: 1.5,
