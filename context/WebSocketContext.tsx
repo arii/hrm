@@ -314,8 +314,13 @@ export const WebSocketProvider = ({
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         // Only reconnect if we're not already connected or connecting
-        if (wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
-          console.log('[WebSocketProvider] Page visible, attempting to reconnect.')
+        if (
+          wsRef.current?.readyState !== WebSocket.OPEN &&
+          wsRef.current?.readyState !== WebSocket.CONNECTING
+        ) {
+          console.log(
+            '[WebSocketProvider] Page visible, attempting to reconnect.'
+          )
           connect()
         }
       }
