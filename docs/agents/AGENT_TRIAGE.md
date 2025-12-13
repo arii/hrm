@@ -40,7 +40,7 @@ Your response should be formatted as a comment to be posted on the issue.
 4.  **Analysis**:
     *   (For Bugs) Potential root cause or request for logs/repro.
     *   (For Features) feasibility check or design questions.
-5.  **Action Plan**: What should happen next? (e.g., "I will wait for more info", "I recommend approving this", etc.)
+5.  **Action Plan**: What should happen next? (e.g., "Awaiting additional information from the issue creator", "Recommendation: Ready for human review/approval", etc.)
 
 ## 4. Tone
 
