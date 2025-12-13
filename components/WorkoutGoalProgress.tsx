@@ -9,16 +9,29 @@ interface WorkoutGoalProgressProps {
 }
 
 function LinearProgressWithLabel(props: LinearProgressProps & { value: number; current: number; target: number, label: string }) {
+  const labelId = React.useId();
+  const currentValueId = React.useId();
+  const targetValueId = React.useId();
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
       <Box sx={{ width: '100%', mr: 1 }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom sx={{ textAlign: 'left' }}>
+        <Typography variant="body2" color="text.secondary" gutterBottom sx={{ textAlign: 'left' }} id={labelId}>
           {props.label}
         </Typography>
-        <LinearProgress variant="determinate" {...props} sx={{ height: 10, borderRadius: 5 }}/>
+        <LinearProgress
+            variant="determinate"
+            {...props}
+            sx={{ height: 8, borderRadius: 8 }}
+            aria-labelledby={labelId}
+            aria-describedby={`${currentValueId} ${targetValueId}`}
+            aria-valuenow={props.current}
+            aria-valuemin={0}
+            aria-valuemax={props.target}
+        />
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">{`${props.current}`}</Typography>
-            <Typography variant="body2" color="text.secondary">{`${props.target}`}</Typography>
+            <Typography variant="body2" color="text.secondary" id={currentValueId}>{`${props.current}`}</Typography>
+            <Typography variant="body2" color="text.secondary" id={targetValueId}>{`${props.target}`}</Typography>
         </Box>
       </Box>
     </Box>
@@ -26,12 +39,22 @@ function LinearProgressWithLabel(props: LinearProgressProps & { value: number; c
 }
 
 const WorkoutGoalProgress: React.FC<WorkoutGoalProgressProps> = ({ currentProgress, targetGoal, label }) => {
-  const normalise = (value: number) => (value - 0) * 100 / (targetGoal - 0);
-  const progressValue = normalise(Math.min(currentProgress, targetGoal));
+  if (targetGoal <= 0) {
+    console.warn('WorkoutGoalProgress: targetGoal must be greater than 0. Rendering 0% progress.');
+    return (
+      <Box sx={{ width: '100%' }}>
+        <LinearProgressWithLabel value={0} current={0} target={targetGoal} label={label} />
+      </Box>
+    );
+  }
+
+  const safeCurrentProgress = Math.max(0, currentProgress);
+  const normalise = (value: number) => (value * 100) / targetGoal;
+  const progressValue = normalise(Math.min(safeCurrentProgress, targetGoal));
 
   return (
     <Box sx={{ width: '100%' }}>
-      <LinearProgressWithLabel value={progressValue} current={currentProgress} target={targetGoal} label={label}/>
+      <LinearProgressWithLabel value={progressValue} current={safeCurrentProgress} target={targetGoal} label={label}/>
     </Box>
   )
 }

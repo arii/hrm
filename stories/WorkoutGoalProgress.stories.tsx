@@ -46,3 +46,11 @@ export const Overfilled: Story = {
       label: 'Distance (km)',
     },
   }
+
+export const ZeroTarget: Story = {
+    args: {
+        currentProgress: 50,
+        targetGoal: 0,
+        label: 'Invalid Goal',
+    },
+}
