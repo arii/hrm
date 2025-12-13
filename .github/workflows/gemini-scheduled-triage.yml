@@ -1,0 +1,58 @@
+name: Gemini Scheduled Triage
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Weekly on Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  scheduled_triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch Stale Issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue list --state open --limit 50 --json number,title,updatedAt,url > issues.json
+          # Filter for issues older than 30 days (simplified logic for now, passing list to Gemini)
+
+      - name: Run Gemini Analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          ISSUES=$(cat issues.json)
+          npx tsx scripts/gemini-client.ts \
+            --task "Analyze these open issues and identify stale ones (older than 30 days) or those needing attention based on project goals. Suggest actions. Issues: $ISSUES" \
+            --context "README.md,FRONTEND_IMPROVEMENT_PLAN.md" \
+            --output "report.md"
+
+      - name: Create Report Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+             const fs = require('fs');
+             try {
+               const body = fs.readFileSync('report.md', 'utf8');
+               await github.rest.issues.create({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 title: 'Weekly Gemini Triage Report',
+                 body: body
+               });
+             } catch (e) {
+               console.log('No report generated');
+             }
