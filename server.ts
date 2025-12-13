@@ -143,6 +143,8 @@ app
     }
 
     // 1. Initialize WebSocket Server
+    // A separate WebSocket server is used for architectural clarity and to allow for
+    // independent scaling and deployment of the real-time and HTTP services.
     const wss = new WebSocketServer({ port: wsPort, host: hostname })
 
     // --- WebSocket Connection Rate Limiting ---
@@ -150,11 +152,13 @@ app
     const WS_MAX_CONNECTIONS = 5
 
     wss.on('connection', (ws, req) => {
-      const ip =
-        (req.headers['x-forwarded-for'] as string)
-          ?.split(',')
-          .shift()
-          ?.trim() || req.socket.remoteAddress
+      const ipHeader = req.headers['x-forwarded-for'] as string
+      let ip: string | undefined = req.socket.remoteAddress
+
+      if (ipHeader) {
+        const addresses = ipHeader.split(',').map((addr) => addr.trim())
+        ip = addresses[addresses.length - 1]
+      }
 
       if (process.env.TESTING !== 'true' && ip) {
         const count = wsConnections.get(ip) || 0
