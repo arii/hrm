@@ -32,6 +32,7 @@ const DEFAULT_STATE: MockAppState = {
     workDuration: 30,
     restDuration: 10,
     soundEventId: 0,
+    caloriesBurned: 0,
   },
   spotifyData: {
     trackName: 'Storybook Simulation',

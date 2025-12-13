@@ -30,6 +30,7 @@ interface DualModeTimerState {
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
+  caloriesBurned: number
 }
 
 class TabataTimer {
@@ -48,6 +49,7 @@ class TabataTimer {
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
+    caloriesBurned: 0,
   }
 
   private countdownMarker: string | null = null
@@ -101,6 +103,7 @@ class TabataTimer {
         soundToPlay: this.timerState.soundToPlay,
       }),
       soundEventId: this.timerState.soundEventId,
+      caloriesBurned: this.timerState.caloriesBurned,
     }
   }
 
@@ -116,6 +119,7 @@ class TabataTimer {
       // COUNT UP (STOPWATCH)
       const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
       this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
+      this.timerState.caloriesBurned = this.timerState.timeElapsed * 0.1
     }
 
     // This applies to TABATA and PREPARE modes (which count down)
@@ -186,6 +190,7 @@ class TabataTimer {
       timeElapsed: 0,
       timeRemaining:
         this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
+      caloriesBurned: 0,
     }
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
