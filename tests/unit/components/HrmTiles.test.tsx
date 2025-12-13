@@ -7,6 +7,10 @@ import { render, screen, within } from '@testing-library/react'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
+jest.mock('@/hooks/useBluetoothHRM', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}))
 jest.mock('@/components/HrTile', () => ({
   __esModule: true,
   default: ({ name, bpm }: { name: string; bpm: number | null }) => (
@@ -17,11 +21,21 @@ jest.mock('@/components/HrTile', () => ({
   ),
 }))
 
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseBluetoothHRM = useBluetoothHRM as jest.Mock
 
 describe('HrmTiles', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+    mockedUseBluetoothHRM.mockReturnValue({
+      connectAndStream: jest.fn(),
+      disconnect: jest.fn(),
+      deviceStatus: 'Disconnected',
+      batteryLevel: null,
+      isConnected: false,
+      isSupported: true,
+    })
   })
 
   it('should render HRM data correctly for a user', () => {
@@ -52,7 +66,7 @@ describe('HrmTiles', () => {
     expect(within(tile).getByText('Signal Drop')).toBeInTheDocument()
   })
 
-  it('should render skeleton containers when hrmData is empty', () => {
+  it('should render connection UI and one skeleton when hrmData is empty', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
       connectionStatus: 'Connected',
@@ -61,13 +75,15 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    // The component renders skeleton containers when there's no data
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
-    // And no actual HrTile components are rendered
+    // The component renders the connection UI and one skeleton tile
+    expect(
+      screen.getByText('Connect Your Heart Rate Monitor')
+    ).toBeInTheDocument()
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 
-  it('should render skeleton containers when connection status is not "Connected"', () => {
+  it('should render connection UI when connection status is not "Connected"', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
       connectionStatus: 'Connecting...',
@@ -76,7 +92,10 @@ describe('HrmTiles', () => {
 
     render(<HrmTiles />)
 
-    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
+    expect(
+      screen.getByText('Connect Your Heart Rate Monitor')
+    ).toBeInTheDocument()
+    expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(1)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
   })
 

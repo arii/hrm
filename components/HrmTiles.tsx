@@ -1,15 +1,33 @@
 // File: app/components/dashboard/HrmTiles.tsx
 'use client'
-import HrTile from '@/components/HrTile'
+import { useMemo } from 'react'
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
+import Skeleton from '@mui/material/Skeleton'
+import Typography from '@mui/material/Typography'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
-import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
-import { useMemo } from 'react'
+import ConnectHRMonitorButton from './ConnectHRMonitorButton'
+import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
+import HrTile from '@/components/HrTile'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const {
+    connectAndStream,
+    disconnect,
+    deviceStatus,
+    batteryLevel,
+    isConnected,
+    isSupported,
+  } = useBluetoothHRM()
+
+  const handleConnect = () => {
+    // TODO: Replace with actual user data from context/state
+    connectAndStream('Local User', '30')
+  }
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -25,7 +43,6 @@ const HrmTiles = () => {
           user.maxHr || MAX_HR_DEFAULT
         )
 
-        // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
           (alert) =>
             alert.clientId === user.clientId &&
@@ -43,7 +60,6 @@ const HrmTiles = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               isAlerting={!!matchingAlert}
-              // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Grid>
@@ -55,17 +71,42 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
+  // If no tiles are available, show connection UI and skeletons
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <Skeleton
-            variant="rectangular"
-            height={220}
-            sx={{ borderRadius: 3 }}
-          />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 2,
+              height: '100%',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography variant="h6">Connect Your Heart Rate Monitor</Typography>
+            <HRMonitorStatusIndicator
+              deviceStatus={deviceStatus}
+              batteryLevel={batteryLevel}
+            />
+            <ConnectHRMonitorButton
+              connect={handleConnect}
+              disconnect={disconnect}
+              isConnected={isConnected}
+              isSupported={isSupported}
+            />
+          </Box>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
+        <Grid
+          size={{ xs: 12, sm: 6, lg: 3 }}
+          data-testid="hr-tile-grid-item"
+          sx={{ display: { xs: 'none', md: 'block' } }}
+        >
           <Skeleton
             variant="rectangular"
             height={220}
