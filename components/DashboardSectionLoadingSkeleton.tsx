@@ -8,7 +8,7 @@ interface DashboardSectionLoadingSkeletonProps {
 
 const DashboardSectionLoadingSkeleton = ({
   height,
-  borderRadius = 3,
+  borderRadius = 0,
 }: DashboardSectionLoadingSkeletonProps) => {
   return (
     <Skeleton

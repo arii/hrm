@@ -59,10 +59,10 @@ const HrmTiles = () => {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <DashboardSectionLoadingSkeleton height={220} />
+          <DashboardSectionLoadingSkeleton height={220} borderRadius={3} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
-          <DashboardSectionLoadingSkeleton height={220} />
+          <DashboardSectionLoadingSkeleton height={220} borderRadius={3} />
         </Grid>
       </>
     )
