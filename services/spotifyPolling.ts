@@ -20,16 +20,6 @@ function safeParseJSON(input: string): unknown {
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
 
-type SpotifyCommand =
-  | 'PLAY'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'LOGIN'
-  | 'TRANSFER_PLAYBACK'
-  | 'SET_VOLUME'
-  | 'PAUSE'
-  | 'GET_DEVICES'
-
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
 
