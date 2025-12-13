@@ -8,10 +8,7 @@ import Typography from '@mui/material/Typography'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import useUserPreferences from '@/hooks/useUserPreferences'
 import { useWebSocket } from '@/context/WebSocketContext'
-import {
-  CONNECT_HR_MONITOR_TITLE,
-  MAX_HR_DEFAULT,
-} from '@/utils/constants'
+import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
