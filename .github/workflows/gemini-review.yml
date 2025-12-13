@@ -38,10 +38,11 @@ jobs:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_DESCRIPTION: ${{ github.event.pull_request.body }}
           PR_DIFF_FILE: pr.diff
+          REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
         run: |
           npx tsx scripts/gemini-client.ts \
             --preset review \
-            --context "DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md" \
+            --context "$REVIEW_CONTEXT_FILES" \
             --output "review_result.json"
 
       - name: Process Review Result

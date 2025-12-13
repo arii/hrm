@@ -11,15 +11,19 @@ const getArg = (key: string) => {
 };
 
 const task = getArg('--task');
+const taskFile = getArg('--task-file');
 const contextFiles = getArg('--context')?.split(',') || [];
 const outputFile = getArg('--output');
 const preset = getArg('--preset');
 
-// List of models to try in order
+// List of models to try in order.
+// Includes newer experimental models and older stable ones to maximize success chance.
 const MODEL_FALLBACKS = [
+  'gemini-2.0-flash-exp',
   'gemini-1.5-flash',
-  'gemini-1.5-flash-001',
+  'gemini-1.5-flash-8b',
   'gemini-1.5-pro',
+  'gemini-1.0-pro',
   'gemini-pro'
 ];
 
@@ -49,11 +53,21 @@ async function main() {
     await runReviewPreset(genAI, contextContent, outputFile);
   } else {
     // Default/Generic mode
-    if (!task) {
-      console.error('Usage: npx tsx scripts/gemini-client.ts --task "task description" [--context "file1.md,file2.md"] [--output "output.md"]');
+    let finalTask = task;
+    if (taskFile) {
+      try {
+        finalTask = await readFile(path.resolve(process.cwd(), taskFile), 'utf-8');
+      } catch (e) {
+        console.error(`Error reading task file ${taskFile}:`, e);
+        process.exit(1);
+      }
+    }
+
+    if (!finalTask) {
+      console.error('Usage: npx tsx scripts/gemini-client.ts --task "task description" OR --task-file "path/to/task.txt" [--context "file1.md,file2.md"] [--output "output.md"]');
       process.exit(1);
     }
-    await runGenericTask(genAI, task, contextContent, outputFile);
+    await runGenericTask(genAI, finalTask, contextContent, outputFile);
   }
 }
 

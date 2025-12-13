@@ -27,14 +27,18 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
+      - name: Create Task File
+        env:
+          TASK_INPUT: ${{ inputs.task }}
+        run: echo "$TASK_INPUT" > task_input.txt
+
       - name: Run Gemini Task
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TASK_INPUT: ${{ inputs.task }}
           CONTEXT_INPUT: ${{ inputs.context_files }}
         run: |
           npx tsx scripts/gemini-client.ts \
-            --task "$TASK_INPUT" \
+            --task-file "task_input.txt" \
             --context "$CONTEXT_INPUT" \
             --output "dispatch_result.md"
 

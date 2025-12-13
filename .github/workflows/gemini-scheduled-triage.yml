@@ -28,14 +28,19 @@ jobs:
         run: |
           gh issue list --state open --limit 100 --json number,title,updatedAt,url > issues.json
 
+      - name: Create Task Input
+        run: |
+          echo "Analyze these open issues and identify stale ones (older than 30 days) or those needing attention based on project goals. Suggest actions. Issues:" > task_input.txt
+          cat issues.json >> task_input.txt
+
       - name: Run Gemini Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SCHEDULED_CONTEXT_FILES: ${{ vars.SCHEDULED_CONTEXT_FILES || 'README.md,FRONTEND_IMPROVEMENT_PLAN.md' }}
         run: |
-          ISSUES=$(cat issues.json)
           npx tsx scripts/gemini-client.ts \
-            --task "Analyze these open issues and identify stale ones (older than 30 days) or those needing attention based on project goals. Suggest actions. Issues: $ISSUES" \
-            --context "README.md,FRONTEND_IMPROVEMENT_PLAN.md" \
+            --task-file "task_input.txt" \
+            --context "$SCHEDULED_CONTEXT_FILES" \
             --output "report.md"
 
       - name: Create Report Issue

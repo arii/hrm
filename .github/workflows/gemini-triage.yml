@@ -21,22 +21,24 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
 
-      - name: Run Gemini Triage
+      - name: Create Task Input
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          # Safe content handling via temporary file
-          echo "Title: $ISSUE_TITLE" > issue_content.txt
-          echo "Body:" >> issue_content.txt
-          echo "$ISSUE_BODY" >> issue_content.txt
+          echo "Perform triage on the following issue." > task_input.txt
+          echo "Title: $ISSUE_TITLE" >> task_input.txt
+          echo "Body:" >> task_input.txt
+          echo "$ISSUE_BODY" >> task_input.txt
 
-          TASK_CONTENT=$(cat issue_content.txt)
-
+      - name: Run Gemini Triage
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TRIAGE_CONTEXT_FILES: ${{ vars.TRIAGE_CONTEXT_FILES || 'CONTRIBUTING.md,docs/agents/AGENT_TRIAGE.md' }}
+        run: |
           npx tsx scripts/gemini-client.ts \
-            --task "Perform triage on the following issue. $TASK_CONTENT" \
-            --context "CONTRIBUTING.md,docs/agents/AGENT_TRIAGE.md" \
+            --task-file "task_input.txt" \
+            --context "$TRIAGE_CONTEXT_FILES" \
             --output "triage_result.md"
 
       - name: Comment on Issue
