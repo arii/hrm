@@ -120,6 +120,7 @@
     "@types/react-dom": "^19.2.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "9",
     "@types/web-bluetooth": "^0.0.21",
     "@types/ws": "^8.18.1",
     "@vitest/browser-playwright": "^4.0.15",

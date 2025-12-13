@@ -200,6 +200,9 @@ importers:
       '@types/swagger-ui-express':
         specifier: ^4.1.8
         version: 4.1.8
+      '@types/uuid':
+        specifier: '9'
+        version: 9.0.8
       '@types/web-bluetooth':
         specifier: ^0.0.21
         version: 0.0.21

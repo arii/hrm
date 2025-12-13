@@ -1,9 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-// tests/unit/components/Spotify/PlaylistSelector.test.tsx
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import { ErrorProvider } from '@/context/ErrorContext'
 
@@ -18,7 +18,10 @@ const mockPlaylists = {
 }
 
 describe('PlaylistSelector', () => {
+  let user: ReturnType<typeof userEvent.setup>
+
   beforeEach(() => {
+    user = userEvent.setup()
     ;(fetch as jest.Mock).mockClear()
     ;(fetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -36,8 +39,10 @@ describe('PlaylistSelector', () => {
       </ErrorProvider>
     )
 
-    expect(await screen.findByText(/Preset Playlist 1/i)).toBeInTheDocument()
-    expect(await screen.findByText(/User Playlist 1/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Preset Playlist 1')).toBeInTheDocument()
+      expect(screen.getByText('User Playlist 1')).toBeInTheDocument()
+    })
   })
 
   it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
@@ -51,9 +56,10 @@ describe('PlaylistSelector', () => {
       </ErrorProvider>
     )
 
-    const userPlaylistItem = await screen.findByText(/User Playlist 1/i)
-    fireEvent.click(userPlaylistItem)
-    expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
+    await waitFor(async () => {
+      await user.click(screen.getByText('User Playlist 1'))
+      expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
+    })
   })
 
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
@@ -67,13 +73,14 @@ describe('PlaylistSelector', () => {
       </ErrorProvider>
     )
 
-    const presetPlaylistItem = await screen.findByText(/Preset Playlist 1/i)
-    // Find the play button associated with "Preset Playlist 1"
-    const playlistItem = presetPlaylistItem.closest('li')
-    const playButton = playlistItem?.querySelector('[aria-label="play"]')
-    if (playButton) {
-      fireEvent.click(playButton)
-    }
-    expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
+    await waitFor(async () => {
+      // Find the play button associated with "Preset Playlist 1"
+      const playlistItem = screen.getByText('Preset Playlist 1').closest('li')
+      const playButton = playlistItem?.querySelector('[aria-label="play"]')
+      if (playButton) {
+        await user.click(playButton)
+      }
+      expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
+    })
   })
 })

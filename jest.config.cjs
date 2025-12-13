@@ -42,7 +42,7 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    "node_modules/(?!uuid)",
+    '/node_modules/(?!uuid)',
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
