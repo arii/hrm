@@ -7,10 +7,8 @@
 
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
-import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
-import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -26,7 +24,9 @@ import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : 3000
+const wsPort: number = process.env.WS_PORT ? +process.env.WS_PORT : 3001
+
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
@@ -48,7 +48,7 @@ const app = next({ dev, hostname, port })
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
-logger.info(`Hostname: ${hostname}, Port: ${port}`)
+logger.info(`Hostname: ${hostname}, Port: ${port}, WebSocket Port: ${wsPort}`)
 const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
@@ -73,7 +73,6 @@ app
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
           return (
             (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
             req.socket.remoteAddress ||
@@ -91,7 +90,6 @@ app
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
           return (
             (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
             req.socket.remoteAddress ||
@@ -108,7 +106,6 @@ app
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
           return (
             (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
             req.socket.remoteAddress ||
@@ -128,8 +125,6 @@ app
     }
 
     // --- Static Asset Serving (Production Only) ---
-    // In production, serve the Next.js static assets directly from the .next/static folder.
-    // This is more efficient than letting the Next.js handler do it.
     if (!dev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
@@ -137,7 +132,6 @@ app
       expressApp.use(
         '/_next/static',
         express.static(staticPath, {
-          // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
           maxAge: '365d',
         })
@@ -145,7 +139,7 @@ app
     }
 
     // 1. Initialize WebSocket Server
-    const wss = new WebSocketServer({ noServer: true })
+    const wss = new WebSocketServer({ port: wsPort, host: hostname })
 
     // 2. Initialize Persistent Services
     let spotifyService: SpotifyPolling
@@ -157,7 +151,6 @@ app
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
       })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
       spotifyService = {
         handleCommand: () => {},
         stopPolling: () => {},
@@ -174,16 +167,41 @@ app
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    // 4. Initialize WebSocket Manager
     initSocketManager(
       wss,
       { tabataService, spotifyService },
       getUnifiedStateSnapshot
     )
 
-    // --- Express Routing ---
+    const wsConnections = new Map<string, number>()
+    const WS_MAX_CONNECTIONS = 5
 
-    // Health Check Endpoints
+    wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+      const ip =
+        (req.headers['x-forwarded-for'] as string)
+          ?.split(',')
+          .shift()
+          ?.trim() || req.socket.remoteAddress
+
+      if (process.env.TESTING !== 'true' && ip) {
+        const count = wsConnections.get(ip) || 0
+        if (count >= WS_MAX_CONNECTIONS) {
+          ws.terminate()
+          return
+        }
+        wsConnections.set(ip, count + 1)
+
+        ws.on('close', () => {
+          const currentCount = wsConnections.get(ip) || 0
+          if (currentCount > 0) {
+            wsConnections.set(ip, currentCount - 1)
+          }
+        })
+      }
+    })
+
+    // --- Express Routing ---
     expressApp.get('/api/health', (_req: Request, res: Response) => {
       res.status(200).json({ status: 'ok' })
     })
@@ -201,22 +219,15 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
       if (
         req.method === 'POST' &&
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Wait a moment for token to be written
         setTimeout(async () => {
           if (spotifyService) {
-            // Signal the service to reload tokens from disk
             spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
             setTimeout(async () => {
               if (typeof spotifyService.forcePollAndBroadcast === 'function') {
                 await spotifyService.forcePollAndBroadcast()
@@ -226,63 +237,21 @@ app
         }, 1000)
       }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
-
-    const wsConnections = new Map<string, number>()
-    const WS_MAX_CONNECTIONS = 5
-
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
-      'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
-        const ip =
-          (req.headers['x-forwarded-for'] as string)
-            ?.split(',')
-            .shift()
-            ?.trim() || req.socket.remoteAddress
-
-        if (process.env.TESTING !== 'true' && ip) {
-          const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS) {
-            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
-            socket.destroy()
-            return
-          }
-          wsConnections.set(ip, count + 1)
-
-          socket.on('close', () => {
-            const currentCount = wsConnections.get(ip) || 0
-            if (currentCount > 0) {
-              wsConnections.set(ip, currentCount - 1)
-            }
-          })
-        }
-
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
-          })
-        }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
-      }
-    )
+    })
 
     // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
-    server.on('error', (err: Error) => {
-      logger.error({ err }, 'Server error')
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.error({ err }, `Port ${port} is already in use.`)
+      } else {
+        logger.error({ err }, 'Server error')
+      }
       process.exit(1)
     })
 
-    // Begin listening
     server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
+      logger.info(`> WebSocket Server listening on ws://${hostname}:${wsPort}`)
     })
   })
   .catch((err: Error) => {

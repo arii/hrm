@@ -25,6 +25,9 @@
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
     "test:unit": "jest tests/unit --coverage",
+    "test:backend:port": "jest tests/unit/backend-port.test.ts",
+    "test:websocket:port": "jest tests/unit/websocket-port.test.ts",
+    "test:port-conflict": "jest tests/unit/port-conflict.test.ts",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
     "test:visual": "scripts/test-with-server.sh playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
@@ -79,6 +82,7 @@
     "react-dom": "19.2.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tree-kill": "^1.2.2",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
