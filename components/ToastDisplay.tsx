@@ -13,7 +13,7 @@ const ToastDisplay: React.FC = () => {
       spacing={1}
       sx={{
         position: 'fixed',
-        bottom: theme.spacing(10), // Above the bottom nav bar
+        bottom: `calc(80px + ${theme.spacing(2)})`, // 80px for BottomNavBar + 16px spacing
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1400, // Higher than other elements
