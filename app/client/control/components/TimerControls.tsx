@@ -495,7 +495,10 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+        <Box
+          sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+          data-testid="volume-controls-section"
+        >
           <VolumeSlider
             volume={volume}
             muted={muted}
