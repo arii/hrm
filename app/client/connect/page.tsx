@@ -34,7 +34,7 @@ export default function ConnectPage() {
 
   return (
     <ConnectView
-      duration={formatDuration(timerData.elapsedTime)}
+      duration={formatDuration(timerData.timeElapsed)}
       caloriesBurned={timerData.caloriesBurned}
       userName={userName}
       setUserName={setUserName}
