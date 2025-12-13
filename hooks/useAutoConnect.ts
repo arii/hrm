@@ -1,16 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
 
-const MAX_DELAY = 30000 // 30 seconds
-const INITIAL_DELAY = 1000 // 1 second
+const MAX_DELAY_DEFAULT = 30000 // 30 seconds
+const INITIAL_DELAY_DEFAULT = 1000 // 1 second
 
 type ConnectFn = () => Promise<boolean>
 type StatusCallback = (isConnecting: boolean, attempts: number) => void
 
+interface AutoConnectOptions {
+  initialDelay?: number
+  maxDelay?: number
+}
+
 const useAutoConnect = (
   connectFn: ConnectFn,
   start: boolean,
-  onStatusChange: StatusCallback
+  onStatusChange: StatusCallback,
+  options: AutoConnectOptions = {}
 ) => {
+  const {
+    initialDelay = INITIAL_DELAY_DEFAULT,
+    maxDelay = MAX_DELAY_DEFAULT,
+  } = options
   const [isConnecting, setIsConnecting] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -36,14 +46,14 @@ const useAutoConnect = (
           setIsConnecting(false)
           setAttempts(0)
         } else {
-          const newDelay = Math.min(delay * 2, MAX_DELAY)
+          const newDelay = Math.min(delay * 2, maxDelay)
           timeoutRef.current = setTimeout(() => tryConnect(newDelay), newDelay)
         }
       }
     }
 
     if (start) {
-      tryConnect(INITIAL_DELAY)
+      tryConnect(initialDelay)
     }
 
     return () => {
@@ -54,7 +64,7 @@ const useAutoConnect = (
       setIsConnecting(false)
       setAttempts(0)
     }
-  }, [start, connectFn])
+  }, [start, connectFn, initialDelay, maxDelay])
 
   return { isConnecting, attempts }
 }

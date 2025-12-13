@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { MAX_HR_DEFAULT } from '../utils/constants'
@@ -258,7 +259,8 @@ const useBluetoothHRM = () => {
       } else if (!isReconnecting && shouldReconnect) {
         setDeviceStatus('Signal Lost. Retrying...')
       }
-    }
+    },
+    { initialDelay: 2000, maxDelay: 10000 }
   )
 
   const connectAndStream = useCallback(
