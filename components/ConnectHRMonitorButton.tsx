@@ -8,6 +8,8 @@ import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import {
   BLUETOOTH_NOT_SUPPORTED_TEXT,
+  CONNECT_HR_MONITOR_BUTTON_TEXT,
+  DISCONNECT_HR_MONITOR_BUTTON_TEXT,
   UNSUPPORTED_BLUETOOTH_TOOLTIP,
 } from '@/utils/constants'
 
@@ -49,7 +51,7 @@ const ConnectHRMonitorButton = ({
       aria-label="Disconnect Heart Rate Monitor"
       sx={{ minHeight: '48px' }}
     >
-      Disconnect HR Monitor
+      {DISCONNECT_HR_MONITOR_BUTTON_TEXT}
     </Button>
   ) : (
     <Button
@@ -60,7 +62,7 @@ const ConnectHRMonitorButton = ({
       aria-label="Connect Heart Rate Monitor"
       sx={{ minHeight: '48px' }}
     >
-      Connect HR Monitor
+      {CONNECT_HR_MONITOR_BUTTON_TEXT}
     </Button>
   )
 }
