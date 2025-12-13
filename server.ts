@@ -25,6 +25,7 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 
 // The server port is configurable via the PORT environment variable.
 // The WebSocket server shares this port and is not configured separately.
@@ -58,6 +59,9 @@ const expressApp = express()
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
+
+// Apply security headers
+expressApp.use(helmet())
 
 // --- Main Application Setup ---
 
