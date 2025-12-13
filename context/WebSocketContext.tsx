@@ -20,16 +20,39 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
+// Keep the last 60s of HR data for the graph
+const HRM_HISTORY_LENGTH = 60
+
+// --- State and Reducer ---
+
+export interface HrmDataPoint {
+  value: number
+  timestamp: number
+}
+
+export interface HrmSessionStats {
+  avgHr: number
+  maxHr: number
+  // Internal properties for calculation
+  totalSamples: number
+  sumHr: number
+}
+
 interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   activeAlerts: ActiveAlert[]
   spotifyServiceInitialized?: boolean
+  // New state for HR metrics
+  hrmDataHistory: { [clientId: string]: HrmDataPoint[] }
+  hrmSessionStats: { [clientId: string]: HrmSessionStats }
 }
 
 const INITIAL_STATE: WebSocketState = {
   hrmData: [],
+  hrmDataHistory: {},
+  hrmSessionStats: {},
   timerData: {
     isRunning: false,
     currentPhase: 'IDLE',
@@ -87,9 +110,50 @@ export const WebSocketProvider = ({
   ): WebSocketState => {
     switch (message.type) {
       case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
+        // The payload for INITIAL_STATE is just the state snapshot, not the full WebSocketState
+        return {
+          ...state,
+          ...message.payload,
+          // Explicitly reset session-specific data
+          hrmDataHistory: {},
+          hrmSessionStats: {},
+        };
+      case 'HRM_UPDATE': {
+        const now = Date.now();
+        const newHistory = { ...state.hrmDataHistory };
+        const newStats = { ...state.hrmSessionStats };
+
+        for (const user of message.payload) {
+          const clientId = user.clientId;
+          const value = user.value;
+
+          // Update history
+          const history = newHistory[clientId] || [];
+          const newHistoryPoint = { value, timestamp: now };
+          newHistory[clientId] = [...history, newHistoryPoint].slice(-HRM_HISTORY_LENGTH);
+
+          // Update stats
+          const stats = newStats[clientId] || { totalSamples: 0, sumHr: 0, maxHr: 0, avgHr: 0 };
+          const newTotalSamples = stats.totalSamples + 1;
+          const newSumHr = stats.sumHr + value;
+          const newMaxHr = Math.max(stats.maxHr, value);
+          const newAvgHr = Math.round(newSumHr / newTotalSamples);
+
+          newStats[clientId] = {
+            totalSamples: newTotalSamples,
+            sumHr: newSumHr,
+            maxHr: newMaxHr,
+            avgHr: newAvgHr,
+          };
+        }
+
+        return {
+          ...state,
+          hrmData: message.payload,
+          hrmDataHistory: newHistory,
+          hrmSessionStats: newStats,
+        };
+      }
       case 'TIMER_UPDATE':
         return {
           ...state,
