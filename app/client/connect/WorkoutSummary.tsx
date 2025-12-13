@@ -16,13 +16,12 @@ const WorkoutSummary = ({
 }: WorkoutSummaryProps) => {
   return (
     <Paper
-      elevation={2}
+      elevation={3}
       sx={{
         p: 2,
         mt: 2,
         bgcolor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        borderRadius: 1.5,
       }}
     >
       <Stack spacing={2}>
