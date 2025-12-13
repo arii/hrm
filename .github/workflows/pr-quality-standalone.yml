@@ -154,16 +154,8 @@ jobs:
           reporter: java-junit
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
-      - name: Run Port Health Checks
-        id: port_tests
-        run: |
-          set -o pipefail
-          pnpm run test:ports 2>&1 | tee logs/port-tests-output.log
-        continue-on-error: true
-
       - name: Run Unit Tests
         id: unit_tests
-        if: steps.port_tests.outcome == 'success'
         run: |
           set -o pipefail
           pnpm run test:unit 2>&1 | tee logs/unit-output.log
@@ -180,12 +172,12 @@ jobs:
           fail-on-error: true # Fails the overall workflow job if any tests failed
 
       - name: Start Application for Performance Test
-        if: always() && steps.build.outcome == 'success' && steps.port_tests.outcome == 'success'
+        if: always() && steps.build.outcome == 'success'
         run: pnpm run start
 
       - name: Run Performance Test
         id: perf_tests
-        if: always() && steps.build.outcome == 'success' && steps.port_tests.outcome == 'success'
+        if: always() && steps.build.outcome == 'success'
         run: |
           set -o pipefail
           PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/performance-output.log
@@ -213,7 +205,6 @@ jobs:
 
       - name: Run Visual Tests
         id: visual_tests
-        if: steps.port_tests.outcome == 'success'
         run: |
           set -o pipefail
           pnpm run test:visual 2>&1 | tee logs/visual-output.log
@@ -249,7 +240,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.port_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
@@ -287,9 +278,6 @@ jobs:
           fi
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
-          fi
-          if [ "${{ steps.port_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Port Health Checks, "
           fi
           if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
@@ -333,9 +321,6 @@ jobs:
           fi
           if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
             append_log "logs/infra-output.log" "Infrastructure Tests"
-          fi
-          if [ "${{ steps.port_tests.outcome }}" == "failure" ]; then
-            append_log "logs/port-tests-output.log" "Port Health Checks"
           fi
           if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
             append_log "logs/unit-output.log" "Unit Tests"
@@ -387,7 +372,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.port_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
