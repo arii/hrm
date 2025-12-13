@@ -270,8 +270,14 @@ test.describe('Visual Regression Tests', () => {
     // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     const startButton = mockPage.getByTestId('streaming-start-button')
-    await expect(startButton).toBeVisible()
-    await startButton.click()
+    try {
+      await expect(startButton).toBeVisible()
+      await startButton.click()
+    } catch (error) {
+      console.warn('Failed to click start button, retrying...')
+      await expect(startButton).toBeVisible()
+      await startButton.click()
+    }
     await expect(
       mockPage.locator('button:has-text("STOP Streaming")')
     ).toBeVisible()
