@@ -6,6 +6,7 @@
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
+import logger from '@/utils/logger.js'
 
 /**
  * Defines the type for an App Router API route handler after it has been
@@ -68,7 +69,7 @@ export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
             { status: 400 }
           )
         }
-        console.error('Unhandled error in withValidation:', error)
+        logger.error('Unhandled error in withValidation:', error)
         return NextResponse.json(
           { message: 'An internal server error occurred.' },
           { status: 500 }

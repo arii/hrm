@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import logger from '@/utils/logger'
 
 /**
  * Debug route to return the server side NextAuth session.
@@ -11,7 +12,7 @@ export async function GET(_req: Request) {
     const session = await getServerSession(authOptions)
     return NextResponse.json({ ok: true, session: session ?? null })
   } catch (err) {
-    console.error('debug/session error:', err)
+    logger.error('debug/session error:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

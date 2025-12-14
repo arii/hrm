@@ -12,6 +12,7 @@ import Head from 'next/head'
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import dynamic from 'next/dynamic'
+import logger from '@/utils/logger.js'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (
@@ -30,7 +31,7 @@ const ControlPanel = () => {
   // Register this client as a controller
   useEffect(() => {
     if (connectionStatus === 'Connected') {
-      console.log('[ControlPanel] Registering as controller')
+      logger.info('[ControlPanel] Registering as controller')
       sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
     }
   }, [connectionStatus, sendData])
@@ -42,7 +43,7 @@ const ControlPanel = () => {
         document.visibilityState === 'visible' &&
         connectionStatus !== 'Connected'
       ) {
-        console.log(
+        logger.info(
           '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
         )
         connect() // Attempt to reconnect

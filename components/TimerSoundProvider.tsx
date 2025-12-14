@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react'
 import { audioManager } from '../utils/audioManager'
+import logger from '@/utils/logger.js'
 
 interface TimerSoundProviderProps {
   children: React.ReactNode
@@ -15,7 +16,7 @@ interface TimerSoundProviderProps {
 const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
   useEffect(() => {
     const handleFirstInteraction = () => {
-      console.log(
+      logger.info(
         '[TimerSoundProvider] User interaction detected, initializing audio...'
       )
       audioManager.loadAudio()

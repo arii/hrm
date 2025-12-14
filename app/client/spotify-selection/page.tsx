@@ -20,6 +20,7 @@ import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
+import logger from '@/utils/logger.js'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -101,7 +102,7 @@ const SpotifySelectionPage = () => {
       }
     }
     if (!deviceId) {
-      console.warn('No deviceId available, command not sent.')
+      logger.warn('No deviceId available, command not sent.')
       return
     }
     const message: SpotifyCommandMessage = {

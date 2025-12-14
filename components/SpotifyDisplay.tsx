@@ -21,6 +21,7 @@ import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types'
+import logger from '@/utils/logger.js'
 
 const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
@@ -31,7 +32,7 @@ const SpotifyDisplay = () => {
 
   // Debug: Log session status changes
   useEffect(() => {
-    console.log('[SpotifyDisplay] Session status changed:', {
+    logger.info('[SpotifyDisplay] Session status changed:', {
       status,
       hasSession: !!session,
       hasAccessToken: !!session?.accessToken,
@@ -106,7 +107,7 @@ const SpotifyDisplay = () => {
     player
       .setVolume(scalar)
       .catch((err) =>
-        console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
+        logger.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
       )
   }, [player, volume, muted])
 
@@ -122,7 +123,7 @@ const SpotifyDisplay = () => {
           const deviceArray = Array.isArray(devices) ? devices : []
           setAvailableDevices(deviceArray)
         } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
+          logger.error('[Dashboard] Failed to fetch Spotify devices:', error)
         }
       }
       fetchDevices()

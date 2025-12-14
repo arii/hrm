@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { NextResponse } from 'next/server'
 import path from 'path'
+import logger from '@/utils/logger'
 
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
@@ -21,7 +22,7 @@ export async function GET() {
     }
     return NextResponse.json({ ok: true, token })
   } catch (err) {
-    console.error('debug/spotify-token error:', err)
+    logger.error('debug/spotify-token error:', err)
     return NextResponse.json({ ok: false, error: String(err) }, { status: 500 })
   }
 }

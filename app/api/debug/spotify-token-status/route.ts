@@ -1,6 +1,7 @@
 // File: app/api/debug/spotify-token-status/route.ts
 import { NextResponse } from 'next/server'
 import { SpotifyTokenManager } from '../../../../services/spotifyTokenManager'
+import logger from '@/utils/logger'
 
 export async function GET() {
   try {
@@ -37,7 +38,7 @@ export async function GET() {
       { status: 200 }
     )
   } catch (error: unknown) {
-    console.error('Error in spotify-token-status API:', error)
+    logger.error('Error in spotify-token-status API:', error)
     let errorMessage = 'An unknown error occurred.'
     if (error instanceof Error) {
       errorMessage = error.message

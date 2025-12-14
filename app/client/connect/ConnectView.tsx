@@ -1,3 +1,5 @@
+'use client' // This directive is required for client components
+
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -15,6 +17,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
+import logger from '@/utils/logger.js'
 
 interface ConnectViewProps {
   duration: string
@@ -74,7 +77,7 @@ export default function ConnectView({
       await onForgetDevice()
       onReset()
     } catch (error) {
-      console.error('Reset failed:', error)
+      logger.error('Reset failed:', error)
     } finally {
       setIsResetting(false)
     }

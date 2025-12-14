@@ -3,6 +3,7 @@ import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import { getAPIURL } from '../utils/urls'
+import logger from '@/utils/logger.js'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -33,7 +34,7 @@ function getCookieDomain(): string | undefined {
     }
     return url.hostname
   } catch (e) {
-    console.error(
+    logger.error(
       'Failed to parse NEXTAUTH_URL for cookie domain:',
       process.env.NEXTAUTH_URL,
       e
@@ -97,7 +98,7 @@ async function refreshAccessToken(token: JWT) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     }
   } catch (error) {
-    console.error('[AUTH REFRESH ERROR]', error)
+    logger.error('[AUTH REFRESH ERROR]', error)
     // If refresh fails, return the original token and an error property
     return {
       ...token,
@@ -236,7 +237,7 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        console.log('[AUTH JWT] Initial sign-in - Full account object:', {
+        logger.info('[AUTH JWT] Initial sign-in - Full account object:', {
           provider: account.provider,
           providerAccountId: account.providerAccountId,
           hasAccessToken: !!account.access_token,
@@ -248,7 +249,7 @@ export const authOptions: AuthOptions = {
           profileDisplayName: (account.profile as Record<string, unknown>)
             ?.display_name,
         })
-        console.log(
+        logger.info(
           '[AUTH JWT] Initial token before modification:',
           Object.keys(token)
         )
@@ -275,14 +276,14 @@ export const authOptions: AuthOptions = {
             })
             const responseBody = await response.text()
             if (response.ok) {
-              console.log(
+              logger.info(
                 'Internal token delivery successful. Status:',
                 response.status,
                 'Body:',
                 responseBody
               )
             } else {
-              console.error(
+              logger.error(
                 'Internal token delivery failed. Status:',
                 response.status,
                 'Body:',
@@ -290,7 +291,7 @@ export const authOptions: AuthOptions = {
               )
             }
           } catch (e) {
-            console.error('Internal token delivery failed:', e)
+            logger.error('Internal token delivery failed:', e)
           }
         }
 
@@ -302,7 +303,7 @@ export const authOptions: AuthOptions = {
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
         }
-        console.log(
+        logger.info(
           '[AUTH JWT] Returning token with keys:',
           Object.keys(updatedToken),
           'has sub:',
@@ -318,7 +319,7 @@ export const authOptions: AuthOptions = {
       }
 
       // 3. Token is expired - try to refresh it
-      console.log('[AUTH] Access token expired, refreshing...')
+      logger.info('[AUTH] Access token expired, refreshing...')
       return await refreshAccessToken(token)
     },
     /**
@@ -334,13 +335,13 @@ export const authOptions: AuthOptions = {
      */
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
-      console.log(
+      logger.info(
         '[AUTH SESSION] Creating session, token keys:',
         Object.keys(token)
       )
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
-      console.log(
+      logger.info(
         '[AUTH SESSION] Session created with accessToken:',
         !!session.accessToken
       )

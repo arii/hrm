@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import logger from '@/utils/logger'
 
 /**
  * API route to search for public Spotify playlists.
@@ -100,7 +101,7 @@ export async function GET(req: NextRequest) {
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /playlists/search] Internal Server Error: ${message}`)
+    logger.error(`[API /playlists/search] Internal Server Error: ${message}`)
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

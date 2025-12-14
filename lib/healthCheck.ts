@@ -4,6 +4,7 @@ import path from 'path'
 import { WebSocketServer } from 'ws'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import logger from '@/utils/logger.js'
 
 interface HealthCheckStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -54,7 +55,7 @@ export const performHealthCheck = async (
     await fs.unlink(testFile)
     checks.storage = 'ok'
   } catch (error) {
-    console.error('Storage health check failed:', error)
+    logger.error('Storage health check failed:', error)
   }
 
   const overallStatus = Object.values(checks).every((s) => s === 'ok')

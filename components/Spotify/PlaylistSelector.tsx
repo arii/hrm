@@ -1,4 +1,5 @@
 // components/Spotify/PlaylistSelector.tsx
+'use client'
 import ClearIcon from '@mui/icons-material/Clear'
 import MusicNote from '@mui/icons-material/MusicNote'
 import PlayArrow from '@mui/icons-material/PlayArrow'
@@ -20,6 +21,7 @@ import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import { API_SPOTIFY_PLAYLISTS } from '../../constants/apiEndpoints'
+import logger from '@/utils/logger.js'
 
 interface PlaylistItemProps {
   playlist: Playlist
@@ -167,7 +169,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         const message =
           error instanceof Error ? error.message : 'Failed to fetch playlists'
         setError(message)
-        console.error('Error fetching playlists:', error)
+        logger.error('Error fetching playlists:', error)
       } finally {
         setLoading(false)
       }
@@ -195,7 +197,7 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
         const data = await response.json()
         setSearchResults(data.items || [])
       } catch (error) {
-        console.error('Error searching playlists:', error)
+        logger.error('Error searching playlists:', error)
         setSearchResults([])
       } finally {
         setSearchLoading(false)
