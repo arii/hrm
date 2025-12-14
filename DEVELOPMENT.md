@@ -1,8 +1,5 @@
 # Development Notes
 
-> [!NOTE]
-> For a comprehensive guide to our coding standards, PR processes, and architectural patterns, please see the new **[Development Standards](./DEVELOPMENT_STANDARDS.md)** document. This file now serves as a high-level overview of ongoing work.
-
 This file contains notes and action items related to the ongoing development of the HRM application.
 
 ## Current Focus
@@ -14,6 +11,33 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
+## CI/CD & Workflow Guidelines
+
+### GitHub Actions Token Usage
+
+- **ARI_PAT Usage**: The use of `secrets.ARI_PAT` (Personal Access Token) in GitHub Actions workflows is **intentionally configured** for specific operational requirements
+- **Review Guidance**: Do NOT recommend changing `secrets.ARI_PAT` to `github.token` - this token choice is deliberate
+- **Context**: PAT tokens provide enhanced permissions and cross-repository access needed for certain workflow operations
+
+### PR Discovery & Knowledge Extraction
+
+See `docs/PR_DISCOVERY_WORKFLOW.md` for comprehensive guide on extracting insights from closed PRs.
+
+**Quick Summary**:
+
+- Analyze recently closed PRs (especially those closed without merging)
+- Extract insights from review feedback and build failures
+- Identify patterns across multiple PRs (systemic issues)
+- Create comprehensive issues based on discoveries
+- Close redundant/superseded issues
+
+**Quick Reference**: See `docs/PR_DISCOVERY_QUICK_REF.md` for checklists and commands
+
+**Frequency**:
+
+- Weekly quick scan (15 min)
+- Bi-weekly deep analysis (1-2 hours)
+
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
@@ -21,8 +45,48 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
 ## Dependency PR Requirements
+
 - **Required Files**: All dependency PRs must include package.json and pnpm-lock.yaml changes
 - **Security Review**: Run `npm audit` and document any security vulnerabilities
 - **Version Verification**: Confirm all versions are stable (no alpha/beta/rc)
 - **Breaking Changes**: Document any breaking changes and migration steps
 - **Testing**: Verify application builds and tests pass with new dependencies
+
+## PR Scope Best Practices
+
+To maintain a clean and manageable git history, and to streamline the review process, it is crucial to adhere to the following scope best practices for Pull Requests.
+
+### One Logical Change Per PR
+
+Each PR should address a single, logical change. This makes it easier to review, test, and, if necessary, revert. A single change could be a bug fix, a new feature, or a refactoring effort.
+
+### Separate Refactoring from Features
+
+Architectural changes and refactoring should be done in separate PRs from feature work or bug fixes. This ensures that the review process for architectural changes can be given the dedicated focus it requires.
+
+### Emergency Fixes Stay Focused
+
+Critical patches or emergency fixes should be tightly focused on the issue at hand. Do not include cleanup, refactoring, or other unrelated changes in a hotfix.
+
+### Use Draft PRs for Work-in-Progress
+
+If you are working on a larger feature and want to get early feedback, use a Draft PR. This allows for discussion and review without formally entering the review process.
+
+### When to Split PRs
+
+Consider splitting a PR into multiple smaller PRs in the following scenarios:
+
+- **Changes span multiple architectural layers:** If a change touches the database, the API, and the frontend, it might be better to split it into separate PRs for each layer.
+- **A bug fix requires significant refactoring:** Submit the refactoring first, and then the bug fix in a separate PR.
+- **Feature work uncovers unrelated issues:** Address the unrelated issue in a separate PR.
+- **Multiple reviewers are needed for different aspects of the change:** Smaller, more focused PRs can be assigned to the appropriate reviewers.
+
+## Reviewer Scope Checklist
+
+As a reviewer, it is your responsibility to ensure that PRs adhere to the scope best practices. Use the following checklist to validate the scope of a PR:
+
+- [ ] **PR has a clear, single purpose:** The title and description of the PR should clearly state the purpose of the change.
+- [ ] **All changes relate to the stated objective:** The code changes should be directly related to the purpose of the PR.
+- [ ] **No unrelated cleanup or refactoring:** The PR should not contain any changes that are not directly related to the stated objective.
+- [ ] **Title and description match the actual changes:** The title and description should accurately reflect the changes in the PR.
+- [ ] **Tests cover the specific change scope:** The tests should be focused on the changes in the PR and should not include unrelated tests.
