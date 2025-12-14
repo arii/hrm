@@ -6,6 +6,9 @@ on:
 jobs:
   scope-check:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -16,8 +19,11 @@ jobs:
         run: |
           # Define architectural areas with a clear precedence (most specific to least specific)
           # A file will only be assigned to the FIRST area it matches.
+          # The order of the `for area in ...` loop below defines the precedence.
           declare -A areas
+          # Authentication-related files (most specific)
           areas[Auth]="app/api/auth|lib/auth.ts|middleware.ts"
+          # CI/CD and automation scripts
           areas[CI-CD]=".github/|scripts/|Dockerfile|docker-compose.yml"
           areas[API]="app/api/|services/|lib/validation"
           areas[UI]="app/((?!api).)*$|components/|hooks/|context/|public/"
@@ -71,15 +77,76 @@ jobs:
           echo "count=$area_count" >> $GITHUB_OUTPUT
           echo "areas=$unique_areas" >> $GITHUB_OUTPUT
 
-      - name: Evaluate Scope
-        if: steps.analyze-files.outputs.count > 1
-        run: |
-          echo "Error: This PR appears to touch multiple architectural areas: ${{ steps.analyze-files.outputs.areas }}."
-          echo "Please split this PR into smaller, more focused PRs, each addressing a single concern."
-          echo "Refer to DEVELOPMENT.md for guidelines on PR scope."
-          exit 1
+      - name: Clean up old scope labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels;
+            const scopeLabels = labels.filter(label => label.name.startsWith('scope:'));
+            for (const label of scopeLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: label.name
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+            }
 
-      - name: Approve Scope
+      - name: Add "scope:focused" label
         if: steps.analyze-files.outputs.count <= 1
-        run: |
-          echo "Success: PR scope is well-defined. Touched areas: ${{ steps.analyze-files.outputs.areas }}"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['scope:focused']
+            });
+
+      - name: Add "scope:needs-review" label and comment
+        if: steps.analyze-files.outputs.count > 1
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['scope:needs-review']
+            });
+            const commentBody = `
+            ###  scope:needs-review
+
+            This PR appears to touch multiple architectural areas: **${{ steps.analyze-files.outputs.areas }}**.
+
+            Please consider splitting this PR into smaller, more focused PRs, each addressing a single concern. This makes reviews faster and more thorough.
+
+            Refer to [DEVELOPMENT.md](DEVELOPMENT.md) for guidelines on PR scope.
+
+            *(If this is intentional and has been discussed, this label can be used to filter for PRs that require a more detailed architectural review.)*
+            `;
+            // Check for existing comments to avoid spamming
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existingComment = comments.find(comment => comment.user.login === 'github-actions[bot]' && comment.body.includes('### scope:needs-review'));
+
+            if (!existingComment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            } else {
+              console.log('A scope review comment already exists. Skipping comment creation.');
+            }
