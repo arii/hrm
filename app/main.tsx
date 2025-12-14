@@ -2,7 +2,6 @@
 
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
@@ -26,7 +25,6 @@ export default function Main({ children }: { children: React.ReactNode }) {
             </UserSettingsProvider>
           </Providers>
           <LoadingIndicator />
-          <ErrorDisplay />
         </LoadingProvider>
       </ErrorProvider>
       <Footer />
