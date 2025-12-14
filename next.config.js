@@ -10,6 +10,15 @@ const nextConfig = {
   env: {
     TESTING: process.env.TESTING,
   },
+  webpack: (config) => {
+    // This is a workaround for a bug in Next.js where it doesn't resolve
+    // extensions correctly when using `moduleResolution: 'nodenext'`.
+    // See: https://github.com/vercel/next.js/issues/37227
+    config.resolve.extensionAlias = {
+      '.js': ['.ts', '.tsx', '.js'],
+    }
+    return config
+  },
   async redirects() {
     return [
       {
