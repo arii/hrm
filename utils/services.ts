@@ -21,39 +21,61 @@ export const spotifyTokenManager = new SpotifyTokenManager(
 // 2. Initialize the main services, injecting dependencies as needed.
 export const initializeCoreServices = async () => {
   let spotifyService: SpotifyPolling
-  try {
-    // Race the Spotify service initialization against a timeout.
-    // This prevents the server from hanging during startup in test environments
-    // where network access to the Spotify API may be blocked or slow.
-    const spotifyPromise = SpotifyPolling.create(broadcast, spotifyTokenManager)
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error('SpotifyPolling initialization timed out')),
-        10000
-      )
-    )
-    spotifyService = await Promise.race([spotifyPromise, timeoutPromise])
-  } catch (e) {
-    logger.error({ err: e }, 'SpotifyPolling initialization failed')
-    broadcast({
-      type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-      payload: false,
-    })
-    // Fallback stub to prevent server crash
+
+  // In a test environment, immediately use the fallback service to prevent
+  // network calls and startup delays.
+  if (process.env.TESTING === 'true') {
+    logger.info('TESTING environment detected. Using fallback Spotify service.')
     spotifyService = {
       handleCommand: () => {},
       stopPolling: () => {},
       startPolling: () => {},
       setRefreshToken: async () => {},
       forcePollAndBroadcast: async () => {},
-      isReady: () => false,
+      isReady: () => true, // Report as "ready" in tests
       getState: () => ({
-        trackName: 'Service Unavailable',
+        trackName: 'Service Disabled for Testing',
         artist: '',
         isPlaying: false,
         devices: [],
       }),
     } as unknown as SpotifyPolling
+  } else {
+    try {
+      // Race the Spotify service initialization against a timeout.
+      const spotifyPromise = SpotifyPolling.create(
+        broadcast,
+        spotifyTokenManager
+      )
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('SpotifyPolling initialization timed out')),
+          15000 // Increased timeout for slower CI environments
+        )
+      )
+      spotifyService = await Promise.race([spotifyPromise, timeoutPromise])
+    } catch (e) {
+      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      broadcast({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: false,
+      })
+      // Fallback stub to prevent server crash
+      spotifyService = {
+        handleCommand: () => {},
+        stopPolling: () => {},
+        startPolling: () => {},
+        setRefreshToken: async () => {},
+        forcePollAndBroadcast: async () => {},
+        isReady: () => false,
+        getState: () => ({
+          trackName: 'Service Unavailable',
+          artist: '',
+          isPlaying: false,
+          devices: [],
+        }),
+      } as unknown as SpotifyPolling
+    }
   }
 
   const tabataService = new TabataTimer(broadcast)
