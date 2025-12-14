@@ -4,7 +4,10 @@ import {
   SpotifyData,
   SpotifyDevice,
 } from '../types/websocket.js'
-import { SpotifyTokenManager } from './spotifyTokenManager.js'
+import {
+  SpotifyTokenManager,
+  SpotifyAccessToken,
+} from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 
 // Utility: Safely parse JSON, fallback to text

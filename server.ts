@@ -10,7 +10,6 @@ import helmet from 'helmet'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
-import type { NextServer } from 'next/dist/server/next'
 import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
@@ -44,7 +43,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
   process.exit(1)
 }
 
-const app: NextServer = next({ dev, hostname, port })
+const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
