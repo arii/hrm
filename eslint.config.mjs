@@ -112,6 +112,7 @@ export default defineConfig([
     },
     rules: {
       // TypeScript specific rules
+      'react/prop-types': 'off',
       // For example, to prevent unused variables:
       // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
