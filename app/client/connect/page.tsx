@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import useLocalStorage from '../../../hooks/useLocalStorage'
 import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '../../../utils/visualization'
@@ -9,8 +9,9 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '../../../hooks/useWorkoutSession'
 
 export default function ConnectPage() {
-  const [userName, setUserName] = useState('')
-  const [userAge, setUserAge] = useState('')
+  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
+  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
 
   const {
     connectAndStream,
@@ -32,11 +33,19 @@ export default function ConnectPage() {
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
-  const { workoutDuration, caloriesBurned, resetWorkout, hasStarted } =
-    useWorkoutSession({
-      isConnected,
+  const {
+    workoutDuration,
+    caloriesBurned,
+    resetWorkout,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected,
       currentHR,
       userAge: userAge ? parseInt(userAge) : 0,
+      userWeight: userWeight ? parseInt(userWeight) : 0,
     })
 
   return (
@@ -47,6 +56,8 @@ export default function ConnectPage() {
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
+      userWeight={userWeight}
+      setUserWeight={setUserWeight}
       isConnected={isConnected}
       deviceStatus={deviceStatus}
       batteryLevel={batteryLevel}
@@ -63,6 +74,9 @@ export default function ConnectPage() {
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
       onReset={resetWorkout}
+      onStartWorkout={startWorkout}
+      onEndWorkout={endWorkout}
+      workoutStatus={workoutStatus}
     />
   )
 }

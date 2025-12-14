@@ -23,6 +23,8 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
+  userWeight: string
+  setUserWeight: (weight: string) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -36,6 +38,9 @@ interface ConnectViewProps {
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
+  onStartWorkout: () => void
+  onEndWorkout: () => void
+  workoutStatus: 'idle' | 'running' | 'paused'
 }
 
 export default function ConnectView({
@@ -45,6 +50,8 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  userWeight,
+  setUserWeight,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -58,6 +65,9 @@ export default function ConnectView({
   bluetoothConnected,
   hasStarted,
   onReset,
+  onStartWorkout,
+  onEndWorkout,
+  workoutStatus,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -125,6 +135,15 @@ export default function ConnectView({
               onChange={(e) => setUserAge(e.target.value)}
               inputProps={{ min: 1, max: 120 }}
             />
+            <TextField
+              fullWidth
+              label="Your Weight (kg)"
+              placeholder="e.g., 75"
+              type="number"
+              value={userWeight}
+              onChange={(e) => setUserWeight(e.target.value)}
+              inputProps={{ min: 20, max: 300 }}
+            />
           </Stack>
         ) : (
           <Box
@@ -144,7 +163,7 @@ export default function ConnectView({
               {userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {userAge}
+              Age: {userAge} | Weight: {userWeight} kg
             </Typography>
           </Box>
         )}
@@ -169,6 +188,7 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
+                !userWeight.trim() ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -246,8 +266,39 @@ export default function ConnectView({
         )}
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <Box sx={{ my: 3 }}>
+            <WorkoutSummary
+              duration={duration}
+              caloriesBurned={caloriesBurned}
+            />
+          </Box>
         )}
+
+        {isConnected && workoutStatus === 'idle' && (
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              onClick={onStartWorkout}
+            >
+              Start Workout
+            </Button>
+          </Box>
+        )}
+
+        {workoutStatus === 'running' || workoutStatus === 'paused' ? (
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Button
+              variant="contained"
+              color="warning"
+              size="large"
+              onClick={onEndWorkout}
+            >
+              End Workout
+            </Button>
+          </Box>
+        ) : null}
 
         <Typography
           variant="body2"

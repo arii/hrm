@@ -11,10 +11,10 @@ interface SessionState {
 }
 
 type SessionAction =
-  | { type: 'CONNECT' }
   | { type: 'DISCONNECT' }
   | { type: 'TICK'; payload: { duration: number; calories: number } }
   | { type: 'RESET' }
+  | { type: 'START_WORKOUT' }
 
 const initialState: SessionState = {
   status: 'idle',
@@ -27,7 +27,7 @@ function sessionReducer(
   action: SessionAction
 ): SessionState {
   switch (action.type) {
-    case 'CONNECT':
+    case 'START_WORKOUT':
       if (state.status === 'idle' || state.status === 'paused') {
         return { ...state, status: 'running' }
       }
@@ -56,12 +56,14 @@ interface WorkoutSessionOptions {
   isConnected: boolean
   currentHR: number
   userAge: number
+  userWeight: number
 }
 
 export const useWorkoutSession = ({
   isConnected,
   currentHR,
   userAge,
+  userWeight,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
@@ -72,21 +74,17 @@ export const useWorkoutSession = ({
     accumulatedCalories: 0,
   })
 
-  const latestMetrics = useRef({ currentHR, userAge })
+  const latestMetrics = useRef({ currentHR, userAge, userWeight })
   useEffect(() => {
-    latestMetrics.current = { currentHR, userAge }
-  }, [currentHR, userAge])
+    latestMetrics.current = { currentHR, userAge, userWeight }
+  }, [currentHR, userAge, userWeight])
 
   const prevIsConnected = useRef(isConnected)
   useEffect(() => {
-    if (prevIsConnected.current !== isConnected) {
-      if (isConnected) {
-        dispatch({ type: 'CONNECT' })
-      } else {
-        dispatch({ type: 'DISCONNECT' })
-      }
-      prevIsConnected.current = isConnected
+    if (prevIsConnected.current && !isConnected) {
+      dispatch({ type: 'DISCONNECT' })
     }
+    prevIsConnected.current = isConnected
   }, [isConnected])
 
   useEffect(() => {
@@ -109,20 +107,21 @@ export const useWorkoutSession = ({
 
     if (state.status === 'running') {
       interval = setInterval(() => {
-        const { currentHR: hr, userAge: age } = latestMetrics.current
+        const {
+          currentHR: hr,
+          userAge: age,
+          userWeight: weightKg,
+        } = latestMetrics.current
         if (session.startTime) {
           const duration = Math.floor(
             (Date.now() - session.startTime - session.totalPaused) / 1000
           )
-          if (age > 0 && hr > 0) {
-            const weightKg = 75
+          if (age > 0 && hr > 0 && weightKg > 0) {
             const caloriesPerMinute =
               (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
               4.184
-            const caloriesPerSecond = caloriesPerMinute / 60
-            if (caloriesPerSecond > 0) {
-              session.accumulatedCalories += caloriesPerSecond
-            }
+            const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
+            session.accumulatedCalories += caloriesPerSecond
           }
           dispatch({
             type: 'TICK',
@@ -149,10 +148,21 @@ export const useWorkoutSession = ({
     dispatch({ type: 'RESET' })
   }, [])
 
+  const startWorkout = useCallback(() => {
+    dispatch({ type: 'START_WORKOUT' })
+  }, [])
+
+  const endWorkout = useCallback(() => {
+    resetWorkout()
+  }, [resetWorkout])
+
   return {
     workoutDuration: state.duration,
     caloriesBurned: Math.round(state.calories),
     resetWorkout,
+    startWorkout,
+    endWorkout,
+    workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
   }
 }
