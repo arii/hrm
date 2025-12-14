@@ -7,10 +7,10 @@ import React from 'react'
 import { ErrorInfo, ErrorReport } from '@/types/error'
 
 export class ErrorBoundary extends React.Component<
-  React.PropsWithChildren<{}>,
+  React.PropsWithChildren<object>,
   { hasError: boolean; error?: Error }
 > {
-  constructor(props: React.PropsWithChildren<{}>) {
+  constructor(props: React.PropsWithChildren<object>) {
     super(props)
     this.state = { hasError: false }
   }

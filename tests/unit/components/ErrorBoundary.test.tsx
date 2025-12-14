@@ -6,7 +6,9 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import '@testing-library/jest-dom'
 
 // Mock console.error to prevent logging during tests
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+const mockConsoleError = jest
+  .spyOn(console, 'error')
+  .mockImplementation(() => {})
 
 // A component that throws an error
 const ProblemChild = () => {
