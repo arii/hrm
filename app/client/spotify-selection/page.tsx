@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
+import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
@@ -197,33 +197,34 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
-            <VolumeControl
+            <VolumeSlider
               volume={volume}
+              muted={false}
               onVolumeChange={setVolume}
               onVolumeChangeCommitted={(newVolume) =>
                 hasActiveDevice &&
                 sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
               }
+              onToggleMute={() => {}}
             />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2, minWidth: 200 }}>
-                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                   Device
                 </Typography>
-                <select
+                <Select
                   value={selectedDeviceId}
-                  onChange={(e) => {
-                    setSelectedDeviceId(e.target.value)
-                  }}
-                  style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  fullWidth
+                  sx={{ color: 'white' }}
                 >
                   {availableDevices.map((device) => (
-                    <option key={device.id} value={device.id}>
+                    <MenuItem key={device.id} value={device.id}>
                       {device.name} {device.is_active ? '(Active)' : ''}
-                    </option>
+                    </MenuItem>
                   ))}
-                </select>
+                </Select>
               </Box>
             )}
           </Stack>

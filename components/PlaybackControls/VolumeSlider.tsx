@@ -5,6 +5,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { memo, useCallback } from 'react'
 
 interface VolumeSliderProps {
@@ -12,6 +13,8 @@ interface VolumeSliderProps {
   muted: boolean
   onVolumeChange: (volume: number) => void
   onToggleMute: () => void
+  onVolumeChangeCommitted?: (volume: number) => void
+  showValue?: boolean
 }
 
 const VolumeSlider: React.FC<VolumeSliderProps> = ({
@@ -19,6 +22,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   muted,
   onVolumeChange,
   onToggleMute,
+  onVolumeChangeCommitted,
+  showValue = true,
 }) => {
   const handleVolumeChange = useCallback(
     (_: Event, value: number | number[]) => {
@@ -27,8 +32,22 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
     [onVolumeChange]
   )
 
+  const handleVolumeChangeCommitted = useCallback(
+    (_: Event, value: number | number[]) => {
+      if (onVolumeChangeCommitted) {
+        onVolumeChangeCommitted(value as number)
+      }
+    },
+    [onVolumeChangeCommitted]
+  )
+
   return (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ width: 120 }}>
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      sx={{ minWidth: 120 }}
+    >
       <IconButton
         size="small"
         onClick={onToggleMute}
@@ -38,11 +57,16 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
         }}
         aria-label={muted ? 'Unmute' : 'Mute'}
       >
-        {muted ? <VolumeOff fontSize="small" /> : <VolumeUp fontSize="small" />}
+        {muted || volume === 0 ? (
+          <VolumeOff fontSize="small" />
+        ) : (
+          <VolumeUp fontSize="small" />
+        )}
       </IconButton>
       <Slider
-        value={volume}
+        value={muted ? 0 : volume}
         onChange={handleVolumeChange}
+        onChangeCommitted={handleVolumeChangeCommitted}
         min={0}
         max={100}
         size="small"
@@ -53,11 +77,19 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
             width: 12,
             height: 12,
           },
-          '& .M_uiSlider-track': { height: 3 },
+          '& .MuiSlider-track': { height: 3 },
           '& .MuiSlider-rail': { height: 3 },
         }}
         aria-labelledby="volume-slider"
       />
+      {showValue && (
+        <Typography
+          variant="caption"
+          sx={{ color: 'grey.400', minWidth: '3ch', textAlign: 'right' }}
+        >
+          {volume}
+        </Typography>
+      )}
     </Stack>
   )
 }
