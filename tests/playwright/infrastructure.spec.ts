@@ -7,7 +7,7 @@ import { WAIT_TIMEOUTS } from './lib/waits'
  * HELPER: Waits for a port to be actively listening.
  * Used to verify servers (dev or prod) have actually started.
  */
-const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
+const waitForPort = (port: number, timeout = 60000) => {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now()
     const interval = setInterval(() => {
@@ -85,7 +85,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
+    test.setTimeout(60000 * 2)
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production
