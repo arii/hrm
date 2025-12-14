@@ -10,9 +10,10 @@ import { WAIT_TIMEOUTS } from './lib/waits'
 const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now()
+    const HOST = process.env.HOST || '127.0.0.1'
     const interval = setInterval(() => {
       const socket = new net.Socket()
-      socket.connect(port, '127.0.0.1', () => {
+      socket.connect(port, HOST, () => {
         socket.destroy()
         clearInterval(interval)
         resolve()
