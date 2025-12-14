@@ -19,6 +19,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    isGattConnected,
     isSupported,
   } = useBluetoothHRM()
 
