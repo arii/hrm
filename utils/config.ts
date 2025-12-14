@@ -13,8 +13,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10)
 const HOST =
   process.env.HOST ||
   (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1')
-const NEXTAUTH_URL =
-  process.env.NEXTAUTH_URL || `http://${HOST}:${PORT}`
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL || `http://${HOST}:${PORT}`
 
 export const config = {
   /**
