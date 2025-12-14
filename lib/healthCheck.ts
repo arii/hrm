@@ -4,7 +4,7 @@ import path from 'path'
 import { WebSocketServer } from 'ws'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
-import logger from '@/utils/logger.js'
+import logger from '../utils/logger.js'
 
 interface HealthCheckStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'

@@ -6,7 +6,6 @@
  */
 
 import express, { Request, Response } from 'express'
-import helmet from 'helmet'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
@@ -24,6 +23,7 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -43,8 +43,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
   process.exit(1)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const app = (next as any)({ dev, hostname, port })
+const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
@@ -57,22 +56,6 @@ const expressApp = express()
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
-
-// --- Security Middleware ---
-expressApp.use(helmet())
-// TODO: Harden the Content Security Policy. The current directives are overly permissive
-// and include 'unsafe-inline' and 'unsafe-eval', which are required for developer
-// tooling and some third-party libraries. A stricter policy should be implemented.
-expressApp.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      'style-src': ["'self'", "'unsafe-inline'"],
-      'img-src': ["'self'", 'data:'],
-    },
-  })
-)
 
 // --- Main Application Setup ---
 
@@ -169,11 +152,18 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error(
-        { err: e },
-        'FATAL: SpotifyPolling initialization failed. Server shutting down.'
-      )
-      process.exit(1)
+      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      broadcast({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: false,
+      })
+      // Fallback stub to avoid crashing entire server if Spotify setup fails
+      spotifyService = {
+        handleCommand: () => {},
+        stopPolling: () => {},
+        startPolling: () => {},
+        setRefreshToken: () => {},
+      } as unknown as SpotifyPolling
     }
     const tabataService = new TabataTimer(broadcast)
 
@@ -212,9 +202,31 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    expressApp.all('*', (req: Request, res: Response) => {
+    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Wait a moment for token to be written
+        setTimeout(async () => {
+          if (spotifyService) {
+            // Signal the service to reload tokens from disk
+            spotifyService.setRefreshToken('signal')
+
+            // Wait a bit for reload, then force poll
+            setTimeout(async () => {
+              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+                await spotifyService.forcePollAndBroadcast()
+              }
+            }, 1500)
+          }
+        }, 1000)
+      }
       return nextRequestHandler(req, res)
-    })
+    }) // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -224,16 +236,11 @@ app
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
-
-        // --- Secure IP Identification ---
-        const xForwardedFor = req.headers['x-forwarded-for']
-        let ip = req.socket.remoteAddress
-
-        if (typeof xForwardedFor === 'string') {
-          const ips = xForwardedFor.split(',').map((ip) => ip.trim())
-          // The rightmost IP is the one most likely to be the client's.
-          ip = ips[ips.length - 1]
-        }
+        const ip =
+          (req.headers['x-forwarded-for'] as string)
+            ?.split(',')
+            .shift()
+            ?.trim() || req.socket.remoteAddress
 
         if (process.env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
