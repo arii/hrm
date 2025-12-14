@@ -19,6 +19,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    isGattConnected,
     isSupported,
   } = useBluetoothHRM()
 
@@ -32,11 +33,12 @@ export default function ConnectPage() {
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
-  const { workoutDuration, caloriesBurned } = useWorkoutSession({
-    isConnected,
-    currentHR,
-    userAge: userAge ? parseInt(userAge) : 0,
-  })
+  const { workoutDuration, caloriesBurned, resetWorkout, hasStarted } =
+    useWorkoutSession({
+      isConnected: isGattConnected,
+      currentHR,
+      userAge: userAge ? parseInt(userAge) : 0,
+    })
 
   return (
     <ConnectView
@@ -60,6 +62,8 @@ export default function ConnectPage() {
       }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
+      hasStarted={hasStarted}
+      onReset={resetWorkout}
     />
   )
 }

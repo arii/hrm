@@ -161,9 +161,8 @@ async function runReviewPreset(
   const linkedIssueBody = process.env.LINKED_ISSUE_BODY
   const existingComments = process.env.EXISTING_COMMENTS
   const prLabels = process.env.PR_LABELS || ''
-  const commentCount = parseInt(process.env.COMMENT_COUNT || '0')
 
-  // 1. Enhanced Loop Detection / Skip Logic
+  // 1. Loop Detection / Skip Logic
   const labelsList = prLabels.split(',').map((l) => l.trim())
   if (
     labelsList.includes('ready-for-approval') ||
@@ -175,19 +174,6 @@ async function runReviewPreset(
     // Write a "no-op" result so the workflow doesn't fail
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [] }),
-      outputFile
-    )
-    return
-  }
-
-  // Enhanced: Prevent review loops on persistent linting issues
-  if (commentCount > 5 && labelsList.includes('needs-improvement')) {
-    console.log('Multiple review cycles detected. Suggesting manual intervention.')
-    await writeOutput(
-      JSON.stringify({ 
-        reviewComment: '**Review Cycle Limit Reached**\n\nThis PR has undergone multiple review cycles with persistent issues. Consider:\n- Manual linting fix (`npx eslint --fix`)\n- Fresh branch/rebase\n- Pair programming session\n\nSkipping automated review to prevent noise.',
-        labels: ['needs-manual-intervention'] 
-      }),
       outputFile
     )
     return
@@ -284,30 +270,16 @@ async function runReviewPreset(
 
     **Critical Instructions:**
     1. **Be Skeptical:** Your default stance is to request changes. Only approve if the code is excellent.
-    2. **Enhanced Scope Enforcement:**
-       - **Architecture Violation**: If modifying core hooks (useVolumePreference, useSpotifyWebPlayback, useWorkoutMetrics) without clear justification, FLAG as "CRITICAL ARCHITECTURE CHANGE - Justify removal/modification"
-       - **Test Deletion**: If unit tests are deleted/reduced, FLAG as "UNACCEPTABLE TEST COVERAGE REGRESSION - Tests must be preserved or explicitly migrated"
-       - **Configuration Creep**: If changing package.json, workflows, or config files in a feature PR, FLAG as "CONFIGURATION SCOPE CREEP - Should be separate PR"
-       - **API Contract Changes**: If modifying API error responses (NextResponse.json -> Error), FLAG as "API CONTRACT VIOLATION - Maintain structured responses"
-    3. **Anti-Pattern Detection (CRITICAL):**
-       - **Magic Strings**: FLAG any conditional logic using string literals like '!== "00:00:00"' or similar brittle conditions
-       - **React Hooks Violations**: FLAG direct setState calls in useEffect (causes cascading renders) - require useMemo/useCallback patterns
-       - **State Desynchronization**: FLAG showing WebSocket data while updating local preferences without proper coordination
-       - **API Flooding**: FLAG immediate onChange handlers without debouncing for external APIs (require 300ms+ debounce)
-       - **Missing Error Boundaries**: FLAG async operations without proper finally blocks for cleanup
-       - **Hardcoded Values**: FLAG hardcoded colors, spacing, dimensions that should use theme.spacing() or theme.palette
-    4. **File Audit:** You MUST list every single file changed.
+    2. **Scope Enforcement:**
+       - If this is a backend PR, FLAG any frontend changes or snapshot updates as "Suspicious Scope Creep".
+       - If this is a refactor, FLAG any logic changes that aren't pure cleanup.
+    3. **File Audit:** You MUST list every single file changed.
        - For each file, provide a specific comment.
        - If a file has no obvious issues, you must still explicitly state "Checked - No issues".
        - If a file change seems unnecessary, ask "Why was this file modified?".
-    5. **Large Changes:** If the diff is large (>15 files or >500 additions), suggest splitting the PR.
-    6. **Technical Debt Integration:**
-       - **Audit Priority**: Check if PR addresses items from AUDIT_CODE_HYGIENE.md - prioritize fixing known issues.
-       - **ESM Import Verification**: FLAG any imports of local service/utility files that are missing the \`.js\` extension (required for ESM in this project).
-       - **Port Strategy Validation**: FLAG any usage of "WS_PORT" or hardcoded ports. Ensure unified usage of "process.env.PORT".
-       - **Dependency Compatibility**: If 'package.json' is modified, validate that Next.js and Storybook versions remain compatible.
-    7. **Suggestions:** Provide code snippets for fixes.
-    8. **Markdown Formatting (STRICT):**
+    4. **Large Changes:** If the diff is large, suggest splitting the PR.
+    5. **Suggestions:** Provide code snippets for fixes.
+    6. **Markdown Formatting (STRICT):**
        - You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
        - You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
        - Do not clump sections together.
@@ -364,17 +336,49 @@ async function writeOutput(
 }
 
 function handleError(error: any) {
-  console.error('Error generating content:', error)
-  if (
-    error instanceof GoogleGenerativeAIError ||
-    error.message?.includes('404')
-  ) {
-    console.error('\nPOSSIBLE CAUSE: All attempted models failed.')
-    console.error(
-      'Please check your Google AI Studio account and ensure you have access to the Gemini models.'
-    )
-    console.error(`Tried models: ${MODEL_FALLBACKS.join(', ')}`)
+  let category = 'Infrastructure Issue'
+  let userMessage =
+    'The review service encountered an unexpected error. This is likely an intermittent problem.'
+  const technicalDetails = error.message || 'No technical details available.'
+
+  if (error instanceof GoogleGenerativeAIError) {
+    if (error.message.includes('400') || error.message.includes('404')) {
+      category = 'Configuration Issue'
+      userMessage =
+        'All attempted generative models failed, likely due to a configuration or access problem.'
+    } else if (error.message.includes('500') || error.message.includes('503')) {
+      category = 'Infrastructure Issue'
+      userMessage =
+        'The generative AI service is temporarily unavailable. Please try again later.'
+    }
+  } else if (error.message.includes('api key')) {
+    category = 'Configuration Issue'
+    userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }
+
+  const errorOutput = {
+    error: {
+      category: category,
+      message: userMessage,
+      details: technicalDetails,
+    },
+    // Provide a valid structure for the review result to avoid breaking the calling workflow
+    reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
+    labels: ['review-failed'],
+  }
+
+  console.error('Error generating content:', JSON.stringify(errorOutput, null, 2))
+
+  // Write the error details to the output file so the workflow can use it
+  if (outputFile) {
+    writeOutput(JSON.stringify(errorOutput, null, 2), outputFile).catch(
+      (writeErr) => {
+        console.error('Failed to write error output to file:', writeErr)
+      }
+    )
+  }
+
+  // Still exit with 1 to signal failure to the workflow runner
   process.exit(1)
 }
 

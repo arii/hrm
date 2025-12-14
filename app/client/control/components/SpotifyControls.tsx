@@ -1,6 +1,7 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
+import VolumeOff from '@mui/icons-material/VolumeOff'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
@@ -13,6 +14,7 @@ import Select from '@mui/material/Select'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -26,7 +28,7 @@ const SpotifyControls = () => {
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { devices = [] } = spotifyData // Default to empty array if undefined
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
@@ -208,8 +210,16 @@ const SpotifyControls = () => {
             />
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} />
+              <IconButton
+                onClick={toggleMute}
+                aria-label={muted ? 'Unmute volume' : 'Mute volume'}
+                size="small"
+                sx={{ color: 'grey.400' }}
+              >
+                {muted ? <VolumeOff /> : <VolumeUp />}
+              </IconButton>
               <Slider
+                aria-label="Volume control"
                 value={volume}
                 onChange={(_, val) => {
                   setIsDragging(true)
