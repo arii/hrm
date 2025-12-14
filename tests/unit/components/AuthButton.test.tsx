@@ -12,13 +12,19 @@ jest.mock('next-auth/react')
 
 describe('AuthButton', () => {
   it('renders login button when not authenticated', () => {
-    ;(useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' })
+    ;(useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    })
     render(<AuthButton />)
     expect(screen.getByText('Login with Spotify')).toBeInTheDocument()
   })
 
   it('calls signIn when login button is clicked', () => {
-    ;(useSession as jest.Mock).mockReturnValue({ data: null, status: 'unauthenticated' })
+    ;(useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    })
     render(<AuthButton />)
     fireEvent.click(screen.getByText('Login with Spotify'))
     expect(signIn).toHaveBeenCalledWith('spotify')
