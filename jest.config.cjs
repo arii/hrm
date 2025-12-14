@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
-  testEnvironment: './tests/unit/custom-resolver.js',
+  testEnvironment: 'node',
   roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -50,7 +50,6 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.ts'],
 }
 
 module.exports = config

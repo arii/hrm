@@ -51,7 +51,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
       await stopButton.click()
     }
 
-    const startButton = page.getByTestId('start-timer-button')
+    const startButton = page.getByTestId('start-session-button')
     await expect(startButton).toBeVisible() // Wait for start button to appear
     await startButton.click()
 
