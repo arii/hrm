@@ -68,7 +68,10 @@ const SpotifyDevicePicker = () => {
           id="basic-button"
           onClick={handleClick}
           size="small"
-          sx={{ color: 'common.white', '&:hover': { backgroundColor: 'grey.800' } }}
+          sx={{
+            color: 'common.white',
+            '&:hover': { backgroundColor: 'grey.800' },
+          }}
           aria-controls={open ? 'device-menu' : undefined}
           aria-haspopup="true"
           aria-expanded={open ? 'true' : undefined}
