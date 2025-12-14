@@ -1,0 +1,85 @@
+name: PR Scope Validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  scope-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for accurate diff
+
+      - name: Analyze Changed Files
+        id: analyze-files
+        run: |
+          # Define architectural areas with a clear precedence (most specific to least specific)
+          # A file will only be assigned to the FIRST area it matches.
+          declare -A areas
+          areas[Auth]="app/api/auth|lib/auth.ts|middleware.ts"
+          areas[CI-CD]=".github/|scripts/|Dockerfile|docker-compose.yml"
+          areas[API]="app/api/|services/|lib/validation"
+          areas[UI]="app/((?!api).)*$|components/|hooks/|context/|public/"
+          areas[Core-Internals]="server.ts|lib/|utils/|types/"
+          areas[Docs]=".md$|.mdx$|docs/"
+
+          # Get the list of changed files between the PR's base and head commits
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+
+          echo "Base SHA: $base_sha"
+          echo "Head SHA: $head_sha"
+
+          changed_files=$(git diff --name-only "$base_sha" "$head_sha")
+
+          if [ -z "$changed_files" ]; then
+            echo "No changed files detected. Exiting."
+            echo "count=0" >> $GITHUB_OUTPUT
+            echo "areas=''" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          declare -A touched_areas_map
+
+          # Iterate over each changed file and assign it to exactly one area
+          while IFS= read -r file; do
+            assigned_area=""
+            # Check against areas in the defined order of precedence
+            for area in Auth CI-CD API UI Core-Internals Docs; do
+              pattern="${areas[$area]}"
+              if echo "$file" | grep -E -q "$pattern"; then
+                assigned_area="$area"
+                touched_areas_map[$area]=1
+                echo "  - $file -> $area"
+                break # Stop after the first match
+              fi
+            done
+            if [ -z "$assigned_area" ]; then
+                echo "  - $file -> (Uncategorized)"
+            fi
+          done <<< "$changed_files"
+
+          # Get the unique areas that were touched
+          unique_areas="${!touched_areas_map[@]}"
+          area_count="${#touched_areas_map[@]}"
+
+          echo "Touched areas: $unique_areas"
+          echo "count=$area_count" >> $GITHUB_OUTPUT
+          echo "areas=$unique_areas" >> $GITHUB_OUTPUT
+
+      - name: Evaluate Scope
+        if: steps.analyze-files.outputs.count > 1
+        run: |
+          echo "Error: This PR appears to touch multiple architectural areas: ${{ steps.analyze-files.outputs.areas }}."
+          echo "Please split this PR into smaller, more focused PRs, each addressing a single concern."
+          echo "Refer to DEVELOPMENT.md for guidelines on PR scope."
+          exit 1
+
+      - name: Approve Scope
+        if: steps.analyze-files.outputs.count <= 1
+        run: |
+          echo "Success: PR scope is well-defined. Touched areas: ${{ steps.analyze-files.outputs.areas }}"
