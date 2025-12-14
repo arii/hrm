@@ -79,91 +79,28 @@ export default defineConfig([
     'build/**',
     'next-env.d.ts',
     'node_modules/',
-    'dist/**', // Exclude compiled output
-    'server.js', // Exclude server.js
-    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-    '.github/copilot-instructions.md', // Exclude copilot instructions
-    'ecosystem.config.cjs', // Exclude PM2 config file
+    'dist/**',
+    '.vscode/**',
   ]),
 
-  // Configuration for TypeScript files
+  // Base TypeScript configuration using the root tsconfig.json
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json', // Adjust if your tsconfig.json is elsewhere
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        React: 'readonly',
-        NodeJS: 'readonly',
+        project: './tsconfig.json', // Unified tsconfig
       },
     },
     rules: {
-      // TypeScript specific rules
-      // For example, to prevent unused variables:
-      // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      // TypeScript-specific rules can be added here
     },
   },
 
-  // Override for Playwright test files
+  // Override for Jest test files to add Jest globals
   {
-    files: ['tests/playwright/**/*.ts'],
+    files: ['tests/unit/**/*.{ts,tsx}', 'tests/integration/**/*.{ts,tsx}'],
     languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tests/playwright/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-    },
-    rules: {
-      // Disable react-hooks/rules-of-hooks for Playwright fixtures (use() is not a React hook)
-      'react-hooks/rules-of-hooks': 'off',
-    },
-  },
-
-  // Override for Jest unit test files
-  {
-    files: ['tests/unit/**/*.{ts,tsx}'],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tests/unit/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        describe: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        jest: 'readonly',
-        NodeJS: 'readonly',
-      },
-    },
-    rules: {
-      // Jest specific rules or overrides
-    },
-  },
-
-  // Override for Jest integration test files
-  {
-    files: ['tests/integration/**/*.{ts,tsx}'],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: './tests/integration/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
       globals: {
         describe: 'readonly',
         it: 'readonly',

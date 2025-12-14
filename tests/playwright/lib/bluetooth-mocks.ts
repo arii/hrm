@@ -1,4 +1,4 @@
-// File: tests/playwright/lib/bluetooth-mocks.ts
+// @ts-nocheck
 import { Page } from '@playwright/test'
 
 export const injectBluetoothMocks = async (page: Page) => {
@@ -8,7 +8,9 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
+    class MockBluetoothRemoteGATTCharacteristic
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
       listeners: { [key: string]: MockEventListener[] } = {}
@@ -45,7 +47,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTService implements MockBluetoothRemoteGATTService {
+    class MockBluetoothRemoteGATTService
+      implements MockBluetoothRemoteGATTService
+    {
       device: MockBluetoothDevice
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
@@ -61,7 +65,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTServer implements MockBluetoothRemoteGATTServer {
+    class MockBluetoothRemoteGATTServer
+      implements MockBluetoothRemoteGATTServer
+    {
       device: MockBluetoothDevice
       connected = false
 
@@ -115,6 +121,15 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.listeners[type].push(listener)
       }
 
+      removeEventListener(type: string, listener: (event: Event) => void) {
+        if (this.listeners[type]) {
+          const index = this.listeners[type].indexOf(listener)
+          if (index > -1) {
+            this.listeners[type].splice(index, 1)
+          }
+        }
+      }
+
       async forget() {
         const index = _pairedDevices.findIndex((d) => d.id === this.id)
         if (index > -1) {
@@ -133,7 +148,10 @@ export const injectBluetoothMocks = async (page: Page) => {
 
       requestDevice: async (_options: unknown) => {
         // Simulate user selecting a device
-        const device = new MockBluetoothDevice('mock-device-id-123', 'Mock HRM')
+        const device = new MockBluetoothDevice(
+          'mock-device-id-123',
+          'Mock HRM'
+        )
 
         // Check if we already have it?
         // For simplicity, just add it to paired list
@@ -151,8 +169,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       simulateHeartRate: async (bpm: number) => {
         if (_connectedDevice && _connectedDevice.gatt.connected) {
           // Simulate the app's actual retrieval path
-          const service =
-            await _connectedDevice.gatt.getPrimaryService('heart_rate')
+          const service = await _connectedDevice.gatt.getPrimaryService(
+            'heart_rate'
+          )
           service.characteristic.emitValue(bpm)
         }
       },

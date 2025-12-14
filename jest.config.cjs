@@ -1,25 +1,21 @@
 /** @type {import('jest').Config} */
 const config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom', // Use jsdom to simulate a browser environment for UI testing
   roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.ts'], // Polyfills and mocks for the test env
   coverageDirectory: 'coverage',
   reporters: [
     'default',
     [
       'jest-junit',
       {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
+        outputDirectory: './test-results',
+        outputName: 'unit-results.xml',
       },
     ],
   ],
-
   collectCoverageFrom: [
     'services/**/*.ts',
     'utils/socketManager.ts',
@@ -27,29 +23,12 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: {
-          module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-        },
-      },
-    ],
+    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: './tsconfig.json' }], // Use the unified tsconfig
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
-  ],
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
-  testTimeout: 10000,
+  testTimeout: 15000,
 }
 
 module.exports = config

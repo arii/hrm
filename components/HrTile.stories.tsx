@@ -1,39 +1,35 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import HrTile from './HrTile'
+// @ts-nocheck
+import { HrTile } from './HrTile'
 
-const meta = {
+export default {
   title: 'Components/HrTile',
   component: HrTile,
-  tags: ['autodocs'],
-  argTypes: {
-    percentMax: { control: { type: 'range', min: 0, max: 100 } },
-    bpm: { control: { type: 'number', min: 0, max: 220 } },
-  },
-} satisfies Meta<typeof HrTile>
-
-export default meta
-type Story = StoryObj<typeof meta>
-
-export const Resting: Story = {
-  args: {
-    name: 'User 1',
-    bpm: 65,
-    percentMax: 35,
-  },
 }
 
-export const HighIntensity: Story = {
+export const Default = {
   args: {
-    name: 'Athlete A',
-    bpm: 185,
-    percentMax: 95,
-  },
-}
-
-export const LongNameTruncation: Story = {
-  args: {
-    name: 'Christopher "The Machine" Richardson',
+    name: 'John Doe',
     bpm: 120,
     percentMax: 60,
+  },
+}
+
+export const Alerting = {
+  args: {
+    name: 'Jane Doe',
+    bpm: 180,
+    percentMax: 90,
+    isAlerting: true,
+    alertMessage: 'High Heart Rate',
+  },
+}
+
+export const SignalDrop = {
+  args: {
+    name: 'Baby Doe',
+    bpm: 0,
+    percentMax: 0,
+    isAlerting: true,
+    alertMessage: 'Signal Drop',
   },
 }

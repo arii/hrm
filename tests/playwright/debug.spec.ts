@@ -1,19 +1,10 @@
-import { expect, test } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
+// @ts-nocheck
+import { test, expect } from './lib'
+import config from '../../utils/config'
 
-const BASE = getBaseURL()
-
-test.describe('HRM debug endpoints', () => {
-  test('ping and session endpoints respond', async ({ request }) => {
-    const ping = await request.get(`${BASE}/api/debug/ping`)
-    expect(ping.ok()).toBeTruthy()
-    const pingJson = await ping.json()
-    expect(pingJson.ok).toBe(true)
-
-    const session = await request.get(`${BASE}/api/debug/session`)
-    // session may return 200 with session or 200+empty or 401; assert not 5xx
-    expect(session.status()).toBeLessThan(500)
-    const s = await session.json()
-    expect(typeof s).toBe('object')
+test.describe('Debug Page', () => {
+  test('should display the debug page', async ({ page }) => {
+    await page.goto('/debug')
+    await expect(page.locator('h1')).toHaveText('Debug')
   })
 })

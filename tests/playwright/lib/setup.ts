@@ -9,7 +9,7 @@
  */
 import type { BrowserContext, Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { getBaseURL } from '../../../utils/urls'
+import config from '../../../utils/config'
 import { waitForFontsLoaded, waitForPageReady } from './waits'
 
 /**
@@ -52,7 +52,7 @@ export async function warmupEndpoints(
   context: BrowserContext,
   routes: string[] = Object.values(HRM_ROUTES)
 ): Promise<void> {
-  const baseUrl = getBaseURL()
+  const baseUrl = config.baseURL
   const warmupPage = await context.newPage()
 
   console.log('🔥 Warming up server endpoints...')
@@ -109,7 +109,7 @@ export async function navigateAndWait(
   page: Page,
   route: string = ''
 ): Promise<void> {
-  const baseUrl = getBaseURL()
+  const baseUrl = config.baseURL
   await page.goto(`${baseUrl}${route}`)
   await waitForPageReady(page)
 }
@@ -177,7 +177,7 @@ export async function setupVisualRegressionTest(pages: {
   connectPage: Page
 }): Promise<void> {
   const { dashboardPage, controlPage, mockPage, connectPage } = pages
-  const baseUrl = getBaseURL()
+  const baseUrl = config.baseURL
 
   // Navigate all pages in parallel
   // Note: Uses LEGACY_ROUTES for control/mock/connect for backward compatibility with existing tests.
@@ -228,7 +228,7 @@ export async function setupComprehensiveTest(options: {
   context: BrowserContext
 }): Promise<void> {
   const { page, context } = options
-  const baseUrl = getBaseURL()
+  const baseUrl = config.baseURL
 
   await page.setViewportSize({ width: 1920, height: 1080 })
 

@@ -15,7 +15,7 @@
  * } from './lib'
  * ```
  */
-import { getBaseURL } from '../../utils/urls'
+import config from '../../utils/config'
 
 // Re-export all utilities from the new library for backward compatibility
 export {
@@ -37,4 +37,4 @@ export {
 } from './lib'
 
 // Export BASE_URL for backward compatibility
-export const BASE_URL = getBaseURL()
+export const BASE_URL = config.baseURL

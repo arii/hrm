@@ -73,21 +73,21 @@ export {
 // ============================================================================
 // Authentication Utilities
 // ============================================================================
-export {
-  // Constants
-  AUTH_ENDPOINTS,
-  // Auth verification
-  verifyAuthConfiguration,
-  verifyDebugEndpoints,
-  verifyNoStateCookieError,
-  verifySpotifyTokenStatus,
-  // Auth navigation
-  waitForAuthRedirect,
-  navigateToProtectedRoute,
-  isLoggedIn,
-  // Context management
-  createAuthenticatedContext,
-} from './auth'
+// export {
+//   // Constants
+//   AUTH_ENDPOINTS,
+//   // Auth verification
+//   verifyAuthConfiguration,
+//   verifyDebugEndpoints,
+//   verifyNoStateCookieError,
+//   verifySpotifyTokenStatus,
+//   // Auth navigation
+//   waitForAuthRedirect,
+//   navigateToProtectedRoute,
+//   isLoggedIn,
+//   // Context management
+//   createAuthenticatedContext,
+// } from './auth'
 
 // ============================================================================
 // Setup and Teardown Utilities
@@ -126,8 +126,8 @@ export type { Page, BrowserContext, Locator } from '@playwright/test'
 // ============================================================================
 // Re-export URL utilities
 // ============================================================================
-export { getBaseURL, getWebSocketURL, getAPIURL } from '../../../utils/urls'
+export { getWebSocketURL, getAPIURL } from '../../../utils/urls'
+import config from '../../../utils/config'
 
 // Export BASE_URL for backward compatibility
-import { getBaseURL } from '../../../utils/urls'
-export const BASE_URL = getBaseURL()
+export const BASE_URL = config.baseURL

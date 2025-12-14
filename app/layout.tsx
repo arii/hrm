@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -11,17 +10,6 @@ import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const roboto_mono = Roboto_Mono({
-  subsets: ['latin'],
-  variable: '--font-roboto-mono',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'HRM | Real-Time Heart Rate Monitor',
@@ -45,7 +33,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${inter.variable} ${roboto_mono.variable}`}>
+      <body>
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>

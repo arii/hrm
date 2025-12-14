@@ -19,36 +19,31 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
-import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
-
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
-
-const dev = process.env.NODE_ENV !== 'production'
+import config from './utils/config.js'
 
 // === CRITICAL SECURITY CHECK ===
 // Ensure NEXTAUTH_SECRET is present in production to prevent runtime errors
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
+if (!config.isDev && !config.nextAuthSecret) {
+  logger.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
+  logger.error('This is mandatory for production security. Shutting down.')
   process.exit(1)
 }
 
-const app = next({ dev, hostname, port })
+const app = next({
+  dev: config.isDev,
+  hostname: config.hostname,
+  port: config.port,
+})
 
-logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
-logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
-logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
-logger.info(`Hostname: ${hostname}, Port: ${port}`)
+logger.info(`Starting server in ${config.env} mode`)
+logger.info(`Environment: NODE_ENV=${config.env}`)
+logger.info(`NEXTAUTH_URL: ${config.baseURL}`)
+logger.info(`Hostname: ${config.hostname}, Port: ${config.port}`)
 const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
@@ -130,7 +125,7 @@ app
     // --- Static Asset Serving (Production Only) ---
     // In production, serve the Next.js static assets directly from the .next/static folder.
     // This is more efficient than letting the Next.js handler do it.
-    if (!dev) {
+    if (!config.isDev) {
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
 
@@ -279,10 +274,12 @@ app
     })
 
     // Begin listening
-    server.listen(port, hostname, () => {
+    server.listen(config.port, config.hostname, () => {
       // This callback only runs on successful listening
-      logger.info(`> Ready on http://${hostname}:${port}`)
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
+      logger.info(`> Ready on http://${config.hostname}:${config.port}`)
+      logger.info(
+        `> WebSocket Server listening on ws://${config.hostname}:${config.port}/ws`
+      )
     })
   })
   .catch((err: Error) => {

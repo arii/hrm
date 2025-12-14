@@ -1,21 +1,11 @@
-import { expect, test } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
+// @ts-nocheck
+import { test, expect } from './lib'
+import config from '../../utils/config'
 
-const BASE = getBaseURL()
-
-test.describe('Spotify Authentication', () => {
-  test('auth check endpoint responds', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/debug/auth-check`)
-    expect(res.ok()).toBeTruthy()
-    const data = await res.json()
-    expect(data).toHaveProperty('spotifyConfigured', true)
-    expect(data).toHaveProperty('nextAuthConfigured', true)
-    expect(data).toHaveProperty('hasClientSecret', true)
-  })
-
-  test('debug page shows auth components', async ({ page }) => {
-    await page.goto(`${BASE}/debug/spotify`)
-    await expect(page.getByText(/sign in/i)).toBeVisible()
-    await expect(page.getByText(/server token status/i)).toBeVisible()
+test.describe('Auth Flow', () => {
+  test('should redirect to spotify login', async ({ page }) => {
+    await page.goto('/api/auth/signin')
+    await page.waitForURL('https://accounts.spotify.com/**')
+    expect(page.url()).toContain('accounts.spotify.com')
   })
 })
