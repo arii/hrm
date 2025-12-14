@@ -11,9 +11,9 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
-import WorkoutSummary from './WorkoutSummary'
+import HrTile from '../../../components/HrTile.jsx'
+import BottomNavBar from '../../../components/BottomNavBar.jsx'
+import WorkoutSummary from './WorkoutSummary.jsx'
 import { useState } from 'react'
 
 interface ConnectViewProps {

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import useBluetoothHRM from '../../../hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '../../../utils/visualization'
-import { formatDuration } from '../../../lib/utils'
-import ConnectView from './ConnectView'
-import { useWorkoutSession } from '../../../hooks/useWorkoutSession'
+import useBluetoothHRM from '../../../hooks/useBluetoothHRM.js'
+import { useWebSocket } from '@/context/WebSocketContext.js'
+import { getHrZoneProps } from '../../../utils/visualization.js'
+import { formatDuration } from '../../../lib/utils.js'
+import ConnectView from './ConnectView.jsx'
+import { useWorkoutSession } from '../../../hooks/useWorkoutSession.js'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useState('')

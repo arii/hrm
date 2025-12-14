@@ -8,12 +8,12 @@ import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
-import Head from 'next/head'
+import Head from 'next/head.js'
 import { useEffect } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
-import dynamic from 'next/dynamic'
+import { useWebSocket } from '@/context/WebSocketContext.js'
+import dynamic from 'next/dynamic.js'
 
-const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
+const SpotifyControls = dynamic(() => import('./components/SpotifyControls.jsx'), {
   loading: () => (
     <Skeleton
       variant="rectangular"
@@ -22,7 +22,7 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
     />
   ),
 })
-import TimerControls from './components/TimerControls'
+import TimerControls from './components/TimerControls.jsx'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
