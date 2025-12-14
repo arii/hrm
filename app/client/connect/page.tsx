@@ -76,7 +76,9 @@ export default function ConnectPage() {
 
           if (age > 0 && hr > 0) {
             const weightKg = 75
-            const caloriesPerMinute = (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
+            const caloriesPerMinute =
+              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
+              4.184
             const caloriesPerSecond = caloriesPerMinute / 60
             if (caloriesPerSecond > 0) {
               setCaloriesBurned(
