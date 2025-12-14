@@ -32,7 +32,9 @@ describe('WorkoutSessionControls', () => {
     )
     expect(screen.getByTestId('start-session-button')).toBeInTheDocument()
     expect(screen.queryByTestId('pause-session-button')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('resume-session-button')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('resume-session-button')
+    ).not.toBeInTheDocument()
     expect(screen.queryByTestId('end-session-button')).not.toBeInTheDocument()
   })
 
@@ -52,7 +54,9 @@ describe('WorkoutSessionControls', () => {
     expect(screen.getByTestId('pause-session-button')).toBeInTheDocument()
     expect(screen.getByTestId('end-session-button')).toBeInTheDocument()
     expect(screen.queryByTestId('start-session-button')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('resume-session-button')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('resume-session-button')
+    ).not.toBeInTheDocument()
   })
 
   // Test case for paused session state

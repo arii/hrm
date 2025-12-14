@@ -50,7 +50,7 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.ts'],
 }
 
 module.exports = config
