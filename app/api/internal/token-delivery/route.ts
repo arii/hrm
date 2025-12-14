@@ -1,18 +1,14 @@
 import { ApiError } from '@/lib/errors'
-import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
 import logger from '@/utils/logger'
+import { spotifyTokenManager } from '@/utils/services'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
 
 /**
- * Internal endpoint for NextAuth to post refresh tokens.
+ * Internal endpoint for NextAuth to deliver tokens directly to the SpotifyTokenManager.
  * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * It updates the token in-memory, avoiding fragile file system dependencies.
  */
-
-const LOG_DIR = path.resolve(process.cwd(), 'logs')
-const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
-
 export async function POST(req: NextRequest) {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
@@ -21,22 +17,19 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized')
     }
 
-    const payload = await req.json()
+    const payload = (await req.json()) as SpotifyTokenPayload
 
-    // ensure logs dir
-    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
-
-    // write timestamped record (overwrite with latest)
-    const record = {
-      receivedAt: Date.now(),
-      payload,
+    // Directly update the singleton instance of the token manager
+    if (spotifyTokenManager) {
+      spotifyTokenManager.updateTokenPayload(payload)
+      logger.info(
+        { subject: payload.sub ?? payload.provider },
+        'Delivered token directly to SpotifyTokenManager'
+      )
+    } else {
+      throw new Error('SpotifyTokenManager service not available.')
     }
-    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
@@ -45,7 +38,7 @@ export async function POST(req: NextRequest) {
         { status: err.statusCode }
       )
     }
-    logger.error('token-delivery error:', err)
+    logger.error({ err }, 'token-delivery error')
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 }

@@ -36,24 +36,23 @@ const getCookie = (name: string): string => {
 /**
  * Helper to race a promise against a timeout
  */
-const withTimeout = <T>(
+const withTimeout = async <T>(
   promise: Promise<T>,
   ms: number,
   msg: string
 ): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(msg)), ms)
-    promise.then(
-      (res) => {
-        clearTimeout(timer)
-        resolve(res)
-      },
-      (err) => {
-        clearTimeout(timer)
-        reject(err)
-      }
-    )
+  let timer: NodeJS.Timeout | undefined
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(msg)), ms)
   })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    if (timer) {
+      clearTimeout(timer)
+    }
+  }
 }
 
 const useBluetoothHRM = () => {

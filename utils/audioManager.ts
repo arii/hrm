@@ -27,32 +27,30 @@ export class AudioManager {
   /**
    * Load audio files (required for iOS - must be triggered by user interaction)
    */
-  loadAudio() {
-    if (!this.loadedAudio && this.shortBeep && this.longBeep) {
-      console.log('[AudioManager] Unlocking audio context via user interaction')
-      // On iOS you can't play back sounds unless it comes from a user
-      // action first, so pretend to play the sound in this callback
-      this.shortBeep
-        .play()
-        .then(() => {
-          this.shortBeep!.pause()
-          this.shortBeep!.currentTime = 0
-        })
-        .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock short beep:', e)
-        })
+  async loadAudio(): Promise<void> {
+    if (this.loadedAudio || !this.shortBeep || !this.longBeep) {
+      return
+    }
 
-      this.longBeep
-        .play()
-        .then(() => {
-          this.longBeep!.pause()
-          this.longBeep!.currentTime = 0
-        })
-        .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock long beep:', e)
-        })
+    console.log('[AudioManager] Unlocking audio context via user interaction')
+    this.loadedAudio = true // Set early to prevent re-entrancy
 
-      this.loadedAudio = true
+    // On iOS, audio must be initiated from a user action.
+    // We play, then immediately pause, to "unlock" the audio context.
+    try {
+      await this.shortBeep.play()
+      this.shortBeep.pause()
+      this.shortBeep.currentTime = 0
+    } catch (e) {
+      console.warn('[AudioManager] Failed to unlock short beep:', e)
+    }
+
+    try {
+      await this.longBeep.play()
+      this.longBeep.pause()
+      this.longBeep.currentTime = 0
+    } catch (e) {
+      console.warn('[AudioManager] Failed to unlock long beep:', e)
     }
   }
 
