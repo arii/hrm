@@ -30,6 +30,9 @@ fi
 
 echo "🚀 Starting HRM Production Server..."
 
+# Ensure a production build exists
+pnpm run build
+
 # Exec ensures the node process replaces the shell
 # allowing signals (SIGINT/SIGTERM) to reach the app
-exec node dist/server.mjs
+exec node dist/server.js
