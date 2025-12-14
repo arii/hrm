@@ -1,10 +1,16 @@
 /** @jest-environment jsdom */
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import VolumeControl from '../../../../components/Spotify/VolumeControl'
 import '@testing-library/jest-dom'
 
 describe('VolumeControl Accessibility', () => {
+  // Mock console.error to keep test output clean
+  const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterAll(() => {
+    mockConsoleError.mockRestore();
+  });
   const mockOnVolumeChange = jest.fn()
   const mockOnVolumeChangeCommitted = jest.fn()
   const defaultProps = {
@@ -45,7 +51,9 @@ describe('VolumeControl Accessibility', () => {
     render(<VolumeControl {...defaultProps} />)
     const slider = screen.getByRole('slider')
 
-    slider.focus()
+    act(() => {
+      slider.focus()
+    })
     expect(slider).toHaveFocus()
 
     // Arrow Right should increase volume

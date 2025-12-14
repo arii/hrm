@@ -38,7 +38,7 @@ const TimerDisplay = ({
 
   if (phase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
-    displayTime = String(timeRemaining).padStart(2, '0')
+    displayTime = pad(timeRemaining)
     phaseColor = '#F59E0B' // Yellow/Warning
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {

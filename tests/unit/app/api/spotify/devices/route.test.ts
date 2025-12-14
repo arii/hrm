@@ -30,6 +30,14 @@ const mockedFetch = global.fetch as jest.Mock
 const MockedSpotifyTokenManager = SpotifyTokenManager as jest.Mock
 
 describe('API Route: /api/spotify/devices', () => {
+  // Mock console methods to keep test output clean
+  const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+  const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterAll(() => {
+    mockConsoleLog.mockRestore();
+    mockConsoleError.mockRestore();
+  });
   let tokenManagerInstance: { getValidAccessToken: jest.Mock }
 
   beforeEach(() => {

@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import TimerControls from '@/app/client/control/components/TimerControls'
+import { WorkoutSessionProvider } from '@/context/WorkoutSessionContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
@@ -55,7 +56,11 @@ describe('TimerControls', () => {
       sendData,
     } as unknown as UseWebSocketReturn)
 
-    render(<TimerControls />)
+    render(
+      <WorkoutSessionProvider>
+        <TimerControls />
+      </WorkoutSessionProvider>
+    )
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 

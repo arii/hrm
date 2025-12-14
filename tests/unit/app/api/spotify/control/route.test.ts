@@ -26,6 +26,12 @@ const createRequest = (body: object | string) => {
 }
 
 describe('API Route: /api/spotify/control', () => {
+  // Mock console.error to keep test output clean
+  const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+  afterAll(() => {
+    mockConsoleError.mockRestore();
+  });
   beforeEach(() => {
     jest.clearAllMocks()
     mockedGetServerSession.mockResolvedValue({

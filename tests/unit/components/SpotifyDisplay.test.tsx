@@ -36,6 +36,12 @@ const renderWithProviders = (ui: React.ReactElement) => {
 }
 
 describe('SpotifyDisplay', () => {
+  // Mock console.log to keep test output clean
+  const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+  afterAll(() => {
+    mockConsoleLog.mockRestore();
+  });
   beforeEach(() => {
     jest.resetAllMocks()
     mockedUseSpotifyWebPlayback.mockReturnValue({

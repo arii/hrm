@@ -20,6 +20,12 @@ jest.mock('@/app/client/control/components/SpotifyControls', () => ({
 }))
 
 describe('ControlPage Integration', () => {
+  // Mock console.log to keep test output clean
+  const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+  afterAll(() => {
+    mockConsoleLog.mockRestore();
+  });
   it('should render all child components within the providers', async () => {
     render(
       <SessionProvider session={null}>

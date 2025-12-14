@@ -71,6 +71,16 @@ class MockWebSocket extends EventEmitter {
 }
 
 describe('WebSocket Manager', () => {
+  // Mock console methods to keep test output clean
+  const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
+  const mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+  afterAll(() => {
+    mockConsoleLog.mockRestore()
+    mockConsoleWarn.mockRestore()
+    mockConsoleError.mockRestore()
+  })
   describe('Heartbeat and Watchdog', () => {
     let mockWss: WebSocketServer
     let mockServices: {
