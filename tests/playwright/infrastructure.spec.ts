@@ -69,8 +69,18 @@ test.describe('Infrastructure & Scripts', () => {
       env: { ...process.env, PORT: String(PORT) },
     })
 
+    let stderr = ''
+    if (devServer.stderr) {
+      devServer.stderr.on('data', (data) => {
+        stderr += data.toString()
+      })
+    }
+
     try {
       await waitForPort(PORT)
+    } catch (error) {
+      console.error('waitForPort failed. Server stderr:\n', stderr)
+      throw error // re-throw the original error
     } finally {
       // Cleanup: Kill the process group, wrapping in a try/catch in case
       // the process already exited (e.g., due to a startup failure).
@@ -103,8 +113,18 @@ test.describe('Infrastructure & Scripts', () => {
       env,
     })
 
+    let stderr = ''
+    if (prodServer.stderr) {
+      prodServer.stderr.on('data', (data) => {
+        stderr += data.toString()
+      })
+    }
+
     try {
       await waitForPort(PORT)
+    } catch (error) {
+      console.error('waitForPort failed. Server stderr:\n', stderr)
+      throw error // re-throw the original error
     } finally {
       try {
         if (prodServer.pid) process.kill(-prodServer.pid)
