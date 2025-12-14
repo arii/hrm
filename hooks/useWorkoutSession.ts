@@ -28,6 +28,8 @@ export const useWorkoutSession = ({
     userAge,
   })
 
+  const prevIsConnected = useRef(isConnected)
+
   useEffect(() => {
     latestMetrics.current = {
       currentHR,
@@ -37,26 +39,36 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     const session = sessionStateRef.current
+    if (prevIsConnected.current === isConnected) {
+      return
+    }
 
     if (isConnected) {
-      if (sessionStatus === 'idle') {
-        session.startTime = Date.now()
-        session.pauseTime = null
-        session.totalPaused = 0
-        setSessionStatus('running')
-      } else if (sessionStatus === 'paused') {
-        const pausedDuration = Date.now() - session.pauseTime!
-        session.totalPaused += pausedDuration
-        session.pauseTime = null
-        setSessionStatus('running')
-      }
+      setSessionStatus((currentStatus) => {
+        if (currentStatus === 'idle') {
+          session.startTime = Date.now()
+          session.pauseTime = null
+          session.totalPaused = 0
+          return 'running'
+        } else if (currentStatus === 'paused') {
+          const pausedDuration = Date.now() - session.pauseTime!
+          session.totalPaused += pausedDuration
+          session.pauseTime = null
+          return 'running'
+        }
+        return currentStatus
+      })
     } else {
-      if (sessionStatus === 'running') {
-        session.pauseTime = Date.now()
-        setSessionStatus('paused')
-      }
+      setSessionStatus((currentStatus) => {
+        if (currentStatus === 'running') {
+          session.pauseTime = Date.now()
+          return 'paused'
+        }
+        return currentStatus
+      })
     }
-  }, [isConnected, sessionStatus])
+    prevIsConnected.current = isConnected
+  }, [isConnected])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -65,17 +77,19 @@ export const useWorkoutSession = ({
     if (sessionStatus === 'running') {
       interval = setInterval(() => {
         const { currentHR: hr, userAge: age } = latestMetrics.current
+        if (session.startTime) {
+          const elapsed = Date.now() - session.startTime - session.totalPaused
+          setWorkoutDuration(Math.floor(elapsed / 1000))
 
-        const elapsed = Date.now() - session.startTime! - session.totalPaused
-        setWorkoutDuration(Math.floor(elapsed / 1000))
-
-        if (age > 0 && hr > 0) {
-          const weightKg = 75
-          const caloriesPerMinute =
-            (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
-          const caloriesPerSecond = caloriesPerMinute / 60
-          if (caloriesPerSecond > 0) {
-            setCaloriesBurned((prev) => prev + caloriesPerSecond)
+          if (age > 0 && hr > 0) {
+            const weightKg = 75
+            const caloriesPerMinute =
+              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
+              4.184
+            const caloriesPerSecond = caloriesPerMinute / 60
+            if (caloriesPerSecond > 0) {
+              setCaloriesBurned((prev) => prev + caloriesPerSecond)
+            }
           }
         }
       }, 1000)
@@ -97,6 +111,7 @@ export const useWorkoutSession = ({
     setSessionStatus('idle')
     setWorkoutDuration(0)
     setCaloriesBurned(0)
+    prevIsConnected.current = false
   }, [])
 
   return {
