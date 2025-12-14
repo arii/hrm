@@ -1,20 +1,19 @@
-
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { ToastProvider, useToast } from '@/context/ToastContext';
-import { ToastType } from '@/types/toast';
+import React from 'react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import { ToastProvider, useToast } from '@/context/ToastContext'
+import { ToastType } from '@/types/toast'
 
 const TestComponent = () => {
-  const { showToast } = useToast();
+  const { showToast } = useToast()
 
   const handleShowToast = (
     message: string,
     type: ToastType,
     duration?: number
   ) => {
-    showToast(message, type, duration);
-  };
+    showToast(message, type, duration)
+  }
 
   return (
     <div>
@@ -25,8 +24,8 @@ const TestComponent = () => {
         Show Error Toast
       </button>
     </div>
-  );
-};
+  )
+}
 
 describe('useToast hook and ToastProvider', () => {
   it('shows a toast when showToast is called', () => {
@@ -34,28 +33,28 @@ describe('useToast hook and ToastProvider', () => {
       <ToastProvider>
         <TestComponent />
       </ToastProvider>
-    );
+    )
 
-    fireEvent.click(screen.getByText('Show Success Toast'));
+    fireEvent.click(screen.getByText('Show Success Toast'))
 
-    expect(screen.getByText('Success')).toBeInTheDocument();
-    expect(screen.getByText('Success!')).toBeInTheDocument();
-    expect(screen.getByTestId('success-icon')).toBeInTheDocument();
-  });
+    expect(screen.getByText('Success')).toBeInTheDocument()
+    expect(screen.getByText('Success!')).toBeInTheDocument()
+    expect(screen.getByTestId('success-icon')).toBeInTheDocument()
+  })
 
   it('allows closing a toast', () => {
     render(
       <ToastProvider>
         <TestComponent />
       </ToastProvider>
-    );
+    )
 
-    fireEvent.click(screen.getByText('Show Error Toast'));
+    fireEvent.click(screen.getByText('Show Error Toast'))
 
-    expect(screen.getByText('Error')).toBeInTheDocument();
+    expect(screen.getByText('Error')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByLabelText('close'));
+    fireEvent.click(screen.getByLabelText('close'))
 
-    expect(screen.queryByText('Error!')).not.toBeInTheDocument();
-  });
-});
+    expect(screen.queryByText('Error!')).not.toBeInTheDocument()
+  })
+})

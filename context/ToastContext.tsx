@@ -52,11 +52,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         }}
       >
         {toasts.map((toast) => (
-          <ToastComponent
-            key={toast.id}
-            toast={toast}
-            onClose={handleClose}
-          />
+          <ToastComponent key={toast.id} toast={toast} onClose={handleClose} />
         ))}
       </Box>
     </ToastContext.Provider>

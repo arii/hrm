@@ -1,12 +1,5 @@
-
 import React from 'react'
-import {
-  Alert,
-  AlertTitle,
-  Snackbar,
-  IconButton,
-  Box,
-} from '@mui/material'
+import { Alert, AlertTitle, Snackbar, IconButton } from '@mui/material'
 import {
   CheckCircleOutline,
   ErrorOutline,
