@@ -8,7 +8,7 @@ set -e
 # Configuration
 PORT=$(node scripts/get-available-port.mjs)
 export PORT
-TIMEOUT=90000
+TIMEOUT=60000
 SERVER_LOG="/tmp/hrm-server.log"
 PID_FILE="/tmp/hrm-server.pid"
 HEALTH_CHECK_URL="http://127.0.0.1:${PORT}/api/debug/ping"
@@ -21,30 +21,17 @@ log() {
 cleanup() {
     EXIT_CODE=$?
     log "🛑 Shutting down server..."
-
-    # Debug: Check if anything is listening on the port
-    if [ $EXIT_CODE -ne 0 ]; then
-        log "--- Port Status ---"
-        lsof -i :${PORT} >&2 || echo "No process listening on port ${PORT}" >&2
-        log "-------------------"
-    fi
-
     pnpm pm2 kill || true
 
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
         if [ -f "$SERVER_LOG" ]; then
-            log "--- Server Startup Logs (Tail 50 lines) ---"
+            log "--- Server Logs (Tail 50 lines) ---"
             tail -n 50 "$SERVER_LOG" >&2
-            log "-------------------------------------------"
+            log "-----------------------------------"
         else
-            log "No server startup log found at $SERVER_LOG"
+            log "No server log found at $SERVER_LOG"
         fi
-
-        log "--- PM2 Application Logs (Tail 100 lines) ---"
-        # Directly tail the log files to avoid PM2 daemon connection issues
-        tail -n 100 ~/.pm2/logs/*.log >&2 2>/dev/null || echo "Could not retrieve PM2 log files from ~/.pm2/logs/" >&2
-        log "---------------------------------------------"
     fi
     exit $EXIT_CODE
 }
@@ -57,22 +44,14 @@ export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:${PORT}"
 
-# Ensure build exists
-if [ ! -f "dist/server.mjs" ]; then
-    log "📦 Build artifact not found. Building server..."
-    pnpm run build:server
-fi
-
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
 
-log "🚀 Starting server with PM2 on port ${PORT}..."
-# Start server with `pnpm start`, which uses PM2.
-# Do NOT run in background (&) because pm2 start returns immediately,
-# and backgrounding pnpm might cause process group cleanup issues in CI.
-pnpm start > "$SERVER_LOG" 2>&1
+log "🚀 Starting server with PM2..."
+# Start server with `pnpm start`, which uses PM2
+PORT=${PORT} pnpm pm2 start ecosystem.config.cjs --env production > "$SERVER_LOG" 2>&1 &
 log "✅ Server process started via PM2."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."

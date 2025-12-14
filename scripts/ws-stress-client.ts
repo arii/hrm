@@ -16,8 +16,7 @@ const argv = process.argv.slice(2).reduce((acc, arg) => {
 const CONCURRENT_CLIENTS = parseInt(argv.clients || '', 10) || C_DEFAULT;
 const DURATION_S = parseInt(argv.duration || argv.d || '', 10) || D_DEFAULT;
 const SEND_INTERVAL_MS = parseInt(argv.interval || '', 10) || I_DEFAULT;
-const PORT = process.env.PORT || 3000;
-const URL = `ws://127.0.0.1:${PORT}/ws`;
+const URL = 'ws://127.0.0.1:3000/ws';
 
 let messagesSent = 0;
 let connections = 0;

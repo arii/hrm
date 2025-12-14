@@ -4,14 +4,12 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-PORT="${PORT:-3000}"
-
-# Check if server is already running on the configured port
-if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo "✅ Server already running on port ${PORT}, using existing instance"
+# Check if server is already running on port 3000
+if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo "✅ Server already running on port 3000, using existing instance"
     SERVER_WAS_RUNNING=true
 else
-    echo "🚀 Starting production server for tests on port ${PORT}..."
+    echo "🚀 Starting production server for tests..."
     SERVER_WAS_RUNNING=false
     
     # Build if needed
@@ -21,8 +19,6 @@ else
     fi
     
     # Start server in background
-    # Export PORT so start-production.sh (or node) picks it up
-    export PORT
     bash start-production.sh > /tmp/hrm-server-test.log 2>&1 &
     SERVER_PID=$!
     echo $SERVER_PID > /tmp/hrm-server-test.pid
@@ -30,7 +26,7 @@ else
     # Wait for server to be ready
     echo "⏳ Waiting for server to start..."
     for i in {1..30}; do
-        if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+        if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
             echo "✅ Server is ready!"
             break
         fi

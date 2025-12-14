@@ -8,8 +8,7 @@ REPORTS_DIR="reports/performance"
 SERVER_ENTRY_POINT="dist/server.js"
 STRESS_CLIENT_SCRIPT="scripts/ws-stress-client.ts"
 LOG_FILE="logs/ws-stress-client.log"
-PORT="${PORT:-3000}"
-URL="http://127.0.0.1:${PORT}"
+URL="http://127.0.0.1:3000"
 PROFILE_DURATION=15 # Duration in seconds for both HTTP and WS load
 STRESS_CLIENT_PID=""
 
@@ -24,9 +23,9 @@ cleanup() {
     kill "$STRESS_CLIENT_PID" 2>/dev/null || true
   fi
 
-  # Ensure port is free
-  echo "   - Ensuring port ${PORT} is released..."
-  fuser -k "${PORT}/tcp" 2>/dev/null || true
+  # Ensure port 3000 is free
+  echo "   - Ensuring port 3000 is released..."
+  fuser -k 3000/tcp 2>/dev/null || true
 }
 
 # Register the cleanup trap
@@ -59,8 +58,6 @@ echo "   - Server built successfully."
 # --- Execution ---
 echo "   - Starting WebSocket stress client in the background..."
 # Run the stress client with ts-node and redirect output to a log file
-# Pass the port environment variable
-export PORT
 pnpm exec ts-node --esm "$STRESS_CLIENT_SCRIPT" --duration=$PROFILE_DURATION > "$LOG_FILE" 2>&1 &
 STRESS_CLIENT_PID=$!
 echo "   - Stress client running with PID: $STRESS_CLIENT_PID"
