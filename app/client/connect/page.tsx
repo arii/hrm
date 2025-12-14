@@ -19,6 +19,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    isGattConnected,
     isSupported,
   } = useBluetoothHRM()
 
@@ -30,8 +31,8 @@ export default function ConnectPage() {
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-
+  const hrZoneProps = getHrZoneProps(currentHR,.
+..
   const {
     workoutDuration,
     caloriesBurned,

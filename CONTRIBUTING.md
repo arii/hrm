@@ -151,10 +151,6 @@ test: add unit tests for timer utilities
    - Link related issues
    - Request appropriate reviewers
 
-### Dependency Updates
-- For pull requests that update dependencies, please use the specific `dependency.md` template.
-- Ensure you follow the guidelines outlined in the `DEVELOPMENT.md` file under the "Dependency PR Requirements" section.
-
 ## Troubleshooting CI/CD Issues
 
 Our CI/CD pipeline includes automated checks to ensure code quality and consistency. Here are some common issues you might encounter:
