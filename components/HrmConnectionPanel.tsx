@@ -13,6 +13,8 @@ import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { formatDuration } from '@/utils/formatters'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -34,6 +36,21 @@ const HrmConnectionPanel = () => {
     connectAndStream(userName, userAge)
   }
 
+  const primaryUser = useMemo(() => {
+    return hrmData.find((user) => {
+      const isZero = user.value === 0
+      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+      const hasNoIdentity = user.name == null
+      return !(isZero || isPlaceholderName || hasNoIdentity)
+    })
+  }, [hrmData])
+
+  const { caloriesBurned, workoutDuration } = useWorkoutSession({
+    isConnected: !!primaryUser && primaryUser.value > 0,
+    currentHR: primaryUser ? primaryUser.value : 0,
+    userAge: userSettings.userAge || 30,
+  })
+
   const filteredTiles = useMemo(() => {
     return hrmData
       .filter((user) => {
@@ -54,6 +71,9 @@ const HrmConnectionPanel = () => {
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )
 
+        const isPrimaryUser =
+          primaryUser && user.clientId === primaryUser.clientId
+
         return (
           <Box
             key={user.clientId}
@@ -71,12 +91,16 @@ const HrmConnectionPanel = () => {
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
               isAlerting={!!matchingAlert}
+              caloriesBurned={isPrimaryUser ? caloriesBurned : undefined}
+              workoutDuration={
+                isPrimaryUser ? formatDuration(workoutDuration) : undefined
+              }
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Box>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, primaryUser, caloriesBurned, workoutDuration])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
