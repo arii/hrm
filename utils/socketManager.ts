@@ -17,7 +17,11 @@ import {
   StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
-import { CALORIE_DEFAULTS } from './constants.js'
+import {
+  CALORIE_DEFAULTS,
+  MIN_ACTIVE_HR_BPM,
+  MAX_DT_MINUTES_CALCULATION,
+} from './constants.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -182,7 +186,7 @@ const handleIncomingMessage = (
           const currentHr = message.data.value ?? existingData.value
           const currentAge = message.data.age ?? existingData.age ?? 30
 
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) { // Filter huge jumps
+          if (currentHr > MIN_ACTIVE_HR_BPM && dtMinutes > 0 && dtMinutes < MAX_DT_MINUTES_CALCULATION) { // Filter huge jumps
              // Formula: (-55.0969 + 0.6309 x HR + 0.1988 x Weight + 0.2017 x Age) / 4.184
              const rate = (
                -CALORIE_DEFAULTS.INTERCEPT +

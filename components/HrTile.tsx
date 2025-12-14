@@ -101,12 +101,12 @@ const HrTile = ({
            <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 1 }}>
             {/* BPM Display */}
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {bpm} <span style={{fontSize: '0.8rem', opacity: 0.8}}>BPM</span>
+              {bpm} <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>BPM</Box>
             </Typography>
 
             {/* Calorie Display */}
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {Math.floor(calories)} <span style={{fontSize: '0.8rem', opacity: 0.8}}>KCAL</span>
+              {Math.floor(calories)} <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>KCAL</Box>
             </Typography>
           </Box>
             {name && !/^(user|new user)$/i.test(name) && (

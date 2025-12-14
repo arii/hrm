@@ -15,6 +15,8 @@ export const CALORIE_DEFAULTS = {
   INTERCEPT: 55.0969,
   JOULE_CONVERSION: 4.184,
 }
+export const MIN_ACTIVE_HR_BPM = 30
+export const MAX_DT_MINUTES_CALCULATION = 5 // To filter out spurious long deltas
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70
