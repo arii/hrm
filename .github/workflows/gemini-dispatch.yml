@@ -43,7 +43,7 @@ jobs:
             --output "dispatch_result.md"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: gemini-result
           path: dispatch_result.md

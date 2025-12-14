@@ -208,7 +208,7 @@ jobs:
 
       - name: Upload Performance Metrics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: performance-metrics
           path: test-results/performance-metrics.json
@@ -240,7 +240,7 @@ jobs:
         # The command now correctly points to the default directory containing blob reports
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: test-results-${{ env.SESSION_ID }}

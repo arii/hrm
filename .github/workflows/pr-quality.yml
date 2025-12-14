@@ -209,7 +209,7 @@ jobs:
 
       - name: Upload Report on Failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
           path: playwright-report/
