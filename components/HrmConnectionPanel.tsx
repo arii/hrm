@@ -4,6 +4,8 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
+import { useSession } from 'next-auth/react'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
@@ -13,6 +15,8 @@ import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
+  const { data: session } = useSession()
+  const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -24,8 +28,10 @@ const HrmConnectionPanel = () => {
   } = useBluetoothHRM()
 
   const handleConnect = () => {
-    // TODO: Get user name and age from a reliable source
-    connectAndStream('Local User', '30')
+    const userName =
+      session?.user?.name || userSettings.userName || 'Unknown User'
+    const userAge = userSettings.userAge || 30
+    connectAndStream(userName, userAge.toString())
   }
 
   const filteredTiles = useMemo(() => {
