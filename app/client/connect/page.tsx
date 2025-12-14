@@ -49,15 +49,18 @@ export default function ConnectPage() {
     }
   }, [currentHR, userAge, sessionStartTime])
 
+  const prevIsConnected = useRef(isConnected)
+
   useEffect(() => {
-    if (isConnected) {
-      if (!sessionStartTime) {
-        setSessionStartTime(Date.now())
-        setWorkoutDuration(0)
-        setCaloriesBurned(0)
-      }
+    // Start a new session ONLY on the rising edge of isConnected
+    if (isConnected && !prevIsConnected.current) {
+      setSessionStartTime(Date.now())
+      setWorkoutDuration(0)
+      setCaloriesBurned(0)
     }
-  }, [isConnected, sessionStartTime])
+    // Update the ref AFTER the rest of the effect logic
+    prevIsConnected.current = isConnected
+  }, [isConnected])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -79,14 +82,13 @@ export default function ConnectPage() {
           if (age > 0 && hr > 0) {
             const weightKg = 75 // Standard weight
             const caloriesPerMinute =
-              (age * 0.2017 -
-                weightKg * 0.09036 +
-                hr * 0.6309 -
-                55.0969) /
+              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
               4.184
             const caloriesPerSecond = caloriesPerMinute / 60
             if (caloriesPerSecond > 0) {
-              setCaloriesBurned((prevCalories) => prevCalories + caloriesPerSecond)
+              setCaloriesBurned(
+                (prevCalories) => prevCalories + caloriesPerSecond
+              )
             }
           }
         }
