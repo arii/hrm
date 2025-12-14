@@ -28,7 +28,7 @@ const DeviceIcon = ({ type }: { type: string }) => {
 }
 
 const SpotifyDevicePicker = () => {
-  const { devices, selectedDeviceId, loading, transferPlayback } =
+  const { devices, selectedDeviceId, loading, error, transferPlayback } =
     useSpotifyDevices()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -51,6 +51,14 @@ const SpotifyDevicePicker = () => {
 
   if (loading) {
     return <CircularProgress size={24} />
+  }
+
+  if (error) {
+    return (
+      <Tooltip title={error}>
+        <SpeakerIcon fontSize="small" color="error" />
+      </Tooltip>
+    )
   }
 
   return (
