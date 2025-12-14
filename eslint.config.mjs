@@ -1,5 +1,5 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
+import storybook from 'eslint-plugin-storybook'
 
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
@@ -7,6 +7,7 @@ import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+import react from 'eslint-plugin-react'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -14,6 +15,18 @@ export default defineConfig([
 
   // Apply recommended TypeScript ESLint rules
   ...tseslint.configs.recommended,
+
+  // Apply recommended React rules, including the new JSX runtime
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    plugins: {
+      react,
+    },
+    rules: {
+      ...react.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+    },
+  },
 
   // Configure JavaScript unused vars to work with TypeScript
   {
