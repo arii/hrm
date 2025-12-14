@@ -8,7 +8,7 @@ const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-const DATA_LIVENESS_TIMEOUT_MS = 5000
+const DATA_LIVENESS_TIMEOUT_MS = 10000 // Increased to 10s for better UX
 
 // ... (Keep existing parseHeartRate and cookie helpers) ...
 const parseHeartRate = (value: DataView): number => {
@@ -60,7 +60,7 @@ const withTimeout = <T>(
 const useBluetoothHRM = () => {
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
-  const [isReceivingData, setIsReceivingData] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
@@ -116,7 +116,7 @@ const useBluetoothHRM = () => {
     if (dataTimeoutRef.current) clearTimeout(dataTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
-    setIsReceivingData(false)
+    setIsStreaming(false)
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(null)
@@ -166,7 +166,7 @@ const useBluetoothHRM = () => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
-    setIsReceivingData(false)
+    setIsStreaming(false)
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
       setDeviceStatus('Signal Lost. Retrying...')
@@ -226,10 +226,10 @@ const useBluetoothHRM = () => {
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event: unknown) => {
-            setIsReceivingData(true)
+            setIsStreaming(true)
             if (dataTimeoutRef.current) clearTimeout(dataTimeoutRef.current)
             dataTimeoutRef.current = setTimeout(
-              () => setIsReceivingData(false),
+              () => setIsStreaming(false),
               DATA_LIVENESS_TIMEOUT_MS
             )
 
@@ -341,7 +341,9 @@ const useBluetoothHRM = () => {
     deviceStatus,
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
-    isConnected: isReceivingData,
+    isConnected: isStreaming, // For backward compatibility and primary UI logic
+    isStreaming,
+    isGattConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
   }
 }

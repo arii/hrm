@@ -34,7 +34,7 @@ export default function ConnectPage() {
 
   const { workoutDuration, caloriesBurned, resetWorkout, hasStarted } =
     useWorkoutSession({
-      isConnected,
+      isConnected: isGattConnected,
       currentHR,
       userAge: userAge ? parseInt(userAge) : 0,
     })
