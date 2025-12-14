@@ -1,4 +1,12 @@
 // File: tests/unit/services/spotifyPlaylistService.test.ts
+// Mock the env module before other imports
+jest.doMock('../../../lib/env', () => ({
+  env: {
+    SPOTIFY_CLIENT_ID: 'test_client_id',
+    SPOTIFY_CLIENT_SECRET: 'test_client_secret',
+  },
+}))
+
 import {
   getPresetPlaylists,
   getUserPlaylists,

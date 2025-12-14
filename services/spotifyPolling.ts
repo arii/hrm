@@ -68,10 +68,16 @@ export class SpotifyPolling {
     this.broadcastUpdate = broadcastUpdate
 
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error(
-        'SpotifyPolling: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be configured.'
+      logger.warn(
+        'SpotifyPolling: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are not configured. The service will be disabled.'
       )
+      // Set a default tokenManager to avoid crashes, even though it will be non-functional.
+      this.tokenManager = new SpotifyTokenManager('', '')
+      this.clientId = ''
+      this.clientSecret = ''
+      return
     }
+
     this.clientId = env.SPOTIFY_CLIENT_ID
     this.clientSecret = env.SPOTIFY_CLIENT_SECRET
 

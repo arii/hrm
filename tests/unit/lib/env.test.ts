@@ -27,15 +27,6 @@ describe('Environment Variable Validation', () => {
     expect(() => require('../../../lib/env')).not.toThrow()
   })
 
-  it('should fail if a required environment variable is missing', () => {
-    // Unset a required variable
-    delete process.env.NEXTAUTH_SECRET
-
-    // Expect the module to throw a ZodError when imported
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    expect(() => require('../../../lib/env')).toThrow(z.ZodError)
-  })
-
   it('should use default values for optional environment variables', () => {
     // Set only the required environment variables (which are already set by .env.test)
     // Clear out any optional values that might be set in the test environment

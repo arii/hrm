@@ -23,7 +23,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
-    "test:unit": "cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
+    "test:unit": "cross-env TESTING=true NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
     "test:visual": "scripts/test-with-server.sh playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
