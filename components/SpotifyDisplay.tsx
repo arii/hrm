@@ -28,7 +28,6 @@ const SpotifyDisplay = () => {
   const isLoggedIn = status === 'authenticated'
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const debouncedVolume = useDebounce(volume, 500)
-  const isInitialLoad = useRef(true)
 
   // Debug: Log session status changes
   useEffect(() => {
@@ -90,10 +89,6 @@ const SpotifyDisplay = () => {
   useEffect(() => {
     // This effect handles ALL volume changes, debouncing them to prevent spamming the API.
     // This includes direct user interaction with the slider and cross-tab synchronization.
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false
-      return
-    }
     sendVolumeCommand(debouncedVolume)
   }, [debouncedVolume, sendVolumeCommand])
 

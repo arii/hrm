@@ -36,9 +36,6 @@ interface ConnectViewProps {
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
-  workoutStatus: 'idle' | 'running' | 'paused'
-  onStartWorkout: () => void
-  onEndWorkout: () => void
 }
 
 export default function ConnectView({
@@ -61,9 +58,6 @@ export default function ConnectView({
   bluetoothConnected,
   hasStarted,
   onReset,
-  workoutStatus,
-  onStartWorkout,
-  onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -250,62 +244,6 @@ export default function ConnectView({
             />
           </Box>
         )}
-
-        <Stack
-          spacing={2}
-          sx={{
-            mt: 3,
-            mb: 3,
-            alignItems: 'center',
-            minHeight: '48px', // Ensure consistent height for layout stability
-          }}
-        >
-          {workoutStatus === 'idle' && isConnected && (
-            <Button
-              variant="contained"
-              onClick={onStartWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="Start workout session"
-            >
-              Start Workout
-            </Button>
-          )}
-          {workoutStatus === 'paused' && (
-            <>
-              <Button
-                variant="contained"
-                onClick={onStartWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                disabled={!isConnected}
-                aria-label="Resume workout session"
-              >
-                Resume Workout
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={onEndWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="End workout session"
-              >
-                End Workout
-              </Button>
-            </>
-          )}
-          {workoutStatus === 'running' && (
-            <Button
-              variant="outlined"
-              onClick={onEndWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="End workout session"
-            >
-              End Workout
-            </Button>
-          )}
-        </Stack>
 
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />

@@ -69,7 +69,7 @@ const useBluetoothHRM = () => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<{ name: string; age: string } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -225,18 +225,16 @@ const useBluetoothHRM = () => {
             lastDataTime.current = Date.now()
 
             const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = age ? 220 - age : MAX_HR_DEFAULT
+            const calculatedMaxHr = age ? 220 - parseInt(age) : MAX_HR_DEFAULT
 
             const data: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
             }
-
-            if (typeof age === 'number') {
-              data.age = age
+            if (age && !isNaN(parseInt(age))) {
+              data.age = parseInt(age)
             }
-
             sendData({
               type: 'HRM_INPUT',
               data,
@@ -264,11 +262,8 @@ const useBluetoothHRM = () => {
   }, [connectToGatt])
 
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<boolean> => {
-      userDetailsRef.current = {
-        name: userName || '',
-        age: userAge || 0,
-      }
+    async (userName?: string, userAge?: string): Promise<boolean> => {
+      userDetailsRef.current = { name: userName || '', age: userAge || '' }
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')

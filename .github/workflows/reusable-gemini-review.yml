@@ -142,7 +142,7 @@ jobs:
           PR_DIFF_FILE: pr.diff
           PR_CONTEXT_NAME: ${{ steps.detector.outputs.context }}
           # Dynamically select the context template and combine with base context files
-          REVIEW_CONTEXT_FILES: '.github/review-prompts/${{ steps.detector.outputs.context }}.md,${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md' }}'
+          REVIEW_CONTEXT_FILES: ${{ format('.github/review-prompts/{0}.md,{1}', steps.detector.outputs.context, vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md') }}
         run: |
           npx tsx scripts/gemini-client.ts \
             --preset review \

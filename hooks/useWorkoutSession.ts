@@ -15,8 +15,6 @@ type SessionAction =
   | { type: 'DISCONNECT' }
   | { type: 'TICK'; payload: { duration: number; calories: number } }
   | { type: 'RESET' }
-  | { type: 'START_WORKOUT' }
-  | { type: 'END_WORKOUT' }
 
 const initialState: SessionState = {
   status: 'idle',
@@ -30,13 +28,11 @@ function sessionReducer(
 ): SessionState {
   switch (action.type) {
     case 'CONNECT':
-    case 'START_WORKOUT':
       if (state.status === 'idle' || state.status === 'paused') {
         return { ...state, status: 'running' }
       }
       return state
     case 'DISCONNECT':
-    case 'END_WORKOUT':
       if (state.status === 'running') {
         return { ...state, status: 'paused' }
       }
@@ -119,21 +115,13 @@ export const useWorkoutSession = ({
             (Date.now() - session.startTime - session.totalPaused) / 1000
           )
           if (age > 0 && hr > 0) {
-            const weightKg = 75 // TODO: Make this configurable
+            const weightKg = 75
             const caloriesPerMinute =
               (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
               4.184
-            const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
-            session.accumulatedCalories += caloriesPerSecond
-            if (process.env.NODE_ENV === 'development') {
-              // eslint-disable-next-line no-console
-              console.debug('Calorie calculation:', {
-                age,
-                hr,
-                caloriesPerMinute,
-                caloriesPerSecond,
-                accumulatedCalories: session.accumulatedCalories,
-              })
+            const caloriesPerSecond = caloriesPerMinute / 60
+            if (caloriesPerSecond > 0) {
+              session.accumulatedCalories += caloriesPerSecond
             }
           }
           dispatch({
@@ -161,21 +149,10 @@ export const useWorkoutSession = ({
     dispatch({ type: 'RESET' })
   }, [])
 
-  const startWorkout = useCallback(() => {
-    dispatch({ type: 'START_WORKOUT' })
-  }, [])
-
-  const endWorkout = useCallback(() => {
-    dispatch({ type: 'END_WORKOUT' })
-  }, [])
-
   return {
     workoutDuration: state.duration,
     caloriesBurned: Math.round(state.calories),
     resetWorkout,
-    startWorkout,
-    endWorkout,
-    workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
   }
 }
