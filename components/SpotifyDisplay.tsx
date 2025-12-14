@@ -26,8 +26,25 @@ const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMute, isLoaded } =
+    useVolumePreference()
   const debouncedVolume = useDebounce(volume, 500)
+  const canSendVolume = useRef(false)
+
+  // Prevent sending the initial volume command on page load.
+  // We wait until the volume has been loaded from localStorage and the debounce period has passed.
+  useEffect(() => {
+    if (!isLoaded) {
+      return
+    } // Do nothing until volume preferences are loaded
+
+    const timer = setTimeout(() => {
+      canSendVolume.current = true
+    }, 550) // Just after the debounce delay
+
+    // Cleanup function
+    return () => clearTimeout(timer)
+  }, [isLoaded])
 
   // Debug: Log session status changes
   useEffect(() => {
@@ -89,7 +106,9 @@ const SpotifyDisplay = () => {
   useEffect(() => {
     // This effect handles ALL volume changes, debouncing them to prevent spamming the API.
     // This includes direct user interaction with the slider and cross-tab synchronization.
-    sendVolumeCommand(debouncedVolume)
+    if (canSendVolume.current) {
+      sendVolumeCommand(debouncedVolume)
+    }
   }, [debouncedVolume, sendVolumeCommand])
 
   useEffect(() => {
