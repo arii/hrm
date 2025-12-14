@@ -4,11 +4,9 @@ import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import Footer from '@/components/Footer'
-import Providers from '@/components/Providers'
+import AppProviders from '@/components/AppProviders'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
-import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -48,13 +46,9 @@ export default function RootLayout({
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
-            <Providers>
-              <UserSettingsProvider>
-                <TimerSoundProvider>
-                  <ErrorBoundary>{children}</ErrorBoundary>
-                </TimerSoundProvider>
-              </UserSettingsProvider>
-            </Providers>
+            <AppProviders>
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </AppProviders>
             <ErrorDisplay />
           </ErrorProvider>
           <Footer />
