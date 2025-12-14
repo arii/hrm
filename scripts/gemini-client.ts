@@ -336,49 +336,17 @@ async function writeOutput(
 }
 
 function handleError(error: any) {
-  let category = 'Infrastructure Issue'
-  let userMessage =
-    'The review service encountered an unexpected error. This is likely an intermittent problem.'
-  const technicalDetails = error.message || 'No technical details available.'
-
-  if (error instanceof GoogleGenerativeAIError) {
-    if (error.message.includes('400') || error.message.includes('404')) {
-      category = 'Configuration Issue'
-      userMessage =
-        'All attempted generative models failed, likely due to a configuration or access problem.'
-    } else if (error.message.includes('500') || error.message.includes('503')) {
-      category = 'Infrastructure Issue'
-      userMessage =
-        'The generative AI service is temporarily unavailable. Please try again later.'
-    }
-  } else if (error.message.includes('api key')) {
-    category = 'Configuration Issue'
-    userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
-  }
-
-  const errorOutput = {
-    error: {
-      category: category,
-      message: userMessage,
-      details: technicalDetails,
-    },
-    // Provide a valid structure for the review result to avoid breaking the calling workflow
-    reviewComment: `### ❌ Review Failed: ${category}\n\n**Details**: ${userMessage}\n\n<details><summary>Technical Info</summary>\n\n\`\`\`\n${technicalDetails}\n\`\`\`\n\n</details>`,
-    labels: ['review-failed'],
-  }
-
-  console.error('Error generating content:', JSON.stringify(errorOutput, null, 2))
-
-  // Write the error details to the output file so the workflow can use it
-  if (outputFile) {
-    writeOutput(JSON.stringify(errorOutput, null, 2), outputFile).catch(
-      (writeErr) => {
-        console.error('Failed to write error output to file:', writeErr)
-      }
+  console.error('Error generating content:', error)
+  if (
+    error instanceof GoogleGenerativeAIError ||
+    error.message?.includes('404')
+  ) {
+    console.error('\nPOSSIBLE CAUSE: All attempted models failed.')
+    console.error(
+      'Please check your Google AI Studio account and ensure you have access to the Gemini models.'
     )
+    console.error(`Tried models: ${MODEL_FALLBACKS.join(', ')}`)
   }
-
-  // Still exit with 1 to signal failure to the workflow runner
   process.exit(1)
 }
 

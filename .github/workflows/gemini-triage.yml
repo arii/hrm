@@ -11,11 +11,11 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
         with:
           version: 9
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -46,16 +46,16 @@ jobs:
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
-            const fs = require('fs');
-            try {
-              const body = fs.readFileSync('triage_result.md', 'utf8');
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-              });
-            } catch (e) {
-              console.error('Failed to post comment:', e);
-              core.setFailed('No triage result found or error posting comment');
-            }
+             const fs = require('fs');
+             try {
+               const body = fs.readFileSync('triage_result.md', 'utf8');
+               await github.rest.issues.createComment({
+                 issue_number: context.issue.number,
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 body: body
+               });
+             } catch (e) {
+               console.error('Failed to post comment:', e);
+               core.setFailed('No triage result found or error posting comment');
+             }

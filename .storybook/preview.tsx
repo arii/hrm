@@ -1,14 +1,6 @@
-import type { Preview } from '@storybook/react'
-import { ThemeProvider } from '@mui/material/styles'
-import { CssBaseline } from '@mui/material'
-import { SessionProvider } from 'next-auth/react'
-import { initialize, mswLoader } from 'msw-storybook-addon'
-import React from 'react'
-import { handlers } from '../stories/mocks/handlers'
-import theme from '../lib/theme'
-
-// Initialize MSW
-initialize({}, handlers)
+import type { Preview } from "@storybook/react";
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from '../lib/theme'; // Import your custom theme
 
 const preview: Preview = {
   parameters: {
@@ -18,23 +10,18 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    // Ensure MSW handles requests by default
-    msw: {
-      handlers: handlers,
+    backgrounds: {
+      default: 'light',
     },
   },
-  // Register the MSW loader
-  loaders: [mswLoader],
   decorators: [
     (Story) => (
-      <SessionProvider session={null}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Story />
-        </ThemeProvider>
-      </SessionProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Story />
+      </ThemeProvider>
     ),
   ],
-}
+};
 
-export default preview
+export default preview;

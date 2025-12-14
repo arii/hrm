@@ -5,20 +5,17 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Development Setup
 
 1. **Clone the repository**
-
    ```bash
    git clone https://github.com/arii/hrm.git
    cd hrm
    ```
 
 2. **Install dependencies**
-
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
-
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your configuration
@@ -32,21 +29,18 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Code Style and Standards
 
 ### TypeScript
-
 - Use strict TypeScript configuration
 - Prefer explicit types over `any`
 - Use interfaces for object shapes
 - Follow naming conventions (camelCase for variables, PascalCase for components)
 
 ### React Components
-
 - Use functional components with hooks
 - Prefer named exports over default exports for components
 - Keep components small and focused
 - Use TypeScript for prop types
 
 ### Code Formatting
-
 - We use Prettier for code formatting
 - ESLint for code linting
 - Run `pnpm run format` before committing
@@ -55,7 +49,6 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 ## Testing
 
 ### Running Tests
-
 ```bash
 # Run all tests
 pnpm test
@@ -71,7 +64,6 @@ pnpm run test:visual
 ```
 
 ### Writing Tests
-
 - Write unit tests for utilities and hooks
 - Write integration tests for components
 - Aim for 70%+ code coverage
@@ -91,7 +83,6 @@ We use [Conventional Commits](https://conventionalcommits.org/) format:
 ```
 
 ### Types:
-
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes
@@ -102,7 +93,6 @@ We use [Conventional Commits](https://conventionalcommits.org/) format:
 - `chore`: Changes to the build process or auxiliary tools
 
 ### Examples:
-
 ```
 feat(timer): add pause functionality to Tabata timer
 fix(websocket): resolve connection drop on network change
@@ -113,7 +103,6 @@ test: add unit tests for timer utilities
 ## Pull Request Process
 
 1. **Create a feature branch**
-
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -124,7 +113,6 @@ test: add unit tests for timer utilities
    - Update documentation as needed
 
 3. **Test your changes**
-
    ```bash
    pnpm run lint
    pnpm run test:coverage
@@ -133,14 +121,12 @@ test: add unit tests for timer utilities
    ```
 
 4. **Commit your changes**
-
    ```bash
    git add .
    git commit -m "feat: your descriptive commit message"
    ```
 
 5. **Push to your branch**
-
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -150,31 +136,6 @@ test: add unit tests for timer utilities
    - Provide clear description of changes
    - Link related issues
    - Request appropriate reviewers
-
-## Troubleshooting CI/CD Issues
-
-Our CI/CD pipeline includes automated checks to ensure code quality and consistency. Here are some common issues you might encounter:
-
-### Lockfile Mismatch
-
-- **Error Message**: `ERR_PNPM_OUTDATED_LOCKFILE`
-- **Cause**: This happens when you make changes to `package.json` (e.g., adding, removing, or updating a dependency) but do not commit the corresponding changes to `pnpm-lock.yaml`.
-- **Solution**: Run the following commands locally, then commit and push the updated lockfile:
-  ```bash
-  pnpm install
-  git add pnpm-lock.yaml
-  git commit -m "fix: update pnpm lockfile"
-  git push
-  ```
-
-### Dependency Installation Failure
-
-- **Symptom**: The "Install Dependencies" step fails for reasons other than a lockfile mismatch.
-- **Cause**: This can be due to a syntax error in `package.json`, an invalid or unreachable dependency, or a corrupted `pnpm-lock.yaml` file.
-- **Solution**:
-  1.  Carefully check your `package.json` for any syntax errors (e.g., missing commas, incorrect version specifiers).
-  2.  Ensure all specified dependencies are valid and available on the npm registry.
-  3.  Review the workflow logs for the specific error message from `pnpm`.
 
 ## Code Review Process
 
@@ -187,14 +148,12 @@ Our CI/CD pipeline includes automated checks to ensure code quality and consiste
 ## Issue Reporting
 
 ### Bug Reports
-
 - Use the bug report template
 - Provide clear reproduction steps
 - Include environment details
 - Attach screenshots if applicable
 
 ### Feature Requests
-
 - Use the feature request template
 - Explain the problem being solved
 - Describe proposed solution
@@ -233,7 +192,6 @@ Our CI/CD pipeline includes automated checks to ensure code quality and consiste
 ## Development Tools
 
 ### Recommended VS Code Extensions
-
 - TypeScript and JavaScript Language Features
 - ESLint
 - Prettier
@@ -241,7 +199,6 @@ Our CI/CD pipeline includes automated checks to ensure code quality and consiste
 - Thunder Client (for API testing)
 
 ### Git Workflow
-
 - Use descriptive branch names
 - Rebase feature branches before merging
 - Keep commits atomic and focused

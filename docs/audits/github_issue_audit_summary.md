@@ -10,7 +10,7 @@ For a full definition of the agent's role and workflow, see [AGENT_GITHUB_ISSUES
 
 ### Summary of Actions
 
-_No actions were taken during this run._
+*No actions were taken during this run.*
 
 ### Details
 

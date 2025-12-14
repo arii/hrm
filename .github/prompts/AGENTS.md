@@ -8,7 +8,6 @@ Function/Method to Change: {method}
 Specific Change Focus: {change}
 
 **Project Documentation Reference**: For comprehensive context and adherence to established standards, always refer to the following project documents:
-
 - `DESIGN_GUIDELINES.md`: For UI/UX principles, design system, and accessibility standards.
 - `DEVELOPMENT.md`: For current development focus and key priorities.
 - `docs/audits/AUDIT_CODE_HYGIENE.md`: **CRITICAL** for understanding known technical debt, security vulnerabilities, and specific refactoring targets (e.g., `server.ts` callback hell). Prioritize or acknowledge findings from this audit in your review where relevant.
@@ -28,12 +27,17 @@ Array/Object Spread (...) for all array/object manipulations to ensure immutabil
 Destructuring and Object Method/Property Shorthand.
 Prefer clear, readable conditional structures. For complex flow control, consider using declarative approaches with maps/filters, or well-structured if/else if blocks. Avoid 'switch (true)' if it degrades readability.
 
+
+
+
 Real-time/Stateful Context: All logic must consider the application's core requirement for real-time, stateful data synchronization. Focus on solutions that maintain predictability and performance when reacting to WebSocket events.
 Security and Performance: Ensure the refactored code is performant, especially for data processing, and adheres to secure coding practices.
 Output Format:
 
 Explanation: Start with a section titled Improvements: containing a concise, technical explanation of what was improved and why, with specific references to the modern features used (e.g., "Improved data transformation using array spread for guaranteed immutability and leveraged optional chaining for safe access to the nested session.data object.").
 Code: Provide only the modified function or method body in a TypeScript code block. Do not include surrounding class, interface, or import statements.
+
+
 
 Example Output Structure:
 **Improvements:**
@@ -42,22 +46,22 @@ Refactored the data fetching logic to utilize a more robust `try...catch` struct
 ```typescript
 async function fetchRealTimeData(sessionId: string): Promise<HrmSessionData> {
   try {
-    const response = await fetch(`/api/hrm/sessions/${sessionId}`)
+    const response = await fetch(`/api/hrm/sessions/${sessionId}`);
     if (!response.ok) {
       // Use structured error for better downstream handling
-      throw new Error(`HTTP error! Status: ${response.status}`)
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    const data = await response.json()
+    const data = await response.json();
 
     // Modern JS features for concise data manipulation
     return {
       ...data,
       metrics: data.metrics ?? [],
-    }
+    };
   } catch (error) {
-    console.error('Failed to fetch HRM data:', error)
+    console.error('Failed to fetch HRM data:', error);
     // Return a structured, empty state upon failure
-    return { sessionId, metrics: [], status: 'error' }
+    return { sessionId, metrics: [], status: 'error' };
   }
 }
 ```
@@ -69,7 +73,6 @@ async function fetchRealTimeData(sessionId: string): Promise<HrmSessionData> {
 **Verifying Changes to Agent Instructions:**
 
 Changes to this file directly impact the AI agent's behavior. To verify updates, follow this process:
-
 1.  **Define a Test Case**: Select a representative code snippet from the repository that requires review or refactoring.
 2.  **Run the Agent**: Provide the selected code snippet and this instruction set to the AI agent.
 3.  **Evaluate the Output**: Assess the agent's response against the updated instructions. The output should reflect the new guidance.
