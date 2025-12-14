@@ -1,4 +1,56 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useReducer, useRef, useCallback } from 'react'
+
+// --- State, Actions, and Reducer for managing session state ---
+
+type SessionStatus = 'idle' | 'running' | 'paused'
+
+interface SessionState {
+  status: SessionStatus
+  duration: number
+  calories: number
+}
+
+type SessionAction =
+  | { type: 'CONNECT' }
+  | { type: 'DISCONNECT' }
+  | { type: 'TICK'; payload: { duration: number; calories: number } }
+  | { type: 'RESET' }
+
+const initialState: SessionState = {
+  status: 'idle',
+  duration: 0,
+  calories: 0,
+}
+
+function sessionReducer(
+  state: SessionState,
+  action: SessionAction
+): SessionState {
+  switch (action.type) {
+    case 'CONNECT':
+      if (state.status === 'idle' || state.status === 'paused') {
+        return { ...state, status: 'running' }
+      }
+      return state
+    case 'DISCONNECT':
+      if (state.status === 'running') {
+        return { ...state, status: 'paused' }
+      }
+      return state
+    case 'TICK':
+      return {
+        ...state,
+        duration: action.payload.duration,
+        calories: action.payload.calories,
+      }
+    case 'RESET':
+      return initialState
+    default:
+      return state
+  }
+}
+
+// --- The Hook Implementation ---
 
 interface WorkoutSessionOptions {
   isConnected: boolean
@@ -11,50 +63,57 @@ export const useWorkoutSession = ({
   currentHR,
   userAge,
 }: WorkoutSessionOptions) => {
-  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
-  const [workoutDuration, setWorkoutDuration] = useState(0)
-  const [caloriesBurned, setCaloriesBurned] = useState(0)
+  const [state, dispatch] = useReducer(sessionReducer, initialState)
 
-  const latestMetrics = useRef({
-    currentHR,
-    userAge,
-    sessionStartTime,
+  const sessionDataRef = useRef({
+    startTime: null as number | null,
+    pauseTime: null as number | null,
+    totalPaused: 0,
+    accumulatedCalories: 0,
   })
 
+  const latestMetrics = useRef({ currentHR, userAge })
   useEffect(() => {
-    latestMetrics.current = {
-      currentHR,
-      userAge,
-      sessionStartTime,
-    }
-  }, [currentHR, userAge, sessionStartTime])
+    latestMetrics.current = { currentHR, userAge }
+  }, [currentHR, userAge])
 
   const prevIsConnected = useRef(isConnected)
-
   useEffect(() => {
-    if (isConnected && !prevIsConnected.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSessionStartTime(Date.now())
-      setWorkoutDuration(0)
-      setCaloriesBurned(0)
+    if (prevIsConnected.current !== isConnected) {
+      if (isConnected) {
+        dispatch({ type: 'CONNECT' })
+      } else {
+        dispatch({ type: 'DISCONNECT' })
+      }
+      prevIsConnected.current = isConnected
     }
-    prevIsConnected.current = isConnected
   }, [isConnected])
 
   useEffect(() => {
+    const session = sessionDataRef.current
+    if (state.status === 'running' && session.startTime === null) {
+      session.startTime = Date.now()
+      session.pauseTime = null
+      session.totalPaused = 0
+    } else if (state.status === 'running' && session.pauseTime !== null) {
+      session.totalPaused += Date.now() - session.pauseTime
+      session.pauseTime = null
+    } else if (state.status === 'paused' && session.pauseTime === null) {
+      session.pauseTime = Date.now()
+    }
+  }, [state.status])
+
+  useEffect(() => {
     let interval: NodeJS.Timeout | null = null
-    if (isConnected && sessionStartTime) {
+    const session = sessionDataRef.current
+
+    if (state.status === 'running') {
       interval = setInterval(() => {
-        const {
-          currentHR: hr,
-          userAge: age,
-          sessionStartTime: start,
-        } = latestMetrics.current
-
-        if (start) {
-          const durationInSeconds = Math.floor((Date.now() - start) / 1000)
-          setWorkoutDuration(durationInSeconds)
-
+        const { currentHR: hr, userAge: age } = latestMetrics.current
+        if (session.startTime) {
+          const duration = Math.floor(
+            (Date.now() - session.startTime - session.totalPaused) / 1000
+          )
           if (age > 0 && hr > 0) {
             const weightKg = 75
             const caloriesPerMinute =
@@ -62,24 +121,38 @@ export const useWorkoutSession = ({
               4.184
             const caloriesPerSecond = caloriesPerMinute / 60
             if (caloriesPerSecond > 0) {
-              setCaloriesBurned(
-                (prevCalories) => prevCalories + caloriesPerSecond
-              )
+              session.accumulatedCalories += caloriesPerSecond
             }
           }
+          dispatch({
+            type: 'TICK',
+            payload: {
+              duration,
+              calories: session.accumulatedCalories,
+            },
+          })
         }
       }, 1000)
     }
-
     return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
+      if (interval) clearInterval(interval)
     }
-  }, [isConnected, sessionStartTime])
+  }, [state.status])
+
+  const resetWorkout = useCallback(() => {
+    const session = sessionDataRef.current
+    session.startTime = null
+    session.pauseTime = null
+    session.totalPaused = 0
+    session.accumulatedCalories = 0
+    prevIsConnected.current = false
+    dispatch({ type: 'RESET' })
+  }, [])
 
   return {
-    workoutDuration,
-    caloriesBurned: Math.round(caloriesBurned),
+    workoutDuration: state.duration,
+    caloriesBurned: Math.round(state.calories),
+    resetWorkout,
+    hasStarted: state.status !== 'idle',
   }
 }
