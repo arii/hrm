@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/arii/hrm/compare/v0.6.0...v0.7.0) (2025-12-14)
+
+
+### Features
+
+* **dashboard:** Implement HR Monitor Connection and Status UI ([#1316](https://github.com/arii/hrm/issues/1316)) ([f9ab382](https://github.com/arii/hrm/commit/f9ab3828eb814db04a8436dcee26a2853a34c4df))
+
 ## [0.6.0](https://github.com/arii/hrm/compare/v0.5.0...v0.6.0) (2025-12-14)
 
 
