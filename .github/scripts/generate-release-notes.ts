@@ -33,11 +33,14 @@ const main = async () => {
 
   const currentTagIndex = sortedTags.findIndex((t) => t.name === currentTagRef)
   if (currentTagIndex === -1) {
-    core.setFailed(`Could not find current tag ${currentTagRef} in the list of tags.`)
+    core.setFailed(
+      `Could not find current tag ${currentTagRef} in the list of tags.`
+    )
     return
   }
 
-  const previousTag = currentTagIndex > 0 ? sortedTags[currentTagIndex - 1] : null
+  const previousTag =
+    currentTagIndex > 0 ? sortedTags[currentTagIndex - 1] : null
 
   let previousTagDate: string
   if (previousTag) {
@@ -45,17 +48,22 @@ const main = async () => {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       commit_sha: previousTag.commit.sha,
-    });
-    previousTagDate = previousTagObject.committer?.date || new Date(0).toISOString();
+    })
+    previousTagDate =
+      previousTagObject.committer?.date || new Date(0).toISOString()
   } else {
     // Fallback for the first release
-    const initialCommit = await octokit.paginate(octokit.rest.repos.listCommits, {
+    const initialCommit = await octokit.paginate(
+      octokit.rest.repos.listCommits,
+      {
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-    });
-    previousTagDate = initialCommit[initialCommit.length - 1].commit.committer?.date || new Date(0).toISOString();
+      }
+    )
+    previousTagDate =
+      initialCommit[initialCommit.length - 1].commit.committer?.date ||
+      new Date(0).toISOString()
   }
-
 
   const { data: currentTagObject } = await octokit.rest.git.getCommit({
     owner: github.context.repo.owner,
@@ -63,8 +71,8 @@ const main = async () => {
     commit_sha: sortedTags[currentTagIndex].commit.sha,
   })
 
-  const currentTagDate = currentTagObject.committer?.date || new Date().toISOString()
-
+  const currentTagDate =
+    currentTagObject.committer?.date || new Date().toISOString()
 
   core.info(
     `Generating release notes for ${currentTagRef} (since ${previousTag?.name || 'initial commit'})...`
