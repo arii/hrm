@@ -3,7 +3,6 @@
  */
 import { act, renderHook } from '@testing-library/react'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { audioManager } from '@/utils/audioManager'
 
 // Mock the audioManager
 jest.mock('@/utils/audioManager', () => ({

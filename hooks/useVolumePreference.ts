@@ -61,7 +61,7 @@ const useVolumePreference = (defaultVolume = 70) => {
           window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
         }
         window.dispatchEvent(
-          new CustomEvent('volumeChange', { detail: sanitized })
+          new CustomEvent('hrm:volumeChange', { detail: sanitized })
         )
       } catch (error) {
         console.warn('Could not persist volume preference:', error)
@@ -84,7 +84,9 @@ const useVolumePreference = (defaultVolume = 70) => {
       } else {
         setVolumeState(lastVolumeRef.current)
       }
-      window.dispatchEvent(new CustomEvent('muteChange', { detail: isMuting }))
+      window.dispatchEvent(
+        new CustomEvent('hrm:muteChange', { detail: isMuting })
+      )
     } catch (error) {
       console.warn('Could not persist mute preference:', error)
     }
@@ -112,13 +114,13 @@ const useVolumePreference = (defaultVolume = 70) => {
     }
 
     window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('volumeChange', handleLocalVolume)
-    window.addEventListener('muteChange', handleLocalMute)
+    window.addEventListener('hrm:volumeChange', handleLocalVolume)
+    window.addEventListener('hrm:muteChange', handleLocalMute)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('volumeChange', handleLocalVolume)
-      window.removeEventListener('muteChange', handleLocalMute)
+      window.removeEventListener('hrm:volumeChange', handleLocalVolume)
+      window.removeEventListener('hrm:muteChange', handleLocalMute)
     }
   }, [])
 

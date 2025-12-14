@@ -1,13 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
