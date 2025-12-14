@@ -5,10 +5,12 @@ import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
+import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
+import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -30,28 +32,27 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  isAlerting, // NEW PROP
-  alertMessage = 'Checking signal...', // Default message
+  isConnected = true, // Default to connected
+  isAlerting = false,
+  alertMessage = 'Checking signal...',
 }: HrTileProps) => {
-  // Get HR zone props which include the theme-based background color
-  // Note: We're passing a placeholder maxHr because the function currently requires it,
-  // but it only uses the ratio (percentMax) to determine the zone color.
-  // This could be refactored in getHrZoneProps to accept percentMax directly.
+  const theme = useTheme()
   const { backgroundColor } = getHrZoneProps(percentMax, 100)
 
+  const tooltipTitle = isAlerting
+    ? alertMessage
+    : !isConnected
+      ? 'Disconnected - Showing last known value'
+      : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+
   return (
-    <Tooltip
-      title={
-        isAlerting
-          ? alertMessage
-          : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
-      }
-      arrow
-    >
+    <Tooltip title={tooltipTitle} arrow>
       <StyledCard
         data-testid="hr-tile-card"
         role="region"
-        aria-label={`Heart rate monitor for ${name}: ${bpm} beats per minute, ${percentMax}% of maximum`}
+        aria-label={`Heart rate monitor for ${name}: ${
+          isConnected ? `${bpm} beats per minute` : 'Disconnected'
+        }, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
           color: '#fff',
@@ -61,10 +62,27 @@ const HrTile = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          position: 'relative', // IMPORTANT: Allows the overlay to be absolutely positioned
+          position: 'relative',
+          opacity: isConnected ? 1 : 0.6,
+          transition: theme.transitions.create('opacity', {
+            duration: theme.transitions.duration.short, // Approx 300ms
+          }),
         }}
       >
-        {/* CONDITIONAL OVERLAY: Renders only when isAlerting is true. */}
+        {/* --- Disconnected Icon --- */}
+        {!isConnected && (
+          <WifiOffIcon
+            sx={{
+              position: 'absolute',
+              top: theme.spacing(1),
+              right: theme.spacing(1),
+              fontSize: '1.5rem',
+              color: theme.palette.warning.main,
+            }}
+          />
+        )}
+
+        {/* --- Alerting Overlay --- */}
         {isAlerting && (
           <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
             <CircularProgress size={30} sx={{ color: 'white' }} />
@@ -76,9 +94,9 @@ const HrTile = ({
             </Typography>
           </Box>
         )}
+
         <Box aria-live="polite" aria-atomic="true">
           <CardContent sx={{ p: 0 }}>
-            {/* Giant Percentage - should dominate the tile */}
             <Typography
               data-testid="live-hr-percent"
               sx={{
@@ -88,11 +106,9 @@ const HrTile = ({
                 lineHeight: 0.85,
                 my: 0.5,
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                // ADDED: Pulse animation
                 animation: 'subtle-pulse 2s infinite ease-in-out',
-                // Animate only when receiving live data (bpm > 0 and not in an alert state)
                 animationPlayState:
-                  bpm > 0 && !isAlerting ? 'running' : 'paused',
+                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
               }}
             >
               {percentMax}%
@@ -104,7 +120,7 @@ const HrTile = ({
                 fontWeight: 600,
                 fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
                 transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
+                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
               }}
             >
               {bpm} BPM
@@ -116,10 +132,10 @@ const HrTile = ({
                   fontWeight: 700,
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
-                  mt: 1, // Add some margin top to separate from BPM
-                  textOverflow: 'ellipsis', // Truncate with ellipsis
-                  whiteSpace: 'nowrap', // Prevent wrapping
-                  overflow: 'hidden', // Hide overflow content
+                  mt: 1,
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
                 }}
               >
                 {name}
@@ -134,11 +150,11 @@ const HrTile = ({
 
 // Custom comparison function for React.memo
 const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
-  // Re-render only if display data changes.
   return (
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )
