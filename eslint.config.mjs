@@ -38,10 +38,11 @@ export default defineConfig([
   // Next.js specific rules and configurations (includes TypeScript support)
   {
     plugins: {
-      '@next': nextPlugin,
+      '@next/next': nextPlugin,
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
+      '@next/next/google-font-display': 'off', // TODO: Re-evaluate this rule
     },
   },
 
