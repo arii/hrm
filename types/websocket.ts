@@ -59,6 +59,8 @@ export interface SpotifyData {
   trackName: string
   artist: string
   isPlaying: boolean
+  progressMs?: number
+  durationMs?: number
   devices: SpotifyDevice[] // <--- ADDED: Synced device list
 }
 

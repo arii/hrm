@@ -15,9 +15,12 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+import { clamp } from '@/utils/number'
+
+const clampVolume = (value: number): number => clamp(Math.round(value), 0, 100)
 import PlaybackControls from './PlaybackControls'
 
 const SpotifyControls = () => {

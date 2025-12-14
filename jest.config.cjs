@@ -1,11 +1,12 @@
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/tests/unit', '<rootDir>/tests/integration'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: "coverage",
+  setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.js'],
   reporters : ["default", 
     [
       "jest-junit",

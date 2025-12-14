@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
+import { clamp } from '@/utils/number'
 
 const STORAGE_KEY_VOL = 'hrm-volume'
 const STORAGE_KEY_MUTE = 'hrm-muted'
 
-export const clampVolume = (value: number): number =>
-  Math.min(100, Math.max(0, Math.round(value)))
+const clampVolume = (value: number): number => clamp(Math.round(value), 0, 100)
 
 const useVolumePreference = (defaultVolume = 70) => {
   const sanitizedDefault = clampVolume(defaultVolume)
