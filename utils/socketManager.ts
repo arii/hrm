@@ -188,6 +188,13 @@ const handleIncomingMessage = (
         break
       }
 
+      case 'RESET_STATE': {
+        if (tabataServiceInstance) {
+          tabataServiceInstance.resetState()
+        }
+        break
+      }
+
       case 'TIMER_COMMAND': {
         if (tabataServiceInstance) {
           tabataServiceInstance.handleCommand(message.command)

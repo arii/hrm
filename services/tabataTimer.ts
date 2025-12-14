@@ -286,6 +286,17 @@ class TabataTimer {
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
+
+  // --- State Reset ---
+  public resetState() {
+    this.stopTimer() // stopTimer already handles resetting to IDLE
+    // Additionally, reset any mode-specific configurations if needed
+    this.timerState.mode = 'TABATA' // Reset to default mode
+    this.timerState.workDuration = DEFAULT_WORK_DURATION
+    this.timerState.restDuration = DEFAULT_REST_DURATION
+    // broadcast is called within stopTimer, but we call it again to ensure the mode is updated
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  }
 }
 
 export default TabataTimer

@@ -38,8 +38,10 @@ interface ConnectViewProps {
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
-  workoutStatus: 'idle' | 'running' | 'paused'
+  workoutStatus: 'IDLE' | 'RUNNING' | 'PAUSED'
   onStartWorkout: () => void
+  onPauseWorkout: () => void
+  onResumeWorkout: () => void
   onEndWorkout: () => void
   allowAutoStart: boolean
   onToggleAutoStart: () => void
@@ -67,6 +69,8 @@ export default function ConnectView({
   onReset,
   workoutStatus,
   onStartWorkout,
+  onPauseWorkout,
+  onResumeWorkout,
   onEndWorkout,
   allowAutoStart,
   onToggleAutoStart,
@@ -279,7 +283,7 @@ export default function ConnectView({
             minHeight: '48px', // Ensure consistent height for layout stability
           }}
         >
-          {workoutStatus === 'idle' && isConnected && (
+        {workoutStatus === 'IDLE' && isConnected && (
             <Button
               variant="contained"
               onClick={onStartWorkout}
@@ -290,11 +294,11 @@ export default function ConnectView({
               Start Workout
             </Button>
           )}
-          {workoutStatus === 'paused' && (
+        {workoutStatus === 'PAUSED' && (
             <>
               <Button
                 variant="contained"
-                onClick={onStartWorkout}
+              onClick={onResumeWorkout}
                 size="large"
                 sx={{ minWidth: '200px' }}
                 disabled={!isConnected}
@@ -313,7 +317,18 @@ export default function ConnectView({
               </Button>
             </>
           )}
-          {workoutStatus === 'running' && (
+        {workoutStatus === 'RUNNING' && (
+          <>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={onPauseWorkout}
+              size="large"
+              sx={{ minWidth: '200px' }}
+              aria-label="Pause workout session"
+            >
+              Pause
+            </Button>
             <Button
               variant="outlined"
               onClick={onEndWorkout}
@@ -323,6 +338,7 @@ export default function ConnectView({
             >
               End Workout
             </Button>
+          </>
           )}
         </Stack>
 

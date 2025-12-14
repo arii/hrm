@@ -26,6 +26,9 @@ export default function ConnectPage() {
     toggleAutoStart,
     startWorkout,
     stopWorkout,
+    pauseWorkout,
+    resumeWorkout,
+    resetWorkout,
     status: workoutStatus,
   } = useWorkoutSession()
 
@@ -62,18 +65,12 @@ export default function ConnectPage() {
       hrZoneProps={hrZoneProps}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
-      hasStarted={workoutStatus === 'RUNNING'}
-      onReset={() => {
-        /* Not implemented in new context */
-      }}
-      workoutStatus={
-        workoutStatus === 'RUNNING'
-          ? 'running'
-          : workoutStatus === 'IDLE'
-          ? 'idle'
-          : 'paused'
-      }
+      hasStarted={workoutStatus !== 'IDLE'}
+      onReset={resetWorkout}
+      workoutStatus={workoutStatus}
       onStartWorkout={() => startWorkout('MANUAL')}
+      onPauseWorkout={pauseWorkout}
+      onResumeWorkout={resumeWorkout}
       onEndWorkout={stopWorkout}
       allowAutoStart={allowAutoStart}
       onToggleAutoStart={toggleAutoStart}
