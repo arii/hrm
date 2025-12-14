@@ -2,7 +2,7 @@
 import storybook from 'eslint-plugin-storybook'
 
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals.js'
+import nextPlugin from '@next/eslint-plugin-next'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
@@ -36,7 +36,7 @@ export default defineConfig([
   },
 
   // Next.js specific rules and configurations (includes TypeScript support)
-  ...Object.values(nextPlugin.configs.recommended), // Extends the core-web-vitals configuration from eslint-config-next
+  nextPlugin.configs['core-web-vitals'], // Extends the core-web-vitals configuration from eslint-config-next
 
   // Apply TypeScript rules without redefining the plugin
   {
