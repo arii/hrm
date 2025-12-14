@@ -33,6 +33,7 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     if (isConnected && !prevIsConnected.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSessionStartTime(Date.now())
       setWorkoutDuration(0)
       setCaloriesBurned(0)
