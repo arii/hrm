@@ -11,10 +11,8 @@ import { ErrorProvider } from '@/context/ErrorContext'
 global.fetch = jest.fn()
 
 const mockPlaylists = {
-  presetPlaylists: [
-    { name: 'Preset Playlist 1', uri: 'spotify:playlist:preset1' },
-  ],
-  userPlaylists: [{ name: 'User Playlist 1', uri: 'spotify:playlist:user1' }],
+  presetPlaylists: [{ name: 'Chill Hits', uri: 'spotify:playlist:chill' }],
+  userPlaylists: [{ name: 'Focus Flow', uri: 'spotify:playlist:focus' }],
 }
 
 describe('PlaylistSelector', () => {
@@ -40,8 +38,8 @@ describe('PlaylistSelector', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Preset Playlist 1')).toBeInTheDocument()
-      expect(screen.getByText('User Playlist 1')).toBeInTheDocument()
+      expect(screen.getByText('Chill Hits')).toBeInTheDocument()
+      expect(screen.getByText('Focus Flow')).toBeInTheDocument()
     })
   })
 
@@ -57,8 +55,8 @@ describe('PlaylistSelector', () => {
     )
 
     await waitFor(async () => {
-      await user.click(screen.getByText('User Playlist 1'))
-      expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:user1')
+      await user.click(screen.getByText('Focus Flow'))
+      expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:focus')
     })
   })
 
@@ -74,13 +72,13 @@ describe('PlaylistSelector', () => {
     )
 
     await waitFor(async () => {
-      // Find the play button associated with "Preset Playlist 1"
-      const playlistItem = screen.getByText('Preset Playlist 1').closest('li')
+      // Find the play button associated with "Chill Hits"
+      const playlistItem = screen.getByText('Chill Hits').closest('li')
       const playButton = playlistItem?.querySelector('[aria-label="play"]')
       if (playButton) {
         await user.click(playButton)
       }
-      expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:preset1')
+      expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:chill')
     })
   })
 })

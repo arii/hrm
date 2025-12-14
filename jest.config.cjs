@@ -42,14 +42,13 @@ const config = {
     ],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!uuid)',
+    '/node_modules/(?!uuid)', // Ensure uuid is transformed
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   testTimeout: 10000,
 }
 
