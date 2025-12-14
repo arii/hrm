@@ -51,7 +51,7 @@ Pre-configured MUI components are used for consistency.
 
 ### 2. Global Theme Integration
 
-The theme has been integrated globally in `components/ThemeRegistry/ThemeRegistry.tsx`, and all components now automatically use the theme values.
+The theme has been integrated globally in `components/Providers.tsx`, and all components now automatically use the theme values.
 
 ## UI/UX Improvements
 
