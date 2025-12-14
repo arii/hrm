@@ -25,7 +25,8 @@ export default function ConnectPage() {
   const { connectionStatus, hrmData } = useWebSocket()
 
   const handleConnect = () => {
-    connectAndStream(userName, userAge)
+    const age = userAge ? parseInt(userAge, 10) : 0
+    connectAndStream(userName, age)
   }
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
