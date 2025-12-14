@@ -39,14 +39,15 @@ const stopButtonSx = {
 }
 
 const pauseButtonSx = {
-    ...actionButtonBaseSx,
-    background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
-    boxShadow: '0 8px 24px rgba(249, 115, 22, 0.4)',
-    '&:hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 12px 32px rgba(249, 115, 22, 0.5)',
-    },
-  }
+  ...actionButtonBaseSx,
+  // background is handled by the `color="warning"` prop on the Button
+  // to align with DESIGN_GUIDELINES.md (Yellow #FFEB3B)
+  boxShadow: '0 8px 24px rgba(255, 235, 59, 0.4)',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 12px 32px rgba(255, 235, 59, 0.5)',
+  },
+}
 
 interface WorkoutSessionControlsProps {
   isSessionActive: boolean
