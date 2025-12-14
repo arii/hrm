@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.7.0](https://github.com/arii/hrm/compare/v0.6.0...v0.7.0) (2025-12-14)
+
+
+### Features
+
+* Add Workout Duration & Calories Burned Display ([afbb165](https://github.com/arii/hrm/commit/afbb1657b719172dcacb7609c4f4a05f5d255f60))
+* **dashboard:** Implement HR Monitor Connection and Status UI ([#1316](https://github.com/arii/hrm/issues/1316)) ([f9ab382](https://github.com/arii/hrm/commit/f9ab3828eb814db04a8436dcee26a2853a34c4df))
+* Implement Workout Duration & Calories Burned Display ([a6d88a0](https://github.com/arii/hrm/commit/a6d88a0d55fa821035092be94f11c5b100059bac))
+* Implement Workout Duration & Calories Burned Display ([74c71b3](https://github.com/arii/hrm/commit/74c71b3202e607a037636801decdbdb4cefbae1b))
+
+
+### Bug Fixes
+
+* Address all linting errors ([ca31bd0](https://github.com/arii/hrm/commit/ca31bd042803b7548123df40cb0971be3f0286e9))
+* Address final Prettier formatting error ([06b05b6](https://github.com/arii/hrm/commit/06b05b6d68a2c510777adc905e566ad0555b4b8b))
+* Address linting errors ([bc04fe5](https://github.com/arii/hrm/commit/bc04fe53822f5d6889bf1940649144ddc1105f1c))
+* Address linting errors ([7e90abe](https://github.com/arii/hrm/commit/7e90abe9a634f642d2770390a58ae33a2f703294))
+* Align WorkoutSummary with design guidelines ([f3c778f](https://github.com/arii/hrm/commit/f3c778f01eb3f912bc11138f8ac989c6fb1ee45e))
+* Apply eslint-disable to useWorkoutSession hook ([f9804aa](https://github.com/arii/hrm/commit/f9804aa0eca519568c0cc836bd4b6a99292990e2))
+* Correct DEFAULT_STATE in MockWebSocketProvider ([1da7bcc](https://github.com/arii/hrm/commit/1da7bcc8f878f3f70f4646b5fe110698163f7399))
+* Correct INITIAL_STATE in WebSocketContext ([f4223de](https://github.com/arii/hrm/commit/f4223de436b8458a93312297d82f966cb5675f21))
+* Correct linting errors ([6fba279](https://github.com/arii/hrm/commit/6fba279f473412d0ad566db458f9e7b709fadff3))
+* Correct props and restore component rendering in ConnectView ([b1d157d](https://github.com/arii/hrm/commit/b1d157d9cfc88be9744bd6929ef5d4efc1293ad0))
+* Correct TimerData object in TabataTimer service ([6909286](https://github.com/arii/hrm/commit/6909286ce8c17e208f809b1e634de65f36ad1f26))
+* Correct TimerData property name and interface ([66501ce](https://github.com/arii/hrm/commit/66501ce4c7fe075fdd26d0054ec1efe0c56ce7ee))
+* improve gemini workflow ([6a4061f](https://github.com/arii/hrm/commit/6a4061fc9ff0677db3c63d66cc6258a1b4fcfd62))
+* Remove lingering comment and restore timer data logic ([b7d0419](https://github.com/arii/hrm/commit/b7d0419ffe0c8f3a98654155f6989ca45717967c))
+* Restore missing WorkoutSummary component ([c3beaaa](https://github.com/arii/hrm/commit/c3beaaabc6967c16188079a6271751da2d76814a))
+
 ## [0.6.0](https://github.com/arii/hrm/compare/v0.5.0...v0.6.0) (2025-12-14)
 
 
