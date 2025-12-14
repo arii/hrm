@@ -77,11 +77,16 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.local/share/pnpm/store
-          # Use session-specific cache directories to prevent conflicts
-          mkdir -p ~/.cache/pnpm-${{ env.SESSION_ID }}
           pnpm config set store-dir ~/.local/share/pnpm/store
-          pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
           pnpm config set side-effects-cache true
+
+      - name: Cache pnpm Store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
