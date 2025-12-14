@@ -194,11 +194,6 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus({ status: 'connected' })
 
-      // Set test flag for Playwright tests - use a more reliable method
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = true
-      }
-
       // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
@@ -232,10 +227,6 @@ export const WebSocketProvider = ({
         event.reason
       )
       setConnectionStatus({ status: 'disconnected' })
-
-      if (typeof window !== 'undefined') {
-        window.__TEST_WEBSOCKET_READY__ = false
-      }
 
       // Stop heartbeat on disconnect
       stopHeartbeat()

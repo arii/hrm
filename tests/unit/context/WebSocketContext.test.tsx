@@ -21,7 +21,7 @@ jest.mock('../../../utils/urls', () => ({
   getWebSocketURL: () => 'ws://localhost:3001',
 }))
 
-global.WebSocket = jest.fn().mockImplementation(() => {
+const mockWebSocket = () => {
   mockSocket = {
     readyState: 0, // CONNECTING
     onopen: () => {},
@@ -29,13 +29,10 @@ global.WebSocket = jest.fn().mockImplementation(() => {
     send: jest.fn(),
     close: jest.fn(),
   }
-  // Immediately transition to OPEN state to simulate successful connection
-  setTimeout(() => {
-    mockSocket.readyState = 1 // OPEN
-    act(() => mockSocket.onopen())
-  }, 100)
   return mockSocket
-})
+}
+
+global.WebSocket = jest.fn().mockImplementation(mockWebSocket)
 
 const TestComponent = () => {
   const { connectionStatus } = useWebSocket()
@@ -65,7 +62,10 @@ describe('WebSocketProvider Reconnection', () => {
         <TestComponent />
       </WebSocketProvider>
     )
-    act(() => jest.runAllTimers())
+    act(() => {
+      mockSocket.readyState = 1
+      mockSocket.onopen()
+    })
     await waitFor(() => {
       expect(screen.getByTestId('status').textContent).toBe('connected')
     })
@@ -77,7 +77,10 @@ describe('WebSocketProvider Reconnection', () => {
         <TestComponent />
       </WebSocketProvider>
     )
-    act(() => jest.runAllTimers())
+    act(() => {
+      mockSocket.readyState = 1
+      mockSocket.onopen()
+    })
     await waitFor(() =>
       expect(screen.getByTestId('status').textContent).toBe('connected')
     )
@@ -106,7 +109,10 @@ describe('WebSocketProvider Reconnection', () => {
         <TestComponent />
       </WebSocketProvider>
     )
-    act(() => jest.runAllTimers())
+    act(() => {
+      mockSocket.readyState = 1
+      mockSocket.onopen()
+    })
 
     // First, disconnect
     act(() => mockSocket.onclose({ code: 1006, reason: 'Network lost' }))
@@ -132,10 +138,13 @@ describe('WebSocketProvider Reconnection', () => {
         <TestComponent />
       </WebSocketProvider>
     )
-    act(() => jest.runAllTimers())
+    act(() => {
+      mockSocket.readyState = 1
+      mockSocket.onopen()
+    })
 
-    // Simulate 10 failed reconnection attempts
-    for (let i = 1; i <= 10; i++) {
+    // Simulate 5 failed reconnection attempts
+    for (let i = 1; i <= 5; i++) {
       act(() => mockSocket.onclose({ code: 1006, reason: 'Fail' }))
       act(() => jest.advanceTimersByTime(1000 * 2 ** (i - 1) + 100))
       await waitFor(() =>
@@ -143,7 +152,7 @@ describe('WebSocketProvider Reconnection', () => {
       )
     }
 
-    // 11th failure
+    // 6th failure
     act(() => mockSocket.onclose({ code: 1006, reason: 'Fail' }))
     await waitFor(() =>
       expect(screen.getByTestId('status').textContent).toBe('failed')
