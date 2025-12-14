@@ -152,10 +152,18 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      // Per AUDIT_CODE_HYGIENE.md, this is a critical service.
-      // If it fails, the server should not start. This is a "fail-fast" approach.
-      logger.fatal({ err: e }, 'CRITICAL: SpotifyPolling initialization failed. Server shutting down.')
-      process.exit(1)
+      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      broadcast({
+        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
+        payload: false,
+      })
+      // Fallback stub to avoid crashing entire server if Spotify setup fails
+      spotifyService = {
+        handleCommand: () => {},
+        stopPolling: () => {},
+        startPolling: () => {},
+        setRefreshToken: () => {},
+      } as unknown as SpotifyPolling
     }
     const tabataService = new TabataTimer(broadcast)
 
