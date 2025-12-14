@@ -166,12 +166,6 @@
       "jest-environment-jsdom"
     ]
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  },
   "pnpm": {
     "overrides": {
       "loader-utils@<1.4.1": ">=1.4.1",

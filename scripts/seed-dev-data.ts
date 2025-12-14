@@ -1,8 +1,7 @@
 // scripts/seed-dev-data.ts
 import WebSocket from 'ws'
 
-const WEBSOCKET_URL =
-  process.env.WEBSOCKET_URL || 'ws://127.0.0.1:3000/ws'
+const WEBSOCKET_URL = process.env.WEBSOCKET_URL || 'ws://127.0.0.1:3000/ws'
 
 const ws = new WebSocket(WEBSOCKET_URL)
 let messageCounter = 0
