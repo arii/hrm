@@ -1,7 +1,7 @@
 // File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
-import { MAX_HR_DEFAULT } from '../utils/constants'
+import { calculateMaxHr, MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -225,7 +225,7 @@ const useBluetoothHRM = () => {
             lastDataTime.current = Date.now()
 
             const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = age ? 220 - age : MAX_HR_DEFAULT
+            const calculatedMaxHr = calculateMaxHr(age)
 
             const data: HrmInputData = {
               value: heartRate,
@@ -331,7 +331,6 @@ const useBluetoothHRM = () => {
     forgetDevice,
     deviceStatus,
     batteryLevel,
-    MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
   }
