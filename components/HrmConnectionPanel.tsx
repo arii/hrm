@@ -34,13 +34,13 @@ const HrmConnectionPanel = () => {
     connectAndStream(userName, userAge)
   }
 
-  const filteredTiles = useMemo(() => {
+  const tileData = useMemo(() => {
+    // Filter out users with placeholder names or no identity
     return hrmData
       .filter((user) => {
-        const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
-        return !(isZero || isPlaceholderName || hasNoIdentity)
+        return !(isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
@@ -54,27 +54,12 @@ const HrmConnectionPanel = () => {
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )
 
-        return (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)',
-                lg: 'calc(25% - 12px)',
-              },
-            }}
-          >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={hrZoneProps.percentage}
-              isAlerting={!!matchingAlert}
-              {...(matchingAlert && { alertMessage: matchingAlert.message })}
-            />
-          </Box>
-        )
+        return {
+          ...user,
+          ...hrZoneProps,
+          isAlerting: !!matchingAlert,
+          alertMessage: matchingAlert?.message,
+        }
       })
   }, [hrmData, activeAlerts])
 
@@ -85,7 +70,7 @@ const HrmConnectionPanel = () => {
   // If no tiles are available, show connection UI and skeletons
   // Note: This UI currently assumes a single, primary HRM connection.
   // Future iterations may need to address a multi-device connection strategy.
-  if (isLoading || filteredTiles.length === 0) {
+  if (isLoading || tileData.length === 0) {
     return (
       <>
         <Box
@@ -131,7 +116,31 @@ const HrmConnectionPanel = () => {
     )
   }
 
-  return <>{filteredTiles}</>
+  return (
+    <>
+      {tileData.map((user) => (
+        <Box
+          key={user.clientId}
+          data-testid="hr-tile-grid-item"
+          sx={{
+            width: {
+              xs: '100%',
+              sm: 'calc(50% - 8px)',
+              lg: 'calc(25% - 12px)',
+            },
+          }}
+        >
+          <HrTile
+            name={user.name || ''}
+            bpm={user.value}
+            percentMax={user.percentage}
+            isConnected={user.isConnected}
+            isAlerting={user.isAlerting}
+            {...(user.alertMessage && { alertMessage: user.alertMessage })}
+          />
+        </Box>
+      ))}
+    </>
+  )
 }
-
 export default HrmConnectionPanel

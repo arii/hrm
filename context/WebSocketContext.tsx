@@ -12,13 +12,18 @@ import {
 } from 'react'
 import {
   ClientCommandMessage,
-  HrmData,
+  HrmData as ServerHrmData,
   SpotifyData,
   TimerData,
   ServerMessage,
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+
+// Client-side extension of HrmData to include connection status
+export interface HrmData extends ServerHrmData {
+  isConnected: boolean
+}
 
 interface WebSocketState {
   hrmData: HrmData[]
@@ -87,10 +92,53 @@ export const WebSocketProvider = ({
     message: ServerMessage
   ): WebSocketState => {
     switch (message.type) {
-      case 'INITIAL_STATE':
-        return { ...state, ...message.payload }
-      case 'HRM_UPDATE':
-        return { ...state, hrmData: message.payload }
+      case 'INITIAL_STATE': {
+        // When the initial state is loaded, ensure all HRM data is marked as connected.
+        const hrmDataWithConnection =
+          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
+          []
+        return {
+          ...state,
+          ...message.payload,
+          hrmData: hrmDataWithConnection,
+        }
+      }
+      case 'HRM_UPDATE': {
+        const payload = message.payload as ServerHrmData[]
+        // Create a map of incoming clientIds for efficient lookup
+        const incomingClients = new Set(payload.map((user) => user.clientId))
+
+        // Create a new state array by merging existing and new data
+        const mergedHrmData = state.hrmData.map((existingUser) => {
+          // If the user is in the new payload, update their data and mark as connected
+          if (incomingClients.has(existingUser.clientId)) {
+            const updatedUser = payload.find(
+              (newUser) => newUser.clientId === existingUser.clientId
+            )
+            // If updatedUser is found, always use its data and mark as connected.
+            // The 'value > 0' check is not relevant for determining if a *connected* device's data should be used.
+            return updatedUser
+              ? { ...updatedUser, isConnected: true }
+              : { ...existingUser, isConnected: true } // Fallback, though updatedUser should always exist if incomingClients.has(clientId)
+          }
+          // If the user is NOT in the new payload, they have disconnected.
+          // Keep their last known data but mark as disconnected.
+          return { ...existingUser, isConnected: false }
+        })
+
+        // Add any brand-new users from the payload who were not in the previous state
+        payload.forEach((newUser) => {
+          if (
+            !state.hrmData.some(
+              (existingUser) => existingUser.clientId === newUser.clientId
+            )
+          ) {
+            mergedHrmData.push({ ...newUser, isConnected: true })
+          }
+        })
+
+        return { ...state, hrmData: mergedHrmData }
+      }
       case 'TIMER_UPDATE':
         return {
           ...state,

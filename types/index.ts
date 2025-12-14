@@ -5,9 +5,10 @@ export interface HrTileProps {
   name: string
   bpm: number
   percentMax: number // 0-100
+  isConnected?: boolean
 
   // NEW: Flag to trigger the visual diagnostic state
-  isAlerting: boolean
+  isAlerting?: boolean
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
 }
