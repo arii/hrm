@@ -162,6 +162,8 @@ async function runReviewPreset(
   const existingComments = process.env.EXISTING_COMMENTS
   const prLabels = process.env.PR_LABELS || ''
 
+  const prContextName = process.env.PR_CONTEXT_NAME || 'general'
+
   // 1. Loop Detection / Skip Logic
   const labelsList = prLabels.split(',').map((l) => l.trim())
   if (
@@ -264,26 +266,24 @@ async function runReviewPreset(
     - **Author:** ${prAuthor}
     - **Branches:** ${prHeadRef} -> ${prBaseRef}
     - **Description:** ${prDescription}
+    - **Detected PR Context:** ${prContextName}
 
-    **Project Documentation & Guidelines (Use these to inform your review):**
+    **Project Documentation & Review Guidelines (Use these to inform your review):**
     ${contextContent}
 
     **Critical Instructions:**
-    1. **Be Skeptical:** Your default stance is to request changes. Only approve if the code is excellent.
-    2. **Scope Enforcement:**
-       - If this is a backend PR, FLAG any frontend changes or snapshot updates as "Suspicious Scope Creep".
-       - If this is a refactor, FLAG any logic changes that aren't pure cleanup.
-    3. **File Audit:** You MUST list every single file changed.
-       - For each file, provide a specific comment.
-       - If a file has no obvious issues, you must still explicitly state "Checked - No issues".
-       - If a file change seems unnecessary, ask "Why was this file modified?".
-    4. **Large Changes:** If the diff is large, suggest splitting the PR.
-    5. **Suggestions:** Provide code snippets for fixes.
-    6. **Markdown Formatting (STRICT):**
-       - You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
-       - You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
-       - Do not clump sections together.
-       - Ensure lists are properly spaced.
+    1.  **Follow Context Guidelines:** You MUST strictly follow the "Focus Areas" and "Scope Enforcement" rules defined in the review guidelines for the detected PR context.
+    2.  **Be Skeptical:** Your default stance is to request changes. Only approve if the code is excellent and adheres to the guidelines.
+    3.  **File Audit:** You MUST list every single file changed.
+        - For each file, provide a specific, actionable comment related to the code.
+        - If a file has no obvious issues, you must still explicitly state "Checked - No issues".
+        - If a file change seems unnecessary or out of scope, ask "Why was this file modified?".
+    4.  **Large Changes:** If the diff is large, suggest splitting the PR into smaller, more manageable chunks.
+    5.  **Suggestions:** Provide concrete code snippets for your suggestions. Instead of "Improve error handling", write "Add a try/catch block here to handle potential `EACCES` errors."
+    6.  **Markdown Formatting (STRICT):**
+        - You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
+        - You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
+        - Do not clump sections together. Ensure lists are properly spaced.
 
     **Output Format (JSON):**
     {

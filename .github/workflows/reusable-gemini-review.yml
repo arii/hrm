@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for diffing against HEAD~1
       - uses: pnpm/action-setup@v3
         with:
           version: 9
@@ -40,8 +42,45 @@ jobs:
             echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
           fi
 
+      - name: Check for significant changes
+        id: changes
+        # Only run this check on updates to the PR, not the initial opening
+        if: github.event.action == 'synchronize'
+        run: |
+          CHANGED_LINES=$(git diff --numstat HEAD~1 HEAD | awk '{s+=$1; s+=$2} END {print s}')
+          THRESHOLD=10
+          echo "Changed lines in this push: $CHANGED_LINES, Threshold for re-run: $THRESHOLD"
+          if [ "$CHANGED_LINES" -lt "$THRESHOLD" ]; then
+            echo "Skipping review: Minor change detected ($CHANGED_LINES lines)."
+            echo "run_review=false" >> $GITHUB_OUTPUT
+            # Post a comment explaining the skip
+            gh pr comment ${{ github.event.pull_request.number }} --body "🤖 **Gemini Review**: Skipped for this push as it contained only minor changes (<$THRESHOLD lines). The review will run again on the next significant update."
+          else
+            echo "Significant changes detected. Proceeding with review."
+            echo "run_review=true" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+      - name: Get PR changed files
+        id: pr-files
+        if: steps.changes.outputs.run_review != 'false'
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} --name-only > changed_files.txt
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Detect PR Context
+        id: detector
+        if: steps.changes.outputs.run_review != 'false'
+        run: |
+          CONTEXT=$(node scripts/review-context-detector.js $(cat changed_files.txt))
+          echo "Detected context: $CONTEXT"
+          echo "context=$CONTEXT" >> $GITHUB_OUTPUT
+
       - name: Get PR Diff
         id: diff
+        if: steps.changes.outputs.run_review != 'false'
         run: |
           gh pr diff ${{ github.event.pull_request.number }} > pr.diff
         env:
@@ -49,6 +88,7 @@ jobs:
 
       - name: Get Additional Context
         id: context
+        if: steps.changes.outputs.run_review != 'false'
         run: |
           # Get linked issue body
           ISSUE_NUMBER=$(gh pr view ${{ github.event.pull_request.number }} --json closingIssuesReferences --jq '.closingIssuesReferences[0].number')
@@ -86,7 +126,7 @@ jobs:
 
       - name: Run Gemini Review
         id: gemini
-        if: env.INSTALL_SUCCESS == 'true'
+        if: env.INSTALL_SUCCESS == 'true' && steps.changes.outputs.run_review != 'false'
         continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -100,7 +140,9 @@ jobs:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_DESCRIPTION: ${{ github.event.pull_request.body }}
           PR_DIFF_FILE: pr.diff
-          REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
+          PR_CONTEXT_NAME: ${{ steps.detector.outputs.context }}
+          # Dynamically select the context template and combine with base context files
+          REVIEW_CONTEXT_FILES: '.github/review-prompts/${{ steps.detector.outputs.context }}.md,${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md' }}'
         run: |
           npx tsx scripts/gemini-client.ts \
             --preset review \
@@ -108,7 +150,7 @@ jobs:
             --output "review_result.json"
 
       - name: Post Configuration Warning
-        if: env.LOCKFILE_MISMATCH == 'true' && env.INSTALL_SUCCESS == 'true'
+        if: env.LOCKFILE_MISMATCH == 'true' && env.INSTALL_SUCCESS == 'true' && steps.changes.outputs.run_review != 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
@@ -136,7 +178,7 @@ jobs:
             });
 
       - name: Process Review Result
-        if: steps.gemini.outcome == 'success'
+        if: steps.gemini.outcome == 'success' && steps.changes.outputs.run_review != 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
@@ -175,7 +217,7 @@ jobs:
               core.setFailed('Failed to process Gemini review result');
             }
       - name: Handle Gemini Failure
-        if: steps.gemini.outcome == 'failure'
+        if: steps.gemini.outcome == 'failure' && steps.changes.outputs.run_review != 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
@@ -192,7 +234,7 @@ jobs:
             });
 
       - name: Handle Installation Failure
-        if: env.INSTALL_FAILURE == 'true'
+        if: env.INSTALL_FAILURE == 'true' && steps.changes.outputs.run_review != 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ github.token }}
