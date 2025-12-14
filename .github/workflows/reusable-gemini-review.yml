@@ -11,6 +11,15 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
+      - name: Check if review needed
+        run: |
+          if [[ "${{ github.event.action }}" == "synchronize" ]]; then
+            CHANGED_LINES=$(git diff HEAD~1 --numstat | awk '{sum+=$1+$2} END {print sum}')
+            if [[ $CHANGED_LINES -lt 10 ]]; then
+              echo "Skip review - minor changes only"
+              exit 0
+            fi
+          fi
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
         with:
@@ -65,6 +74,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Detect Review Context
+        id: detect_context
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} --name-only > changed_files.txt
+          CONTEXT=$(node -e "const fs = require('fs'); const { detectPRContext } = require('./scripts/review-context-detector.js'); const files = fs.readFileSync('changed_files.txt', 'utf-8').split('\n'); const context = detectPRContext(files); console.log(context);")
+          echo "REVIEW_CONTEXT=$CONTEXT" >> $GITHUB_ENV
+          echo "Detected context: $CONTEXT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Run Gemini Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -78,6 +97,7 @@ jobs:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PR_DESCRIPTION: ${{ github.event.pull_request.body }}
           PR_DIFF_FILE: pr.diff
+          REVIEW_CONTEXT: ${{ env.REVIEW_CONTEXT }}
           REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
         run: |
           npx tsx scripts/gemini-client.ts \

@@ -161,8 +161,10 @@ async function runReviewPreset(
   const linkedIssueBody = process.env.LINKED_ISSUE_BODY
   const existingComments = process.env.EXISTING_COMMENTS
   const prLabels = process.env.PR_LABELS || ''
+  const commentCount = parseInt(process.env.COMMENT_COUNT || '0')
+  const reviewContext = process.env.REVIEW_CONTEXT || 'general'
 
-  // 1. Loop Detection / Skip Logic
+  // 1. Enhanced Loop Detection / Skip Logic
   const labelsList = prLabels.split(',').map((l) => l.trim())
   if (
     labelsList.includes('ready-for-approval') ||
@@ -174,6 +176,19 @@ async function runReviewPreset(
     // Write a "no-op" result so the workflow doesn't fail
     await writeOutput(
       JSON.stringify({ reviewComment: '', labels: [] }),
+      outputFile
+    )
+    return
+  }
+
+  // Enhanced: Prevent review loops on persistent linting issues
+  if (commentCount > 5 && labelsList.includes('needs-improvement')) {
+    console.log('Multiple review cycles detected. Suggesting manual intervention.')
+    await writeOutput(
+      JSON.stringify({ 
+        reviewComment: '**Review Cycle Limit Reached**\n\nThis PR has undergone multiple review cycles with persistent issues. Consider:\n- Manual linting fix (`npx eslint --fix`)\n- Fresh branch/rebase\n- Pair programming session\n\nSkipping automated review to prevent noise.',
+        labels: ['needs-manual-intervention'] 
+      }),
       outputFile
     )
     return
@@ -212,92 +227,33 @@ async function runReviewPreset(
       ? diff.substring(0, maxDiffLength) + '\n...[DIFF TRUNCATED]'
       : diff
 
-  let reviewTypeInstructions = ''
-  if (existingComments) {
-    reviewTypeInstructions = `
-      **Review Type:** Subsequent Review
-
-      **Instructions for THIS review:**
-      This is a follow-up review. The user has pushed new changes after your previous feedback.
-      Your task is to re-evaluate the Pull Request.
-      1.  **Acknowledge Previous Feedback:** Briefly mention the previous comments.
-      2.  **Focus on Resolution:** Determine if your previous concerns have been addressed in the new diff.
-      3.  **Avoid Repetition:** DO NOT repeat feedback for issues that have been fixed.
-      4.  **New Issues:** Identify any new issues introduced in this update.
-      5.  **Be Concise:** Keep the review focused on the changes since the last one.
-
-      **Previous Review Comments (for your context):**
-      \`\`\`
-      ${existingComments}
-      \`\`\`
-    `
-  } else {
-    reviewTypeInstructions = `
-      **Review Type:** Initial Review
-
-      **Instructions for THIS review:**
-      This is the first time you are reviewing this Pull Request.
-      Provide a thorough and critical analysis of the code changes.
-      Focus on code quality, security, and adherence to project guidelines.
-    `
+  // Load the prompt template
+  const promptTemplatePath = path.resolve(
+    process.cwd(),
+    `.github/review-prompts/${reviewContext}.md`
+  )
+  let promptTemplate = ''
+  try {
+    promptTemplate = await readFile(promptTemplatePath, 'utf-8')
+  } catch (error) {
+    console.warn(
+      `Warning: Could not read prompt template file ${promptTemplatePath}. Falling back to general.md.`
+    )
+    const fallbackTemplatePath = path.resolve(
+      process.cwd(),
+      '.github/review-prompts/general.md'
+    )
+    promptTemplate = await readFile(fallbackTemplatePath, 'utf-8')
   }
 
-  if (linkedIssueBody) {
-    reviewTypeInstructions += `
-      **Linked Issue Context:**
-      The following context is from the issue linked to this PR (#${process.env.ISSUE_NUMBER}). Use it to verify that the PR's changes fully address the issue's requirements.
-      \`\`\`
-      ${linkedIssueBody}
-      \`\`\`
-    `
-  }
-
-  const prompt = `
-    **Role:** You are a Principal Software Engineer acting as a strict, critical code reviewer.
-
-    **Task:** Review the following Pull Request Diff.
-
-    ${reviewTypeInstructions}
-
-    **Context:**
-    - **PR Title:** ${prTitle}
-    - **Author:** ${prAuthor}
-    - **Branches:** ${prHeadRef} -> ${prBaseRef}
-    - **Description:** ${prDescription}
-
-    **Project Documentation & Guidelines (Use these to inform your review):**
-    ${contextContent}
-
-    **Critical Instructions:**
-    1. **Be Skeptical:** Your default stance is to request changes. Only approve if the code is excellent.
-    2. **Scope Enforcement:**
-       - If this is a backend PR, FLAG any frontend changes or snapshot updates as "Suspicious Scope Creep".
-       - If this is a refactor, FLAG any logic changes that aren't pure cleanup.
-    3. **File Audit:** You MUST list every single file changed.
-       - For each file, provide a specific comment.
-       - If a file has no obvious issues, you must still explicitly state "Checked - No issues".
-       - If a file change seems unnecessary, ask "Why was this file modified?".
-    4. **Large Changes:** If the diff is large, suggest splitting the PR.
-    5. **Suggestions:** Provide code snippets for fixes.
-    6. **Markdown Formatting (STRICT):**
-       - You MUST add **TWO NEWLINES** (\`\\n\\n\`) before every header.
-       - You MUST add **ONE NEWLINE** (\`\\n\`) after every header.
-       - Do not clump sections together.
-       - Ensure lists are properly spaced.
-
-    **Output Format (JSON):**
-    {
-      "reviewComment": "Markdown string containing: \\n\\n### 🛡️ Security & Quality Summary\\n\\n[Summary]\\n\\n### 📂 File-by-File Audit\\n\\n- **file1.ts**: [Comment]\\n- **file2.tsx**: [Comment]\\n...\\n\\n### 💡 Critical Feedback\\n\\n[Deep dive]",
-      "labels": ["size-label", "status-label"]
-    }
-
-    **Valid Labels:**
-    - Size: 'small', 'medium', 'large', 'xl'
-    - Status: 'needs-improvement', 'abandon', 'ready-for-approval'
-
-    **Diff:**
-    ${truncatedDiff}
-  `
+  const prompt = promptTemplate
+    .replace('{{prTitle}}', prTitle)
+    .replace('{{prAuthor}}', prAuthor)
+    .replace('{{prHeadRef}}', prHeadRef)
+    .replace('{{prBaseRef}}', prBaseRef)
+    .replace('{{prDescription}}', prDescription)
+    .replace('{{contextContent}}', contextContent)
+    .replace('{{truncatedDiff}}', truncatedDiff)
 
   try {
     const text = await generateContentWithFallback(genAI, prompt, {
