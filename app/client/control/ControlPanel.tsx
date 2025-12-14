@@ -66,6 +66,7 @@ const ControlPanel = () => {
 
       return () => clearTimeout(timer)
     }
+    return () => {}
   }, [connectionStatus])
 
   return (
