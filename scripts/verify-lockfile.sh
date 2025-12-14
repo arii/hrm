@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 echo "Verifying pnpm-lock.yaml is synchronized..."
@@ -7,7 +8,8 @@ if git diff --cached --name-only | grep -q package.json; then
   echo "package.json modified, checking lockfile sync..."
 
   # Run pnpm install to verify lockfile
-  if ! pnpm install --frozen-lockfile; then
+  # Use --lockfile-only to avoid modifying node_modules
+  if ! pnpm install --frozen-lockfile --lockfile-only; then
     echo "❌ ERROR: pnpm-lock.yaml is out of sync with package.json"
     echo "Please run: pnpm install"
     echo "Then stage the updated pnpm-lock.yaml file"

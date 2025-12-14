@@ -32,3 +32,28 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Version Verification**: Confirm all versions are stable (no alpha/beta/rc)
 - **Breaking Changes**: Document any breaking changes and migration steps
 - **Testing**: Verify application builds and tests pass with new dependencies
+
+## Pre-commit Quality Checks
+
+### Automatic Checks
+- ESLint fixes and validation
+- Prettier code formatting
+- Package lockfile synchronization
+- Git commit message validation (via commitlint)
+
+### Manual Fix Commands
+```bash
+# Fix lockfile sync issues
+npm run lockfile:fix
+
+# Fix all formatting issues
+npm run format
+
+# Fix linting issues
+npm run lint:fix
+```
+
+### Common Issues
+- **Lockfile out of sync**: Run `pnpm install` and stage pnpm-lock.yaml
+- **Formatting errors**: Run `npm run format` before commit
+- **Linting errors**: Run `npm run lint:fix` before commit
