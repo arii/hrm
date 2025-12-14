@@ -28,6 +28,7 @@ export interface TimerData {
   currentPhase: TimerPhase
   timeRemaining: number // Used for countdowns (Tabata, Prepare)
   timeElapsed: number // Used for count-ups (Stopwatch)
+  caloriesBurned: number
   mode: TimerMode
   workDuration: number // seconds for Tabata work interval
   restDuration: number // seconds for Tabata rest interval

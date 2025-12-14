@@ -13,9 +13,12 @@ import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
+import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
 
 interface ConnectViewProps {
+  duration: string
+  caloriesBurned: number
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -34,6 +37,8 @@ interface ConnectViewProps {
 }
 
 export default function ConnectView({
+  duration,
+  caloriesBurned,
   userName,
   setUserName,
   userAge,
@@ -228,6 +233,10 @@ export default function ConnectView({
               isAlerting={false}
             />
           </Box>
+        )}
+
+        {isConnected && duration && (
+          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
 
         <Typography

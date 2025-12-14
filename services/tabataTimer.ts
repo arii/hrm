@@ -94,6 +94,7 @@ class TabataTimer {
       currentPhase: this.timerState.currentPhase,
       timeRemaining: this.timerState.timeRemaining,
       timeElapsed: this.timerState.timeElapsed,
+      caloriesBurned: 0, // Placeholder
       mode: this.timerState.mode,
       workDuration: this.timerState.workDuration,
       restDuration: this.timerState.restDuration,
