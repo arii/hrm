@@ -25,14 +25,9 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { config } from './utils/config.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
-
+const { port, host: hostname } = config.server
 const dev = process.env.NODE_ENV !== 'production'
 
 // === CRITICAL SECURITY CHECK ===

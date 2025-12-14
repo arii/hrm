@@ -3,6 +3,8 @@
  * Centralized URL configuration for development and production environments
  */
 
+import { config } from './config.js'
+
 /**
  * Builds a WebSocket URL from a standard HTTP/S base URL.
  * @param baseUrl The base URL (e.g., 'https://example.com').
@@ -20,25 +22,25 @@ export const getBaseURL = (): string => {
     return window.location.origin
   }
 
-  // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
-  return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+  // Server-side: Use the centralized config value.
+  return config.app.baseUrl
 }
 
 export const getWebSocketURL = (): string => {
-  // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
-  if (envWsUrl && envWsUrl.length > 0) {
-    return buildWebSocketUrl(envWsUrl)
-  }
-
-  // 2. Fallback for client-side execution, deriving from the browser's location.
+  // Client-side:
   if (typeof window !== 'undefined') {
+    // 1. Prioritize the explicit environment variable.
+    const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
+    if (envWsUrl && envWsUrl.length > 0) {
+      return buildWebSocketUrl(envWsUrl)
+    }
+    // 2. Fallback to deriving from the browser's location.
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     return `${protocol}//${window.location.host}/ws`
   }
 
-  // 3. Fallback for server-side execution, deriving from the base application URL.
-  return buildWebSocketUrl(getBaseURL())
+  // Server-side: Directly use the computed config value.
+  return config.websocket.url
 }
 
 export const getAPIURL = (endpoint: string): string => {
