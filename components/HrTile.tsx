@@ -30,6 +30,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
+  calories,
   isAlerting, // NEW PROP
   alertMessage = 'Checking signal...', // Default message
 }: HrTileProps) => {
@@ -44,7 +45,7 @@ const HrTile = ({
       title={
         isAlerting
           ? alertMessage
-          : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+          : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}`
       }
       arrow
     >
@@ -97,18 +98,17 @@ const HrTile = ({
             >
               {percentMax}%
             </Typography>
-            <Typography
-              data-testid="live-hr-value"
-              variant="h6"
-              sx={{
-                fontWeight: 600,
-                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
-                transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out', // Subtle animation
-              }}
-            >
-              {bpm} BPM
+           <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 1 }}>
+            {/* BPM Display */}
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {bpm} <span style={{fontSize: '0.8rem', opacity: 0.8}}>BPM</span>
             </Typography>
+
+            {/* Calorie Display */}
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {Math.floor(calories)} <span style={{fontSize: '0.8rem', opacity: 0.8}}>KCAL</span>
+            </Typography>
+          </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
@@ -139,6 +139,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.calories === nextProps.calories &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage
   )

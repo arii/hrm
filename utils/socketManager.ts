@@ -17,6 +17,7 @@ import {
   StateSnapshot,
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { CALORIE_DEFAULTS } from './constants.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -32,7 +33,9 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmClients = new Map<string, HrmData>()
+const clientData = new Map<string, HrmData>()
+// Track internal state for calculations (not sent to client)
+const clientSessionState = new Map<string, { lastUpdate: number }>()
 
 interface Services {
   tabataService: TabataTimer
@@ -59,15 +62,17 @@ const initSocketManager = (
     extWs.lastPingTime = Date.now() // Initialize on connect
     console.log(`WebSocket Client connected: ${clientId}`)
 
-    // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
-    const defaultClientData: HrmData = {
+    // Initialize new client
+    const newClient: HrmData = {
       clientId,
       value: 0,
       maxHr: 185,
-      // name intentionally undefined until first HRM_INPUT provides one
       age: 30,
+      calories: 0, // Initialize to 0
     }
-    hrmClients.set(clientId, defaultClientData)
+    clientData.set(clientId, newClient)
+    clientSessionState.set(clientId, { lastUpdate: Date.now() })
+
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), clientId)
@@ -75,10 +80,11 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       console.log(`WebSocket Client disconnected: ${clientId}`)
-      hrmClients.delete(clientId)
+      clientData.delete(clientId)
+      clientSessionState.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
-        payload: Array.from(hrmClients.values()),
+        payload: Array.from(clientData.values()),
       })
     })
   })
@@ -148,7 +154,7 @@ const handleIncomingMessage = (
         // Explicitly construct the payload to match the ServerMessage['payload'] type for 'INITIAL_STATE'
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: Array.from(hrmClients.values()),
+          hrmData: Array.from(clientData.values()),
         }
 
         const initialStateMessage: ServerMessage = {
@@ -160,30 +166,49 @@ const handleIncomingMessage = (
       }
 
       case 'HRM_INPUT': {
-        const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
-        if (existingClientData) {
-          // Filter out null values to avoid overwriting valid data
-          const updatedClientProperties = Object.fromEntries(
+        const existingData = clientData.get(clientId)
+        const sessionState = clientSessionState.get(clientId)
+
+        if (existingData && sessionState) {
+          const now = Date.now()
+          // Calculate time delta in minutes
+          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
+
+          // Update Session State
+          sessionState.lastUpdate = now
+
+          // Calculate Calories if HR is active (> 30 bpm to filter noise)
+          let newCalories = existingData.calories
+          const currentHr = message.data.value ?? existingData.value
+          const currentAge = message.data.age ?? existingData.age ?? 30
+
+          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) { // Filter huge jumps
+             // Formula: (-55.0969 + 0.6309 x HR + 0.1988 x Weight + 0.2017 x Age) / 4.184
+             const rate = (
+               -CALORIE_DEFAULTS.INTERCEPT +
+               (CALORIE_DEFAULTS.FACTOR_HR * currentHr) +
+               (CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG) +
+               (CALORIE_DEFAULTS.FACTOR_AGE * currentAge)
+             ) / CALORIE_DEFAULTS.JOULE_CONVERSION
+
+             // Ensure positive rate
+             const safeRate = Math.max(0, rate)
+             newCalories += safeRate * dtMinutes
+          }
+
+          const updateData = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmClients.set(clientId, {
-            ...existingClientData,
-            ...updatedClientProperties,
+
+          clientData.set(clientId, {
+            ...existingData,
+            ...updateData,
+            calories: Math.round(newCalories * 10) / 10, // Round to 1 decimal
           })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
         }
         broadcast({
           type: 'HRM_UPDATE',
-          payload: Array.from(hrmClients.values()),
+          payload: Array.from(clientData.values()),
         })
         break
       }

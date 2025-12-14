@@ -70,6 +70,7 @@ const HrmConnectionPanel = () => {
               name={user.name || ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
+              calories={user.calories || 0}
               isAlerting={!!matchingAlert}
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
