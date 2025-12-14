@@ -75,7 +75,11 @@ const HrmConnectionPanel = () => {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
         <Box
           sx={{
-            width: '100%',
+            width: {
+              xs: '100%',
+              sm: 'calc(50% - 8px)',
+              lg: 'calc(25% - 12px)',
+            },
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
@@ -103,7 +107,10 @@ const HrmConnectionPanel = () => {
           data-testid="hr-tile-grid-item"
           sx={{
             display: { xs: 'none', md: 'block' },
-            width: '100%',
+            width: {
+              sm: 'calc(50% - 8px)',
+              lg: 'calc(25% - 12px)',
+            },
           }}
         >
           <Skeleton
@@ -123,7 +130,11 @@ const HrmConnectionPanel = () => {
           key={user.clientId}
           data-testid="hr-tile-grid-item"
           sx={{
-            width: '100%',
+            width: {
+              xs: '100%',
+              sm: 'calc(50% - 8px)',
+              lg: 'calc(25% - 12px)',
+            },
           }}
         >
           <HrTile
