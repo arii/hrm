@@ -24,14 +24,19 @@ const envSchema = z.object({
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
 
   // --- Application ---
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   HOST: z.string().optional().default('127.0.0.1'),
   PORT: z.coerce.number().default(3000),
 
   // --- Security & Persistence ---
   ENCRYPTION_KEY: z
     .string()
-    .length(64, 'ENCRYPTION_KEY must be 64 characters long (a 32-byte hex string)')
+    .length(
+      64,
+      'ENCRYPTION_KEY must be 64 characters long (a 32-byte hex string)'
+    )
     .optional(),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(3000),
   SPOTIFY_TOKEN_PERSISTENCE: z

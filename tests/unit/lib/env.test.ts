@@ -23,6 +23,7 @@ describe('Environment Variable Validation', () => {
   it('should pass with all required environment variables set', () => {
     // These are already set by .env.test and loaded by jest.config.cjs
     // This test now simply verifies that a valid environment doesn't throw.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     expect(() => require('../../../lib/env')).not.toThrow()
   })
 
@@ -31,6 +32,7 @@ describe('Environment Variable Validation', () => {
     delete process.env.NEXTAUTH_SECRET
 
     // Expect the module to throw a ZodError when imported
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     expect(() => require('../../../lib/env')).toThrow(z.ZodError)
   })
 
@@ -44,6 +46,7 @@ describe('Environment Variable Validation', () => {
     // and we want to confirm our schema respects that.
 
     // Dynamically import the env module
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { env } = require('../../../lib/env')
 
     // Check that optional variables have their default values
@@ -59,6 +62,7 @@ describe('Environment Variable Validation', () => {
     process.env.TESTING = 'true'
     process.env.SPOTIFY_DEBUG = '1'
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { env } = require('../../../lib/env')
 
     expect(env.TESTING).toBe(true)
