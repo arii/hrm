@@ -69,7 +69,7 @@ const HrmTiles = () => {
             <Skeleton
               variant="rectangular"
               height={220}
-              sx={{ borderRadius: '12px' }}
+              sx={{ borderRadius: 3 }}
             />
           </Grid>
         ))}
