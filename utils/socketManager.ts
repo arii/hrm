@@ -15,7 +15,7 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-} from '../types/websocket'
+} from '../types/websocket.ts'
 import { broadcast, initBroadcaster } from './broadcast'
 
 // Extend WebSocket to track client role and connection health
