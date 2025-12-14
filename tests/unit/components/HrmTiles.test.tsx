@@ -1,10 +1,7 @@
 /** @jest-environment jsdom */
 
 import HrmTiles from '@/components/HrmTiles'
-import {
-  useWebSocket,
-  ConnectionStatus,
-} from '@/context/WebSocketContext'
+import { useWebSocket, ConnectionStatus } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
 

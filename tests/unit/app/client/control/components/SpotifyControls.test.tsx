@@ -3,10 +3,7 @@
  */
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import {
-  useWebSocket,
-  ConnectionStatus,
-} from '@/context/WebSocketContext'
+import { useWebSocket, ConnectionStatus } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'

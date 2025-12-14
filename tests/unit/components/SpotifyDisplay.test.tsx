@@ -7,10 +7,7 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import {
-  useWebSocket,
-  ConnectionStatus,
-} from '@/context/WebSocketContext'
+import { useWebSocket, ConnectionStatus } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react'
