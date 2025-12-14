@@ -5,10 +5,10 @@ import type { ErrorInfo } from 'react'
 import type { ErrorReport } from '@/types/error'
 
 export class ErrorBoundary extends React.Component<
-  React.PropsWithChildren<{}>,
+  React.PropsWithChildren<object>,
   { hasError: boolean; error?: Error }
 > {
-  constructor(props: React.PropsWithChildren<{}>) {
+  constructor(props: React.PropsWithChildren<object>) {
     super(props)
     this.state = { hasError: false }
   }
@@ -58,7 +58,8 @@ export class ErrorBoundary extends React.Component<
             Something went wrong
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            We've encountered an unexpected error. Your workout data is safe.
+            We&apos;ve encountered an unexpected error. Your workout data is
+            safe.
           </Typography>
           <Button
             variant="contained"

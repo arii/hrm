@@ -47,16 +47,16 @@ export default function RootLayout({
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         {/* ThemeRegistry now contains all the logic */}
         <ThemeRegistry options={{ key: 'mui' }}>
-          <ErrorProvider>
-            <Providers>
-              <UserSettingsProvider>
-                <ErrorBoundary>
+          <ErrorBoundary>
+            <ErrorProvider>
+              <Providers>
+                <UserSettingsProvider>
                   <TimerSoundProvider>{children}</TimerSoundProvider>
-                </ErrorBoundary>
-              </UserSettingsProvider>
-            </Providers>
-            <ErrorDisplay />
-          </ErrorProvider>
+                </UserSettingsProvider>
+              </Providers>
+              <ErrorDisplay />
+            </ErrorProvider>
+          </ErrorBoundary>
           <Footer />
           <BottomNavBar />
         </ThemeRegistry>

@@ -38,7 +38,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: "gemini-1.5-flash"
+          GEMINI_MODEL: 'gemini-1.5-flash'
         run: node dist/release-notes-script/generate-release-notes.js
 
       - name: Create Release

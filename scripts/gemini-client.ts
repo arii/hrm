@@ -182,11 +182,14 @@ async function runReviewPreset(
 
   // Enhanced: Prevent review loops on persistent linting issues
   if (commentCount > 5 && labelsList.includes('needs-improvement')) {
-    console.log('Multiple review cycles detected. Suggesting manual intervention.')
+    console.log(
+      'Multiple review cycles detected. Suggesting manual intervention.'
+    )
     await writeOutput(
-      JSON.stringify({ 
-        reviewComment: '**Review Cycle Limit Reached**\n\nThis PR has undergone multiple review cycles with persistent issues. Consider:\n- Manual linting fix (`npx eslint --fix`)\n- Fresh branch/rebase\n- Pair programming session\n\nSkipping automated review to prevent noise.',
-        labels: ['needs-manual-intervention'] 
+      JSON.stringify({
+        reviewComment:
+          '**Review Cycle Limit Reached**\n\nThis PR has undergone multiple review cycles with persistent issues. Consider:\n- Manual linting fix (`npx eslint --fix`)\n- Fresh branch/rebase\n- Pair programming session\n\nSkipping automated review to prevent noise.',
+        labels: ['needs-manual-intervention'],
       }),
       outputFile
     )
