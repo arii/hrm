@@ -14,7 +14,6 @@ export default function ConnectPage() {
   const [workoutDuration, setWorkoutDuration] = useState(0)
   const [caloriesBurned, setCaloriesBurned] = useState(0)
 
-  // Destructure the new values from your updated hook
   const {
     connectAndStream,
     disconnect,
@@ -34,7 +33,7 @@ export default function ConnectPage() {
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-  // Create a ref to hold the latest values for use in the interval
+
   const latestMetrics = useRef({
     currentHR,
     userAge: userAge ? parseInt(userAge) : 0,
@@ -52,13 +51,11 @@ export default function ConnectPage() {
   const prevIsConnected = useRef(isConnected)
 
   useEffect(() => {
-    // Start a new session ONLY on the rising edge of isConnected
     if (isConnected && !prevIsConnected.current) {
       setSessionStartTime(Date.now())
       setWorkoutDuration(0)
       setCaloriesBurned(0)
     }
-    // Update the ref AFTER the rest of the effect logic
     prevIsConnected.current = isConnected
   }, [isConnected])
 
@@ -66,7 +63,6 @@ export default function ConnectPage() {
     let interval: NodeJS.Timeout | null = null
     if (isConnected && sessionStartTime) {
       interval = setInterval(() => {
-        // Use the ref here to get the latest values
         const {
           currentHR: hr,
           userAge: age,
@@ -74,15 +70,16 @@ export default function ConnectPage() {
         } = latestMetrics.current
 
         if (start) {
-          // Update duration
           const durationInSeconds = Math.floor((Date.now() - start) / 1000)
           setWorkoutDuration(durationInSeconds)
 
-          // Calculate calories if age and HR are valid
           if (age > 0 && hr > 0) {
-            const weightKg = 75 // Standard weight
+            const weightKg = 75
             const caloriesPerMinute =
-              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
+              (age * 0.2017 -
+                weightKg * 0.09036 +
+                hr * 0.6309 -
+                55.0969) /
               4.184
             const caloriesPerSecond = caloriesPerMinute / 60
             if (caloriesPerSecond > 0) {
