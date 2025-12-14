@@ -1,6 +1,6 @@
 {
   "name": "hrm",
-  "version": "0.9.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -55,6 +55,9 @@
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
+    "lockfile:verify": "bash scripts/verify-lockfile.sh",
+    "lockfile:fix": "pnpm install && git add pnpm-lock.yaml",
+    "precommit": "lint-staged",
     "prepare": "husky"
   },
   "dependencies": {
