@@ -87,7 +87,9 @@ describe('HrTile', () => {
           />
         </ThemeProvider>
       )
-      expect(screen.queryByTestId('workout-data-display')).not.toBeInTheDocument()
+      expect(
+        screen.queryByTestId('workout-data-display')
+      ).not.toBeInTheDocument()
     })
 
     it('hides workout data if calories are 0 and duration is missing', () => {
@@ -104,7 +106,9 @@ describe('HrTile', () => {
           />
         </ThemeProvider>
       )
-      expect(screen.queryByTestId('workout-data-display')).not.toBeInTheDocument()
+      expect(
+        screen.queryByTestId('workout-data-display')
+      ).not.toBeInTheDocument()
     })
   })
 })

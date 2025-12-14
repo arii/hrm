@@ -72,16 +72,17 @@ const renderWithProviders = (component: React.ReactElement) => {
 }
 
 describe('HrmConnectionPanel - Workout Data Integration', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Provide a default mock implementation for useWorkoutSession
-    (useWorkoutSession as jest.Mock).mockReturnValue({
+    ;(useWorkoutSession as jest.Mock).mockReturnValue({
       caloriesBurned: 150,
       workoutDuration: 90, // 1:30
       hasStarted: true,
     })
 
     // Mock WebSocket context
-    jest.spyOn(require('@/context/WebSocketContext'), 'useWebSocket').mockReturnValue({
+    const webSocketContext = await import('@/context/WebSocketContext')
+    jest.spyOn(webSocketContext, 'useWebSocket').mockReturnValue({
       hrmData: mockHrmData,
       connectionStatus: 'Connected',
       activeAlerts: [],
@@ -99,8 +100,12 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
     const tiles = screen.getAllByTestId('hr-tile-card')
     expect(tiles.length).toBe(2) // Primary and Secondary users
 
-    const primaryUserTile = screen.getByText('Primary User').closest('[data-testid="hr-tile-card"]')
-    const secondaryUserTile = screen.getByText('Secondary User').closest('[data-testid="hr-tile-card"]')
+    const primaryUserTile = screen
+      .getByText('Primary User')
+      .closest('[data-testid="hr-tile-card"]')
+    const secondaryUserTile = screen
+      .getByText('Secondary User')
+      .closest('[data-testid="hr-tile-card"]')
 
     // We can't directly check props of the real HrTile, so we check the output.
     // Let's assume the presence of "kcal" means workout data is shown.
@@ -119,29 +124,32 @@ describe('HrmConnectionPanel - Workout Data Integration', () => {
   })
 
   it('correctly identifies the primary user', () => {
-     // The logic for identifying the primary user is inside the component's useMemo.
-     // We can infer its correctness by observing which tile gets the workout data.
-     renderWithProviders(<HrmConnectionPanel />);
+    // The logic for identifying the primary user is inside the component's useMemo.
+    // We can infer its correctness by observing which tile gets the workout data.
+    renderWithProviders(<HrmConnectionPanel />)
 
-     // Let's check which user's tile gets the workout data props.
-     // This is an indirect test of the "primary user" logic.
-     const allTiles = screen.getAllByRole('region');
-     const primaryUserTile = allTiles[0]; // Assuming order is preserved
+    // Let's check which user's tile gets the workout data props.
+    // This is an indirect test of the "primary user" logic.
+    const allTiles = screen.getAllByRole('region')
+    const primaryUserTile = allTiles[0] // Assuming order is preserved
 
-     // Based on the mock, the first user is the primary one.
-     expect(primaryUserTile).toHaveAttribute('aria-label', expect.stringContaining('Primary User'));
-  });
+    // Based on the mock, the first user is the primary one.
+    expect(primaryUserTile).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Primary User')
+    )
+  })
 
   it('does not show workout data if the workout has not started', () => {
-    (useWorkoutSession as jest.Mock).mockReturnValue({
+    ;(useWorkoutSession as jest.Mock).mockReturnValue({
       caloriesBurned: 0,
       workoutDuration: 0,
       hasStarted: false,
-    });
+    })
 
-    renderWithProviders(<HrmConnectionPanel />);
+    renderWithProviders(<HrmConnectionPanel />)
 
     // No workout data should be visible
-    expect(screen.queryByText('kcal')).not.toBeInTheDocument();
-  });
-});
+    expect(screen.queryByText('kcal')).not.toBeInTheDocument()
+  })
+})

@@ -92,11 +92,10 @@ const HrmConnectionPanel = () => {
   }, [
     hrmData,
     activeAlerts,
-    session?.user?.name,
-    userSettings.userName,
     hasStarted,
     caloriesBurned,
     workoutDuration,
+    primaryUser?.clientId,
   ])
 
   const isLoading =
