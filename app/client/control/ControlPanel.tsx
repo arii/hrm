@@ -56,18 +56,15 @@ const ControlPanel = () => {
 
   // Signal when page is ready for testing
   useEffect(() => {
-    if (connectionStatus === 'Connected') {
-      const timer = setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          window.__TEST_READY__ = true
-          window.dispatchEvent(new CustomEvent('test-ready'))
-        }
-      }, 1500) // A delay to ensure all elements are rendered
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.__TEST_READY__ = true
+        window.dispatchEvent(new CustomEvent('test-ready'))
+      }
+    }, 1500)
 
-      return () => clearTimeout(timer)
-    }
-    return () => {}
-  }, [connectionStatus])
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <>
@@ -95,6 +92,7 @@ const ControlPanel = () => {
         <Box sx={{ mb: 1, textAlign: 'center' }}>
           <Typography
             variant="caption"
+            data-testid="connection-status"
             sx={{
               color: connectionStatus === 'Connected' ? 'green' : 'orange',
               fontWeight: 'bold',
