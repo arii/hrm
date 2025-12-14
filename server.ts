@@ -22,6 +22,7 @@ import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
+import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
@@ -182,6 +183,24 @@ app
 
     // --- Express Routing ---
 
+    // Health Check Endpoints
+    expressApp.get('/api/health', (_req: Request, res: Response) => {
+      res.status(200).json({ status: 'ok' })
+    })
+
+    expressApp.get(
+      '/api/health/ready',
+      async (_req: Request, res: Response) => {
+        const healthStatus = await performHealthCheck(
+          wss,
+          spotifyService,
+          tabataService
+        )
+        const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200
+        res.status(statusCode).json(healthStatus)
+      }
+    )
+
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
@@ -191,36 +210,20 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Refactored to use async/await and avoid nested setTimeouts
-        const handleTokenDelivery = async () => {
-          try {
-            // Wait a moment for the token to be written to disk by the API route
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+        // Wait a moment for token to be written
+        setTimeout(async () => {
+          if (spotifyService) {
+            // Signal the service to reload tokens from disk
+            spotifyService.setRefreshToken('signal')
 
-            if (spotifyService) {
-              // Signal the service to reload tokens from disk
-              spotifyService.setRefreshToken('signal')
-
-              // Wait a bit for the service to re-initialize with the new token
-              await new Promise((resolve) => setTimeout(resolve, 1500))
-
-              // Force a poll to get immediate feedback
-              if (
-                typeof spotifyService.forcePollAndBroadcast === 'function'
-              ) {
+            // Wait a bit for reload, then force poll
+            setTimeout(async () => {
+              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
                 await spotifyService.forcePollAndBroadcast()
               }
-            }
-          } catch (error) {
-            logger.error(
-              { err: error },
-              'Error handling token delivery interception'
-            )
+            }, 1500)
           }
-        }
-
-        // Execute the handler without holding up the HTTP response
-        handleTokenDelivery()
+        }, 1000)
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
