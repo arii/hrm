@@ -1,6 +1,6 @@
 'use client'
 
-import BottomNavBar from '@/components/BottomNavBar'
+import ResponsiveNavBar from '@/components/ResponsiveNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
@@ -30,7 +30,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
         </LoadingProvider>
       </ErrorProvider>
       <Footer />
-      <BottomNavBar />
+      <ResponsiveNavBar />
     </ThemeRegistry>
   )
 }
