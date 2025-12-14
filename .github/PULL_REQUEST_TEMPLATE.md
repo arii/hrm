@@ -20,11 +20,14 @@ Fixes # (issue)
 - [ ] 📚 Documentation (changes only affecting documentation)
 - [ ] 🎨 Styling (changes that do not affect functionality)
 
-## Scope Validation
-- [ ] This PR addresses a **single concern**
-- [ ] If multiple changes exist, they are **directly related**
-- [ ] No unrelated **architectural changes** are included
-- [ ] No **scope creep** from the original issue/task
+## PR Scope Checklist
+*This checklist is mandatory for all PRs.*
+
+- [ ] **PR has a clear, single purpose:** The title and description of the PR clearly state the purpose of the change.
+- [ ] **All changes relate to the stated objective:** The code changes should be directly related to the purpose of the PR.
+- [ ] **No unrelated cleanup or refactoring:** The PR should not contain any changes that are not directly related to the stated objective.
+- [ ] **Title and description match the actual changes:** The title and description should accurately reflect the changes in the PR.
+- [ ] **Tests cover the specific change scope:** The tests should be focused on the changes in the PR and should not include unrelated tests.
 
 ## Impact Assessment
 - [ ] Changes are **backward compatible** (or breaking changes are documented)
@@ -45,7 +48,7 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - Toolchain:
 - SDK:
 
-## Checklist:
+## Self-Review Checklist:
 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
