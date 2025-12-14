@@ -22,8 +22,17 @@ export const spotifyTokenManager = new SpotifyTokenManager(
 export const initializeCoreServices = async () => {
   let spotifyService: SpotifyPolling
   try {
-    // Pass the singleton token manager to the polling service
-    spotifyService = await SpotifyPolling.create(broadcast, spotifyTokenManager)
+    // Race the Spotify service initialization against a timeout.
+    // This prevents the server from hanging during startup in test environments
+    // where network access to the Spotify API may be blocked or slow.
+    const spotifyPromise = SpotifyPolling.create(broadcast, spotifyTokenManager)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('SpotifyPolling initialization timed out')),
+        10000
+      )
+    )
+    spotifyService = await Promise.race([spotifyPromise, timeoutPromise])
   } catch (e) {
     logger.error({ err: e }, 'SpotifyPolling initialization failed')
     broadcast({
