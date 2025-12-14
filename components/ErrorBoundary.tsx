@@ -28,7 +28,7 @@ export class ErrorBoundary extends React.Component<
   reportError = (error: Error, errorInfo: ErrorInfo) => {
     const errorReport: ErrorReport = {
       message: error.message,
-      stack: error.stack,
+      ...(error.stack && { stack: error.stack }),
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
       url: window.location.href,
