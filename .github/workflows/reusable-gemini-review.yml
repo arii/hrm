@@ -19,7 +19,26 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies with fallback
+        id: install
+        continue-on-error: true
+        run: |
+          echo "Attempting pnpm install with frozen lockfile..."
+          if ! pnpm install --frozen-lockfile; then
+            echo "::warning::Frozen lockfile failed, attempting regular install"
+            echo "LOCKFILE_MISMATCH=true" >> $GITHUB_ENV
+
+            if pnpm install; then
+              echo "::notice::Dependencies installed successfully with lockfile update"
+              echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
+            else
+              echo "::error::Dependency installation failed completely"
+              echo "INSTALL_FAILURE=true" >> $GITHUB_ENV
+              exit 1
+            fi
+          else
+            echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
+          fi
 
       - name: Get PR Diff
         id: diff
@@ -66,6 +85,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Run Gemini Review
+        id: gemini
+        if: env.INSTALL_SUCCESS == 'true'
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
@@ -85,7 +107,36 @@ jobs:
             --context "$REVIEW_CONTEXT_FILES" \
             --output "review_result.json"
 
+      - name: Post Configuration Warning
+        if: env.LOCKFILE_MISMATCH == 'true' && env.INSTALL_SUCCESS == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const warningComment = `## ⚠️ Configuration Issue Detected
+            **Issue**: \`pnpm-lock.yaml\` is out of sync with \`package.json\`
+            **Impact**: This doesn't affect your code changes, but the dependency lockfile needs updating.
+            **Fix**: Run these commands locally and push the changes:
+            \`\`\`bash
+            pnpm install
+            git add pnpm-lock.yaml
+            git commit -m "fix: update pnpm lockfile"
+            git push
+            \`\`\`
+            **Code Review**: ${{ steps.gemini.outcome == 'success' && '✅ Completed despite configuration issue' || '❌ Skipped due to setup failure' }}
+            <details>
+            <summary>Technical Details</summary>
+            The workflow attempted to install dependencies with \`--frozen-lockfile\` but found mismatches. This typically happens when dependencies in \`package.json\` are changed without committing the corresponding \`pnpm-lock.yaml\` update. This is an infrastructure issue, not a problem with your code changes.
+            </details>`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: warningComment
+            });
+
       - name: Process Review Result
+        if: steps.gemini.outcome == 'success'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
@@ -123,3 +174,36 @@ jobs:
               console.error('Error processing review result:', e);
               core.setFailed('Failed to process Gemini review result');
             }
+      - name: Handle Gemini Failure
+        if: steps.gemini.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const failureComment = `## 🤖 Gemini Review Status
+            **Status**: ❌ Review Failed
+            **Reason**: The Gemini review process encountered an unexpected error. This is likely an intermittent infrastructure issue.
+            **Next Steps**: The workflow will be automatically re-run on the next push. If the problem persists, please check the workflow logs for more details.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: failureComment
+            });
+
+      - name: Handle Installation Failure
+        if: env.INSTALL_FAILURE == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const failureComment = `## 🤖 Gemini Review Status
+            **Status**: ❌ Review Skipped
+            **Reason**: Dependency installation failed completely. This is a blocking issue.
+            **Next Steps**: Please check your \`package.json\` for syntax errors or invalid dependencies and ensure \`pnpm-lock.yaml\` is not corrupted. Review the workflow logs for the specific error message from \`pnpm\`.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: failureComment
+            });

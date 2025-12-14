@@ -151,6 +151,31 @@ test: add unit tests for timer utilities
    - Link related issues
    - Request appropriate reviewers
 
+## Troubleshooting CI/CD Issues
+
+Our CI/CD pipeline includes automated checks to ensure code quality and consistency. Here are some common issues you might encounter:
+
+### Lockfile Mismatch
+
+- **Error Message**: `ERR_PNPM_OUTDATED_LOCKFILE`
+- **Cause**: This happens when you make changes to `package.json` (e.g., adding, removing, or updating a dependency) but do not commit the corresponding changes to `pnpm-lock.yaml`.
+- **Solution**: Run the following commands locally, then commit and push the updated lockfile:
+  ```bash
+  pnpm install
+  git add pnpm-lock.yaml
+  git commit -m "fix: update pnpm lockfile"
+  git push
+  ```
+
+### Dependency Installation Failure
+
+- **Symptom**: The "Install Dependencies" step fails for reasons other than a lockfile mismatch.
+- **Cause**: This can be due to a syntax error in `package.json`, an invalid or unreachable dependency, or a corrupted `pnpm-lock.yaml` file.
+- **Solution**:
+  1.  Carefully check your `package.json` for any syntax errors (e.g., missing commas, incorrect version specifiers).
+  2.  Ensure all specified dependencies are valid and available on the npm registry.
+  3.  Review the workflow logs for the specific error message from `pnpm`.
+
 ## Code Review Process
 
 - All changes require review before merging
