@@ -12,15 +12,28 @@ import { z } from 'zod'
 /**
  * Zod schema for environment variables.
  * Defines the required and optional variables for the application.
+ *
+ * During the build process (`next build`), certain server-side environment
+ * variables may not be available. To prevent build failures, we make these
+ * variables optional if the `CI` environment variable is set to `'true'`, if
+ * the npm lifecycle event is 'build', or if `TESTING` is true. The runtime
+ * validation in `server.ts` will still enforce their presence in production.
  */
+const isBuildOrTest =
+  process.env.npm_lifecycle_event === 'build' ||
+  process.env.CI === 'true' ||
+  process.env.TESTING === 'true'
+
 const envSchema = z.object({
   // --- NextAuth ---
   NEXTAUTH_URL: z.string().url().optional(),
-  NEXTAUTH_SECRET: z.string().min(1),
+  NEXTAUTH_SECRET: isBuildOrTest ? z.string().optional() : z.string().min(1),
 
   // --- Spotify ---
-  SPOTIFY_CLIENT_ID: z.string().min(1),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1),
+  SPOTIFY_CLIENT_ID: isBuildOrTest ? z.string().optional() : z.string().min(1),
+  SPOTIFY_CLIENT_SECRET: isBuildOrTest
+    ? z.string().optional()
+    : z.string().min(1),
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
 
   // --- Application ---
@@ -31,13 +44,15 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
 
   // --- Security & Persistence ---
-  ENCRYPTION_KEY: z
-    .string()
-    .length(
-      64,
-      'ENCRYPTION_KEY must be 64 characters long (a 32-byte hex string)'
-    )
-    .optional(),
+  ENCRYPTION_KEY: isBuildOrTest
+    ? z.string().optional()
+    : z
+        .string()
+        .length(
+          64,
+          'ENCRYPTION_KEY must be 64 characters long (a 32-byte hex string)'
+        )
+        .optional(),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(3000),
   SPOTIFY_TOKEN_PERSISTENCE: z
     .enum(['true', 'false', '1', '0'])
@@ -65,17 +80,38 @@ const envSchema = z.object({
  * This object is the single source of truth for environment variables
  * throughout the application. Accessing variables through this object
  * ensures they are type-safe and have been validated against the schema.
- *
- * If validation fails (e.g., a required variable is missing), the server
- * will throw an error and refuse to start, preventing runtime errors
- * due to misconfiguration.
- *
- * @example
- * import { env } from '@/lib/env';
- *
- * const clientId = env.SPOTIFY_CLIENT_ID;
- * if (env.NODE_ENV === 'development') {
- *   // ...
- * }
  */
 export const env = envSchema.parse(process.env)
+
+/**
+ * A separate runtime validation function to be called explicitly in `server.ts`.
+ * This ensures that server-specific, required environment variables are present
+ * when the application starts in a production environment, even if they were
+ * optional during the build phase.
+ */
+export function validateRuntimeEnv() {
+  const runtimeSchema = z.object({
+    NEXTAUTH_SECRET: z.string().min(1),
+    SPOTIFY_CLIENT_ID: z.string().min(1),
+    SPOTIFY_CLIENT_SECRET: z.string().min(1),
+    // ENCRYPTION_KEY is required for token persistence
+    ENCRYPTION_KEY: env.SPOTIFY_TOKEN_PERSISTENCE
+      ? z
+          .string()
+          .length(
+            64,
+            'ENCRYPTION_KEY must be 64 characters long (a 32-byte hex string)'
+          )
+      : z.string().optional(),
+  })
+
+  try {
+    runtimeSchema.parse(process.env)
+  } catch (error) {
+    console.error(
+      '🔴 Critical runtime environment variables are missing or invalid:',
+      error
+    )
+    process.exit(1)
+  }
+}

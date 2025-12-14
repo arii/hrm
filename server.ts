@@ -15,6 +15,7 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
+import { validateRuntimeEnv } from './lib/env.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -53,6 +54,12 @@ expressApp.set('trust proxy', true)
 app
   .prepare()
   .then(async () => {
+    // Runtime validation of environment variables.
+    // This is skipped in test environments where a full set of secrets may not be available.
+    if (env.NODE_ENV === 'production' && !env.TESTING) {
+      validateRuntimeEnv()
+    }
+
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---

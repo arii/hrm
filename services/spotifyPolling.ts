@@ -43,6 +43,8 @@ export class SpotifyPolling {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
+  private clientId: string
+  private clientSecret: string
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
@@ -64,11 +66,20 @@ export class SpotifyPolling {
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error(
+        'SpotifyPolling: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be configured.'
+      )
+    }
+    this.clientId = env.SPOTIFY_CLIENT_ID
+    this.clientSecret = env.SPOTIFY_CLIENT_SECRET
+
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
-      env.SPOTIFY_CLIENT_ID,
-      env.SPOTIFY_CLIENT_SECRET
+      this.clientId,
+      this.clientSecret
     )
   }
 
@@ -99,7 +110,7 @@ export class SpotifyPolling {
   }
 
   private setupSdk(accessToken: AccessToken) {
-    this.sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, accessToken)
+    this.sdk = SpotifyApi.withAccessToken(this.clientId, accessToken)
   }
 
   private async checkAndRefreshSdkToken() {

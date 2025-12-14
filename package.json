@@ -7,7 +7,7 @@
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
-    "build": "cross-env NEXTAUTH_SECRET=dummy-secret-for-build SPOTIFY_CLIENT_ID=dummy-client-id-for-build SPOTIFY_CLIENT_SECRET=dummy-client-secret-for-build pnpm run build:server && next build",
+    "build": "pnpm run build:server && next build",
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",

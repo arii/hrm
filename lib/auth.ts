@@ -131,8 +131,8 @@ export const authOptions: AuthOptions = {
     SpotifyProvider({
       id: 'spotify',
       name: 'Spotify',
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      clientId: env.SPOTIFY_CLIENT_ID || '',
+      clientSecret: env.SPOTIFY_CLIENT_SECRET || '',
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
@@ -335,5 +335,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret: env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET || '',
 }

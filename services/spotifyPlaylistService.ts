@@ -25,6 +25,12 @@ export function getPresetPlaylists(): SpotifyPlaylistItem[] {
 export async function getUserPlaylists(
   accessToken: string
 ): Promise<SpotifyPlaylistItem[]> {
+  if (!env.SPOTIFY_CLIENT_ID) {
+    console.warn(
+      'Cannot get user playlists: SPOTIFY_CLIENT_ID is not configured.'
+    )
+    return []
+  }
   if (!accessToken) {
     console.warn('Cannot get user playlists: Access token is missing.')
     return []
