@@ -76,6 +76,9 @@ importers:
       pino:
         specifier: ^10.1.0
         version: 10.1.0
+      prop-types:
+        specifier: ^15.8.1
+        version: 15.8.1
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -18377,7 +18380,7 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
-      react-is: 16.8.6
+      react-is: 16.13.1
 
   prop-types@15.8.1:
     dependencies:

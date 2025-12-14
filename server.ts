@@ -43,7 +43,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
   process.exit(1)
 }
 
-const app = (next as any)({ dev, hostname, port })
+const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
@@ -168,7 +168,10 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'FATAL: SpotifyPolling initialization failed. Server shutting down.')
+      logger.error(
+        { err: e },
+        'FATAL: SpotifyPolling initialization failed. Server shutting down.'
+      )
       process.exit(1)
     }
     const tabataService = new TabataTimer(broadcast)
@@ -226,7 +229,7 @@ app
         let ip = req.socket.remoteAddress
 
         if (typeof xForwardedFor === 'string') {
-          const ips = xForwardedFor.split(',').map(ip => ip.trim())
+          const ips = xForwardedFor.split(',').map((ip) => ip.trim())
           // The rightmost IP is the one most likely to be the client's.
           ip = ips[ips.length - 1]
         }

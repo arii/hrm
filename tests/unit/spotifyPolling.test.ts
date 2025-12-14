@@ -262,7 +262,11 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.setRefreshToken(newTokens)
 
       expect(
-        (spotifyService as any).tokenManager.setTokens
+        (
+          spotifyService as unknown as {
+            tokenManager: { setTokens: jest.Mock }
+          }
+        ).tokenManager.setTokens
       ).toHaveBeenCalledWith(newTokens)
       expect(initializeSdkSpy).toHaveBeenCalled()
       initializeSdkSpy.mockRestore()

@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { spotifyServiceInstance } from '@/utils/socketManager'
 import { AccessToken } from '@spotify/web-api-ts-sdk'

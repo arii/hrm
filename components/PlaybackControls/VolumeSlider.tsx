@@ -6,6 +6,7 @@ import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import { memo, useCallback } from 'react'
+import PropTypes from 'prop-types'
 
 interface VolumeSliderProps {
   volume: number
@@ -60,6 +61,13 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
       />
     </Stack>
   )
+}
+
+VolumeSlider.propTypes = {
+  volume: PropTypes.number.isRequired,
+  muted: PropTypes.bool.isRequired,
+  onVolumeChange: PropTypes.func.isRequired,
+  onToggleMute: PropTypes.func.isRequired,
 }
 
 export default memo(VolumeSlider)
