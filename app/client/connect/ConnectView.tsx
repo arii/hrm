@@ -278,9 +278,10 @@ export default function ConnectView({
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Button
               variant="contained"
-              color="success"
+              color="primary"
               size="large"
               onClick={onStartWorkout}
+              aria-label="Start Workout Session"
             >
               Start Workout
             </Button>
@@ -290,10 +291,11 @@ export default function ConnectView({
         {workoutStatus === 'running' || workoutStatus === 'paused' ? (
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Button
-              variant="contained"
-              color="warning"
+              variant="outlined"
+              color="primary"
               size="large"
               onClick={onEndWorkout}
+              aria-label="End Workout Session"
             >
               End Workout
             </Button>
