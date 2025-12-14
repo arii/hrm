@@ -337,6 +337,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret:
-    process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET as string,
 }
