@@ -12,6 +12,7 @@ export interface HrTileProps {
   alertMessage?: string
   caloriesBurned?: number
   workoutDuration?: string
+  showWorkoutData?: boolean
 }
 
 export interface HeartRateZonesProps {

@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 import Divider from '@mui/material/Divider'
-import WhatshotIcon from '@mui/icons-material/Whatshot'
+import WorkoutDataDisplay from './WorkoutDataDisplay'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -36,13 +36,13 @@ const HrTile = ({
   alertMessage = 'Checking signal...', // Default message
   caloriesBurned,
   workoutDuration,
+  showWorkoutData,
 }: HrTileProps) => {
   // Get HR zone props which include the theme-based background color
   // Note: We're passing a placeholder maxHr because the function currently requires it,
   // but it only uses the ratio (percentMax) to determine the zone color.
   // This could be refactored in getHrZoneProps to accept percentMax directly.
   const { backgroundColor } = getHrZoneProps(percentMax, 100)
-  const showWorkoutData = caloriesBurned && caloriesBurned > 0
 
   return (
     <Tooltip
@@ -82,7 +82,7 @@ const HrTile = ({
           </Box>
         )}
         <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 2 }}>
+          <CardContent sx={{ p: 0 }}>
             {/* Giant Percentage - should dominate the tile */}
             <Typography
               data-testid="live-hr-percent"
@@ -119,10 +119,9 @@ const HrTile = ({
                 variant="subtitle1"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
                   mt: 1, // Add some margin top to separate from BPM
-                  mb: 1, // Add some margin bottom to separate from workout data
                   textOverflow: 'ellipsis', // Truncate with ellipsis
                   whiteSpace: 'nowrap', // Prevent wrapping
                   overflow: 'hidden', // Hide overflow content
@@ -131,49 +130,20 @@ const HrTile = ({
                 {name}
               </Typography>
             )}
-            {showWorkoutData && (
-              <>
-                <Divider sx={{ my: 1, bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mt: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                    }}
-                  >
-                    <WhatshotIcon
-                      sx={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                      fontSize="small"
-                    />
-                    <Typography variant="body1" sx={{ color: 'white' }}>
-                      {caloriesBurned || 0}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                    >
-                      kcal
-                    </Typography>
-                  </Box>
-                  {workoutDuration && (
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                    >
-                      {workoutDuration}
-                    </Typography>
-                  )}
-                </Box>
-              </>
-            )}
+            {showWorkoutData &&
+              (caloriesBurned || workoutDuration) &&
+              caloriesBurned !== undefined &&
+              workoutDuration !== undefined && (
+                <>
+                  <Divider
+                    sx={{ my: 1, bgcolor: 'rgba(255, 255, 255, 0.2)' }}
+                  />
+                  <WorkoutDataDisplay
+                    calories={caloriesBurned}
+                    duration={workoutDuration}
+                  />
+                </>
+              )}
           </CardContent>
         </Box>
       </StyledCard>
@@ -191,7 +161,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage &&
     prevProps.caloriesBurned === nextProps.caloriesBurned &&
-    prevProps.workoutDuration === nextProps.workoutDuration
+    prevProps.workoutDuration === nextProps.workoutDuration &&
+    prevProps.showWorkoutData === nextProps.showWorkoutData
   )
 }
 

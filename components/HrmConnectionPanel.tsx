@@ -45,7 +45,7 @@ const HrmConnectionPanel = () => {
     })
   }, [hrmData])
 
-  const { caloriesBurned, workoutDuration } = useWorkoutSession({
+  const { caloriesBurned, workoutDuration, hasStarted } = useWorkoutSession({
     isConnected: !!primaryUser && primaryUser.value > 0,
     currentHR: primaryUser ? primaryUser.value : 0,
     userAge: userSettings.userAge || 30,
@@ -95,6 +95,7 @@ const HrmConnectionPanel = () => {
               workoutDuration={
                 isPrimaryUser ? formatDuration(workoutDuration) : undefined
               }
+              showWorkoutData={isPrimaryUser && hasStarted}
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Box>
