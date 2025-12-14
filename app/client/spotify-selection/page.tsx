@@ -23,6 +23,7 @@ import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
+import { SpotifyDevice } from '@/types'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -37,11 +38,6 @@ const SpotifySelectionPage = () => {
   const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
     null
   )
-  interface SpotifyDevice {
-    id: string
-    name: string
-    is_active?: boolean
-  }
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   // Helper: is there an active device?
