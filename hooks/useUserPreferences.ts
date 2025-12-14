@@ -7,6 +7,8 @@ export interface UserPreferences {
   defaultWorkDuration: number
   defaultRestDuration: number
   favoritePlaylist: string | null
+  userName: string | null
+  userAge: number | null
 }
 
 export const useUserPreferences = () => {
@@ -16,6 +18,8 @@ export const useUserPreferences = () => {
     defaultWorkDuration: 20,
     defaultRestDuration: 10,
     favoritePlaylist: null,
+    userName: null,
+    userAge: null,
   })
 
   return [prefs, setPrefs] as const
