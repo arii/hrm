@@ -19,6 +19,7 @@ package-lock.json
 /tests/playwright/*-actual.png
 /tests/playwright/*-diff.png
 /screenshots/
+test_output.txt
 
 # Next.js & Build
 /.next/
