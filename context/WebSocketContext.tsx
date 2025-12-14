@@ -20,6 +20,17 @@ import {
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
+export type ConnectionStatus = {
+  status:
+    | 'connected'
+    | 'reconnecting'
+    | 'disconnected'
+    | 'failed'
+    | 'error'
+    | 'connecting'
+  attempt?: number
+}
+
 interface WebSocketState {
   hrmData: HrmData[]
   timerData: TimerData
@@ -52,7 +63,7 @@ const INITIAL_STATE: WebSocketState = {
 }
 
 export interface WebSocketContextType extends WebSocketState {
-  connectionStatus: string
+  connectionStatus: ConnectionStatus
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
@@ -68,7 +79,9 @@ export const WebSocketProvider = ({
   serverUrl?: string
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...')
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    status: 'connecting',
+  })
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
@@ -77,8 +90,9 @@ export const WebSocketProvider = ({
   const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Configuration for exponential backoff
-  const MAX_RECONNECT_ATTEMPTS = 10
+  const MAX_RECONNECT_ATTEMPTS = 5
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+  const MAX_RECONNECT_INTERVAL = 30000 // 30 seconds
   const JITTER_FACTOR = 0.2 // 20% jitter
 
   // Unified State Object managed by a reducer
@@ -178,7 +192,7 @@ export const WebSocketProvider = ({
 
     ws.onopen = () => {
       console.log('[WebSocketProvider] Connected to server')
-      setConnectionStatus('Connected')
+      setConnectionStatus({ status: 'connected' })
 
       // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
@@ -217,7 +231,7 @@ export const WebSocketProvider = ({
         event.code,
         event.reason
       )
-      setConnectionStatus('Disconnected')
+      setConnectionStatus({ status: 'disconnected' })
 
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
@@ -229,8 +243,10 @@ export const WebSocketProvider = ({
       if (shouldReconnect.current) {
         if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttempts.current++
-          const delay =
-            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1)
+          const delay = Math.min(
+            INITIAL_RECONNECT_DELAY * 2 ** (reconnectAttempts.current - 1),
+            MAX_RECONNECT_INTERVAL
+          )
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
           const reconnectDelay = delay + jitter
 
@@ -239,23 +255,24 @@ export const WebSocketProvider = ({
           )
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            setConnectionStatus('Reconnecting...')
+            setConnectionStatus({
+              status: 'reconnecting',
+              attempt: reconnectAttempts.current,
+            })
             connectRef.current()
           }, reconnectDelay)
         } else {
           console.error(
             '[WebSocketProvider] Max reconnection attempts reached.'
           )
-          setConnectionStatus(
-            'Failed to connect. Please check your connection and refresh the page.'
-          )
+          setConnectionStatus({ status: 'failed' })
         }
       }
     }
 
     ws.onerror = (_err) => {
       console.warn('[WebSocketProvider] Connection error')
-      setConnectionStatus('Error')
+      setConnectionStatus({ status: 'error' })
     }
 
     ws.onmessage = (event) => {

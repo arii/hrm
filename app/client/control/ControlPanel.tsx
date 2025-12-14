@@ -29,18 +29,18 @@ const ControlPanel = () => {
 
   // Register this client as a controller
   useEffect(() => {
-    if (connectionStatus === 'Connected') {
+    if (connectionStatus.status === 'connected') {
       console.log('[ControlPanel] Registering as controller')
       sendData({ type: 'REGISTER_CLIENT', role: 'controller' })
     }
-  }, [connectionStatus, sendData])
+  }, [connectionStatus.status, sendData])
 
   // Reconnect on page visibility
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (
         document.visibilityState === 'visible' &&
-        connectionStatus !== 'Connected'
+        connectionStatus.status !== 'connected'
       ) {
         console.log(
           '[ControlPanel] Page visible, attempting to reconnect WebSocket...'
@@ -52,7 +52,7 @@ const ControlPanel = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () =>
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [connectionStatus, connect])
+  }, [connectionStatus.status, connect])
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -93,7 +93,8 @@ const ControlPanel = () => {
           <Typography
             variant="caption"
             sx={{
-              color: connectionStatus === 'Connected' ? 'green' : 'orange',
+              color:
+                connectionStatus.status === 'connected' ? 'green' : 'orange',
               fontWeight: 'bold',
               backgroundColor: 'rgba(0,0,0,0.1)',
               px: 1,
@@ -102,7 +103,7 @@ const ControlPanel = () => {
               display: 'inline-block',
             }}
           >
-            Server: {connectionStatus}
+            Server: {connectionStatus.status}
           </Typography>
         </Box>
 
