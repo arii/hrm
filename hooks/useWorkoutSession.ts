@@ -125,14 +125,16 @@ export const useWorkoutSession = ({
               4.184
             const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
             session.accumulatedCalories += caloriesPerSecond
-            // eslint-disable-next-line no-console
-            console.debug('Calorie calculation:', {
-              age,
-              hr,
-              caloriesPerMinute,
-              caloriesPerSecond,
-              accumulatedCalories: session.accumulatedCalories,
-            })
+            if (process.env.NODE_ENV === 'development') {
+              // eslint-disable-next-line no-console
+              console.debug('Calorie calculation:', {
+                age,
+                hr,
+                caloriesPerMinute,
+                caloriesPerSecond,
+                accumulatedCalories: session.accumulatedCalories,
+              })
+            }
           }
           dispatch({
             type: 'TICK',

@@ -12,24 +12,14 @@ Please include a summary of the change and which issue is fixed. Please also inc
 
 Fixes # (issue)
 
-## Change Type (select one)
-- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
-- [ ] ✨ New feature (non-breaking change adding functionality)
-- [ ] 💥 Breaking change (fix/feature causing existing functionality to break)
-- [ ] 🏗️ Refactoring (code change that neither fixes bug nor adds feature)
-- [ ] 📚 Documentation (changes only affecting documentation)
-- [ ] 🎨 Styling (changes that do not affect functionality)
+## Type of change
 
-## Scope Validation
-- [ ] This PR addresses a **single concern**
-- [ ] If multiple changes exist, they are **directly related**
-- [ ] No unrelated **architectural changes** are included
-- [ ] No **scope creep** from the original issue/task
+Please delete options that are not relevant.
 
-## Impact Assessment
-- [ ] Changes are **backward compatible** (or breaking changes are documented)
-- [ ] **Tests** are added/updated for new functionality
-- [ ] **Documentation** is updated if needed
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] This change requires a documentation update
 
 ## How Has This Been Tested?
 

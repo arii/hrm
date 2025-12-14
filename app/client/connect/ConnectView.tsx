@@ -266,6 +266,7 @@ export default function ConnectView({
               onClick={onStartWorkout}
               size="large"
               sx={{ minWidth: '200px' }}
+              aria-label="Start workout session"
             >
               Start Workout
             </Button>
@@ -278,6 +279,7 @@ export default function ConnectView({
                 size="large"
                 sx={{ minWidth: '200px' }}
                 disabled={!isConnected}
+                aria-label="Resume workout session"
               >
                 Resume Workout
               </Button>
@@ -286,6 +288,7 @@ export default function ConnectView({
                 onClick={onEndWorkout}
                 size="large"
                 sx={{ minWidth: '200px' }}
+                aria-label="End workout session"
               >
                 End Workout
               </Button>
@@ -297,6 +300,7 @@ export default function ConnectView({
               onClick={onEndWorkout}
               size="large"
               sx={{ minWidth: '200px' }}
+              aria-label="End workout session"
             >
               End Workout
             </Button>
