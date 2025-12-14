@@ -42,29 +42,21 @@ export class SpotifyTokenManager {
   /**
    * Directly set the access token (for command injection/testing).
    */
-  public setAccessToken(token: string) {
-    if (this.currentToken) {
-      this.currentToken.payload.access_token = token
-      this.currentToken.payload.obtainedAt = Date.now()
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token updated via setAccessToken.')
-    } else {
-      // If no token record exists, create a minimal one
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          provider: 'manual',
-          sub: 'manual',
-          access_token: token,
-          refresh_token: '',
-          expires_in: 3600,
-          scope: '',
-          obtainedAt: Date.now(),
-        },
-      }
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token created via setAccessToken.')
+  public async setTokens(token: AccessToken) {
+    const newRecord: TokenRecord = {
+      receivedAt: Date.now(),
+      payload: {
+        provider: 'spotify',
+        sub: '', // We don't have the user ID here, but it's not critical for the token manager.
+        access_token: token.access_token,
+        refresh_token: token.refresh_token,
+        expires_in: token.expires_in,
+        scope: token.scope,
+        obtainedAt: Date.now(),
+      },
     }
+    this.currentToken = newRecord
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null

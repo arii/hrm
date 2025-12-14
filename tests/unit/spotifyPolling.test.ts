@@ -18,20 +18,16 @@ jest.mock('../../utils/logger', () => ({
 
 // Mock the SpotifyTokenManager module
 jest.mock('../../services/spotifyTokenManager', () => {
-  const SpotifyTokenManager = jest.fn().mockImplementation(() => {
-    return {
-      getValidAccessToken: jest
-        .fn()
-        .mockImplementation(() => Promise.resolve('mock_access_token')),
+  return {
+    SpotifyTokenManager: jest.fn().mockImplementation(() => ({
+      getValidAccessToken: jest.fn().mockResolvedValue('mock_access_token'),
       getSdkAccessToken: jest.fn().mockReturnValue({
         access_token: 'mock_access_token',
         token_type: 'Bearer',
         expires_in: 3600,
       }),
-    }
-  })
-  return {
-    SpotifyTokenManager,
+      setTokens: jest.fn().mockResolvedValue(undefined), // Mock the new method
+    })),
   }
 })
 
@@ -251,14 +247,23 @@ describe('SpotifyPolling Service', () => {
 
   describe('Token Management', () => {
     it('should accept refresh token', async () => {
-      const refreshToken = 'test_refresh_token'
+      const newTokens = {
+        access_token: 'new_access_token',
+        refresh_token: 'new_refresh_token',
+        expires_in: 3600,
+        scope: 'user-read-private',
+        token_type: 'Bearer',
+      } as AccessToken
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
         .spyOn(spotifyService as never, 'initializeSdk')
         .mockResolvedValue(undefined)
-      spotifyService.setRefreshToken(refreshToken)
-      // Advance timers to allow setTimeout to run
-      jest.advanceTimersByTime(1000)
+
+      await spotifyService.setRefreshToken(newTokens)
+
+      expect(
+        (spotifyService as any).tokenManager.setTokens
+      ).toHaveBeenCalledWith(newTokens)
       expect(initializeSdkSpy).toHaveBeenCalled()
       initializeSdkSpy.mockRestore()
     })
