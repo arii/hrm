@@ -19,6 +19,7 @@ export const useSpotifyDevices = () => {
       // setting state in an effect, as it's a reaction to an external event.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(null)
 
       if (requestTimeout.current) {
