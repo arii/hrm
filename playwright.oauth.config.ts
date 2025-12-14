@@ -20,7 +20,10 @@ export default defineConfig({
   workers: 1,
 
   // Reporter configuration
-  reporter: [['html', { outputFolder: 'oauth-test-report' }], ['list']],
+  reporter: [
+    ['html', { outputFolder: 'oauth-test-report' }],
+    ['list'],
+  ],
 
   // Shared settings for OAuth tests
   use: {
