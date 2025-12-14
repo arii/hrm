@@ -36,7 +36,14 @@ export default defineConfig([
   },
 
   // Next.js specific rules and configurations (includes TypeScript support)
-  nextPlugin.configs['core-web-vitals'], // Extends the core-web-vitals configuration from eslint-config-next
+  {
+    plugins: {
+      '@next': nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+    },
+  },
 
   // Apply TypeScript rules without redefining the plugin
   {
