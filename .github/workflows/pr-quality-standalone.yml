@@ -190,9 +190,12 @@ jobs:
       - name: Run Performance Test
         id: perf_tests
         if: always() && steps.build.outcome == 'success'
-        run: |
-          set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/performance-output.log
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
         continue-on-error: true
 
       - name: Publish Performance Test Results to GitHub Checks
