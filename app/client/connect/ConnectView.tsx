@@ -36,6 +36,9 @@ interface ConnectViewProps {
   bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
+  onStartWorkout: () => void
+  onEndWorkout: () => void
+  workoutStatus: 'idle' | 'running' | 'paused'
 }
 
 export default function ConnectView({
@@ -58,6 +61,9 @@ export default function ConnectView({
   bluetoothConnected,
   hasStarted,
   onReset,
+  onStartWorkout,
+  onEndWorkout,
+  workoutStatus,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -205,6 +211,38 @@ export default function ConnectView({
                   </Stack>
                 )}
               </Box>
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="center"
+                sx={{
+                  '& .MuiButton-root': {
+                    minWidth: '140px', // Ensure buttons have same width
+                    minHeight: '48px', // Ensure touch target size
+                  },
+                }}
+              >
+                {workoutStatus === 'idle' && isConnected && (
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={onStartWorkout}
+                    aria-label="Start Workout"
+                  >
+                    Start Workout
+                  </Button>
+                )}
+                {workoutStatus !== 'idle' && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={onEndWorkout}
+                    aria-label="End Workout"
+                  >
+                    End Workout
+                  </Button>
+                )}
+              </Stack>
               <Button
                 variant="outlined"
                 size="large"

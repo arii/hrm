@@ -15,6 +15,8 @@ type SessionAction =
   | { type: 'DISCONNECT' }
   | { type: 'TICK'; payload: { duration: number; calories: number } }
   | { type: 'RESET' }
+  | { type: 'START_WORKOUT' }
+  | { type: 'END_WORKOUT' }
 
 const initialState: SessionState = {
   status: 'idle',
@@ -27,7 +29,7 @@ function sessionReducer(
   action: SessionAction
 ): SessionState {
   switch (action.type) {
-    case 'CONNECT':
+    case 'CONNECT': // Auto-start on connect if idle
       if (state.status === 'idle' || state.status === 'paused') {
         return { ...state, status: 'running' }
       }
@@ -43,6 +45,12 @@ function sessionReducer(
         duration: action.payload.duration,
         calories: action.payload.calories,
       }
+    case 'START_WORKOUT':
+      if (state.status === 'idle') {
+        return { ...state, status: 'running' }
+      }
+      return state
+    case 'END_WORKOUT':
     case 'RESET':
       return initialState
     default:
@@ -115,14 +123,25 @@ export const useWorkoutSession = ({
             (Date.now() - session.startTime - session.totalPaused) / 1000
           )
           if (age > 0 && hr > 0) {
-            const weightKg = 75
+            const weightKg = 75 // TODO: Make this configurable in the future
             const caloriesPerMinute =
-              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
+              (age * 0.2017 -
+                weightKg * 0.09036 +
+                hr * 0.6309 -
+                55.0969) /
               4.184
-            const caloriesPerSecond = caloriesPerMinute / 60
-            if (caloriesPerSecond > 0) {
-              session.accumulatedCalories += caloriesPerSecond
-            }
+            // Ensure caloriesPerSecond is not negative
+            const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
+            session.accumulatedCalories += caloriesPerSecond
+
+            // Optional: Add debug logging to monitor calculation
+            console.debug('Calorie calculation:', {
+              age,
+              hr,
+              caloriesPerMinute,
+              caloriesPerSecond,
+              accumulated: session.accumulatedCalories,
+            })
           }
           dispatch({
             type: 'TICK',
@@ -149,10 +168,22 @@ export const useWorkoutSession = ({
     dispatch({ type: 'RESET' })
   }, [])
 
+  const startWorkout = useCallback(() => {
+    dispatch({ type: 'START_WORKOUT' })
+  }, [])
+
+  const endWorkout = useCallback(() => {
+    // The reducer handles resetting state on END_WORKOUT, so we just dispatch
+    dispatch({ type: 'END_WORKOUT' })
+  }, [])
+
   return {
     workoutDuration: state.duration,
     caloriesBurned: Math.round(state.calories),
     resetWorkout,
+    startWorkout,
+    endWorkout,
+    workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
   }
 }
