@@ -11,7 +11,6 @@ import React, {
 } from 'react'
 import { AlertColor } from '@mui/material'
 import Toast from '@/components/Toast/Toast'
-import { Toast as ToastType } from '@/context/ToastContext'
 
 export interface Toast {
   id: number
