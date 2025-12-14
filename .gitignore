@@ -13,8 +13,6 @@ package-lock.json
 /coverage
 /test-results/
 /playwright-report/
-/playwright/.cache/
-.nycrc
 /oauth-test-report/
 /test-recordings/
 /tests/playwright/screenshots/

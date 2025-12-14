@@ -1,16 +1,26 @@
 // File: components/HeartRateZones.tsx (Heart Rate Zone Display)
 import React from 'react'
-import { Box, Typography, Paper } from '@mui/material'
-import { HEART_RATE_ZONES, HeartRateZoneConfig } from '../utils/constants'
+import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
 
 interface HeartRateZonesProps {
   maxHr: number
 }
 
 const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
-  const calculateBpmRange = (zone: HeartRateZoneConfig) => {
-    const minBpm = Math.round((zone.minPercent / 100) * maxHr)
-    const maxBpm = Math.round((zone.maxPercent / 100) * maxHr)
+  const zones = [
+    { name: 'Zone 5', percentage: '90-100%', color: '#F44336' },
+    { name: 'Zone 4', percentage: '80-90%', color: '#FFEB3B' },
+    { name: 'Zone 3', percentage: '70-80%', color: '#4CAF50' },
+    { name: 'Zone 2', percentage: '60-70%', color: '#2196F3' },
+    { name: 'Zone 1', percentage: '50-60%', color: '#9E9E9E' },
+  ]
+
+  const calculateBpmRange = (percentage: string) => {
+    const [min, max] = percentage.replace('%', '').split('-').map(Number)
+    const minBpm = Math.round(((min || 0) / 100) * maxHr)
+    const maxBpm = Math.round(((max || 0) / 100) * maxHr)
     return `${minBpm}-${maxBpm} BPM`
   }
 
@@ -19,7 +29,7 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
       <Typography variant="h6" className="font-bold text-center mb-4">
         Heart Rate Zones
       </Typography>
-      {HEART_RATE_ZONES.map((zone) => (
+      {zones.map((zone) => (
         <Box
           key={zone.name}
           className="flex items-center justify-between p-2 mb-2 rounded-lg"
@@ -29,10 +39,10 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
             {zone.name}
           </Typography>
           <Typography variant="body2" className="text-white">
-            {zone.minPercent}-{zone.maxPercent}%
+            {zone.percentage}
           </Typography>
           <Typography variant="body2" className="font-mono text-white">
-            {calculateBpmRange(zone)}
+            {calculateBpmRange(zone.percentage)}
           </Typography>
         </Box>
       ))}

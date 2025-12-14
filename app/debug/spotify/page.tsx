@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import { Session } from 'next-auth'
 import { signIn, signOut, useSession } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { API_DEBUG_SPOTIFY_TOKEN } from '@/constants/apiEndpoints'
 
 interface ServerTokenStatus {
@@ -25,13 +25,13 @@ export default function SpotifyDebugPage() {
   const { data: session } = useSession() as { data: Session | null }
   const [serverToken, setServerToken] = useState<ServerTokenStatus | null>(null)
 
-  const fetchServerToken = async () => {
+  const fetchServerToken = useCallback(async () => {
     const res = await fetch(API_DEBUG_SPOTIFY_TOKEN)
     if (res.ok) {
       const data = await res.json()
       setServerToken(data.token)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchServerToken()
@@ -39,7 +39,7 @@ export default function SpotifyDebugPage() {
       const testWindow = window as typeof window & { __TEST_READY__?: boolean }
       testWindow.__TEST_READY__ = true
     }
-  }, [])
+  }, [fetchServerToken])
 
   return (
     <Box sx={{ p: 2 }}>

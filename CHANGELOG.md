@@ -1,12 +1,5 @@
 # Changelog
 
-## [0.9.1](https://github.com/arii/hrm/compare/v0.9.0...v0.9.1) (2025-12-14)
-
-
-### Bug Fixes
-
-* Prevent initial volume command to reduce Spotify API calls ([#1472](https://github.com/arii/hrm/issues/1472)) ([a8a67f2](https://github.com/arii/hrm/commit/a8a67f21e6dc421929c305d19cf4229682194fa5))
-
 ## [0.9.0](https://github.com/arii/hrm/compare/v0.8.0...v0.9.0) (2025-12-14)
 
 

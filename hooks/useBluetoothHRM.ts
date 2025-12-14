@@ -1,7 +1,7 @@
 // File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
-import { calculateMaxHr } from '../utils/constants'
+import { MAX_HR_DEFAULT } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -116,7 +116,7 @@ const useBluetoothHRM = () => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
-  }, [])
+  }, [stopWatchdog])
 
   const forgetDevice = useCallback(async () => {
     console.log('Initiating device forget sequence...')
@@ -226,7 +226,7 @@ const useBluetoothHRM = () => {
             startWatchdog() // Reset the watchdog on every new HR value
 
             const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = calculateMaxHr(age)
+            const calculatedMaxHr = age ? 220 - age : MAX_HR_DEFAULT
 
             const data: HrmInputData = {
               value: heartRate,
@@ -257,7 +257,7 @@ const useBluetoothHRM = () => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData, startWatchdog]
   )
 
   useEffect(() => {
@@ -332,6 +332,7 @@ const useBluetoothHRM = () => {
     forgetDevice,
     deviceStatus,
     batteryLevel,
+    MAX_HR: MAX_HR_DEFAULT,
     isConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
   }
