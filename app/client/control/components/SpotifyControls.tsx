@@ -1,6 +1,8 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
+import VolumeOff from '@mui/icons-material/VolumeOff'
+import VolumeUp from '@mui/icons-material/VolumeUp'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -9,29 +11,26 @@ import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
+import Slider from '@mui/material/Slider'
+import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-import { useWebSocket } from '@/context/WebSocketContext'
-import { useDebounce } from '@/hooks/useDebounce'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
-import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
+  // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { devices = [] } = spotifyData // Default to empty array if undefined
-
-  // State Management
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const debouncedVolume = useDebounce(volume, 300)
+  const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
-  const lastSentVolumeRef = useRef<string | null>(null)
-  const isInitialMount = useRef(true)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleBrowseClick = () => {
@@ -43,7 +42,7 @@ const SpotifyControls = () => {
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-  // Effect: Request devices on mount or connection
+  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       sendData({
@@ -53,28 +52,31 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData])
 
-  // Effect: Synchronize device selection and volume with incoming data
+  // 4. Update selection logic and volume sync
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Sync Selected Device ID
+    // Sync Selected Device
     if (prevActiveIdRef.current === undefined && activeId) {
-      setSelectedDeviceId(activeId) // Initial sync
+      // Initial sync
+      setSelectedDeviceId(activeId)
     } else if (activeId && activeId !== prevActiveIdRef.current) {
-      setSelectedDeviceId(activeId) // Active device changed externally
+      // Active device changed externally, update selection
+      setSelectedDeviceId(activeId)
     } else {
-      // Validate existing selection
+      // Check if selected device is still valid
       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
       if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '') // Selected device disappeared
-      } else if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId) // No selection, but active device exists
+        setSelectedDeviceId(activeId ?? '')
+      }
+      if (!selectedDeviceId && activeId) {
+        setSelectedDeviceId(activeId)
       }
     }
     prevActiveIdRef.current = activeId
 
-    // Sync Volume from active device, but only if the user is not actively dragging the slider
+    // Sync Volume (if not dragging)
     if (
       !isDragging &&
       activeDevice &&
@@ -84,12 +86,16 @@ const SpotifyControls = () => {
         setVolume(activeDevice.volume_percent)
       }
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices, isDragging]) // Re-run if devices change or dragging state changes
+  }, [devices]) // Rely on devices update to trigger sync
 
   const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) return selectedDeviceId
-    return devices.find((device) => device.is_active)?.id
+    if (selectedDeviceId) {
+      return selectedDeviceId
+    }
+    const activeDevice = devices.find((device) => device.is_active)
+    return activeDevice?.id
   }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
@@ -97,17 +103,14 @@ const SpotifyControls = () => {
       command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
       overriddenDeviceId?: string
     ) => {
-      const targetDeviceId = overriddenDeviceId ?? resolveTargetDeviceId()
-      if (!targetDeviceId) {
-        console.warn(
-          `[SpotifyControls] Command '${command}' aborted. No target device.`
-        )
-        return
-      }
+      const targetDeviceId =
+        overriddenDeviceId !== undefined
+          ? overriddenDeviceId
+          : resolveTargetDeviceId()
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command,
-        deviceId: targetDeviceId,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
       sendData(message)
     },
@@ -132,17 +135,18 @@ const SpotifyControls = () => {
     (value: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
+
+      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
-
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        deviceId: targetDeviceId,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
@@ -150,25 +154,15 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
-  // Effect: Send debounced volume command to backend
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
-    }
-    // We don't send the initial volume from useVolumePreference,
-    // only subsequent user-initiated changes.
-    if (!isDragging) {
-      sendVolumeCommand(debouncedVolume)
-    }
-  }, [debouncedVolume, isDragging, sendVolumeCommand])
-
-  // Effect: Reset volume lock on disconnect
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
       lastSentVolumeRef.current = null
     }
   }, [connectionStatus])
+
+  useEffect(() => {
+    sendVolumeCommand(volume)
+  }, [volume, sendVolumeCommand])
 
   return (
     <Card
@@ -214,20 +208,41 @@ const SpotifyControls = () => {
               disabled={connectionStatus !== 'Connected'}
             />
 
-            <VolumeSlider
-              volume={volume}
-              muted={muted}
-              onVolumeChange={(newVolume) => {
-                setIsDragging(true)
-                setVolume(newVolume)
-              }}
-              onVolumeChangeCommitted={() => {
-                setIsDragging(false)
-                // The debounced effect will handle sending the command
-              }}
-              onToggleMute={toggleMute}
-              showValue={true}
-            />
+            <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton
+                onClick={toggleMute}
+                aria-label={muted ? 'Unmute volume' : 'Mute volume'}
+                size="small"
+                sx={{ color: 'grey.400' }}
+              >
+                {muted ? <VolumeOff /> : <VolumeUp />}
+              </IconButton>
+              <Slider
+                aria-label="Volume control"
+                value={volume}
+                onChange={(_, val) => {
+                  setIsDragging(true)
+                  setVolume(val as number)
+                }}
+                onChangeCommitted={(_, val) => {
+                  setIsDragging(false)
+                  sendVolumeCommand(val as number)
+                }}
+                min={0}
+                max={100}
+                size="small"
+                sx={{
+                  color: '#1DB954',
+                  '& .MuiSlider-thumb': { backgroundColor: 'white' },
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ color: 'grey.400', minWidth: '3ch' }}
+              >
+                {volume}
+              </Typography>
+            </Stack>
             {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>

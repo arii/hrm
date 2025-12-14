@@ -6,13 +6,13 @@ This guide provides a comprehensive overview of the testing commands, structure,
 
 These are the most frequently used commands for testing and code quality checks.
 
-| Command                  | Description                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run test:visual`      | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes.                               |
-| `npm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                                                |
-| `npm run test:unit`        | Executes the Jest unit test suite for testing individual components and business logic.                                                   |
-| `npm run lint`             | Runs ESLint to check for code quality and style issues.                                                                                  |
-| `npm run format`           | Formats the entire codebase using Prettier to ensure consistent styling.                                                                 |
+| Command                      | Description                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `npm run test:visual`        | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes. |
+| `npm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                    |
+| `npm run test:unit`          | Executes the Jest unit test suite for testing individual components and business logic.                      |
+| `npm run lint`               | Runs ESLint to check for code quality and style issues.                                                      |
+| `npm run format`             | Formats the entire codebase using Prettier to ensure consistent styling.                                     |
 
 ---
 

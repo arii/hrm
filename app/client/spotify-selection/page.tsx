@@ -13,17 +13,13 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import Select from '@mui/material/Select'
-import MenuItem from '@mui/material/MenuItem'
 import dynamic from 'next/dynamic'
-import { useCallback, useEffect, useState } from 'react'
-import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
-import { useDebounce } from '@/hooks/useDebounce'
+import { useEffect, useState } from 'react'
+import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
-import { SpotifyDevice } from '@/types'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -38,6 +34,11 @@ const SpotifySelectionPage = () => {
   const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
     null
   )
+  interface SpotifyDevice {
+    id: string
+    name: string
+    is_active?: boolean
+  }
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   // Helper: is there an active device?
@@ -73,22 +74,7 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const debouncedVolume = useDebounce(volume, 300)
-  const [isDragging, setIsDragging] = useState(false)
-
-  // Sync Volume from active device, but only if the user is not actively dragging the slider
-  useEffect(() => {
-    if (
-      !isDragging &&
-      activeDevice &&
-      typeof activeDevice.volume_percent === 'number'
-    ) {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
-    }
-  }, [activeDevice, isDragging, volume, setVolume])
+  const { volume, setVolume } = useVolumePreference()
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
@@ -100,35 +86,32 @@ const SpotifySelectionPage = () => {
     setSelectedPlaylistUri(uri)
   }
 
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
-      options: { playlistUri?: string; volume?: number; token?: string } = {}
-    ) => {
-      // Always include a deviceId, fallback to active device if not set
-      let deviceId = selectedDeviceId
-      if (!deviceId && availableDevices.length > 0) {
-        const activeDevice = availableDevices.find((d) => d.is_active)
-        const firstDevice = availableDevices[0]
-        deviceId = activeDevice ? activeDevice.id : firstDevice?.id || ''
-        if (deviceId) {
-          setSelectedDeviceId(deviceId)
-        }
+  const sendSpotifyCommand = (
+    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'SET_VOLUME',
+    options: { playlistUri?: string; volume?: number; token?: string } = {}
+  ) => {
+    // Always include a deviceId, fallback to active device if not set
+    let deviceId = selectedDeviceId
+    if (!deviceId && availableDevices.length > 0) {
+      const activeDevice = availableDevices.find((d) => d.is_active)
+      const firstDevice = availableDevices[0]
+      deviceId = activeDevice ? activeDevice.id : firstDevice?.id || ''
+      if (deviceId) {
+        setSelectedDeviceId(deviceId)
       }
-      if (!deviceId) {
-        console.warn('No deviceId available, command not sent.')
-        return
-      }
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        deviceId,
-        ...options,
-      }
-      sendData(message)
-    },
-    [availableDevices, selectedDeviceId, sendData]
-  )
+    }
+    if (!deviceId) {
+      console.warn('No deviceId available, command not sent.')
+      return
+    }
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command,
+      deviceId,
+      ...options,
+    }
+    sendData(message)
+  }
 
   const handlePlayPause = () => {
     if (spotifyData.isPlaying) {
@@ -140,13 +123,6 @@ const SpotifySelectionPage = () => {
       )
     }
   }
-
-  // Effect to send volume command
-  useEffect(() => {
-    if (hasActiveDevice) {
-      sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
-    }
-  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
 
   return (
     <Container maxWidth="sm" sx={{ py: 3 }}>
@@ -221,37 +197,33 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
-            <VolumeSlider
+            <VolumeControl
               volume={volume}
-              muted={muted}
-              onVolumeChange={(newVolume) => {
-                setIsDragging(true)
-                setVolume(newVolume)
-              }}
-              onVolumeChangeCommitted={() => setIsDragging(false)}
-              onToggleMute={toggleMute}
+              onVolumeChange={setVolume}
+              onVolumeChangeCommitted={(newVolume) =>
+                hasActiveDevice &&
+                sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
+              }
             />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
               <Box sx={{ mt: 2, minWidth: 200 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ color: 'text.secondary', mb: 1 }}
-                >
+                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
                   Device
                 </Typography>
-                <Select
+                <select
                   value={selectedDeviceId}
-                  onChange={(e) => setSelectedDeviceId(e.target.value)}
-                  fullWidth
-                  sx={{ color: 'text.primary' }}
+                  onChange={(e) => {
+                    setSelectedDeviceId(e.target.value)
+                  }}
+                  style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
                 >
                   {availableDevices.map((device) => (
-                    <MenuItem key={device.id} value={device.id}>
+                    <option key={device.id} value={device.id}>
                       {device.name} {device.is_active ? '(Active)' : ''}
-                    </MenuItem>
+                    </option>
                   ))}
-                </Select>
+                </select>
               </Box>
             )}
           </Stack>

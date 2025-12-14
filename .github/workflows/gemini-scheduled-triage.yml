@@ -1,7 +1,7 @@
 name: Gemini Scheduled Triage
 on:
   schedule:
-    - cron: "0 9 * * 1" # Weekly on Monday
+    - cron: '0 9 * * 1' # Weekly on Monday
   workflow_dispatch:
 
 permissions:
@@ -12,11 +12,11 @@ jobs:
   scheduled_triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v3
         with:
           version: 9
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -48,16 +48,16 @@ jobs:
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
-             const fs = require('fs');
-             try {
-               const body = fs.readFileSync('report.md', 'utf8');
-               await github.rest.issues.create({
-                 owner: context.repo.owner,
-                 repo: context.repo.repo,
-                 title: 'Weekly Gemini Triage Report',
-                 body: body
-               });
-             } catch (e) {
-               console.error('No report generated:', e);
-               core.setFailed('Failed to create triage report');
-             }
+            const fs = require('fs');
+            try {
+              const body = fs.readFileSync('report.md', 'utf8');
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Weekly Gemini Triage Report',
+                body: body
+              });
+            } catch (e) {
+              console.error('No report generated:', e);
+              core.setFailed('Failed to create triage report');
+            }

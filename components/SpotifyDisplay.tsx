@@ -56,8 +56,6 @@ const SpotifyDisplay = () => {
   useSpotifyRemoteExecution(player)
 
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [isDragging, setIsDragging] = useState(false)
-  const isInitialMount = useRef(true)
   const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -93,19 +91,6 @@ const SpotifyDisplay = () => {
     // This includes direct user interaction with the slider and cross-tab synchronization.
     sendVolumeCommand(debouncedVolume)
   }, [debouncedVolume, sendVolumeCommand])
-
-  // Effect: Send debounced volume command to backend
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
-    }
-    // We don't send the initial volume from useVolumePreference,
-    // only subsequent user-initiated changes.
-    if (!isDragging) {
-      sendVolumeCommand(debouncedVolume)
-    }
-  }, [debouncedVolume, isDragging, sendVolumeCommand])
 
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
@@ -157,6 +142,7 @@ const SpotifyDisplay = () => {
     const activeDevice = availableDevices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
       setSelectedDeviceId(activeDevice.id)
+      return
     }
     if (
       selectedDeviceId &&
@@ -164,18 +150,7 @@ const SpotifyDisplay = () => {
     ) {
       setSelectedDeviceId(activeDevice?.id ?? '')
     }
-
-    // Sync Volume from active device, but only if the user is not actively dragging the slider
-    if (
-      !isDragging &&
-      activeDevice &&
-      typeof activeDevice.volume_percent === 'number'
-    ) {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
-    }
-  }, [availableDevices, selectedDeviceId, isDragging, volume, setVolume])
+  }, [availableDevices, selectedDeviceId])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
@@ -336,16 +311,8 @@ const SpotifyDisplay = () => {
           <VolumeSlider
             volume={volume}
             muted={muted}
-            onVolumeChange={(newVolume) => {
-              setIsDragging(true)
-              setVolume(newVolume)
-            }}
-            onVolumeChangeCommitted={() => {
-              setIsDragging(false)
-              // The debounced effect will handle sending the command
-            }}
+            onVolumeChange={setVolume}
             onToggleMute={toggleMute}
-            showValue={false} // Don't show numeric value in the main display
           />
           <SpotifyDeviceSelectorWrapper
             availableDevices={availableDevices}

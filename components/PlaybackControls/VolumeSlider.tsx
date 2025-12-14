@@ -6,7 +6,7 @@ import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, SyntheticEvent } from 'react'
 
 interface VolumeSliderProps {
   volume: number
@@ -26,14 +26,14 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
   showValue = true,
 }) => {
   const handleVolumeChange = useCallback(
-    (_event: any, value: number | number[]) => {
+    (_event: Event | SyntheticEvent, value: number | number[]) => {
       onVolumeChange(value as number)
     },
     [onVolumeChange]
   )
 
   const handleVolumeChangeCommitted = useCallback(
-    (_event: any, value: number | number[]) => {
+    (_event: Event | SyntheticEvent, value: number | number[]) => {
       if (onVolumeChangeCommitted) {
         onVolumeChangeCommitted(value as number)
       }

@@ -80,8 +80,7 @@ describe('components/SpotifyControls', () => {
 
   it('should render the mute button with the correct aria-label', () => {
     render(<SpotifyControls />)
-    // The VolumeSlider component uses "Mute" or "Unmute" as the label
-    const muteButton = screen.getByLabelText(/mute/i)
+    const muteButton = screen.getByLabelText(/mute volume/i)
     expect(muteButton).toBeInTheDocument()
   })
 })
