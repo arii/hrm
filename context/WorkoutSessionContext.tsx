@@ -1,7 +1,13 @@
 // File: context/WorkoutSessionContext.tsx
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from 'react'
 import { useWebSocket } from './WebSocketContext'
 import { TimerCommandMessage } from '@/types/websocket'
 
@@ -20,29 +26,36 @@ interface WorkoutSessionState {
   resetWorkout: () => void
 }
 
-const WorkoutSessionContext = createContext<WorkoutSessionState | undefined>(undefined)
+const WorkoutSessionContext = createContext<WorkoutSessionState | undefined>(
+  undefined
+)
 
-export const WorkoutSessionProvider = ({ children }: { children: ReactNode }) => {
+export const WorkoutSessionProvider = ({
+  children,
+}: {
+  children: ReactNode
+}) => {
   const { sendData, timerData } = useWebSocket()
   const [status, setStatus] = useState<WorkoutStatus>('IDLE')
   const [startMethod, setStartMethod] = useState<StartMethod>(null)
   const [allowAutoStart, setAllowAutoStart] = useState(true)
 
   // This flag will temporarily disable auto-start after a manual stop.
-  const [autoStartDisabledForSession, setAutoStartDisabledForSession] = useState(false)
+  const [autoStartDisabledForSession, setAutoStartDisabledForSession] =
+    useState(false)
 
   // Sync with server state
   React.useEffect(() => {
     if (timerData.currentPhase === 'IDLE') {
-      setStatus('IDLE');
-      setStartMethod(null);
+      setStatus('IDLE')
+      setStartMethod(null)
     } else if (timerData.isRunning) {
-      setStatus('RUNNING');
+      setStatus('RUNNING')
     } else {
       // If the phase is not IDLE and the timer is not running, it's paused.
-      setStatus('PAUSED');
+      setStatus('PAUSED')
     }
-  }, [timerData.isRunning, timerData.currentPhase]);
+  }, [timerData.isRunning, timerData.currentPhase])
 
   const toggleAutoStart = useCallback(() => {
     setAllowAutoStart((prev) => !prev)
@@ -150,7 +163,9 @@ export const WorkoutSessionProvider = ({ children }: { children: ReactNode }) =>
 export const useWorkoutSession = () => {
   const context = useContext(WorkoutSessionContext)
   if (context === undefined) {
-    throw new Error('useWorkoutSession must be used within a WorkoutSessionProvider')
+    throw new Error(
+      'useWorkoutSession must be used within a WorkoutSessionProvider'
+    )
   }
   return context
 }

@@ -283,7 +283,7 @@ export default function ConnectView({
             minHeight: '48px', // Ensure consistent height for layout stability
           }}
         >
-        {workoutStatus === 'IDLE' && isConnected && (
+          {workoutStatus === 'IDLE' && isConnected && (
             <Button
               variant="contained"
               onClick={onStartWorkout}
@@ -294,11 +294,11 @@ export default function ConnectView({
               Start Workout
             </Button>
           )}
-        {workoutStatus === 'PAUSED' && (
+          {workoutStatus === 'PAUSED' && (
             <>
               <Button
                 variant="contained"
-              onClick={onResumeWorkout}
+                onClick={onResumeWorkout}
                 size="large"
                 sx={{ minWidth: '200px' }}
                 disabled={!isConnected}
@@ -317,28 +317,28 @@ export default function ConnectView({
               </Button>
             </>
           )}
-        {workoutStatus === 'RUNNING' && (
-          <>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={onPauseWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="Pause workout session"
-            >
-              Pause
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={onEndWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="End workout session"
-            >
-              End Workout
-            </Button>
-          </>
+          {workoutStatus === 'RUNNING' && (
+            <>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={onPauseWorkout}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                aria-label="Pause workout session"
+              >
+                Pause
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={onEndWorkout}
+                size="large"
+                sx={{ minWidth: '200px' }}
+                aria-label="End workout session"
+              >
+                End Workout
+              </Button>
+            </>
           )}
         </Stack>
 

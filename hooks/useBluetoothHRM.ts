@@ -66,7 +66,8 @@ const useBluetoothHRM = () => {
   const [isSupported] = useState(
     () =>
       (typeof window !== 'undefined' &&
-        (window as any).__FORCE_BLUETOOTH_SUPPORT__) ||
+        (window as Window & { __FORCE_BLUETOOTH_SUPPORT__?: boolean })
+          .__FORCE_BLUETOOTH_SUPPORT__) ||
       (typeof navigator !== 'undefined' && !!navigator.bluetooth)
   )
 
