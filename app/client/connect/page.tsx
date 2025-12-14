@@ -20,6 +20,7 @@ export default function ConnectPage() {
     deviceStatus,
     batteryLevel,
     isConnected,
+    isGattConnected,
     isSupported,
   } = useBluetoothHRM()
 
@@ -42,7 +43,7 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected,
+    isConnected: isGattConnected,
     currentHR,
     userAge: userAge ? parseInt(userAge) : 0,
     userWeight: userWeight ? parseInt(userWeight) : 0,
