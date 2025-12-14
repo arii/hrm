@@ -26,7 +26,13 @@ const AuthButton = () => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true)
-    await signOut({ callbackUrl: '/' })
+    try {
+      await signOut({ callbackUrl: '/' })
+    } finally {
+      // This will only execute if signOut doesn't immediately redirect/unmount
+      // but it's good practice for robustness in case of failures or client-side errors.
+      setIsLoggingOut(false)
+    }
   }
 
   if (status === 'loading') {
