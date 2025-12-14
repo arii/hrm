@@ -1,7 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
-import { SpotifyTokenResponse } from './spotifyPolling'
+import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -51,7 +51,7 @@ export class SpotifyTokenManager {
         access_token: token.access_token,
         refresh_token: token.refresh_token,
         expires_in: token.expires_in,
-        scope: token.scope,
+        scope: (token as any).scope,
         obtainedAt: Date.now(),
       },
     }

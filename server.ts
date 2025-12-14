@@ -24,7 +24,6 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -44,7 +43,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
   process.exit(1)
 }
 
-const app = next({ dev, hostname, port })
+const app = (next as any)({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
@@ -165,7 +164,6 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
     let spotifyService: SpotifyPolling
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
