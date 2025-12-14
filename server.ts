@@ -15,7 +15,6 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { validateRuntimeEnv } from './lib/env.js'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -26,7 +25,7 @@ import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
-import { env } from './lib/env.js'
+import { env, validateRuntimeEnv } from './lib/env.js'
 
 const port = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -38,7 +37,7 @@ const dev = env.NODE_ENV !== 'production'
 const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
-logger.info(`Environment: NODE_ENV=${env.NODE_ENV}`)
+logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
@@ -54,8 +53,6 @@ expressApp.set('trust proxy', true)
 app
   .prepare()
   .then(async () => {
-    // Runtime validation of environment variables.
-    // This is skipped in test environments where a full set of secrets may not be available.
     if (env.NODE_ENV === 'production' && !env.TESTING) {
       validateRuntimeEnv()
     }

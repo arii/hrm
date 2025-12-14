@@ -3,17 +3,6 @@
  * Tests Spotify commands and volume control
  */
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
-
-// Mock the env module before other imports
-jest.doMock('../../lib/env', () => ({
-  env: {
-    SPOTIFY_CLIENT_ID: 'test_client_id',
-    SPOTIFY_CLIENT_SECRET: 'test_client_secret',
-    SPOTIFY_POLLING_INTERVAL_MS: 100,
-    SPOTIFY_DEBUG: false,
-  },
-}))
-
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'

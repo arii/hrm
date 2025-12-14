@@ -3,6 +3,7 @@ import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
 import { env } from '../lib/env.js'
+
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
   try {

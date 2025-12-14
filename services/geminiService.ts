@@ -1,9 +1,8 @@
 import { GoogleGenAI, Type } from '@google/genai'
 import { GithubPullRequest, ReleaseNoteResult } from '../types/gemini'
-import { env } from '../lib/env'
 
 const getClient = () => {
-  const apiKey = env.GEMINI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY // Ensure GEMINI_API_KEY is configured for server-side use
   if (!apiKey) {
     throw new Error('Gemini API Key is missing')
   }
@@ -46,7 +45,7 @@ export const generateReleaseNotes = async (
     ${JSON.stringify(prSummaries)}
   `
 
-  const modelName = env.GEMINI_MODEL
+  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const response = await client.models.generateContent({
     model: modelName,
     contents: prompt,

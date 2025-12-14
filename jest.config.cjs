@@ -1,6 +1,4 @@
 /** @type {import('jest').Config} */
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-require('dotenv').config({ path: './.env.test' })
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -52,6 +50,7 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
 }
 
 module.exports = config
