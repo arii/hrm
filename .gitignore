@@ -13,12 +13,10 @@ package-lock.json
 /coverage
 /test-results/
 /playwright-report/
-/oauth-test-report/
 /test-recordings/
 /tests/playwright/screenshots/
 /tests/playwright/*-actual.png
 /tests/playwright/*-diff.png
-/screenshots/
 
 # Next.js & Build
 /.next/

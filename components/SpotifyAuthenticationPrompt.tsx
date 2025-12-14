@@ -11,7 +11,7 @@ import SpotifyLoginButton from './SpotifyLoginButton'
  * button for unauthenticated users and rendering nothing for authenticated
  * users, allowing the parent component to render its own UI.
  */
-const UserGreetingDisplay = () => {
+const SpotifyAuthenticationPrompt = () => {
   const { status } = useSession()
 
   if (status === 'loading') {
@@ -64,4 +64,4 @@ const UserGreetingDisplay = () => {
   return null
 }
 
-export default UserGreetingDisplay
+export default SpotifyAuthenticationPrompt

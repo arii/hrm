@@ -28,7 +28,6 @@ const DEFAULT_STATE: MockAppState = {
     currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
-    caloriesBurned: 0,
     mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,

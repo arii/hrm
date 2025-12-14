@@ -6,13 +6,13 @@
  */
 'use client'
 import Container from '@mui/material/Container'
+import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import dynamic from 'next/dynamic'
-import Box from '@mui/material/Box'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import HrmTiles from '../components/HrmTiles'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -76,13 +76,11 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+      <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
+        <Grid size={{ xs: 12, lg: 6 }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -92,17 +90,13 @@ const Dashboard = () => {
             restDuration={timerData.restDuration}
             soundEventId={timerData.soundEventId}
           />
-        </Box>
+        </Grid>
 
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmConnectionPanel />
-          </ErrorBoundary>
-        </Box>
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmTiles />
+        </ErrorBoundary>
 
-        <Box sx={{ width: '100%' }}>
+        <Grid size={{ xs: 12 }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
@@ -114,8 +108,8 @@ const Dashboard = () => {
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
           )}
-        </Box>
-      </Box>
+        </Grid>
+      </Grid>
 
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />

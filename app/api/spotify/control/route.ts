@@ -66,22 +66,14 @@ export async function POST(req: NextRequest) {
         break
       case 'SET_VOLUME':
         // Volume requires a query param 'volume_percent'
-        if (volume === undefined) {
-          return NextResponse.json(
-            { error: 'Volume parameter is required for SET_VOLUME' },
-            { status: 400 }
-          )
-        }
+        if (volume === undefined)
+          throw new Error('Volume required for SET_VOLUME')
         url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
         method = 'PUT'
         break
       case 'TRANSFER_PLAYBACK':
-        if (!deviceId) {
-          return NextResponse.json(
-            { error: 'Device ID required for TRANSFER_PLAYBACK' },
-            { status: 400 }
-          )
-        }
+        if (!deviceId)
+          throw new Error('Device ID required for TRANSFER_PLAYBACK')
         url = `${SPOTIFY_API_BASE}`
         method = 'PUT'
         // Transfer requires a specific body structure

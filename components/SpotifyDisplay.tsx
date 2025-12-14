@@ -19,7 +19,7 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import UserGreetingDisplay from './UserGreetingDisplay'
+import SpotifyAuthenticationPrompt from './SpotifyAuthenticationPrompt'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
 
@@ -188,7 +188,7 @@ const SpotifyDisplay = () => {
   }
 
   if (!isLoggedIn) {
-    return <UserGreetingDisplay />
+    return <SpotifyAuthenticationPrompt />
   }
 
   // If we are logged in, we show the player bar.
