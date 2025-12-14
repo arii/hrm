@@ -11,12 +11,11 @@ import {
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import Add from '@mui/icons-material/Add'
 import FitnessCenter from '@mui/icons-material/FitnessCenter'
-import PlayArrow from '@mui/icons-material/PlayArrow'
 import Remove from '@mui/icons-material/Remove'
-import Stop from '@mui/icons-material/Stop'
 import Timer from '@mui/icons-material/Timer'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import WorkoutSessionControls from './WorkoutSessionControls'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
@@ -26,36 +25,36 @@ import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const actionButtonBaseSx = {
-  flex: 1,
-  fontWeight: 'bold',
-  py: 1,
-  minHeight: '48px',
-  transition: 'transform 0.1s ease-in-out',
-  '&:active': {
-    transform: 'scale(0.95)',
-  },
-}
+// const actionButtonBaseSx = {
+//   flex: 1,
+//   fontWeight: 'bold',
+//   py: 1,
+//   minHeight: '48px',
+//   transition: 'transform 0.1s ease-in-out',
+//   '&:active': {
+//     transform: 'scale(0.95)',
+//   },
+// }
 
-const startButtonSx = {
-  ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
-  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
-  },
-}
+// const startButtonSx = {
+//   ...actionButtonBaseSx,
+//   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+//   boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+//   '&:hover': {
+//     transform: 'translateY(-2px)',
+//     boxShadow: '0 12px 32px rgba(16, 185, 129, 0.5)',
+//   },
+// }
 
-const stopButtonSx = {
-  ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-  boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 12px 32px rgba(239, 68, 68, 0.5)',
-  },
-}
+// const stopButtonSx = {
+//   ...actionButtonBaseSx,
+//   background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+//   boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)',
+//   '&:hover': {
+//     transform: 'translateY(-2px)',
+//     boxShadow: '0 12px 32px rgba(239, 68, 68, 0.5)',
+//   },
+// }
 
 const stepperButtonSx = {
   backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -501,33 +500,15 @@ const TimerControls = () => {
           </Stack>
         )}
 
-        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          {!timerData.isRunning ? (
-            <Button
-              data-testid="start-timer-button"
-              variant="contained"
-              color="success"
-              onClick={() => sendTimerCommand('START')}
-              disabled={connectionStatus !== 'Connected'}
-              sx={startButtonSx}
-              startIcon={<PlayArrow fontSize="large" />}
-            >
-              START
-            </Button>
-          ) : (
-            <Button
-              data-testid="stop-timer-button"
-              variant="contained"
-              color="error"
-              onClick={() => sendTimerCommand('STOP')}
-              disabled={connectionStatus !== 'Connected'}
-              sx={stopButtonSx}
-              startIcon={<Stop fontSize="large" />}
-            >
-              STOP
-            </Button>
-          )}
-        </Stack>
+        <WorkoutSessionControls
+          isSessionActive={timerData.isRunning}
+          isPaused={!timerData.isRunning && timerData.currentPhase !== 'IDLE'}
+          onStartSession={() => sendTimerCommand('START')}
+          onPauseSession={() => sendTimerCommand('PAUSE')}
+          onResumeSession={() => sendTimerCommand('START')}
+          onEndSession={() => sendTimerCommand('STOP')}
+          isConnected={connectionStatus === 'Connected'}
+        />
       </CardContent>
     </Card>
   )
