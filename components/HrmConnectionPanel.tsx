@@ -101,7 +101,14 @@ const HrmConnectionPanel = () => {
           </Box>
         )
       })
-  }, [hrmData, activeAlerts, primaryUser, caloriesBurned, workoutDuration])
+  }, [
+    hrmData,
+    activeAlerts,
+    primaryUser,
+    caloriesBurned,
+    workoutDuration,
+    hasStarted,
+  ])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
