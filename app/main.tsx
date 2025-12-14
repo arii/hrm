@@ -12,15 +12,12 @@ import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
-import { useState } from 'react'
 
 export default function MainLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [isLoading, _setIsLoading] = useState(true)
-
   return (
     <ThemeRegistry options={{ key: 'mui' }}>
       <ErrorProvider>
@@ -35,7 +32,7 @@ export default function MainLayout({
       </ErrorProvider>
       <Footer />
       <BottomNavBar />
-      <LoadingIndicator isLoading={isLoading} />
+      <LoadingIndicator />
     </ThemeRegistry>
   )
 }

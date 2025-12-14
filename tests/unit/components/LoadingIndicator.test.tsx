@@ -4,12 +4,19 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
+import * as LoadingContext from '@/context/LoadingContext'
 import '@testing-library/jest-dom'
 
 describe('LoadingIndicator', () => {
   it('should render the loading indicator when isLoading is true', () => {
+    // Arrange
+    jest.spyOn(LoadingContext, 'useLoading').mockReturnValue({
+      isLoading: true,
+      setIsLoading: jest.fn(),
+    })
+
     // Act
-    render(<LoadingIndicator isLoading={true} />)
+    render(<LoadingIndicator />)
 
     // Assert
     const progressBar = screen.getByRole('progressbar', { name: /loading/i })
@@ -17,8 +24,14 @@ describe('LoadingIndicator', () => {
   })
 
   it('should not render the loading indicator when isLoading is false', () => {
+    // Arrange
+    jest.spyOn(LoadingContext, 'useLoading').mockReturnValue({
+      isLoading: false,
+      setIsLoading: jest.fn(),
+    })
+
     // Act
-    render(<LoadingIndicator isLoading={false} />)
+    render(<LoadingIndicator />)
 
     // Assert
     const progressBar = screen.queryByRole('progressbar', {

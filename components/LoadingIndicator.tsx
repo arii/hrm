@@ -2,15 +2,11 @@
 
 import React from 'react'
 import { Box, LinearProgress, useTheme } from '@mui/material'
+import { useLoading } from '@/context/LoadingContext'
 
-interface LoadingIndicatorProps {
-  isLoading: boolean
-}
-
-export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
-  isLoading,
-}) => {
+export const LoadingIndicator: React.FC = () => {
   const theme = useTheme()
+  const { isLoading } = useLoading()
 
   if (!isLoading) return null
 
