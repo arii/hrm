@@ -48,7 +48,7 @@ export default function ResponsiveNavBar() {
                 textAlign: 'center',
                 minHeight: 48,
                 backgroundColor:
-                  pathname === item.href ? 'action.hover' : 'transparent',
+                  pathname === item.href ? 'action.selected' : 'transparent',
               }}
             >
               <ListItemText primary={item.label} />
@@ -86,7 +86,7 @@ export default function ResponsiveNavBar() {
                 component={Link}
                 href={item.href}
                 sx={{
-                  color: '#fff',
+                  color: 'common.white',
                   fontWeight: pathname === item.href ? 'bold' : 'normal',
                 }}
               >
