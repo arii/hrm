@@ -1,0 +1,402 @@
+
+> hrm@0.6.0 test:unit /app
+> jest tests/unit --coverage "tests/unit/components/Spotify/VolumeControl.test.tsx"
+
+FAIL tests/unit/components/Spotify/VolumeControl.test.tsx
+  ● VolumeControl Accessibility › renders slider with correct aria-label and ARIA value attributes
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      15 |
+      16 |   it('renders slider with correct aria-label and ARIA value attributes', () => {
+    > 17 |     render(<VolumeControl {...defaultProps} />)
+         |           ^
+      18 |     const slider = screen.getByRole('slider')
+      19 |
+      20 |     // Check aria-label
+
+      at render (node_modules/.pnpm/@testing-library+react@16.3.0_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_v3kzquwuqqnfk6s6ngqc73zpqu/node_modules/@testing-library/react/dist/pure.js:257:5)
+      at Object.<anonymous> (tests/unit/components/Spotify/VolumeControl.test.tsx:17:11)
+
+  ● VolumeControl Accessibility › hides the volume icon from screen readers
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      28 |
+      29 |   it('hides the volume icon from screen readers', () => {
+    > 30 |     render(<VolumeControl {...defaultProps} />)
+         |           ^
+      31 |     // Find the svg icon. Since it's hidden, getByRole('img', { hidden: true }) might work
+      32 |     // or querySelector.
+      33 |     const icons = document.querySelectorAll('svg')
+
+      at render (node_modules/.pnpm/@testing-library+react@16.3.0_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_v3kzquwuqqnfk6s6ngqc73zpqu/node_modules/@testing-library/react/dist/pure.js:257:5)
+      at Object.<anonymous> (tests/unit/components/Spotify/VolumeControl.test.tsx:30:11)
+
+  ● VolumeControl Accessibility › supports keyboard interaction
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      43 |
+      44 |   it('supports keyboard interaction', () => {
+    > 45 |       render(<VolumeControl {...defaultProps} />)
+         |             ^
+      46 |       const slider = screen.getByRole('slider')
+      47 |
+      48 |       slider.focus()
+
+      at render (node_modules/.pnpm/@testing-library+react@16.3.0_@testing-library+dom@10.4.0_@types+react-dom@19.2.3_@types+reac_v3kzquwuqqnfk6s6ngqc73zpqu/node_modules/@testing-library/react/dist/pure.js:257:5)
+      at Object.<anonymous> (tests/unit/components/Spotify/VolumeControl.test.tsx:45:13)
+
+PASS tests/unit/components/Spotify/PlaylistSelector.test.tsx
+PASS tests/unit/components/SpotifyDisplay.test.tsx
+  ● Console
+
+    console.log
+      [SpotifyDisplay] Session status changed: {
+        status: 'unauthenticated',
+        hasSession: false,
+        hasAccessToken: false,
+        isLoggedIn: false
+      }
+
+      at components/SpotifyDisplay.tsx:34:13
+
+    console.log
+      [SpotifyDisplay] Session status changed: {
+        status: 'authenticated',
+        hasSession: true,
+        hasAccessToken: true,
+        isLoggedIn: true
+      }
+
+      at components/SpotifyDisplay.tsx:34:13
+
+    console.log
+      [SpotifyDisplay] Session status changed: {
+        status: 'authenticated',
+        hasSession: true,
+        hasAccessToken: true,
+        isLoggedIn: true
+      }
+
+      at components/SpotifyDisplay.tsx:34:13
+
+PASS tests/unit/TimerControls.test.tsx
+PASS tests/unit/app/client/control/page.test.tsx
+  ● Console
+
+    console.log
+      [useWebSocket] Manually disconnected.
+
+      at context/WebSocketContext.tsx:308:13
+          at Array.forEach (<anonymous>)
+
+PASS tests/unit/app/client/control/components/SpotifyControls.test.tsx
+PASS tests/unit/components/TimerDisplay.test.tsx
+PASS tests/unit/components/HrmTiles.test.tsx
+PASS tests/unit/tabataTimer.test.ts
+PASS tests/unit/services.test.ts
+PASS tests/unit/socketManager.test.ts
+  ● Console
+
+    console.log
+      WebSocket Client connected: user-ggylj60
+
+      at EventEmitter.log (utils/socketManager.ts:60:13)
+
+    console.log
+      WebSocket Client connected: user-lg7pe6o
+
+      at EventEmitter.log (utils/socketManager.ts:60:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-lg7pe6o: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-lg7pe6o: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      WebSocket Client connected: user-2iyaqtz
+
+      at EventEmitter.log (utils/socketManager.ts:60:13)
+
+    console.log
+      Terminating stale WebSocket connection for client (no pong received).
+
+      at log (utils/socketManager.ts:97:17)
+          at Set.forEach (<anonymous>)
+
+    console.log
+      WebSocket Client connected: user-ocum58k
+
+      at EventEmitter.log (utils/socketManager.ts:60:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+    console.log
+      [socketManager] INCOMING MESSAGE from user-ocum58k: {"type":"PING"}
+
+      at log (utils/socketManager.ts:116:11)
+
+    console.log
+      [socketManager] PARSED JSON: { type: 'PING' }
+
+      at log (utils/socketManager.ts:120:13)
+
+    console.log
+      [socketManager] Received message from user-ocum58k: PING
+
+      at log (utils/socketManager.ts:124:13)
+
+PASS tests/unit/app/api/spotify/control/route.test.ts
+  ● Console
+
+    console.error
+      Spotify API Error (404): Device not found
+
+      123 |         // Text was not JSON
+      124 |       }
+    > 125 |       console.error(`Spotify API Error (${response.status}): ${errorDetails}`)
+          |               ^
+      126 |       return NextResponse.json(
+      127 |         { error: 'Spotify API error', details: errorDetails },
+      128 |         { status: response.status }
+
+      at POST (app/api/spotify/control/route.ts:125:15)
+      at Object.<anonymous> (tests/unit/app/api/spotify/control/route.test.ts:138:22)
+
+    console.error
+      REST control failed: Error: Network error
+          at Object.<anonymous> (/app/tests/unit/app/api/spotify/control/route.test.ts:147:35)
+          at Promise.finally.completed (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)
+          at _callCircusTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:947:3)
+          at /app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:857:11)
+          at run (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)
+          at jestAdapter (/app/node_modules/.pnpm/jest-circus@30.2.0_babel-plugin-macros@3.1.0/node_modules/jest-circus/build/runner.js:101:19)
+          at runTestInternal (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:275:16)
+          at runTest (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:343:7)
+          at Object.worker (/app/node_modules/.pnpm/jest-runner@30.2.0/node_modules/jest-runner/build/testWorker.js:497:12)
+
+      135 |     })
+      136 |   } catch (error) {
+    > 137 |     console.error('REST control failed:', error)
+          |             ^
+      138 |     return NextResponse.json(
+      139 |       {
+      140 |         error: 'Internal server error processing command.',
+
+      at POST (app/api/spotify/control/route.ts:137:13)
+      at Object.<anonymous> (tests/unit/app/api/spotify/control/route.test.ts:149:22)
+
+PASS tests/unit/services/genericTimer.test.ts
+PASS tests/unit/app/api/spotify/devices/route.test.ts
+  ● Console
+
+    console.log
+      [API /devices] No user session found, attempting system token fallback.
+
+      at GET (app/api/spotify/devices/route.ts:27:15)
+
+    console.log
+      [API /devices] No user session found, attempting system token fallback.
+
+      at GET (app/api/spotify/devices/route.ts:27:15)
+
+    console.error
+      [API /devices] Spotify API error: 403 Forbidden
+
+      54 |     if (!response.ok) {
+      55 |       const errorText = await response.text()
+    > 56 |       console.error(
+         |               ^
+      57 |         `[API /devices] Spotify API error: ${response.status} ${errorText}`
+      58 |       )
+      59 |       return NextResponse.json(
+
+      at GET (app/api/spotify/devices/route.ts:56:15)
+      at Object.<anonymous> (tests/unit/app/api/spotify/devices/route.test.ts:118:22)
+
+    console.error
+      [API /devices] Internal Server Error: Unexpected DB error
+
+      74 |     const message =
+      75 |       error instanceof Error ? error.message : 'An unknown error occurred.'
+    > 76 |     console.error(`[API /devices] Internal Server Error: ${message}`)
+         |             ^
+      77 |     return NextResponse.json(
+      78 |       { error: 'Internal Server Error' },
+      79 |       { status: 500 }
+
+      at GET (app/api/spotify/devices/route.ts:76:13)
+      at Object.<anonymous> (tests/unit/app/api/spotify/devices/route.test.ts:129:22)
+
+PASS tests/unit/useVolumePreference.test.ts
+PASS tests/unit/services/spotifyPlaylistService.test.ts
+PASS tests/unit/spotifyPolling.test.ts
+PASS tests/unit/app/api/spotify/playlists/route.test.ts
+PASS tests/unit/app/api/spotify/access-token/route.test.ts
+  ● Console
+
+    console.error
+      [API /access-token] No session or access token found.
+
+      21 |     // 2. Check if the session and token exist.
+      22 |     if (!session || !session.accessToken) {
+    > 23 |       console.error('[API /access-token] No session or access token found.')
+         |               ^
+      24 |       return NextResponse.json(
+      25 |         { error: 'Not authenticated or token is missing.' },
+      26 |         { status: 401 }
+
+      at GET (app/api/spotify/access-token/route.ts:23:15)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:24:22)
+
+    console.error
+      [API /access-token] Token refresh failed in NextAuth
+
+      30 |     // 3. Check for refresh errors from NextAuth
+      31 |     if (session.error === 'RefreshAccessTokenError') {
+    > 32 |       console.error('[API /access-token] Token refresh failed in NextAuth')
+         |               ^
+      33 |       return NextResponse.json(
+      34 |         { error: 'Token refresh failed. Please re-authenticate.' },
+      35 |         { status: 401 }
+
+      at GET (app/api/spotify/access-token/route.ts:32:15)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:40:22)
+
+    console.error
+      [API /access-token] Internal Server Error: Test error
+
+      44 |     const message =
+      45 |       error instanceof Error ? error.message : 'An unknown error occurred.'
+    > 46 |     console.error(`[API /access-token] Internal Server Error: ${message}`)
+         |             ^
+      47 |     return NextResponse.json(
+      48 |       { error: 'Internal Server Error' },
+      49 |       { status: 500 }
+
+      at GET (app/api/spotify/access-token/route.ts:46:13)
+      at Object.<anonymous> (tests/unit/app/api/spotify/access-token/route.test.ts:67:22)
+
+PASS tests/unit/services/spotifyTokenManager.test.ts
+----------------------------|---------|----------|---------|---------|-------------------------------------------------------------------------------------------
+File                        | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+----------------------------|---------|----------|---------|---------|-------------------------------------------------------------------------------------------
+All files                   |   78.02 |    64.39 |    82.6 |   79.03 |
+ services                   |    84.1 |    69.03 |   86.44 |   85.42 |
+  genericTimer.ts           |   93.61 |    79.59 |     100 |   93.18 | 64,98,114
+  seedData.ts               |     100 |      100 |     100 |     100 |
+  spotifyPlaylistService.ts |     100 |      100 |     100 |     100 |
+  spotifyPolling.ts         |   81.32 |    65.54 |   84.61 |    82.6 | 44,81,128,199-206,236,250-251,278-280,289,297-298,322,338-339,366,403-406,457,469,482-493
+  spotifyTokenManager.ts    |   63.63 |    44.18 |   63.63 |   66.66 | 18-21,46-66,90,115-116,146-147,174-175,189-194
+  tabataTimer.ts            |    93.8 |    83.33 |     100 |   95.32 | 73,78,254-255,273
+ utils                      |   49.42 |    11.11 |      60 |      50 |
+  socketManager.ts          |   49.42 |    11.11 |      60 |      50 | 77-79,139-258
+----------------------------|---------|----------|---------|---------|-------------------------------------------------------------------------------------------
+
+Test Suites: 1 failed, 19 passed, 20 total
+Tests:       3 failed, 153 passed, 156 total
+Snapshots:   0 total
+Time:        4.644 s
+Ran all test suites matching tests/unit|tests/unit/components/Spotify/VolumeControl.test.tsx.
+ ELIFECYCLE  Command failed with exit code 1.
