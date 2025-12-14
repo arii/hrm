@@ -10,7 +10,8 @@ import React, {
   ReactNode,
 } from 'react'
 import { AlertColor } from '@mui/material'
-import ToastContainer from '@/components/Toast/ToastContainer'
+import Toast from '@/components/Toast/Toast'
+import { Toast as ToastType } from '@/context/ToastContext'
 
 export interface Toast {
   id: number
@@ -59,7 +60,17 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          open={true}
+          message={toast.message}
+          severity={toast.severity}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        />
+      ))}
     </ToastContext.Provider>
   )
 }

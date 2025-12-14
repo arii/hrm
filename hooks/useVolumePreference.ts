@@ -1,97 +1,88 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
 
-const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
+const STORAGE_KEY_VOL = 'hrm-volume'
 const STORAGE_KEY_MUTE = 'hrm-muted'
 
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))
 
-/**
- * Manages user's volume and mute preferences with localStorage persistence.
- * This hook handles the logic of restoring volume after unmuting.
- * @param {number} defaultVolume - The default volume level (0-100).
- */
 const useVolumePreference = (defaultVolume = 70) => {
   const sanitizedDefault = clampVolume(defaultVolume)
-  const lastVolumeRef = useRef(sanitizedDefault)
 
-  const [volume, setVolumeState] = useState(sanitizedDefault) // Effective volume
-  const [muted, setMutedState] = useState(false)
+  // 1. Initialize State with Server-Safe Defaults
+  // We strictly use the default prop here to ensure Server HTML == Client Initial Render
+  const [volume, setVolumeState] = useState<number>(sanitizedDefault)
+  const [muted, setMutedState] = useState<boolean>(false)
+
+  // Track if we have finished reading from localStorage
   const [isLoaded, setIsLoaded] = useState(false)
 
+  // 2. Load Preferences on Client Mount
   useEffect(() => {
     try {
-      const storedMute = window.localStorage.getItem(STORAGE_KEY_MUTE)
       const storedVol = window.localStorage.getItem(STORAGE_KEY_VOL)
+      const storedMute = window.localStorage.getItem(STORAGE_KEY_MUTE)
 
-      const isMuted = storedMute === 'true'
-      const preferredVolume =
-        storedVol !== null ? clampVolume(Number(storedVol)) : sanitizedDefault
-      lastVolumeRef.current = preferredVolume
-      setMutedState(isMuted)
-      setVolumeState(isMuted ? 0 : preferredVolume)
+      if (storedVol !== null) {
+        setVolumeState(clampVolume(Number(storedVol)))
+      }
+
+      if (storedMute !== null) {
+        setMutedState(storedMute === 'true')
+      }
     } catch (error) {
       console.warn('Failed to read audio preferences from localStorage:', error)
     } finally {
       setIsLoaded(true)
     }
-  }, [sanitizedDefault])
+  }, [])
+
+  // 3. Sync State to AudioManager (Effect)
+  // We only sync specific values to avoid race conditions during the initial load
+  useEffect(() => {
+    if (isLoaded) {
+      audioManager.setVolume(volume)
+    }
+  }, [volume, isLoaded])
 
   useEffect(() => {
     if (isLoaded) {
       audioManager.setMuted(muted)
-      // We still set volume for non-Spotify sounds that respect volume but not the mute toggle
-      audioManager.setVolume(volume)
     }
-  }, [volume, muted, isLoaded])
+  }, [muted, isLoaded])
 
-  const setVolume = useCallback(
-    (value: number) => {
-      const sanitized = clampVolume(value)
-      setVolumeState(sanitized)
-      try {
-        if (sanitized > 0) {
-          lastVolumeRef.current = sanitized
-          setMutedState(false)
-          window.localStorage.setItem(STORAGE_KEY_VOL, String(sanitized))
-          window.localStorage.setItem(STORAGE_KEY_MUTE, 'false')
-        } else {
-          setMutedState(true)
-          window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
-        }
-        window.dispatchEvent(
-          new CustomEvent('hrm:volumeChange', { detail: sanitized })
-        )
-      } catch (error) {
-        console.warn('Could not persist volume preference:', error)
-      }
-    },
-    [setMutedState]
-  )
+  // --- ACTIONS ---
+
+  const setVolume = useCallback((value: number) => {
+    const sanitized = clampVolume(value)
+    setVolumeState(sanitized)
+
+    // Side effects (Storage + Event)
+    try {
+      window.localStorage.setItem(STORAGE_KEY_VOL, String(sanitized))
+      window.dispatchEvent(
+        new CustomEvent('volumeChange', { detail: sanitized })
+      )
+    } catch (_e) {
+      // Ignore storage errors (e.g. Incognito mode quotas)
+    }
+  }, [])
 
   const toggleMute = useCallback(() => {
-    const isMuting = !muted
-    setMutedState(isMuting)
-    try {
-      window.localStorage.setItem(STORAGE_KEY_MUTE, String(isMuting))
-      if (isMuting) {
-        if (volume > 0) {
-          lastVolumeRef.current = volume
-          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
-        }
-        setVolumeState(0)
-      } else {
-        setVolumeState(lastVolumeRef.current)
+    setMutedState((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem(STORAGE_KEY_MUTE, String(next))
+        window.dispatchEvent(new CustomEvent('muteChange', { detail: next }))
+      } catch (_e) {
+        // Ignore storage errors
       }
-      window.dispatchEvent(
-        new CustomEvent('hrm:muteChange', { detail: isMuting })
-      )
-    } catch (error) {
-      console.warn('Could not persist mute preference:', error)
-    }
-  }, [muted, volume])
+      return next
+    })
+  }, [])
 
+  // --- CROSS-TAB SYNC ---
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY_VOL && e.newValue !== null) {
@@ -114,13 +105,13 @@ const useVolumePreference = (defaultVolume = 70) => {
     }
 
     window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('hrm:volumeChange', handleLocalVolume)
-    window.addEventListener('hrm:muteChange', handleLocalMute)
+    window.addEventListener('volumeChange', handleLocalVolume)
+    window.addEventListener('muteChange', handleLocalMute)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('hrm:volumeChange', handleLocalVolume)
-      window.removeEventListener('hrm:muteChange', handleLocalMute)
+      window.removeEventListener('volumeChange', handleLocalVolume)
+      window.removeEventListener('muteChange', handleLocalMute)
     }
   }, [])
 

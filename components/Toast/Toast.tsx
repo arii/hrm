@@ -19,7 +19,7 @@ const Toast: React.FC<ToastProps> = ({
   severity,
   onClose,
   duration = 6000,
-  anchorOrigin = { vertical: 'bottom', horizontal: 'left' },
+  anchorOrigin = { vertical: 'top', horizontal: 'right' },
 }) => {
   const handleClose = (
     event?: React.SyntheticEvent | Event,
@@ -37,6 +37,11 @@ const Toast: React.FC<ToastProps> = ({
       autoHideDuration={duration}
       onClose={handleClose}
       anchorOrigin={anchorOrigin}
+      sx={{
+        width: '100%',
+        maxWidth: { xs: 'calc(100% - 2rem)', sm: 400 },
+        right: { xs: '1rem', sm: '1rem' },
+      }}
     >
       <Alert
         onClose={handleClose}

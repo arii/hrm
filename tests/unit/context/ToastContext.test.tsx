@@ -5,24 +5,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ToastProvider, useToast } from '@/context/ToastContext'
 import '@testing-library/jest-dom'
 
-// Mock the ToastContainer and Toast components
-jest.mock('@/components/Toast/ToastContainer', () => ({
-  __esModule: true,
-  default: ({ toasts, removeToast }: any) => (
-    <div>
-      {toasts.map((toast: any) => (
-        <div
-          key={toast.id}
-          onClick={() => removeToast(toast.id)}
-          data-testid={`toast-${toast.id}`}
-        >
-          {toast.message}
-        </div>
-      ))}
-    </div>
-  ),
-}))
-
 const TestComponent = () => {
   const { addToast } = useToast()
   return (
@@ -33,7 +15,7 @@ const TestComponent = () => {
 }
 
 describe('ToastContext', () => {
-  it('should add and remove a toast', async () => {
+  it('should add a toast and then remove it', async () => {
     render(
       <ToastProvider>
         <TestComponent />
@@ -50,13 +32,13 @@ describe('ToastContext', () => {
     const toast = await screen.findByText('Test Message')
     expect(toast).toBeInTheDocument()
 
-    // Remove the toast
-    fireEvent.click(toast)
-
-    // Wait for the toast to be removed
-    await waitFor(() => {
-      expect(screen.queryByText('Test Message')).not.toBeInTheDocument()
-    })
+    // Wait for the toast to be removed automatically
+    await waitFor(
+      () => {
+        expect(screen.queryByText('Test Message')).not.toBeInTheDocument()
+      },
+      { timeout: 7000 } // a bit longer than the default toast duration
+    )
   })
 
   it('should throw an error if useToast is used outside of a ToastProvider', () => {
