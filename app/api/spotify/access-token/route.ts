@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import logger from '@/utils/logger' // Import the logger
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
@@ -20,7 +21,9 @@ export async function GET(_req: Request) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      console.error('[API /access-token] No session or access token found.')
+      logger.error('No session or access token found in API route', {
+        hasSession: !!session,
+      })
       return NextResponse.json(
         { error: 'Not authenticated or token is missing.' },
         { status: 401 }
@@ -29,7 +32,7 @@ export async function GET(_req: Request) {
 
     // 3. Check for refresh errors from NextAuth
     if (session.error === 'RefreshAccessTokenError') {
-      console.error('[API /access-token] Token refresh failed in NextAuth')
+      logger.error('Token refresh failed in NextAuth, caught in API route')
       return NextResponse.json(
         { error: 'Token refresh failed. Please re-authenticate.' },
         { status: 401 }
@@ -43,7 +46,9 @@ export async function GET(_req: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /access-token] Internal Server Error: ${message}`)
+    logger.error('Internal Server Error in /api/spotify/access-token', {
+      error: message,
+    })
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

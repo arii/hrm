@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
+import logger from '../../utils/logger'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**
@@ -42,8 +43,10 @@ test.describe('Infrastructure & Scripts', () => {
         stdout: Buffer
         stderr: Buffer
       }
-      console.error('Lint Output:', execError.stdout?.toString())
-      console.error('Lint Errors:', execError.stderr?.toString())
+      logger.error('Lint command failed', {
+        stdout: execError.stdout?.toString(),
+        stderr: execError.stderr?.toString(),
+      })
       throw new Error(`Linting failed with status ${execError.status}`)
     }
   })
