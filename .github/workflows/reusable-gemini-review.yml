@@ -1,12 +1,11 @@
-name: Gemini Code Review
+name: Reusable Gemini Review
 on:
-  pull_request:
-    types: [opened, synchronize]
-
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
+  workflow_call:
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      ARI_PAT:
+        required: true
 
 jobs:
   review:
@@ -59,6 +58,10 @@ jobs:
              echo "No existing comments from bot found."
              echo "EXISTING_COMMENTS=" >> $GITHUB_ENV
           fi
+
+          # Get PR Labels
+          PR_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '[.labels[].name] | join(",")')
+          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -67,6 +70,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
           EXISTING_COMMENTS: ${{ env.EXISTING_COMMENTS }}
+          PR_LABELS: ${{ env.PR_LABELS }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -88,6 +92,10 @@ jobs:
           script: |
             const fs = require('fs');
             try {
+              if (!fs.existsSync('review_result.json')) {
+                console.log('No review result file found. Likely skipped.');
+                return;
+              }
               const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
               const { reviewComment, labels } = result;
 
