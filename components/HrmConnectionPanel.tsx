@@ -31,7 +31,7 @@ const HrmConnectionPanel = () => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge.toString())
+    connectAndStream(userName, userAge)
   }
 
   const filteredTiles = useMemo(() => {
