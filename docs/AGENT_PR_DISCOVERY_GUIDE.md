@@ -56,6 +56,8 @@ gh pr view {PR_NUMBER} --comments
 
 #### Step 2: Categorize Findings
 
+For each PR, identify and summarize key points. Note that comment threads can be extensive; your role is to *summarize* the technical arguments and decisions, not just copy-paste entire conversations.
+
 For each PR, identify:
 
 ```
