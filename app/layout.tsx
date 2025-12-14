@@ -38,7 +38,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, _setIsLoading] = useState(true)
 
   return (
     <html lang="en">
