@@ -4,7 +4,7 @@ import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 // The AccessToken type from the SDK is missing the 'scope' property.
-interface SpotifyAccessToken extends AccessToken {
+export interface SpotifyAccessToken extends AccessToken {
   scope: string
 }
 
