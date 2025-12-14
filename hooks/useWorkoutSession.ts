@@ -11,13 +11,18 @@ export const useWorkoutSession = ({
   currentHR,
   userAge,
 }: WorkoutSessionOptions) => {
-  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null)
-  const [sessionPauseTime, setSessionPauseTime] = useState<number | null>(null)
-  const [totalPausedTime, setTotalPausedTime] = useState(0)
   const [workoutDuration, setWorkoutDuration] = useState(0)
   const [caloriesBurned, setCaloriesBurned] = useState(0)
+  const [hasStarted, setHasStarted] = useState(false)
 
-  // To keep interval calculations accurate with latest state without restarting the interval
+  // Ref to hold session timing data to avoid dependency cycles in effects.
+  const sessionStateRef = useRef({
+    startTime: null as number | null,
+    pauseTime: null as number | null,
+    totalPaused: 0,
+  })
+
+  // Ref to hold latest metrics for use in the interval without causing re-renders.
   const latestMetrics = useRef({
     currentHR,
     userAge,
@@ -30,48 +35,54 @@ export const useWorkoutSession = ({
     }
   }, [currentHR, userAge])
 
-  // Effect to handle connection status changes (start, pause, resume)
+  // Effect to manage the session's running state based on connection status.
+  const [isPaused, setIsPaused] = useState(true)
   useEffect(() => {
+    const session = sessionStateRef.current
+
     if (isConnected) {
-      if (!sessionStartTime) {
-        // First-time connection, start the session
-        setSessionStartTime(Date.now())
-        setTotalPausedTime(0)
-        setSessionPauseTime(null)
-      } else if (sessionPauseTime) {
-        // Resuming from a paused state
-        const pausedDuration = Date.now() - sessionPauseTime
-        setTotalPausedTime((prev) => prev + pausedDuration)
-        setSessionPauseTime(null)
+      // Transitioning to a connected state
+      if (!session.startTime) {
+        // This is the very first connection. Start the session.
+        session.startTime = Date.now()
+        session.pauseTime = null
+        session.totalPaused = 0
+        setHasStarted(true) // Signal that the session has begun
+        setIsPaused(false) // Start the timer
+      } else if (session.pauseTime) {
+        // Resuming from a paused state.
+        const pausedDuration = Date.now() - session.pauseTime
+        session.totalPaused += pausedDuration
+        session.pauseTime = null
+        setIsPaused(false) // Resume the timer
       }
     } else {
-      if (sessionStartTime && !sessionPauseTime) {
-        // Connection lost, pause the session
-        setSessionPauseTime(Date.now())
+      // Transitioning to a disconnected state
+      if (session.startTime && !session.pauseTime) {
+        // The session was running, so pause it.
+        session.pauseTime = Date.now()
+        setIsPaused(true) // Pause the timer
       }
     }
-  }, [isConnected, sessionStartTime, sessionPauseTime])
+  }, [isConnected])
 
-  // Effect for the main workout timer and calorie calculation
+  // Effect for the main workout timer and calorie calculation.
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
+    const session = sessionStateRef.current
 
-    if (sessionStartTime && !sessionPauseTime) {
+    if (session.startTime && !isPaused) {
       interval = setInterval(() => {
         const { currentHR: hr, userAge: age } = latestMetrics.current
 
-        // Calculate total elapsed duration
-        const elapsed = Date.now() - sessionStartTime - totalPausedTime
+        const elapsed = Date.now() - session.startTime! - session.totalPaused
         setWorkoutDuration(Math.floor(elapsed / 1000))
 
-        // Calculate calories burned since the last tick (1 second)
         if (age > 0 && hr > 0) {
-          const weightKg = 75 // Assuming a constant weight for now
-          // Formula for calories burned per minute
+          const weightKg = 75 // Assuming a constant weight
           const caloriesPerMinute =
             (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
           const caloriesPerSecond = caloriesPerMinute / 60
-
           if (caloriesPerSecond > 0) {
             setCaloriesBurned((prev) => prev + caloriesPerSecond)
           }
@@ -84,12 +95,16 @@ export const useWorkoutSession = ({
         clearInterval(interval)
       }
     }
-  }, [sessionStartTime, sessionPauseTime, totalPausedTime])
+  }, [isPaused]) // This effect now only depends on the paused state.
 
   const resetWorkout = useCallback(() => {
-    setSessionStartTime(null)
-    setSessionPauseTime(null)
-    setTotalPausedTime(0)
+    const session = sessionStateRef.current
+    session.startTime = null
+    session.pauseTime = null
+    session.totalPaused = 0
+
+    setHasStarted(false)
+    setIsPaused(true)
     setWorkoutDuration(0)
     setCaloriesBurned(0)
   }, [])
@@ -98,6 +113,6 @@ export const useWorkoutSession = ({
     workoutDuration,
     caloriesBurned: Math.round(caloriesBurned),
     resetWorkout,
-    hasStarted: sessionStartTime !== null,
+    hasStarted,
   }
 }
