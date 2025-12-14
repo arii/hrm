@@ -193,8 +193,8 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Wait for the WebSocket to connect before interacting with the UI
-    await controlPage.waitForSelector('text=Server: Connected')
+    // Wait for the WebSocket to connect and the UI to be ready before interacting with the UI
+    await controlPage.waitForFunction(() => window.__TEST_READY__)
 
     // Configure timer (15 work, 5s rest)
     await workInput.fill('15')
