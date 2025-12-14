@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '@/components/BottomNavBar'
@@ -5,12 +7,15 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
+import { useState } from 'react'
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -33,6 +38,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const [isLoading, setIsLoading] = useState(true)
+
   return (
     <html lang="en">
       <head>
@@ -60,6 +67,7 @@ export default function RootLayout({
           </ErrorProvider>
           <Footer />
           <BottomNavBar />
+          <LoadingIndicator isLoading={isLoading} />
         </ThemeRegistry>
       </body>
     </html>
