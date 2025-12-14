@@ -98,17 +98,30 @@ const HrTile = ({
             >
               {percentMax}%
             </Typography>
-           <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 1 }}>
-            {/* BPM Display */}
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {bpm} <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>BPM</Box>
-            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                mt: 1,
+              }}
+            >
+              {/* BPM Display */}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {bpm}{' '}
+                <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                  BPM
+                </Box>
+              </Typography>
 
-            {/* Calorie Display */}
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {Math.floor(calories)} <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>KCAL</Box>
-            </Typography>
-          </Box>
+              {/* Calorie Display */}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {Math.floor(calories)}{' '}
+                <Box component="span" sx={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                  KCAL
+                </Box>
+              </Typography>
+            </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"

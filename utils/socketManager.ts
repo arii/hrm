@@ -77,7 +77,6 @@ const initSocketManager = (
     clientData.set(clientId, newClient)
     clientSessionState.set(clientId, { lastUpdate: Date.now() })
 
-
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), clientId)
     })
@@ -186,18 +185,23 @@ const handleIncomingMessage = (
           const currentHr = message.data.value ?? existingData.value
           const currentAge = message.data.age ?? existingData.age ?? 30
 
-          if (currentHr > MIN_ACTIVE_HR_BPM && dtMinutes > 0 && dtMinutes < MAX_DT_MINUTES_CALCULATION) { // Filter huge jumps
-             // Formula: (-55.0969 + 0.6309 x HR + 0.1988 x Weight + 0.2017 x Age) / 4.184
-             const rate = (
-               -CALORIE_DEFAULTS.INTERCEPT +
-               (CALORIE_DEFAULTS.FACTOR_HR * currentHr) +
-               (CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG) +
-               (CALORIE_DEFAULTS.FACTOR_AGE * currentAge)
-             ) / CALORIE_DEFAULTS.JOULE_CONVERSION
+          if (
+            currentHr > MIN_ACTIVE_HR_BPM &&
+            dtMinutes > 0 &&
+            dtMinutes < MAX_DT_MINUTES_CALCULATION
+          ) {
+            // Filter huge jumps
+            // Formula: (-55.0969 + 0.6309 x HR + 0.1988 x Weight + 0.2017 x Age) / 4.184
+            const rate =
+              (-CALORIE_DEFAULTS.INTERCEPT +
+                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
+                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
+                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
+              CALORIE_DEFAULTS.JOULE_CONVERSION
 
-             // Ensure positive rate
-             const safeRate = Math.max(0, rate)
-             newCalories += safeRate * dtMinutes
+            // Ensure positive rate
+            const safeRate = Math.max(0, rate)
+            newCalories += safeRate * dtMinutes
           }
 
           const updateData = Object.fromEntries(
