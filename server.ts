@@ -22,7 +22,6 @@ import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
@@ -182,24 +181,6 @@ app
     )
 
     // --- Express Routing ---
-
-    // Health Check Endpoints
-    expressApp.get('/api/health', (_req: Request, res: Response) => {
-      res.status(200).json({ status: 'ok' })
-    })
-
-    expressApp.get(
-      '/api/health/ready',
-      async (_req: Request, res: Response) => {
-        const healthStatus = await performHealthCheck(
-          wss,
-          spotifyService,
-          tabataService
-        )
-        const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200
-        res.status(statusCode).json(healthStatus)
-      }
-    )
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
