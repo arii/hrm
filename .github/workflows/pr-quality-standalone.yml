@@ -158,7 +158,7 @@ jobs:
 
       - name: Publish Infra Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always() && steps.infra_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
         with:
           name: Infrastructure Tests Report # The name of the check run
@@ -175,7 +175,7 @@ jobs:
 
       - name: Publish Unit Test Results to GitHub Checks
         # This action reads the generated XML and displays it in the Checks/Summary tab
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always() && steps.unit_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
         with:
           name: Unit Tests Report # The name of the check run
@@ -198,7 +198,7 @@ jobs:
           command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
 
       - name: Publish Performance Test Results to GitHub Checks
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always() && steps.perf_tests.outcome != 'skipped'
         with:
           name: Performance Tests Report
@@ -226,7 +226,7 @@ jobs:
         continue-on-error: true
 
       - name: Publish Visual Test Results to GitHub Checks
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always() && steps.visual_tests.outcome != 'skipped'
         with:
           name: Visual Tests Report
