@@ -4,6 +4,10 @@
 
 This audit identifies a mix of strong foundational practices and critical technical debt. While the project benefits from a very strict TypeScript configuration and good security measures like rate limiting, these are undermined by unstable dependencies, build process hacks, and legacy coding patterns in the core server logic. Addressing these issues is crucial for improving the long-term stability, security, and maintainability of the application.
 
+## CI/CD & GitHub Actions Guidelines
+
+**Token Usage**: The use of `secrets.ARI_PAT` (Personal Access Token) in GitHub Actions workflows is intentionally configured and should NOT be flagged for replacement with `github.token`. This choice is deliberate for operational requirements.
+
 ## Static Analysis Findings
 
 | File / Area     | Issue                                                                                                                                               | Severity   | Recommended Fix                                                                                                                                                                                                                                                                                |
