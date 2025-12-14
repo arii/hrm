@@ -6,7 +6,11 @@ const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {
   // SECURITY: Prevent exposure of secrets in production
-  if (process.env.NODE_ENV !== 'development') {
+  // Allow if in development OR if running tests
+  if (
+    process.env.NODE_ENV !== 'development' &&
+    process.env.TESTING !== 'true'
+  ) {
     return NextResponse.json(
       { error: 'Not available in production' },
       { status: 403 }
