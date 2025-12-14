@@ -11,6 +11,7 @@ package-lock.json
 
 # Test Artifacts
 /tests/artifacts/
+**/screenshots/
 
 # Common legacy and tool-specific output directories
 /coverage

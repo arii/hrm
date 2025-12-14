@@ -34,9 +34,11 @@ if (!hasNextAuthSecret) {
 // Ensure artifact directories exist and get their paths
 const resultsDir = ensureArtifactDir('playwright-results')
 const reportsDir = ensureArtifactDir('reports')
+const screenshotDir =
+  process.env.TEST_SCREENSHOT_DIR || ensureArtifactDir('screenshots')
 
 export default defineConfig({
-  globalSetup: require.resolve('./tests/playwright/global-setup.ts'),
+  globalSetup: './tests/playwright/global-setup.ts',
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
   testIgnore: testIgnoreList,
@@ -70,6 +72,7 @@ export default defineConfig({
 
     // Screenshot settings
     screenshot: {
+      dir: screenshotDir,
       mode: 'only-on-failure',
       fullPage: true,
     },

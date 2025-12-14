@@ -51,7 +51,9 @@ export function cleanArtifacts(): void {
       fs.rmSync(dirPath, { recursive: true, force: true })
       console.log(`Successfully cleaned artifact directory: ${dirPath}`)
     } else {
-      console.log(`Artifact directory does not exist, skipping cleanup: ${dirPath}`)
+      console.log(
+        `Artifact directory does not exist, skipping cleanup: ${dirPath}`
+      )
     }
   } catch (error) {
     console.error(`Failed to clean artifact directory: ${dirPath}`, error)
