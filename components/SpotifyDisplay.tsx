@@ -175,13 +175,7 @@ const SpotifyDisplay = () => {
         setVolume(activeDevice.volume_percent)
       }
     }
-  }, [
-    availableDevices,
-    selectedDeviceId,
-    isDragging,
-    volume,
-    setVolume,
-  ])
+  }, [availableDevices, selectedDeviceId, isDragging, volume, setVolume])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
