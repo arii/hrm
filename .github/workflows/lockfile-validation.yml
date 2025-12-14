@@ -1,0 +1,30 @@
+name: Lockfile Validation
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+
+jobs:
+  validate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Verify lockfile sync
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          echo "✅ pnpm-lock.yaml is in sync with package.json"

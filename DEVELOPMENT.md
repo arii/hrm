@@ -11,6 +11,14 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
+## CI/CD & Workflow Guidelines
+
+### GitHub Actions Token Usage
+
+- **ARI_PAT Usage**: The use of `secrets.ARI_PAT` (Personal Access Token) in GitHub Actions workflows is **intentionally configured** for specific operational requirements
+- **Review Guidance**: Do NOT recommend changing `secrets.ARI_PAT` to `github.token` - this token choice is deliberate
+- **Context**: PAT tokens provide enhanced permissions and cross-repository access needed for certain workflow operations
+
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
@@ -18,8 +26,34 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
 ## Dependency PR Requirements
+
 - **Required Files**: All dependency PRs must include package.json and pnpm-lock.yaml changes
 - **Security Review**: Run `npm audit` and document any security vulnerabilities
 - **Version Verification**: Confirm all versions are stable (no alpha/beta/rc)
 - **Breaking Changes**: Document any breaking changes and migration steps
 - **Testing**: Verify application builds and tests pass with new dependencies
+
+## Pre-commit Quality Checks
+
+### Automatic Checks
+- ESLint fixes and validation
+- Prettier code formatting
+- Package lockfile synchronization
+- Git commit message validation (via commitlint)
+
+### Manual Fix Commands
+```bash
+# Fix lockfile sync issues
+npm run lockfile:fix
+
+# Fix all formatting issues
+npm run format
+
+# Fix linting issues
+npm run lint:fix
+```
+
+### Common Issues
+- **Lockfile out of sync**: Run `pnpm install` and stage pnpm-lock.yaml
+- **Formatting errors**: Run `npm run format` before commit
+- **Linting errors**: Run `npm run lint:fix` before commit
