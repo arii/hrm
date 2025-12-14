@@ -2,6 +2,16 @@
 
 import { createTheme } from '@mui/material/styles'
 
+// Extend the MUI theme types to include custom properties
+declare module '@mui/material/styles' {
+  interface ZIndex {
+    loadingIndicator: number
+  }
+  interface TypeBackground {
+    overlay: string
+  }
+}
+
 /**
  * HRM Application Design System
  *
@@ -52,6 +62,7 @@ const theme = createTheme({
     background: {
       default: '#F5F5F5', // Light grey for main background
       paper: '#FFFFFF',
+      overlay: 'rgba(0, 0, 0, 0.5)', // Added for loading indicator
     },
     // Text colors
     text: {
@@ -160,6 +171,16 @@ const theme = createTheme({
   // Shape - Consistent border radius
   shape: {
     borderRadius: 8, // 8px rounded corners for cards, buttons
+  },
+
+  // zIndex - Consistent layering
+  zIndex: {
+    appBar: 1200,
+    drawer: 1100,
+    modal: 1300,
+    snackbar: 1400,
+    tooltip: 1500,
+    loadingIndicator: 9999, // Added for loading indicator
   },
 
   // Shadows - Consistent elevation
