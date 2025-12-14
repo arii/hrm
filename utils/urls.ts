@@ -3,7 +3,7 @@
  * Centralized URL configuration for development and production environments
  */
 
-import { config } from './config.js'
+import { config } from './config'
 
 /**
  * Builds a WebSocket URL from a standard HTTP/S base URL.
