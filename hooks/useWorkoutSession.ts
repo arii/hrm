@@ -125,11 +125,7 @@ export const useWorkoutSession = ({
           if (age > 0 && hr > 0) {
             const weightKg = 75 // TODO: Make this configurable in the future
             const caloriesPerMinute =
-              (age * 0.2017 -
-                weightKg * 0.09036 +
-                hr * 0.6309 -
-                55.0969) /
-              4.184
+              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
             // Ensure caloriesPerSecond is not negative
             const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
             session.accumulatedCalories += caloriesPerSecond
