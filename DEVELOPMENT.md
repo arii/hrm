@@ -16,3 +16,10 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
+
+## Dependency PR Requirements
+- **Required Files**: All dependency PRs must include package.json and pnpm-lock.yaml changes
+- **Security Review**: Run `npm audit` and document any security vulnerabilities
+- **Version Verification**: Confirm all versions are stable (no alpha/beta/rc)
+- **Breaking Changes**: Document any breaking changes and migration steps
+- **Testing**: Verify application builds and tests pass with new dependencies

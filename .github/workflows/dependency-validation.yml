@@ -1,0 +1,27 @@
+name: Validate Dependency PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-files:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.title, 'deps')
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - name: Validate Dependency PR
+      run: |
+        # Check for package.json changes
+        git diff --name-only HEAD~1 | grep package.json || {
+          echo "ERROR: Dependency PR missing package.json changes"
+          exit 1
+        }
+
+        # Check for lock file changes
+        git diff --name-only HEAD~1 | grep pnpm-lock.yaml || {
+          echo "ERROR: Dependency PR missing pnpm-lock.yaml changes"
+          exit 1
+        }
