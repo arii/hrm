@@ -1,81 +1,68 @@
-// File: tests/playwright/remote-capabilities.spec.ts
 import { test, expect } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
+import {
+  ClientCommandMessage,
+  TimerCommandMessage,
+} from '../../types/websocket'
 
-const BASE_URL = getBaseURL()
-
+/**
+ * @fileoverview
+ * This test file verifies the remote control capabilities of the application,
+ * ensuring that the controller client can send commands to the server via WebSocket.
+ */
 test.describe('Remote Capabilities & Command Relay', () => {
   test('Controller sends commands via WebSocket', async ({ page }) => {
-    // 1. Setup Network & WS capture
+    // 1. Setup
+    const commands: ClientCommandMessage[] = []
     const failedRequests: string[] = []
-    page.on('requestfailed', (request) => {
-      if (request.url().includes('/api/spotify'))
-        failedRequests.push(request.url())
-    })
 
-    const sentMessages: unknown[] = []
+    // Intercept WebSocket messages
     page.on('websocket', (ws) => {
-      ws.on('framesent', (frame) => {
-        try {
-          sentMessages.push(JSON.parse(frame.payload as string))
-        } catch {
-          /* empty */
+      ws.on('framesent', (event) => {
+        if (event.payload) {
+          commands.push(JSON.parse(event.payload.toString()))
         }
       })
     })
 
-    // 2. Navigate and Wait for Component
-    await page.goto(`${BASE_URL}/client/control`)
-
-    // Wait for both components to be ready
-    await expect(page.getByTestId('spotify-controls-card')).toBeVisible({
-      timeout: 10000,
-    })
-    await expect(page.getByTestId('timer-mode-heading')).toBeVisible({
-      timeout: 10000,
+    // Intercept failed HTTP requests
+    page.on('requestfailed', (request) => {
+      failedRequests.push(request.url())
     })
 
-    // 3. Verify GET_DEVICES
-    await expect
-      .poll(() => sentMessages, { timeout: 10000 })
-      .toContainEqual(
-        expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'GET_DEVICES',
-        })
-      )
+    // 2. Go to Controller Page
+    await page.goto('http://127.0.0.1:3000/client/control')
+    await expect(page.getByTestId('timer-mode-heading')).toBeVisible()
+    await expect(page.locator('body')).toContainText('Server: Connected')
 
-    // 4. Test Interaction: Ensure timer is stopped, then start it.
-    const stopButton = page.getByTestId('stop-timer-button')
-    if (await stopButton.isVisible()) {
-      await stopButton.click()
-    }
-
-    const startButton = page.getByTestId('start-timer-button')
-    await expect(startButton).toBeVisible() // Wait for start button to appear
+    // 3. Click Start Button
+    const startButton = page.getByTestId('start-session-button')
+    const stopButton = page.getByTestId('end-session-button')
+    await expect(startButton).toBeVisible()
+    await expect(stopButton).not.toBeVisible()
     await startButton.click()
 
-    // 5. Verify WebSocket Command
-    await expect
-      .poll(() => sentMessages)
-      .toContainEqual(
-        expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'NEXT',
-        })
-      )
-
+    // 4. Verify UI Change on Controller
+    // The button should now be a "STOP" button
     expect(failedRequests).toEqual([])
     await expect(stopButton).toBeVisible() // Wait for start button to appear
     await stopButton.click()
     // 5. Verify WebSocket Command
     await expect
-      .poll(() => sentMessages)
-      .toContainEqual(
-        expect.objectContaining({
-          type: 'SPOTIFY_COMMAND',
-          command: 'PAUSE',
-        })
-      )
+      .poll(() => commands.length, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(2)
+
+    const timerCommands = commands.filter(
+      (c): c is TimerCommandMessage => c.type === 'TIMER_COMMAND'
+    )
+    const startCommand = timerCommands.find((c) => c.command === 'START')
+    const stopCommand = timerCommands.find((c) => c.command === 'STOP')
+
+    expect(startCommand).toBeDefined()
+    expect(startCommand?.type).toBe('TIMER_COMMAND')
+    expect(startCommand?.command).toBe('START')
+
+    expect(stopCommand).toBeDefined()
+    expect(stopCommand?.type).toBe('TIMER_COMMAND')
+    expect(stopCommand?.command).toBe('STOP')
   })
 })

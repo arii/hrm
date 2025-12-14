@@ -1,5 +1,23 @@
 /** @type {import('jest').Config} */
 const config = {
+  /**
+   * @fileoverview Jest Configuration
+   *
+   * This configuration uses Jest's "projects" feature to support a monorepo-like
+   * testing setup where backend and frontend tests require different environments.
+   *
+   * - "server" project:
+   *   - `testEnvironment: 'node'` for testing Node.js code (services, API routes).
+   *   - `testMatch`: Targets all `*.test.ts` files under `tests/unit/`.
+   *
+   * - "client" project:
+   *   - `testEnvironment: 'jsdom'` for testing React components and hooks.
+   *   - `testMatch`: Specifically targets `*.test.tsx` files under `tests/unit/client/`.
+   *   - `setupFilesAfterEnv`: Includes setup files for the JSDOM environment, like mocks.
+   *
+   * This approach prevents environment conflicts, such as trying to access `document`
+   * in Node.js tests or encountering Node.js built-ins in component tests.
+   */
   projects: [
     {
       displayName: 'server',
