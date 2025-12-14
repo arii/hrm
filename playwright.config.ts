@@ -2,14 +2,14 @@
  * Playwright Test Configuration for HRM Comprehensive Assessment
  * Optimized for performance and parallel execution
  */
-import { defineConfig, devices } from '@playwright/test';
-import { getBaseURL } from './utils/urls';
+import { defineConfig, devices } from '@playwright/test'
+import { getBaseURL } from './utils/urls'
 
 // Check if Spotify/NextAuth credentials are available
 const hasSpotifyCredentials = !!(
   process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET
-);
-const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET;
+)
+const hasNextAuthSecret = !!process.env.NEXTAUTH_SECRET
 
 // Optimized ignore list - run more tests by default
 const testIgnoreList = [
@@ -19,14 +19,14 @@ const testIgnoreList = [
   'workflow-assessment.spec.ts',
   // OAuth tests are excluded from regular test runs (use separate npm script)
   'oauth/**/*.spec.ts',
-];
+]
 
 // Only ignore auth-dependent tests if credentials are missing
 if (!hasSpotifyCredentials) {
-  testIgnoreList.push('auth-flow.spec.ts');
+  testIgnoreList.push('auth-flow.spec.ts')
 }
 if (!hasNextAuthSecret) {
-  testIgnoreList.push('debug.spec.ts');
+  testIgnoreList.push('debug.spec.ts')
 }
 
 export default defineConfig({
@@ -119,8 +119,6 @@ export default defineConfig({
       : []),
   ],
 
-
-
   // Output configuration
   outputDir: 'test-results/',
   reporter: [
@@ -130,4 +128,4 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
   ],
-});
+})
