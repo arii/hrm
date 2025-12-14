@@ -2,6 +2,7 @@ import { test, expect, chromium, BrowserContext } from '@playwright/test'
 import path from 'path'
 import os from 'os'
 import fs from 'fs'
+import { env } from '../../../lib/env'
 
 /**
  * Local OAuth Verification Test
@@ -11,12 +12,12 @@ import fs from 'fs'
  * TEST_BASE_URL=http://localhost:3000 npm run test:visual -- tests/playwright/local-oauth.spec.ts
  */
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
-const CHROME_PROFILE = process.env.CHROME_PROFILE_PATH
-const EXPECTED_USER = process.env.SPOTIFY_EXPECTED_USER_ID
+const BASE_URL = env.TEST_BASE_URL || 'http://localhost:3000'
+const CHROME_PROFILE = env.CHROME_PROFILE_PATH
+const EXPECTED_USER = env.SPOTIFY_EXPECTED_USER_ID
 
 // Skip in CI environments to prevent rate limiting and auth failures
-test.skip(!!process.env.CI, 'Skipping OAuth local test in CI environment')
+test.skip(!!env.CI, 'Skipping OAuth local test in CI environment')
 
 test.describe('Spotify OAuth Integration (Local)', () => {
   let context: BrowserContext

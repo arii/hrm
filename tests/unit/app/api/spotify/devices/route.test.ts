@@ -123,7 +123,11 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should return 500 on unexpected errors', async () => {
-    mockedGetServerSession.mockRejectedValue(new Error('Unexpected DB error'))
+    // This test simulates a failure during the fetch call to Spotify
+    mockedGetServerSession.mockResolvedValue({
+      accessToken: 'user-access-token',
+    })
+    mockedFetch.mockRejectedValue(new Error('Network failure'))
 
     const req = new Request('http://localhost/api/spotify/devices')
     const response = await GET(req)

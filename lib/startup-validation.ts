@@ -1,13 +1,10 @@
-// lib/env.ts
-import { z } from 'zod'
+import { z } from 'zod';
+import { env } from './env';
 
 /**
  * =================================================================================
  * SERVER-SIDE ENVIRONMENT VARIABLES
  * =================================================================================
- * This is the single source of truth for all server-side environment variables.
- *
- * @see https://env.t3.gg/docs/server
  */
 const serverSchemaRaw = z.object({
   // --- Application & Server ---
@@ -17,9 +14,7 @@ const serverSchemaRaw = z.object({
 
   // --- NextAuth ---
   NEXTAUTH_URL: z.string().url().optional(),
-  NEXTAUTH_SECRET: z
-    .string()
-    .min(1, 'NEXTAUTH_SECRET is a required security variable.'),
+  NEXTAUTH_SECRET: z.string().min(1, 'NEXTAUTH_SECRET is a required security variable.'),
 
   // --- Spotify ---
   SPOTIFY_CLIENT_ID: z.string().min(1),
@@ -28,9 +23,7 @@ const serverSchemaRaw = z.object({
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().optional(),
 
   // --- Security ---
-  ENCRYPTION_KEY: z
-    .string()
-    .length(64, 'ENCRYPTION_KEY must be a 64-character hex key'),
+  ENCRYPTION_KEY: z.string().length(64, 'ENCRYPTION_KEY must be a 64-character hex key'),
   INTERNAL_TOKEN_DELIVERY_SECRET: z.string().min(1),
 
   // --- Database ---
@@ -48,76 +41,66 @@ const serverSchemaRaw = z.object({
   TEST_BASE_URL: z.string().url().optional(),
   CHROME_PROFILE_PATH: z.string().optional(),
   SPOTIFY_EXPECTED_USER_ID: z.string().optional(),
-})
+});
 
 // In a test environment, we don't want to require all secrets to be present.
-const partialSchema = serverSchemaRaw.partial()
+const partialSchema = serverSchemaRaw.partial();
 
 // Apply the transformation to the (potentially partial) schema.
-const finalServerSchema = (
-  process.env.NODE_ENV === 'test' ? partialSchema : serverSchemaRaw
-).transform((data) => ({
-  ...data,
-  HOST:
-    data.NODE_ENV === 'production' ? '0.0.0.0' : data.HOST || '127.0.0.1',
-}))
+const finalServerSchema = (process.env.NODE_ENV === 'test' ? partialSchema : serverSchemaRaw)
+  .transform((data) => ({
+    ...data,
+    HOST: data.NODE_ENV === 'production' ? '0.0.0.0' : data.HOST || '127.0.0.1',
+  }));
 
 /**
  * =================================================================================
  * CLIENT-SIDE ENVIRONMENT VARIABLES
  * =================================================================================
- * This is the single source of truth for all client-side environment variables.
- *
- * @see https://env.t3.gg/docs/client
  */
 const clientSchema = z.object({
   NEXT_PUBLIC_WS_URL: z.string().url().optional(),
   NEXT_PUBLIC_API_URL: z.string().url().optional(),
   NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
-})
+});
 
 /**
  * =================================================================================
- * DYNAMIC CLIENT-SIDE VARIABLE EXTRACTION & VALIDATION
+ * DYNAMIC CLIENT-SIDE VARIABLE EXTRACTION
  * =================================================================================
- * We dynamically extract all environment variables starting with `NEXT_PUBLIC_`
- * to avoid manually listing them in the schema.
  */
-const clientEnvProxy: { [key: string]: string | undefined } = {}
+const clientEnv: { [key: string]: string | undefined } = {};
 for (const key in process.env) {
   if (key.startsWith('NEXT_PUBLIC_')) {
-    clientEnvProxy[key] = process.env[key]
+    clientEnv[key] = process.env[key];
   }
 }
 
-// --- Perform Validation ---
-const _serverEnv = finalServerSchema.safeParse(process.env)
-const _clientEnv = clientSchema.safeParse(clientEnvProxy)
-
-if (!_serverEnv.success) {
-  console.error(
-    '❌ Invalid server-side environment variables:',
-    _serverEnv.error.flatten().fieldErrors
-  )
-  throw new Error('Invalid server-side environment variables')
-}
-
-if (!_clientEnv.success) {
-  console.error(
-    '❌ Invalid client-side environment variables:',
-    _clientEnv.error.flatten().fieldErrors
-  )
-  throw new Error('Invalid client-side environment variables')
-}
-
 /**
  * =================================================================================
- * EXPORT MERGED & TYPED ENVIRONMENT
+ * STARTUP VALIDATION
  * =================================================================================
- * This is the final, validated, and type-safe environment object that should be
- * imported and used throughout the application.
  */
-export const env = {
-  ..._serverEnv.data,
-  ..._clientEnv.data,
+export function validateEnvironment() {
+    const _serverEnv = finalServerSchema.safeParse(process.env);
+    const _clientEnv = clientSchema.safeParse(clientEnv);
+
+    if (!_serverEnv.success) {
+    console.error(
+        '❌ Invalid server-side environment variables:',
+        _serverEnv.error.flatten().fieldErrors,
+    );
+    throw new Error('Invalid server-side environment variables');
+    }
+
+    if (!_clientEnv.success) {
+        console.error(
+            '❌ Invalid client-side environment variables:',
+            _clientEnv.error.flatten().fieldErrors,
+        );
+        throw new Error('Invalid client-side environment variables');
+    }
+
+    // Mutate the env object to add the validated variables
+    Object.assign(env, _serverEnv.data, _clientEnv.data);
 }

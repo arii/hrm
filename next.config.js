@@ -1,14 +1,15 @@
 import bundleAnalyzer from '@next/bundle-analyzer'
+import { env } from './lib/env.js'
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
+  enabled: env.ANALYZE === 'true',
 })
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
   env: {
-    TESTING: process.env.TESTING,
+    TESTING: env.TESTING,
   },
   async redirects() {
     return [

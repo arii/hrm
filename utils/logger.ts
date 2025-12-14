@@ -1,5 +1,6 @@
 // utils/logger.ts
 import pino from 'pino'
+import { env } from '../lib/env'
 
 // Define a consistent logger interface
 interface Logger {
@@ -22,8 +23,8 @@ const createLogger = (): Logger => {
 
   // Server-side logger - pino already matches the interface
   return pino({
-    enabled: process.env.NODE_ENV !== 'test',
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+    enabled: env.NODE_ENV !== 'test',
+    level: env.NODE_ENV === 'production' ? 'info' : 'debug',
   }) as Logger
 }
 

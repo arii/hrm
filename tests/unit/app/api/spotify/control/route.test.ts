@@ -3,6 +3,7 @@
 
 import { POST } from '@/app/api/spotify/control/route'
 import { getServerSession } from 'next-auth/next'
+import { NextRequest } from 'next/server'
 
 // Mock 'next-auth/next' for getServerSession
 jest.mock('next-auth/next', () => ({
@@ -15,8 +16,8 @@ global.fetch = jest.fn()
 const mockedGetServerSession = getServerSession as jest.Mock
 const mockedFetch = global.fetch as jest.Mock
 
-const createRequest = (body: object | string) => {
-  return new Request('http://localhost/api/spotify/control', {
+const createRequest = (body: object | string): NextRequest => {
+  return new NextRequest('http://localhost/api/spotify/control', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -31,11 +32,7 @@ describe('API Route: /api/spotify/control', () => {
     mockedGetServerSession.mockResolvedValue({
       accessToken: 'fake-access-token',
     })
-    mockedFetch.mockResolvedValue({
-      ok: true,
-      status: 204, // Spotify often returns 204 No Content for success
-      text: () => Promise.resolve(''),
-    })
+    mockedFetch.mockResolvedValue(new Response(null, { status: 204 }))
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {
@@ -126,14 +123,7 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should forward Spotify API errors', async () => {
-    mockedFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      text: () =>
-        Promise.resolve(
-          JSON.stringify({ error: { message: 'Device not found' } })
-        ),
-    })
+    mockedFetch.mockResolvedValue(new Response(JSON.stringify({ error: { message: 'Device not found' } }), { status: 404 }))
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()
@@ -142,6 +132,7 @@ describe('API Route: /api/spotify/control', () => {
     expect(data.error).toBe('Spotify API error')
     expect(data.details).toBe('Device not found')
   })
+
 
   it('should return 500 if fetch throws an error', async () => {
     mockedFetch.mockRejectedValue(new Error('Network error'))

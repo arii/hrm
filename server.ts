@@ -14,6 +14,9 @@ import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
+import { validateEnvironment } from './lib/startup-validation.js'
+validateEnvironment();
+
 import { env } from './lib/env.js'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
@@ -232,7 +235,7 @@ app
             .shift()
             ?.trim() || req.socket.remoteAddress
 
-        if (process.env.TESTING !== 'true' && ip) {
+        if (env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
           if (count >= WS_MAX_CONNECTIONS) {
             socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
