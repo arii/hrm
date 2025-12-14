@@ -14,8 +14,9 @@ import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import VolumeSlider from '@/components/PlaybackControls/VolumeSlider'
+import { useDebounce } from '@/hooks/useDebounce'
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
@@ -74,7 +75,22 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const debouncedVolume = useDebounce(volume, 300)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Sync Volume from active device, but only if the user is not actively dragging the slider
+  useEffect(() => {
+    if (
+      !isDragging &&
+      activeDevice &&
+      typeof activeDevice.volume_percent === 'number'
+    ) {
+      if (activeDevice.volume_percent !== volume) {
+        setVolume(activeDevice.volume_percent)
+      }
+    }
+  }, [activeDevice, isDragging, volume, setVolume])
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
@@ -123,6 +139,13 @@ const SpotifySelectionPage = () => {
       )
     }
   }
+
+  // Effect to send volume command
+  useEffect(() => {
+    if (hasActiveDevice) {
+      sendSpotifyCommand('SET_VOLUME', { volume: debouncedVolume })
+    }
+  }, [debouncedVolume, hasActiveDevice, sendSpotifyCommand])
 
   return (
     <Container maxWidth="sm" sx={{ py: 3 }}>
@@ -199,13 +222,13 @@ const SpotifySelectionPage = () => {
             </Stack>
             <VolumeSlider
               volume={volume}
-              muted={false}
-              onVolumeChange={setVolume}
-              onVolumeChangeCommitted={(newVolume) =>
-                hasActiveDevice &&
-                sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
-              }
-              onToggleMute={() => {}}
+              muted={muted}
+              onVolumeChange={(newVolume) => {
+                setIsDragging(true)
+                setVolume(newVolume)
+              }}
+              onVolumeChangeCommitted={() => setIsDragging(false)}
+              onToggleMute={toggleMute}
             />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (
@@ -217,7 +240,7 @@ const SpotifySelectionPage = () => {
                   value={selectedDeviceId}
                   onChange={(e) => setSelectedDeviceId(e.target.value)}
                   fullWidth
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'text.primary' }}
                 >
                   {availableDevices.map((device) => (
                     <MenuItem key={device.id} value={device.id}>
