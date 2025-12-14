@@ -56,4 +56,48 @@ describe('PlaybackControls Integration', () => {
       command: 'PAUSE',
     })
   })
+
+  it('sends a "NEXT" command when the next button is clicked', () => {
+    render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <PlaybackControls />
+      </WebSocketContext.Provider>
+    )
+
+    fireEvent.click(screen.getByLabelText('Next track'))
+    expect(mockWebSocketContext.sendData).toHaveBeenCalledWith({
+      type: 'SPOTIFY_COMMAND',
+      command: 'NEXT',
+    })
+  })
+
+  it('sends a "PREVIOUS" command when the previous button is clicked', () => {
+    render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <PlaybackControls />
+      </WebSocketContext.Provider>
+    )
+
+    fireEvent.click(screen.getByLabelText('Previous track'))
+    expect(mockWebSocketContext.sendData).toHaveBeenCalledWith({
+      type: 'SPOTIFY_COMMAND',
+      command: 'PREVIOUS',
+    })
+  })
+
+  it('passes the correct props to the ProgressBar', () => {
+    render(
+      <WebSocketContext.Provider value={mockWebSocketContext}>
+        <PlaybackControls />
+      </WebSocketContext.Provider>
+    )
+
+    const progressBar = screen.getByRole('progressbar')
+    expect(progressBar).toHaveAttribute(
+      'aria-valuenow',
+      String(
+        (mockSpotifyData.progressMs / mockSpotifyData.durationMs) * 100
+      )
+    )
+  })
 })

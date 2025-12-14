@@ -1,25 +1,36 @@
 'use client'
 
-import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import LinearProgress from '@mui/material/LinearProgress'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import { formatDuration } from '@/utils/time'
 
+interface ProgressBarProps {
+  progressMs: number
+  durationMs: number
+}
+
 /**
  * @component ProgressBar
  * @description Displays the progress of the current Spotify track.
  */
-export const ProgressBar = memo(() => {
-  const { spotifyData } = useWebSocket()
-  const { progressMs = 0, durationMs = 0 } = spotifyData
-
+export const ProgressBar = memo(({ progressMs, durationMs }: ProgressBarProps) => {
   const progress = durationMs > 0 ? (progressMs / durationMs) * 100 : 0
 
   return (
     <Box sx={{ width: '100%' }}>
-      <LinearProgress variant="determinate" value={progress} />
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        aria-label="Track progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+        aria-valuetext={`${formatDuration(progressMs)} of ${formatDuration(
+          durationMs
+        )}`}
+      />
       <Box
         sx={{
           display: 'flex',
