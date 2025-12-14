@@ -2,7 +2,7 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
-import logger from '../utils/logger' // Import the logger
+import logger from '../utils/logger.js' // Import the logger
 import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
