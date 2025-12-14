@@ -30,9 +30,15 @@ const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
+import { ToastProvider } from '@/context/ToastContext'
+
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<ErrorProvider>{ui}</ErrorProvider>)
+  return render(
+    <ErrorProvider>
+      <ToastProvider>{ui}</ToastProvider>
+    </ErrorProvider>
+  )
 }
 
 describe('SpotifyDisplay', () => {
