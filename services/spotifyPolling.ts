@@ -62,20 +62,20 @@ export class SpotifyPolling {
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  private constructor(
+    broadcastUpdate: (message: ServerMessage) => void,
+    tokenManager: SpotifyTokenManager
+  ) {
     this.broadcastUpdate = broadcastUpdate
+    this.tokenManager = tokenManager
     logger.debug('Spotify Polling Service Initialized.')
-
-    this.tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
-    )
   }
 
   public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
+    broadcastUpdate: (message: ServerMessage) => void,
+    tokenManager: SpotifyTokenManager
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate)
+    const instance = new SpotifyPolling(broadcastUpdate, tokenManager)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
@@ -133,11 +133,10 @@ export class SpotifyPolling {
   /**
    * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
-  public setRefreshToken(_token: string) {
+  public async setRefreshToken(_token: string): Promise<void> {
     logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+    // The token has been updated on the filesystem; re-initialize the SDK to load it.
+    await this.initializeSdk()
   }
 
   // --- Polling Logic ---
@@ -323,30 +322,28 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
-    }
-
-    if (command === 'GET_DEVICES') {
-      this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        this.logSpotifyCommandError(command, error)
-      }
-    })()
+    if (command === 'GET_DEVICES') {
+      await this.refreshDevices()
+      return
+    }
+
+    try {
+      await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+      // No longer force a poll; rely on the natural polling interval for updates.
+    } catch (error) {
+      this.logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(

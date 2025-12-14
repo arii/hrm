@@ -165,15 +165,16 @@ export class SpotifyTokenManager {
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
+        this.refreshPromise = (async () => {
+          try {
+            await this.refreshToken()
             console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
+          } catch (error) {
             console.error('Spotify access token refresh failed:', error)
-          })
+          } finally {
+            this.refreshPromise = null
+          }
+        })()
       }
       await this.refreshPromise
     }
@@ -187,6 +188,21 @@ export class SpotifyTokenManager {
 
   getCurrentRefreshToken(): string | null {
     return this.currentToken?.payload.refresh_token ?? null
+  }
+
+  /**
+   * Updates the in-memory token record with a new payload and persists it to the filesystem.
+   * This is the primary method for delivering new tokens from the authentication flow.
+   * @param {SpotifyTokenPayload} payload - The new token payload.
+   */
+  public updateTokenPayload(payload: SpotifyTokenPayload): void {
+    this.currentToken = {
+      receivedAt: Date.now(),
+      payload,
+    }
+    console.log('Updated Spotify tokens in-memory for:', payload.sub)
+    // Persist tokens to disk
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
   }
 
   getSdkAccessToken(): AccessToken | null {
