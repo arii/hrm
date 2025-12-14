@@ -51,6 +51,9 @@ test.describe('Remote Capabilities & Command Relay', () => {
       await stopButton.click()
     }
 
+    // Wait for the WebSocket to connect before interacting with the UI
+    await page.waitForSelector('text=Server: Connected')
+
     const startButton = page.getByTestId('start-session-button')
     await expect(startButton).toBeVisible() // Wait for start button to appear
     await startButton.click()
