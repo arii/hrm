@@ -9,6 +9,8 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+import Divider from '@mui/material/Divider'
+import WorkoutDataDisplay from './WorkoutDataDisplay'
 import StyledCard from './shared/StyledCard'
 import { useTheme } from '@mui/material/styles'
 
@@ -35,6 +37,9 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  caloriesBurned,
+  workoutDuration,
+  showWorkoutData = false,
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor } = getHrZoneProps(percentMax, 100)
@@ -95,7 +100,17 @@ const HrTile = ({
           </Box>
         )}
 
-        <Box aria-live="polite" aria-atomic="true">
+        <Box
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            flexGrow: 1,
+            p: 1, // Add some padding to avoid content touching edges
+          }}
+        >
           <CardContent sx={{ p: 0 }}>
             <Typography
               data-testid="live-hr-percent"
@@ -142,6 +157,19 @@ const HrTile = ({
               </Typography>
             )}
           </CardContent>
+
+          {showWorkoutData &&
+            ((caloriesBurned && caloriesBurned > 0) || !!workoutDuration) && (
+              <Box sx={{ px: 1, pt: 1 }}>
+                <Divider
+                  sx={{ my: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                />
+                <WorkoutDataDisplay
+                  calories={caloriesBurned ?? 0}
+                  duration={workoutDuration ?? '00:00'}
+                />
+              </Box>
+            )}
         </Box>
       </StyledCard>
     </Tooltip>
@@ -156,7 +184,10 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.percentMax === nextProps.percentMax &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.caloriesBurned === nextProps.caloriesBurned &&
+    prevProps.workoutDuration === nextProps.workoutDuration &&
+    prevProps.showWorkoutData === nextProps.showWorkoutData
   )
 }
 

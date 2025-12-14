@@ -7,7 +7,9 @@ import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { formatDuration } from '@/utils/formatters'
 import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
@@ -26,6 +28,26 @@ const HrmConnectionPanel = () => {
     isConnected,
     isSupported,
   } = useBluetoothHRM()
+  const primaryUserName = session?.user?.name || userSettings.userName
+  const primaryUser = useMemo(
+    () =>
+      hrmData.find(
+        (user) =>
+          user.name === primaryUserName &&
+          user.value > 0 &&
+          !/new user/i.test(user.name || '')
+      ),
+    [hrmData, primaryUserName]
+  )
+  const { caloriesBurned, workoutDuration, hasStarted } = useWorkoutSession(
+    primaryUser
+      ? {
+          isConnected: primaryUser.isConnected,
+          currentHR: primaryUser.value,
+          userAge: userSettings.userAge || 30, // Fallback to default age
+        }
+      : { isConnected: false, currentHR: 0, userAge: 0 }
+  )
 
   const handleConnect = () => {
     const userName =
@@ -35,7 +57,7 @@ const HrmConnectionPanel = () => {
   }
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
+    // Filter out users with placeholder names or no identity for display
     return hrmData
       .filter((user) => {
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
@@ -43,6 +65,8 @@ const HrmConnectionPanel = () => {
         return !(isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
+        const isPrimaryUser = user.clientId === primaryUser?.clientId
+
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
@@ -59,9 +83,23 @@ const HrmConnectionPanel = () => {
           ...hrZoneProps,
           isAlerting: !!matchingAlert,
           alertMessage: matchingAlert?.message,
+          // Add workout data only for the primary user
+          caloriesBurned: isPrimaryUser ? caloriesBurned : undefined,
+          workoutDuration: isPrimaryUser
+            ? formatDuration(workoutDuration)
+            : undefined,
+          showWorkoutData: isPrimaryUser ? hasStarted : false,
         }
       })
-  }, [hrmData, activeAlerts])
+  }, [
+    hrmData,
+    activeAlerts,
+    session?.user?.name,
+    userSettings.userName,
+    hasStarted,
+    caloriesBurned,
+    workoutDuration,
+  ])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
@@ -137,6 +175,9 @@ const HrmConnectionPanel = () => {
             isConnected={user.isConnected}
             isAlerting={user.isAlerting}
             {...(user.alertMessage && { alertMessage: user.alertMessage })}
+            caloriesBurned={user.caloriesBurned}
+            workoutDuration={user.workoutDuration}
+            showWorkoutData={user.showWorkoutData}
           />
         </Box>
       ))}

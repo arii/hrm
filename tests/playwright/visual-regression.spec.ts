@@ -293,4 +293,34 @@ test.describe('Visual Regression Tests', () => {
       ],
     })
   })
+
+  test('HR Tile with Workout Data', async () => {
+    // Start streaming from the mock client
+    await mockPage.click('button:has-text("START")')
+    await expect(
+      mockPage.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
+
+    // Start a workout to make the data appear
+    await controlPage.click('button:has-text("START")', { force: true })
+
+    // Wait for the HR tile to be visible on the dashboard
+    const firstTile = dashboardPage
+      .locator('[data-testid="hr-tile-grid-item"]')
+      .first()
+    await expect(firstTile).toBeVisible({ timeout: WAIT_TIMEOUTS.LONG })
+
+    // Wait for the workout data to appear
+    await expect(firstTile.getByText('kcal')).toBeVisible({
+      timeout: WAIT_TIMEOUTS.LONG,
+    })
+
+    // Capture the screenshot
+    await expect(firstTile).toHaveScreenshot('hr-tile-with-workout-data.png', {
+      animations: 'disabled',
+      caret: 'hide',
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.05,
+    })
+  })
 })

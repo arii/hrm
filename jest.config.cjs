@@ -49,6 +49,7 @@ const config = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   testTimeout: 10000,
 }
 
