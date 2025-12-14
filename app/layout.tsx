@@ -7,9 +7,14 @@ import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
+import AuthButton from '@/components/AuthButton'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import AppBar from '@mui/material/AppBar'
+import Box from '@mui/material/Box'
+import Toolbar from '@mui/material/Toolbar'
+import Typography from '@mui/material/Typography'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -50,6 +55,14 @@ export default function RootLayout({
         <ThemeRegistry options={{ key: 'mui' }}>
           <ErrorProvider>
             <Providers>
+              <AppBar position="static">
+                <Toolbar>
+                  <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    HRM
+                  </Typography>
+                  <AuthButton />
+                </Toolbar>
+              </AppBar>
               <UserSettingsProvider>
                 <ErrorBoundary fallback={<ErrorFallback />}>
                   <TimerSoundProvider>{children}</TimerSoundProvider>

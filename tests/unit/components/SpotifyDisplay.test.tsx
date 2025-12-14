@@ -15,7 +15,7 @@ import { useSession } from 'next-auth/react'
 import React from 'react'
 
 // Mock child components and dependencies
-jest.mock('@/components/SpotifyLoginButton', () => ({
+jest.mock('@/components/AuthButton', () => ({
   __esModule: true,
   default: () => <button>Login with Spotify</button>,
 }))
@@ -52,7 +52,7 @@ describe('SpotifyDisplay', () => {
     ) as jest.Mock
   })
 
-  it('should render the login button when not logged in', async () => {
+  it('should render nothing when not logged in', () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
       spotifyData: { trackName: '', artist: '', isPlaying: false },
@@ -62,13 +62,8 @@ describe('SpotifyDisplay', () => {
       isAuthenticated: false,
     })
 
-    renderWithProviders(<SpotifyDisplay />)
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /login with spotify/i })
-      ).toBeInTheDocument()
-    })
+    const { container } = renderWithProviders(<SpotifyDisplay />)
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('should render "No Active Playback" when logged in but trackName is "Awaiting Login..."', async () => {
