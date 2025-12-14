@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/arii/hrm/compare/v0.7.0...v0.8.0) (2025-12-14)
+
+
+### Features
+
+* Enhance pre-commit hooks for lockfile sync and formatting ([#1455](https://github.com/arii/hrm/issues/1455)) ([9255d8f](https://github.com/arii/hrm/commit/9255d8faebb436e6455d15537d670ab9084c27e5))
+
 ## [0.7.0](https://github.com/arii/hrm/compare/v0.6.0...v0.7.0) (2025-12-14)
 
 
