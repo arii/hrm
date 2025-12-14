@@ -22,7 +22,7 @@ export async function POST() {
     }
     return NextResponse.json({ message: 'Server reset successful' })
   } catch (error) {
-    logger.error('Error resetting server:', error)
+    logger.error('Error resetting server:', { error })
     return NextResponse.json(
       { message: 'Error resetting server' },
       { status: 500 }

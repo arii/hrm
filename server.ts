@@ -152,7 +152,7 @@ app
     try {
       spotifyService = await SpotifyPolling.create(broadcast)
     } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
+      logger.error('SpotifyPolling initialization failed', { err: e })
       broadcast({
         type: 'SPOTIFY_SERVICE_INIT_UPDATE',
         payload: false,
@@ -274,7 +274,7 @@ app
 
     // Handle server errors (e.g., port already in use)
     server.on('error', (err: Error) => {
-      logger.error({ err }, 'Server error')
+      logger.error('Server error', { err })
       process.exit(1)
     })
 
@@ -286,6 +286,6 @@ app
     })
   })
   .catch((err: Error) => {
-    logger.error({ err }, 'Next.js preparation failed')
+    logger.error('Next.js preparation failed', { err })
     process.exit(1)
   })

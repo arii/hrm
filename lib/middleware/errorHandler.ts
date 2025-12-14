@@ -20,7 +20,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
       return await handler(req, ...args)
     } catch (error) {
       if (error instanceof ApiError) {
-        logger.warn({ err: error }, `API Error: ${error.message}`)
+        logger.warn(`API Error: ${error.message}`, { err: error })
         return NextResponse.json(
           { error: error.message },
           { status: error.statusCode }
@@ -29,7 +29,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
 
       const message =
         error instanceof Error ? error.message : 'An unknown error occurred.'
-      logger.error({ err: error }, `Internal Server Error: ${message}`)
+      logger.error(`Internal Server Error: ${message}`, { err: error })
       return NextResponse.json(
         { error: 'Internal Server Error' },
         { status: 500 }

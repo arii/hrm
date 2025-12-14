@@ -33,10 +33,9 @@ export async function POST(req: NextRequest) {
     }
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
+    logger.info('Received token-delivery', {
+      subject: payload.sub ?? payload.provider,
+    })
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
         { status: err.statusCode }
       )
     }
-    logger.error('token-delivery error:', err)
+    logger.error('token-delivery error:', { err })
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 }
