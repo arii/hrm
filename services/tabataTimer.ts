@@ -37,6 +37,8 @@ class TabataTimer {
   private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
+  private phaseStartTime: number | null = null
+  private targetDuration: number = 0
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
 
   private timerState: DualModeTimerState = {
@@ -54,6 +56,7 @@ class TabataTimer {
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+    this.timerState.timeRemaining = this.timerState.workDuration
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
@@ -108,70 +111,99 @@ class TabataTimer {
   // --- Core Timer Logic ---
 
   private updateTimer = () => {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (!this.timerState.isRunning || !this.phaseStartTime) return
+
+    let hasChanged = false
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
       this.timerState.currentPhase === 'RUNNING'
     ) {
-      // COUNT UP (STOPWATCH)
+      if (!this.startTime) return // Should not happen if running
       const currentDelta = Math.floor((Date.now() - this.startTime) / 1000)
-      this.timerState.timeElapsed = this.pausedElapsedTime + currentDelta
-    }
+      const newTimeElapsed = this.pausedElapsedTime + currentDelta
+      if (this.timerState.timeElapsed !== newTimeElapsed) {
+        this.timerState.timeElapsed = newTimeElapsed
+        hasChanged = true
+      }
+    } else {
+      const elapsedPhaseTime = Math.floor(
+        (Date.now() - this.phaseStartTime) / 1000
+      )
+      const nextRemaining = Math.max(0, this.targetDuration - elapsedPhaseTime)
 
-    // This applies to TABATA and PREPARE modes (which count down)
-    if (
-      this.timerState.mode === 'TABATA' ||
-      this.timerState.currentPhase === 'PREPARE'
-    ) {
-      const nextRemaining = Math.max(0, this.timerState.timeRemaining - 1)
-      this.timerState.timeRemaining = nextRemaining
-
-      if (nextRemaining <= 0) {
-        this.transitionPhase()
-      } else {
-        this.handleCountdownCue()
+      if (this.timerState.timeRemaining !== nextRemaining) {
+        this.timerState.timeRemaining = nextRemaining
+        hasChanged = true
+        if (nextRemaining <= 0) {
+          this.transitionPhase()
+          return // transitionPhase handles its own broadcast
+        } else {
+          this.handleCountdownCue()
+        }
       }
     }
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+    if (hasChanged) {
+      this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+    }
   }
 
   private startTimer() {
     if (this.timerState.isRunning) return
-
     this.timerState.isRunning = true
-    this.startTime = Date.now()
+    const now = Date.now()
 
-    // --- UNIVERSAL PREPARE LOGIC ---
-    // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
+      this.startTime = now
+      this.phaseStartTime = now
       this.timerState.currentPhase = 'PREPARE'
+      this.targetDuration = START_COUNTDOWN_DURATION
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
+    } else {
+      const timePausedMs = now - (this.phaseStartTime || now)
+      this.startTime = (this.startTime || now) + timePausedMs
+      this.phaseStartTime = now
     }
-    // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
 
-    this.timerInterval = setInterval(this.updateTimer, 1000)
+    if (
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase !== 'PREPARE'
+    ) {
+      this.timerState.currentPhase = 'RUNNING'
+    }
+
+    if (this.timerInterval) clearInterval(this.timerInterval)
+    this.timerInterval = setInterval(this.updateTimer, 250)
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private pauseTimer() {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (!this.timerState.isRunning) return
+
+    this.updateTimer()
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
       this.timerState.currentPhase === 'RUNNING'
     ) {
-      this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
-      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+      this.pausedElapsedTime = this.timerState.timeElapsed
+      this.timerState.currentPhase = 'IDLE'
     }
 
     this.timerState.isRunning = false
+    this.phaseStartTime = Date.now()
+
+    if (
+      this.timerState.mode === 'TABATA' ||
+      this.timerState.currentPhase === 'PREPARE'
+    ) {
+      this.targetDuration = this.timerState.timeRemaining
+    }
+
     if (this.timerInterval) clearInterval(this.timerInterval)
     this.timerInterval = null
-    this.startTime = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
@@ -179,7 +211,6 @@ class TabataTimer {
   private stopTimer() {
     if (this.timerInterval) clearInterval(this.timerInterval)
 
-    // Full reset of all time and cycle variables
     this.timerState = {
       ...this.timerState,
       isRunning: false,
@@ -192,6 +223,8 @@ class TabataTimer {
     this.resetCountdownMarker()
     this.pausedElapsedTime = 0
     this.startTime = null
+    this.phaseStartTime = null
+    this.targetDuration = 0
     this.timerInterval = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
@@ -205,8 +238,6 @@ class TabataTimer {
     this.timerState.workDuration = sanitizedWorkDuration
     this.timerState.restDuration = sanitizedRestDuration
 
-    // If the timer is not running, update timeRemaining to reflect the new work duration.
-    // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
     if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
       this.timerState.timeRemaining = sanitizedWorkDuration
     }
@@ -218,49 +249,49 @@ class TabataTimer {
 
   private transitionPhase() {
     this.resetCountdownMarker()
+    const now = Date.now()
+    this.phaseStartTime = now
+
     switch (this.timerState.currentPhase) {
-      case 'PREPARE': // Transition from 5s countdown
-        this.queueSound('WORK') // Long beep when starting
+      case 'PREPARE':
+        this.queueSound('WORK')
         if (this.timerState.mode === 'STOPWATCH') {
-          // Start Stopwatch counting up
           this.timerState.currentPhase = 'RUNNING'
           this.timerState.timeElapsed = 0
           this.pausedElapsedTime = 0
-          this.startTime = Date.now() // Reset start time for accurate count up
+          this.startTime = now
         } else {
-          // Start Tabata WORK phase
           this.timerState.currentPhase = 'WORK'
-          this.timerState.timeRemaining = this.timerState.workDuration
+          this.targetDuration = this.timerState.workDuration
         }
         break
 
       case 'WORK':
-        // Infinite loop: WORK -> REST
         this.queueSound('REST')
         this.timerState.currentPhase = 'REST'
-        this.timerState.timeRemaining = this.timerState.restDuration
+        this.targetDuration = this.timerState.restDuration
         break
 
       case 'REST':
-        // Infinite loop: REST -> WORK
         this.queueSound('WORK')
         this.timerState.currentPhase = 'WORK'
-        this.timerState.timeRemaining = this.timerState.workDuration
+        this.targetDuration = this.timerState.workDuration
         break
 
       case 'IDLE':
       case 'COOLDOWN':
       case 'RUNNING':
         this.stopTimer()
-        break
+        return // stopTimer broadcasts, so no need for another one
     }
+    this.updateTimer()
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   // --- Command Handler (Used by socketManager) ---
   public handleCommand(command: TimerCommand) {
     switch (command) {
       case 'START':
-        // START now triggers PREPARE if in IDLE
         this.startTimer()
         break
       case 'PAUSE':
