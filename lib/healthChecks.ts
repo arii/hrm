@@ -1,11 +1,11 @@
-import { tabataTimer } from '@/utils/socketManager'
 import WebSocket from 'ws'
 
 // Individual health check functions
 export function checkMemoryUsage() {
   const memUsage = process.memoryUsage()
   const memUsageMB = memUsage.heapUsed / 1024 / 1024
-  const memLimitMB = 512 // Adjust based on deployment
+  const memLimitMB =
+    parseInt(process.env.HEALTH_CHECK_MEMORY_LIMIT_MB || '', 10) || 512
 
   return {
     healthy: memUsageMB < memLimitMB,
@@ -110,14 +110,14 @@ export async function checkSpotifyAPI(): Promise<{
 
 export function checkTimerService() {
   try {
-    // Basic timer service check - ensure class can be instantiated
-    const timerCheck = typeof tabataTimer !== 'undefined'
-
+    // The timer service is an in-memory component of the main server process.
+    // If the server is up and responding to health checks, we assume the timer is active.
+    // A more sophisticated check would require IPC, which is out of scope.
     return {
-      healthy: true, // Timer is in-memory, always healthy if app is running
+      healthy: true,
       details: {
         service: 'timer',
-        instance: timerCheck ? 'active' : 'standby',
+        instance: 'active', // Assumed active
       },
     }
   } catch (error) {

@@ -191,20 +191,36 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
+        // Refactored to use async/await and avoid nested setTimeouts
+        const handleTokenDelivery = async () => {
+          try {
+            // Wait a moment for the token to be written to disk by the API route
+            await new Promise((resolve) => setTimeout(resolve, 1000))
 
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
+            if (spotifyService) {
+              // Signal the service to reload tokens from disk
+              spotifyService.setRefreshToken('signal')
+
+              // Wait a bit for the service to re-initialize with the new token
+              await new Promise((resolve) => setTimeout(resolve, 1500))
+
+              // Force a poll to get immediate feedback
+              if (
+                typeof spotifyService.forcePollAndBroadcast === 'function'
+              ) {
                 await spotifyService.forcePollAndBroadcast()
               }
-            }, 1500)
+            }
+          } catch (error) {
+            logger.error(
+              { err: error },
+              'Error handling token delivery interception'
+            )
           }
-        }, 1000)
+        }
+
+        // Execute the handler without holding up the HTTP response
+        handleTokenDelivery()
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
