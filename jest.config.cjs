@@ -1,55 +1,23 @@
-/** @type {import('jest').Config} */
-const config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  coverageDirectory: 'coverage',
-  reporters: [
-    'default',
-    [
-      'jest-junit',
-      {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
-      },
-    ],
-  ],
 
-  collectCoverageFrom: [
-    'services/**/*.ts',
-    'utils/socketManager.ts',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-  ],
-  transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        useESM: true,
-        tsconfig: {
-          module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-        },
-      },
-    ],
-  },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
-  ],
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+const nextJest = require('next/jest')
+
+const createJestConfig = nextJest({
+  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
+  dir: './',
+})
+
+// Add any custom config to be passed to Jest
+const customJestConfig = {
+  // Add more setup options before each test is run
+  // setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  // if using TypeScript with a baseUrl set to the root directory then you need the below for alias' to work
+  moduleDirectories: ['node_modules', '<rootDir>/'],
+  testEnvironment: 'jest-environment-jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@/(.*)$': '<rootDir>/$1',
+    '@/(.*)$': '<rootDir>/$1',
   },
-  testTimeout: 10000,
 }
 
-module.exports = config
+// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
+module.exports = createJestConfig(customJestConfig)

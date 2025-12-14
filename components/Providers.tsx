@@ -1,19 +1,17 @@
 'use client'
 
 import { WebSocketProvider } from '@/context/WebSocketContext'
-import theme from '@/lib/theme'
-import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider } from '@mui/material/styles'
+import { ToastProvider } from '@/context/ToastContext'
+import ThemeRegistry from './ThemeRegistry/ThemeRegistry'
 import { SessionProvider } from 'next-auth/react'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
       <WebSocketProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <ToastProvider>
+          <ThemeRegistry>{children}</ThemeRegistry>
+        </ToastProvider>
       </WebSocketProvider>
     </SessionProvider>
   )

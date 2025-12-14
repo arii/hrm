@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyExecutionMessage } from '@/types/websocket'
+import { useToast } from '@/context/ToastContext'
 
 // Define the shape of the player object from useSpotifyWebPlayback hook
 interface SpotifyPlayerInstance {
@@ -22,6 +23,7 @@ export const useSpotifyRemoteExecution = (
   player: SpotifyPlayerInstance | null
 ): void => {
   const { sendData } = useWebSocket()
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (!player) return
@@ -37,6 +39,26 @@ export const useSpotifyRemoteExecution = (
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
+        const handleResponse = async (response: Response) => {
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const errorMessage =
+              errorData.error || `Spotify command '${command}' failed.`
+            showToast(errorMessage, 'error')
+            console.error(
+              `[Dashboard] Spotify command '${command}' failed:`,
+              response.statusText
+            )
+          }
+        }
+
+        const handleError = (error: unknown) => {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error)
+          showToast(`An unexpected error occurred: ${errorMessage}`, 'error')
+          console.error('[Dashboard] Command execution failed:', error)
+        }
+
         try {
           switch (command) {
             case 'PLAY':
@@ -47,6 +69,8 @@ export const useSpotifyRemoteExecution = (
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: command }),
               })
+                .then(handleResponse)
+                .catch(handleError)
               break
             case 'NEXT':
               fetch('/api/spotify/control', {
@@ -54,6 +78,8 @@ export const useSpotifyRemoteExecution = (
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'NEXT' }),
               })
+                .then(handleResponse)
+                .catch(handleError)
               break
             case 'PREVIOUS':
               fetch('/api/spotify/control', {
@@ -61,12 +87,14 @@ export const useSpotifyRemoteExecution = (
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'PREVIOUS' }),
               })
+                .then(handleResponse)
+                .catch(handleError)
               break
             case 'SET_VOLUME':
               if (volume !== undefined) {
                 // Use both the local player and the API for volume control
                 const vol = volume > 1 ? volume / 100 : volume
-                player.setVolume(vol)
+                player.setVolume(vol).catch(handleError)
                 fetch('/api/spotify/control', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -76,6 +104,8 @@ export const useSpotifyRemoteExecution = (
                     deviceId,
                   }),
                 })
+                  .then(handleResponse)
+                  .catch(handleError)
               }
               break
             case 'TRANSFER_PLAYBACK':
@@ -85,11 +115,13 @@ export const useSpotifyRemoteExecution = (
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'TRANSFER', deviceId }),
                 })
+                  .then(handleResponse)
+                  .catch(handleError)
               }
               break
           }
         } catch (execError) {
-          console.error('[Dashboard] Command execution failed:', execError)
+          handleError(execError)
         }
       }
     }
@@ -110,5 +142,5 @@ export const useSpotifyRemoteExecution = (
 
     // Return undefined explicitly for server-side rendering
     return undefined
-  }, [player, sendData])
+  }, [player, sendData, showToast])
 }
