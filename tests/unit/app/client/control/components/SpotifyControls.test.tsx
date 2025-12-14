@@ -1,46 +1,92 @@
-/** @jest-environment jsdom */
-
-import SpotifyControls from '@/app/client/control/components/SpotifyControls'
+/**
+ * @jest-environment jsdom
+ */
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
+import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
-import type { SpotifyData } from '@/types/websocket'
+import SpotifyControls from '@/app/client/control/components/SpotifyControls'
+import { mockRouter } from '@/utils/test-utils/mockRouter'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
 
-type UseWebSocketReturn = ReturnType<typeof useWebSocket>
-
-jest.mock('@/context/WebSocketContext')
+// Mock the router
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
+  useRouter: jest.fn(),
 }))
 
-const mockedUseWebSocket = useWebSocket as jest.MockedFunction<
-  () => UseWebSocketReturn
->
+// Mock the WebSocket context
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+}))
 
-const baseSpotifyData: SpotifyData = {
-  trackName: 'Mock Track',
-  artist: 'Mock Artist',
-  isPlaying: true,
-  devices: [],
-}
+// Mock the volume preference hook
+jest.mock('@/hooks/useVolumePreference')
 
-describe('SpotifyControls', () => {
+describe('components/SpotifyControls', () => {
+  let mockSendData: jest.Mock
+
   beforeEach(() => {
-    jest.resetAllMocks()
+    mockSendData = jest.fn()
+    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
+    ;(useWebSocket as jest.Mock).mockReturnValue({
+      connectionStatus: 'Connected',
+      spotifyData: {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        isPlaying: true,
+        devices: [
+          { id: '1', name: 'Device 1', is_active: true, volume_percent: 50 },
+        ],
+      },
+      sendData: mockSendData,
+    })
+    ;(useVolumePreference as jest.Mock).mockReturnValue({
+      volume: 50,
+      muted: false,
+      setVolume: jest.fn(),
+      toggleMute: jest.fn(),
+    })
   })
 
-  it('renders the PlaybackControls component when a track is playing', () => {
-    mockedUseWebSocket.mockReturnValue({
-      spotifyData: baseSpotifyData,
-      connectionStatus: 'Connected',
-      sendData: jest.fn(),
-    } as unknown as UseWebSocketReturn)
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
 
+  it('renders Spotify controls with track info', () => {
     render(<SpotifyControls />)
+    expect(screen.getByText('Test Track')).toBeInTheDocument()
+    expect(screen.getByText('Test Artist')).toBeInTheDocument()
+    expect(screen.getByLabelText('Pause')).toBeInTheDocument()
+  })
 
-    // The PlaybackControls component contains a button with the test id "spotify-play-pause"
-    expect(screen.getByTestId('spotify-play-pause')).toBeInTheDocument()
+  it('sends a GET_DEVICES command on mount if connected', () => {
+    render(<SpotifyControls />)
+    expect(mockSendData).toHaveBeenCalledWith({
+      type: 'SPOTIFY_COMMAND',
+      command: 'GET_DEVICES',
+    })
+  })
+
+  it('handles playback commands', () => {
+    render(<SpotifyControls />)
+    fireEvent.click(screen.getByLabelText('Pause'))
+    expect(mockSendData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PAUSE',
+      })
+    )
+  })
+
+  it('should render the mute button with the correct aria-label', () => {
+    render(<SpotifyControls />)
+    const muteButton = screen.getByLabelText(/mute volume/i)
+    expect(muteButton).toBeInTheDocument()
   })
 })
