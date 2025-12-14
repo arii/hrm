@@ -133,7 +133,7 @@ const useSpotifyWebPlayback = () => {
         }
         // User is logged in, proceed with initialization
         initializeSDK()
-      } catch (error) {
+      } catch (_error) {
         console.log(
           '[Spotify Web Playback] Session check failed, skipping Web Playback initialization'
         )
