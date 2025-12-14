@@ -10,9 +10,9 @@ export interface HrTileProps {
   isAlerting: boolean
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
-  caloriesBurned?: number
-  workoutDuration?: string
-  showWorkoutData?: boolean
+  caloriesBurned?: number | undefined
+  workoutDuration?: string | undefined
+  showWorkoutData?: boolean | undefined
 }
 
 export interface HeartRateZonesProps {
