@@ -26,12 +26,13 @@ fi
 echo "✅ PM2 reports '$APP_NAME' is online."
 
 # 2. Check HTTP Endpoint (with retries)
-echo "Checking HTTP health at http://127.0.0.1:$PORT/api/debug/ping..."
+HOST="${HOST:-127.0.0.1}"
+echo "Checking HTTP health at http://$HOST:$PORT/api/debug/ping..."
 
 count=0
 while [ $count -lt $MAX_RETRIES ]; do
     # curl flags: -s (silent), -o (dev/null), -w (write out status code)
-    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/api/debug/ping || echo "000")
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$HOST:$PORT/api/debug/ping || echo "000")
 
     if [ "$HTTP_STATUS" == "200" ]; then
         echo "✅ Health check passed! Endpoint returned 200 OK."
