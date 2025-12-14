@@ -9,13 +9,15 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      // STRICT CHANGE: Default to production immediately
+      // Pass PORT from the environment, otherwise it will be undefined
+      // and the application can decide on a default.
       env: {
         NODE_ENV: 'production',
+        PORT: process.env.PORT,
       },
-      // Redundant but kept for compatibility with existing scripts
       env_production: {
         NODE_ENV: 'production',
+        PORT: process.env.PORT,
       },
     },
   ],

@@ -11,12 +11,20 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
 fi
 
 # Load environment variables (order matters)
-# 1. Load production overrides
+# 1. Preserve PORT if it's already set in the environment
+PRESERVED_PORT=$PORT
+
+# 2. Load production overrides
 if [ -f .env.production ]; then
   echo "Loading .env.production..."
   set -a
   source .env.production
   set +a
+fi
+
+# 3. Restore PORT if it was preserved
+if [ -n "$PRESERVED_PORT" ]; then
+  export PORT=$PRESERVED_PORT
 fi
 
 # 2. Set production mode
