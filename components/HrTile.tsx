@@ -159,7 +159,7 @@ const HrTile = ({
           </CardContent>
 
           {showWorkoutData &&
-            ((caloriesBurned && caloriesBurned > 0) || !!workoutDuration) && (
+            ((caloriesBurned ?? 0) > 0 || !!workoutDuration) && (
               <Box sx={{ px: 1, pt: 1 }}>
                 <Divider
                   sx={{ my: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}

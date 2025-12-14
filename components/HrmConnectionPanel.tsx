@@ -33,9 +33,7 @@ const HrmConnectionPanel = () => {
     () =>
       hrmData.find(
         (user) =>
-          user.name === primaryUserName &&
-          user.value > 0 &&
-          !/new user/i.test(user.name || '')
+          user.name === primaryUserName && !/new user/i.test(user.name || '')
       ),
     [hrmData, primaryUserName]
   )
