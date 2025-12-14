@@ -10,6 +10,7 @@ import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
+import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 import './globals.css'
 
@@ -19,20 +20,22 @@ export default function MainLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ThemeRegistry options={{ key: 'mui' }}>
-      <ErrorProvider>
-        <Providers>
-          <UserSettingsProvider>
-            <ErrorBoundary fallback={<ErrorFallback />}>
-              <TimerSoundProvider>{children}</TimerSoundProvider>
-            </ErrorBoundary>
-          </UserSettingsProvider>
-        </Providers>
-        <ErrorDisplay />
-      </ErrorProvider>
-      <Footer />
-      <BottomNavBar />
-      <LoadingIndicator />
-    </ThemeRegistry>
+    <LoadingProvider>
+      <ThemeRegistry options={{ key: 'mui' }}>
+        <ErrorProvider>
+          <Providers>
+            <UserSettingsProvider>
+              <ErrorBoundary fallback={<ErrorFallback />}>
+                <TimerSoundProvider>{children}</TimerSoundProvider>
+              </ErrorBoundary>
+            </UserSettingsProvider>
+          </Providers>
+          <ErrorDisplay />
+        </ErrorProvider>
+        <Footer />
+        <BottomNavBar />
+        <LoadingIndicator />
+      </ThemeRegistry>
+    </LoadingProvider>
   )
 }
