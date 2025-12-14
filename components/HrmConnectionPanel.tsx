@@ -72,10 +72,10 @@ const HrmConnectionPanel = () => {
   // Future iterations may need to address a multi-device connection strategy.
   if (isLoading || tileData.length === 0) {
     return (
-      <>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
         <Box
           sx={{
-            width: { xs: '100%', md: 'calc(50% - 8px)' },
+            width: '100%',
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
@@ -103,7 +103,7 @@ const HrmConnectionPanel = () => {
           data-testid="hr-tile-grid-item"
           sx={{
             display: { xs: 'none', md: 'block' },
-            width: { sm: 'calc(50% - 8px)', lg: 'calc(25% - 12px)' },
+            width: '100%',
           }}
         >
           <Skeleton
@@ -112,22 +112,18 @@ const HrmConnectionPanel = () => {
             sx={{ borderRadius: 3 }}
           />
         </Box>
-      </>
+      </Box>
     )
   }
 
   return (
-    <>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
       {tileData.map((user) => (
         <Box
           key={user.clientId}
           data-testid="hr-tile-grid-item"
           sx={{
-            width: {
-              xs: '100%',
-              sm: 'calc(50% - 8px)',
-              lg: 'calc(25% - 12px)',
-            },
+            width: '100%',
           }}
         >
           <HrTile
@@ -140,7 +136,7 @@ const HrmConnectionPanel = () => {
           />
         </Box>
       ))}
-    </>
+    </Box>
   )
 }
 export default HrmConnectionPanel
