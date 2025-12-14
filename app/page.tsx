@@ -19,10 +19,13 @@ import { useWebSocket } from '@/context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay.jsx'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={80} />, // Optional: Render nothing while loading to avoid layout shift
-})
+const SpotifyDisplay = dynamic(
+  () => import('../components/SpotifyDisplay.jsx'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={80} />, // Optional: Render nothing while loading to avoid layout shift
+  }
+)
 
 const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
@@ -35,10 +38,13 @@ const WorkoutTableViewer = dynamic(
   }
 )
 
-const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer.jsx'), {
-  ssr: false,
-  loading: () => <Skeleton variant="rectangular" height={500} />,
-})
+const GoogleDocViewer = dynamic(
+  () => import('../components/GoogleDocViewer.jsx'),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={500} />,
+  }
+)
 
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'

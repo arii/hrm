@@ -105,7 +105,7 @@ const SpotifyDisplay = () => {
     const scalar = muted ? 0 : Math.min(Math.max(volume / 100, 0), 1)
     player
       .setVolume(scalar)
-      .catch((err: any) =>
+      .catch((err) =>
         console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
       )
   }, [player, volume, muted])
@@ -318,7 +318,7 @@ const SpotifyDisplay = () => {
             availableDevices={availableDevices}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
-            onMenuOpen={(e: any) => setDeviceMenuAnchor(e.currentTarget)}
+            onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
             onMenuClose={() => setDeviceMenuAnchor(null)}
           />
           <Button

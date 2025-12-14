@@ -18,6 +18,7 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
 ## Dependency PR Requirements
+
 - **Required Files**: All dependency PRs must include package.json and pnpm-lock.yaml changes
 - **Security Review**: Run `npm audit` and document any security vulnerabilities
 - **Version Verification**: Confirm all versions are stable (no alpha/beta/rc)

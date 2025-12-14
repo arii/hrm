@@ -2,7 +2,7 @@
 import storybook from 'eslint-plugin-storybook'
 
 import js from '@eslint/js'
-import NextJS from '@next/eslint-plugin-next';
+import NextJS from '@next/eslint-plugin-next'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'

@@ -37,42 +37,42 @@ export default function BottomNavBar() {
         boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <BottomNavigationAction
-        label="Dashboard"
-        aria-label="Navigate to Dashboard page"
-        icon={<DashboardIcon />}
-        component={Link}
-        href="/"
-        sx={{
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Phone Controls"
-        aria-label="Navigate to Phone Controls page"
-        icon={<SettingsIcon />}
-        component={Link}
-        href="/client/control"
-        sx={{
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
-      <BottomNavigationAction
-        label="Stream HR"
-        aria-label="Navigate to Stream Heart Rate page"
-        icon={<FavoriteIcon />}
-        component={Link}
-        href="/client/connect"
-        sx={{
-          '&:hover, &.Mui-focusVisible': {
-            backgroundColor: 'action.hover',
-          },
-        }}
-      />
+      <Link href="/" passHref>
+        <BottomNavigationAction
+          label="Dashboard"
+          aria-label="Navigate to Dashboard page"
+          icon={<DashboardIcon />}
+          sx={{
+            '&:hover, &.Mui-focusVisible': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        />
+      </Link>
+      <Link href="/client/control" passHref>
+        <BottomNavigationAction
+          label="Phone Controls"
+          aria-label="Navigate to Phone Controls page"
+          icon={<SettingsIcon />}
+          sx={{
+            '&:hover, &.Mui-focusVisible': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        />
+      </Link>
+      <Link href="/client/connect" passHref>
+        <BottomNavigationAction
+          label="Stream HR"
+          aria-label="Navigate to Stream Heart Rate page"
+          icon={<FavoriteIcon />}
+          sx={{
+            '&:hover, &.Mui-focusVisible': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        />
+      </Link>
     </BottomNavigation>
   )
 }

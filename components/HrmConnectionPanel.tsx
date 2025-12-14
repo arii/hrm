@@ -30,20 +30,20 @@ const HrmConnectionPanel = () => {
 
   const filteredTiles = useMemo(() => {
     return hrmData
-      .filter((user: any) => {
+      .filter((user: HrmData) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
-      .map((user: any) => {
+      .map((user: HrmData) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
 
         const matchingAlert = activeAlerts.find(
-          (alert: any) =>
+          (alert: ActiveAlert) =>
             alert.clientId === user.clientId &&
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )

@@ -18,7 +18,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
   return async (req: Request, ...args: unknown[]) => {
     try {
       return await handler(req, ...args)
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
         return NextResponse.json(
