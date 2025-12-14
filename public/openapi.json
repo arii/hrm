@@ -20,11 +20,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "workoutSessionId",
-          "timestamp",
-          "heartRate"
-        ]
+        "required": ["workoutSessionId", "timestamp", "heartRate"]
       },
       "CreateUserProfileSchema": {
         "type": "object",
@@ -46,12 +42,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "username",
-          "email",
-          "firstName",
-          "lastName"
-        ]
+        "required": ["username", "email", "firstName", "lastName"]
       },
       "CreateWorkoutSessionSchema": {
         "type": "object",
@@ -68,11 +59,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "userId",
-          "startedAt",
-          "notes"
-        ]
+        "required": ["userId", "startedAt", "notes"]
       },
       "HeartRateDataPointSchema": {
         "type": "object",
@@ -92,12 +79,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "id",
-          "workoutSessionId",
-          "timestamp",
-          "heartRate"
-        ]
+        "required": ["id", "workoutSessionId", "timestamp", "heartRate"]
       },
       "UserProfileSchema": {
         "type": "object",
@@ -165,13 +147,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "userId",
-          "startedAt",
-          "endedAt",
-          "notes"
-        ]
+        "required": ["id", "userId", "startedAt", "endedAt", "notes"]
       },
       "UserProfile": {
         "type": "object",
@@ -235,12 +211,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "username",
-          "email",
-          "firstName",
-          "lastName"
-        ]
+        "required": ["username", "email", "firstName", "lastName"]
       }
     },
     "parameters": {}
