@@ -9,17 +9,17 @@
 !.yarn/versions
 package-lock.json
 
-# Testing & Coverage
+# Test Artifacts
+/tests/artifacts/
+
+# Common legacy and tool-specific output directories
 /coverage
 /test-results/
 /playwright-report/
 /oauth-test-report/
 /test-recordings/
-/tests/playwright/screenshots/
-/tests/playwright/*-actual.png
-/tests/playwright/*-diff.png
-/screenshots/
-test_output.txt
+/.nyc_output/
+/blob-report/
 
 # Next.js & Build
 /.next/
@@ -41,7 +41,6 @@ logs/*
 
 # Misc / System / Editor
 .eslintcache
-/blob-report/
 .DS_Store
 *.pem
 *.backup
@@ -49,6 +48,7 @@ logs/*
 *.swp
 *.tmp
 diff.txt
+test_output.txt
 
 # Debugging Profiles (Chrome MCP)
 .config/chrome-debug-profile/
@@ -65,4 +65,3 @@ diff.txt
 !.vscode/launch.json
 !.vscode/settings.json
 !.vscode/tasks.json
-verification/screenshots/

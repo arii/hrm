@@ -3,7 +3,9 @@
  * Optimized for performance and parallel execution
  */
 import { defineConfig, devices } from '@playwright/test'
+import path from 'path'
 import { getBaseURL } from './utils/urls'
+import { ensureArtifactDir } from './tests/utils/artifacts'
 
 // Check if Spotify/NextAuth credentials are available
 const hasSpotifyCredentials = !!(
@@ -29,7 +31,12 @@ if (!hasNextAuthSecret) {
   testIgnoreList.push('debug.spec.ts')
 }
 
+// Ensure artifact directories exist and get their paths
+const resultsDir = ensureArtifactDir('playwright-results')
+const reportsDir = ensureArtifactDir('reports')
+
 export default defineConfig({
+  globalSetup: require.resolve('./tests/playwright/global-setup.ts'),
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
   testIgnore: testIgnoreList,
@@ -120,12 +127,18 @@ export default defineConfig({
   ],
 
   // Output configuration
-  outputDir: 'test-results/',
+  outputDir: resultsDir,
   reporter: [
     ['list'],
-    ['blob'],
-    ['junit', { outputFile: 'test-results/results.xml' }],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'test-results/results.json' }],
+    ['blob'], // Blob report will be stored in the outputDir
+    ['junit', { outputFile: path.join(reportsDir, 'junit-results.xml') }],
+    [
+      'html',
+      {
+        outputFolder: path.join(reportsDir, 'html-report'),
+        open: 'never',
+      },
+    ],
+    ['json', { outputFile: path.join(reportsDir, 'json-results.json') }],
   ],
 })
