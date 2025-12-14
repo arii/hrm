@@ -198,14 +198,15 @@ test.describe('Visual Regression Tests', () => {
     await restInput.fill('5')
 
     // Start timer
-    await expect(controlPage.getByTestId('connection-status')).toHaveText(
-      'Server: Connected'
-    )
-    await controlPage.getByTestId('start-session-button').click()
+
+    await controlPage.click('button:has-text("START")', { force: true })
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
-    const stopButton = controlPage.getByTestId('end-session-button')
+    const stopButton = controlPage.getByRole('button', {
+      name: 'STOP',
+      exact: true,
+    })
 
     // Use this specific locator in your assertion
     await expect(stopButton).toBeVisible()

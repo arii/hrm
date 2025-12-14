@@ -1,10 +1,27 @@
 /** @type {import('jest').Config} */
 const config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  projects: [
+    {
+      displayName: 'server',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1',
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+      },
+    },
+    {
+      displayName: 'client',
+      preset: 'ts-jest',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/tests/unit/client/**/*.test.tsx'],
+      setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1',
+      },
+    },
+  ],
   coverageDirectory: 'coverage',
   reporters: [
     'default',

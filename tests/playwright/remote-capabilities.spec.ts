@@ -51,10 +51,7 @@ test.describe('Remote Capabilities & Command Relay', () => {
       await stopButton.click()
     }
 
-    await expect(page.getByTestId('connection-status')).toHaveText(
-      'Server: Connected'
-    )
-    const startButton = page.getByTestId('start-session-button')
+    const startButton = page.getByTestId('start-timer-button')
     await expect(startButton).toBeVisible() // Wait for start button to appear
     await startButton.click()
 

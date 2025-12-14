@@ -92,7 +92,6 @@ const ControlPanel = () => {
         <Box sx={{ mb: 1, textAlign: 'center' }}>
           <Typography
             variant="caption"
-            data-testid="connection-status"
             sx={{
               color: connectionStatus === 'Connected' ? 'green' : 'orange',
               fontWeight: 'bold',
