@@ -185,9 +185,11 @@ jobs:
 
       - name: Run Functional Tests
         id: functional_tests
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: test-results/functional-results.xml
         run: |
           set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/functional-results.xml pnpm run test:functional --reporter=junit 2>&1 | tee logs/functional-output.log
+          pnpm run test:functional --reporter=junit 2>&1 | tee logs/functional-output.log
         continue-on-error: true
 
       - name: Publish Functional Test Results to GitHub Checks

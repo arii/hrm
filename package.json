@@ -29,7 +29,7 @@
     "test:json": "scripts/test-json-with-server.sh",
     "test:visual": "scripts/test-with-server.sh playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
     "test:functional": "scripts/test-with-server.sh playwright test tests/playwright/bluetooth-flow.spec.ts tests/playwright/realtime-resilience.spec.ts tests/playwright/spotify-debug.spec.ts tests/playwright/auth-flow.spec.ts",
-    "test:e2e": "cross-env TESTING=true scripts/test-with-server.sh npx playwright test",
+    "test:e2e": "scripts/test-with-server.sh playwright test --project=chromium",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
     "test:quick": "pnpm run build && scripts/test-with-server.sh playwright test --reporter=dot",
     "test:visual:ui": "playwright test --ui",
