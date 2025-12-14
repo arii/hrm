@@ -3,6 +3,7 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useWorkoutSession } from '@/context/WorkoutSessionContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -58,11 +59,15 @@ const withTimeout = <T>(
 
 const useBluetoothHRM = () => {
   const { sendData, connectionStatus } = useWebSocket()
+  const { status: workoutStatus, startWorkout } = useWorkoutSession()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
-    () => typeof navigator !== 'undefined' && !!navigator.bluetooth
+    () =>
+      (typeof window !== 'undefined' &&
+        (window as any).__FORCE_BLUETOOTH_SUPPORT__) ||
+      (typeof navigator !== 'undefined' && !!navigator.bluetooth)
   )
 
   const statusRef = useRef(deviceStatus)
@@ -325,13 +330,22 @@ const useBluetoothHRM = () => {
     [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
   )
 
+  const isConnected = deviceStatus.startsWith('Connected')
+
+  useEffect(() => {
+    // Auto-start logic: when device connects and no workout is running, start one.
+    if (isConnected && workoutStatus === 'IDLE') {
+      startWorkout('AUTO')
+    }
+  }, [isConnected, workoutStatus, startWorkout])
+
   return {
     connectAndStream,
     disconnect,
     forgetDevice,
     deviceStatus,
     batteryLevel,
-    isConnected: deviceStatus.startsWith('Connected'),
+    isConnected,
     isSupported, // Export this flag
   }
 }

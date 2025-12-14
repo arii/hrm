@@ -3,10 +3,8 @@
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '@/utils/visualization'
-import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
-import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useWorkoutSession } from '@/context/WorkoutSessionContext'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -23,6 +21,13 @@ export default function ConnectPage() {
   } = useBluetoothHRM()
 
   const { connectionStatus, hrmData } = useWebSocket()
+  const {
+    allowAutoStart,
+    toggleAutoStart,
+    startWorkout,
+    stopWorkout,
+    status: workoutStatus,
+  } = useWorkoutSession()
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
@@ -31,26 +36,17 @@ export default function ConnectPage() {
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
-
-  const {
-    workoutDuration,
-    caloriesBurned,
-    resetWorkout,
-    hasStarted,
-    startWorkout,
-    endWorkout,
-    workoutStatus,
-  } = useWorkoutSession({
-    isConnected,
-    currentHR,
-    userAge: userAge ? parseInt(userAge) : 0,
-  })
+  // Simplified props for ConnectView, since the old logic is removed.
+  // The old `getHrZoneProps` is not used anymore.
+  const hrZoneProps = {
+    percentage: maxHr > 0 ? (currentHR / maxHr) * 100 : 0,
+    progressColor: 'grey', // Placeholder color
+  }
 
   return (
     <ConnectView
-      duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
+      duration="00:00" // Placeholder
+      caloriesBurned={0} // Placeholder
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}
@@ -63,17 +59,24 @@ export default function ConnectPage() {
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
-      }}
+      hrZoneProps={hrZoneProps}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
-      hasStarted={hasStarted}
-      onReset={resetWorkout}
-      workoutStatus={workoutStatus}
-      onStartWorkout={startWorkout}
-      onEndWorkout={endWorkout}
+      hasStarted={workoutStatus === 'RUNNING'}
+      onReset={() => {
+        /* Not implemented in new context */
+      }}
+      workoutStatus={
+        workoutStatus === 'RUNNING'
+          ? 'running'
+          : workoutStatus === 'IDLE'
+          ? 'idle'
+          : 'paused'
+      }
+      onStartWorkout={() => startWorkout('MANUAL')}
+      onEndWorkout={stopWorkout}
+      allowAutoStart={allowAutoStart}
+      onToggleAutoStart={toggleAutoStart}
     />
   )
 }

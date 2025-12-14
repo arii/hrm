@@ -2,9 +2,9 @@
 'use client'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useWorkoutSession } from '@/context/WorkoutSessionContext'
 import {
   SpotifyCommandMessage,
-  TimerCommandMessage,
   TimerConfigMessage,
   TimerModeCommandMessage,
 } from '@/types/websocket'
@@ -71,6 +71,7 @@ const stepperButtonSx = {
 
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
+  const { startWorkout, stopWorkout } = useWorkoutSession()
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -158,31 +159,22 @@ const TimerControls = () => {
     [sendData, spotifyDeviceId, spotifyDevices]
   )
 
-  const sendTimerCommand = useCallback(
-    (command: 'START' | 'PAUSE' | 'STOP') => {
-      if (connectionStatus !== 'Connected') return
+  const handleStart = () => {
+    // Manually send latest config on start, as context doesn't handle this part.
+    const config: TimerConfigMessage = {
+      type: 'TIMER_CONFIG',
+      workDuration: latestWork.current,
+      restDuration: latestRest.current,
+    }
+    sendData(config)
+    startWorkout('MANUAL')
+    sendSpotifyCommand('NEXT')
+  }
 
-      // When starting, ensure the server receives the latest configuration immediately
-      if (command === 'START') {
-        // Prefer reading the current ref values to avoid stale React state
-        const config: TimerConfigMessage = {
-          type: 'TIMER_CONFIG',
-          workDuration: latestWork.current,
-          restDuration: latestRest.current,
-        }
-        sendData(config)
-      }
-      const message: TimerCommandMessage = { type: 'TIMER_COMMAND', command }
-      sendData(message)
-
-      if (command === 'START') {
-        sendSpotifyCommand('NEXT')
-      } else if (command === 'STOP') {
-        sendSpotifyCommand('PAUSE')
-      }
-    },
-    [sendData, latestWork, latestRest, sendSpotifyCommand, connectionStatus]
-  )
+  const handleStop = () => {
+    stopWorkout()
+    sendSpotifyCommand('PAUSE')
+  }
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
     if (connectionStatus !== 'Connected') return
@@ -507,7 +499,7 @@ const TimerControls = () => {
               data-testid="start-timer-button"
               variant="contained"
               color="success"
-              onClick={() => sendTimerCommand('START')}
+              onClick={handleStart}
               disabled={connectionStatus !== 'Connected'}
               sx={startButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
@@ -519,7 +511,7 @@ const TimerControls = () => {
               data-testid="stop-timer-button"
               variant="contained"
               color="error"
-              onClick={() => sendTimerCommand('STOP')}
+              onClick={handleStop}
               disabled={connectionStatus !== 'Connected'}
               sx={stopButtonSx}
               startIcon={<Stop fontSize="large" />}

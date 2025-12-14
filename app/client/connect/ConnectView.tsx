@@ -3,7 +3,9 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import Stack from '@mui/material/Stack'
+import Switch from '@mui/material/Switch'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
@@ -39,6 +41,8 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  allowAutoStart: boolean
+  onToggleAutoStart: () => void
 }
 
 export default function ConnectView({
@@ -64,6 +68,8 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  allowAutoStart,
+  onToggleAutoStart,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -154,6 +160,19 @@ export default function ConnectView({
             </Typography>
           </Box>
         )}
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={allowAutoStart}
+                onChange={onToggleAutoStart}
+                name="autoStartSwitch"
+              />
+            }
+            label="Auto-start Workout on Connect"
+          />
+        </Box>
 
         {deviceStatus &&
           !isConnected &&
