@@ -6,15 +6,12 @@ import * as React from 'react'
 
 // --- ADD THESE IMPORTS ---
 import CssBaseline from '@mui/material/CssBaseline'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '@/lib/theme'
 // --- END OF NEW IMPORTS ---
 
 // This implementation is taken directly from the MUI official docs:
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
-
-// --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
-// ------------------------------
 
 type ThemeRegistryProps = {
   options: { key: string }
@@ -25,7 +22,6 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
   const { options, children } = props
 
   const [{ cache, flush }] = React.useState(() => {
-    // ... (rest of the cache logic remains the same)
     const cache = createCache(options)
     cache.compat = true
     const prevInsert = cache.insert
@@ -46,7 +42,6 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
   })
 
   useServerInsertedHTML(() => {
-    // ... (rest of the useServerInsertedHTML logic remains the same)
     const names = flush()
     if (names.length === 0) {
       return null
