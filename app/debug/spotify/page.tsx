@@ -34,14 +34,11 @@ export default function SpotifyDebugPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchServerToken()
-    }, 0)
+    fetchServerToken()
     if (typeof window !== 'undefined') {
       const testWindow = window as typeof window & { __TEST_READY__?: boolean }
       testWindow.__TEST_READY__ = true
     }
-    return () => clearTimeout(timer)
   }, [])
 
   return (

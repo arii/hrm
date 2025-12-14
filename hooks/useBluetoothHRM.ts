@@ -34,26 +34,24 @@ const getCookie = (name: string): string => {
 }
 
 /**
- * Helper to race a promise against a timeout
+ * Helper to race a promise against a timeout using async/await and Promise.race.
+ * This is a more modern and robust implementation than manual timer management with .then().
  */
-const withTimeout = <T>(
+const withTimeout = async <T>(
   promise: Promise<T>,
   ms: number,
   msg: string
 ): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(msg)), ms)
-    promise.then(
-      (res) => {
-        clearTimeout(timer)
-        resolve(res)
-      },
-      (err) => {
-        clearTimeout(timer)
-        reject(err)
-      }
-    )
+  let timeout: NodeJS.Timeout | undefined
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(msg)), ms)
   })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 const useBluetoothHRM = () => {
@@ -66,11 +64,11 @@ const useBluetoothHRM = () => {
   )
 
   const statusRef = useRef(deviceStatus)
-  const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const watchdogTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
@@ -79,36 +77,39 @@ const useBluetoothHRM = () => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
+  // Watchdog for stale data - dead man's switch pattern
+  const stopWatchdog = useCallback(() => {
+    if (watchdogTimeoutRef.current) {
+      clearTimeout(watchdogTimeoutRef.current)
+      watchdogTimeoutRef.current = null
+    }
+  }, [])
+
+  const startWatchdog = useCallback(() => {
+    stopWatchdog() // Ensure no multiple timers
+    watchdogTimeoutRef.current = setTimeout(() => {
+      console.warn('Bluetooth data stale. Forcing reconnection...')
+      setDeviceStatus('Connection unstable. Reconnecting...')
+      if (deviceRef.current?.gatt?.connected) {
+        deviceRef.current.gatt.disconnect()
+      }
+    }, 10000) // 10-second timeout
+  }, [stopWatchdog])
+
   // Cleanup
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      stopWatchdog()
       if (deviceRef.current?.gatt?.connected)
         deviceRef.current.gatt.disconnect()
     }
-  }, [])
-
-  // Watchdog for stale data
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (
-        statusRef.current.startsWith('Connected') &&
-        lastDataTime.current > 0
-      ) {
-        if (Date.now() - lastDataTime.current > 10000) {
-          console.warn('Bluetooth data stale. Forcing reconnection...')
-          setDeviceStatus('Connection unstable. Reconnecting...')
-          if (deviceRef.current?.gatt?.connected)
-            deviceRef.current.gatt.disconnect()
-        }
-      }
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [])
+  }, [stopWatchdog])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    stopWatchdog()
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
     setDeviceStatus('Disconnected')
@@ -214,7 +215,7 @@ const useBluetoothHRM = () => {
         }
 
         await characteristic.startNotifications()
-        lastDataTime.current = Date.now()
+        startWatchdog() // Start the watchdog when notifications are enabled
 
         characteristic.addEventListener(
           'characteristicvaluechanged',
@@ -222,7 +223,7 @@ const useBluetoothHRM = () => {
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
-            lastDataTime.current = Date.now()
+            startWatchdog() // Reset the watchdog on every new HR value
 
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)

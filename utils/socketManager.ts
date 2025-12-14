@@ -15,8 +15,8 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-} from '../types/websocket.js'
-import { broadcast, initBroadcaster } from './broadcast.js'
+} from '@/types/websocket'
+import { broadcast, initBroadcaster } from '@/utils/broadcast'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -260,4 +260,9 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+/**
+ * Exports the live service instances for use in other modules (e.g., API routes).
+ * This is crucial for allowing direct, event-driven communication between different
+ * parts of the server, eliminating fragile file-based or timing-based coupling.
+ */
+export { initSocketManager, spotifyServiceInstance, tabataServiceInstance }

@@ -10,7 +10,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useEffect, useState } from 'react'
+import { memo, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
@@ -36,14 +36,6 @@ const GoogleDocViewer = ({
     : `${embedUrl}?embedded=true`
 
   const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
-
-  // Use useEffect to set a timeout fallback in case onLoad doesn't fire
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIframeLoading(false)
-    }, 3000) // Show iframe after 3 seconds regardless
-    return () => clearTimeout(timeout)
-  }, [])
 
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>

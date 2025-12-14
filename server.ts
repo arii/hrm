@@ -23,7 +23,6 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { performHealthCheck } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -58,10 +57,9 @@ const expressApp = express()
 expressApp.set('trust proxy', true)
 
 // --- Main Application Setup ---
-
-app
-  .prepare()
-  .then(async () => {
+;(async () => {
+  try {
+    await app.prepare()
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
@@ -202,31 +200,14 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    // All routes are now passed directly to the Next.js handler.
+    // The fragile, timing-based interceptor for token delivery has been removed.
+    // The logic is now correctly placed within the token-delivery API route itself.
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
-      }
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -284,8 +265,8 @@ app
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
-  })
-  .catch((err: Error) => {
-    logger.error({ err }, 'Next.js preparation failed')
+  } catch (err) {
+    logger.error({ err: err }, 'Next.js preparation failed')
     process.exit(1)
-  })
+  }
+})()

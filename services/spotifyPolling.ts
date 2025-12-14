@@ -134,10 +134,12 @@ export class SpotifyPolling {
    * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
    */
   public setRefreshToken(_token: string) {
-    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
+    logger.debug(
+      'Spotify Refresh Token signal received. Re-initializing SDK immediately.'
+    )
+    // The file persistence is awaited in server.ts before this is called,
+    // so we can re-initialize immediately without a fragile timeout.
+    this.initializeSdk()
   }
 
   // --- Polling Logic ---
@@ -342,7 +344,9 @@ export class SpotifyPolling {
     return (async () => {
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
+        // Poll immediately for a faster UI update after a command.
+        // The natural polling interval will handle subsequent state changes.
+        this.getCurrentlyPlaying()
       } catch (error) {
         this.logSpotifyCommandError(command, error)
       }

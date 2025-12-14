@@ -24,17 +24,20 @@ export default function MockPage() {
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
 
-  // Signal when page is ready for testing
+  // Signal when page is ready for testing, based on WebSocket connection
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.__TEST_READY__ = true
-        window.dispatchEvent(new CustomEvent('test-ready'))
-      }
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [])
+    if (connectionStatus === 'Connected') {
+      // Use a microtask delay to ensure the DOM has a chance to update
+      // after the connection status changes, making tests more reliable.
+      queueMicrotask(() => {
+        if (typeof window !== 'undefined') {
+          console.log('[MockPage] Test-ready signal sent.')
+          window.__TEST_READY__ = true
+          window.dispatchEvent(new CustomEvent('test-ready'))
+        }
+      })
+    }
+  }, [connectionStatus])
 
   const sendHrPacket = useCallback(
     (hr: number) => {

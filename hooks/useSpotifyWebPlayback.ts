@@ -121,9 +121,9 @@ const useSpotifyWebPlayback = () => {
       return
     }
 
-    // Check if user has active session before initializing
-    fetch(API_SPOTIFY_ACCESS_TOKEN)
-      .then((response) => {
+    const checkSessionAndInitialize = async () => {
+      try {
+        const response = await fetch(API_SPOTIFY_ACCESS_TOKEN)
         if (!response.ok) {
           console.log(
             '[Spotify Web Playback] No active session, skipping Web Playback initialization'
@@ -132,12 +132,14 @@ const useSpotifyWebPlayback = () => {
         }
         // User is logged in, proceed with initialization
         initializeSDK()
-      })
-      .catch(() => {
+      } catch (error) {
         console.log(
           '[Spotify Web Playback] Session check failed, skipping Web Playback initialization'
         )
-      })
+      }
+    }
+
+    checkSessionAndInitialize()
 
     function initializeSDK() {
       // Load the SDK script if not already loaded
@@ -216,7 +218,8 @@ const useSpotifyWebPlayback = () => {
       setPlayer(spotifyPlayer)
 
       // --- Connect the Player ---
-      spotifyPlayer.connect().then((success) => {
+      const connectPlayer = async () => {
+        const success = await spotifyPlayer.connect()
         if (success) {
           console.log(
             '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
@@ -228,7 +231,8 @@ const useSpotifyWebPlayback = () => {
             '[Spotify Web Playback] connect() returned false, but this may be a false negative'
           )
         }
-      })
+      }
+      connectPlayer()
     }
 
     // Cleanup function to disconnect the player when component unmounts
