@@ -4,6 +4,7 @@ about: Propose a change to the HRM project
 title: ''
 labels: ''
 assignees: ''
+
 ---
 
 ## Description
@@ -29,11 +30,10 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] Test B
 
 **Test Configuration**:
-
-- Firmware version:
-- Hardware:
-- Toolchain:
-- SDK:
+* Firmware version:
+* Hardware:
+* Toolchain:
+* SDK:
 
 ## Checklist:
 

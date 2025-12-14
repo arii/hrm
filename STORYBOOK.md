@@ -37,9 +37,9 @@ This project uses the Storybook Accessibility Addon (`@storybook/addon-a11y`) to
 1.  **Open a Story**: Navigate to any component story in the Storybook UI.
 2.  **Select the Accessibility Tab**: In the addons panel at the bottom of the screen, click on the "Accessibility" tab.
 3.  **Review the Results**: The panel will display a list of automated accessibility checks. It highlights:
-    - **Violations**: Issues that fail accessibility standards (e.g., WCAG). These should be fixed.
-    - **Passes**: Rules that the component correctly adheres to.
-    - **Incomplete**: Rules that could not be automatically checked and may require manual verification.
+    *   **Violations**: Issues that fail accessibility standards (e.g., WCAG). These should be fixed.
+    *   **Passes**: Rules that the component correctly adheres to.
+    *   **Incomplete**: Rules that could not be automatically checked and may require manual verification.
 
 By using this tool, you can catch common problems like incorrect color contrast, missing ARIA attributes, and improper element structures, ensuring our components are usable by as many people as possible.
 

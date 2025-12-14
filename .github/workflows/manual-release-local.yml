@@ -36,7 +36,7 @@ jobs:
           version: 8
 
       - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -47,7 +47,7 @@ jobs:
       - name: 🏗️ Build Standalone Artifact
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_BUILD_PLACEHOLDER }}
-          NEXTAUTH_URL: 'http://localhost:3000'
+          NEXTAUTH_URL: "http://localhost:3000"
         run: |
           echo "Building Next.js application..."
           pnpm run build
