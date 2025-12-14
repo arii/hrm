@@ -251,7 +251,6 @@ export default function MockPage() {
           </Box>
         </Card>
       </Container>
-      <BottomNavBar />
     </>
   )
 }

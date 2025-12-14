@@ -98,7 +98,6 @@ export default function ConnectView({
           Your browser does not support Web Bluetooth. Please use Google Chrome,
           Edge, or Bluefy (on iOS).
         </Alert>
-        <BottomNavBar />
       </Container>
     )
   }
@@ -344,7 +343,6 @@ export default function ConnectView({
           </Typography>
         </Box>
       </Container>
-      <BottomNavBar />
     </>
   )
 }
