@@ -1,7 +1,10 @@
 /** @jest-environment jsdom */
 
 import TimerControls from '@/app/client/control/components/TimerControls'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useWebSocket,
+  ConnectionStatus,
+} from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, fireEvent, render, screen } from '@testing-library/react'
@@ -51,7 +54,7 @@ describe('TimerControls', () => {
       timerData: { ...baseTimerData },
       spotifyData: { trackName: '', artist: '', isPlaying: false },
       spotifyServiceInitialized: true,
-      connectionStatus: 'Connected',
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
       sendData,
     } as unknown as UseWebSocketReturn)
 

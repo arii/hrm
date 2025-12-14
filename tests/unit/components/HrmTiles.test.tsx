@@ -1,7 +1,10 @@
 /** @jest-environment jsdom */
 
 import HrmTiles from '@/components/HrmTiles'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useWebSocket,
+  ConnectionStatus,
+} from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
 
@@ -27,7 +30,7 @@ describe('HrmTiles', () => {
   it('should render HRM data correctly for a user', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connected',
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
       activeAlerts: [],
     })
 
@@ -41,7 +44,7 @@ describe('HrmTiles', () => {
   it('should render "Signal Drop" when value is null', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: null }],
-      connectionStatus: 'Connected',
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
       activeAlerts: [],
     })
 
@@ -55,7 +58,7 @@ describe('HrmTiles', () => {
   it('should render skeleton containers when hrmData is empty', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [],
-      connectionStatus: 'Connected',
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
       activeAlerts: [],
     })
 
@@ -70,7 +73,7 @@ describe('HrmTiles', () => {
   it('should render skeleton containers when connection status is not "Connected"', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
-      connectionStatus: 'Connecting...',
+      connectionStatus: { status: 'connecting' } as ConnectionStatus,
       activeAlerts: [],
     })
 
@@ -87,7 +90,7 @@ describe('HrmTiles', () => {
         { clientId: 'user2', name: 'Ariel', value: 0 },
         { clientId: 'user3', name: 'Valid User', value: 130 },
       ],
-      connectionStatus: 'Connected',
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
       activeAlerts: [],
     })
 

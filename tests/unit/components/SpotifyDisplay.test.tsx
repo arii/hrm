@@ -7,7 +7,10 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useWebSocket,
+  ConnectionStatus,
+} from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -57,6 +60,7 @@ describe('SpotifyDisplay', () => {
     mockedUseWebSocket.mockReturnValue({
       spotifyData: { trackName: '', artist: '', isPlaying: false },
       spotifyServiceInitialized: true,
+      connectionStatus: { status: 'disconnected' } as ConnectionStatus,
     })
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isAuthenticated: false,
@@ -83,6 +87,7 @@ describe('SpotifyDisplay', () => {
         isPlaying: false,
       },
       spotifyServiceInitialized: true,
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
     })
 
     renderWithProviders(<SpotifyDisplay />)
@@ -104,6 +109,7 @@ describe('SpotifyDisplay', () => {
         isPlaying: true,
       },
       spotifyServiceInitialized: true,
+      connectionStatus: { status: 'connected' } as ConnectionStatus,
     })
 
     renderWithProviders(<SpotifyDisplay />)
