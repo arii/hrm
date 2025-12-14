@@ -231,8 +231,12 @@ const useBluetoothHRM = () => {
               value: heartRate,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-              age,
             }
+
+            if (typeof age === 'number') {
+              data.age = age
+            }
+
             sendData({
               type: 'HRM_INPUT',
               data,
