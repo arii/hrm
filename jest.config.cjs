@@ -1,4 +1,6 @@
 /** @type {import('jest').Config} */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config({ path: './.env.test' })
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',

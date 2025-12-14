@@ -2,7 +2,7 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
-
+import { env } from '../lib/env.js'
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
   try {
@@ -67,8 +67,8 @@ export class SpotifyPolling {
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
+      env.SPOTIFY_CLIENT_ID,
+      env.SPOTIFY_CLIENT_SECRET
     )
   }
 
@@ -99,10 +99,7 @@ export class SpotifyPolling {
   }
 
   private setupSdk(accessToken: AccessToken) {
-    this.sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      accessToken
-    )
+    this.sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, accessToken)
   }
 
   private async checkAndRefreshSdkToken() {
@@ -146,9 +143,7 @@ export class SpotifyPolling {
   public startPolling() {
     if (this.pollInterval) return
 
-    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
-      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
-      : 3000
+    const intervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
     // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
