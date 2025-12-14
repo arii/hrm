@@ -5,8 +5,8 @@ import FavoriteIcon from '@mui/icons-material/Favorite'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Link from 'next/link.js'
+import { usePathname } from 'next/navigation.js'
 import { useState } from 'react'
 
 export default function BottomNavBar() {

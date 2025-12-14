@@ -4,13 +4,13 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
-import { getHrZoneProps } from '@/utils/visualization'
-import ConnectHRMonitorButton from './ConnectHRMonitorButton'
-import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTile from '@/components/HrTile'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM.js'
+import { useWebSocket } from '@/context/WebSocketContext.js'
+import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants.js'
+import { getHrZoneProps } from '@/utils/visualization.js'
+import ConnectHRMonitorButton from './ConnectHRMonitorButton.jsx'
+import HRMonitorStatusIndicator from './HRMonitorStatusIndicator.jsx'
+import HrTile from '@/components/HrTile.jsx'
 
 const HrmConnectionPanel = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -30,20 +30,20 @@ const HrmConnectionPanel = () => {
 
   const filteredTiles = useMemo(() => {
     return hrmData
-      .filter((user) => {
+      .filter((user: any) => {
         const isZero = user.value === 0
         const isPlaceholderName = !!user.name && /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
-      .map((user) => {
+      .map((user: any) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
 
         const matchingAlert = activeAlerts.find(
-          (alert) =>
+          (alert: any) =>
             alert.clientId === user.clientId &&
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )

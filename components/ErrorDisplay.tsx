@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useError } from '@/context/ErrorContext'
+import { useError } from '@/context/ErrorContext.js'
 import { Alert, Snackbar, Stack } from '@mui/material'
 
 const ErrorDisplay: React.FC = () => {

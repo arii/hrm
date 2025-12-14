@@ -6,7 +6,25 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
-    "traceResolution": false
+    "traceResolution": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
   },
-  "include": ["server.ts", "services/**/*.ts", "utils/**/*.ts", "types/**/*.ts"]
+  "include": [
+    "server.ts",
+    "services/**/*.ts",
+    "utils/**/*.ts",
+    "types/**/*.ts",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "constants/**/*.ts",
+    "hooks/**/*.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx"
+  ]
 }

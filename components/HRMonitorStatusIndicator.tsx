@@ -16,7 +16,7 @@ import {
   BATTERY_LEVEL_FULL,
   BATTERY_LEVEL_HIGH,
   BATTERY_LEVEL_LOW,
-} from '@/utils/constants'
+} from '@/utils/constants.js'
 
 interface HRMonitorStatusIndicatorProps {
   deviceStatus: string

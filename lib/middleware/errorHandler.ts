@@ -1,7 +1,7 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse } from 'next/server'
-import { ApiError } from '@/lib/errors'
-import logger from '@/utils/logger'
+import { ApiError } from '@/lib/errors.js'
+import logger from '@/utils/logger.js'
 
 type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
 
@@ -18,7 +18,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
   return async (req: Request, ...args: unknown[]) => {
     try {
       return await handler(req, ...args)
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
         return NextResponse.json(
