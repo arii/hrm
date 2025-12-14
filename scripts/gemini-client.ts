@@ -367,10 +367,7 @@ function handleError(error: any) {
     labels: ['review-failed'],
   }
 
-  console.error(
-    'Error generating content:',
-    JSON.stringify(errorOutput, null, 2)
-  )
+  console.error('Error generating content:', JSON.stringify(errorOutput, null, 2))
 
   // Write the error details to the output file so the workflow can use it
   if (outputFile) {

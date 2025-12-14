@@ -22,7 +22,6 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -353,17 +352,15 @@ const TimerControls = () => {
                 justifyContent="center"
                 spacing={1}
               >
-                <Tooltip title="Decrease by 5s" arrow>
-                  <IconButton
-                    color="primary"
-                    onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
-                    aria-label="Decrease work duration"
-                    disabled={controlsDisabled}
-                    sx={stepperButtonSx}
-                  >
-                    <Remove fontSize="large" />
-                  </IconButton>
-                </Tooltip>
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => Math.max(0, prev - 5))}
+                  aria-label="Decrease work duration"
+                  disabled={controlsDisabled}
+                  sx={stepperButtonSx}
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
                 <TextField
                   type="number"
                   value={workTime}
@@ -404,17 +401,15 @@ const TimerControls = () => {
                   }}
                   aria-label="Work duration in seconds"
                 />
-                <Tooltip title="Increase by 5s" arrow>
-                  <IconButton
-                    color="primary"
-                    onClick={() => setWorkTime((prev) => prev + 5)}
-                    aria-label="Increase work duration"
-                    disabled={controlsDisabled}
-                    sx={stepperButtonSx}
-                  >
-                    <Add fontSize="large" />
-                  </IconButton>
-                </Tooltip>
+                <IconButton
+                  color="primary"
+                  onClick={() => setWorkTime((prev) => prev + 5)}
+                  aria-label="Increase work duration"
+                  disabled={controlsDisabled}
+                  sx={stepperButtonSx}
+                >
+                  <Add fontSize="large" />
+                </IconButton>
               </Stack>
             </Box>
 
@@ -435,17 +430,15 @@ const TimerControls = () => {
                 justifyContent="center"
                 spacing={1}
               >
-                <Tooltip title="Decrease by 5s" arrow>
-                  <IconButton
-                    color="primary"
-                    onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
-                    aria-label="Decrease rest duration"
-                    disabled={controlsDisabled}
-                    sx={stepperButtonSx}
-                  >
-                    <Remove fontSize="large" />
-                  </IconButton>
-                </Tooltip>
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => Math.max(0, prev - 5))}
+                  aria-label="Decrease rest duration"
+                  disabled={controlsDisabled}
+                  sx={stepperButtonSx}
+                >
+                  <Remove fontSize="large" />
+                </IconButton>
                 <TextField
                   type="number"
                   value={restTime}
@@ -485,17 +478,15 @@ const TimerControls = () => {
                   }}
                   aria-label="Rest duration in seconds"
                 />
-                <Tooltip title="Increase by 5s" arrow>
-                  <IconButton
-                    color="primary"
-                    onClick={() => setRestTime((prev) => prev + 5)}
-                    aria-label="Increase rest duration"
-                    disabled={controlsDisabled}
-                    sx={stepperButtonSx}
-                  >
-                    <Add fontSize="large" />
-                  </IconButton>
-                </Tooltip>
+                <IconButton
+                  color="primary"
+                  onClick={() => setRestTime((prev) => prev + 5)}
+                  aria-label="Increase rest duration"
+                  disabled={controlsDisabled}
+                  sx={stepperButtonSx}
+                >
+                  <Add fontSize="large" />
+                </IconButton>
               </Stack>
             </Box>
           </Stack>

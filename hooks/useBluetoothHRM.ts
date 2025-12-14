@@ -8,6 +8,7 @@ const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+const DATA_LIVENESS_TIMEOUT_MS = 10000 // Increased to 10s for better UX
 
 // ... (Keep existing parseHeartRate and cookie helpers) ...
 const parseHeartRate = (value: DataView): number => {
@@ -59,12 +60,14 @@ const withTimeout = <T>(
 const useBluetoothHRM = () => {
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
+  const [isStreaming, setIsStreaming] = useState(false)
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
 
+  const dataTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
@@ -83,6 +86,7 @@ const useBluetoothHRM = () => {
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (dataTimeoutRef.current) clearTimeout(dataTimeoutRef.current)
       if (deviceRef.current?.gatt?.connected)
         deviceRef.current.gatt.disconnect()
     }
@@ -109,8 +113,10 @@ const useBluetoothHRM = () => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+    if (dataTimeoutRef.current) clearTimeout(dataTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
+    setIsStreaming(false)
     setDeviceStatus('Disconnected')
     setSavedDevice(null)
     setBatteryLevel(null)
@@ -160,6 +166,7 @@ const useBluetoothHRM = () => {
 
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
+    setIsStreaming(false)
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
       setDeviceStatus('Signal Lost. Retrying...')
@@ -219,6 +226,13 @@ const useBluetoothHRM = () => {
         characteristic.addEventListener(
           'characteristicvaluechanged',
           (event: unknown) => {
+            setIsStreaming(true)
+            if (dataTimeoutRef.current) clearTimeout(dataTimeoutRef.current)
+            dataTimeoutRef.current = setTimeout(
+              () => setIsStreaming(false),
+              DATA_LIVENESS_TIMEOUT_MS
+            )
+
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
@@ -327,7 +341,9 @@ const useBluetoothHRM = () => {
     deviceStatus,
     batteryLevel,
     MAX_HR: MAX_HR_DEFAULT,
-    isConnected: deviceStatus.startsWith('Connected'),
+    isConnected: isStreaming, // For backward compatibility and primary UI logic
+    isStreaming,
+    isGattConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
   }
 }
