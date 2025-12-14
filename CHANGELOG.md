@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.10.0](https://github.com/arii/hrm/compare/v0.9.1...v0.10.0) (2025-12-14)
+
+
+### Features
+
+* Implement ghost state for disconnected HRM tiles ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+* Implement Global Loading State with LoadingContext ([#1507](https://github.com/arii/hrm/issues/1507)) ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+* refactor layout for Next.js 16 client/server boundaries ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+* refactor layout for Next.js 16 client/server boundaries ([4820988](https://github.com/arii/hrm/commit/48209883f27d2e3956c0fee20e63aa32f1f10c2e))
+
+
+### Bug Fixes
+
+* Address PR feedback for ghost state feature ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+* Correct TypeScript errors in theme and remove unused imports ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+* Correctly handle INITIAL_STATE in MockWebSocketProvider ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+* Resolve linting errors ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+* Run `lint --fix` to correct formatting ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+* Update LoadingIndicator test to reflect new implementation ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+* Update MockWebSocketProvider to fix build failure ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+
 ## [0.9.1](https://github.com/arii/hrm/compare/v0.9.0...v0.9.1) (2025-12-14)
 
 
