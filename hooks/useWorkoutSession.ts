@@ -22,7 +22,10 @@ const initialState: SessionState = {
   calories: 0,
 }
 
-function sessionReducer(state: SessionState, action: SessionAction): SessionState {
+function sessionReducer(
+  state: SessionState,
+  action: SessionAction
+): SessionState {
   switch (action.type) {
     case 'CONNECT':
       if (state.status === 'idle' || state.status === 'paused') {
@@ -114,7 +117,8 @@ export const useWorkoutSession = ({
           if (age > 0 && hr > 0) {
             const weightKg = 75
             const caloriesPerMinute =
-              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) / 4.184
+              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
+              4.184
             const caloriesPerSecond = caloriesPerMinute / 60
             if (caloriesPerSecond > 0) {
               session.accumulatedCalories += caloriesPerSecond
