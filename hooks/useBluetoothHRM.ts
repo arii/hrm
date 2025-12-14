@@ -286,7 +286,9 @@ const useBluetoothHRM = () => {
                 await connectToGatt(foundDevice)
                 return true
               } catch (err) {
-                logger.warn('Reconnect failed, clearing preference', { error: err })
+                logger.warn('Reconnect failed, clearing preference', {
+                  error: err,
+                })
                 setCookie('hrm_device_id', '', -1)
               }
             }

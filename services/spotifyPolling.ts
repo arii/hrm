@@ -90,7 +90,9 @@ export class SpotifyPolling {
       const sdkToken = this.tokenManager.getSdkAccessToken()
       if (sdkToken) {
         this.setupSdk(sdkToken)
-        logger.debug('Loaded existing Spotify tokens from file. Starting polling')
+        logger.debug(
+          'Loaded existing Spotify tokens from file. Starting polling'
+        )
         this.startPolling()
       }
     }
@@ -279,9 +281,7 @@ export class SpotifyPolling {
       }
 
       if (err?.status === 401) {
-        logger.warn(
-          'Spotify token expired during polling. Attempting refresh.'
-        )
+        logger.warn('Spotify token expired during polling. Attempting refresh.')
         this.checkAndRefreshSdkToken()
         return
       }
@@ -414,7 +414,10 @@ export class SpotifyPolling {
     }
   }
 
-  private async logSpotifyCommandError(command: SpotifyCommand, error: unknown) {
+  private async logSpotifyCommandError(
+    command: SpotifyCommand,
+    error: unknown
+  ) {
     const baseContext = { command, originalError: error }
 
     try {

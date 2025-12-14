@@ -182,7 +182,10 @@ const handleIncomingMessage = (
             ...updatedClientProperties,
           }
           hrmClients.set(clientId, updatedData)
-          logger.debug('HRM data updated', { clientId, clientData: updatedData })
+          logger.debug('HRM data updated', {
+            clientId,
+            clientData: updatedData,
+          })
         }
         broadcast({
           type: 'HRM_UPDATE',
