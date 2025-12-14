@@ -1,8 +1,9 @@
 /** @type {import('jest').Config} */
 const config = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   roots: ['<rootDir>/tests/unit'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: 'coverage',
@@ -33,6 +34,8 @@ const config = {
       {
         useESM: true,
         tsconfig: {
+          jsx: 'react-jsx',
+          target: 'ES2022',
           module: 'ES2022',
           moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
