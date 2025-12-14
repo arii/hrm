@@ -4,10 +4,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import React from 'react'
-
-interface ErrorInfo {
-  componentStack: string
-}
+import { ErrorInfo, ErrorReport } from '@/types/error'
 
 export class ErrorBoundary extends React.Component<
   React.PropsWithChildren<{}>,
@@ -29,7 +26,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   reportError = (error: Error, errorInfo: ErrorInfo) => {
-    const errorReport = {
+    const errorReport: ErrorReport = {
       message: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,

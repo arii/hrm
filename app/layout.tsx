@@ -50,9 +50,9 @@ export default function RootLayout({
           <ErrorProvider>
             <Providers>
               <UserSettingsProvider>
-                <ErrorBoundary>
-                  <TimerSoundProvider>{children}</TimerSoundProvider>
-                </ErrorBoundary>
+                <TimerSoundProvider>
+                  <ErrorBoundary>{children}</ErrorBoundary>
+                </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>
             <ErrorDisplay />
