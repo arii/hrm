@@ -175,7 +175,9 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={() => sendSpotifyCommand('PREVIOUS')}
-                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
+                disabled={
+                  connectionStatus.status !== 'connected' || !hasActiveDevice
+                }
                 startIcon={<SkipPrevious />}
               >
                 Previous
@@ -183,7 +185,9 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={handlePlayPause}
-                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
+                disabled={
+                  connectionStatus.status !== 'connected' || !hasActiveDevice
+                }
                 startIcon={spotifyData.isPlaying ? <Pause /> : <PlayArrow />}
               >
                 {spotifyData.isPlaying ? 'Pause' : 'Play'}
@@ -191,7 +195,9 @@ const SpotifySelectionPage = () => {
               <Button
                 variant="contained"
                 onClick={() => sendSpotifyCommand('NEXT')}
-                disabled={connectionStatus !== 'Connected' || !hasActiveDevice}
+                disabled={
+                  connectionStatus.status !== 'connected' || !hasActiveDevice
+                }
                 startIcon={<SkipNext />}
               >
                 Next

@@ -270,7 +270,7 @@ const useBluetoothHRM = () => {
         age: userAge || 0,
       }
       if (statusRef.current.startsWith('Connected')) return true
-      if (connectionStatus !== 'Connected') {
+      if (connectionStatus.status !== 'connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
         return false
       }
@@ -322,7 +322,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
+    [connectionStatus.status, savedDevice, connectToGatt, handleConnectionError]
   )
 
   return {

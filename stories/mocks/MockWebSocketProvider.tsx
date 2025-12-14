@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   WebSocketContext,
   WebSocketContextType,
+  ConnectionStatus,
 } from '@/context/WebSocketContext'
 import {
   ServerMessage,
@@ -73,7 +74,9 @@ export const MockWebSocketProvider = ({
 }: MockProviderProps) => {
   // 1. Initialize State
   const [state, setState] = useState({ ...DEFAULT_STATE, ...initialState })
-  const [connectionStatus, setConnectionStatus] = useState('Connected')
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    status: 'connected',
+  })
 
   // 2. Scenario Engine
   useEffect(() => {
@@ -124,12 +127,12 @@ export const MockWebSocketProvider = ({
   }, [])
 
   const connect = useCallback(() => {
-    setConnectionStatus('Connected')
+    setConnectionStatus({ status: 'connected' })
     action('WebSocket')('Connect called')
   }, [])
 
   const disconnect = useCallback(() => {
-    setConnectionStatus('Disconnected')
+    setConnectionStatus({ status: 'disconnected' })
     action('WebSocket')('Disconnect called')
   }, [])
 

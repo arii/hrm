@@ -67,7 +67,7 @@ export default function ConnectPage() {
         percentage: hrZoneProps.percentage,
         progressColor: hrZoneProps.progressColor,
       }}
-      connectionStatus={connectionStatus}
+      connectionStatus={connectionStatus.status}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
       onReset={resetWorkout}

@@ -64,7 +64,7 @@ const SpotifyDisplay = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus.status !== 'connected') return
       const targetDeviceId =
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
@@ -84,7 +84,7 @@ const SpotifyDisplay = () => {
       sendData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
+    [availableDevices, connectionStatus.status, selectedDeviceId, sendData]
   )
 
   useEffect(() => {
@@ -98,10 +98,10 @@ const SpotifyDisplay = () => {
   }, [debouncedVolume, sendVolumeCommand])
 
   useEffect(() => {
-    if (connectionStatus !== 'Connected') {
+    if (connectionStatus.status !== 'connected') {
       lastSentVolumeRef.current = null
     }
-  }, [connectionStatus])
+  }, [connectionStatus.status])
 
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return

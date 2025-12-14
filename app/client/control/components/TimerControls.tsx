@@ -160,7 +160,7 @@ const TimerControls = () => {
 
   const sendTimerCommand = useCallback(
     (command: 'START' | 'PAUSE' | 'STOP') => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus.status !== 'connected') return
 
       // When starting, ensure the server receives the latest configuration immediately
       if (command === 'START') {
@@ -181,17 +181,23 @@ const TimerControls = () => {
         sendSpotifyCommand('PAUSE')
       }
     },
-    [sendData, latestWork, latestRest, sendSpotifyCommand, connectionStatus]
+    [
+      sendData,
+      latestWork,
+      latestRest,
+      sendSpotifyCommand,
+      connectionStatus.status,
+    ]
   )
 
   const sendModeCommand = (mode: 'TABATA' | 'STOPWATCH') => {
-    if (connectionStatus !== 'Connected') return
+    if (connectionStatus.status !== 'connected') return
     const message: TimerModeCommandMessage = { type: 'SET_MODE', mode }
     sendData(message)
   }
 
   const controlsDisabled =
-    timerData.isRunning || connectionStatus !== 'Connected'
+    timerData.isRunning || connectionStatus.status !== 'connected'
 
   return (
     <Card
@@ -508,7 +514,7 @@ const TimerControls = () => {
               variant="contained"
               color="success"
               onClick={() => sendTimerCommand('START')}
-              disabled={connectionStatus !== 'Connected'}
+              disabled={connectionStatus.status !== 'connected'}
               sx={startButtonSx}
               startIcon={<PlayArrow fontSize="large" />}
             >
@@ -520,7 +526,7 @@ const TimerControls = () => {
               variant="contained"
               color="error"
               onClick={() => sendTimerCommand('STOP')}
-              disabled={connectionStatus !== 'Connected'}
+              disabled={connectionStatus.status !== 'connected'}
               sx={stopButtonSx}
               startIcon={<Stop fontSize="large" />}
             >

@@ -79,8 +79,8 @@ const HrmConnectionPanel = () => {
   }, [hrmData, activeAlerts])
 
   const isLoading =
-    connectionStatus === 'Connecting...' ||
-    connectionStatus === 'Reconnecting...'
+    connectionStatus.status === 'connecting' ||
+    connectionStatus.status === 'reconnecting'
 
   // If no tiles are available, show connection UI and skeletons
   // Note: This UI currently assumes a single, primary HRM connection.

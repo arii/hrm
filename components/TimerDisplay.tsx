@@ -109,7 +109,7 @@ const TimerDisplay = ({
           sx={{ color: '#fff' }}
           data-testid="ws-status-indicator"
         >
-          {connectionStatus}
+          {connectionStatus.status}
         </Typography>
         <Box
           sx={{
@@ -117,13 +117,15 @@ const TimerDisplay = ({
             height: 12,
             borderRadius: '50%',
             backgroundColor:
-              connectionStatus === 'Connected'
+              connectionStatus.status === 'connected'
                 ? '#10B981'
-                : connectionStatus === 'Reconnecting...'
+                : connectionStatus.status === 'reconnecting'
                   ? '#F59E0B'
                   : '#EF4444',
             animation:
-              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
+              connectionStatus.status === 'connected'
+                ? 'pulse 2s infinite'
+                : 'none',
           }}
         />
       </Box>

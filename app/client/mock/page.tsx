@@ -53,7 +53,7 @@ export default function MockPage() {
   )
 
   const startStreaming = () => {
-    if (isStreaming || connectionStatus !== 'Connected') return
+    if (isStreaming || connectionStatus.status !== 'connected') return
     sendHrPacket(hrValue)
     const id = setInterval(() => {
       const fluctuatedHr = Math.max(
@@ -219,7 +219,7 @@ export default function MockPage() {
             size="large"
             color={isStreaming ? 'error' : 'primary'}
             onClick={isStreaming ? stopStreaming : startStreaming}
-            disabled={connectionStatus !== 'Connected'}
+            disabled={connectionStatus.status !== 'connected'}
             startIcon={<HeartBroken />}
             fullWidth
             sx={{ mb: 3 }}
@@ -237,17 +237,17 @@ export default function MockPage() {
               p: 2,
               borderRadius: 1,
               backgroundColor:
-                connectionStatus === 'Connected'
+                connectionStatus.status === 'connected'
                   ? 'success.light'
                   : 'error.light',
               color:
-                connectionStatus === 'Connected'
+                connectionStatus.status === 'connected'
                   ? 'success.contrastText'
                   : 'error.contrastText',
             }}
           >
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Server Status: {connectionStatus}
+              Server Status: {connectionStatus.status}
             </Typography>
           </Box>
         </Card>

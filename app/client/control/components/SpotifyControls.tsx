@@ -44,13 +44,13 @@ const SpotifyControls = () => {
 
   // 3. Request devices on mount or connection
   useEffect(() => {
-    if (connectionStatus === 'Connected') {
+    if (connectionStatus.status === 'connected') {
       sendData({
         type: 'SPOTIFY_COMMAND',
         command: 'GET_DEVICES',
       })
     }
-  }, [connectionStatus, sendData])
+  }, [connectionStatus.status, sendData])
 
   // 4. Update selection logic and volume sync
   useEffect(() => {
@@ -133,7 +133,7 @@ const SpotifyControls = () => {
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
-      if (connectionStatus !== 'Connected') return
+      if (connectionStatus.status !== 'connected') return
       const targetDeviceId = resolveTargetDeviceId()
 
       // Prevent sending volume command if no device is targeted
@@ -151,14 +151,14 @@ const SpotifyControls = () => {
       sendData(message)
       lastSentVolumeRef.current = messageKey
     },
-    [connectionStatus, resolveTargetDeviceId, sendData]
+    [connectionStatus.status, resolveTargetDeviceId, sendData]
   )
 
   useEffect(() => {
-    if (connectionStatus !== 'Connected') {
+    if (connectionStatus.status !== 'connected') {
       lastSentVolumeRef.current = null
     }
-  }, [connectionStatus])
+  }, [connectionStatus.status])
 
   useEffect(() => {
     sendVolumeCommand(volume)
@@ -205,7 +205,7 @@ const SpotifyControls = () => {
             <PlaybackControls
               isPlaying={spotifyData.isPlaying}
               onCommand={handlePlaybackCommand}
-              disabled={connectionStatus !== 'Connected'}
+              disabled={connectionStatus.status !== 'connected'}
             />
 
             <Stack direction="row" spacing={1} alignItems="center">
@@ -258,7 +258,7 @@ const SpotifyControls = () => {
                         sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
                       }
                     }}
-                    disabled={connectionStatus !== 'Connected'}
+                    disabled={connectionStatus.status !== 'connected'}
                     sx={{
                       color: 'white',
                       '& .MuiOutlinedInput-notchedOutline': {

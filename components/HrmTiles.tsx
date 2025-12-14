@@ -52,8 +52,8 @@ const HrmTiles = () => {
   }, [hrmData, activeAlerts])
 
   const isLoading =
-    connectionStatus === 'Connecting...' ||
-    connectionStatus === 'Reconnecting...'
+    connectionStatus.status === 'connecting' ||
+    connectionStatus.status === 'reconnecting'
 
   if (isLoading || filteredTiles.length === 0) {
     return (
