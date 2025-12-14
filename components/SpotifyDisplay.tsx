@@ -16,6 +16,7 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import logger from '../utils/logger' // Import the logger
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './PlaybackControls/VolumeSlider'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -31,7 +32,7 @@ const SpotifyDisplay = () => {
 
   // Debug: Log session status changes
   useEffect(() => {
-    console.log('[SpotifyDisplay] Session status changed:', {
+    logger.debug('SpotifyDisplay session status changed', {
       status,
       hasSession: !!session,
       hasAccessToken: !!session?.accessToken,
@@ -106,7 +107,7 @@ const SpotifyDisplay = () => {
     player
       .setVolume(scalar)
       .catch((err) =>
-        console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
+        logger.warn('Failed to adjust local Spotify volume', { error: err })
       )
   }, [player, volume, muted])
 
@@ -122,7 +123,7 @@ const SpotifyDisplay = () => {
           const deviceArray = Array.isArray(devices) ? devices : []
           setAvailableDevices(deviceArray)
         } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
+          logger.error('Failed to fetch Spotify devices', { error })
         }
       }
       fetchDevices()
