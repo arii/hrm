@@ -3,6 +3,11 @@ import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
+// The AccessToken type from the SDK is missing the 'scope' property.
+interface SpotifyAccessToken extends AccessToken {
+  scope: string
+}
+
 /**
  * Helper for atomic writes to prevent file corruption.
  * Writes to a temporary file and then atomically renames it to the final destination.
@@ -42,7 +47,7 @@ export class SpotifyTokenManager {
   /**
    * Directly set the access token (for command injection/testing).
    */
-  public async setTokens(token: AccessToken) {
+  public async setTokens(token: SpotifyAccessToken) {
     const newRecord: TokenRecord = {
       receivedAt: Date.now(),
       payload: {
@@ -51,7 +56,7 @@ export class SpotifyTokenManager {
         access_token: token.access_token,
         refresh_token: token.refresh_token,
         expires_in: token.expires_in,
-        scope: (token as any).scope,
+        scope: token.scope,
         obtainedAt: Date.now(),
       },
     }

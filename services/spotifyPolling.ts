@@ -139,7 +139,7 @@ export class SpotifyPolling {
    */
   public async setRefreshToken(token: AccessToken) {
     logger.debug('New Spotify Refresh Token received. Reloading SDK.')
-    await this.tokenManager.setTokens(token)
+    await this.tokenManager.setTokens(token as SpotifyAccessToken)
     await this.initializeSdk()
   }
 
