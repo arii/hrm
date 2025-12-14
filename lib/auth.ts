@@ -119,6 +119,17 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
+// --- CRITICAL SECURITY CHECK ---
+// Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
+// This prevents runtime errors and insecure defaults.
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
+
+if (!NEXTAUTH_SECRET) {
+  throw new Error(
+    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
+  )
+}
+
 /**
  * Configuration options for NextAuth.js.
  *
@@ -337,6 +348,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret:
-    process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
+  secret: NEXTAUTH_SECRET,
 }
