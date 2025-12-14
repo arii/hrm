@@ -24,3 +24,31 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
+
+## Pre-commit Quality Checks
+
+### Automatic Checks
+
+- ESLint fixes and validation
+- Prettier code formatting
+- Package lockfile synchronization
+- Git commit message validation (via commitlint)
+
+### Manual Fix Commands
+
+```bash
+# Fix lockfile sync issues
+npm run lockfile:fix
+
+# Fix all formatting issues
+npm run format
+
+# Fix linting issues
+npm run lint:fix
+```
+
+### Common Issues
+
+- **Lockfile out of sync**: Run `pnpm install` and stage `pnpm-lock.yaml`
+- **Formatting errors**: Run `npm run format` before commit
+- **Linting errors**: Run `npm run lint:fix` before commit
