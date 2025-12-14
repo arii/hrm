@@ -47,6 +47,7 @@ jobs:
           fi
           # Get existing review comments from this bot (user 'arii')
           COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '[.comments[] | select(.author.login == "arii") | .body] | .[]')
+          COMMENT_COUNT=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '[.comments[] | select(.author.login == "arii")] | length')
           if [ -n "$COMMENTS" ]; then
              echo "Found existing comments."
              # Format for prompt by joining with a separator
@@ -58,6 +59,7 @@ jobs:
              echo "No existing comments from bot found."
              echo "EXISTING_COMMENTS=" >> $GITHUB_ENV
           fi
+          echo "COMMENT_COUNT=$COMMENT_COUNT" >> $GITHUB_ENV
 
           # Get PR Labels
           PR_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '[.labels[].name] | join(",")')
