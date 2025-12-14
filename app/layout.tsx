@@ -3,7 +3,6 @@ import { Inter, Roboto_Mono } from 'next/font/google'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
-import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
@@ -51,7 +50,7 @@ export default function RootLayout({
           <ErrorProvider>
             <Providers>
               <UserSettingsProvider>
-                <ErrorBoundary fallback={<ErrorFallback />}>
+                <ErrorBoundary>
                   <TimerSoundProvider>{children}</TimerSoundProvider>
                 </ErrorBoundary>
               </UserSettingsProvider>

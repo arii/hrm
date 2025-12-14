@@ -10,7 +10,6 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
@@ -96,7 +95,7 @@ const Dashboard = () => {
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
         >
-          <ErrorBoundary fallback={<ErrorFallback />}>
+          <ErrorBoundary>
             <HrmConnectionPanel />
           </ErrorBoundary>
         </Box>
@@ -116,7 +115,7 @@ const Dashboard = () => {
         </Box>
       </Box>
 
-      <ErrorBoundary fallback={<ErrorFallback />}>
+      <ErrorBoundary>
         <SpotifyDisplay />
       </ErrorBoundary>
     </Container>
