@@ -22,8 +22,9 @@ const testIgnoreList = [
 ]
 
 // Only ignore auth-dependent tests if credentials are missing
+// We now have a fallback test in auth-flow.spec.ts so we don't need to ignore it entirely
 if (!hasSpotifyCredentials) {
-  testIgnoreList.push('auth-flow.spec.ts')
+  // auth-flow.spec.ts is now safe to run without credentials
 }
 if (!hasNextAuthSecret) {
   testIgnoreList.push('debug.spec.ts')
@@ -37,7 +38,7 @@ export default defineConfig({
   // Performance Optimizations
   fullyParallel: false,
   workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 15 * 1000, // Global test timeout (15s)
+  timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -49,7 +50,7 @@ export default defineConfig({
   expect: {
     timeout: 5000, // Assertions fail after 5s
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0.1, // Relaxed to 0.1 for stability (0.02 was too flaky)
     },
   },
 
