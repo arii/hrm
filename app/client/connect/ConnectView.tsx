@@ -28,12 +28,14 @@ interface ConnectViewProps {
   batteryLevel: number | null
   onConnect: () => void
   onDisconnect: () => void
-  onForgetDevice: () => Promise<void> // Added this
-  isSupported: boolean // Added this
+  onForgetDevice: () => Promise<void>
+  isSupported: boolean
   currentHR: number
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
   bluetoothConnected: boolean
+  hasStarted: boolean
+  onReset: () => void
 }
 
 export default function ConnectView({
@@ -54,6 +56,8 @@ export default function ConnectView({
   hrZoneProps,
   connectionStatus,
   bluetoothConnected,
+  hasStarted,
+  onReset,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -64,11 +68,11 @@ export default function ConnectView({
     return <BatteryAlertIcon color="error" />
   }
 
-  // New: Combined Reset Handler
   const handleFullReset = async () => {
     setIsResetting(true)
     try {
-      await onForgetDevice() // 1. Forget Bluetooth
+      await onForgetDevice()
+      onReset()
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
@@ -76,7 +80,6 @@ export default function ConnectView({
     }
   }
 
-  // New: Browser Support Check
   if (!isSupported) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: 'center' }}>
@@ -95,6 +98,8 @@ export default function ConnectView({
     )
   }
 
+  const showUserDetails = hasStarted || isConnected
+
   return (
     <>
       <Container maxWidth="sm" sx={{ py: 3, pb: 10 }}>
@@ -102,7 +107,7 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
-        {!isConnected ? (
+        {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
             <TextField
               fullWidth
@@ -144,7 +149,6 @@ export default function ConnectView({
           </Box>
         )}
 
-        {/* Enhanced Status Messages */}
         {deviceStatus &&
           !isConnected &&
           !deviceStatus.includes('Disconnected') && (
@@ -224,6 +228,12 @@ export default function ConnectView({
           </Alert>
         )}
 
+        {hasStarted && !isConnected && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Device Disconnected - Workout Paused
+          </Alert>
+        )}
+
         {isConnected && currentHR > 0 && (
           <Box sx={{ mt: 2 }}>
             <HrTile
@@ -235,7 +245,7 @@ export default function ConnectView({
           </Box>
         )}
 
-        {isConnected && duration && (
+        {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
         )}
 
@@ -248,7 +258,6 @@ export default function ConnectView({
           WebSocket: {connectionStatus}
         </Typography>
 
-        {/* Updated Reset Section */}
         <Box
           sx={{
             textAlign: 'center',
@@ -261,7 +270,7 @@ export default function ConnectView({
             variant="contained"
             color="error"
             onClick={handleFullReset}
-            disabled={isResetting}
+            disabled={isResetting || !hasStarted}
           >
             {isResetting ? 'Resetting...' : 'Reset System & Device'}
           </Button>
