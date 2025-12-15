@@ -124,7 +124,8 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
-      expect(paused.currentPhase).toBe('IDLE')
+      // CORRECT BEHAVIOR: A paused stopwatch is still in the 'RUNNING' phase conceptually.
+      expect(paused.currentPhase).toBe('RUNNING')
       expect(paused.timeElapsed).toBe(1)
 
       jest.advanceTimersByTime(5000) // Time should not advance while paused
@@ -147,15 +148,13 @@ describe('TabataTimer Service', () => {
       expect(paused.timeElapsed).toBe(5) // Should still be 5
       expect(paused.isRunning).toBe(false)
 
-      // When resuming, it will go through PREPARE again
+      // CORRECT BEHAVIOR: Resuming does not require another PREPARE phase.
       timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(3000) // RUNNING
+      jest.advanceTimersByTime(3000) // Resume RUNNING
 
       const resumed = timer.getState()
       expect(resumed.currentPhase).toBe('RUNNING')
-      // Time should continue counting (might be 3s or more depending on implementation)
-      expect(resumed.timeElapsed).toBeGreaterThanOrEqual(2)
+      expect(resumed.timeElapsed).toBe(8) // 5s (before pause) + 3s (after resume)
     })
 
     it('should reset to zero when stopped', () => {

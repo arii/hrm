@@ -245,4 +245,9 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+export {
+  initSocketManager,
+  // Export service instances for direct access from other modules (e.g., API routes)
+  tabataServiceInstance,
+  spotifyServiceInstance,
+}

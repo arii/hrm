@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import logger from '../utils/logger.js'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -47,7 +48,7 @@ export class SpotifyTokenManager {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token updated via setAccessToken.')
+      logger.info('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
       this.currentToken = {
@@ -63,7 +64,7 @@ export class SpotifyTokenManager {
         },
       }
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token created via setAccessToken.')
+      logger.info('Access token created via setAccessToken.')
     }
   }
   private tokenFile: string
@@ -84,10 +85,13 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        logger.info(
+          { user: this.currentToken.payload.sub },
+          'Loaded Spotify tokens'
+        )
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      logger.warn({ err }, 'Failed to load Spotify tokens')
     }
   }
 
@@ -117,11 +121,9 @@ export class SpotifyTokenManager {
       }
 
       const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
+      logger.info(
+        { status: response.status, body: data },
+        'Spotify token refresh successful'
       )
 
       // Update current token with new values
@@ -140,10 +142,13 @@ export class SpotifyTokenManager {
       // Save updated token
       writeTokenFileSafe(this.tokenFile, this.currentToken)
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      logger.info(
+        { user: this.currentToken.payload.sub },
+        'Refreshed Spotify token'
+      )
       return true
     } catch (err) {
-      console.error('Failed to refresh Spotify token:', err)
+      logger.error({ err }, 'Failed to refresh Spotify token')
       return false
     }
   }
@@ -159,20 +164,21 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
-      )
+      logger.info('Spotify access token is expiring soon, initiating refresh.')
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
+            logger.info('Spotify access token refresh completed.')
           })
           .catch((error) => {
             this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
+            logger.error(
+              { err: error },
+              'Spotify access token refresh failed'
+            )
           })
       }
       await this.refreshPromise
@@ -200,5 +206,43 @@ export class SpotifyTokenManager {
         this.currentToken.payload.obtainedAt +
         this.currentToken.payload.expires_in * 1000,
     }
+  }
+
+  /**
+   * Persists new tokens received from the authentication flow.
+   * This is called by the SpotifyPolling service after a token is delivered via the API.
+   * @param payload The token data from the auth provider.
+   */
+  public persistNewTokens(payload: {
+    access_token: string
+    refresh_token: string
+    expires_at: number // Unix timestamp in seconds
+    sub?: string
+    provider?: string
+    scope?: string
+  }) {
+    const obtainedAt = Date.now()
+    // Convert expires_at (absolute timestamp) to expires_in (relative duration in seconds)
+    const expiresIn = Math.round((payload.expires_at * 1000 - obtainedAt) / 1000)
+
+    const newRecord: TokenRecord = {
+      receivedAt: obtainedAt,
+      payload: {
+        access_token: payload.access_token,
+        refresh_token: payload.refresh_token,
+        expires_in: expiresIn,
+        obtainedAt: obtainedAt,
+        provider: payload.provider || 'spotify',
+        sub: payload.sub || 'unknown-user',
+        scope: payload.scope || '',
+      },
+    }
+
+    this.currentToken = newRecord
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
+    logger.info(
+      { user: this.currentToken.payload.sub },
+      'Persisted new Spotify tokens'
+    )
   }
 }

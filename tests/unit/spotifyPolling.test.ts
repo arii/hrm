@@ -28,6 +28,8 @@ jest.mock('../../services/spotifyTokenManager', () => {
         token_type: 'Bearer',
         expires_in: 3600,
       }),
+      // Add mock for the new method to satisfy the test spy
+      persistNewTokens: jest.fn().mockResolvedValue(undefined),
     }
   })
   return {
@@ -250,17 +252,29 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
-    it('should accept refresh token', async () => {
-      const refreshToken = 'test_refresh_token'
-      // Mock the initializeSdk to resolve immediately
-      const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
+    it('should process new tokens and force a poll', async () => {
+      const tokenPayload = {
+        access_token: 'new_access_token',
+        refresh_token: 'new_refresh_token',
+        expires_at: Date.now() / 1000 + 3600,
+      }
+
+      // Spy on the methods that should be called
+      const persistSpy = jest
+        .spyOn(spotifyService['tokenManager'], 'persistNewTokens')
         .mockResolvedValue(undefined)
-      spotifyService.setRefreshToken(refreshToken)
-      // Advance timers to allow setTimeout to run
-      jest.advanceTimersByTime(1000)
-      expect(initializeSdkSpy).toHaveBeenCalled()
-      initializeSdkSpy.mockRestore()
+      const initSpy = jest
+        .spyOn(spotifyService as any, 'initializeSdk')
+        .mockResolvedValue(undefined)
+      const pollSpy = jest
+        .spyOn(spotifyService, 'forcePollAndBroadcast')
+        .mockResolvedValue(undefined)
+
+      await spotifyService.processNewTokens(tokenPayload)
+
+      expect(persistSpy).toHaveBeenCalledWith(tokenPayload)
+      expect(initSpy).toHaveBeenCalled()
+      expect(pollSpy).toHaveBeenCalled()
     })
 
     it('should not execute commands without access token', async () => {
