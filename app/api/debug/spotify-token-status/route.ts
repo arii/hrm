@@ -5,6 +5,9 @@ import { env } from '@/lib/env'
 
 export async function GET() {
   try {
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error('Spotify client ID or secret is not defined.')
+    }
     const tokenManager = new SpotifyTokenManager(
       env.SPOTIFY_CLIENT_ID,
       env.SPOTIFY_CLIENT_SECRET
