@@ -35,6 +35,17 @@ jest.mock('../../utils/broadcast', () => ({
   broadcast: jest.fn(),
 }))
 
+// Mock logger globally for the test file
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+}))
+
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
@@ -207,17 +218,6 @@ describe('WebSocket Manager', () => {
     })
 
     it('should accumulate calories correctly with small frequent updates', () => {
-      // Manual mock for logger since it's used in initSocketManager
-      jest.mock('../../utils/logger', () => ({
-        __esModule: true,
-        default: {
-          info: jest.fn(),
-          warn: jest.fn(),
-          error: jest.fn(),
-          debug: jest.fn(),
-        },
-      }))
-
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
