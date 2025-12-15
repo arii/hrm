@@ -32,6 +32,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
+  calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
@@ -43,7 +44,7 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, % Max HR: ${percentMax}%`
+      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -113,18 +114,38 @@ const HrTile = ({
             >
               {percentMax}%
             </Typography>
-            <Typography
-              data-testid="live-hr-value"
-              variant="h6"
+            <Box
               sx={{
-                fontWeight: 600,
-                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
-                transition:
-                  'font-size 0.3s ease-in-out, color 0.3s ease-in-out',
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                mt: 1,
               }}
             >
-              {bpm} BPM
-            </Typography>
+              {/* BPM Display */}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {bpm}{' '}
+                <Typography
+                  variant="caption"
+                  component="span"
+                  sx={{ opacity: 0.8 }}
+                >
+                  BPM
+                </Typography>
+              </Typography>
+
+              {/* Calorie Display */}
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {Math.floor(calories)}{' '}
+                <Typography
+                  variant="caption"
+                  component="span"
+                  sx={{ opacity: 0.8 }}
+                >
+                  KCAL
+                </Typography>
+              </Typography>
+            </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
                 variant="subtitle1"
@@ -154,6 +175,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
+    prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage

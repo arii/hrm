@@ -12,6 +12,7 @@ export interface HrmData {
   maxHr: number
   name?: string
   age?: number
+  calories: number // Added field
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
