@@ -412,7 +412,10 @@ describe('SpotifyPolling Service', () => {
         sdk: null, // Ensure SDK is null
       })
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create(
+        broadcastMock,
+        mockTokenManager
+      )
       await newService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
