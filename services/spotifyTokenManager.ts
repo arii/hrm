@@ -1,5 +1,5 @@
 // File: services/spotifyTokenManager.ts
-import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { AccessToken } from '@spotify/web--api-ts-sdk'
 import { prisma } from '../lib/prisma'
 import logger from '../utils/logger'
 

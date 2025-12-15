@@ -77,9 +77,7 @@ const SpotifyControls = () => {
         setVolume(activeDevice.volume_percent)
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices, selectedDeviceId, setVolume, volume]) // Rely on devices update to trigger sync
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {

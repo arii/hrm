@@ -5,7 +5,6 @@ import { PrismaClient } from '@prisma/client'
 // This is done to ensure that the Prisma client is only instantiated once
 // across the entire application, preventing connection pool exhaustion.
 declare global {
-  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined
 }
 

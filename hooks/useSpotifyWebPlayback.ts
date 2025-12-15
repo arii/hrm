@@ -238,9 +238,7 @@ const useSpotifyWebPlayback = () => {
         player.disconnect()
       }
     }
-    // We intentionally include player and isReady to control re-initialization
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getOAuthToken])
+  }, [getOAuthToken, player, isReady])
 
   return { player, isReady, deviceId, isAuthenticated }
 }
