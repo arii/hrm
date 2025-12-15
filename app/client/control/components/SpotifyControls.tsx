@@ -2,31 +2,49 @@
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
+import DevicesIcon from '@mui/icons-material/Devices'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import FormControl from '@mui/material/FormControl'
-import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
+import Popover from '@mui/material/Popover'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
+import SpotifyDevicePicker from '@/components/Spotify/SpotifyDevicePicker'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
+  const {
+    devices,
+    isLoading: devicesLoading,
+    error: devicesError,
+    transferPlayback,
+  } = useSpotifyDevices()
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
+
+  const handleDevicePickerClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleDevicePickerClose = () => {
+    setAnchorEl(null)
+  }
+
+  const open = Boolean(anchorEl)
+  const id = open ? 'device-picker-popover' : undefined
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection')
@@ -37,76 +55,10 @@ const SpotifyControls = () => {
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-  // 3. Request devices on mount or connection
-  useEffect(() => {
-    if (connectionStatus === 'Connected') {
-      sendData({
-        type: 'SPOTIFY_COMMAND',
-        command: 'GET_DEVICES',
-      })
-    }
-  }, [connectionStatus, sendData])
-
-  // 4. Update selection logic and volume sync
-  useEffect(() => {
-    const activeDevice = devices.find((d) => d.is_active)
-    const activeId = activeDevice?.id
-
-    // Sync Selected Device
-    if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
-      // Active device changed externally, update selection
-      setSelectedDeviceId(activeId)
-    } else {
-      // Check if selected device is still valid
-      const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
-      if (selectedDeviceId && !selectedStillExists) {
-        setSelectedDeviceId(activeId ?? '')
-      }
-      if (!selectedDeviceId && activeId) {
-        setSelectedDeviceId(activeId)
-      }
-    }
-    prevActiveIdRef.current = activeId
-
-    // Sync Volume (if not dragging)
-    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
-      if (activeDevice.volume_percent !== volume) {
-        setVolume(activeDevice.volume_percent)
-      }
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
-
   const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
     const activeDevice = devices.find((device) => device.is_active)
     return activeDevice?.id
-  }, [devices, selectedDeviceId])
-
-  const sendSpotifyCommand = useCallback(
-    (
-      command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
-      overriddenDeviceId?: string
-    ) => {
-      const targetDeviceId =
-        overriddenDeviceId !== undefined
-          ? overriddenDeviceId
-          : resolveTargetDeviceId()
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
-      }
-      sendData(message)
-    },
-    [resolveTargetDeviceId, sendData]
-  )
+  }, [devices])
 
   const handlePlaybackCommand = useCallback(
     (command: SpotifyCommand) => {
@@ -116,20 +68,23 @@ const SpotifyControls = () => {
         command === 'NEXT' ||
         command === 'PREVIOUS'
       ) {
-        sendSpotifyCommand(command)
+        const targetDeviceId = resolveTargetDeviceId()
+        const message: SpotifyCommandMessage = {
+          type: 'SPOTIFY_COMMAND',
+          command,
+          ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        }
+        sendData(message)
       }
     },
-    [sendSpotifyCommand]
+    [resolveTargetDeviceId, sendData]
   )
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
-
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
-
       const sanitized = clampVolume(value)
       const messageKey = `${targetDeviceId}:${sanitized}`
       if (lastSentVolumeRef.current === messageKey) return
@@ -137,7 +92,7 @@ const SpotifyControls = () => {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
         volume: sanitized,
-        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+        deviceId: targetDeviceId,
       }
       sendData(message)
       lastSentVolumeRef.current = messageKey
@@ -154,24 +109,19 @@ const SpotifyControls = () => {
   }, [connectionStatus])
 
   useEffect(() => {
-    // Clear any existing timer
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
-    }
-
-    // Set a new timer to send the volume command after 300ms
+    if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current)
     debounceTimeoutRef.current = setTimeout(() => {
       sendVolumeCommand(volume)
     }, 300)
-
-    // Cleanup function to clear the timeout if the component unmounts
-    // or if the volume changes again before the timeout has passed
     return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current)
     }
   }, [volume, sendVolumeCommand])
+
+  const handleSelectDevice = (deviceId: string) => {
+    transferPlayback(deviceId)
+    handleDevicePickerClose()
+  }
 
   return (
     <Card
@@ -224,50 +174,51 @@ const SpotifyControls = () => {
               onToggleMute={toggleMute}
             />
 
-            {devices.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
-                  Device
-                </Typography>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={selectedDeviceId}
-                    onChange={(e) => {
-                      const deviceId = e.target.value
-                      setSelectedDeviceId(deviceId)
-                      if (deviceId) {
-                        sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
-                      }
-                    }}
-                    disabled={connectionStatus !== 'Connected'}
-                    sx={{
-                      color: 'white',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'grey.600',
-                      },
-                      '& .MuiSvgIcon-root': {
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    {devices.map((device) => (
-                      <MenuItem key={device.id} value={device.id}>
-                        {device.name} {device.is_active && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            )}
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<LibraryMusic />}
-              onClick={handleBrowseClick}
-              sx={{ mt: 2, borderColor: 'grey.600', color: 'grey.300' }}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<LibraryMusic />}
+                onClick={handleBrowseClick}
+                sx={{ borderColor: 'grey.600', color: 'grey.300' }}
+              >
+                Playlist
+              </Button>
+              <Button
+                aria-describedby={id}
+                variant="outlined"
+                size="small"
+                startIcon={<DevicesIcon />}
+                onClick={handleDevicePickerClick}
+                sx={{ borderColor: 'grey.600', color: 'grey.300' }}
+              >
+                Devices
+              </Button>
+            </Box>
+
+            <Popover
+              id={id}
+              open={open}
+              anchorEl={anchorEl}
+              onClose={handleDevicePickerClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'center',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
             >
-              Select Playlist
-            </Button>
+              <Box sx={{ p: 2, background: 'rgba(40, 51, 69, 0.9)' }}>
+                <SpotifyDevicePicker
+                  devices={devices}
+                  onSelectDevice={handleSelectDevice}
+                  isLoading={devicesLoading}
+                  error={devicesError}
+                />
+              </Box>
+            </Popover>
           </>
         ) : (
           <Button onClick={handleBrowseClick}>Select Music</Button>

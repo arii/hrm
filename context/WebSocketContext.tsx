@@ -165,6 +165,11 @@ export const WebSocketProvider = ({
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
+  // Expose dispatch for testing purposes
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    ;(window as any).__dispatch = dispatch
+  }
+
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {
       dispatch(message)

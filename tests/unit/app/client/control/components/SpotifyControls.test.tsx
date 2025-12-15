@@ -21,6 +21,16 @@ jest.mock('@/context/WebSocketContext', () => ({
 
 // Mock the volume preference hook
 jest.mock('@/hooks/useVolumePreference')
+jest.mock('@/hooks/useSpotifyDevices', () => ({
+  useSpotifyDevices: () => ({
+    devices: [
+      { id: '1', name: 'Device 1', is_active: true, volume_percent: 50 },
+    ],
+    isLoading: false,
+    error: null,
+    transferPlayback: jest.fn(),
+  }),
+}))
 
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
@@ -34,9 +44,6 @@ describe('components/SpotifyControls', () => {
         trackName: 'Test Track',
         artist: 'Test Artist',
         isPlaying: true,
-        devices: [
-          { id: '1', name: 'Device 1', is_active: true, volume_percent: 50 },
-        ],
       },
       sendData: mockSendData,
     })
@@ -57,14 +64,6 @@ describe('components/SpotifyControls', () => {
     expect(screen.getByText('Test Track')).toBeInTheDocument()
     expect(screen.getByText('Test Artist')).toBeInTheDocument()
     expect(screen.getByLabelText('Pause')).toBeInTheDocument()
-  })
-
-  it('sends a GET_DEVICES command on mount if connected', () => {
-    render(<SpotifyControls />)
-    expect(mockSendData).toHaveBeenCalledWith({
-      type: 'SPOTIFY_COMMAND',
-      command: 'GET_DEVICES',
-    })
   })
 
   it('handles playback commands', () => {
