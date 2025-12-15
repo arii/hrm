@@ -22,12 +22,7 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 const SpotifyControls = () => {
   const router = useRouter()
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const {
-    devices,
-    isLoading: devicesLoading,
-    error: devicesError,
-    transferPlayback,
-  } = useSpotifyDevices()
+  const { devices, transferPlayback } = useSpotifyDevices()
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
 
@@ -220,8 +215,6 @@ const SpotifyControls = () => {
                 <SpotifyDevicePicker
                   devices={devices}
                   onSelectDevice={handleSelectDevice}
-                  isLoading={devicesLoading}
-                  error={devicesError}
                 />
               </Box>
             </Popover>

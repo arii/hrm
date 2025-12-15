@@ -1,70 +1,50 @@
 // hooks/useSpotifyDevices.ts
-import { useState, useEffect, useCallback } from 'react'
-import { SpotifyDevice } from '@/types'
-import { useError } from '@/context/ErrorContext'
+import { useCallback, useEffect } from 'react'
+import { useWebSocket } from '@/context/WebSocketContext'
 
+/**
+ * Custom hook to manage Spotify Connect devices via WebSocket.
+ * This hook provides functionalities to fetch devices and transfer playback.
+ * It uses the shared WebSocket connection for all communications.
+ *
+ * @returns {object} An object containing the list of devices, and functions to fetch devices and transfer playback.
+ */
 export const useSpotifyDevices = () => {
-  const [devices, setDevices] = useState<SpotifyDevice[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const { addError } = useError()
+  const { send, spotifyData, isConnected } = useWebSocket()
 
-  const fetchDevices = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const response = await fetch('/api/spotify/devices')
-      if (!response.ok) {
-        throw new Error('Failed to fetch devices')
-      }
-      const data = await response.json()
-      setDevices(data)
-    } catch (e) {
-      addError('Failed to load Spotify devices.')
-      setError(e as Error)
-    } finally {
-      setIsLoading(false)
+  // Effect to automatically fetch devices once the WebSocket is connected.
+  useEffect(() => {
+    console.log('[useSpotifyDevices] Hook mounted. isConnected:', isConnected)
+    if (isConnected) {
+      console.log('[useSpotifyDevices] Sending GET_DEVICES command.')
+      send({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
     }
-  }, [addError])
+  }, [isConnected, send])
 
+  // Function to manually request an update of Spotify devices from the server.
+  const fetchDevices = useCallback(() => {
+    if (isConnected) {
+      send({ type: 'SPOTIFY_COMMAND', command: 'GET_DEVICES' })
+    }
+  }, [isConnected, send])
+
+  // Function to transfer playback to a specific device.
   const transferPlayback = useCallback(
-    async (deviceId: string) => {
-      try {
-        const response = await fetch('/api/spotify/control', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            command: 'TRANSFER_PLAYBACK',
-            deviceId,
-          }),
+    (deviceId: string) => {
+      if (isConnected) {
+        send({
+          type: 'SPOTIFY_COMMAND',
+          command: 'TRANSFER_PLAYBACK',
+          deviceId,
         })
-
-        if (!response.ok) {
-          throw new Error('Failed to transfer playback')
-        }
-
-        // Optimistically update the active device
-        setDevices((prevDevices) =>
-          prevDevices.map((d) => ({
-            ...d,
-            is_active: d.id === deviceId,
-          }))
-        )
-
-        // Refetch devices to get the latest state from the API
-        await fetchDevices()
-      } catch (e) {
-        console.error('Failed to transfer playback', e)
-        addError('Failed to transfer Spotify playback.')
-        setError(e as Error)
       }
     },
-    [fetchDevices, addError]
+    [isConnected, send]
   )
 
-  useEffect(() => {
-    fetchDevices()
-  }, [fetchDevices])
-
-  return { devices, isLoading, error, fetchDevices, transferPlayback }
+  return {
+    devices: spotifyData?.devices || [],
+    fetchDevices,
+    transferPlayback,
+  }
 }

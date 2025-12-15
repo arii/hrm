@@ -1,90 +1,54 @@
 #!/bin/bash
 # scripts/test-with-server.sh
-# Handles starting the server, waiting for it, running tests, and cleaning up.
-# Ensures exit codes are propagated correctly.
 
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Configuration
-TIMEOUT=120000 # Increased timeout for slower CI environments
-SERVER_LOG="/tmp/hrm-server.log"
-HEALTH_CHECK_URL_TEMPLATE="http://127.0.0.1:{{PORT}}/api/debug/ping"
+# --- Configuration ---
+PORT="${PORT:-3000}"
+SERVER_URL="http://127.0.0.1:$PORT"
+WAIT_ON_URL="$SERVER_URL/api/debug/ping"
+WAIT_TIMEOUT="${WAIT_TIMEOUT:-120000}" # 120 seconds
+TEST_COMMAND="$@"
 
-# Helper for logging to stderr (so it doesn't interfere with stdout piping)
-log() {
-    echo "[test-with-server] $@" >&2
-}
-
+# --- Helper Functions ---
 cleanup() {
-    EXIT_CODE=$?
-    log "🛑 Shutting down server..."
-    pnpm pm2 kill || true
-
-    if [ $EXIT_CODE -ne 0 ]; then
-        log "❌ Failure detected (Exit Code: $EXIT_CODE)."
-        if [ -f "$SERVER_LOG" ]; then
-            log "--- Server Logs (Tail 50 lines) ---"
-            tail -n 50 "$SERVER_LOG" >&2
-            log "-----------------------------------"
-        else
-            log "No server log found at $SERVER_LOG"
-        fi
-    fi
-    exit $EXIT_CODE
+  echo "🛑 Shutting down server..."
+  pnpm exec pm2 delete all || true
+  pnpm exec pm2 kill || true
+  echo "✅ Server shut down."
 }
 
-# Trap signals for cleanup
-trap cleanup EXIT INT TERM
+# Trap EXIT signal to run cleanup function
+trap cleanup EXIT
 
-# Use pre-configured port or dynamically find an available one
-if [ -z "$PORT" ]; then
-  log "🔎 Finding an available port..."
-  PORT=$(node scripts/get-available-port.mjs)
-  if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
-      log "❌ Failed to get a valid port. Exiting."
-      exit 1
-  fi
-  log "✅ Found available port: $PORT"
-else
-  log "✅ Using pre-configured port: $PORT"
+# --- Main Script ---
+echo "[test-with-server] 🔎 Finding an available port..."
+# No need to find port, we use the one specified.
+echo "[test-with-server] ✅ Using specified port: $PORT"
+
+echo "[test-with-server] 🧹 Cleaning up any old PM2 processes..."
+pnpm exec pm2 delete all || true
+pnpm exec pm2 kill || true
+
+echo "[test-with-server] 🚀 Starting server with PM2 on port $PORT..."
+PORT=$PORT pnpm exec pm2 start ecosystem.config.cjs --env production
+echo "[test-with-server] ✅ Server process started via PM2."
+
+echo "[test-with-server] ⏳ Waiting up to ${WAIT_TIMEOUT}ms for $WAIT_ON_URL..."
+pnpm exec wait-on "$WAIT_ON_URL" --timeout "$WAIT_TIMEOUT"
+
+echo "[test-with-server] ✅ Server is ready. Executing test command: $TEST_COMMAND"
+echo "[test-with-server] ---------------------------------------------------"
+echo "[test-with-server] 🎯 Executing command: $TEST_COMMAND"
+
+# Execute the test command
+if ! $TEST_COMMAND; then
+  echo "[test-with-server] ❌ Failure detected (Exit Code: $?)."
+  echo "[test-with-server] --- Server Logs ---"
+  pnpm exec pm2 logs --nostream
+  echo "[test-with-server] -----------------------------------"
+  exit 1
 fi
 
-# Export environment variables for testing
-export PORT
-export TESTING=true
-export NEXTAUTH_SECRET="test-secret-for-ci"
-export NEXTAUTH_URL="http://127.0.0.1:$PORT"
-HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
-
-# Clean up any stale PM2 processes
-log "🧹 Cleaning up any old PM2 processes..."
-pnpm pm2 kill || true
-
-log "🚀 Starting server with PM2 on port $PORT..."
-# Start server with `pnpm start`, which uses PM2
-# The PORT variable is passed via ecosystem.config.cjs
-pnpm start > "$SERVER_LOG" 2>&1 &
-log "✅ Server process started via PM2."
-
-log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
-if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
-    log "❌ Server failed to respond within timeout."
-    exit 1
-fi
-
-log "✅ Server is ready. Executing test command: $@"
-log "---------------------------------------------------"
-
-# Execute the passed command
-log "🎯 Executing command: $*"
-"$@"
-TEST_EXIT_CODE=$?
-
-if [ $TEST_EXIT_CODE -ne 0 ]; then
-  log "⚠️ Test command failed with exit code: $TEST_EXIT_CODE"
-  log "📋 Last 20 lines of test output may be in stdout above"
-else
-  log "✅ Test command completed successfully"
-fi
-
-exit $TEST_EXIT_CODE
+echo "[test-with-server] ✅ Tests passed."

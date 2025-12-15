@@ -8,9 +8,7 @@ import SpeakerIcon from '@mui/icons-material/Speaker'
 import ComputerIcon from '@mui/icons-material/Computer'
 import SmartphoneIcon from '@mui/icons-material/Smartphone'
 import { ListItemIcon } from '@mui/material'
-import DashboardSectionLoadingSkeleton from '../DashboardSectionLoadingSkeleton'
 import { SpotifyDevice } from '@/types'
-import ErrorDisplay from '../ErrorDisplay'
 
 const DeviceIcon = ({ type }: { type: string }) => {
   switch (type?.toLowerCase()) {
@@ -28,24 +26,12 @@ const DeviceIcon = ({ type }: { type: string }) => {
 interface SpotifyDevicePickerProps {
   devices: SpotifyDevice[]
   onSelectDevice: (deviceId: string) => void
-  isLoading?: boolean
-  error?: Error | null
 }
 
 const SpotifyDevicePicker: React.FC<SpotifyDevicePickerProps> = ({
   devices,
   onSelectDevice,
-  isLoading = false,
-  error = null,
 }) => {
-  if (isLoading) {
-    return <DashboardSectionLoadingSkeleton />
-  }
-
-  if (error) {
-    return <ErrorDisplay />
-  }
-
   if (!devices || devices.length === 0) {
     return <Alert severity="info">No Spotify Connect devices found.</Alert>
   }
