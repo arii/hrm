@@ -116,6 +116,14 @@ const initSocketManager = (
   wss.on('close', () => clearInterval(interval))
 }
 
+/**
+ * Resets the socket manager state. Use this for testing purposes only.
+ */
+export const resetSocketManager = () => {
+  clientData.clear()
+  clientSessionState.clear()
+}
+
 const broadcastState = () => {
   broadcast({
     type: 'HRM_UPDATE',

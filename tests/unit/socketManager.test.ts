@@ -9,12 +9,15 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { initSocketManager } from '../../utils/socketManager'
+import {
+  initSocketManager,
+  resetSocketManager,
+} from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { StateSnapshot } from '../../types/websocket'
+import { HrmData, StateSnapshot } from '../../types/websocket'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -99,6 +102,8 @@ describe('WebSocket Manager', () => {
       jest.clearAllMocks()
       // @ts-expect-error-next-line
       mockWss.clients.clear()
+      // Reset module-level state to ensure test isolation
+      resetSocketManager()
     })
 
     it('should set lastPingTime on new connection', () => {
@@ -196,6 +201,8 @@ describe('WebSocket Manager', () => {
       jest.clearAllMocks()
       // @ts-expect-error-next-line
       mockWss.clients.clear()
+      // Reset module-level state to ensure test isolation
+      resetSocketManager()
     })
 
     it('should accumulate calories correctly with small frequent updates', () => {
@@ -240,14 +247,14 @@ describe('WebSocket Manager', () => {
       // Check the last broadcasted state
       const lastBroadcastCall =
         broadcast.mock.calls[broadcast.mock.calls.length - 1]
-      const broadcastPayload = lastBroadcastCall[0].payload
+      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
 
-      // Find the client that has updated calories (since other tests might leave stale data in module scope)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const clientData = broadcastPayload.find((c: any) => c.calories > 0)
+      // Find the client that has updated calories
+      const clientData = broadcastPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
-      expect(clientData.calories).toBeGreaterThan(1)
+      // Use non-null assertion as we've checked definition
+      expect(clientData!.calories).toBeGreaterThan(1)
     })
   })
 })
