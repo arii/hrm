@@ -1,5 +1,5 @@
-import { defineConfig } from '@playwright/test';
-import path from 'path';
+import { defineConfig } from '@playwright/test'
+import path from 'path'
 
 export default defineConfig({
   use: {
@@ -9,4 +9,4 @@ export default defineConfig({
       DOTENV_CONFIG_PATH: path.resolve(__dirname, '.env.local'),
     },
   },
-});
+})
