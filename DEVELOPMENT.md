@@ -33,7 +33,7 @@ To adjust the limits, modify the `rateLimitConfig` object in the configuration f
 
 The primary focus of ongoing development is to enhance the user experience and improve the long-term maintainability of the application. Key priorities include:
 
-- **UI/UX Polish**: Implementing the enhancements outlined in `FRONTEND_IM改善PLAN.md`, focusing on typography, color consistency, and mobile optimization.
+- **UI/UX Polish**: Implementing the enhancements outlined in `FRONTEND_IMPROVEMENT_PLAN.md`, focusing on typography, color consistency, and mobile optimization.
 - **Accessibility**: Ensuring the application is fully accessible by meeting WCAG 2.1 AA compliance, including keyboard navigation and screen reader support.
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.

@@ -55,6 +55,9 @@ const nextRequestHandler = app.getRequestHandler()
 // Create Express app for routing and middleware
 const expressApp = express()
 
+// Trust the first hop from the reverse proxy (nginx)
+expressApp.set('trust proxy', 1)
+
 // --- Main Application Setup ---
 
 app
@@ -65,18 +68,10 @@ app
     // --- Rate Limiting Setup ---
     if (process.env.RATE_LIMITING_ENABLED !== 'false') {
       logger.info('Rate limiting is enabled.')
-      // Custom key generator for robust IP identification
+      // Shared key generator for consistency
       const keyGenerator = (req: Request) => {
-        const xForwardedFor = req.headers['x-forwarded-for']
-        if (xForwardedFor) {
-          const ips = (
-            Array.isArray(xForwardedFor)
-              ? xForwardedFor
-              : xForwardedFor.split(',')
-          ).map((ip) => ip.trim())
-          return ips[ips.length - 1] || req.socket.remoteAddress || 'unknown'
-        }
-        return req.socket.remoteAddress || 'unknown'
+        // Rely on 'trust proxy' being set for accurate IP
+        return req.ip || 'unknown'
       }
 
       // Shared handler for logging rate-limited requests
