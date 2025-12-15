@@ -110,19 +110,18 @@ export const WebSocketProvider = ({
 
         // Create a new state array by merging existing and new data
         const mergedHrmData = state.hrmData.map((existingUser) => {
-          // If the user is in the new payload, update their data and mark as connected
           if (incomingClients.has(existingUser.clientId)) {
             const updatedUser = payload.find(
               (newUser) => newUser.clientId === existingUser.clientId
             )
-            // If updatedUser is found, always use its data and mark as connected.
-            // The 'value > 0' check is not relevant for determining if a *connected* device's data should be used.
             return updatedUser
-              ? { ...updatedUser, isConnected: true }
-              : { ...existingUser, isConnected: true } // Fallback, though updatedUser should always exist if incomingClients.has(clientId)
+              ? {
+                  ...existingUser,
+                  ...updatedUser,
+                  isConnected: true,
+                }
+              : { ...existingUser, isConnected: true }
           }
-          // If the user is NOT in the new payload, they have disconnected.
-          // Keep their last known data but mark as disconnected.
           return { ...existingUser, isConnected: false }
         })
 
