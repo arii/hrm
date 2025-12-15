@@ -77,3 +77,9 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
+
+declare global {
+  interface Window {
+    __dispatch: React.Dispatch<any>
+  }
+}

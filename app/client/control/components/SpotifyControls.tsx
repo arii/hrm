@@ -174,7 +174,13 @@ const SpotifyControls = () => {
               onToggleMute={toggleMute}
             />
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                mt: 2,
+              }}
+            >
               <Button
                 variant="outlined"
                 size="small"
