@@ -46,12 +46,12 @@ test.describe('Remote Capabilities & Command Relay', () => {
       )
 
     // 4. Test Interaction: Ensure timer is stopped, then start it.
-    const stopButton = page.getByTestId('stop-timer-button')
-    if (await stopButton.isVisible()) {
-      await stopButton.click()
+    const endButton = page.getByTestId('end-session-button')
+    if (await endButton.isVisible()) {
+      await endButton.click()
     }
 
-    const startButton = page.getByTestId('start-timer-button')
+    const startButton = page.getByTestId('start-session-button')
     await expect(startButton).toBeVisible() // Wait for start button to appear
     await startButton.click()
 
@@ -66,8 +66,8 @@ test.describe('Remote Capabilities & Command Relay', () => {
       )
 
     expect(failedRequests).toEqual([])
-    await expect(stopButton).toBeVisible() // Wait for start button to appear
-    await stopButton.click()
+    await expect(endButton).toBeVisible() // Wait for start button to appear
+    await endButton.click()
     // 5. Verify WebSocket Command
     await expect
       .poll(() => sentMessages)
