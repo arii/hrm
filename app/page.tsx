@@ -17,6 +17,8 @@ import TimerDisplay from '@/components/TimerDisplay'
 import { useAudio } from '@/hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSession } from 'next-auth/react'
+import { UserProfile } from '@/types'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -45,6 +47,9 @@ const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
+  const { data: session, status } = useSession()
+  const user: UserProfile | null = session?.user || null
+  const isLoadingSession = status === 'loading'
   const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
@@ -76,7 +81,7 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <UserGreetingDisplay />
+      {!isLoadingSession && <UserGreetingDisplay user={user} />}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
