@@ -59,7 +59,7 @@ const GoogleDocViewer = ({
             position: 'relative',
           }}
         >
-          {iframeLoading && (
+          {iframeLoading === true && (
             <Skeleton
               variant="rectangular"
               width="100%"
@@ -85,7 +85,7 @@ const GoogleDocViewer = ({
             onLoad={() => setIframeLoading(false)}
           />
         </Box>
-        {onToggleShrink && (
+        {onToggleShrink !== undefined && (
           <IconButton
             onClick={onToggleShrink}
             sx={{

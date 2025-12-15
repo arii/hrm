@@ -24,15 +24,15 @@ export function middleware(request: NextRequest) {
   const host = request.headers.get('host')
 
   // Determine the actual host being accessed
-  const actualHost = forwardedHost || host || ''
-  const actualProto = forwardedProto || 'https'
-  const actualPort = forwardedPort || ''
+  const actualHost = forwardedHost ?? host ?? ''
+  const actualProto = forwardedProto ?? 'https'
+  const actualPort = forwardedPort ?? ''
 
   // Reconstruct the full URL with port for NextAuth
-  if (actualHost) {
+  if (actualHost !== '') {
     // Ensure Host header includes the port if not already present and port is custom
     let hostWithPort = actualHost
-    if (actualPort && !actualHost.includes(':')) {
+    if (actualPort !== '' && !actualHost.includes(':')) {
       // Add port only if it's non-standard (444 for dev, or explicitly forwarded)
       if (actualPort !== '443') {
         hostWithPort = `${actualHost}:${actualPort}`
@@ -42,7 +42,7 @@ export function middleware(request: NextRequest) {
     response.headers.set('x-forwarded-host', hostWithPort)
     response.headers.set('x-forwarded-proto', actualProto)
 
-    if (actualPort) {
+    if (actualPort !== '') {
       response.headers.set('x-forwarded-port', actualPort)
     }
 

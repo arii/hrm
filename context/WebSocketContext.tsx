@@ -72,7 +72,7 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const wsUrl = serverUrl || getWebSocketURL()
+  const wsUrl = serverUrl ?? getWebSocketURL()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -95,7 +95,7 @@ export const WebSocketProvider = ({
       case 'INITIAL_STATE': {
         // When the initial state is loaded, ensure all HRM data is marked as connected.
         const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
+          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ??
           []
         return {
           ...state,
@@ -117,7 +117,7 @@ export const WebSocketProvider = ({
             )
             // If updatedUser is found, always use its data and mark as connected.
             // The 'value > 0' check is not relevant for determining if a *connected* device's data should be used.
-            return updatedUser
+            return updatedUser !== undefined
               ? { ...updatedUser, isConnected: true }
               : { ...existingUser, isConnected: true } // Fallback, though updatedUser should always exist if incomingClients.has(clientId)
           }
@@ -179,17 +179,17 @@ export const WebSocketProvider = ({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedActions = localStorage.getItem('pendingActions')
-      if (savedActions) {
+      if (savedActions !== null) {
         pendingActions.current = JSON.parse(savedActions)
       }
     }
   }, [])
 
   const stopHeartbeat = useCallback(() => {
-    if (heartbeatIntervalRef.current) {
+    if (heartbeatIntervalRef.current !== null) {
       clearInterval(heartbeatIntervalRef.current)
     }
-    if (pongTimeoutRef.current) {
+    if (pongTimeoutRef.current !== null) {
       clearTimeout(pongTimeoutRef.current)
     }
   }, [])
@@ -251,7 +251,7 @@ export const WebSocketProvider = ({
       reconnectAttempts.current = 0
 
       // Clear any pending reconnection
-      if (reconnectTimeoutRef.current) {
+      if (reconnectTimeoutRef.current !== null) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
@@ -312,7 +312,7 @@ export const WebSocketProvider = ({
 
         // Heartbeat pong check
         if (message.type === 'PONG') {
-          if (pongTimeoutRef.current) {
+          if (pongTimeoutRef.current !== null) {
             clearTimeout(pongTimeoutRef.current)
           }
           return // Pong message is handled, no state dispatch needed
@@ -346,11 +346,11 @@ export const WebSocketProvider = ({
     shouldReconnect.current = false
     // Stop heartbeat on manual disconnect
     stopHeartbeat()
-    if (reconnectTimeoutRef.current) {
+    if (reconnectTimeoutRef.current !== null) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
     }
-    if (wsRef.current) {
+    if (wsRef.current !== null) {
       wsRef.current.close()
     }
     console.log('[useWebSocket] Manually disconnected.')
@@ -403,7 +403,7 @@ export const WebSocketProvider = ({
 
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext)
-  if (!context) {
+  if (context === null) {
     throw new Error('useWebSocket must be used within a WebSocketProvider')
   }
   return context

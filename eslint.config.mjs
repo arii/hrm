@@ -61,6 +61,24 @@ export default defineConfig([
           functions: 'always-multiline',
         },
       ],
+      // Ban specific TS comments
+      '@typescript-eslint/ban-ts-comment': 'error',
+      // Disallow unnecessary type assertions
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      // Enforce consistent type assertion style
+      '@typescript-eslint/consistent-type-assertions': [
+        'error',
+        {
+          assertionStyle: 'as',
+          objectLiteralTypeAssertions: 'never',
+        },
+      ],
+      // Prefer nullish coalescing operator
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      // Disallow non-null assertions
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      // Enforce strict boolean expressions
+      '@typescript-eslint/strict-boolean-expressions': 'warn',
     },
   },
   {

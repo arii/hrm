@@ -108,7 +108,7 @@ class TabataTimer {
   // --- Core Timer Logic ---
 
   private updateTimer = () => {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (this.timerState.isRunning !== true || this.startTime === null) return
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
@@ -158,7 +158,7 @@ class TabataTimer {
   }
 
   private pauseTimer() {
-    if (!this.timerState.isRunning || !this.startTime) return
+    if (this.timerState.isRunning !== true || this.startTime === null) return
 
     if (
       this.timerState.mode === 'STOPWATCH' &&
@@ -169,7 +169,7 @@ class TabataTimer {
     }
 
     this.timerState.isRunning = false
-    if (this.timerInterval) clearInterval(this.timerInterval)
+    if (this.timerInterval !== null) clearInterval(this.timerInterval)
     this.timerInterval = null
     this.startTime = null
 
@@ -177,7 +177,7 @@ class TabataTimer {
   }
 
   private stopTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval)
+    if (this.timerInterval !== null) clearInterval(this.timerInterval)
 
     // Full reset of all time and cycle variables
     this.timerState = {
@@ -207,7 +207,10 @@ class TabataTimer {
 
     // If the timer is not running, update timeRemaining to reflect the new work duration.
     // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
-    if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
+    if (
+      this.timerState.isRunning !== true &&
+      this.timerState.mode === 'TABATA'
+    ) {
       this.timerState.timeRemaining = sanitizedWorkDuration
     }
 

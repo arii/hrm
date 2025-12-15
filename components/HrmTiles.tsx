@@ -15,7 +15,10 @@ const HrmTiles = () => {
     return hrmData
       .filter((user) => {
         const isZero = user.value === 0
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+        const isPlaceholderName =
+          user.name !== null &&
+          user.name !== undefined &&
+          /new user/i.test(user.name)
         const hasNoIdentity = user.name == null
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
@@ -39,12 +42,14 @@ const HrmTiles = () => {
             data-testid="hr-tile-grid-item"
           >
             <HrTile
-              name={user.name || ''}
+              name={user.name ?? ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
-              isAlerting={!!matchingAlert}
+              isAlerting={matchingAlert !== undefined}
               // Conditionally add alertMessage to avoid passing `undefined`
-              {...(matchingAlert && { alertMessage: matchingAlert.message })}
+              {...(matchingAlert !== undefined && {
+                alertMessage: matchingAlert.message,
+              })}
             />
           </Grid>
         )

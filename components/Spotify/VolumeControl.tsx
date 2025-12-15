@@ -21,8 +21,10 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
       <VolumeUp sx={{ color: 'grey.400', fontSize: 20 }} aria-hidden="true" />
       <Slider
         value={volume}
-        onChange={(_, val) => onVolumeChange(val as number)}
-        onChangeCommitted={(_, val) => onVolumeChangeCommitted(val as number)}
+        onChange={(_, val) => onVolumeChange(Array.isArray(val) ? val[0] : val)}
+        onChangeCommitted={(_, val) =>
+          onVolumeChangeCommitted(Array.isArray(val) ? val[0] : val)
+        }
         min={0}
         max={100}
         size="small"

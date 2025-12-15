@@ -90,7 +90,7 @@ const useSpotifyWebPlayback = () => {
           )
         }
         const { accessToken } = await response.json()
-        if (!accessToken) {
+        if (accessToken === undefined) {
           throw new Error('Access token was not found in the response.')
         }
         console.log(
@@ -116,7 +116,7 @@ const useSpotifyWebPlayback = () => {
     )
 
     // Prevent re-initialization if player already exists and is ready
-    if (player && isReady) {
+    if (player !== null && isReady) {
       console.log('[Spotify Web Playbook] Player already initialized and ready')
       return
     }
@@ -141,7 +141,7 @@ const useSpotifyWebPlayback = () => {
 
     function initializeSDK() {
       // Load the SDK script if not already loaded
-      if (!window.Spotify) {
+      if (window.Spotify === undefined) {
         console.log('[Spotify Web Playback] Loading Spotify SDK script...')
         const script = document.createElement('script')
         script.src = 'https://sdk.scdn.co/spotify-player.js'
@@ -162,7 +162,7 @@ const useSpotifyWebPlayback = () => {
 
     function initializePlayer() {
       // Don't initialize if we already have a player
-      if (player) {
+      if (player !== null) {
         console.log(
           '[Spotify Web Playback] Player already exists, skipping initialization'
         )
@@ -217,7 +217,7 @@ const useSpotifyWebPlayback = () => {
 
       // --- Connect the Player ---
       spotifyPlayer.connect().then((success) => {
-        if (success) {
+        if (success === true) {
           console.log(
             '[Spotify Web Playback] The Web Playback SDK successfully connected to Spotify!'
           )
@@ -233,7 +233,7 @@ const useSpotifyWebPlayback = () => {
 
     // Cleanup function to disconnect the player when component unmounts
     return () => {
-      if (player && typeof player.disconnect === 'function') {
+      if (player !== null && typeof player.disconnect === 'function') {
         console.log('[Spotify Web Playback] Disconnecting player on cleanup')
         player.disconnect()
       }

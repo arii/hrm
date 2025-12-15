@@ -43,10 +43,10 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
                       {/* Larger font */}
                       {it.title}
                     </Typography>
-                    {it.details && (
+                    {it.details !== undefined && (
                       <Typography variant="body2" color="text.secondary">
                         {it.details}
-                      </Typography>
+                      </                      Typography>
                     )}
                   </Box>
                 ))}

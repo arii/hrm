@@ -15,14 +15,14 @@ declare module 'next-auth' {
 /**
  * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
  * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
- * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
+ * `undefined` for invalid URLs or for local development environments (`localhost`, `12-7.0.0.1`),
  * allowing the browser to default to the current domain.
  *
  * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
  *                               should not be set.
  */
 function getCookieDomain(): string | undefined {
-  if (!process.env.NEXTAUTH_URL) {
+  if (process.env.NEXTAUTH_URL === undefined) {
     return undefined
   }
   try {
@@ -36,7 +36,7 @@ function getCookieDomain(): string | undefined {
     console.error(
       'Failed to parse NEXTAUTH_URL for cookie domain:',
       process.env.NEXTAUTH_URL,
-      e
+      e,
     )
     return undefined
   }
@@ -70,9 +70,9 @@ async function refreshAccessToken(token: JWT) {
         Authorization:
           'Basic ' +
           Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID +
+            (process.env.SPOTIFY_CLIENT_ID ?? '') +
               ':' +
-              process.env.SPOTIFY_CLIENT_SECRET
+              (process.env.SPOTIFY_CLIENT_SECRET ?? ''),
           ).toString('base64'),
       },
       body: new URLSearchParams({
@@ -124,9 +124,9 @@ const SPOTIFY_SCOPES = [
 // This prevents runtime errors and insecure defaults.
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
 
-if (!NEXTAUTH_SECRET) {
+if (NEXTAUTH_SECRET === undefined) {
   throw new Error(
-    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
+    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.',
   )
 }
 
@@ -144,8 +144,8 @@ export const authOptions: AuthOptions = {
     SpotifyProvider({
       id: 'spotify',
       name: 'Spotify',
-      clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
+      clientId: process.env.SPOTIFY_CLIENT_ID ?? '',
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET ?? '',
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
@@ -235,36 +235,38 @@ export const authOptions: AuthOptions = {
      */
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
-      if (account) {
+      if (account !== null) {
         console.log('[AUTH JWT] Initial sign-in - Full account object:', {
           provider: account.provider,
           providerAccountId: account.providerAccountId,
-          hasAccessToken: !!account.access_token,
-          hasProfile: !!account.profile,
-          profileKeys: account.profile
-            ? Object.keys(account.profile)
-            : 'NO PROFILE',
+          hasAccessToken: account.access_token !== null,
+          hasProfile: account.profile !== null,
+          profileKeys:
+            account.profile !== null
+              ? Object.keys(account.profile)
+              : 'NO PROFILE',
           profileEmail: (account.profile as Record<string, unknown>)?.email,
           profileDisplayName: (account.profile as Record<string, unknown>)
             ?.display_name,
         })
         console.log(
           '[AUTH JWT] Initial token before modification:',
-          Object.keys(token)
+          Object.keys(token),
         )
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
+        if (account.refresh_token !== undefined) {
           try {
             const tokenPayload = {
               provider: account.provider,
               sub: account.providerAccountId,
               access_token: account.access_token,
               refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
+              expires_in:
+                account.expires_at !== undefined
+                  ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
+                  : 3600,
+              scope: account.scope ?? '',
               obtainedAt: Date.now(),
             }
 
@@ -279,14 +281,14 @@ export const authOptions: AuthOptions = {
                 'Internal token delivery successful. Status:',
                 response.status,
                 'Body:',
-                responseBody
+                responseBody,
               )
             } else {
               console.error(
                 'Internal token delivery failed. Status:',
                 response.status,
                 'Body:',
-                responseBody
+                responseBody,
               )
             }
           } catch (e) {
@@ -299,14 +301,14 @@ export const authOptions: AuthOptions = {
           ...token,
           accessToken: account.access_token,
           accessTokenExpires:
-            Date.now() + (Number(account.expires_in) || 3600) * 1000,
+            Date.now() + (Number(account.expires_in) ?? 3600) * 1000,
           refreshToken: account.refresh_token,
         }
         console.log(
           '[AUTH JWT] Returning token with keys:',
           Object.keys(updatedToken),
           'has sub:',
-          !!updatedToken.sub
+          updatedToken.sub !== undefined,
         )
         return updatedToken
       }
@@ -336,13 +338,13 @@ export const authOptions: AuthOptions = {
       // Pass the updated token and error info to the session object
       console.log(
         '[AUTH SESSION] Creating session, token keys:',
-        Object.keys(token)
+        Object.keys(token),
       )
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
       console.log(
         '[AUTH SESSION] Session created with accessToken:',
-        !!session.accessToken
+        session.accessToken !== undefined,
       )
       return session
     },

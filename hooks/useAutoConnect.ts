@@ -13,7 +13,7 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
   useEffect(() => {
     let isMounted = true
     const tryConnect = async (delay: number) => {
-      if (!start || !isMounted) {
+      if (start !== true || isMounted !== true) {
         return
       }
 
@@ -23,7 +23,7 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
       const success = await connectFn()
 
       if (isMounted) {
-        if (success) {
+        if (success === true) {
           setIsConnecting(false)
           setAttempts(0)
         } else {
@@ -33,13 +33,13 @@ const useAutoConnect = (connectFn: ConnectFn, start: boolean) => {
       }
     }
 
-    if (start) {
+    if (start === true) {
       tryConnect(INITIAL_DELAY)
     }
 
     return () => {
       isMounted = false
-      if (timeoutRef.current) {
+      if (timeoutRef.current !== null) {
         clearTimeout(timeoutRef.current)
       }
       setIsConnecting(false)

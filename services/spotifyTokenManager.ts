@@ -43,7 +43,7 @@ export class SpotifyTokenManager {
    * Directly set the access token (for command injection/testing).
    */
   public setAccessToken(token: string) {
-    if (this.currentToken) {
+    if (this.currentToken !== null) {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
       writeTokenFileSafe(this.tokenFile, this.currentToken)
@@ -68,12 +68,12 @@ export class SpotifyTokenManager {
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
+  private refreshPromise: Promise<boolean> | null = null
 
   constructor(
     private clientId: string,
     private clientSecret: string,
-    logDir: string = path.resolve(process.cwd(), 'logs')
+    logDir: string = path.resolve(process.cwd(), 'logs'),
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
     this.loadTokens()
@@ -84,7 +84,10 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        console.log(
+          'Loaded Spotify tokens for:',
+          this.currentToken.payload.sub,
+        )
       }
     } catch (err) {
       console.warn('Failed to load Spotify tokens:', err)
@@ -92,11 +95,11 @@ export class SpotifyTokenManager {
   }
 
   private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false
+    if (this.currentToken?.payload.refresh_token === undefined) return false
 
     try {
       const basic = Buffer.from(
-        `${this.clientId}:${this.clientSecret}`
+        `${this.clientId}:${this.clientSecret}`,
       ).toString('base64')
 
       const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -121,7 +124,7 @@ export class SpotifyTokenManager {
         'Spotify token refresh successful. Status:',
         response.status,
         'Body:',
-        data
+        data,
       )
 
       // Update current token with new values
@@ -140,7 +143,10 @@ export class SpotifyTokenManager {
       // Save updated token
       writeTokenFileSafe(this.tokenFile, this.currentToken)
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      console.log(
+        'Refreshed Spotify token for:',
+        this.currentToken.payload.sub,
+      )
       return true
     } catch (err) {
       console.error('Failed to refresh Spotify token:', err)
@@ -151,7 +157,7 @@ export class SpotifyTokenManager {
   async getValidAccessToken(): Promise<string | null> {
     // Always reload the token file before returning the access token
     this.loadTokens()
-    if (!this.currentToken) return null
+    if (this.currentToken === null) return null
 
     // Check if token needs refresh
     const expiresAt =
@@ -160,19 +166,21 @@ export class SpotifyTokenManager {
 
     if (Date.now() >= expiresAt - 60000) {
       console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
+        'Spotify access token is expiring soon, initiating refresh...',
       )
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
-      if (!this.refreshPromise) {
+      if (this.refreshPromise === null) {
         this.refreshPromise = this.refreshToken()
           .then(() => {
             this.refreshPromise = null
             console.log('Spotify access token refresh completed.')
+            return true
           })
           .catch((error) => {
             this.refreshPromise = null
             console.error('Spotify access token refresh failed:', error)
+            return false
           })
       }
       await this.refreshPromise
@@ -190,7 +198,7 @@ export class SpotifyTokenManager {
   }
 
   getSdkAccessToken(): AccessToken | null {
-    if (!this.currentToken) return null
+    if (this.currentToken === null) return null
     return {
       access_token: this.currentToken.payload.access_token,
       token_type: 'Bearer',
