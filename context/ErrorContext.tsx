@@ -8,7 +8,6 @@ import React, {
   useCallback,
 } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { Snackbar, Alert } from '@mui/material'
 
 interface ErrorInfo {
   id: string
@@ -37,42 +36,19 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({
     (message: string, type: 'transient' | 'persistent' = 'transient') => {
       const newError: ErrorInfo = { id: uuidv4(), message, type }
       setErrors((prevErrors) => [...prevErrors, newError])
-    },
-    []
-  )
 
-  const handleClose = (
-    id: string,
-    _event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === 'clickaway') {
-      return
-    }
-    removeError(id)
-  }
+      if (type === 'transient') {
+        setTimeout(() => {
+          removeError(newError.id)
+        }, 5000) // 5 seconds for transient errors
+      }
+    },
+    [removeError]
+  )
 
   return (
     <ErrorContext.Provider value={{ errors, addError, removeError }}>
       {children}
-      {errors.map((error) => (
-        <Snackbar
-          key={error.id}
-          open={true}
-          autoHideDuration={error.type === 'transient' ? 5000 : null}
-          onClose={(event, reason) => handleClose(error.id, event, reason)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => handleClose(error.id)}
-            severity="error"
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {error.message}
-          </Alert>
-        </Snackbar>
-      ))}
     </ErrorContext.Provider>
   )
 }
