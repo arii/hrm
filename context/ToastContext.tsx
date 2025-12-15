@@ -47,9 +47,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { toasts, showToast, hideToast }
 
-  return (
-    <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
-  )
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
 }
 
 export const useToast = () => {
