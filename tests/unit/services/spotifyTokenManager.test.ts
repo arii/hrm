@@ -15,9 +15,9 @@ describe('SpotifyTokenManager', () => {
   const clientSecret = 'test_client_secret'
 
   beforeEach(() => {
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
-    ;(fs.readFileSync as jest.Mock).mockClear()
-    ;(fs.writeFileSync as jest.Mock).mockClear()
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false)
+    jest.spyOn(fs, 'readFileSync').mockClear()
+    jest.spyOn(fs, 'writeFileSync').mockClear()
     jest.spyOn(console, 'log').mockImplementation(() => {})
   })
 
