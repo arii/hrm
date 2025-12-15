@@ -12,12 +12,11 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
+import AuthButton from './AuthButton'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import logger from '@/utils/logger'
-import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types'
@@ -46,10 +45,6 @@ const SpotifyDisplay = () => {
     )
   }, [status, session, isLoggedIn])
 
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    window.location.reload()
-  }
 
   const {
     player,
@@ -235,7 +230,7 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <SpotifyLoginButton />
+        <AuthButton />
       </Box>
     )
   }
@@ -360,24 +355,7 @@ const SpotifyDisplay = () => {
             onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
             onMenuClose={() => setDeviceMenuAnchor(null)}
           />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleLogout}
-            sx={{
-              color: 'common.white',
-              borderColor: 'grey.600',
-              '&:hover': {
-                borderColor: 'grey.500',
-                backgroundColor: 'grey.800',
-              },
-              minWidth: 'auto',
-              px: 1.5,
-              fontSize: '0.75rem',
-            }}
-          >
-            Logout
-          </Button>
+          <AuthButton />
         </Box>
       </Box>
     )

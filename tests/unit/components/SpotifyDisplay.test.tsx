@@ -15,7 +15,7 @@ import { useSession } from 'next-auth/react'
 import React from 'react'
 
 // Mock child components and dependencies
-jest.mock('@/components/SpotifyLoginButton', () => ({
+jest.mock('@/components/AuthButton', () => ({
   __esModule: true,
   default: () => <button>Login with Spotify</button>,
 }))
