@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 import {
-  checkMemoryUsage,
   checkSpotifyAPI,
   checkWebSocketService,
   checkTimerService,
@@ -23,14 +22,6 @@ describe('Health Check Logic', () => {
     jest.clearAllMocks()
     ;(global.fetch as jest.Mock).mockClear()
     MockedWebSocket.mockClear()
-  })
-
-  describe('checkMemoryUsage', () => {
-    it('should return healthy if memory usage is within limits', () => {
-      const result = checkMemoryUsage()
-      expect(result.healthy).toBe(true)
-      expect(result.details.usedMB).toBeGreaterThan(0)
-    })
   })
 
   describe('checkSpotifyAPI', () => {

@@ -1,109 +1,72 @@
-// File: tests/unit/services/spotifyTokenManager.test.ts
-import {
-  SpotifyTokenManager,
-  TokenRecord,
-} from '../../../services/spotifyTokenManager'
-import fs from 'fs'
-import path from 'path'
+// tests/unit/services/spotifyTokenManager.test.ts
+import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
+import { PrismaClient } from '@prisma/client'
 
-jest.mock('fs')
+jest.mock('@prisma/client')
+
+const mockPrisma = new PrismaClient()
 
 describe('SpotifyTokenManager', () => {
-  const logDir = '/tmp/logs'
-  const tokenFile = path.join(logDir, 'spotify_tokens.json')
-  const clientId = 'test_client_id'
-  const clientSecret = 'test_client_secret'
+  let tokenManager: SpotifyTokenManager
 
   beforeEach(() => {
-    ;(fs.existsSync as jest.Mock).mockReturnValue(false)
-    ;(fs.readFileSync as jest.Mock).mockClear()
-    ;(fs.writeFileSync as jest.Mock).mockClear()
-    jest.spyOn(console, 'log').mockImplementation(() => {})
+    jest.clearAllMocks()
+    tokenManager = new SpotifyTokenManager(
+      'test-client-id',
+      'test-client-secret',
+      mockPrisma
+    )
   })
 
-  afterEach(() => {
-    jest.restoreAllMocks()
+  it('should return null if no account is found', async () => {
+    ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue(null)
+    const token = await tokenManager.getValidAccessToken()
+    expect(token).toBeNull()
   })
 
-  it('should load tokens from file on initialization', () => {
-    const tokenRecord: TokenRecord = {
-      receivedAt: Date.now(),
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: Date.now(),
-      },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+  it('should return access token if valid', async () => {
+    const future = new Date()
+    future.setHours(future.getHours() + 1)
+    const expires_at = Math.floor(future.getTime() / 1000)
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    expect(fs.readFileSync).toHaveBeenCalledWith(tokenFile, 'utf8')
-    expect(tokenManager.getUserId()).toBe('test_user')
-  })
-
-  it('should refresh the access token if it is expired', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now - 3600 * 1000, // Expired
-      },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
-
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: 'new_access_token',
-          expires_in: 3600,
-          refresh_token: 'new_refresh_token',
-        }),
+    ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue({
+      access_token: 'valid-access-token',
+      refresh_token: 'valid-refresh-token',
+      expires_at: expires_at,
+      token_type: 'Bearer',
+      scope: 'user-read-private',
     })
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
-
-    expect(global.fetch).toHaveBeenCalled()
-    expect(accessToken).toBe('new_access_token')
-    expect(fs.writeFileSync).toHaveBeenCalled()
+    const token = await tokenManager.getValidAccessToken()
+    expect(token).toBe('valid-access-token')
   })
 
-  it('should not refresh the access token if it is still valid', async () => {
-    const now = Date.now()
-    const tokenRecord: TokenRecord = {
-      receivedAt: now,
-      payload: {
-        provider: 'spotify',
-        sub: 'test_user',
-        access_token: 'access_token',
-        refresh_token: 'refresh_token',
-        expires_in: 3600,
-        scope: 'test_scope',
-        obtainedAt: now, // Not expired
-      },
-    }
-    ;(fs.existsSync as jest.Mock).mockReturnValue(true)
-    ;(fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(tokenRecord))
+  it('should refresh token if expired', async () => {
+    const past = new Date()
+    past.setHours(past.getHours() - 1)
+    const expires_at = Math.floor(past.getTime() / 1000)
 
-    global.fetch = jest.fn()
+    ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue({
+      access_token: 'expired-access-token',
+      refresh_token: 'valid-refresh-token',
+      expires_at: expires_at,
+    })
 
-    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
-    const accessToken = await tokenManager.getValidAccessToken()
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: 'new-access-token',
+            expires_in: 3600,
+            token_type: 'Bearer',
+            scope: 'user-read-private',
+          }),
+      })
+    ) as jest.Mock
 
-    expect(global.fetch).not.toHaveBeenCalled()
-    expect(accessToken).toBe('access_token')
+    const token = await tokenManager.getValidAccessToken()
+    expect(token).toBe('new-access-token')
+    expect(mockPrisma.account.updateMany).toHaveBeenCalled()
   })
 })

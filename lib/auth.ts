@@ -1,9 +1,12 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import { PrismaClient } from '@prisma/client'
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '../utils/logger'
-import { getAPIURL } from '../utils/urls'
+
+const prisma = new PrismaClient()
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -140,6 +143,7 @@ if (!NEXTAUTH_SECRET) {
  * @type {AuthOptions}
  */
 export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     SpotifyProvider({
       id: 'spotify',
@@ -241,47 +245,9 @@ export const authOptions: AuthOptions = {
             provider: account.provider,
             providerAccountId: account.providerAccountId,
             hasAccessToken: !!account.access_token,
-            hasProfile: !!account.profile,
           },
           '[AUTH] Initial sign-in'
         )
-
-        // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
-        if (account.refresh_token) {
-          try {
-            const tokenPayload = {
-              provider: account.provider,
-              sub: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_in: account.expires_at
-                ? Math.floor((account.expires_at * 1000 - Date.now()) / 1000)
-                : 3600,
-              scope: account.scope || '',
-              obtainedAt: Date.now(),
-            }
-
-            const response = await fetch(getAPIURL('internal/token-delivery'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(tokenPayload),
-            })
-            const responseBody = await response.text()
-            if (response.ok) {
-              logger.info(
-                { status: response.status, body: responseBody },
-                'Internal token delivery successful'
-              )
-            } else {
-              logger.warn(
-                { status: response.status, body: responseBody },
-                'Internal token delivery failed'
-              )
-            }
-          } catch (e) {
-            logger.error({ error: e }, 'Internal token delivery failed')
-          }
-        }
 
         // Return token with Spotify account data
         const updatedToken = {

@@ -93,7 +93,7 @@ export class SpotifyPolling {
       if (sdkToken) {
         this.setupSdk(sdkToken)
         logger.debug(
-          'Loaded existing Spotify tokens from file. Starting polling.'
+          'Loaded existing Spotify tokens from database. Starting polling.'
         )
         this.startPolling()
       }
@@ -128,18 +128,6 @@ export class SpotifyPolling {
    */
   public isReady(): boolean {
     return this.sdk !== null
-  }
-
-  // --- Token Management (Used by NextAuth route) ---
-
-  /**
-   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
-   */
-  public setRefreshToken(_token: string) {
-    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
-    // Reset the token manager state to ensure it re-reads the file
-    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
-    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
   // --- Polling Logic ---

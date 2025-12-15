@@ -68,3 +68,9 @@ diff.txt
 !.vscode/settings.json
 !.vscode/tasks.json
 verification/screenshots/
+
+/lib/generated/prisma
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal

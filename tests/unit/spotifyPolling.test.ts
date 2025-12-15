@@ -250,19 +250,6 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
-    it('should accept refresh token', async () => {
-      const refreshToken = 'test_refresh_token'
-      // Mock the initializeSdk to resolve immediately
-      const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
-        .mockResolvedValue(undefined)
-      spotifyService.setRefreshToken(refreshToken)
-      // Advance timers to allow setTimeout to run
-      jest.advanceTimersByTime(1000)
-      expect(initializeSdkSpy).toHaveBeenCalled()
-      initializeSdkSpy.mockRestore()
-    })
-
     it('should not execute commands without access token', async () => {
       // Override the mock to return null token for this test to ensure SDK is not initialized
       ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(

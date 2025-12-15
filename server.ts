@@ -23,7 +23,6 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -206,29 +205,7 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
-      }
+    expressApp.all('*', (req: Request, res: Response) => {
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 

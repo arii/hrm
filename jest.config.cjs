@@ -27,8 +27,7 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
-    '^.+\\.(ts|tsx)$': [
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [
       'ts-jest',
       {
         useESM: true,
@@ -41,15 +40,15 @@ const config = {
       },
     ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
-  ],
+  transformIgnorePatterns: [],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
+    '^@prisma/client$': '<rootDir>/tests/unit/__mocks__/@prisma/client',
   },
   testTimeout: 10000,
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.ts'],
 }
 
 module.exports = config
