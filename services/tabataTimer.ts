@@ -108,7 +108,9 @@ class TabataTimer {
         soundToPlay: this.timerState.soundToPlay,
       }),
       soundEventId: this.timerState.soundEventId,
-      phaseBeforePause: this.timerState.phaseBeforePause,
+      ...(this.timerState.phaseBeforePause !== undefined && {
+        phaseBeforePause: this.timerState.phaseBeforePause,
+      }),
     }
   }
 
