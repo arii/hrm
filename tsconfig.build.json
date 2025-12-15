@@ -1,4 +1,5 @@
 {
+{
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
@@ -8,5 +9,11 @@
     "esModuleInterop": true,
     "traceResolution": false
   },
-  "include": ["server.ts", "services/**/*.ts", "utils/**/*.ts", "types/**/*.ts"]
+  "include": [
+    "server.ts",
+    "services/**/*.ts",
+    "utils/**/*.ts",
+    "types/**/*.ts",
+    "lib/**/*.ts"
+  ]
 }
