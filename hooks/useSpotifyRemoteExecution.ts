@@ -34,7 +34,9 @@ export const useSpotifyRemoteExecution = (
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
-    const handleCustomEvent = async (event: CustomEvent<SpotifyExecutionMessage>) => {
+    const handleCustomEvent = async (
+      event: CustomEvent<SpotifyExecutionMessage>
+    ) => {
       const message = event.detail
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
