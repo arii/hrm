@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.1](https://github.com/arii/hrm/compare/v0.10.0...v0.10.1) (2025-12-15)
+
+
+### Bug Fixes
+
+* manually remove semicolons to fix linting errors ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+* resolve build error by removing empty hook ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+
 ## [0.10.0](https://github.com/arii/hrm/compare/v0.9.1...v0.10.0) (2025-12-14)
 
 
