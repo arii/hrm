@@ -78,8 +78,10 @@ export interface DashboardSectionLoadingSkeletonProps {
   className?: string
 }
 
+import { ServerMessage } from './websocket'
+
 declare global {
   interface Window {
-    __dispatch: React.Dispatch<any>
+    __dispatch: React.Dispatch<ServerMessage>
   }
 }

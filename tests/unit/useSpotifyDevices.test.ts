@@ -126,6 +126,8 @@ describe('useSpotifyDevices', () => {
       await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
-    expect(result.current.error).toEqual(new Error('Failed to transfer playback'))
+    expect(result.current.error).toEqual(
+      new Error('Failed to transfer playback')
+    )
   })
 })

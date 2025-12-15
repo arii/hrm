@@ -172,7 +172,7 @@ export const WebSocketProvider = ({
       typeof window !== 'undefined' &&
       process.env.NODE_ENV === 'development'
     ) {
-      window.__dispatch = dispatch as Dispatch<any>
+      window.__dispatch = dispatch as Dispatch<ServerMessage>
     }
   }, [dispatch])
 
