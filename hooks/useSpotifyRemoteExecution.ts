@@ -41,48 +41,50 @@ export const useSpotifyRemoteExecution = (
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
         try {
-          const options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command, volume, deviceId }),
-          }
+          let requestBody: Record<string, any>
 
           switch (command) {
             case 'PLAY':
             case 'PAUSE':
             case 'NEXT':
             case 'PREVIOUS':
-              await callSpotifyApi('/api/spotify/control', {
-                ...options,
-                body: JSON.stringify({ command }),
-              })
+              requestBody = { command }
               break
             case 'SET_VOLUME':
               if (volume !== undefined) {
                 const vol = volume > 1 ? volume / 100 : volume
                 player.setVolume(vol)
-                await callSpotifyApi('/api/spotify/control', {
-                  ...options,
-                  body: JSON.stringify({
-                    command: 'SET_VOLUME',
-                    volume,
-                    deviceId,
-                  }),
-                })
+                requestBody = { command: 'SET_VOLUME', volume, deviceId }
+              } else {
+                throw new Error('Volume not provided for SET_VOLUME command.')
               }
               break
             case 'TRANSFER_PLAYBACK':
               if (deviceId) {
-                await callSpotifyApi('/api/spotify/control', {
-                  ...options,
-                  body: JSON.stringify({ command: 'TRANSFER', deviceId }),
-                })
+                requestBody = { command: 'TRANSFER', deviceId }
+              } else {
+                throw new Error(
+                  'Device ID not provided for TRANSFER_PLAYBACK command.'
+                )
               }
               break
+            default:
+              console.warn(`[Dashboard] Unrecognized Spotify command: ${command}`)
+              return // Exit if command is not recognized
           }
-        } catch (execError) {
-          console.error('[Dashboard] Command execution failed:', execError)
-          addError('Failed to control Spotify. Please try again.')
+
+          await callSpotifyApi('/api/spotify/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          })
+        } catch (execError: unknown) {
+          const errorMessage =
+            execError instanceof Error
+              ? execError.message
+              : 'An unexpected error occurred.'
+          console.error('[Dashboard] Command execution failed:', execError) // Log full context for debugging
+          addError(errorMessage) // Pass the specific message extracted by callSpotifyApi
         }
       }
     }
