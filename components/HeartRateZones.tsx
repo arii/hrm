@@ -1,25 +1,22 @@
 // File: components/HeartRateZones.tsx (Heart Rate Zone Display)
 import React from 'react'
 import { Box, Typography, Paper } from '@mui/material'
-import { HEART_RATE_ZONES, HeartRateZoneConfig } from '../utils/constants'
+import {
+  HR_ZONE_DEFINITIONS,
+  getZoneBpmRange,
+} from '../lib/hrm/zones'
 
 interface HeartRateZonesProps {
   maxHr: number
 }
 
 const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
-  const calculateBpmRange = (zone: HeartRateZoneConfig) => {
-    const minBpm = Math.round((zone.minPercent / 100) * maxHr)
-    const maxBpm = Math.round((zone.maxPercent / 100) * maxHr)
-    return `${minBpm}-${maxBpm} BPM`
-  }
-
   return (
     <Paper elevation={3} className="p-4 mt-6">
       <Typography variant="h6" className="font-bold text-center mb-4">
         Heart Rate Zones
       </Typography>
-      {HEART_RATE_ZONES.map((zone) => (
+      {HR_ZONE_DEFINITIONS.map((zone) => (
         <Box
           key={zone.name}
           className="flex items-center justify-between p-2 mb-2 rounded-lg"
@@ -29,10 +26,12 @@ const HeartRateZones: React.FC<HeartRateZonesProps> = ({ maxHr }) => {
             {zone.name}
           </Typography>
           <Typography variant="body2" className="text-white">
-            {zone.minPercent}-{zone.maxPercent}%
+            {`${zone.min * 100}-${
+              zone.max === Infinity ? '100' : zone.max * 100
+            }%`}
           </Typography>
           <Typography variant="body2" className="font-mono text-white">
-            {calculateBpmRange(zone)}
+            {getZoneBpmRange(zone, maxHr)}
           </Typography>
         </Box>
       ))}
