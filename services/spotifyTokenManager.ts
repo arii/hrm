@@ -42,7 +42,6 @@ export class SpotifyTokenManager {
         token_type: account.token_type!,
         expires_in: Math.floor((account.expires_at * 1000 - Date.now()) / 1000),
         refresh_token: account.refresh_token,
-        scope: account.scope!,
       }
       return account.access_token
     }
@@ -95,7 +94,6 @@ export class SpotifyTokenManager {
         token_type: refreshedTokens.token_type,
         expires_in: refreshedTokens.expires_in,
         refresh_token: refreshedTokens.refresh_token ?? refreshToken,
-        scope: refreshedTokens.scope,
       }
 
       logger.info('Successfully refreshed and updated Spotify token.')

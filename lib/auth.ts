@@ -250,6 +250,8 @@ export const authOptions: AuthOptions = {
         )
 
         // Return token with Spotify account data
+        // The `hasProfile` property was removed as it is not used in the application
+        // and the profile information is already available in the session object.
         const updatedToken = {
           ...token,
           accessToken: account.access_token,
