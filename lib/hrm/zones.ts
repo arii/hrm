@@ -6,22 +6,14 @@
 
 import { HrZoneName } from '../shared/hr-zones'
 
-// --- Types ---
-export interface HeartRateZoneDefinition {
-  name: HrZoneName
-  min: number // Percentage of Max HR (0-1), inclusive
-  max: number // Percentage of Max HR (0-1), exclusive
-  color: string // Hex color for UI
-}
-
 // --- Constants ---
-// SINGLE SOURCE OF TRUTH for Heart Rate Zone Boundaries
-export const HR_ZONE_DEFINITIONS: HeartRateZoneDefinition[] = [
-  { name: HrZoneName.WarmUp, min: 0.5, max: 0.6, color: '#2196F3' },
-  { name: HrZoneName.FatBurn, min: 0.6, max: 0.7, color: '#4CAF50' },
-  { name: HrZoneName.Cardio, min: 0.7, max: 0.85, color: '#FFEB3B' },
-  { name: HrZoneName.Peak, min: 0.85, max: 0.95, color: '#F44336' },
-  { name: HrZoneName.Max, min: 0.95, max: Infinity, color: '#9C27B0' },
+// Heart Rate Zone Boundaries (as percentage of Max HR)
+export const HR_ZONE_DEFINITIONS = [
+  { name: HrZoneName.WarmUp, min: 0.5 },
+  { name: HrZoneName.FatBurn, min: 0.6 },
+  { name: HrZoneName.Cardio, min: 0.7 },
+  { name: HrZoneName.Peak, min: 0.85 },
+  { name: HrZoneName.Max, min: 0.95 },
 ]
 
 export interface HrZone {
@@ -31,7 +23,7 @@ export interface HrZone {
 }
 
 /**
- * Calculates the current heart rate zone based on explicit min/max boundaries.
+ * Calculates the current heart rate zone, and percentage of max HR.
  * @param {number} currentHr - The current heart rate in beats per minute.
  * @param {number} maxHr - The user's maximum heart rate.
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
@@ -45,38 +37,21 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
     }
   }
 
-  const percentageDecimal = currentHr / maxHr
-  const percentageOfMax = Math.min(100, Math.round(percentageDecimal * 100))
+  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
+  let calculatedZone = HR_ZONE_DEFINITIONS[0]!
 
-  const currentZone = HR_ZONE_DEFINITIONS.find(
-    (zone) => percentageDecimal >= zone.min && percentageDecimal < zone.max
-  )
+  // Iterate backwards to find the correct zone
+  for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
+    const hrZone = HR_ZONE_DEFINITIONS[i]
+    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
+      calculatedZone = hrZone
+      break
+    }
+  }
 
   return {
-    zoneName: currentZone ? currentZone.name : HrZoneName.Rest, // Default to Rest for valid HR below zones
+    zoneName: calculatedZone.name,
     percentage: percentageOfMax,
     bpm: currentHr,
   }
-}
-
-/**
- * Calculates the beats per minute (BPM) range for a given heart rate zone.
- * @param {HeartRateZoneDefinition} zone - The heart rate zone definition.
- * @param {number} maxHr - The user's maximum heart rate.
- * @returns {string} The formatted BPM range string (e.g., "120-139 BPM").
- */
-export const getZoneBpmRange = (
-  zone: HeartRateZoneDefinition,
-  maxHr: number
-): string => {
-  const minBpm = Math.round(zone.min * maxHr)
-
-  if (zone.max === Infinity) {
-    return `${minBpm}+ BPM`
-  }
-
-  // The max is exclusive, so the display value is 1 less than the next zone's start
-  const maxBpm = Math.round(zone.max * maxHr) - 1
-
-  return `${minBpm}-${maxBpm} BPM`
 }
