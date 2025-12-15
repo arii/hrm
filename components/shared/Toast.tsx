@@ -1,11 +1,12 @@
 'use client'
 
 import React from 'react'
-import { Snackbar, Alert } from '@mui/material'
+import { Snackbar, Alert, useTheme } from '@mui/material'
 import { useToast } from '@/context/ToastContext'
 
 const Toast = () => {
   const { toasts, hideToast } = useToast()
+  const theme = useTheme()
 
   return (
     <>
@@ -16,7 +17,12 @@ const Toast = () => {
           autoHideDuration={6000}
           onClose={() => hideToast(toast.id)}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{ top: `${8 + index * 60}px` }}
+          sx={{
+            top: theme.spacing(1 + index * 7.5),
+            '& .MuiAlert-root': {
+              boxShadow: theme.shadows[3],
+            },
+          }}
         >
           <Alert
             onClose={() => hideToast(toast.id)}
