@@ -148,23 +148,7 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    let spotifyService: SpotifyPolling
-    try {
-      spotifyService = await SpotifyPolling.create(broadcast)
-    } catch (e) {
-      logger.error({ err: e }, 'SpotifyPolling initialization failed')
-      broadcast({
-        type: 'SPOTIFY_SERVICE_INIT_UPDATE',
-        payload: false,
-      })
-      // Fallback stub to avoid crashing entire server if Spotify setup fails
-      spotifyService = {
-        handleCommand: () => {},
-        stopPolling: () => {},
-        startPolling: () => {},
-        setRefreshToken: () => {},
-      } as unknown as SpotifyPolling
-    }
+    const spotifyService = await SpotifyPolling.create(broadcast)
     const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
