@@ -63,7 +63,7 @@ test.describe('Infrastructure & Scripts', () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
-    const devServer = spawn('npm', ['run', 'dev'], {
+    const devServer = spawn('bash', ['-c', 'npm run dev > server.log 2>&1'], {
       detached: true,
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
