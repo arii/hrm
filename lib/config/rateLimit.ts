@@ -41,4 +41,10 @@ export const rateLimitConfig = {
     windowMs: 1 * 60 * 1000, // 1 minute
     max: 100,
   },
+  // Extremely strict limit for authentication endpoints to prevent brute-force attacks
+  authentication: {
+    ...defaultOptions,
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 10,
+  },
 }

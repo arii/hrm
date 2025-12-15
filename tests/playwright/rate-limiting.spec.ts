@@ -6,42 +6,87 @@
 
 import { test, expect } from '@playwright/test'
 
-// The endpoint to test. /api/workout is a good candidate as it's a sensitive endpoint.
-const endpoint = '/api/workout'
-// The number of requests to send. This should be greater than the max limit for the endpoint.
-// From our config, the sensitive limit is 50 requests per minute.
-const requestCount = 55
+// Note: These tests require `RATE_LIMITING_ENABLED=true` in the test environment.
 
-test.describe('API Rate Limiting', () => {
-  test('should return a 429 status code when the rate limit is exceeded', async ({
+test.describe('API Rate Limiting - Sensitive Endpoints', () => {
+  test('should return a 429 for sensitive API limit exceeding', async ({
     request,
   }) => {
-    // We need to disable the default timeout for this test, as it will take a while
-    // to send all the requests.
-    test.setTimeout(120000) // 2 minutes
+    test.setTimeout(120000)
+    const endpoint = '/api/workout'
+    const limit = 55 // Configured max is 50
 
     const responses = []
-    for (let i = 0; i < requestCount; i++) {
-      // Send a POST request to the endpoint.
-      // The body can be empty as we're only interested in the response status.
+    for (let i = 0; i < limit; i++) {
       const response = await request.post(endpoint, { data: {} })
       responses.push(response)
     }
 
-    // Find the first response with a 429 status code.
-    const rateLimitedResponse = responses.find(
-      (response) => response.status() === 429
-    )
-
-    // Assert that a 429 response was received.
+    const rateLimitedResponse = responses.find((res) => res.status() === 429)
     expect(rateLimitedResponse).toBeDefined()
     expect(rateLimitedResponse?.status()).toBe(429)
+    const body = await rateLimitedResponse?.json()
+    expect(body.error).toContain('Too many requests')
+  })
+})
 
-    // Assert that the response body contains the expected error message.
-    const responseBody = await rateLimitedResponse?.json()
-    expect(responseBody).toHaveProperty(
-      'error',
-      'Too many requests, please try again later.'
-    )
+test.describe('API Rate Limiting - Critical Endpoints', () => {
+  test('should return 429 for critical API limit exceeding', async ({
+    request,
+  }) => {
+    test.setTimeout(120000)
+    const endpoint = '/api/internal/health/services' // An example of a critical endpoint
+    const limit = 105 // Configured max is 100
+
+    const responses = []
+    for (let i = 0; i < limit; i++) {
+      const response = await request.get(endpoint)
+      responses.push(response)
+    }
+
+    const rateLimitedResponse = responses.find((res) => res.status() === 429)
+    expect(rateLimitedResponse).toBeDefined()
+    expect(rateLimitedResponse?.status()).toBe(429)
+  })
+})
+
+test.describe('API Rate Limiting - Authentication Endpoints', () => {
+  test('should return 429 for authentication API limit exceeding', async ({
+    request,
+  }) => {
+    test.setTimeout(120000)
+    // Use the new, dedicated test endpoint
+    const endpoint = '/api/auth/test-rate-limit'
+    const limit = 15 // Configured max is 10
+
+    const responses = []
+    for (let i = 0; i < limit; i++) {
+      const response = await request.get(endpoint)
+      responses.push(response)
+    }
+
+    const rateLimitedResponse = responses.find((res) => res.status() === 429)
+    expect(rateLimitedResponse).toBeDefined()
+    expect(rateLimitedResponse?.status()).toBe(429)
+  })
+})
+
+test.describe('API Rate Limiting - General Endpoints', () => {
+  test('should return 429 for general API limit exceeding', async ({
+    request,
+  }) => {
+    test.setTimeout(120000)
+    const endpoint = '/api/health' // A general, non-specific endpoint
+    const limit = 205 // Configured max is 200
+
+    const responses = []
+    for (let i = 0; i < limit; i++) {
+      const response = await request.get(endpoint)
+      responses.push(response)
+    }
+
+    const rateLimitedResponse = responses.find((res) => res.status() === 429)
+    expect(rateLimitedResponse).toBeDefined()
+    expect(rateLimitedResponse?.status()).toBe(429)
   })
 })

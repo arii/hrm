@@ -70,11 +70,8 @@ app
       logger.info('Rate limiting is enabled.')
       // Shared key generator for consistency
       const keyGenerator = (req: Request) => {
-        return (
-          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-          req.socket.remoteAddress ||
-          'unknown'
-        )
+        // Rely on 'trust proxy' being set for accurate IP
+        return req.ip || 'unknown'
       }
 
       // Shared handler for logging rate-limited requests
@@ -111,6 +108,12 @@ app
         handler,
       })
 
+      const authenticationApiLimiter = rateLimit({
+        ...rateLimitConfig.authentication,
+        keyGenerator,
+        handler,
+      })
+
       const generalApiLimiter = rateLimit({
         ...rateLimitConfig.general,
         keyGenerator,
@@ -118,6 +121,7 @@ app
       })
 
       // Apply limiters from most specific to least specific
+      expressApp.use('/api/auth/', authenticationApiLimiter)
       expressApp.use('/api/internal/', criticalApiLimiter)
       expressApp.use('/api/workout/', sensitiveApiLimiter)
       expressApp.use('/api/spotify/control/', spotifyControlLimiter)
