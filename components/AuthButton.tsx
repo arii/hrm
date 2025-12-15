@@ -37,11 +37,9 @@ const AuthButton = () => {
     handleClose()
     setIsLoading(true)
     try {
-      await signOut({ redirect: false })
-      window.location.reload()
+      await signOut({ callbackUrl: '/' })
     } catch (error) {
       console.error('Logout failed', error)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -54,6 +52,7 @@ const AuthButton = () => {
           size="small"
           onClick={handleClickOpen}
           disabled={isLoading}
+          aria-label={isLoading ? 'Attempting to log out' : 'Logout'}
           sx={{
             color: 'common.white',
             borderColor: 'grey.600',
@@ -63,7 +62,6 @@ const AuthButton = () => {
             },
             minWidth: 'auto',
             px: 1.5,
-            fontSize: '0.75rem',
           }}
         >
           {isLoading ? 'Logging out...' : 'Logout'}
@@ -99,6 +97,11 @@ const AuthButton = () => {
       color="primary"
       onClick={handleLogin}
       disabled={isLoading || status === 'loading'}
+      aria-label={
+        isLoading || status === 'loading'
+          ? 'Attempting to log in with Spotify'
+          : 'Login with Spotify'
+      }
     >
       {isLoading || status === 'loading' ? 'Loading...' : 'Login with Spotify'}
     </Button>
