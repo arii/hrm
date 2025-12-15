@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.11.0](https://github.com/arii/hrm/compare/v0.10.0...v0.11.0) (2025-12-15)
+
+
+### Features
+
+* add health check endpoints ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* add health check endpoints ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* **hooks:** make `useBluetoothHRM` data liveness timeout configurable ([#1536](https://github.com/arii/hrm/issues/1536)) ([6f18eb6](https://github.com/arii/hrm/commit/6f18eb631b09b5e80d8e3c6aff6743b4d1867502))
+* Implement Dynamic Port Configuration for Testing ([de84a93](https://github.com/arii/hrm/commit/de84a938740020ebaa84a2c3779a4b3dee4046e6))
+
+
+### Bug Fixes
+
+* address linting errors and apply PR feedback ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* correct path in health check unit test ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* manually remove semicolons to fix linting errors ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+* resolve build error by removing empty hook ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+* resolve build errors ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting error in detailed health route ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting errors ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting issue ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+
 ## [0.10.0](https://github.com/arii/hrm/compare/v0.9.1...v0.10.0) (2025-12-14)
 
 
