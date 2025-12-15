@@ -114,7 +114,7 @@ export const WebSocketProvider = ({
         }
       }
       case 'HRM_UPDATE': {
-        const metrics = message.payload as HrmMetric[]
+        const metrics = message.payload
         const hrmDataMap = new Map(
           state.hrmData.map((d) => [d.clientId, d])
         )
