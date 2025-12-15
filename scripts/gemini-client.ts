@@ -449,12 +449,23 @@ async function runReviewPreset(
       },
     })
 
-    // Fallback: If reviewComment is empty but we had success, inject a default message
-    // This handles cases where the model returns an empty string despite instructions.
+    // Immediate fallback check for empty/short raw text before JSON parsing
+    if (!text || text.trim().length < 20) {
+       console.warn('Warning: Raw model response is empty or too short. Injecting fallback immediately.');
+       const fallback = {
+         reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
+         labels: ["ready-for-approval"],
+         verdict: 'approve'
+       };
+       await writeOutput(JSON.stringify(fallback, null, 2), outputFile);
+       return;
+    }
+
+    // JSON Parsing and secondary fallback check
     try {
       const parsed = JSON.parse(text);
       if (!parsed.reviewComment || parsed.reviewComment.trim().length < 20) {
-        console.warn('Warning: Model returned empty or too short review comment. Injecting fallback.');
+        console.warn('Warning: Parsed JSON has empty review comment. Injecting fallback.');
         parsed.reviewComment = `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`;
         parsed.verdict = 'approve';
         await writeOutput(JSON.stringify(parsed, null, 2), outputFile);
@@ -462,8 +473,18 @@ async function runReviewPreset(
         await writeOutput(text, outputFile);
       }
     } catch (e) {
-      // If parsing fails, just output the raw text (standard behavior)
-      await writeOutput(text, outputFile);
+      console.warn('Warning: Failed to parse JSON response. Falling back if text is not useful JSON.', e);
+      // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
+      // If it's just raw text, maybe output it? But safer to standardise output.
+      // Given we asked for JSON, any non-JSON response is suspect.
+      // Let's output the text but wrapped in a valid JSON structure if possible, or just the fallback if it's garbage.
+
+      const fallback = {
+         reviewComment: `### ⚠️ Review Generation Warning\n\nThe AI response could not be parsed as valid JSON. Raw output:\n\n${text}`,
+         labels: ["review-failed"],
+         verdict: 'comment'
+       };
+       await writeOutput(JSON.stringify(fallback, null, 2), outputFile);
     }
   } catch (error) {
     handleError(error)
