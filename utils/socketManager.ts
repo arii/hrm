@@ -16,6 +16,8 @@ import {
   ServerMessage,
   StateSnapshot,
   HrmMetric,
+  TimerData,
+  SpotifyData,
 } from '../types/websocket.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
@@ -125,6 +127,28 @@ const broadcastDeviceList = () => {
   broadcast({
     type: 'HRM_DEVICE_UPDATE',
     payload: devices,
+  })
+}
+
+/**
+ * Broadcasts the current timer state to all connected clients.
+ * @param {TimerData} payload - The timer data to broadcast.
+ */
+export const broadcastTimerUpdate = (payload: TimerData) => {
+  broadcast({
+    type: 'TIMER_UPDATE',
+    payload,
+  })
+}
+
+/**
+ * Broadcasts the current Spotify state to all connected clients.
+ * @param {SpotifyData} payload - The Spotify data to broadcast.
+ */
+export const broadcastSpotifyUpdate = (payload: SpotifyData) => {
+  broadcast({
+    type: 'SPOTIFY_UPDATE',
+    payload,
   })
 }
 
