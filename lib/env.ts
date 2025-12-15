@@ -17,20 +17,18 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('127.0.0.1'),
-  DATABASE_URL: z.string().url().min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().url().optional(),
 
   // --- NextAuth & Security ---
   NEXTAUTH_URL: z.string().url(),
   NEXTAUTH_SECRET: z
     .string()
     .min(1, 'NEXTAUTH_SECRET is required for authentication'),
-  INTERNAL_TOKEN_DELIVERY_SECRET: z
-    .string()
-    .min(1, 'INTERNAL_TOKEN_DELIVERY_SECRET is required'),
+  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().optional(),
 
   // --- Spotify Integration ---
-  SPOTIFY_CLIENT_ID: z.string().min(1, 'SPOTIFY_CLIENT_ID is required'),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1, 'SPOTIFY_CLIENT_SECRET is required'),
+  SPOTIFY_CLIENT_ID: z.string().optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().optional(),
   SPOTIFY_CALLBACK_URL: z.string().url().optional(),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
   SPOTIFY_DEBUG: z.string().optional(),
