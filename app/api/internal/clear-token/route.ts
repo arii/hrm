@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/errors'
+import { SpotifyApiError } from '@/lib/errors'
 import * as fs from 'fs'
 import { NextResponse } from 'next/server'
 import * as path from 'path'
@@ -32,10 +32,10 @@ export async function POST(_req: Request) {
       })
     }
   } catch (error) {
-    if (error instanceof ApiError) {
+    if (error instanceof SpotifyApiError) {
       return NextResponse.json(
         { error: error.message },
-        { status: error.statusCode }
+        { status: error.status }
       )
     }
     logger.error('[API /clear-token] Error clearing token file:', error)

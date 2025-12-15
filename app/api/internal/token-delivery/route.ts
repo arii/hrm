@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/errors'
+import { SpotifyApiError } from '@/lib/errors'
 import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
     if (expected && secretHeader !== expected) {
-      throw new ApiError(401, 'Unauthorized')
+      throw new SpotifyApiError('Unauthorized', 401)
     }
 
     const payload = await req.json()
@@ -39,11 +39,8 @@ export async function POST(req: NextRequest) {
     )
     return NextResponse.json({ ok: true })
   } catch (err) {
-    if (err instanceof ApiError) {
-      return NextResponse.json(
-        { error: err.message },
-        { status: err.statusCode }
-      )
+    if (err instanceof SpotifyApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status })
     }
     logger.error('token-delivery error:', err)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })

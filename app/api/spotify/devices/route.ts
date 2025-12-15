@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { ApiError } from '@/lib/errors'
+import { SpotifyApiError } from '@/lib/errors'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
@@ -34,9 +34,9 @@ export async function GET(_req: Request) {
     }
 
     if (!accessToken) {
-      throw new ApiError(
-        401,
-        'Not authenticated: No user session or valid system token available.'
+      throw new SpotifyApiError(
+        'Not authenticated: No user session or valid system token available.',
+        401
       )
     }
 
@@ -65,11 +65,8 @@ export async function GET(_req: Request) {
     const data = await response.json()
     return NextResponse.json(data.devices || [])
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
+    if (error instanceof SpotifyApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'

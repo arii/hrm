@@ -7,7 +7,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
-import { ApiError } from '@/lib/errors'
+import { SpotifyApiError } from '@/lib/errors'
 
 /**
  * API route to fetch preset and user Spotify playlists.
@@ -25,7 +25,7 @@ async function getPlaylists(_req: Request) {
 
   // 2. Check if the session and token exist.
   if (!session || !session.accessToken) {
-    throw new ApiError(401, 'Not authenticated or token is missing.')
+    throw new SpotifyApiError('Not authenticated or token is missing.', 401)
   }
 
   // 3. Initialize Spotify SDK with access token

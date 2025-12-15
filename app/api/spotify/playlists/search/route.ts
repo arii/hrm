@@ -3,7 +3,7 @@
 // This endpoint is used by the PlaylistSelector component to search for popular playlists
 
 import { authOptions } from '@/lib/auth'
-import { ApiError } from '@/lib/errors'
+import { SpotifyApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      throw new ApiError(401, 'Not authenticated or token is missing.')
+      throw new SpotifyApiError('Not authenticated or token is missing.', 401)
     }
 
     // 3. Get search query from URL parameters
@@ -92,11 +92,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ items: searchResults })
   } catch (error) {
-    if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
+    if (error instanceof SpotifyApiError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'

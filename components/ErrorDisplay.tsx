@@ -2,40 +2,35 @@
 
 import React from 'react'
 import { useError } from '@/context/ErrorContext'
-import { Alert, Snackbar, Stack } from '@mui/material'
+import { Alert, Snackbar } from '@mui/material'
 
+/**
+ * A component that displays error messages as toast notifications.
+ * It consumes the `ErrorContext` to get the list of errors and displays them.
+ */
 const ErrorDisplay: React.FC = () => {
   const { errors, removeError } = useError()
 
   return (
-    <Stack
-      spacing={1}
-      sx={{
-        position: 'fixed',
-        bottom: '80px', // Above the bottom nav bar
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1400, // Higher than other elements
-        minWidth: '300px',
-      }}
-    >
+    <>
       {errors.map((error) => (
         <Snackbar
-          open={true}
           key={error.id}
+          open={true}
+          autoHideDuration={error.type === 'transient' ? 5000 : null}
+          onClose={() => removeError(error.id)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert
             onClose={() => removeError(error.id)}
             severity="error"
             variant="filled"
-            sx={{ width: '100%' }}
           >
             {error.message}
           </Alert>
         </Snackbar>
       ))}
-    </Stack>
+    </>
   )
 }
 
