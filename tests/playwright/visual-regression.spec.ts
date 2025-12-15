@@ -117,7 +117,9 @@ test.describe('Visual Regression Tests', () => {
       const stopStreamingButton = mockPage.getByRole('button', {
         name: 'STOP Streaming',
       })
-      if (await stopStreamingButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT })) {
+      if (
+        await stopStreamingButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT })
+      ) {
         await stopStreamingButton.click()
         await expect(
           mockPage.getByRole('button', { name: 'START Continuous Stream' })
