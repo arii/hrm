@@ -141,8 +141,8 @@ importers:
         specifier: ^8.6.14
         version: 8.6.14(storybook@8.6.14(prettier@3.7.4))
       '@storybook/addon-onboarding':
-        specifier: ^10.1.4
-        version: 10.1.5(storybook@8.6.14(prettier@3.7.4))
+        specifier: ^10.1.9
+        version: 10.1.9(storybook@8.6.14(prettier@3.7.4))
       '@storybook/addon-vitest':
         specifier: ^10.1.4
         version: 10.1.5(@vitest/browser-playwright@4.0.15(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(playwright@1.57.0)(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15))(@vitest/browser@4.0.15(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15(@types/node@24.10.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(jsdom@26.1.0)(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)))(@vitest/runner@4.0.15)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(storybook@8.6.14(prettier@3.7.4))(vitest@4.0.15(@types/node@24.10.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(jsdom@26.1.0)(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -2567,10 +2567,10 @@ packages:
     peerDependencies:
       storybook: ^8.6.14
 
-  '@storybook/addon-onboarding@10.1.5':
-    resolution: {integrity: sha512-fb7m6roDiLOywvnI4w4H5X3K8nMVUDPAvY51BXR/VnS3yuaOrvuvcU/hKbIloMfTN4klSjVD5tgXuMr6HPSYSg==}
+  '@storybook/addon-onboarding@10.1.9':
+    resolution: {integrity: sha512-9f0F5DBA01jZSZXrOzhiuubMdQrej8C15mrIcXoPFNPNbvx9IBYsAiVWv3Tj76mF1IuvVy0J7vzNtGT+kMvKzg==}
     peerDependencies:
-      storybook: ^10.1.5
+      storybook: ^10.1.9
 
   '@storybook/addon-outline@8.6.14':
     resolution: {integrity: sha512-CW857JvN6OxGWElqjlzJO2S69DHf+xO3WsEfT5mT3ZtIjmsvRDukdWfDU9bIYUFyA2lFvYjncBGjbK+I91XR7w==}
@@ -12124,7 +12124,7 @@ snapshots:
       storybook: 8.6.14(prettier@3.7.4)
       tiny-invariant: 1.3.3
 
-  '@storybook/addon-onboarding@10.1.5(storybook@8.6.14(prettier@3.7.4))':
+  '@storybook/addon-onboarding@10.1.9(storybook@8.6.14(prettier@3.7.4))':
     dependencies:
       storybook: 8.6.14(prettier@3.7.4)
 
