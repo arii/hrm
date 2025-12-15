@@ -41,10 +41,7 @@ export async function getUserPlaylists(
       expires: Date.now() + 3600 * 1000,
     }
 
-    const sdk = SpotifyApi.withAccessToken(
-      env.SPOTIFY_CLIENT_ID,
-      tokenObject
-    )
+    const sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, tokenObject)
 
     // Fetch playlists
     const response = await sdk.currentUser.playlists.playlists(50)

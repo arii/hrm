@@ -102,10 +102,7 @@ export class SpotifyPolling {
   }
 
   private setupSdk(accessToken: AccessToken) {
-    this.sdk = SpotifyApi.withAccessToken(
-      env.SPOTIFY_CLIENT_ID,
-      accessToken
-    )
+    this.sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, accessToken)
   }
 
   private async checkAndRefreshSdkToken() {

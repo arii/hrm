@@ -33,8 +33,7 @@ import rateLimit from 'express-rate-limit'
 
 const port: number = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST
+const hostname = env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST
 
 const dev = env.NODE_ENV !== 'production'
 

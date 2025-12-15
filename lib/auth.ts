@@ -68,9 +68,7 @@ async function refreshAccessToken(token: JWT) {
         Authorization:
           'Basic ' +
           Buffer.from(
-            env.SPOTIFY_CLIENT_ID +
-              ':' +
-              env.SPOTIFY_CLIENT_SECRET
+            env.SPOTIFY_CLIENT_ID + ':' + env.SPOTIFY_CLIENT_SECRET
           ).toString('base64'),
       },
       body: new URLSearchParams({
@@ -116,7 +114,6 @@ const SPOTIFY_SCOPES = [
   'user-read-currently-playing',
   'streaming', // Required for Web Playback SDK
 ].join(',')
-
 
 /**
  * Configuration options for NextAuth.js.
@@ -253,7 +250,7 @@ export const authOptions: AuthOptions = {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${env.INTERNAL_TOKEN_DELIVERY_SECRET}`
+                Authorization: `Bearer ${env.INTERNAL_TOKEN_DELIVERY_SECRET}`,
               },
               body: JSON.stringify(tokenPayload),
             })

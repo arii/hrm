@@ -44,15 +44,12 @@ export async function GET(req: NextRequest) {
       )
     }
     // 4. Initialize Spotify SDK with access token
-    const spotify = SpotifyApi.withAccessToken(
-      env.SPOTIFY_CLIENT_ID,
-      {
-        access_token: session.accessToken,
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: '',
-      }
-    )
+    const spotify = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, {
+      access_token: session.accessToken,
+      token_type: 'Bearer',
+      expires_in: 3600,
+      refresh_token: '',
+    })
 
     // 5. Search for playlists using the SDK
     const searchResponse = await spotify.search(

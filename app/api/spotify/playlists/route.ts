@@ -30,15 +30,12 @@ async function getPlaylists(_req: Request) {
   }
 
   // 3. Initialize Spotify SDK with access token
-  const spotify = SpotifyApi.withAccessToken(
-    env.SPOTIFY_CLIENT_ID,
-    {
-      access_token: session.accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600, // Approximate, actual expiry handled by NextAuth
-      refresh_token: '', // Not needed for this use case
-    }
-  )
+  const spotify = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, {
+    access_token: session.accessToken,
+    token_type: 'Bearer',
+    expires_in: 3600, // Approximate, actual expiry handled by NextAuth
+    refresh_token: '', // Not needed for this use case
+  })
 
   // 4. Fetch all user playlists (SDK handles pagination automatically)
   // Correct syntax for @spotify/web-api-ts-sdk

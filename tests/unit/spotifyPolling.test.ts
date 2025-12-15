@@ -97,9 +97,7 @@ describe('SpotifyPolling Service', () => {
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as any).pollInterval) {
-      clearInterval(
-        (spotifyService as any).pollInterval as NodeJS.Timeout
-      )
+      clearInterval((spotifyService as any).pollInterval as NodeJS.Timeout)
       ;(spotifyService as any).pollInterval = null
     }
 

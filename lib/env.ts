@@ -21,8 +21,12 @@ const envSchema = z.object({
 
   // --- NextAuth & Security ---
   NEXTAUTH_URL: z.string().url(),
-  NEXTAUTH_SECRET: z.string().min(1, 'NEXTAUTH_SECRET is required for authentication'),
-  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().min(1, 'INTERNAL_TOKEN_DELIVERY_SECRET is required'),
+  NEXTAUTH_SECRET: z
+    .string()
+    .min(1, 'NEXTAUTH_SECRET is required for authentication'),
+  INTERNAL_TOKEN_DELIVERY_SECRET: z
+    .string()
+    .min(1, 'INTERNAL_TOKEN_DELIVERY_SECRET is required'),
 
   // --- Spotify Integration ---
   SPOTIFY_CLIENT_ID: z.string().min(1, 'SPOTIFY_CLIENT_ID is required'),
@@ -47,8 +51,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
   NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
   NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
-});
-
+})
 
 /**
  * Validated and typed environment variables.
@@ -61,4 +64,4 @@ const envSchema = z.object({
  * import { env } from '@/lib/env';
  * const port = env.PORT;
  */
-export const env = envSchema.parse(process.env);
+export const env = envSchema.parse(process.env)
