@@ -4,45 +4,25 @@
  * and the client hooks via the WebSocket connection.
  */
 
-import { HrmStaticMetadata, TimerMode, TimerPhase } from './shared'
-
 // --- Server Broadcast State Interfaces ---
 
-/**
- * Represents a single, time-stamped heart rate measurement.
- * This is the primary data point for real-time HRM updates.
- */
-export interface HrmMetric {
-  /**
-   * A unique identifier for the client or device, managed by the server.
-   */
+export interface HrmData {
   clientId: string
-  /**
-   * The heart rate value in beats per minute (BPM).
-   */
   value: number
-  /**
-   * The server-generated timestamp (ms since epoch) when the metric was processed.
-   */
-  timestamp: number
+  maxHr: number
+  name?: string
+  age?: number
+  calories: number // Added field
 }
 
-/**
- * Combines the static device metadata with its calculated real-time metrics.
- * Represents the complete state of a single connected HRM device.
- */
-export interface HrmDevice extends HrmStaticMetadata {
-  /**
-   * The calculated total calories burned during the session for this device.
-   */
-  calories: number
-}
-
-/**
- * @deprecated HrmData is deprecated and will be removed. Use HrmDevice for static data
- * and HrmMetric for time-series data.
- */
-export type HrmData = HrmDevice & { value: number }
+export type TimerMode = 'STOPWATCH' | 'TABATA'
+export type TimerPhase =
+  | 'IDLE'
+  | 'PREPARE'
+  | 'WORK'
+  | 'REST'
+  | 'COOLDOWN'
+  | 'RUNNING'
 
 export interface TimerData {
   isRunning: boolean
@@ -89,7 +69,7 @@ export interface SpotifyData {
  * The payload for the INITIAL_STATE message, representing the full application state.
  */
 export interface InitialStateSnapshotPayload {
-  hrmData: HrmDevice[]
+  hrmData: HrmData[]
   timerData: TimerData
   spotifyData: SpotifyData
   spotifyServiceInitialized?: boolean
@@ -119,8 +99,7 @@ export type ServerMessage =
       type: 'INITIAL_STATE'
       payload: InitialStateSnapshotPayload
     }
-  | { type: 'HRM_UPDATE'; payload: HrmMetric[] }
-  | { type: 'HRM_DEVICE_UPDATE'; payload: HrmDevice[] }
+  | { type: 'HRM_UPDATE'; payload: HrmData[] }
   | { type: 'TIMER_UPDATE'; payload: TimerData }
   | { type: 'SPOTIFY_UPDATE'; payload: SpotifyData }
   | { type: 'ACTIVE_ALERTS_UPDATE'; payload: ActiveAlert[] }
@@ -136,7 +115,7 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId' | 'calories'>
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
@@ -203,7 +182,7 @@ import { z } from 'zod'
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 export const HrmInputDataSchema = z.object({
-  value: z.number(),
+  value: z.number().nullable().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),

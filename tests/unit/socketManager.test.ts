@@ -188,6 +188,7 @@ describe('WebSocket Manager', () => {
       }
       getSnapshot = jest.fn()
       broadcastMock = jest.spyOn(broadcast, 'broadcast')
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       localInitSocketManager =
         require('../../utils/socketManager').initSocketManager
     })
