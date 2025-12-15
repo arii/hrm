@@ -16,7 +16,7 @@ describe('DashboardSectionLoadingSkeleton', () => {
       <DashboardSectionLoadingSkeleton
         width={200}
         height="50px"
-        shape="circle"
+        shape="circular"
         count={3}
         className="custom-skeleton"
       />

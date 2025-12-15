@@ -73,7 +73,7 @@ export interface SpotifyPlaylist {
 export interface DashboardSectionLoadingSkeletonProps {
   width?: string | number
   height?: string | number
-  shape?: 'rectangle' | 'circle'
+  shape?: 'rectangular' | 'circular'
   count?: number
   className?: string
 }

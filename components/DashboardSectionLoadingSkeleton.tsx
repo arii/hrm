@@ -8,7 +8,7 @@ const DashboardSectionLoadingSkeleton: React.FC<
 > = ({
   width = '100%',
   height = '100px',
-  shape = 'rectangle',
+  shape = 'rectangular',
   count = 1,
   className,
 }) => {
