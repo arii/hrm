@@ -18,6 +18,7 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { HrmData, StateSnapshot } from '../../types/websocket'
+import { broadcast } from '../../utils/broadcast'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -216,8 +217,6 @@ describe('WebSocket Manager', () => {
           debug: jest.fn(),
         },
       }))
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const broadcast = require('../../utils/broadcast').broadcast
 
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
@@ -245,8 +244,9 @@ describe('WebSocket Manager', () => {
       }
 
       // Check the last broadcasted state
+      const mockBroadcast = broadcast as jest.Mock
       const lastBroadcastCall =
-        broadcast.mock.calls[broadcast.mock.calls.length - 1]
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
 
       // Find the client that has updated calories
