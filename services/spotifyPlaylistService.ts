@@ -41,6 +41,10 @@ export async function getUserPlaylists(
       expires: Date.now() + 3600 * 1000,
     }
 
+    if (!env.SPOTIFY_CLIENT_ID) {
+      throw new Error('Spotify client ID is not defined.')
+    }
+
     const sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, tokenObject)
 
     // Fetch playlists

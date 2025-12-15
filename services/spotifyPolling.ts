@@ -69,6 +69,10 @@ export class SpotifyPolling {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error('Spotify client ID or secret is not defined.')
+    }
+
     this.tokenManager = new SpotifyTokenManager(
       env.SPOTIFY_CLIENT_ID,
       env.SPOTIFY_CLIENT_SECRET
@@ -102,6 +106,9 @@ export class SpotifyPolling {
   }
 
   private setupSdk(accessToken: AccessToken) {
+    if (!env.SPOTIFY_CLIENT_ID) {
+      throw new Error('Spotify client ID is not defined.')
+    }
     this.sdk = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, accessToken)
   }
 
