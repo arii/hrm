@@ -212,6 +212,8 @@ const handleIncomingMessage = (
             }
             broadcastHrmUpdate([newMetric])
           }
+          // After any potential metadata update, broadcast the full device list
+          broadcastDeviceList()
         }
         break
       }

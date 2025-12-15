@@ -6,7 +6,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Container from '@mui/material/Container'
-import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
@@ -110,8 +109,14 @@ export default function MockPage() {
             Simulate heart rate data for testing.
           </Typography>
 
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={8}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ flex: 2 }}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
@@ -119,8 +124,8 @@ export default function MockPage() {
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
               />
-            </Grid>
-            <Grid item xs={4}>
+            </Box>
+            <Box sx={{ flex: 1 }}>
               <TextField
                 label="Age"
                 placeholder="e.g., 30"
@@ -129,8 +134,8 @@ export default function MockPage() {
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           <TextField
             label="Current BPM"
@@ -154,63 +159,56 @@ export default function MockPage() {
           >
             Select a zone to set HR:
           </Typography>
-          <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid item xs="auto">
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#9E9E9E' }}
-                onClick={() => setHrByZone('grey')}
-                data-testid="zone-1-button"
-              >
-                Zone 1
-              </Button>
-            </Grid>
-            <Grid item xs="auto">
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#2196F3' }}
-                onClick={() => setHrByZone('blue')}
-                data-testid="zone-2-button"
-              >
-                Zone 2
-              </Button>
-            </Grid>
-            <Grid item xs="auto">
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#4CAF50' }}
-                onClick={() => setHrByZone('green')}
-                data-testid="zone-3-button"
-              >
-                Zone 3
-              </Button>
-            </Grid>
-            <Grid item xs="auto">
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
-                onClick={() => setHrByZone('yellow')}
-                data-testid="zone-4-button"
-              >
-                Zone 4
-              </Button>
-            </Grid>
-            <Grid item xs="auto">
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{ backgroundColor: '#F44336' }}
-                onClick={() => setHrByZone('red')}
-                data-testid="zone-5-button"
-              >
-                Zone 5
-              </Button>
-            </Grid>
-          </Grid>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              mb: 3,
+            }}
+          >
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#9E9E9E' }}
+              onClick={() => setHrByZone('grey')}
+              data-testid="zone-1-button"
+            >
+              Zone 1
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#2196F3' }}
+              onClick={() => setHrByZone('blue')}
+              data-testid="zone-2-button"
+            >
+              Zone 2
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#4CAF50' }}
+              onClick={() => setHrByZone('green')}
+              data-testid="zone-3-button"
+            >
+              Zone 3
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#FFEB3B', color: 'black' }}
+              onClick={() => setHrByZone('yellow')}
+              data-testid="zone-4-button"
+            >
+              Zone 4
+            </Button>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#F44336' }}
+              onClick={() => setHrByZone('red')}
+              data-testid="zone-5-button"
+            >
+              Zone 5
+            </Button>
+          </Box>
 
           <Button
             variant="contained"
