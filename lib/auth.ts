@@ -19,7 +19,7 @@ declare module 'next-auth' {
 /**
  * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
  * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
- * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
+ * `undefined` for invalid URLs or for local development environments (`localhost`, `12-7.0.0.1`),
  * allowing the browser to default to the current domain.
  *
  * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it

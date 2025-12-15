@@ -3,20 +3,16 @@ import { PrismaClient } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import logger from '../utils/logger'
 
+const prisma = new PrismaClient()
+
 export class SpotifyTokenManager {
   private clientId: string
   private clientSecret: string
   private sdkAccessToken: AccessToken | null = null
-  private prisma: PrismaClient
 
-  constructor(
-    clientId: string,
-    clientSecret: string,
-    prismaClient?: PrismaClient
-  ) {
+  constructor(clientId: string, clientSecret: string) {
     this.clientId = clientId
     this.clientSecret = clientSecret
-    this.prisma = prismaClient || new PrismaClient()
   }
 
   public getSdkAccessToken(): AccessToken | null {
@@ -24,7 +20,7 @@ export class SpotifyTokenManager {
   }
 
   public async getValidAccessToken(): Promise<string | null> {
-    const account = await this.prisma.account.findFirst({
+    const account = await prisma.account.findFirst({
       where: { provider: 'spotify' },
     })
 
@@ -77,7 +73,7 @@ export class SpotifyTokenManager {
         Date.now() / 1000 + refreshedTokens.expires_in
       )
 
-      await this.prisma.account.updateMany({
+      await prisma.account.updateMany({
         where: { provider: 'spotify', refresh_token: refreshToken },
         data: {
           access_token: refreshedTokens.access_token,
