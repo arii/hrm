@@ -182,7 +182,6 @@ app
 
     // --- Express Routing ---
 
-
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
@@ -206,9 +205,7 @@ app
               await new Promise((resolve) => setTimeout(resolve, 1500))
 
               // Force a poll to get immediate feedback
-              if (
-                typeof spotifyService.forcePollAndBroadcast === 'function'
-              ) {
+              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
                 await spotifyService.forcePollAndBroadcast()
               }
             }
