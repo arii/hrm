@@ -1,9 +1,7 @@
 // File: services/spotifyTokenManager.ts
-import { PrismaClient } from '@prisma/client'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
+import { prisma } from '../lib/prisma'
 import logger from '../utils/logger'
-
-const prisma = new PrismaClient()
 
 export class SpotifyTokenManager {
   private clientId: string
@@ -29,17 +27,24 @@ export class SpotifyTokenManager {
       return null
     }
 
-    if (account.expires_at && Date.now() < account.expires_at * 1000 - 60000) {
+    // Check if the token is still valid (with a 60-second buffer)
+    if (
+      account.access_token &&
+      account.expires_at &&
+      Date.now() < account.expires_at * 1000 - 60000
+    ) {
       this.sdkAccessToken = {
-        access_token: account.access_token!,
-        token_type: account.token_type!,
-        expires_in: Math.floor((account.expires_at * 1000 - Date.now()) / 1000),
+        access_token: account.access_token,
+        token_type: account.token_type ?? 'Bearer',
+        expires_in: Math.floor(
+          (account.expires_at * 1000 - Date.now()) / 1000
+        ),
         refresh_token: account.refresh_token,
       }
       return account.access_token
     }
 
-    logger.info('Spotify access token expired, refreshing...')
+    logger.info('Spotify access token expired or invalid, refreshing...')
     return this.refreshAccessToken(account.refresh_token)
   }
 
@@ -66,7 +71,9 @@ export class SpotifyTokenManager {
       const refreshedTokens = await response.json()
 
       if (!response.ok) {
-        throw refreshedTokens
+        throw new Error(
+          `Failed to refresh token: ${JSON.stringify(refreshedTokens)}`
+        )
       }
 
       const newExpiresAt = Math.floor(
@@ -78,6 +85,7 @@ export class SpotifyTokenManager {
         data: {
           access_token: refreshedTokens.access_token,
           expires_at: newExpiresAt,
+          // Spotify may or may not return a new refresh token.
           refresh_token: refreshedTokens.refresh_token ?? refreshToken,
         },
       })

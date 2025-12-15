@@ -8,6 +8,7 @@
     "prebuild": "pnpm run clean",
     "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
+    "migrate:tokens": "ts-node --esm scripts/migrate-tokens.ts",
     "build": "pnpm run build:with-db",
     "build:with-db": "DATABASE_URL=\"file:./prisma/dev.db\" pnpm run build:server && DATABASE_URL=\"file:./prisma/dev.db\" next build",
     "build:server": "DATABASE_URL=\"file:./prisma/dev.db\" pnpm exec prisma generate && pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
@@ -164,7 +165,8 @@
     "typescript-eslint": "^8.49.0",
     "vite": "^7.2.7",
     "vitest": "^4.0.15",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "whatwg-fetch": "^3.6.20"
   },
   "engines": {
     "node": ">=20.0.0",

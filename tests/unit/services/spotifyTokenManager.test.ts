@@ -1,20 +1,28 @@
 // tests/unit/services/spotifyTokenManager.test.ts
 import { SpotifyTokenManager } from '../../../services/spotifyTokenManager'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../../../lib/prisma'
 
-jest.mock('@prisma/client')
+// Mock the prisma singleton
+jest.mock('../../../lib/prisma', () => ({
+  prisma: {
+    account: {
+      findFirst: jest.fn(),
+      updateMany: jest.fn(),
+    },
+  },
+}))
 
-const mockPrisma = new PrismaClient()
+const mockPrisma = prisma
 
 describe('SpotifyTokenManager', () => {
   let tokenManager: SpotifyTokenManager
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Instantiate without passing prisma client
     tokenManager = new SpotifyTokenManager(
       'test-client-id',
-      'test-client-secret',
-      mockPrisma
+      'test-client-secret'
     )
   })
 
@@ -30,6 +38,7 @@ describe('SpotifyTokenManager', () => {
     const expires_at = Math.floor(future.getTime() / 1000)
 
     ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue({
+      provider: 'spotify',
       access_token: 'valid-access-token',
       refresh_token: 'valid-refresh-token',
       expires_at: expires_at,
@@ -47,6 +56,7 @@ describe('SpotifyTokenManager', () => {
     const expires_at = Math.floor(past.getTime() / 1000)
 
     ;(mockPrisma.account.findFirst as jest.Mock).mockResolvedValue({
+      provider: 'spotify',
       access_token: 'expired-access-token',
       refresh_token: 'valid-refresh-token',
       expires_at: expires_at,
