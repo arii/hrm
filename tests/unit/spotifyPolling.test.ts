@@ -96,7 +96,9 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as { pollInterval: NodeJS.Timeout | null }).pollInterval) {
+    if (
+      (spotifyService as { pollInterval: NodeJS.Timeout | null }).pollInterval
+    ) {
       clearInterval(
         (spotifyService as { pollInterval: NodeJS.Timeout | null })
           .pollInterval as NodeJS.Timeout
@@ -107,9 +109,8 @@ describe('SpotifyPolling Service', () => {
     }
 
     if (
-      (
-        spotifyService as { tokenRefreshInterval: NodeJS.Timeout | null }
-      ).tokenRefreshInterval
+      (spotifyService as { tokenRefreshInterval: NodeJS.Timeout | null })
+        .tokenRefreshInterval
     ) {
       clearInterval(
         (
