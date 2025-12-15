@@ -120,11 +120,14 @@ describe('TabataTimer Service', () => {
 
       const beforePause = timer.getState()
       expect(beforePause.timeElapsed).toBe(1)
+      expect(beforePause.currentPhase).toBe('RUNNING')
+
 
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
-      expect(paused.currentPhase).toBe('IDLE')
+      expect(paused.currentPhase).toBe('PAUSED')
+      expect(paused.phaseBeforePause).toBe('RUNNING')
       expect(paused.timeElapsed).toBe(1)
 
       jest.advanceTimersByTime(5000) // Time should not advance while paused
@@ -146,16 +149,15 @@ describe('TabataTimer Service', () => {
       const paused = timer.getState()
       expect(paused.timeElapsed).toBe(5) // Should still be 5
       expect(paused.isRunning).toBe(false)
+      expect(paused.currentPhase).toBe('PAUSED')
 
-      // When resuming, it will go through PREPARE again
+      // Resuming should not trigger a PREPARE phase
       timer.handleCommand('START')
-      jest.advanceTimersByTime(5000) // PREPARE
-      jest.advanceTimersByTime(3000) // RUNNING
+      jest.advanceTimersByTime(3000) // 3 seconds of running
 
       const resumed = timer.getState()
       expect(resumed.currentPhase).toBe('RUNNING')
-      // Time should continue counting (might be 3s or more depending on implementation)
-      expect(resumed.timeElapsed).toBeGreaterThanOrEqual(2)
+      expect(resumed.timeElapsed).toBe(8)
     })
 
     it('should reset to zero when stopped', () => {
@@ -227,7 +229,8 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('PAUSE')
       const paused = timer.getState()
       expect(paused.isRunning).toBe(false)
-      expect(paused.currentPhase).toBe('WORK')
+      expect(paused.currentPhase).toBe('PAUSED')
+      expect(paused.phaseBeforePause).toBe('WORK')
       expect(paused.timeRemaining).toBe(10)
     })
 
@@ -235,12 +238,22 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(10000) // Halfway through WORK
+
+      const beforePause = timer.getState()
+      expect(beforePause.timeRemaining).toBe(10)
+
       timer.handleCommand('PAUSE')
 
-      timer.handleCommand('START')
-      jest.advanceTimersByTime(5000)
+      const paused = timer.getState()
+      expect(paused.timeRemaining).toBe(10)
+      expect(paused.currentPhase).toBe('PAUSED')
+
+
+      timer.handleCommand('START') // Resume
+      jest.advanceTimersByTime(5000) // Run for 5 more seconds
 
       const resumed = timer.getState()
+      expect(resumed.isRunning).toBe(true)
       expect(resumed.currentPhase).toBe('WORK')
       expect(resumed.timeRemaining).toBe(5)
     })
