@@ -125,7 +125,7 @@ const HrmConnectionPanel = () => {
           sx={{
             width: {
               xs: '100%',
-              sm: 'calc(50% - 12px)',
+              sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
             },
           }}
         >
