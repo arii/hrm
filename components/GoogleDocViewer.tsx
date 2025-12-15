@@ -16,7 +16,6 @@ interface GoogleDocViewerProps {
   title: string
   // URL must be the 'embed' version of the Google Doc/Sheet/etc.
   embedUrl: string
-  height?: number
   isShrunk?: boolean // New prop
   onToggleShrink?: () => void // New callback prop
 }
@@ -24,7 +23,6 @@ interface GoogleDocViewerProps {
 const GoogleDocViewer = ({
   title,
   embedUrl,
-  height = 700,
   isShrunk = false, // Default to not shrunk
   onToggleShrink,
 }: GoogleDocViewerProps) => {
@@ -35,8 +33,6 @@ const GoogleDocViewer = ({
     ? embedUrl
     : `${embedUrl}?embedded=true`
 
-  const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
-
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -46,12 +42,22 @@ const GoogleDocViewer = ({
   }, [])
 
   return (
-    <Card elevation={6} sx={{ position: 'relative' }}>
-      <CardContent sx={{ p: 1 }}>
+    <Card
+      elevation={6}
+      sx={{
+        position: 'relative',
+        height: isShrunk ? '200px' : '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'height 0.3s ease-in-out',
+      }}
+    >
+      <CardContent sx={{ p: 1, flexGrow: 1, position: 'relative' }}>
         <Box
           sx={{
             width: '100%',
-            height: `${dynamicHeight}px`,
+            // Take up all available space in the card
+            height: '100%',
             overflow: 'hidden',
             borderRadius: 1,
             border: '1px solid',

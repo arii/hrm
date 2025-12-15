@@ -73,48 +73,70 @@ const Dashboard = () => {
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
         backgroundColor: 'background.default',
+        // Make the container a flex column to fill vertical space
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
       }}
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
+      {/* Main content area that grows to fill available space */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          gap: 2,
+        }}
+      >
+        {/* Top row container for Timer and HRM panels */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {/* 1. TABATA TIMER */}
+          <Box
+            sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
+          >
+            <TimerDisplay
+              phase={timerData.currentPhase}
+              timeRemaining={timerData.timeRemaining}
+              timeElapsed={timerData.timeElapsed}
+              mode={timerData.mode}
+              workDuration={timerData.workDuration}
+              restDuration={timerData.restDuration}
+              soundEventId={timerData.soundEventId}
+            />
+          </Box>
 
-        {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
-          <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-            soundEventId={timerData.soundEventId}
-          />
+          {/* 2. HRM TILES */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              width: { xs: '100%', lg: 'calc(50% - 16px)' },
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+            }}
+          >
+            <ErrorBoundary fallback={<ErrorFallback />}>
+              <HrmConnectionPanel />
+            </ErrorBoundary>
+          </Box>
         </Box>
 
+        {/* Document viewer container that grows */}
         <Box
           sx={{
+            width: '100%',
             flexGrow: 1,
-            width: { xs: '100%', lg: 'calc(50% - 16px)' },
+            // Ensure the Box itself can contain a stretching child
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
+            flexDirection: 'column',
           }}
         >
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmConnectionPanel />
-          </ErrorBoundary>
-        </Box>
-
-        <Box sx={{ width: '100%' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
             <GoogleDocViewer
               title="Today's Training Regimen"
               embedUrl={DOC_URL}
-              height={500}
               isShrunk={docIsManuallyShrunk}
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
@@ -122,6 +144,7 @@ const Dashboard = () => {
         </Box>
       </Box>
 
+      {/* Spotify display at the bottom */}
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
