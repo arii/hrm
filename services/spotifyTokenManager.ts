@@ -175,10 +175,7 @@ export class SpotifyTokenManager {
           })
           .catch((error) => {
             this.refreshPromise = null
-            logger.error(
-              { err: error },
-              'Spotify access token refresh failed'
-            )
+            logger.error({ err: error }, 'Spotify access token refresh failed')
           })
       }
       await this.refreshPromise
@@ -223,7 +220,9 @@ export class SpotifyTokenManager {
   }) {
     const obtainedAt = Date.now()
     // Convert expires_at (absolute timestamp) to expires_in (relative duration in seconds)
-    const expiresIn = Math.round((payload.expires_at * 1000 - obtainedAt) / 1000)
+    const expiresIn = Math.round(
+      (payload.expires_at * 1000 - obtainedAt) / 1000
+    )
 
     const newRecord: TokenRecord = {
       receivedAt: obtainedAt,

@@ -108,7 +108,9 @@ class TabataTimer {
         if (isStopwatch) {
           this.timerState.timeElapsed = Math.floor(timerState.elapsedMs / 1000)
         } else {
-          this.timerState.timeRemaining = Math.ceil(timerState.remainingMs / 1000)
+          this.timerState.timeRemaining = Math.ceil(
+            timerState.remainingMs / 1000
+          )
           this.handleCountdownCue()
         }
 

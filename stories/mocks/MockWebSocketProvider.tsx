@@ -109,7 +109,11 @@ export const MockWebSocketProvider = ({
                   ...d,
                   isConnected: true,
                 })) || []
-              return { ...prev, ...message.payload, hrmData: hrmDataWithConnection }
+              return {
+                ...prev,
+                ...message.payload,
+                hrmData: hrmDataWithConnection,
+              }
             }
             default:
               return prev

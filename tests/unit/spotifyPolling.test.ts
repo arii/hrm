@@ -264,7 +264,12 @@ describe('SpotifyPolling Service', () => {
         .spyOn(spotifyService['tokenManager'], 'persistNewTokens')
         .mockResolvedValue(undefined)
       const initSpy = jest
-        .spyOn(spotifyService as any, 'initializeSdk')
+        .spyOn(
+          spotifyService as unknown as {
+            initializeSdk: () => Promise<void>
+          },
+          'initializeSdk'
+        )
         .mockResolvedValue(undefined)
       const pollSpy = jest
         .spyOn(spotifyService, 'forcePollAndBroadcast')

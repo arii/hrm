@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
       logger.error(
         'Spotify service not initialized. Cannot deliver token. This may happen if the main server is down.'
       )
-      throw new ApiError(503, 'Service Unavailable: Spotify service is not running.')
+      throw new ApiError(
+        503,
+        'Service Unavailable: Spotify service is not running.'
+      )
     }
 
     // 3. Process the Token
@@ -38,7 +41,10 @@ export async function POST(req: NextRequest) {
       'Successfully delivered token to Spotify service in-memory.'
     )
 
-    return NextResponse.json({ ok: true, message: 'Token delivered successfully.' })
+    return NextResponse.json({
+      ok: true,
+      message: 'Token delivered successfully.',
+    })
   } catch (err) {
     if (err instanceof ApiError) {
       return NextResponse.json(
@@ -48,10 +54,7 @@ export async function POST(req: NextRequest) {
     }
     const errorMessage =
       err instanceof Error ? err.message : 'An unknown error occurred'
-    logger.error(
-      { err: errorMessage },
-      'Token delivery failed'
-    )
+    logger.error({ err: errorMessage }, 'Token delivery failed')
     return NextResponse.json(
       { error: 'server_error', details: errorMessage },
       { status: 500 }
