@@ -176,7 +176,7 @@ const handleIncomingMessage = (
             newCalories += safeRate * dtMinutes
           }
 
-          const updateData = Object.fromEntries(
+          const updateData: Partial<HrmData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
 
