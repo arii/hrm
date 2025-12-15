@@ -147,6 +147,7 @@ test.describe('Visual Regression Tests', () => {
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
+        ...getHrMasks(dashboardPage),
       ],
     })
   })
