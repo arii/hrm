@@ -37,7 +37,10 @@ let wsServerInstance: WebSocketServer
 
 const clientData = new Map<string, HrmData>()
 // Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<string, { lastUpdate: number }>()
+const clientSessionState = new Map<
+  string,
+  { lastUpdate: number; accumulatedCalories: number }
+>()
 
 interface Services {
   tabataService: TabataTimer
@@ -73,7 +76,10 @@ const initSocketManager = (
       calories: 0, // Initialize to 0
     }
     clientData.set(extWs.clientId, newClient)
-    clientSessionState.set(extWs.clientId, { lastUpdate: Date.now() })
+    clientSessionState.set(extWs.clientId, {
+      lastUpdate: Date.now(),
+      accumulatedCalories: 0,
+    })
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -165,7 +171,7 @@ const handleIncomingMessage = (
           const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
           sessionState.lastUpdate = now
 
-          let newCalories = existingData.calories
+          let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = message.data.age ?? existingData.age ?? 30
 
@@ -178,8 +184,11 @@ const handleIncomingMessage = (
               CALORIE_DEFAULTS.JOULE_CONVERSION
 
             const safeRate = Math.max(0, rate)
-            newCalories += safeRate * dtMinutes
+            currentAccumulated += safeRate * dtMinutes
           }
+
+          // Update the internal state with high precision value
+          sessionState.accumulatedCalories = currentAccumulated
 
           const updateData: Partial<HrmData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
@@ -188,7 +197,7 @@ const handleIncomingMessage = (
           clientData.set(clientId, {
             ...existingData,
             ...updateData,
-            calories: Math.round(newCalories * 10) / 10,
+            calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
         broadcastState()

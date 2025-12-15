@@ -167,4 +167,83 @@ describe('WebSocket Manager', () => {
       clearInterval(interval)
     })
   })
+
+  describe('Calorie Calculation', () => {
+    let mockWss: WebSocketServer
+    let mockServices: {
+      tabataService: TabataTimer
+      spotifyService: SpotifyPolling
+    }
+    let getSnapshot: () => StateSnapshot
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      mockWss = new (WebSocketServer as jest.Mock)()
+      mockServices = {
+        tabataService: {
+          handleCommand: jest.fn(),
+          setMode: jest.fn(),
+        } as unknown as TabataTimer,
+        spotifyService: {
+          handleCommand: jest.fn(),
+        } as unknown as SpotifyPolling,
+      }
+      getSnapshot = jest.fn()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+      jest.clearAllMocks()
+      // @ts-expect-error-next-line
+      mockWss.clients.clear()
+    })
+
+    it('should accumulate calories correctly with small frequent updates', () => {
+      // Manual mock for logger since it's used in initSocketManager
+      jest.mock('../../utils/logger', () => ({
+        __esModule: true,
+        default: {
+          info: jest.fn(),
+          warn: jest.fn(),
+          error: jest.fn(),
+          debug: jest.fn(),
+        },
+      }))
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const broadcast = require('../../utils/broadcast').broadcast
+
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      // @ts-expect-error-next-line
+      mockWss.clients.add(mockWs)
+      // @ts-expect-error-next-line
+      mockWss.emit('connection', mockWs)
+
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // Initial input
+      sendHrmInput(150)
+
+      // Send 100 updates, each 100ms apart
+      // Should accumulate significant calories even if each step < 0.1 kcal
+      for (let i = 0; i < 100; i++) {
+        jest.advanceTimersByTime(100) // 100ms
+        sendHrmInput(150)
+      }
+
+      // Check the last broadcasted state
+      const lastBroadcastCall =
+        broadcast.mock.calls[broadcast.mock.calls.length - 1]
+      const broadcastPayload = lastBroadcastCall[0].payload
+      const clientData = broadcastPayload[0]
+
+      expect(clientData.calories).toBeGreaterThan(1)
+    })
+  })
 })
