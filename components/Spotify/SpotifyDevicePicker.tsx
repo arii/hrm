@@ -1,5 +1,5 @@
 // components/Spotify/SpotifyDevicePicker.tsx
-import React from 'react'
+import React, { useEffect } from 'react'
 import List from '@mui/material/List'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
@@ -9,8 +9,9 @@ import ComputerIcon from '@mui/icons-material/Computer'
 import SmartphoneIcon from '@mui/icons-material/Smartphone'
 import { ListItemIcon } from '@mui/material'
 import DashboardSectionLoadingSkeleton from '../DashboardSectionLoadingSkeleton'
-import ErrorDisplay from '../ErrorDisplay'
 import { SpotifyDevice } from '@/types'
+import { useError } from '@/context/ErrorContext'
+import ErrorDisplay from '../ErrorDisplay'
 
 const DeviceIcon = ({ type }: { type: string }) => {
   switch (type?.toLowerCase()) {
@@ -38,12 +39,20 @@ const SpotifyDevicePicker: React.FC<SpotifyDevicePickerProps> = ({
   isLoading = false,
   error = null,
 }) => {
+  const { addError } = useError()
+
+  useEffect(() => {
+    if (error) {
+      addError('Failed to fetch devices.')
+    }
+  }, [error, addError])
+
   if (isLoading) {
     return <DashboardSectionLoadingSkeleton />
   }
 
   if (error) {
-    return <ErrorDisplay message="Failed to fetch devices." />
+    return <ErrorDisplay />
   }
 
   if (!devices || devices.length === 0) {
