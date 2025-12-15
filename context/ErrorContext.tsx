@@ -7,7 +7,6 @@ import React, {
   ReactNode,
   useCallback,
 } from 'react'
-
 interface ErrorInfo {
   id: string
   message: string
@@ -22,9 +21,6 @@ interface ErrorContextType {
 
 const ErrorContext = createContext<ErrorContextType | undefined>(undefined)
 
-// Simple ID generator
-const generateId = () => `error-${Date.now()}-${Math.random()}`
-
 export const ErrorProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -36,7 +32,11 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({
 
   const addError = useCallback(
     (message: string, type: 'transient' | 'persistent' = 'transient') => {
-      const newError: ErrorInfo = { id: generateId(), message, type }
+      const newError: ErrorInfo = {
+        id: `error-${Date.now()}-${Math.random()}`,
+        message,
+        type,
+      }
       setErrors((prevErrors) => [...prevErrors, newError])
 
       if (type === 'transient') {

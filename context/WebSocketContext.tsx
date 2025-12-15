@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
   useReducer,
-  Dispatch,
 } from 'react'
 import {
   ClientCommandMessage,
@@ -165,16 +164,6 @@ export const WebSocketProvider = ({
   }
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
-
-  // Expose dispatch for testing purposes
-  useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      process.env.NODE_ENV === 'development'
-    ) {
-      window.__dispatch = dispatch as Dispatch<ServerMessage>
-    }
-  }, [dispatch])
 
   const throttledDispatch = useRef(
     throttle((message: ServerMessage) => {

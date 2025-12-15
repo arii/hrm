@@ -10,7 +10,6 @@ import SmartphoneIcon from '@mui/icons-material/Smartphone'
 import { ListItemIcon } from '@mui/material'
 import DashboardSectionLoadingSkeleton from '../DashboardSectionLoadingSkeleton'
 import { SpotifyDevice } from '@/types'
-import { useError } from '@/context/ErrorContext'
 import ErrorDisplay from '../ErrorDisplay'
 
 const DeviceIcon = ({ type }: { type: string }) => {
@@ -39,14 +38,6 @@ const SpotifyDevicePicker: React.FC<SpotifyDevicePickerProps> = ({
   isLoading = false,
   error = null,
 }) => {
-  const { addError } = useError()
-
-  useEffect(() => {
-    if (error) {
-      addError('Failed to fetch devices.')
-    }
-  }, [error, addError])
-
   if (isLoading) {
     return <DashboardSectionLoadingSkeleton />
   }

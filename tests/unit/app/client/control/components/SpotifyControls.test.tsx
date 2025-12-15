@@ -8,6 +8,8 @@ import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import '@testing-library/jest-dom'
+import { ErrorProvider } from '@/context/ErrorContext'
+import React from 'react'
 
 // Mock the router
 jest.mock('next/navigation', () => ({
@@ -31,6 +33,10 @@ jest.mock('@/hooks/useSpotifyDevices', () => ({
     transferPlayback: jest.fn(),
   }),
 }))
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <ErrorProvider>{children}</ErrorProvider>
+)
 
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
@@ -60,14 +66,14 @@ describe('components/SpotifyControls', () => {
   })
 
   it('renders Spotify controls with track info', () => {
-    render(<SpotifyControls />)
+    render(<SpotifyControls />, { wrapper })
     expect(screen.getByText('Test Track')).toBeInTheDocument()
     expect(screen.getByText('Test Artist')).toBeInTheDocument()
     expect(screen.getByLabelText('Pause')).toBeInTheDocument()
   })
 
   it('handles playback commands', () => {
-    render(<SpotifyControls />)
+    render(<SpotifyControls />, { wrapper })
     fireEvent.click(screen.getByLabelText('Pause'))
     expect(mockSendData).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -78,7 +84,7 @@ describe('components/SpotifyControls', () => {
   })
 
   it('should render the mute button with the correct aria-label', () => {
-    render(<SpotifyControls />)
+    render(<SpotifyControls />, { wrapper })
     const muteButton = screen.getByLabelText(/mute volume/i)
     expect(muteButton).toBeInTheDocument()
   })
