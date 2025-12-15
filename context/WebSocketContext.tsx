@@ -17,6 +17,8 @@ import {
   TimerData,
   ServerMessage,
   ActiveAlert,
+  HrmMetric,
+  HrmDevice,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 
@@ -94,51 +96,41 @@ export const WebSocketProvider = ({
     message: ServerMessage
   ): WebSocketState => {
     switch (message.type) {
-      case 'INITIAL_STATE': {
-        // When the initial state is loaded, ensure all HRM data is marked as connected.
-        const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
+      case 'INITIAL_STATE':
+      case 'HRM_DEVICE_UPDATE': {
+        const hrmDevices =
+          message.type === 'INITIAL_STATE'
+            ? message.payload.hrmData
+            : message.payload
+        const hrmDataWithConnection = hrmDevices.map((d: HrmDevice) => ({
+          ...d,
+          value: 0, // Initialize with a default value
+          isConnected: true,
+        }))
         return {
           ...state,
-          ...message.payload,
+          ...(message.type === 'INITIAL_STATE' ? message.payload : {}),
           hrmData: hrmDataWithConnection,
         }
       }
       case 'HRM_UPDATE': {
-        const payload = message.payload as ServerHrmData[]
-        // Create a map of incoming clientIds for efficient lookup
-        const incomingClients = new Set(payload.map((user) => user.clientId))
+        const metrics = message.payload as HrmMetric[]
+        const hrmDataMap = new Map(
+          state.hrmData.map((d) => [d.clientId, d])
+        )
 
-        // Create a new state array by merging existing and new data
-        const mergedHrmData = state.hrmData.map((existingUser) => {
-          if (incomingClients.has(existingUser.clientId)) {
-            const updatedUser = payload.find(
-              (newUser) => newUser.clientId === existingUser.clientId
-            )
-            return updatedUser
-              ? {
-                  ...existingUser,
-                  ...updatedUser,
-                  isConnected: true,
-                }
-              : { ...existingUser, isConnected: true }
-          }
-          return { ...existingUser, isConnected: false }
-        })
-
-        // Add any brand-new users from the payload who were not in the previous state
-        payload.forEach((newUser) => {
-          if (
-            !state.hrmData.some(
-              (existingUser) => existingUser.clientId === newUser.clientId
-            )
-          ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
+        metrics.forEach((metric) => {
+          const existingData = hrmDataMap.get(metric.clientId)
+          if (existingData) {
+            hrmDataMap.set(metric.clientId, {
+              ...existingData,
+              value: metric.value,
+              isConnected: true,
+            })
           }
         })
 
-        return { ...state, hrmData: mergedHrmData }
+        return { ...state, hrmData: Array.from(hrmDataMap.values()) }
       }
       case 'TIMER_UPDATE':
         return {
