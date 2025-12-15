@@ -1,6 +1,6 @@
-// File: middleware.ts (NextAuth Reverse Proxy Middleware)
+// File: proxy.ts (NextAuth Reverse Proxy)
 /**
- * Middleware to handle reverse proxy headers for NextAuth.js
+ * Proxy to handle reverse proxy headers for NextAuth.js.
  * This ensures that HTTPS cookies work properly behind a reverse proxy.
  */
 import { NextResponse } from 'next/server'
@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server'
 // Base path for auth routes
 const API_AUTH_BASE = '/api/auth/'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Only handle auth routes
   if (!request.nextUrl.pathname.startsWith(API_AUTH_BASE)) {
     return NextResponse.next()
@@ -54,7 +54,7 @@ export function middleware(request: NextRequest) {
 
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Middleware] Auth request:', {
+    console.log('[Proxy] Auth request:', {
       pathname: request.nextUrl.pathname,
       host: request.headers.get('host'),
       forwardedHost,
