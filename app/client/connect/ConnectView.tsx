@@ -1,4 +1,3 @@
-
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -119,7 +118,6 @@ export default function ConnectView({
             <TextField
               fullWidth
               label="Your Name"
-              name="userName"
               placeholder="e.g., Jane Doe"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}

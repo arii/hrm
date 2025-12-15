@@ -1,4 +1,3 @@
-
 'use client'
 
 import HeartBroken from '@mui/icons-material/HeartBroken'
@@ -121,7 +120,6 @@ export default function MockPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
-                inputProps={{ 'data-testid': 'user-name-input' }}
               />
             </Grid>
             <Grid size={{ xs: 4 }}>
@@ -132,7 +130,6 @@ export default function MockPage() {
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10))}
                 fullWidth
-                inputProps={{ 'data-testid': 'age-input' }}
               />
             </Grid>
           </Grid>
