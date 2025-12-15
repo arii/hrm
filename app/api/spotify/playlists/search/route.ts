@@ -1,6 +1,6 @@
 // File: app/api/spotify/playlists/search/route.ts
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { authOptions } from '@/lib/auth'
