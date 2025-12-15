@@ -2,15 +2,10 @@ import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
-
-// Utility: Safely parse JSON, fallback to text
-function safeParseJSON(input: string): unknown {
-  try {
-    return JSON.parse(input)
-  } catch {
-    return input // Return raw text if not JSON
-  }
-}
+import {
+  handleSpotifyApiError,
+  logSpotifyCommandError,
+} from './spotifyApiErrorHandling.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
@@ -179,37 +174,8 @@ export class SpotifyPolling {
   private getCurrentlyPlaying = async () => {
     if (!this.sdk) return
 
-    // Ensure token is valid before call?
-    // We rely on background refresh or failure handling.
-
     try {
-      let playbackState
-      try {
-        playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
-      } catch (err: unknown) {
-        // If response is not JSON, fallback to text
-        if (
-          typeof err === 'object' &&
-          err !== null &&
-          'response' in err &&
-          typeof (err as { response?: unknown }).response === 'object' &&
-          (err as { response?: { text?: unknown } }).response &&
-          'text' in (err as { response: { text?: unknown } }).response &&
-          typeof (err as { response: { text?: unknown } }).response.text ===
-            'function'
-        ) {
-          const text = await (
-            err as { response: { text: () => Promise<string> } }
-          ).response.text()
-          const parsed = safeParseJSON(text)
-          if (typeof parsed === 'object' && parsed !== null) {
-            logger.error({ response: parsed }, 'Spotify API response (parsed)')
-          } else {
-            logger.error({ response: text }, 'Spotify API response (not JSON)')
-          }
-        }
-        throw err
-      }
+      const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
       if (!playbackState) {
         // Nothing playing or 204
@@ -274,21 +240,7 @@ export class SpotifyPolling {
         })
       }
     } catch (error) {
-      const err = error as { status?: number }
-      // Handle 429 specifically
-      if (err?.status === 429) {
-        logger.warn('Spotify API Rate Limited. Backing off...')
-        // Maybe stop polling for a bit?
-        return
-      }
-
-      if (err?.status === 401) {
-        logger.warn('Spotify token expired during polling. Attempting refresh.')
-        this.checkAndRefreshSdkToken()
-        return
-      }
-
-      logger.error({ err: error }, 'Error fetching currently playing track')
+      await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
     }
   }
 
@@ -346,7 +298,7 @@ export class SpotifyPolling {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
-        this.logSpotifyCommandError(command, error)
+        await logSpotifyCommandError(command, error)
       }
     })()
   }
@@ -406,91 +358,6 @@ export class SpotifyPolling {
         break
       default:
         logger.warn({ command }, 'Unknown Spotify command')
-    }
-  }
-
-  private async logSpotifyCommandError(
-    command: SpotifyCommand,
-    error: unknown
-  ) {
-    try {
-      if (error instanceof SyntaxError) {
-        // Suppress SyntaxError which usually occurs when Spotify returns a non-JSON response (e.g. 204 No Content or simple text error)
-        // This is "expected" behavior from the SDK in some edge cases.
-        logger.warn(
-          { command },
-          'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
-        )
-      } else if (error && typeof error === 'object') {
-        if (
-          'response' in error &&
-          (error as { response?: { text?: () => Promise<string> } }).response
-        ) {
-          try {
-            let text = '[No response text available]'
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error as { response?: unknown }).response === 'object' &&
-              (error as { response?: { text?: unknown } }).response &&
-              'text' in (error as { response: { text?: unknown } }).response &&
-              typeof (error as { response: { text?: unknown } }).response
-                .text === 'function'
-            ) {
-              try {
-                text = await (
-                  error as { response: { text: () => Promise<string> } }
-                ).response.text()
-              } catch (textError) {
-                // Sometimes calling text() itself might fail if body was already consumed or invalid
-                logger.error(
-                  { command, err: textError },
-                  'Failed to retrieve error response text'
-                )
-                logger.error(
-                  { command, err: error },
-                  'Error executing Spotify command'
-                )
-                return
-              }
-
-              const parsed = safeParseJSON(text)
-              if (typeof parsed === 'object' && parsed !== null) {
-                logger.error(
-                  { command, response: parsed },
-                  'Error executing Spotify command: Parsed response'
-                )
-              } else {
-                logger.error(
-                  { command, response: text },
-                  'Error executing Spotify command: Response body'
-                )
-              }
-            }
-          } catch (e) {
-            logger.error(
-              { command, err: e },
-              'Could not read response body for failed Spotify command'
-            )
-          }
-        } else {
-          // Log other object errors
-          logger.error(
-            { command, err: error },
-            'Error executing Spotify command'
-          )
-        }
-      } else {
-        logger.error({ command, err: error }, 'Error executing Spotify command')
-      }
-    } catch (loggingError) {
-      // Absolute failsafe to prevent logger from crashing the app
-      logger.error(
-        { command, err: loggingError },
-        'Error executing Spotify command (Logging failed)'
-      )
-      logger.error({ command, originalError: error }, 'Original error')
     }
   }
 }
