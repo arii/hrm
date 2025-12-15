@@ -89,7 +89,11 @@ describe('useBluetoothHRM', () => {
     jest.clearAllMocks()
   })
 
-  const simulateConnection = async (hook: any) => {
+  type UseBluetoothHRMReturn = ReturnType<typeof useBluetoothHRM>
+
+  const simulateConnection = async (hook: {
+    result: { current: UseBluetoothHRMReturn }
+  }) => {
     await act(async () => {
       hook.result.current.connectAndStream('Test User', 30)
       await Promise.resolve() // Allow promises to resolve
