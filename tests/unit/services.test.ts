@@ -12,11 +12,12 @@ import {
 } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
+import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 
 // Mock fetch globally
-global.fetch = jest.fn()
+global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -28,11 +29,22 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 describe('Services Integration', () => {
-  let tabataTimer
-  let spotifyService
-  let broadcastedMessages
-  let broadcastFn
-  let mockSdk
+  let tabataTimer: TabataTimer
+  let spotifyService: SpotifyPolling
+  let broadcastedMessages: ServerMessage[]
+  let broadcastFn: (message: ServerMessage) => void
+  let mockSdk: {
+    player: {
+      getCurrentlyPlayingTrack: jest.Mock
+      startResumePlayback: jest.Mock
+      pausePlayback: jest.Mock
+      skipToNext: jest.Mock
+      skipToPrevious: jest.Mock
+      transferPlayback: jest.Mock
+      setPlaybackVolume: jest.Mock
+      getAvailableDevices: jest.Mock
+    }
+  }
 
   beforeEach(async () => {
     jest.useFakeTimers()
@@ -40,24 +52,22 @@ describe('Services Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (message) => {
+    broadcastFn = (message: ServerMessage) => {
       broadcastedMessages.push(message)
     }
 
     // Mock TokenManager to return a valid token
-    jest
-      .spyOn(SpotifyTokenManager, 'mockImplementation')
-      .mockImplementation(() => ({
-        getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-        getSdkAccessToken: jest.fn().mockReturnValue({
-          access_token: 'test_access_token',
-          token_type: 'Bearer',
-          expires_in: 3600,
-          refresh_token: 'refresh_token',
-        }),
-        stopPolling: jest.fn(),
-        cleanup: jest.fn(),
-      }))
+    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
+      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
+      getSdkAccessToken: jest.fn().mockReturnValue({
+        access_token: 'test_access_token',
+        token_type: 'Bearer',
+        expires_in: 3600,
+        refresh_token: 'refresh_token',
+      }),
+      stopPolling: jest.fn(),
+      cleanup: jest.fn(),
+    }))
 
     // Mock SDK instance
     mockSdk = {

@@ -59,7 +59,7 @@ describe('AuthButton', () => {
       name: /logout/i,
     })
     fireEvent.click(logoutButtonInDialog)
-    expect(signOutMock).toHaveBeenCalledWith({ redirect: false })
+    expect(signOutMock).toHaveBeenCalledWith({ callbackUrl: '/' })
   })
 
   it('closes dialog on cancel', () => {
