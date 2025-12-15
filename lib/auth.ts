@@ -17,7 +17,7 @@ declare module 'next-auth' {
 /**
  * Safely extracts the hostname from the `NEXTAUTH_URL` environment variable to be used
  * as the domain for NextAuth cookies. This prevents cookie domain errors by returning
- * `undefined` for invalid URLs or for local development environments (`localhost`, `127.0.0.1`),
+ * `undefined` for invalid URLs or for local development environments (`localhost`, `12ce7.0.0.1`),
  * allowing the browser to default to the current domain.
  *
  * @returns {string | undefined} The hostname for the cookie domain, or `undefined` if it
@@ -59,6 +59,9 @@ function getCookieDomain(): string | undefined {
  */
 async function refreshAccessToken(token: JWT) {
   try {
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error('Spotify client ID or secret is not defined.')
+    }
     // Use the standard Spotify accounts endpoint for token refresh
     const url = 'https://accounts.spotify.com/api/token'
     const response = await fetch(url, {
@@ -114,6 +117,10 @@ const SPOTIFY_SCOPES = [
   'user-read-currently-playing',
   'streaming', // Required for Web Playback SDK
 ].join(',')
+
+if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+  throw new Error('Spotify client ID or secret is not defined.')
+}
 
 /**
  * Configuration options for NextAuth.js.
