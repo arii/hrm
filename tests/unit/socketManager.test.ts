@@ -9,12 +9,16 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { initSocketManager } from '../../utils/socketManager'
+import {
+  initSocketManager,
+  resetSocketManager,
+} from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
-import { StateSnapshot } from '../../types/websocket'
+import { HrmData, StateSnapshot } from '../../types/websocket'
+import { broadcast } from '../../utils/broadcast'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -29,6 +33,17 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 jest.mock('../../utils/broadcast', () => ({
   initBroadcaster: jest.fn(),
   broadcast: jest.fn(),
+}))
+
+// Mock logger globally for the test file
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
 }))
 
 // Manual mock for the 'ws' module
@@ -99,6 +114,8 @@ describe('WebSocket Manager', () => {
       jest.clearAllMocks()
       // @ts-expect-error-next-line
       mockWss.clients.clear()
+      // Reset module-level state to ensure test isolation
+      resetSocketManager()
     })
 
     it('should set lastPingTime on new connection', () => {
@@ -165,6 +182,79 @@ describe('WebSocket Manager', () => {
 
       expect(mockWs.terminate).not.toHaveBeenCalled()
       clearInterval(interval)
+    })
+  })
+
+  describe('Calorie Calculation', () => {
+    let mockWss: WebSocketServer
+    let mockServices: {
+      tabataService: TabataTimer
+      spotifyService: SpotifyPolling
+    }
+    let getSnapshot: () => StateSnapshot
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      mockWss = new (WebSocketServer as jest.Mock)()
+      mockServices = {
+        tabataService: {
+          handleCommand: jest.fn(),
+          setMode: jest.fn(),
+        } as unknown as TabataTimer,
+        spotifyService: {
+          handleCommand: jest.fn(),
+        } as unknown as SpotifyPolling,
+      }
+      getSnapshot = jest.fn()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+      jest.clearAllMocks()
+      // @ts-expect-error-next-line
+      mockWss.clients.clear()
+      // Reset module-level state to ensure test isolation
+      resetSocketManager()
+    })
+
+    it('should accumulate calories correctly with small frequent updates', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      // @ts-expect-error-next-line
+      mockWss.clients.add(mockWs)
+      // @ts-expect-error-next-line
+      mockWss.emit('connection', mockWs)
+
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // Initial input
+      sendHrmInput(150)
+
+      // Send 100 updates, each 100ms apart
+      // Should accumulate significant calories even if each step < 0.1 kcal
+      for (let i = 0; i < 100; i++) {
+        jest.advanceTimersByTime(100) // 100ms
+        sendHrmInput(150)
+      }
+
+      // Check the last broadcasted state
+      const mockBroadcast = broadcast as jest.Mock
+      const lastBroadcastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
+
+      // Find the client that has updated calories
+      const clientData = broadcastPayload.find((c) => c.calories > 0)
+
+      expect(clientData).toBeDefined()
+      // Use non-null assertion as we've checked definition
+      expect(clientData!.calories).toBeGreaterThan(1)
     })
   })
 })
