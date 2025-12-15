@@ -14,8 +14,8 @@ import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
-import VolumeControl from '../../../components/Spotify/VolumeControl' // I will recreate this temporarily
+import { useEffect, useState, useRef } from 'react'
+import VolumeSlider from '../../../components/Spotify/VolumeSlider'
 import useVolumePreference from '../../../hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
@@ -74,7 +74,8 @@ const SpotifySelectionPage = () => {
       setSelectedDeviceId('')
     }
   }, [availableDevices, selectedDeviceId])
-  const { volume, setVolume } = useVolumePreference()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handlePlaylistSelected = (uri: string) => {
     setSelectedPlaylistUri(uri)
@@ -197,13 +198,21 @@ const SpotifySelectionPage = () => {
                 Next
               </Button>
             </Stack>
-            <VolumeControl
+            <VolumeSlider
               volume={volume}
-              onVolumeChange={setVolume}
-              onVolumeChangeCommitted={(newVolume) =>
-                hasActiveDevice &&
-                sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
-              }
+              muted={muted}
+              onVolumeChange={(newVolume) => {
+                setVolume(newVolume)
+                if (debounceTimeoutRef.current) {
+                  clearTimeout(debounceTimeoutRef.current)
+                }
+                debounceTimeoutRef.current = setTimeout(() => {
+                  if (hasActiveDevice) {
+                    sendSpotifyCommand('SET_VOLUME', { volume: newVolume })
+                  }
+                }, 300)
+              }}
+              onToggleMute={toggleMute}
             />
             {/* Device dropdown */}
             {availableDevices.length > 0 && (

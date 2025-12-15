@@ -51,6 +51,8 @@ const INITIAL_STATE: WebSocketState = {
     artist: '',
     isPlaying: false,
     devices: [],
+    volume: 70,
+    isMuted: false,
   },
   activeAlerts: [],
   spotifyServiceInitialized: true,

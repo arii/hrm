@@ -61,6 +61,8 @@ export interface SpotifyData {
   artist: string
   isPlaying: boolean
   devices: SpotifyDevice[] // <--- ADDED: Synced device list
+  volume: number
+  isMuted: boolean
 }
 
 /**

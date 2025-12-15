@@ -1,8 +1,6 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
 import MusicNote from '@mui/icons-material/MusicNote'
-import VolumeOff from '@mui/icons-material/VolumeOff'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -11,16 +9,14 @@ import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
-import Slider from '@mui/material/Slider'
-import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
+import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -30,7 +26,6 @@ const SpotifyControls = () => {
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const [isDragging, setIsDragging] = useState(false)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleBrowseClick = () => {
@@ -77,11 +72,7 @@ const SpotifyControls = () => {
     prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging)
-    if (
-      !isDragging &&
-      activeDevice &&
-      typeof activeDevice.volume_percent === 'number'
-    ) {
+    if (activeDevice && typeof activeDevice.volume_percent === 'number') {
       if (activeDevice.volume_percent !== volume) {
         setVolume(activeDevice.volume_percent)
       }
@@ -154,6 +145,8 @@ const SpotifyControls = () => {
     [connectionStatus, resolveTargetDeviceId, sendData]
   )
 
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
     if (connectionStatus !== 'Connected') {
       lastSentVolumeRef.current = null
@@ -161,7 +154,23 @@ const SpotifyControls = () => {
   }, [connectionStatus])
 
   useEffect(() => {
-    sendVolumeCommand(volume)
+    // Clear any existing timer
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set a new timer to send the volume command after 300ms
+    debounceTimeoutRef.current = setTimeout(() => {
+      sendVolumeCommand(volume)
+    }, 300)
+
+    // Cleanup function to clear the timeout if the component unmounts
+    // or if the volume changes again before the timeout has passed
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
   }, [volume, sendVolumeCommand])
 
   return (
@@ -208,41 +217,13 @@ const SpotifyControls = () => {
               disabled={connectionStatus !== 'Connected'}
             />
 
-            <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton
-                onClick={toggleMute}
-                aria-label={muted ? 'Unmute volume' : 'Mute volume'}
-                size="small"
-                sx={{ color: 'grey.400' }}
-              >
-                {muted ? <VolumeOff /> : <VolumeUp />}
-              </IconButton>
-              <Slider
-                aria-label="Volume control"
-                value={volume}
-                onChange={(_, val) => {
-                  setIsDragging(true)
-                  setVolume(val as number)
-                }}
-                onChangeCommitted={(_, val) => {
-                  setIsDragging(false)
-                  sendVolumeCommand(val as number)
-                }}
-                min={0}
-                max={100}
-                size="small"
-                sx={{
-                  color: '#1DB954',
-                  '& .MuiSlider-thumb': { backgroundColor: 'white' },
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ color: 'grey.400', minWidth: '3ch' }}
-              >
-                {volume}
-              </Typography>
-            </Stack>
+            <VolumeSlider
+              volume={volume}
+              muted={muted}
+              onVolumeChange={setVolume}
+              onToggleMute={toggleMute}
+            />
+
             {devices.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
