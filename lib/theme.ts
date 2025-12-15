@@ -319,9 +319,10 @@ const theme = createTheme({
     },
     MuiAlert: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           borderRadius: 12,
-        },
+          boxShadow: theme.shadows[3],
+        }),
       },
     },
   },
