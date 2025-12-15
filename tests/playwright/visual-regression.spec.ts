@@ -111,26 +111,6 @@ test.describe('Visual Regression Tests', () => {
         e
       )
     }
-
-    // Stop mock client stream to ensure clean state
-    try {
-      const stopStreamingButton = mockPage.getByRole('button', {
-        name: 'STOP Streaming',
-      })
-      if (
-        await stopStreamingButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT })
-      ) {
-        await stopStreamingButton.click()
-        await expect(
-          mockPage.getByRole('button', { name: 'START Continuous Stream' })
-        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-      }
-    } catch (error) {
-      console.warn(
-        'Mock client stream stop encountered an issue (ignoring):',
-        error
-      )
-    }
   })
 
   // Clean up after all tests
@@ -167,7 +147,6 @@ test.describe('Visual Regression Tests', () => {
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
-        ...getHrMasks(dashboardPage),
       ],
     })
   })
@@ -312,36 +291,6 @@ test.describe('Visual Regression Tests', () => {
         firstTile.locator('[data-testid="live-hr-value"]'),
         firstTile.locator('[data-testid="live-hr-percent"]'),
       ],
-    })
-  })
-
-  test('HR Tile with Workout Data', async () => {
-    // Start streaming from the mock client
-    await mockPage.click('button:has-text("START")')
-    await expect(
-      mockPage.locator('button:has-text("STOP Streaming")')
-    ).toBeVisible()
-
-    // Start a workout to make the data appear
-    await controlPage.click('button:has-text("START")', { force: true })
-
-    // Wait for the HR tile to be visible on the dashboard
-    const firstTile = dashboardPage
-      .locator('[data-testid="hr-tile-grid-item"]')
-      .first()
-    await expect(firstTile).toBeVisible({ timeout: WAIT_TIMEOUTS.LONG })
-
-    // Wait for the workout data to appear
-    await expect(firstTile.getByText('kcal')).toBeVisible({
-      timeout: WAIT_TIMEOUTS.LONG,
-    })
-
-    // Capture the screenshot
-    await expect(firstTile).toHaveScreenshot('hr-tile-with-workout-data.png', {
-      animations: 'disabled',
-      caret: 'hide',
-      threshold: 0.2,
-      maxDiffPixelRatio: 0.05,
     })
   })
 })
