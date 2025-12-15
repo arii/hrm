@@ -44,13 +44,13 @@ interface ReviewContext {
   resolvedCount: number
   changesRequested: number
   previousReviews: string
-  linkedIssueBody?: string
-  issueNumber?: string
-  issueTitle?: string
+  linkedIssueBody?: string | undefined
+  issueNumber?: string | undefined
+  issueTitle?: string | undefined
   commitMessages: string
   hasTestChanges: boolean
   missingTests: boolean
-  testFiles?: string
+  testFiles?: string | undefined
 }
 
 async function main() {
