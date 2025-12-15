@@ -3,6 +3,8 @@
 import { useEffect } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyExecutionMessage } from '@/types/websocket'
+import { callSpotifyApi } from '@/lib/api'
+import { useError } from '@/context/ErrorContext'
 
 // Define the shape of the player object from useSpotifyWebPlayback hook
 interface SpotifyPlayerInstance {
@@ -22,6 +24,7 @@ export const useSpotifyRemoteExecution = (
   player: SpotifyPlayerInstance | null
 ): void => {
   const { sendData } = useWebSocket()
+  const { addError } = useError()
 
   useEffect(() => {
     if (!player) return
@@ -31,48 +34,38 @@ export const useSpotifyRemoteExecution = (
     sendData({ type: 'REGISTER_CLIENT', role: 'dashboard' })
 
     // Listen for custom events dispatched by the WebSocket context
-    const handleCustomEvent = (event: CustomEvent) => {
+    const handleCustomEvent = async (event: CustomEvent) => {
       const message = event.detail as SpotifyExecutionMessage
       if (message.type === 'EXECUTE_SPOTIFY') {
         const { command, volume, deviceId } = message.payload
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
         try {
+          const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command, volume, deviceId }),
+          }
+
           switch (command) {
             case 'PLAY':
             case 'PAUSE':
-              // Use the Spotify Web API for playback control
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: command }),
-              })
-              break
             case 'NEXT':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'NEXT' }),
-              })
-              break
             case 'PREVIOUS':
-              fetch('/api/spotify/control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'PREVIOUS' }),
+              await callSpotifyApi('/api/spotify/control', {
+                ...options,
+                body: JSON.stringify({ command }),
               })
               break
             case 'SET_VOLUME':
               if (volume !== undefined) {
-                // Use both the local player and the API for volume control
                 const vol = volume > 1 ? volume / 100 : volume
                 player.setVolume(vol)
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                await callSpotifyApi('/api/spotify/control', {
+                  ...options,
                   body: JSON.stringify({
                     command: 'SET_VOLUME',
-                    volume: volume,
+                    volume,
                     deviceId,
                   }),
                 })
@@ -80,9 +73,8 @@ export const useSpotifyRemoteExecution = (
               break
             case 'TRANSFER_PLAYBACK':
               if (deviceId) {
-                fetch('/api/spotify/control', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                await callSpotifyApi('/api/spotify/control', {
+                  ...options,
                   body: JSON.stringify({ command: 'TRANSFER', deviceId }),
                 })
               }
@@ -90,6 +82,7 @@ export const useSpotifyRemoteExecution = (
           }
         } catch (execError) {
           console.error('[Dashboard] Command execution failed:', execError)
+          addError('Failed to control Spotify. Please try again.')
         }
       }
     }
@@ -110,5 +103,5 @@ export const useSpotifyRemoteExecution = (
 
     // Return undefined explicitly for server-side rendering
     return undefined
-  }, [player, sendData])
+  }, [player, sendData, addError])
 }
