@@ -1,9 +1,9 @@
-/** @type {import('jest').Config} */
-const config = {
+// jest.config.cjs
+
+// Common configuration for all projects
+const commonConfig = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
   roots: ['<rootDir>/tests/unit'],
-  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: 'coverage',
   reporters: [
@@ -11,11 +11,11 @@ const config = {
     [
       'jest-junit',
       {
-        outputDirectory: './test-results', // The directory where the XML file will be saved
-        outputName: 'unit-results.xml', // The name of the JUnit XML file
-        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
-        classNameTemplate: '{classname}', // Optional: customize the class name
-        titleTemplate: '{title}', // Optional: customize the test title
+        outputDirectory: './test-results',
+        outputName: 'unit-results.xml',
+        suiteNameTemplate: '{filepath}',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
       },
     ],
   ],
@@ -27,23 +27,21 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
+    '^.+\\.mjs$': 'babel-jest',
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         useESM: true,
         tsconfig: {
           module: 'ES2022',
-          moduleResolution: 'bundler', // bundler is a better choice for modern apps
+          moduleResolution: 'bundler',
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
         },
       },
     ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!uuid)'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -52,4 +50,25 @@ const config = {
   testTimeout: 10000,
 }
 
+/** @type {import('jest').Config} */
+const config = {
+  projects: [
+    // Project for React Components & Hooks (.tsx files) -> jsdom environment
+    {
+      ...commonConfig,
+      displayName: 'dom',
+      testEnvironment: 'jsdom',
+      testMatch: ['**/*.test.tsx'],
+    },
+    // Project for API Routes & Services (.ts files) -> node environment
+    {
+      ...commonConfig,
+      displayName: 'node',
+      testEnvironment: 'node',
+      testMatch: ['**/*.test.ts'],
+    },
+  ],
+}
+
+// eslint-disable-next-line no-undef
 module.exports = config
