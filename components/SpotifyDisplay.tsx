@@ -1,6 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
@@ -44,7 +44,6 @@ const SpotifyDisplay = () => {
       'Session status changed'
     )
   }, [status, session, isLoggedIn])
-
 
   const {
     player,
