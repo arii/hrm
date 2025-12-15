@@ -5,7 +5,6 @@ import {
 } from '@google/generative-ai'
 import { readFile, writeFile } from 'fs/promises'
 import path from 'path'
-import fs from 'fs'
 
 // Simple arg parsing
 const args = process.argv.slice(2)
