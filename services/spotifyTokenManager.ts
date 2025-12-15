@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import logger from '@/utils/logger'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -15,7 +16,7 @@ const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
     fs.writeFileSync(tempPath, JSON.stringify(data, null, 2))
     fs.renameSync(tempPath, filePath) // Atomic rename
   } catch (error) {
-    console.error(`Failed to write token file safely: ${error}`)
+    logger.error({ err: error }, 'Failed to write token file safely')
     // Clean up temp file if it exists
     if (fs.existsSync(tempPath)) {
       fs.unlinkSync(tempPath)
@@ -47,7 +48,7 @@ export class SpotifyTokenManager {
       this.currentToken.payload.access_token = token
       this.currentToken.payload.obtainedAt = Date.now()
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token updated via setAccessToken.')
+      logger.info('Access token updated via setAccessToken.')
     } else {
       // If no token record exists, create a minimal one
       this.currentToken = {
@@ -63,12 +64,12 @@ export class SpotifyTokenManager {
         },
       }
       writeTokenFileSafe(this.tokenFile, this.currentToken)
-      console.log('Access token created via setAccessToken.')
+      logger.info('Access token created via setAccessToken.')
     }
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
-  private refreshPromise: Promise<void> | null = null
+  private refreshPromise: Promise<boolean> | null = null
 
   constructor(
     private clientId: string,
@@ -84,11 +85,28 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        logger.info(
+          { user: this.currentToken.payload.sub },
+          'Loaded Spotify tokens'
+        )
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      logger.warn({ err }, 'Failed to load Spotify tokens')
     }
+  }
+
+  /**
+   * Updates the current token with a new payload, typically from an OAuth callback.
+   * This method updates the in-memory token and persists it to the filesystem.
+   * @param {SpotifyTokenPayload} payload - The new token payload.
+   */
+  public updateTokens(payload: SpotifyTokenPayload): void {
+    logger.info({ user: payload.sub }, 'Updating Spotify tokens in-memory')
+    this.currentToken = {
+      receivedAt: Date.now(),
+      payload,
+    }
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
   }
 
   private async refreshToken(): Promise<boolean> {
@@ -117,11 +135,9 @@ export class SpotifyTokenManager {
       }
 
       const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
+      logger.info(
+        { status: response.status, body: data },
+        'Spotify token refresh successful'
       )
 
       // Update current token with new values
@@ -140,17 +156,19 @@ export class SpotifyTokenManager {
       // Save updated token
       writeTokenFileSafe(this.tokenFile, this.currentToken)
 
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
+      logger.info(
+        { user: this.currentToken.payload.sub },
+        'Refreshed Spotify token'
+      )
       return true
     } catch (err) {
-      console.error('Failed to refresh Spotify token:', err)
+      logger.error({ err }, 'Failed to refresh Spotify token')
       return false
     }
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
+    // No longer reloads from disk on every call. Trusts in-memory state.
     if (!this.currentToken) return null
 
     // Check if token needs refresh
@@ -159,23 +177,21 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log(
+      logger.info(
         'Spotify access token is expiring soon, initiating refresh...'
       )
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
       if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-          })
+        this.refreshPromise = this.refreshToken().finally(() => {
+          this.refreshPromise = null
+        })
       }
-      await this.refreshPromise
+      const refreshed = await this.refreshPromise
+      if (!refreshed) {
+        logger.error("Token refresh failed, can't provide a valid token.")
+        return null // Explicitly return null if refresh fails
+      }
     }
 
     return this.currentToken.payload.access_token

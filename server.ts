@@ -16,6 +16,7 @@ import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
+import { spotifyTokenManager } from './services/serviceContainer.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/broadcast.js'
@@ -148,7 +149,10 @@ app
     const wss = new WebSocketServer({ noServer: true })
 
     // 2. Initialize Persistent Services
-    const spotifyService = await SpotifyPolling.create(broadcast)
+    const spotifyService = await SpotifyPolling.create(
+      broadcast,
+      spotifyTokenManager
+    )
     const tabataService = new TabataTimer(broadcast)
 
     // 3. State Snapshot Function
@@ -190,32 +194,11 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
-      }
+    expressApp.use((req: Request, res: Response) => {
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
+    // --- HTTP/WS Upgrade Handling ---
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
 

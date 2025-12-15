@@ -46,6 +46,8 @@ describe('Services Integration', () => {
     }
   }
 
+  let mockTokenManager: SpotifyTokenManager
+
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
@@ -56,18 +58,24 @@ describe('Services Integration', () => {
       broadcastedMessages.push(message)
     }
 
-    // Mock TokenManager to return a valid token
-    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'test_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
-    }))
+    // Mock the implementation of the SpotifyTokenManager class
+    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => {
+      return {
+        getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
+        getSdkAccessToken: jest.fn().mockReturnValue({
+          access_token: 'test_access_token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          refresh_token: 'refresh_token',
+        }),
+      }
+    })
+
+    // Instantiate a mock TokenManager using the mocked class
+    mockTokenManager = new SpotifyTokenManager(
+      'test-client-id',
+      'test-client-secret'
+    )
 
     // Mock SDK instance
     mockSdk = {
@@ -87,14 +95,16 @@ describe('Services Integration', () => {
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
     tabataTimer = new TabataTimer(broadcastFn)
-    // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    // Initialize service with the mock token manager
+    spotifyService = await SpotifyPolling.create(broadcastFn, mockTokenManager)
   })
 
   afterEach(() => {
     jest.useRealTimers()
-    spotifyService.stopPolling()
-    spotifyService.cleanup()
+    // spotifyService no longer has a direct cleanup method in this way.
+    if (spotifyService && typeof spotifyService.cleanup === 'function') {
+      spotifyService.cleanup()
+    }
   })
 
   describe('Dashboard Updates with Timer Changes', () => {

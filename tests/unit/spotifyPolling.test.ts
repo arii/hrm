@@ -65,6 +65,7 @@ describe('SpotifyPolling Service', () => {
   let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   let broadcastedStates: SpotifyData[]
 
+  let mockTokenManager: SpotifyTokenManager
   beforeEach(async () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
@@ -92,15 +93,30 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_POLLING_INTERVAL_MS = '100' // Use a short interval for testing
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
-    // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
-    // Stop polling after service creation to avoid side effects in tests
+    // Mock and instantiate the token manager
+    ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => {
+      return {
+        getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
+        getSdkAccessToken: jest.fn().mockReturnValue({
+          access_token: 'test_access_token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          refresh_token: 'refresh_token',
+        }),
+      }
+    })
+    mockTokenManager = new SpotifyTokenManager(
+      'test-client-id',
+      'test-client-secret'
+    )
 
-    if ((spotifyService as unknown)['pollInterval']) {
-      clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
-      )
-      ;(spotifyService as unknown)['pollInterval'] = null
+    // Initialize the service with the mock token manager
+    spotifyService = await SpotifyPolling.create(broadcastMock, mockTokenManager)
+
+    // Stop polling after service creation to avoid side effects in tests
+    if ((spotifyService as any).pollInterval) {
+      clearInterval((spotifyService as any).pollInterval)
+      ;(spotifyService as any).pollInterval = null
     }
 
     if ((spotifyService as unknown)['tokenRefreshInterval']) {
@@ -250,29 +266,21 @@ describe('SpotifyPolling Service', () => {
   })
 
   describe('Token Management', () => {
-    it('should accept refresh token', async () => {
-      const refreshToken = 'test_refresh_token'
-      // Mock the initializeSdk to resolve immediately
-      const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
-        .mockResolvedValue(undefined)
-      spotifyService.setRefreshToken(refreshToken)
-      // Advance timers to allow setTimeout to run
-      jest.advanceTimersByTime(1000)
-      expect(initializeSdkSpy).toHaveBeenCalled()
-      initializeSdkSpy.mockRestore()
-    })
-
     it('should not execute commands without access token', async () => {
-      // Override the mock to return null token for this test to ensure SDK is not initialized
-      ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
-        () => ({
-          getValidAccessToken: jest.fn().mockResolvedValue(null),
-          getSdkAccessToken: jest.fn().mockReturnValue(null),
-        })
-      )
+      // Create a mock token manager that returns null
+      const nullTokenManager = {
+        getValidAccessToken: jest.fn().mockResolvedValue(null),
+        getSdkAccessToken: jest.fn().mockReturnValue(null),
+        updateTokens: jest.fn(),
+        setAccessToken: jest.fn(),
+        getUserId: jest.fn(),
+        getCurrentRefreshToken: jest.fn(),
+      } as unknown as SpotifyTokenManager
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create(
+        broadcastMock,
+        nullTokenManager
+      )
       await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
