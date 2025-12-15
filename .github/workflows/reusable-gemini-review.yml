@@ -16,8 +16,8 @@ jobs:
           fetch-depth: 0  # Need full history for diff analysis
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+        # with:
+        #   version: 9  # Removed to avoid conflict with package.json "packageManager" field
 
       - uses: actions/setup-node@v6
         with:
