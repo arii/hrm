@@ -4,7 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 
-import { HrmStaticMetadata, TimerMode, TimerPhase } from './shared.js'
+import { HrmStaticMetadata, TimerMode, TimerPhase } from './shared'
 
 // --- Server Broadcast State Interfaces ---
 
