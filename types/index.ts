@@ -69,3 +69,12 @@ export interface SpotifyPlaylist {
   name: string
   uri: string
 }
+
+
+export interface DashboardSectionLoadingSkeletonProps {
+  width?: string | number;
+  height?: string | number;
+  shape?: 'rectangle' | 'circle';
+  count?: number;
+  className?: string;
+}
