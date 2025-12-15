@@ -25,6 +25,7 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { rateLimitConfig } from './lib/config/rateLimit.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -65,66 +66,66 @@ app
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
-    if (process.env.TESTING !== 'true') {
-      const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to Spotify API, please try again later.',
-        },
+    if (process.env.RATE_LIMITING_ENABLED !== 'false') {
+      logger.info('Rate limiting is enabled.')
+      // Shared key generator for consistency
+      const keyGenerator = (req: Request) => {
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      }
+
+      // Shared handler for logging rate-limited requests
+      const handler = (req: Request, res: Response) => {
+        logger.warn(
+          {
+            ip: keyGenerator(req),
+            path: req.path,
+            method: req.method,
+          },
+          'Rate limit exceeded'
+        )
+        // Ensure the response is sent correctly
+        res
+          .status(429)
+          .json({ error: 'Too many requests, please try again later.' })
+      }
+
+      const criticalApiLimiter = rateLimit({
+        ...rateLimitConfig.critical,
+        keyGenerator,
+        handler,
       })
 
-      const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to internal API, please try again later.',
-        },
+      const sensitiveApiLimiter = rateLimit({
+        ...rateLimitConfig.sensitive,
+        keyGenerator,
+        handler,
       })
+
+      const spotifyControlLimiter = rateLimit({
+        ...rateLimitConfig.spotifyControl,
+        keyGenerator,
+        handler,
+      })
+
       const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: { error: 'Too many requests, please try again later.' },
-        skip: (req: Request) =>
-          req.path.startsWith('/api/spotify') ||
-          req.path.startsWith('/api/internal'),
+        ...rateLimitConfig.general,
+        keyGenerator,
+        handler,
       })
 
-      // Apply the rate limiters to specific routes
-      expressApp.use('/api/spotify/', spotifyApiLimiter)
-      expressApp.use('/api/internal/', internalApiLimiter)
-      expressApp.use('/api/', generalApiLimiter)
+      // Apply limiters from most specific to least specific
+      expressApp.use('/api/internal/', criticalApiLimiter)
+      expressApp.use('/api/workout/', sensitiveApiLimiter)
+      expressApp.use('/api/spotify/control/', spotifyControlLimiter)
+      expressApp.use('/api/', generalApiLimiter) // Catches all other /api routes
+    } else {
+      logger.info(
+        'Rate limiting is disabled via RATE_LIMITING_ENABLED env var.'
+      )
     }
 
     // --- Static Asset Serving (Production Only) ---
