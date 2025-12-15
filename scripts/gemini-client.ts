@@ -294,12 +294,14 @@ ${truncatedDiff}
 2. **New Issues**: Identify any regressions or new problems introduced
 3. **Progressive Approval**: If most issues resolved and only minor items remain, indicate near-approval status
 4. **Focus on Critical**: At this stage, focus on blocking issues only unless asking for major refactoring
+5. **No Issues Found**: If the changes are perfect and no issues are found, YOU MUST explicitly describe what you verified and why it is correct. Do not output an empty review.
 
 ### Output Format for Re-Review:
 - Start with a summary of what was fixed from previous review
 - List any remaining issues (categorize as blocking vs. nice-to-have)
 - If near approval, explicitly state "✅ Ready for approval pending: [list minor items]"
 - Provide specific, actionable feedback for any remaining concerns
+- If NO issues found: "✅ Verified [Specific Change]. No regressions found. Ready for approval."
 `
   } else {
     // Initial review instructions based on depth
