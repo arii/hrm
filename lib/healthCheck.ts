@@ -1,71 +1,126 @@
 // lib/healthCheck.ts
-import { promises as fs } from 'fs'
-import path from 'path'
-import { WebSocketServer } from 'ws'
-import { SpotifyPolling } from '../services/spotifyPolling'
+import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
 
-interface HealthCheckStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy'
-  checks: {
-    websocket: 'ok' | 'error'
-    spotify: 'ok' | 'degraded' | 'error'
-    tabataTimer: 'ok' | 'error'
-    storage: 'ok' | 'error'
-  }
-  timestamp: string
-}
-
-export const performHealthCheck = async (
-  wss: WebSocketServer,
-  spotifyService: SpotifyPolling,
-  tabataService: TabataTimer
-): Promise<HealthCheckStatus> => {
-  const checks = {
-    websocket: 'error' as 'ok' | 'error',
-    spotify: 'error' as 'ok' | 'degraded' | 'error',
-    tabataTimer: 'error' as 'ok' | 'error',
-    storage: 'error' as 'ok' | 'error',
-  }
-
-  // 1. WebSocket Server Check
-  if (wss && wss.clients) {
-    checks.websocket = 'ok'
-  }
-
-  // 2. Spotify Service Check
-  if (spotifyService) {
-    if (spotifyService.isReady()) {
-      checks.spotify = 'ok'
-    } else {
-      checks.spotify = 'degraded'
-    }
-  }
-
-  // 3. Tabata Timer Check
-  if (tabataService) {
-    checks.tabataTimer = 'ok'
-  }
-
-  // 4. Storage Check
-  try {
-    const testFile = path.join(process.cwd(), 'logs', 'healthcheck.tmp')
-    await fs.writeFile(testFile, new Date().toISOString())
-    await fs.unlink(testFile)
-    checks.storage = 'ok'
-  } catch (error) {
-    console.error('Storage health check failed:', error)
-  }
-
-  const overallStatus = Object.values(checks).every((s) => s === 'ok')
-    ? 'healthy'
-    : Object.values(checks).some((s) => s === 'error')
-      ? 'unhealthy'
-      : 'degraded'
+// Individual health check functions
+export function checkMemoryUsage() {
+  const memUsage = process.memoryUsage()
+  const memUsageMB = memUsage.heapUsed / 1024 / 1024
+  const memLimitMB = 512 // Adjust based on deployment
 
   return {
-    status: overallStatus,
-    checks,
-    timestamp: new Date().toISOString(),
+    healthy: memUsageMB < memLimitMB,
+    details: {
+      usedMB: Math.round(memUsageMB),
+      limitMB: memLimitMB,
+      percentage: Math.round((memUsageMB / memLimitMB) * 100),
+    },
+  }
+}
+
+export async function checkWebSocketService(): Promise<{
+  healthy: boolean
+  details: Record<string, unknown>
+}> {
+  try {
+    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
+    // Check if WebSocket server is accepting connections
+    const wsHealth = await new Promise((resolve) => {
+      const testWs = new WebSocket(wsUrl)
+
+      const timeout = setTimeout(() => {
+        testWs.close()
+        resolve(false)
+      }, 5000)
+
+      testWs.onopen = () => {
+        clearTimeout(timeout)
+        testWs.close()
+        resolve(true)
+      }
+
+      testWs.onerror = () => {
+        clearTimeout(timeout)
+        resolve(false)
+      }
+    })
+
+    return {
+      healthy: Boolean(wsHealth),
+      details: {
+        service: 'websocket',
+        url: wsUrl,
+      },
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      details: {
+        service: 'websocket',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }
+  }
+}
+
+export async function checkSpotifyAPI(): Promise<{
+  healthy: boolean
+  details: Record<string, unknown>
+}> {
+  try {
+    // Test Spotify API connectivity (no auth required)
+    const response = await fetch(
+      'https://api.spotify.com/v1/browse/categories?limit=1',
+      {
+        headers: {
+          'User-Agent': 'HRM-App/1.0',
+        },
+      }
+    )
+
+    const healthy = response.status === 401 // 401 is expected without auth
+
+    return {
+      healthy,
+      details: {
+        service: 'spotify-api',
+        status: response.status,
+        reachable: response.status !== undefined,
+      },
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      details: {
+        service: 'spotify-api',
+        error: error instanceof Error ? error.message : 'Network unreachable',
+      },
+    }
+  }
+}
+
+export function checkTimerService(tabataTimer: TabataTimer): {
+  healthy: boolean
+  details: Record<string, unknown>
+} {
+  try {
+    const timerCheck =
+      typeof tabataTimer !== 'undefined' && tabataTimer.getState
+
+    return {
+      healthy: true,
+      details: {
+        service: 'timer',
+        instance: timerCheck ? 'active' : 'standby',
+      },
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      details: {
+        service: 'timer',
+        error: error instanceof Error ? error.message : 'Timer service error',
+      },
+    }
   }
 }
