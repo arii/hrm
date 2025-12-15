@@ -11,6 +11,7 @@ import {
   ActiveAlert,
   TimerData,
   SpotifyData,
+  HrmDevice,
 } from '@/types/websocket'
 import { action } from '@storybook/addon-actions'
 
@@ -90,14 +91,34 @@ export const MockWebSocketProvider = ({
       if (message) {
         setState((prev) => {
           switch (message.type) {
-            case 'HRM_UPDATE': {
+            case 'HRM_DEVICE_UPDATE': {
               const payloadWithConnection = (
-                message.payload as ServerHrmData[]
+                message.payload as HrmDevice[]
               ).map((d) => ({
                 ...d,
+                value: 0,
                 isConnected: true,
               }))
               return { ...prev, hrmData: payloadWithConnection }
+            }
+            case 'HRM_UPDATE': {
+              const metrics = message.payload
+              const hrmDataMap = new Map(
+                prev.hrmData.map((d) => [d.clientId, d])
+              )
+
+              metrics.forEach((metric) => {
+                const existingData = hrmDataMap.get(metric.clientId)
+                if (existingData) {
+                  hrmDataMap.set(metric.clientId, {
+                    ...existingData,
+                    value: metric.value,
+                    isConnected: true,
+                  })
+                }
+              })
+
+              return { ...prev, hrmData: Array.from(hrmDataMap.values()) }
             }
             case 'TIMER_UPDATE':
               return { ...prev, timerData: message.payload }
