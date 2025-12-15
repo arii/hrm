@@ -7,6 +7,8 @@ import { TimerData } from '../types/websocket'
 import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
+import { calculateHrZone } from '../lib/hrm/zones'
+import { HrZoneName } from '../lib/shared/hr-zones'
 
 // Define types for MUI color props
 type MuiColor =
@@ -18,44 +20,51 @@ type MuiColor =
   | 'success'
 
 // --- Constants ---
-// Heart Rate Zone Boundaries (as percentage of Max HR)
-export const HR_ZONES = [
-  {
-    name: 'Warm-up',
-    min: 0.5,
+// UI properties for each heart rate zone, mapped for efficient O(1) lookup.
+type HrZoneUi = {
+  color: string
+  progressColor: string
+  bgColor: string
+}
+
+export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+  [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main, // Darker blue
-    bgColor: theme.palette.secondary.main, // Darker blue
+    progressColor: theme.palette.secondary.main,
+    bgColor: theme.palette.secondary.main,
   },
-  {
-    name: 'Fat Burn',
-    min: 0.6,
+  [HrZoneName.FatBurn]: {
     color: 'text-green-500',
     progressColor: theme.palette.success.main,
     bgColor: theme.palette.success.main,
   },
-  {
-    name: 'Cardio',
-    min: 0.7,
+  [HrZoneName.Cardio]: {
     color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark, // Darker orange/yellow
-    bgColor: theme.palette.warning.dark, // Darker orange/yellow
+    progressColor: theme.palette.warning.dark,
+    bgColor: theme.palette.warning.dark,
   },
-  {
-    name: 'Peak',
-    min: 0.85,
+  [HrZoneName.Peak]: {
     color: 'text-red-500',
     progressColor: theme.palette.primary.main,
     bgColor: theme.palette.primary.main,
   },
-  {
-    name: 'Max',
-    min: 0.95,
+  [HrZoneName.Max]: {
     color: 'text-purple-600',
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
   },
-]
+  // Add placeholder properties for non-displayable zones
+  [HrZoneName.NoData]: {
+    color: 'text-gray-400',
+    progressColor: '#9ca3af',
+    bgColor: '#9ca3af',
+  },
+  [HrZoneName.Unknown]: {
+    color: 'text-gray-400',
+    progressColor: '#9ca3af',
+    bgColor: '#9ca3af',
+  },
+}
 
 // Zone color lookup for easy access (zone 1-5)
 export const ZONE_COLORS = {
@@ -78,51 +87,27 @@ export interface HrZoneProps {
 
 /**
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
+ * This function now composes the core business logic from `lib/hrm` with
+ * presentation-specific properties defined in this file.
  */
 export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
-    return {
-      zone: 'No Data',
-      percentage: 0,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
-      bpm: 0,
-    }
-  }
+  // 1. Get the core HR data from the domain module
+  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
 
-  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let zone = HR_ZONES[0]
+  // 2. Look up the UI properties from the map
+  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-  for (let i = HR_ZONES.length - 1; i >= 0; i--) {
-    const hrZone = HR_ZONES[i]
-    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
-      zone = hrZone
-      break
-    }
-  }
-
-  if (!zone) {
-    return {
-      zone: 'Unknown',
-      percentage: percentageOfMax,
-      color: 'text-gray-400',
-      progressColor: '#9ca3af',
-      backgroundColor: '#9ca3af',
-      bpm: currentHr,
-    }
-  }
-
+  // 3. Combine domain data with UI properties
   return {
-    zone: zone.name,
-    percentage: percentageOfMax,
-    color: zone.color,
-    progressColor: zone.progressColor,
-    backgroundColor: zone.bgColor,
-    bpm: currentHr,
+    zone: zoneName, // The enum member is a string at runtime
+    percentage: percentage,
+    color: zoneUiProps.color,
+    progressColor: zoneUiProps.progressColor,
+    backgroundColor: zoneUiProps.bgColor,
+    bpm: bpm,
   }
 }
 
