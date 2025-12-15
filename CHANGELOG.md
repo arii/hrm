@@ -2,38 +2,34 @@
 
 ## [0.10.0](https://github.com/arii/hrm/compare/v0.9.1...v0.10.0) (2025-12-14)
 
-
 ### Features
 
-* Implement ghost state for disconnected HRM tiles ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
-* Implement Global Loading State with LoadingContext ([#1507](https://github.com/arii/hrm/issues/1507)) ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
-* refactor layout for Next.js 16 client/server boundaries ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
-* refactor layout for Next.js 16 client/server boundaries ([4820988](https://github.com/arii/hrm/commit/48209883f27d2e3956c0fee20e63aa32f1f10c2e))
-
+- Implement ghost state for disconnected HRM tiles ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+- Implement Global Loading State with LoadingContext ([#1507](https://github.com/arii/hrm/issues/1507)) ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+- refactor layout for Next.js 16 client/server boundaries ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+- refactor layout for Next.js 16 client/server boundaries ([4820988](https://github.com/arii/hrm/commit/48209883f27d2e3956c0fee20e63aa32f1f10c2e))
 
 ### Bug Fixes
 
-* Address PR feedback for ghost state feature ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
-* Correct TypeScript errors in theme and remove unused imports ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
-* Correctly handle INITIAL_STATE in MockWebSocketProvider ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
-* Resolve linting errors ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
-* Run `lint --fix` to correct formatting ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
-* Update LoadingIndicator test to reflect new implementation ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
-* Update MockWebSocketProvider to fix build failure ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+- Address PR feedback for ghost state feature ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+- Correct TypeScript errors in theme and remove unused imports ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+- Correctly handle INITIAL_STATE in MockWebSocketProvider ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+- Resolve linting errors ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
+- Run `lint --fix` to correct formatting ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+- Update LoadingIndicator test to reflect new implementation ([1d1bb7a](https://github.com/arii/hrm/commit/1d1bb7a0ba4aa85acef29c99644578e6cbb934bf))
+- Update MockWebSocketProvider to fix build failure ([fbe34bd](https://github.com/arii/hrm/commit/fbe34bd6463a1dd3b1b3ee487a875849c907fe9b))
 
 ## [0.9.1](https://github.com/arii/hrm/compare/v0.9.0...v0.9.1) (2025-12-14)
 
-
 ### Bug Fixes
 
-* Prevent initial volume command to reduce Spotify API calls ([#1472](https://github.com/arii/hrm/issues/1472)) ([a8a67f2](https://github.com/arii/hrm/commit/a8a67f21e6dc421929c305d19cf4229682194fa5))
+- Prevent initial volume command to reduce Spotify API calls ([#1472](https://github.com/arii/hrm/issues/1472)) ([a8a67f2](https://github.com/arii/hrm/commit/a8a67f21e6dc421929c305d19cf4229682194fa5))
 
 ## [0.9.0](https://github.com/arii/hrm/compare/v0.8.0...v0.9.0) (2025-12-14)
 
-
 ### Features
 
-* Implement PR Scope Validation and Review Checklist ([#1456](https://github.com/arii/hrm/issues/1456)) ([bfd3d41](https://github.com/arii/hrm/commit/bfd3d41826f8d7919c1f88e966012a1671443708))
+- Implement PR Scope Validation and Review Checklist ([#1456](https://github.com/arii/hrm/issues/1456)) ([bfd3d41](https://github.com/arii/hrm/commit/bfd3d41826f8d7919c1f88e966012a1671443708))
 
 ## [0.6.0](https://github.com/arii/hrm/compare/v0.5.0...v0.6.0) (2025-12-14)
 

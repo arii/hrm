@@ -28,15 +28,21 @@ export class AudioManager {
    * Load audio files (required for iOS - must be triggered by user interaction)
    */
   loadAudio() {
-    if (!this.loadedAudio && this.shortBeep && this.longBeep) {
+    if (
+      !this.loadedAudio &&
+      this.shortBeep !== null &&
+      this.longBeep !== null
+    ) {
       console.log('[AudioManager] Unlocking audio context via user interaction')
       // On iOS you can't play back sounds unless it comes from a user
       // action first, so pretend to play the sound in this callback
       this.shortBeep
         .play()
         .then(() => {
-          this.shortBeep!.pause()
-          this.shortBeep!.currentTime = 0
+          if (this.shortBeep !== null) {
+            this.shortBeep.pause()
+            this.shortBeep.currentTime = 0
+          }
         })
         .catch((e) => {
           console.warn('[AudioManager] Failed to unlock short beep:', e)
@@ -45,8 +51,10 @@ export class AudioManager {
       this.longBeep
         .play()
         .then(() => {
-          this.longBeep!.pause()
-          this.longBeep!.currentTime = 0
+          if (this.longBeep !== null) {
+            this.longBeep.pause()
+            this.longBeep.currentTime = 0
+          }
         })
         .catch((e) => {
           console.warn('[AudioManager] Failed to unlock long beep:', e)
@@ -64,7 +72,7 @@ export class AudioManager {
       console.log('[AudioManager] Skipped short beep (Muted)')
       return
     }
-    if (!this.shortBeep) {
+    if (this.shortBeep === null) {
       console.warn('[AudioManager] Short beep audio not initialized')
       return
     }
@@ -83,7 +91,7 @@ export class AudioManager {
       console.log('[AudioManager] Skipped long beep (Muted)')
       return
     }
-    if (!this.longBeep) {
+    if (this.longBeep === null) {
       console.warn('[AudioManager] Long beep audio not initialized')
       return
     }
@@ -99,8 +107,8 @@ export class AudioManager {
    */
   setVolume(volumePercent: number) {
     this.volume = volumePercent / 100
-    if (this.shortBeep) this.shortBeep.volume = this.volume
-    if (this.longBeep) this.longBeep.volume = this.volume
+    if (this.shortBeep !== null) this.shortBeep.volume = this.volume
+    if (this.longBeep !== null) this.longBeep.volume = this.volume
     // console.log(`[AudioManager] Volume set to ${this.volume}`)
   }
 

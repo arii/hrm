@@ -31,7 +31,7 @@ describe('WebSocket Full Integration Test', () => {
     // Silence verbose server output in tests, but log errors
     serverProcess.stdout?.on('data', (_data: Buffer) => {})
     serverProcess.stderr?.on('data', (data: Buffer) =>
-      console.error(`[Server ERR]: ${data.toString().trim()}`)
+      console.error(`[Server ERR]: ${data.toString().trim()}`),
     )
     serverProcess.on('error', (err) => done(err))
 
@@ -46,7 +46,7 @@ describe('WebSocket Full Integration Test', () => {
           // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
           if (res.statusCode === 503) {
             console.log(
-              'Server is running but unhealthy (as expected without Spotify).'
+              'Server is running but unhealthy (as expected without Spotify).',
             )
             clearInterval(interval)
             clearTimeout(timeout)
@@ -62,14 +62,14 @@ describe('WebSocket Full Integration Test', () => {
       clearInterval(interval)
       done(
         new Error(
-          `Server failed to start or respond to health check in 50 seconds.`
-        )
+          `Server failed to start or respond to health check in 50 seconds.`,
+        ),
       )
     }, 50000)
   })
 
   afterAll((done) => {
-    if (serverProcess && serverProcess.pid) {
+    if (serverProcess?.pid !== undefined) {
       try {
         process.kill(-serverProcess.pid, 'SIGKILL')
       } catch (_e) {
@@ -105,7 +105,7 @@ describe('WebSocket Full Integration Test', () => {
       await new Promise((resolve) => setTimeout(resolve, 500))
       let lastMessage = receivedMessages[receivedMessages.length - 1]
       const clientData = lastMessage.hrmData?.find(
-        (c) => c.name === 'Workflow Test'
+        (c) => c.name === 'Workflow Test',
       )
       expect(clientData).toBeDefined()
       expect(clientData?.value).toBe(135)

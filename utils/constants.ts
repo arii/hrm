@@ -24,7 +24,7 @@ export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
  * Falls back to MAX_HR_DEFAULT if age is invalid or not provided.
  */
 export const calculateMaxHr = (age?: number | string | null): number => {
-  if (!age) return MAX_HR_DEFAULT
+  if (age === null || age === undefined) return MAX_HR_DEFAULT
 
   const ageNum = typeof age === 'string' ? parseInt(age, 10) : age
 

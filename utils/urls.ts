@@ -21,13 +21,13 @@ export const getBaseURL = (): string => {
   }
 
   // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
-  return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+  return process.env.NEXTAUTH_URL ?? 'http://127.0.0.1:3000'
 }
 
 export const getWebSocketURL = (): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
   const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
-  if (envWsUrl && envWsUrl.length > 0) {
+  if (envWsUrl !== undefined && envWsUrl.length > 0) {
     return buildWebSocketUrl(envWsUrl)
   }
 
@@ -44,7 +44,7 @@ export const getWebSocketURL = (): string => {
 export const getAPIURL = (endpoint: string): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
   const envApiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (envApiUrl && envApiUrl.length > 0) {
+  if (envApiUrl !== undefined && envApiUrl.length > 0) {
     const cleanedUrl = envApiUrl.replace(/\/$/, '') // Remove trailing slash
     // Strictly adhere to docs: assume no '/api' in the env var.
     return `${cleanedUrl}/api/${endpoint.replace(/^\//, '')}`
@@ -62,7 +62,7 @@ export const getAPIURL = (endpoint: string): string => {
 
 export const getSpotifyCallbackURL = (): string => {
   return (
-    process.env.SPOTIFY_CALLBACK_URL ||
+    process.env.SPOTIFY_CALLBACK_URL ??
     `${getBaseURL()}/api/auth/callback/spotify`
   )
 }

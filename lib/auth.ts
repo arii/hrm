@@ -240,9 +240,9 @@ export const authOptions: AuthOptions = {
           provider: account.provider,
           providerAccountId: account.providerAccountId,
           hasAccessToken: account.access_token !== null,
-          hasProfile: account.profile !== null,
+          hasProfile: account.profile !== undefined,
           profileKeys:
-            account.profile !== null
+            account.profile !== undefined && account.profile !== null
               ? Object.keys(account.profile)
               : 'NO PROFILE',
           profileEmail: (account.profile as Record<string, unknown>)?.email,

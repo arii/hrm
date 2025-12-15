@@ -8,7 +8,9 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
+    class MockBluetoothRemoteGATTCharacteristic
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
       listeners: { [key: string]: MockEventListener[] } = {}
@@ -26,7 +28,7 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
 
       addEventListener(type: string, listener: MockEventListener) {
-        if (!this.listeners[type]) this.listeners[type] = []
+        if (this.listeners[type] === undefined) this.listeners[type] = []
         this.listeners[type].push(listener)
       }
 
@@ -39,13 +41,15 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.value = view
 
         const event = { target: { value: this.value } }
-        if (this.listeners['characteristicvaluechanged']) {
+        if (this.listeners['characteristicvaluechanged'] !== undefined) {
           this.listeners['characteristicvaluechanged'].forEach((l) => l(event))
         }
       }
     }
 
-    class MockBluetoothRemoteGATTService implements MockBluetoothRemoteGATTService {
+    class MockBluetoothRemoteGATTService
+      implements MockBluetoothRemoteGATTService
+    {
       device: MockBluetoothDevice
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
@@ -61,7 +65,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTServer implements MockBluetoothRemoteGATTServer {
+    class MockBluetoothRemoteGATTServer
+      implements MockBluetoothRemoteGATTServer
+    {
       device: MockBluetoothDevice
       connected = false
 
@@ -84,9 +90,9 @@ export const injectBluetoothMocks = async (page: Page) => {
         this.connected = false
         _connectedDevice = null
         // Trigger disconnection listener on device
-        if (this.device.listeners['gattserverdisconnected']) {
+        if (this.device.listeners['gattserverdisconnected'] !== undefined) {
           this.device.listeners['gattserverdisconnected'].forEach((l) =>
-            l({ target: this.device } as unknown as Event)
+            l({ target: this.device } as unknown as Event),
           )
         }
       }
@@ -111,7 +117,7 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
 
       addEventListener(type: string, listener: (event: Event) => void) {
-        if (!this.listeners[type]) this.listeners[type] = []
+        if (this.listeners[type] === undefined) this.listeners[type] = []
         this.listeners[type].push(listener)
       }
 
@@ -133,11 +139,14 @@ export const injectBluetoothMocks = async (page: Page) => {
 
       requestDevice: async (_options: unknown) => {
         // Simulate user selecting a device
-        const device = new MockBluetoothDevice('mock-device-id-123', 'Mock HRM')
+        const device = new MockBluetoothDevice(
+          'mock-device-id-123',
+          'Mock HRM',
+        )
 
         // Check if we already have it?
         // For simplicity, just add it to paired list
-        if (!_pairedDevices.find((d) => d.id === device.id)) {
+        if (_pairedDevices.find((d) => d.id === device.id) === undefined) {
           _pairedDevices.push(device)
         }
         return device
@@ -149,7 +158,10 @@ export const injectBluetoothMocks = async (page: Page) => {
     window.MockBluetoothDevice = MockBluetoothDevice
     window.bluetoothTestHelpers = {
       simulateHeartRate: async (bpm: number) => {
-        if (_connectedDevice && _connectedDevice.gatt.connected) {
+        if (
+          _connectedDevice !== null &&
+          _connectedDevice.gatt.connected === true
+        ) {
           // Simulate the app's actual retrieval path
           const service =
             await _connectedDevice.gatt.getPrimaryService('heart_rate')

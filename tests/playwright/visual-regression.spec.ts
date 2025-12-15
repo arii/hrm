@@ -84,7 +84,7 @@ test.describe('Visual Regression Tests', () => {
         await stopButton.click()
         // Wait for START button to confirm timer stopped on control page
         await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
+          controlPage.getByRole('button', { name: 'START', exact: true }),
         ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
         // Wait for dashboard to clear timer display (return to READY state)
@@ -108,14 +108,14 @@ test.describe('Visual Regression Tests', () => {
     } catch (e) {
       console.warn(
         'Failed to replace iframe (it might be missing or slow to load):',
-        e
+        e,
       )
     }
   })
 
   // Clean up after all tests
   test.afterAll(async () => {
-    if (context) {
+    if (context !== undefined) {
       await context.close()
     }
   })
@@ -266,7 +266,7 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await mockPage.click('button:has-text("START")')
     await expect(
-      mockPage.locator('button:has-text("STOP Streaming")')
+      mockPage.locator('button:has-text("STOP Streaming")'),
     ).toBeVisible()
 
     // Wait for HR tiles to load on dashboard

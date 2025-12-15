@@ -46,7 +46,7 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
                     {it.details !== undefined && (
                       <Typography variant="body2" color="text.secondary">
                         {it.details}
-                      </                      Typography>
+                      </Typography>
                     )}
                   </Box>
                 ))}

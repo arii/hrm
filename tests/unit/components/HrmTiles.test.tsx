@@ -12,7 +12,7 @@ jest.mock('@/components/HrTile', () => ({
   default: ({ name, bpm }: { name: string; bpm: number | null }) => (
     <div data-testid="mock-hr-tile">
       <p>{name}</p>
-      <p>{bpm === null ? 'Signal Drop' : bpm}</p>
+      <p>{bpm ?? 'Signal Drop'}</p>
     </div>
   ),
 }))

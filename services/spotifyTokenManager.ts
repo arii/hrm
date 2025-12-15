@@ -170,19 +170,17 @@ export class SpotifyTokenManager {
       )
       // Refresh if within 1 minute of expiry
       // Ensure only one refresh happens at a time
-      if (this.refreshPromise === null) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-            return true
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-            return false
-          })
-      }
+      this.refreshPromise ??= this.refreshToken()
+        .then(() => {
+          this.refreshPromise = null
+          console.log('Spotify access token refresh completed.')
+          return true
+        })
+        .catch((error) => {
+          this.refreshPromise = null
+          console.error('Spotify access token refresh failed:', error)
+          return false
+        })
       await this.refreshPromise
     }
 

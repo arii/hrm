@@ -81,9 +81,13 @@ export interface HrZoneProps {
  */
 export const getHrZoneProps = (
   currentHr: number,
-  maxHr: number
+  maxHr: number,
 ): HrZoneProps => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
+  if (
+    maxHr === 0 ||
+    currentHr === 0 ||
+    currentHr <= 0
+  ) {
     return {
       zone: 'No Data',
       percentage: 0,
@@ -99,13 +103,13 @@ export const getHrZoneProps = (
 
   for (let i = HR_ZONES.length - 1; i >= 0; i--) {
     const hrZone = HR_ZONES[i]
-    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
+    if (hrZone !== undefined && percentageOfMax / 100 >= hrZone.min) {
       zone = hrZone
       break
     }
   }
 
-  if (!zone) {
+  if (zone === undefined) {
     return {
       zone: 'Unknown',
       percentage: percentageOfMax,
@@ -137,7 +141,7 @@ interface TimerProps {
  * Returns props (color, text) for the Tabata Timer phase display.
  */
 export const getTimerProps = (
-  currentPhase: TimerData['currentPhase']
+  currentPhase: TimerData['currentPhase'],
 ): TimerProps => {
   switch (currentPhase) {
     case 'PREPARE':
@@ -187,9 +191,9 @@ export const getTimerProps = (
 }
 
 export const transformWorkoutDataToColumns = (
-  data: WorkoutData
+  data: WorkoutData,
 ): WorkoutColumnsProps['columns'] => {
-  if (!data) return []
+  if (data === undefined) return []
 
   return data.map((category: WorkoutItem) => ({
     title: category.category,

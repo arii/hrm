@@ -40,14 +40,14 @@ test.describe('Frontend Performance', () => {
         const performanceMetrics = await client.send('Performance.getMetrics')
         const jsHeapUsedSize =
           performanceMetrics.metrics.find((m) => m.name === 'JSHeapUsedSize')
-            ?.value || 0
+            ?.value ?? 0
         const layoutCount =
           performanceMetrics.metrics.find((m) => m.name === 'LayoutCount')
-            ?.value || 0
+            ?.value ?? 0
         const recalculateStyleCount =
           performanceMetrics.metrics.find(
-            (m) => m.name === 'RecalculateStyleCount'
-          )?.value || 0
+            (m) => m.name === 'RecalculateStyleCount',
+          )?.value ?? 0
 
         metrics.push({
           JSHeapUsedSize: jsHeapUsedSize,
@@ -71,8 +71,8 @@ test.describe('Frontend Performance', () => {
     console.table(metrics)
 
     const heapSizes = metrics.map((m) => m.JSHeapUsedSize)
-    const initialHeapSize = heapSizes[0] || 0
-    const finalHeapSize = heapSizes[heapSizes.length - 1] || 0
+    const initialHeapSize = heapSizes[0] ?? 0
+    const finalHeapSize = heapSizes[heapSizes.length - 1] ?? 0
     const heapGrowthRatio =
       initialHeapSize > 0
         ? (finalHeapSize - initialHeapSize) / initialHeapSize
@@ -82,7 +82,7 @@ test.describe('Frontend Performance', () => {
 
     const layoutCounts = metrics.map((m) => m.LayoutCount)
     const totalLayouts =
-      (layoutCounts[layoutCounts.length - 1] || 0) - (layoutCounts[0] || 0)
+      (layoutCounts[layoutCounts.length - 1] ?? 0) - (layoutCounts[0] ?? 0)
     console.log(`Total Layouts during test: ${totalLayouts}`)
 
     // --- Reporting ---

@@ -121,14 +121,14 @@ describe('WebSocket Manager', () => {
       // @ts-expect-error-next-line
       mockWss.emit('connection', mockWs)
 
-      const initialPingTime = mockWs.lastPingTime
+      const initialPingTime = mockWs.lastPingTime ?? 0
       jest.advanceTimersByTime(1000)
 
       // Simulate a PING message from the client
       const message = JSON.stringify({ type: 'PING' })
       mockWs.emit('message', message.toString())
 
-      expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
+      expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime)
       expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify({ type: 'PONG' }))
     })
 

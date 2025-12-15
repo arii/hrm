@@ -178,7 +178,7 @@ describe('Services Integration', () => {
 
       const phases = broadcastedMessages
         .map((m) => (m.type === 'TIMER_UPDATE' ? m.payload.currentPhase : null))
-        .filter(Boolean)
+        .filter((p) => p !== null)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')
@@ -238,7 +238,9 @@ describe('Services Integration', () => {
       jest.advanceTimersByTime(5000)
 
       const broadcasts = broadcastedMessages.filter(
-        (m) => m.type === 'TIMER_UPDATE' && m.payload.soundToPlay
+        (m) =>
+          m.type === 'TIMER_UPDATE' &&
+          m.payload.soundToPlay !== undefined,
       )
 
       expect(broadcasts.length).toBeGreaterThan(0)
@@ -291,7 +293,7 @@ describe('Services Integration', () => {
 
       tabataTimer.setMode('STOPWATCH')
       const timerBroadcast = broadcastedMessages.find(
-        (m) => m.type === 'TIMER_UPDATE' && m.payload.mode === 'STOPWATCH'
+        (m) => m.type === 'TIMER_UPDATE' && m.payload.mode === 'STOPWATCH',
       )
 
       expect(timerBroadcast).toBeDefined()
@@ -313,7 +315,7 @@ describe('Services Integration', () => {
 
       const phases = broadcastedMessages
         .map((m) => (m.type === 'TIMER_UPDATE' ? m.payload.currentPhase : null))
-        .filter(Boolean)
+        .filter((p) => p !== null)
 
       expect(phases).toContain('PREPARE')
       expect(phases).toContain('WORK')

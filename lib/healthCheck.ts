@@ -19,7 +19,7 @@ interface HealthCheckStatus {
 export const performHealthCheck = async (
   wss: WebSocketServer,
   spotifyService: SpotifyPolling,
-  tabataService: TabataTimer,
+  tabataService: TabataTimer
 ): Promise<HealthCheckStatus> => {
   const checks = {
     websocket: 'error' as 'ok' | 'error',
@@ -60,8 +60,8 @@ export const performHealthCheck = async (
   const overallStatus = Object.values(checks).every((s) => s === 'ok')
     ? 'healthy'
     : Object.values(checks).some((s) => s === 'error')
-    ? 'unhealthy'
-    : 'degraded'
+      ? 'unhealthy'
+      : 'degraded'
 
   return {
     status: overallStatus,

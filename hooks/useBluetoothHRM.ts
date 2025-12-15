@@ -20,7 +20,7 @@ const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
     document.cookie = `${name}=${encodeURIComponent(
-      value
+      value,
     )}; expires=${expires}; path=/`
   }
 }
@@ -41,7 +41,7 @@ const getCookie = (name: string): string => {
 const withTimeout = <T>(
   promise: Promise<T>,
   ms: number,
-  msg: string
+  msg: string,
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(msg)), ms)
@@ -53,7 +53,7 @@ const withTimeout = <T>(
       (err) => {
         clearTimeout(timer)
         reject(err)
-      }
+      },
     )
   })
 }
@@ -186,26 +186,29 @@ const useBluetoothHRM = () => {
     async (device: BluetoothDevice) => {
       try {
         deviceRef.current = device
-        setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
+        setDeviceStatus(`Connecting to: ${device.name ?? 'Device'}...`)
 
+        if (device.gatt === undefined) {
+          throw new Error('GATT server not available')
+        }
         // Use a timeout for the initial GATT connection to avoid infinite hanging
         // 10 seconds is usually enough for a healthy BLE connection
         const server = await withTimeout(
           device.gatt.connect(),
           10000,
-          'GATT connection timeout'
+          'GATT connection timeout',
         )
 
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
-          HR_CHARACTERISTIC_UUID
+          HR_CHARACTERISTIC_UUID,
         )
 
         try {
           const batteryService =
             await server.getPrimaryService(BATTERY_SERVICE_UUID)
           const batteryChar = await batteryService.getCharacteristic(
-            BATTERY_LEVEL_CHARACTERISTIC_UUID
+            BATTERY_LEVEL_CHARACTERISTIC_UUID,
           )
           const value = await batteryChar.readValue()
           setBatteryLevel(value.getUint8(0))
@@ -242,8 +245,7 @@ const useBluetoothHRM = () => {
             const data: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
-              name:
-                name ?? `Bluetooth HRM (${device.name ?? 'Unknown'})`,
+              name: name ?? `Bluetooth HRM (${device.name ?? 'Unknown'})`,
             }
 
             if (typeof age === 'number') {
@@ -254,7 +256,7 @@ const useBluetoothHRM = () => {
               type: 'HRM_INPUT',
               data,
             })
-          }
+          },
         )
 
         device.addEventListener('gattserverdisconnected', onDisconnected)
@@ -269,7 +271,7 @@ const useBluetoothHRM = () => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData],
   )
 
   useEffect(() => {
@@ -295,7 +297,7 @@ const useBluetoothHRM = () => {
         if (device === null) {
           const savedDeviceId = getCookie('hrm_device_id')
           if (
-            savedDeviceId !== '' &&
+            savedDeviceId &&
             navigator.bluetooth?.getDevices !== undefined
           ) {
             const devices = await navigator.bluetooth.getDevices()
@@ -338,7 +340,7 @@ const useBluetoothHRM = () => {
         return false
       }
     },
-    [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
+    [connectionStatus, savedDevice, connectToGatt, handleConnectionError],
   )
 
   return {

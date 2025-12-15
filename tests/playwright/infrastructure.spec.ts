@@ -44,7 +44,9 @@ test.describe('Infrastructure & Scripts', () => {
       }
       console.error('Lint Output:', execError.stdout?.toString())
       console.error('Lint Errors:', execError.stderr?.toString())
-      throw new Error(`Linting failed with status ${execError.status}`)
+      if (execError.status !== 0) {
+        throw new Error(`Linting failed with status ${execError.status}`)
+      }
     }
   })
 
@@ -75,7 +77,7 @@ test.describe('Infrastructure & Scripts', () => {
       // Cleanup: Kill the process group, wrapping in a try/catch in case
       // the process already exited (e.g., due to a startup failure).
       try {
-        if (devServer.pid) process.kill(-devServer.pid)
+        if (devServer.pid !== undefined) process.kill(-devServer.pid)
       } catch (_e) {
         // Ignore errors, likely "ESRCH" (process already gone).
       }
@@ -107,7 +109,7 @@ test.describe('Infrastructure & Scripts', () => {
       await waitForPort(PORT)
     } finally {
       try {
-        if (prodServer.pid) process.kill(-prodServer.pid)
+        if (prodServer.pid !== undefined) process.kill(-prodServer.pid)
       } catch (_e) {
         // Ignore errors
       }

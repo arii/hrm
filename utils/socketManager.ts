@@ -45,7 +45,7 @@ interface Services {
 const initSocketManager = (
   wss: WebSocketServer,
   services: Services,
-  getSnapshot: () => StateSnapshot
+  getSnapshot: () => StateSnapshot,
 ) => {
   initBroadcaster(wss)
   wsServerInstance = wss
@@ -95,7 +95,7 @@ const initSocketManager = (
       // If the client hasn't responded in time, terminate.
       if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
         console.log(
-          `Terminating stale WebSocket connection for client (no pong received).`
+          `Terminating stale WebSocket connection for client (no pong received).`,
         )
         return ws.terminate()
       }
@@ -111,7 +111,7 @@ const initSocketManager = (
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   jsonMessage: string,
-  clientId: string
+  clientId: string,
 ) => {
   console.log(`[socketManager] INCOMING MESSAGE from ${clientId}:`, jsonMessage)
   try {
@@ -123,7 +123,7 @@ const handleIncomingMessage = (
 
     console.log(
       `[socketManager] Received message from ${clientId}:`,
-      message.type
+      message.type,
     )
 
     switch (message.type) {
@@ -165,12 +165,12 @@ const handleIncomingMessage = (
           `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
           existingClientData,
           'newValue:',
-          message.data.value
+          message.data.value,
         )
-        if (existingClientData) {
+        if (existingClientData !== undefined) {
           // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+            Object.entries(message.data).filter(([, value]) => value !== null),
           )
           hrmClients.set(clientId, {
             ...existingClientData,
@@ -178,7 +178,7 @@ const handleIncomingMessage = (
           })
           console.log(
             `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
+            hrmClients.get(clientId),
           )
         }
         broadcast({
@@ -189,21 +189,21 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND': {
-        if (tabataServiceInstance) {
+        if (tabataServiceInstance !== undefined) {
           tabataServiceInstance.handleCommand(message.command)
         }
         break
       }
 
       case 'SET_MODE': {
-        if (tabataServiceInstance) {
+        if (tabataServiceInstance !== undefined) {
           tabataServiceInstance.setMode(message.mode)
         }
         break
       }
 
       case 'TIMER_CONFIG': {
-        if (tabataServiceInstance) {
+        if (tabataServiceInstance !== undefined) {
           tabataServiceInstance.setConfig({
             workDuration: message.workDuration,
             restDuration: message.restDuration,
@@ -233,12 +233,12 @@ const handleIncomingMessage = (
         })
 
         // Also handle locally for backward compatibility
-        if (spotifyServiceInstance) {
+        if (spotifyServiceInstance !== undefined) {
           spotifyServiceInstance.handleCommand(
             commandMsg.command,
             commandMsg.deviceId,
             commandMsg.volume,
-            commandMsg.playlistUri
+            commandMsg.playlistUri,
           )
         }
         break
@@ -248,7 +248,7 @@ const handleIncomingMessage = (
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
         console.warn(
           'Unknown message type received:',
-          (message as { type: unknown }).type
+          (message as { type: unknown }).type,
         )
     }
   } catch (e) {

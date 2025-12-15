@@ -255,7 +255,10 @@ export class SpotifyPolling {
       const isPlaying = playbackState.is_playing
 
       // Only broadcast if track ID or playback state has changed
-      if (item?.id !== this.lastTrackId || isPlaying !== this.lastPlaybackState) {
+      if (
+        item?.id !== this.lastTrackId ||
+        isPlaying !== this.lastPlaybackState
+      ) {
         this.lastTrackId = item?.id ?? null
         this.lastPlaybackState = isPlaying
         this.state = {
@@ -301,7 +304,7 @@ export class SpotifyPolling {
       const validDevices: SpotifyDevice[] = (response.devices ?? [])
         .filter((d: Device) => d.id !== null)
         .map((d: Device) => ({
-          id: d.id as string,
+          id: String(d.id),
           is_active: d.is_active,
           is_private_session: d.is_private_session,
           is_restricted: d.is_restricted,
@@ -353,6 +356,10 @@ export class SpotifyPolling {
     volume?: number,
     playlistUri?: string,
   ) {
+    if (this.sdk === null) {
+      logger.warn(`SDK not available, ignoring Spotify command: ${command}`)
+      return
+    }
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
 
@@ -360,31 +367,24 @@ export class SpotifyPolling {
       case 'PLAY':
         if (playlistUri !== undefined) {
           // If deviceId is undefined, SDK targets active device
-          // Type assertion needed because SDK types incorrectly require string
-          await this.sdk.player.startResumePlayback(
-            (deviceId ?? undefined) as unknown as string,
-            playlistUri,
-          )
+          // @ts-expect-error - SDK types are incorrect, deviceId is optional
+          await this.sdk.player.startResumePlayback(deviceId, playlistUri)
         } else {
-          await this.sdk.player.startResumePlayback(
-            (deviceId ?? undefined) as unknown as string,
-          )
+          // @ts-expect-error - SDK types are incorrect, deviceId is optional
+          await this.sdk.player.startResumePlayback(deviceId)
         }
         break
       case 'PAUSE':
-        await this.sdk.player.pausePlayback(
-          (deviceId ?? undefined) as unknown as string,
-        )
+        // @ts-expect-error - SDK types are incorrect, deviceId is optional
+        await this.sdk.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        await this.sdk.player.skipToNext(
-          (deviceId ?? undefined) as unknown as string,
-        )
+        // @ts-expect-error - SDK types are incorrect, deviceId is optional
+        await this.sdk.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        await this.sdk.player.skipToPrevious(
-          (deviceId ?? undefined) as unknown as string,
-        )
+        // @ts-expect-error - SDK types are incorrect, deviceId is optional
+        await this.sdk.player.skipToPrevious(deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId !== undefined) {

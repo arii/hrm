@@ -39,7 +39,7 @@ export async function verifyAuthConfiguration(page: Page): Promise<{
 }> {
   const baseUrl = getBaseURL()
   const response = await page.request.get(
-    `${baseUrl}${AUTH_ENDPOINTS.AUTH_CHECK}`
+    `${baseUrl}${AUTH_ENDPOINTS.AUTH_CHECK}`,
   )
 
   expect(response.ok()).toBe(true)
@@ -65,14 +65,12 @@ export async function verifyDebugEndpoints(page: Page): Promise<{
   const baseUrl = getBaseURL()
 
   // Check ping endpoint
-  const pingResponse = await page.request.get(
-    `${baseUrl}${AUTH_ENDPOINTS.PING}`
-  )
+  const pingResponse = await page.request.get(`${baseUrl}${AUTH_ENDPOINTS.PING}`)
   const pingJson = await pingResponse.json()
 
   // Check session endpoint
   const sessionResponse = await page.request.get(
-    `${baseUrl}${AUTH_ENDPOINTS.SESSION}`
+    `${baseUrl}${AUTH_ENDPOINTS.SESSION}`,
   )
 
   return {
@@ -90,7 +88,7 @@ export async function verifyDebugEndpoints(page: Page): Promise<{
  */
 export async function waitForAuthRedirect(
   page: Page,
-  options: { timeout?: number } = {}
+  options: { timeout?: number } = {},
 ): Promise<void> {
   const { timeout = WAIT_TIMEOUTS.NAVIGATION } = options
   const baseUrl = getBaseURL()
@@ -130,7 +128,7 @@ export async function verifyNoStateCookieError(page: Page): Promise<void> {
     .isVisible()
   expect(
     errorText,
-    '❌ Critical: "State cookie was missing" error detected!'
+    '❌ Critical: "State cookie was missing" error detected!',
   ).toBe(false)
 }
 
@@ -147,7 +145,7 @@ export async function verifySpotifyTokenStatus(page: Page): Promise<{
 }> {
   const baseUrl = getBaseURL()
   const response = await page.request.get(
-    `${baseUrl}${AUTH_ENDPOINTS.SPOTIFY_TOKEN_STATUS}`
+    `${baseUrl}${AUTH_ENDPOINTS.SPOTIFY_TOKEN_STATUS}`,
   )
 
   expect(response.status()).toBe(200)
@@ -155,8 +153,8 @@ export async function verifySpotifyTokenStatus(page: Page): Promise<{
 
   return {
     status: data.status ?? 'unknown',
-    hasAccessToken: !!data.accessToken,
-    hasRefreshToken: !!data.refreshToken,
+    hasAccessToken: data.accessToken === true,
+    hasRefreshToken: data.refreshToken === true,
   }
 }
 
@@ -181,7 +179,7 @@ export async function verifySpotifyTokenStatus(page: Page): Promise<{
  */
 export async function createAuthenticatedContext(
   context: BrowserContext,
-  _storageState?: string
+  _storageState?: string,
 ): Promise<BrowserContext> {
   // Returns context as-is - implement storage state handling as needed
   return context
@@ -197,7 +195,7 @@ export async function createAuthenticatedContext(
 export async function navigateToProtectedRoute(
   page: Page,
   route: string,
-  options: { expectAuth?: boolean; timeout?: number } = {}
+  options: { expectAuth?: boolean; timeout?: number } = {},
 ): Promise<void> {
   const { expectAuth = false, timeout = 30000 } = options
   const baseUrl = getBaseURL()

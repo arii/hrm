@@ -32,15 +32,16 @@ describe('TimerControls', () => {
     jest.resetAllMocks()
 
     // Mock the fetch call for Spotify devices to prevent console warnings
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve([
-            { id: 'test-device-id', name: 'Test Device', is_active: true },
-          ]),
-      })
-    ) as jest.Mock
+    global.fetch = jest.fn(
+      () =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              { id: 'test-device-id', name: 'Test Device', is_active: true },
+            ]),
+        }) as unknown as Response,
+    )
   })
 
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
@@ -60,12 +61,8 @@ describe('TimerControls', () => {
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
     // Get the actual input elements using data-testid (following MUI testing pattern)
-    const workInput = screen.getByTestId(
-      'work-duration-input'
-    ) as HTMLInputElement
-    const restInput = screen.getByTestId(
-      'rest-duration-input'
-    ) as HTMLInputElement
+    const workInput = screen.getByTestId('work-duration-input')
+    const restInput = screen.getByTestId('rest-duration-input')
 
     // Use fireEvent.change to directly trigger the onChange event with new values
     // This properly simulates input changes on MUI TextField components
@@ -85,7 +82,7 @@ describe('TimerControls', () => {
         type: 'TIMER_CONFIG',
         workDuration: 45,
         restDuration: 15,
-      })
+      }),
     )
   })
 })
