@@ -1,6 +1,6 @@
 // app/api/health/detailed/route.ts
 import { NextResponse } from 'next/server'
-import { checkMemoryUsage } from '../../../../lib/healthCheck'
+import { checkMemoryUsage, checkSpotifyAPI } from '../../../../lib/healthCheck'
 import { env } from '@/lib/env'
 
 async function checkStatefulServices(): Promise<{
@@ -49,6 +49,7 @@ export async function GET() {
     version: env.npm_package_version || 'unknown',
     checks: {
       memory: checkMemoryUsage(),
+      spotify: await checkSpotifyAPI(),
       services: await checkStatefulServices(),
     },
   }

@@ -13,6 +13,12 @@ import TabataTimer from '../../../services/tabataTimer'
 // Mock the 'ws' module
 jest.mock('ws')
 
+jest.mock('@spotify/web-api-ts-sdk', () => ({
+  SpotifyApi: {
+    performClientCredentialsGrantRequest: jest.fn(),
+  },
+}))
+
 // Mock global fetch
 global.fetch = jest.fn()
 
@@ -35,16 +41,15 @@ describe('Health Check Logic', () => {
 
   describe('checkSpotifyAPI', () => {
     it('should return healthy when Spotify API is reachable', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValue({
-        ok: false,
-        status: 401,
-      })
+      const { SpotifyApi } = require('@spotify/web-api-ts-sdk')
+      ;(SpotifyApi.performClientCredentialsGrantRequest as jest.Mock).mockResolvedValue(true)
       const result = await checkSpotifyAPI()
       expect(result.healthy).toBe(true)
     })
 
     it('should return unhealthy when Spotify API is unreachable', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'))
+      const { SpotifyApi } = require('@spotify/web-api-ts-sdk')
+      ;(SpotifyApi.performClientCredentialsGrantRequest as jest.Mock).mockRejectedValue(new Error('Network error'))
       const result = await checkSpotifyAPI()
       expect(result.healthy).toBe(false)
     })

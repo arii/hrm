@@ -45,6 +45,7 @@ const config = {
     '/node_modules/(?!uuid)', // Ensure uuid is transformed
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',

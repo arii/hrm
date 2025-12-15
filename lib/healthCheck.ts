@@ -1,6 +1,8 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { env } from './env'
 
 // Individual health check functions
 export function checkMemoryUsage() {
@@ -15,6 +17,25 @@ export function checkMemoryUsage() {
       limitMB: memLimitMB,
       percentage: Math.round((memUsageMB / memLimitMB) * 100),
     },
+  }
+}
+
+export const checkSpotifyAPI = async () => {
+  try {
+    // This is a lightweight check that doesn't require full auth,
+    // just valid client credentials.
+    await SpotifyApi.performClientCredentialsGrantRequest(
+      env.SPOTIFY_CLIENT_ID,
+      env.SPOTIFY_CLIENT_SECRET
+    )
+    return { healthy: true, message: 'Spotify API credentials are valid.' }
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred'
+    return {
+      healthy: false,
+      message: `Spotify API health check failed: ${errorMessage}`,
+    }
   }
 }
 

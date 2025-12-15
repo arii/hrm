@@ -96,18 +96,18 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
+    if ((spotifyService as any).pollInterval) {
       clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
+        (spotifyService as any).pollInterval as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['pollInterval'] = null
+      ;(spotifyService as any).pollInterval = null
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
+    if ((spotifyService as any).tokenRefreshInterval) {
       clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
+        (spotifyService as any).tokenRefreshInterval as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+      ;(spotifyService as any).tokenRefreshInterval = null
     }
   })
 
@@ -254,7 +254,7 @@ describe('SpotifyPolling Service', () => {
       const refreshToken = 'test_refresh_token'
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService as never, 'initializeSdk')
+        .spyOn(spotifyService as any, 'initializeSdk')
         .mockResolvedValue(undefined)
       spotifyService.setRefreshToken(refreshToken)
       // Advance timers to allow setTimeout to run
@@ -291,15 +291,9 @@ describe('SpotifyPolling Service', () => {
         is_playing: true,
         currently_playing_type: 'track',
       }
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
-        Promise.resolve(mockPlayback)
-      )
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(mockPlayback)
 
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
-      spotifyService.stopPolling()
+      await spotifyService.forcePollAndBroadcast()
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
@@ -307,15 +301,9 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle 204 No Content response', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
-        Promise.resolve(null)
-      )
+      mockPlayer.getCurrentlyPlayingTrack.mockResolvedValue(null)
 
-      spotifyService.startPolling()
-      jest.advanceTimersByTime(150)
-      await Promise.resolve()
-      await Promise.resolve()
-      spotifyService.stopPolling()
+      await spotifyService.forcePollAndBroadcast()
 
       // Only check the last broadcasted state
       const lastState = broadcastedStates.at(-1)
@@ -366,16 +354,11 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should handle 401 unauthorized responses', async () => {
-      mockPlayer.getCurrentlyPlayingTrack.mockImplementation(() =>
-        Promise.reject({ status: 401 })
-      )
+      mockPlayer.getCurrentlyPlayingTrack.mockRejectedValue({ status: 401 })
       // @ts-expect-error - Testing private method
       const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken')
-      spotifyService.startPolling(100)
-      jest.advanceTimersByTime(150)
-      await Promise.resolve() // Flush promises
-      await Promise.resolve() // Flush promises
-      spotifyService.stopPolling()
+
+      await spotifyService.forcePollAndBroadcast()
 
       // Should attempt to handle 401 without crashing
       expect(() => spotifyService.getState()).not.toThrow()

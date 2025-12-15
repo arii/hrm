@@ -16,7 +16,6 @@ jest.mock('@/lib/env', () => {
     SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().int().positive().default(5000),
     SPOTIFY_DEBUG: z.string().optional(),
     SPOTIFY_EXPECTED_USER_ID: z.string().optional(),
-    WS_URL: z.string().url().optional(),
     GOOGLE_DOC_WORKOUT_URL: z.string().url().optional(),
     GEMINI_API_KEY: z.string().optional(),
     GEMINI_MODEL: z.string().optional(),
@@ -24,8 +23,8 @@ jest.mock('@/lib/env', () => {
     CI: z.string().optional(),
     ANALYZE: z.string().optional(),
     npm_package_version: z.string().optional(),
-    NEXT_PUBLIC_WS_URL: z.string().url().optional(),
-    NEXT_PUBLIC_API_URL: z.string().url().optional(),
+    NEXT_PUBLIC_WS_URL: z.string().url().optional().or(z.literal('')),
+    NEXT_PUBLIC_API_URL: z.string().url().optional().or(z.literal('')),
     NEXT_PUBLIC_USE_NATIVE_TABLE: z.string().optional(),
   });
 
