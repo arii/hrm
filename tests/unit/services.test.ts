@@ -41,7 +41,7 @@ describe('Services Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (message: ServerMessage) => {
+    broadcastFn = (message) => {
       broadcastedMessages.push(message)
     }
 
