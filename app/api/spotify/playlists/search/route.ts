@@ -15,10 +15,10 @@ export const runtime = 'nodejs' // Force Node.js runtime
  * This route is protected and requires a valid user session. It takes a search
  * query from the request and uses the Spotify API to find matching playlists.
  *
- * @param {NextRequest} req - The incoming request object, containing the search query.
+ * @param {Request} req - The incoming request object, containing the search query.
  * @returns {Promise<NextResponse>} A JSON response with the search results or an error.
  */
-async function searchPlaylistsHandler(req: NextRequest): Promise<NextResponse> {
+async function searchPlaylistsHandler(req: Request): Promise<NextResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.accessToken) {
     throw new ApiError(401, 'Not authenticated or token is missing.')
