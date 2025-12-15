@@ -1,7 +1,7 @@
 // File: app/api/spotify/playlists/route.ts
 
 import { getPresetPlaylists } from '@/services/spotifyPlaylistService'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+import { SpotifyApi, SimplifiedPlaylist } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
@@ -38,7 +38,7 @@ async function getPlaylistsHandler(): Promise<NextResponse> {
   )
 
   const presetPlaylists = getPresetPlaylists()
-  let userPlaylists = []
+  let userPlaylists: SimplifiedPlaylist[] = []
 
   try {
     // Fetch user's playlists from Spotify

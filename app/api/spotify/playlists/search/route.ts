@@ -21,14 +21,14 @@ export const runtime = 'nodejs' // Force Node.js runtime
 async function searchPlaylistsHandler(req: NextRequest): Promise<NextResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.accessToken) {
-    throw new ApiError('Not authenticated or token is missing.', 401)
+    throw new ApiError(401, 'Not authenticated or token is missing.')
   }
 
   const { searchParams } = new URL(req.url)
   const query = searchParams.get('query')
 
   if (!query) {
-    throw new ApiError('Search query is required.', 400)
+    throw new ApiError(400, 'Search query is required.')
   }
 
   // Initialize Spotify API with user's access token
