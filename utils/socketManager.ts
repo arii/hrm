@@ -23,6 +23,7 @@ import { broadcast, initBroadcaster } from './broadcast.js'
 interface ExtWebSocket extends WebSocket {
   lastPingTime: number // Changed to non-optional
   clientType?: 'dashboard' | 'controller'
+  clientId: string
 }
 
 // Define service instances to be managed
@@ -57,6 +58,7 @@ const initSocketManager = (
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+    extWs.clientId = clientId // Assign clientId to the WebSocket object
     extWs.lastPingTime = Date.now() // Initialize on connect
     logger.info('WebSocket client connected', { clientId })
 
