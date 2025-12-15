@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { Snackbar, Alert, useTheme } from '@mui/material'
 import { useToast } from '@/context/ToastContext'
 
