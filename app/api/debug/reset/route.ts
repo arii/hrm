@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import logger from '@/utils/logger'
+import { env } from '@/lib/env'
 
 export async function POST() {
-  if (process.env.NODE_ENV !== 'development') {
+  if (env.NODE_ENV !== 'development') {
     return NextResponse.json(
       { message: 'This feature is only available in development mode.' },
       { status: 403 }

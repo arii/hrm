@@ -3,6 +3,7 @@ import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 import logger from '@/utils/logger'
+import { env } from '@/lib/env'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
@@ -15,9 +16,13 @@ const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
 
 export async function POST(req: NextRequest) {
   try {
-    const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
-    if (expected && secretHeader !== expected) {
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new ApiError(401, 'Unauthorized')
+    }
+    const token = authHeader.split(' ')[1]
+    const expected = env.INTERNAL_TOKEN_DELIVERY_SECRET
+    if (token !== expected) {
       throw new ApiError(401, 'Unauthorized')
     }
 

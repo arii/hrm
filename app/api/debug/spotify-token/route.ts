@@ -1,12 +1,13 @@
 import fs from 'fs'
 import { NextResponse } from 'next/server'
 import path from 'path'
+import { env } from '@/lib/env'
 
 const TOKEN_FILE = path.resolve(process.cwd(), 'logs', 'spotify_tokens.json')
 
 export async function GET() {
   // SECURITY: Prevent exposure of secrets in production
-  if (process.env.NODE_ENV !== 'development') {
+  if (env.NODE_ENV !== 'development') {
     return NextResponse.json(
       { error: 'Not available in production' },
       { status: 403 }

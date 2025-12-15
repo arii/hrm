@@ -5,6 +5,7 @@
  */
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { env } from './lib/env'
 
 // Base path for auth routes
 const API_AUTH_BASE = '/api/auth/'
@@ -53,7 +54,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
+  if (env.NODE_ENV === 'development') {
     console.log('[Middleware] Auth request:', {
       pathname: request.nextUrl.pathname,
       host: request.headers.get('host'),

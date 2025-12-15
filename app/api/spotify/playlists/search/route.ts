@@ -7,6 +7,7 @@ import { ApiError } from '@/lib/errors'
 import { SimplifiedPlaylist, SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+import { env } from '@/lib/env'
 
 /**
  * API route to search for public Spotify playlists.
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
     }
     // 4. Initialize Spotify SDK with access token
     const spotify = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || '',
+      env.SPOTIFY_CLIENT_ID,
       {
         access_token: session.accessToken,
         token_type: 'Bearer',

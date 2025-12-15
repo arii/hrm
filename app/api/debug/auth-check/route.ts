@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
+import { env } from '@/lib/env'
 
 /**
  * Debug endpoint to verify Spotify OAuth configuration is loaded correctly.
@@ -7,10 +8,12 @@ import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
  */
 export async function GET() {
   try {
-    const clientId = process.env.SPOTIFY_CLIENT_ID
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+    const {
+      SPOTIFY_CLIENT_ID: clientId,
+      SPOTIFY_CLIENT_SECRET: clientSecret,
+      NEXTAUTH_SECRET: nextAuthSecret,
+    } = env
     const nextAuthUrl = getBaseURL()
-    const nextAuthSecret = process.env.NEXTAUTH_SECRET
 
     return NextResponse.json({
       nextAuthConfigured: !!(nextAuthUrl && nextAuthSecret),

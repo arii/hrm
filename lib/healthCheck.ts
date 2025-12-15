@@ -23,7 +23,7 @@ export async function checkWebSocketService(): Promise<{
   details: Record<string, unknown>
 }> {
   try {
-    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
+    const wsUrl = 'ws://localhost:3000' // Corrected default URL
     // Check if WebSocket server is accepting connections
     const wsHealth = await new Promise((resolve) => {
       const testWs = new WebSocket(wsUrl)
@@ -58,42 +58,6 @@ export async function checkWebSocketService(): Promise<{
       details: {
         service: 'websocket',
         error: error instanceof Error ? error.message : 'Unknown error',
-      },
-    }
-  }
-}
-
-export async function checkSpotifyAPI(): Promise<{
-  healthy: boolean
-  details: Record<string, unknown>
-}> {
-  try {
-    // Test Spotify API connectivity (no auth required)
-    const response = await fetch(
-      'https://api.spotify.com/v1/browse/categories?limit=1',
-      {
-        headers: {
-          'User-Agent': 'HRM-App/1.0',
-        },
-      }
-    )
-
-    const healthy = response.status === 401 // 401 is expected without auth
-
-    return {
-      healthy,
-      details: {
-        service: 'spotify-api',
-        status: response.status,
-        reachable: response.status !== undefined,
-      },
-    }
-  } catch (error) {
-    return {
-      healthy: false,
-      details: {
-        service: 'spotify-api',
-        error: error instanceof Error ? error.message : 'Network unreachable',
       },
     }
   }

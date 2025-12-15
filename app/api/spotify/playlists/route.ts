@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
+import { env } from '@/lib/env'
 
 /**
  * API route to fetch preset and user Spotify playlists.
@@ -30,7 +31,7 @@ async function getPlaylists(_req: Request) {
 
   // 3. Initialize Spotify SDK with access token
   const spotify = SpotifyApi.withAccessToken(
-    process.env.SPOTIFY_CLIENT_ID || '',
+    env.SPOTIFY_CLIENT_ID,
     {
       access_token: session.accessToken,
       token_type: 'Bearer',

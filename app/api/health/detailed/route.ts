@@ -1,12 +1,13 @@
 // app/api/health/detailed/route.ts
 import { NextResponse } from 'next/server'
-import { checkMemoryUsage, checkSpotifyAPI } from '../../../../lib/healthCheck'
+import { checkMemoryUsage } from '../../../../lib/healthCheck'
+import { env } from '@/lib/env'
 
 async function checkStatefulServices(): Promise<{
   healthy: boolean
   details: Record<string, unknown>
 }> {
-  const baseUrl = process.env.NEXTAUTH_URL
+  const baseUrl = env.NEXTAUTH_URL
   if (!baseUrl) {
     return {
       healthy: false,
@@ -45,10 +46,9 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     status: 'healthy' as 'healthy' | 'degraded' | 'unhealthy',
     uptime: process.uptime(),
-    version: process.env.npm_package_version || 'unknown',
+    version: env.npm_package_version || 'unknown',
     checks: {
       memory: checkMemoryUsage(),
-      spotify: await checkSpotifyAPI(),
       services: await checkStatefulServices(),
     },
   }

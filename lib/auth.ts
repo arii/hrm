@@ -4,6 +4,7 @@ import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '../utils/logger'
 import { getAPIURL } from '../utils/urls'
+import { env } from './env'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -23,11 +24,8 @@ declare module 'next-auth' {
  *                               should not be set.
  */
 function getCookieDomain(): string | undefined {
-  if (!process.env.NEXTAUTH_URL) {
-    return undefined
-  }
   try {
-    const url = new URL(process.env.NEXTAUTH_URL)
+    const url = new URL(env.NEXTAUTH_URL)
     // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
       return undefined
@@ -35,7 +33,7 @@ function getCookieDomain(): string | undefined {
     return url.hostname
   } catch (e) {
     logger.error(
-      { url: process.env.NEXTAUTH_URL, error: e },
+      { url: env.NEXTAUTH_URL, error: e },
       'Failed to parse NEXTAUTH_URL for cookie domain'
     )
     return undefined
@@ -70,9 +68,9 @@ async function refreshAccessToken(token: JWT) {
         Authorization:
           'Basic ' +
           Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID +
+            env.SPOTIFY_CLIENT_ID +
               ':' +
-              process.env.SPOTIFY_CLIENT_SECRET
+              env.SPOTIFY_CLIENT_SECRET
           ).toString('base64'),
       },
       body: new URLSearchParams({
@@ -119,16 +117,6 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
-// --- CRITICAL SECURITY CHECK ---
-// Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
-// This prevents runtime errors and insecure defaults.
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
-
-if (!NEXTAUTH_SECRET) {
-  throw new Error(
-    'NEXTAUTH_SECRET environment variable is not defined. This is a critical security requirement.'
-  )
-}
 
 /**
  * Configuration options for NextAuth.js.
@@ -144,8 +132,8 @@ export const authOptions: AuthOptions = {
     SpotifyProvider({
       id: 'spotify',
       name: 'Spotify',
-      clientId: process.env.SPOTIFY_CLIENT_ID as string,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
+      clientId: env.SPOTIFY_CLIENT_ID,
+      clientSecret: env.SPOTIFY_CLIENT_SECRET,
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
@@ -161,7 +149,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -171,7 +159,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -181,7 +169,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -191,7 +179,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
         domain: getCookieDomain(),
       },
@@ -202,14 +190,14 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
         domain: getCookieDomain(),
       },
     },
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
-  debug: process.env.NODE_ENV === 'development',
+  useSecureCookies: env.NODE_ENV === 'production',
+  debug: env.NODE_ENV === 'development',
   callbacks: {
     /**
      * Callback executed on a successful sign-in.
@@ -263,7 +251,10 @@ export const authOptions: AuthOptions = {
 
             const response = await fetch(getAPIURL('internal/token-delivery'), {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${env.INTERNAL_TOKEN_DELIVERY_SECRET}`
+              },
               body: JSON.stringify(tokenPayload),
             })
             const responseBody = await response.text()
@@ -329,5 +320,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret: NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
 }

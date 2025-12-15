@@ -2,6 +2,7 @@
 /**
  * Centralized URL configuration for development and production environments
  */
+import { env } from '../lib/env'
 
 /**
  * Builds a WebSocket URL from a standard HTTP/S base URL.
@@ -21,12 +22,12 @@ export const getBaseURL = (): string => {
   }
 
   // Server-side: ALWAYS use NEXTAUTH_URL if available (for OAuth consistency)
-  return process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000'
+  return env.NEXTAUTH_URL
 }
 
 export const getWebSocketURL = (): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envWsUrl = process.env.NEXT_PUBLIC_WS_URL
+  const envWsUrl = env.NEXT_PUBLIC_WS_URL
   if (envWsUrl && envWsUrl.length > 0) {
     return buildWebSocketUrl(envWsUrl)
   }
@@ -43,7 +44,7 @@ export const getWebSocketURL = (): string => {
 
 export const getAPIURL = (endpoint: string): string => {
   // 1. Prioritize the explicit environment variable if it's a non-empty string.
-  const envApiUrl = process.env.NEXT_PUBLIC_API_URL
+  const envApiUrl = env.NEXT_PUBLIC_API_URL
   if (envApiUrl && envApiUrl.length > 0) {
     const cleanedUrl = envApiUrl.replace(/\/$/, '') // Remove trailing slash
     // Strictly adhere to docs: assume no '/api' in the env var.
@@ -62,11 +63,11 @@ export const getAPIURL = (endpoint: string): string => {
 
 export const getSpotifyCallbackURL = (): string => {
   return (
-    process.env.SPOTIFY_CALLBACK_URL ||
+    env.SPOTIFY_CALLBACK_URL ||
     `${getBaseURL()}/api/auth/callback/spotify`
   )
 }
 
 export const getGoogleDocWorkoutUrl = (): string | undefined => {
-  return process.env.GOOGLE_DOC_WORKOUT_URL
+  return env.GOOGLE_DOC_WORKOUT_URL
 }

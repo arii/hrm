@@ -12,60 +12,45 @@ This document provides clear standards for managing environment variables (env v
 
 ### 1. Centralized Validation
 
-All environment variables must be validated in a single, centralized location (e.g., `lib/env.ts`). This validation should occur at application startup. We use Zod for schema-based validation, which provides both runtime validation and static type inference.
+All environment variables are validated in a single, centralized location: `lib/env.ts`. This validation occurs at application startup using a Zod schema, which provides both runtime validation and static type inference.
 
-### 2. Avoid Type Assertions
+### 2. Avoid Direct `process.env` Access
 
-Do not use type assertions (e.g., `as string`) to bypass TypeScript's type safety. This is a dangerous practice that can mask configuration issues and lead to runtime errors.
-
-**Incorrect Pattern:**
-
-```typescript
-// This is unsafe and prohibited.
-const myVar = process.env.MY_VAR as string;
-```
-
-### 3. Use Explicit Validation and Error Handling
-
-For any environment variable that is required for the application to function, you must perform an explicit check. If the variable is missing, throw an error to halt the application's startup process.
+Do not use `process.env` directly in the application code. Instead, import the validated `env` object from `lib/env.ts`. This ensures that all environment variables are accessed in a type-safe manner.
 
 **Correct Pattern:**
 
 ```typescript
-// Example using a validation library like Zod
-import { z } from 'zod';
+import { env } from '@/lib/env';
 
-const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  API_KEY: z.string().min(1),
-});
-
-const env = envSchema.parse(process.env);
-
-// Now 'env.API_KEY' is guaranteed to be a non-empty string.
+const port = env.PORT;
 ```
 
-If not using a validation library, a manual check is required:
+## Environment Variable Reference
 
-```typescript
-const apiKey = process.env.API_KEY;
-if (!apiKey) {
-  throw new Error('Required environment variable API_KEY is not set.');
-}
-// 'apiKey' is now known to be a string.
-```
-
-### 4. Provide Example and Documentation
-
-All environment variables required by the project must be documented in the `.env.example` file. This file should:
-
--   List every required environment variable.
--   Provide a descriptive comment explaining the purpose of each variable.
--   Include placeholder or example values, but **never** real secrets.
-
-### 5. Use Specific and Prefixed Names
-
-To avoid naming collisions and to make the purpose of variables clear, use a consistent naming convention. For example, prefix all Spotify-related variables with `SPOTIFY_`.
-
--   **Good**: `SPOTIFY_CLIENT_ID`, `DATABASE_URL`
--   **Bad**: `ID`, `URL`
+| Variable | Description | Required | Default |
+| --- | --- | --- | --- |
+| `NODE_ENV` | The application environment. | Yes | `development` |
+| `PORT` | The port the application will run on. | Yes | `3000` |
+| `HOST` | The hostname the application will bind to. | Yes | `127.0.0.1` |
+| `DATABASE_URL` | The connection string for the database. | Yes | |
+| `NEXTAUTH_URL` | The base URL for NextAuth. | Yes | |
+| `NEXTAUTH_SECRET` | A secret key for NextAuth. | Yes | |
+| `INTERNAL_TOKEN_DELIVERY_SECRET`| A secret key for the internal token delivery endpoint. | Yes | |
+| `SPOTIFY_CLIENT_ID` | The client ID for the Spotify API. | Yes | |
+| `SPOTIFY_CLIENT_SECRET` | The client secret for the Spotify API. | Yes | |
+| `SPOTIFY_CALLBACK_URL` | The callback URL for the Spotify API. | No | |
+| `SPOTIFY_POLLING_INTERVAL_MS`| The interval in milliseconds to poll the Spotify API. | Yes | `5000` |
+| `SPOTIFY_DEBUG` | Enable debug logging for the Spotify service. | No | |
+| `SPOTIFY_EXPECTED_USER_ID` | The expected user ID for the Spotify service. | No | |
+| `WS_URL` | The URL for the WebSocket server. | No | |
+| `GOOGLE_DOC_WORKOUT_URL` | The URL for the Google Doc workout plan. | No | |
+| `GEMINI_API_KEY` | The API key for the Gemini API. | No | |
+| `GEMINI_MODEL` | The model to use for the Gemini API. | No | |
+| `TESTING` | Enable testing mode. | No | |
+| `CI` | Enable CI mode. | No | |
+| `ANALYZE` | Enable bundle analysis. | No | |
+| `npm_package_version` | The version of the application. | No | |
+| `NEXT_PUBLIC_WS_URL` | The public URL for the WebSocket server. | No | |
+| `NEXT_PUBLIC_API_URL` | The public URL for the API. | No | |
+| `NEXT_PUBLIC_USE_NATIVE_TABLE`| Enable the native table feature. | No | |

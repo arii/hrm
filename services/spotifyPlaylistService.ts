@@ -6,6 +6,7 @@
 import { SpotifyApi, AccessToken } from '@spotify/web-api-ts-sdk'
 import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
 import { presetPlaylists } from './seedData.js'
+import { env } from '../lib/env.js'
 
 // Re-export types for backward compatibility
 export type { SpotifyPlaylistItem, SpotifyPlaylist }
@@ -41,7 +42,7 @@ export async function getUserPlaylists(
     }
 
     const sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || 'client_id_placeholder', // Client ID is needed even if we have token? Yes, usually.
+      env.SPOTIFY_CLIENT_ID,
       tokenObject
     )
 
