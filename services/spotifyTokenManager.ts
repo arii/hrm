@@ -159,23 +159,29 @@ export class SpotifyTokenManager {
       this.currentToken.payload.expires_in * 1000
 
     if (Date.now() >= expiresAt - 60000) {
-      console.log(
-        'Spotify access token is expiring soon, initiating refresh...'
-      )
-      // Refresh if within 1 minute of expiry
-      // Ensure only one refresh happens at a time
-      if (!this.refreshPromise) {
-        this.refreshPromise = this.refreshToken()
-          .then(() => {
-            this.refreshPromise = null
-            console.log('Spotify access token refresh completed.')
-          })
-          .catch((error) => {
-            this.refreshPromise = null
-            console.error('Spotify access token refresh failed:', error)
-          })
+      if (this.currentToken.payload.refresh_token) {
+        console.log(
+          'Spotify access token is expiring soon, initiating refresh...'
+        )
+        // Refresh if within 1 minute of expiry
+        // Ensure only one refresh happens at a time
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.refreshToken()
+            .then(() => {
+              this.refreshPromise = null
+              console.log('Spotify access token refresh completed.')
+            })
+            .catch((error) => {
+              this.refreshPromise = null
+              console.error('Spotify access token refresh failed:', error)
+            })
+        }
+        await this.refreshPromise
+      } else {
+        console.log(
+          'Spotify access token expired, but no refresh token available. Cannot refresh.'
+        )
       }
-      await this.refreshPromise
     }
 
     return this.currentToken.payload.access_token
