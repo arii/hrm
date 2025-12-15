@@ -9,7 +9,6 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { initSocketManager } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
@@ -78,6 +77,7 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
+    let initSocketManager: any
 
     beforeEach(() => {
       jest.useFakeTimers()
@@ -92,6 +92,7 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
+      initSocketManager = require('../../utils/socketManager').initSocketManager
     })
 
     afterEach(() => {
@@ -165,6 +166,121 @@ describe('WebSocket Manager', () => {
 
       expect(mockWs.terminate).not.toHaveBeenCalled()
       clearInterval(interval)
+    })
+  })
+
+  describe('HRM Data Handling', () => {
+    let mockWss: WebSocketServer
+    let mockServices: {
+      tabataService: TabataTimer
+      spotifyService: SpotifyPolling
+    }
+    let getSnapshot: () => StateSnapshot
+    let broadcastMock: jest.Mock
+    let initSocketManager: (
+      wss: WebSocketServer,
+      services: any,
+      getSnapshot: () => StateSnapshot
+    ) => void
+
+    beforeEach(() => {
+      jest.resetModules()
+      jest.useFakeTimers()
+
+      const { Server } = require('ws')
+      mockWss = new (Server as jest.Mock)()
+
+      mockServices = {
+        tabataService: {
+          handleCommand: jest.fn(),
+          setMode: jest.fn(),
+        } as unknown as TabataTimer,
+        spotifyService: {
+          handleCommand: jest.fn(),
+        } as unknown as SpotifyPolling,
+      }
+      getSnapshot = jest.fn()
+      broadcastMock = require('../../utils/broadcast').broadcast
+      initSocketManager = require('../../utils/socketManager').initSocketManager
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+      jest.clearAllMocks()
+      // @ts-expect-error-next-line
+      if (mockWss && mockWss.clients) {
+        mockWss.clients.clear()
+      }
+    })
+
+    it('should process HRM_INPUT, update client data, and broadcast the new metric', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      // @ts-expect-error-next-line
+      mockWss.clients.add(mockWs)
+      // @ts-expect-error-next-line
+      mockWss.emit('connection', mockWs)
+
+      const hrmInputMessage = {
+        type: 'HRM_INPUT',
+        data: {
+          value: 120,
+          maxHr: 190,
+          age: 35,
+          name: 'Test User',
+        },
+      }
+
+      const messageString = JSON.stringify(hrmInputMessage)
+      mockWs.emit('message', messageString)
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'HRM_UPDATE',
+        payload: [
+          expect.objectContaining({
+            clientId: expect.any(String),
+            value: 120,
+            timestamp: expect.any(Number),
+          }),
+        ],
+      })
+    })
+
+    it('should broadcast the device list on new connection', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      // @ts-expect-error-next-line
+      mockWss.clients.add(mockWs)
+      // @ts-expect-error-next-line
+      mockWss.emit('connection', mockWs)
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'HRM_DEVICE_UPDATE',
+        payload: [
+          expect.objectContaining({
+            clientId: expect.any(String),
+          }),
+        ],
+      })
+    })
+
+    it('should broadcast the device list on disconnection', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      // @ts-expect-error-next-line
+      mockWss.clients.add(mockWs)
+      // @ts-expect-error-next-line
+      mockWss.emit('connection', mockWs)
+
+      // Reset the mock to ignore the connection broadcast
+      broadcastMock.mockClear()
+
+      mockWs.emit('close')
+
+      expect(broadcastMock).toHaveBeenCalledWith({
+        type: 'HRM_DEVICE_UPDATE',
+        payload: [],
+      })
     })
   })
 })
