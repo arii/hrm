@@ -1,82 +1,65 @@
+// File: app/api/spotify/devices/route.ts
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
-import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import logger from '@/utils/logger'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
+export const runtime = 'nodejs' // Force Node.js runtime
+
 /**
  * API route to fetch available Spotify devices.
  *
- * This endpoint retrieves the list of devices from the Spotify API.
- * It prioritizes the authenticated user's session token. If no session
- * exists (e.g., for external controllers), it falls back to a system-level
- * token for authorized access.
+ * This route is protected and requires a valid user session. It proxies the
+ * request to the Spotify API's `/me/player/devices` endpoint.
  *
- * @param _req The incoming Next.js API request (unused).
- * @returns A NextResponse object with the device list or an error.
+ * @param {Request} _req - The incoming request object (unused).
+ * @returns {Promise<NextResponse>} A JSON response with the list of devices
+ *                                   or an error message.
  */
-export async function GET(_req: Request) {
+async function getDevicesHandler(_req: Request): Promise<NextResponse> {
+  const session = await getServerSession(authOptions)
+  if (!session?.accessToken) {
+    throw new ApiError(401, 'Not authenticated or token is missing.')
+  }
+
+  const { accessToken } = session
+  const url = 'https://api.spotify.com/v1/me/player/devices'
+
   try {
-    let accessToken: string | null = null
-    const session = await getServerSession(authOptions)
+    const spotifyResponse = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
 
-    if (session?.accessToken) {
-      accessToken = session.accessToken
-    } else {
-      // Fallback to System Token
-      logger.info('No user session found, attempting system token fallback.')
-      const tokenManager = new SpotifyTokenManager(
-        process.env.SPOTIFY_CLIENT_ID || '',
-        process.env.SPOTIFY_CLIENT_SECRET || ''
-      )
-      accessToken = await tokenManager.getValidAccessToken()
-    }
-
-    if (!accessToken) {
-      throw new ApiError(
-        401,
-        'Not authenticated: No user session or valid system token available.'
-      )
-    }
-
-    // 3. Fetch devices from Spotify API.
-    const response = await fetch(
-      'https://api.spotify.com/v1/me/player/devices',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
+    if (!spotifyResponse.ok) {
+      const errorData = await spotifyResponse.json()
       logger.error(
-        { status: response.status, error: errorText },
-        'Spotify API error'
+        {
+          status: spotifyResponse.status,
+          error: errorData,
+        },
+        'Failed to fetch devices from Spotify'
       )
-      return NextResponse.json(
-        { error: 'Failed to fetch devices from Spotify.' },
-        { status: response.status }
+      throw new ApiError(
+        spotifyResponse.status,
+        'Failed to fetch devices from Spotify.'
       )
     }
 
-    const data = await response.json()
-    return NextResponse.json(data.devices || [])
+    const data = await spotifyResponse.json()
+    return NextResponse.json(data.devices)
   } catch (error) {
+    // Log the caught error and re-throw it to be handled by the middleware
+    logger.error({ error }, 'Error fetching Spotify devices')
     if (error instanceof ApiError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      )
+      throw error // Re-throw ApiError to be handled by the middleware
     }
-    const message =
-      error instanceof Error ? error.message : 'An unknown error occurred.'
-    logger.error({ error: message }, 'Internal Server Error')
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    // For other unexpected errors, wrap them in a generic ApiError
+    throw new ApiError(500, 'An unexpected error occurred.')
   }
 }
+
+export const GET = withErrorHandler(getDevicesHandler)

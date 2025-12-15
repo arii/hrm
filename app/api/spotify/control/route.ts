@@ -3,140 +3,119 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import logger from '@/utils/logger'
+import { z } from 'zod'
 
-export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
+export const runtime = 'nodejs' // Force Node.js runtime
 
-  if (!session || !session.accessToken) {
-    return NextResponse.json(
-      { error: 'Authorization required' },
-      { status: 401 }
-    )
-  }
-
-  // Parse body safely
-  let body
-  try {
-    body = await req.json()
-  } catch (_e) {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
-
-  const { command, volume, deviceId } = body
-
-  // Allowed commands
-  const VALID_COMMANDS = [
+// Zod schema for input validation
+const controlSchema = z.object({
+  command: z.enum([
     'PLAY',
     'PAUSE',
     'NEXT',
     'PREVIOUS',
     'SET_VOLUME',
     'TRANSFER_PLAYBACK',
-  ]
-  if (!VALID_COMMANDS.includes(command)) {
-    return NextResponse.json(
-      { error: `Invalid command: ${command}` },
-      { status: 400 }
-    )
-  }
+  ]),
+  deviceId: z.string().optional(),
+  volume: z.number().min(0).max(100).optional(),
+  context_uri: z.string().optional(), // For starting playback of a specific playlist/album
+})
 
+type ControlRequestBody = z.infer<typeof controlSchema>
+
+// Helper function to build Spotify API URLs
+const spotifyApiUrl = (path: string) => `https://api.spotify.com/v1${path}`
+
+export async function POST(req: NextRequest) {
   try {
-    const SPOTIFY_API_BASE = 'https://api.spotify.com/v1/me/player' // Corrected Base URL
-    let url = ''
-    let method = ''
+    const session = await getServerSession(authOptions)
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    // Construct Query Parameters if needed (e.g. device_id)
-    const queryParams = deviceId ? `?device_id=${deviceId}` : ''
+    const body: ControlRequestBody = await req.json()
+    const validation = controlSchema.safeParse(body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: validation.error.issues },
+        { status: 400 }
+      )
+    }
+
+    const { command, deviceId, volume, context_uri } = validation.data
+    const { accessToken } = session
+
+    let url: string
+    let method: 'PUT' | 'POST' = 'PUT' // Most playback commands use PUT
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fetchBody: Record<string, any> = {}
 
     switch (command) {
       case 'PLAY':
-        url = `${SPOTIFY_API_BASE}/play${queryParams}`
-        method = 'PUT'
+        url = spotifyApiUrl(`/me/player/play?device_id=${deviceId}`)
+        if (context_uri) {
+          fetchBody.context_uri = context_uri
+        }
         break
       case 'PAUSE':
-        url = `${SPOTIFY_API_BASE}/pause${queryParams}`
-        method = 'PUT'
+        url = spotifyApiUrl(`/me/player/pause?device_id=${deviceId}`)
         break
       case 'NEXT':
-        url = `${SPOTIFY_API_BASE}/next${queryParams}`
+        url = spotifyApiUrl(`/me/player/next?device_id=${deviceId}`)
         method = 'POST'
         break
       case 'PREVIOUS':
-        url = `${SPOTIFY_API_BASE}/previous${queryParams}`
+        url = spotifyApiUrl(`/me/player/previous?device_id=${deviceId}`)
         method = 'POST'
         break
       case 'SET_VOLUME':
-        // Volume requires a query param 'volume_percent'
-        if (volume === undefined) {
+        if (typeof volume !== 'number') {
           return NextResponse.json(
-            { error: 'Volume parameter is required for SET_VOLUME' },
+            { error: 'Volume must be a number' },
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}/volume?volume_percent=${volume}${deviceId ? `&device_id=${deviceId}` : ''}`
-        method = 'PUT'
+        url = spotifyApiUrl(`/me/player/volume?volume_percent=${volume}`)
+        if (deviceId) {
+          url += `&device_id=${deviceId}`
+        }
         break
       case 'TRANSFER_PLAYBACK':
         if (!deviceId) {
           return NextResponse.json(
-            { error: 'Device ID required for TRANSFER_PLAYBACK' },
+            { error: 'Device ID is required for transfer' },
             { status: 400 }
           )
         }
-        url = `${SPOTIFY_API_BASE}`
-        method = 'PUT'
-        // Transfer requires a specific body structure
+        url = spotifyApiUrl('/me/player')
+        fetchBody.device_ids = [deviceId]
+        fetchBody.play = true // Optionally start playback on transfer
         break
+      default:
+        return NextResponse.json({ error: 'Invalid command' }, { status: 400 })
     }
 
-    // Special handling for Transfer Playback body
-    const fetchOptions: RequestInit = {
-      method: method,
+    const spotifyResponse = await fetch(url, {
+      method,
       headers: {
-        Authorization: `Bearer ${session.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-    }
-
-    if (command === 'TRANSFER_PLAYBACK') {
-      fetchOptions.body = JSON.stringify({ device_ids: [deviceId], play: true })
-    }
-
-    const response = await fetch(url, fetchOptions)
-
-    // Handle 204 No Content (Success) explicitly
-    if (response.status === 204) {
-      return NextResponse.json({
-        success: true,
-        message: `Command '${command}' executed.`,
-      })
-    }
-
-    // Handle other statuses
-    // Attempt to parse JSON only if content-type is json or text exists
-    const text = await response.text()
-    if (!response.ok) {
-      let errorDetails = text
-      try {
-        const json = JSON.parse(text)
-        errorDetails = json.error?.message || text
-      } catch (_e) {
-        // Text was not JSON
-      }
-      logger.error(
-        { status: response.status, details: errorDetails },
-        'Spotify API Error'
-      )
-      return NextResponse.json(
-        { error: 'Spotify API error', details: errorDetails },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Command '${command}' executed.`,
+      body: Object.keys(fetchBody).length ? JSON.stringify(fetchBody) : null,
     })
+
+    if (!spotifyResponse.ok) {
+      const error = await spotifyResponse.json()
+      logger.error({ error }, 'Spotify API Error')
+      return NextResponse.json(
+        { error: 'Spotify API error', details: error },
+        { status: spotifyResponse.status }
+      )
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 })
   } catch (error) {
     logger.error({ error }, 'REST control failed')
     return NextResponse.json(

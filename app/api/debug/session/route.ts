@@ -2,6 +2,8 @@ import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 
+export const runtime = 'nodejs' // Force Node.js runtime
+
 /**
  * Debug route to return the server side NextAuth session.
  * Useful to confirm tokens/refresh tokens are present in the session.
