@@ -47,8 +47,6 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter {
-  lastPingTime: number | undefined
-  clientType: string | undefined
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
@@ -56,6 +54,7 @@ class MockWebSocket extends EventEmitter {
   constructor() {
     super()
     this.lastPingTime = Date.now()
+    this.clientType = undefined
   }
 
   // Simulate receiving a pong from the client

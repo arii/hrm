@@ -17,7 +17,7 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 
 // Mock fetch globally
-global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
+global.fetch = jest.fn()
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -29,22 +29,11 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 describe('Services Integration', () => {
-  let tabataTimer: TabataTimer
-  let spotifyService: SpotifyPolling
-  let broadcastedMessages: ServerMessage[]
-  let broadcastFn: (message: ServerMessage) => void
-  let mockSdk: {
-    player: {
-      getCurrentlyPlayingTrack: jest.Mock
-      startResumePlayback: jest.Mock
-      pausePlayback: jest.Mock
-      skipToNext: jest.Mock
-      skipToPrevious: jest.Mock
-      transferPlayback: jest.Mock
-      setPlaybackVolume: jest.Mock
-      getAvailableDevices: jest.Mock
-    }
-  }
+  let tabataTimer
+  let spotifyService
+  let broadcastedMessages
+  let broadcastFn
+  let mockSdk
 
   beforeEach(async () => {
     jest.useFakeTimers()
