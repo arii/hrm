@@ -3,7 +3,9 @@ import { withValidation } from '@/lib/middleware/validation'
 import { CreateUserProfileSchema } from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/data-models'
 import { NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+
+// Simple ID generator
+const generateId = () => `user-${Date.now()}-${Math.random()}`
 
 /**
  * Handles the POST request to create a new user.
@@ -23,7 +25,7 @@ async function createUser(
   // In a real application, you would save the user to a database.
   // For this example, we'll just return the created user.
   const newUser: UserProfile = {
-    id: uuidv4(),
+    id: generateId(),
     ...body,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
