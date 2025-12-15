@@ -17,6 +17,7 @@ import { StateSnapshot } from '../../types/websocket'
 import { initSocketManager } from '../../utils/socketManager'
 import * as broadcast from '../../utils/broadcast'
 import * as ws from 'ws'
+import * as socketManager from '../../utils/socketManager'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -188,9 +189,7 @@ describe('WebSocket Manager', () => {
       }
       getSnapshot = jest.fn()
       broadcastMock = jest.spyOn(broadcast, 'broadcast')
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      localInitSocketManager =
-        require('../../utils/socketManager').initSocketManager
+      localInitSocketManager = socketManager.initSocketManager
     })
 
     afterEach(() => {
