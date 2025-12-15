@@ -43,6 +43,11 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    if (!env.SPOTIFY_CLIENT_ID) {
+      throw new Error('Spotify client ID is not defined.')
+    }
+
     // 4. Initialize Spotify SDK with access token
     const spotify = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, {
       access_token: session.accessToken,
