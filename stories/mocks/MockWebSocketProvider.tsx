@@ -7,7 +7,6 @@ import {
 import {
   ServerMessage,
   ClientCommandMessage,
-  HrmData as ServerHrmData,
   ActiveAlert,
   TimerData,
   SpotifyData,
@@ -128,8 +127,9 @@ export const MockWebSocketProvider = ({
               return { ...prev, activeAlerts: message.payload }
             case 'INITIAL_STATE': {
               const hrmDataWithConnection =
-                message.payload.hrmData?.map((d: ServerHrmData) => ({
+                message.payload.hrmData?.map((d: HrmDevice) => ({
                   ...d,
+                  value: 0,
                   isConnected: true,
                 })) || []
               return { ...prev, ...message.payload, hrmData: hrmDataWithConnection }
