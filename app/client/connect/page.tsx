@@ -1,6 +1,7 @@
 'use client'
 
 import useLocalStorage from '@/hooks/useLocalStorage'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
@@ -11,6 +12,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [userSettings] = useUserSettings()
 
   const {
     connectAndStream,
@@ -45,6 +47,7 @@ export default function ConnectPage() {
     isConnected,
     currentHR,
     userAge: userAge ? parseInt(userAge) : 0,
+    allowAutoStart: userSettings.allowAutoStart,
   })
 
   return (

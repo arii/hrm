@@ -3,11 +3,14 @@ import { useEffect, useReducer, useRef, useCallback } from 'react'
 // --- State, Actions, and Reducer for managing session state ---
 
 type SessionStatus = 'idle' | 'running' | 'paused'
+type StartMethod = 'manual' | 'auto' | 'none'
 
 interface SessionState {
   status: SessionStatus
   duration: number
   calories: number
+  startMethod: StartMethod
+  manualStopOccurred: boolean
 }
 
 type SessionAction =
@@ -15,13 +18,15 @@ type SessionAction =
   | { type: 'DISCONNECT' }
   | { type: 'TICK'; payload: { duration: number; calories: number } }
   | { type: 'RESET' }
-  | { type: 'START_WORKOUT' }
+  | { type: 'START_WORKOUT'; payload: { method: 'manual' | 'auto' } }
   | { type: 'END_WORKOUT' }
 
 const initialState: SessionState = {
   status: 'idle',
   duration: 0,
   calories: 0,
+  startMethod: 'none',
+  manualStopOccurred: false,
 }
 
 function sessionReducer(
@@ -30,15 +35,36 @@ function sessionReducer(
 ): SessionState {
   switch (action.type) {
     case 'CONNECT':
-    case 'START_WORKOUT':
-      if (state.status === 'idle' || state.status === 'paused') {
+      if (state.status === 'paused' && !state.manualStopOccurred) {
         return { ...state, status: 'running' }
       }
       return state
+    case 'START_WORKOUT':
+      if (state.status === 'running') return state
+      if (
+        action.payload.method === 'auto' &&
+        (state.status !== 'idle' || state.manualStopOccurred)
+      ) {
+        return state
+      }
+      return {
+        ...state,
+        status: 'running',
+        startMethod: action.payload.method,
+        manualStopOccurred: false,
+      }
     case 'DISCONNECT':
-    case 'END_WORKOUT':
       if (state.status === 'running') {
         return { ...state, status: 'paused' }
+      }
+      return state
+    case 'END_WORKOUT':
+      if (state.status === 'running') {
+        return {
+          ...state,
+          status: 'paused',
+          manualStopOccurred: true,
+        }
       }
       return state
     case 'TICK':
@@ -60,12 +86,14 @@ interface WorkoutSessionOptions {
   isConnected: boolean
   currentHR: number
   userAge: number
+  allowAutoStart: boolean
 }
 
 export const useWorkoutSession = ({
   isConnected,
   currentHR,
   userAge,
+  allowAutoStart,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
@@ -86,12 +114,15 @@ export const useWorkoutSession = ({
     if (prevIsConnected.current !== isConnected) {
       if (isConnected) {
         dispatch({ type: 'CONNECT' })
+        if (allowAutoStart) {
+          dispatch({ type: 'START_WORKOUT', payload: { method: 'auto' } })
+        }
       } else {
         dispatch({ type: 'DISCONNECT' })
       }
       prevIsConnected.current = isConnected
     }
-  }, [isConnected])
+  }, [isConnected, allowAutoStart])
 
   useEffect(() => {
     const session = sessionDataRef.current
@@ -161,7 +192,7 @@ export const useWorkoutSession = ({
   }, [])
 
   const startWorkout = useCallback(() => {
-    dispatch({ type: 'START_WORKOUT' })
+    dispatch({ type: 'START_WORKOUT', payload: { method: 'manual' } })
   }, [])
 
   const endWorkout = useCallback(() => {
@@ -175,6 +206,7 @@ export const useWorkoutSession = ({
     startWorkout,
     endWorkout,
     workoutStatus: state.status,
+    startMethod: state.startMethod,
     hasStarted: state.status !== 'idle',
   }
 }

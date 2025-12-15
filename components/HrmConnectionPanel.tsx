@@ -4,6 +4,8 @@ import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
+import Switch from '@mui/material/Switch'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
@@ -16,7 +18,7 @@ import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
-  const [userSettings] = useUserSettings()
+  const [userSettings, setUserSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -97,6 +99,21 @@ const HrmConnectionPanel = () => {
             disconnect={disconnect}
             isConnected={isConnected}
             isSupported={isSupported}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={userSettings.allowAutoStart}
+                onChange={(e) =>
+                  setUserSettings({
+                    ...userSettings,
+                    allowAutoStart: e.target.checked,
+                  })
+                }
+              />
+            }
+            label="Auto-start workout on connect"
+            sx={{ mt: 1 }}
           />
         </Box>
         <Box
