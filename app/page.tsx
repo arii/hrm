@@ -7,19 +7,20 @@
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
+import DashboardSectionLoadingSkeleton from '@/components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
-import ErrorBoundary from '../components/ErrorBoundary'
-import ErrorFallback from '../components/ErrorFallback'
-import HrmConnectionPanel from '../components/HrmConnectionPanel'
-import TimerDisplay from '../components/TimerDisplay'
-import { useAudio } from '../hooks/useAudio'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import UserGreetingDisplay from '@/components/UserGreetingDisplay'
+import ErrorFallback from '@/components/ErrorFallback'
+import HrmConnectionPanel from '@/components/HrmConnectionPanel'
+import TimerDisplay from '@/components/TimerDisplay'
+import { useAudio } from '@/hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
-const SpotifyDisplay = dynamic(() => import('../components/SpotifyDisplay'), {
+const SpotifyDisplay = dynamic(() => import('@/components/SpotifyDisplay'), {
   ssr: false,
   loading: () => <DashboardSectionLoadingSkeleton height={80} />, // Optional: Render nothing while loading to avoid layout shift
 })
@@ -28,14 +29,14 @@ const DOC_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
 
 const WorkoutTableViewer = dynamic(
-  () => import('../components/WorkoutTableViewer'),
+  () => import('@/components/WorkoutTableViewer'),
   {
     ssr: false,
     loading: () => <DashboardSectionLoadingSkeleton height={500} />,
   }
 )
 
-const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
+const GoogleDocViewer = dynamic(() => import('@/components/GoogleDocViewer'), {
   ssr: false,
   loading: () => <DashboardSectionLoadingSkeleton height={500} />,
 })
@@ -75,6 +76,7 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
+      <UserGreetingDisplay />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 

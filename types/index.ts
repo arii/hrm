@@ -77,3 +77,9 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
+
+export interface UserProfile {
+  name?: string | null
+  email?: string | null
+  image?: string | null
+}
