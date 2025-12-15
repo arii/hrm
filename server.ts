@@ -25,6 +25,7 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { rateLimitConfig } from './config/rate-limit.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -65,57 +66,15 @@ app
     const server = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
-    if (process.env.TESTING !== 'true') {
-      const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to Spotify API, please try again later.',
-        },
-      })
-
-      const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to internal API, please try again later.',
-        },
-      })
+    // Skip rate limiting for tests to avoid flakes, unless explicitly enabled
+    if (
+      process.env.TESTING !== 'true' ||
+      process.env.ENABLE_RATE_LIMIT_IN_TEST === 'true'
+    ) {
+      const spotifyApiLimiter = rateLimit(rateLimitConfig.spotify)
+      const internalApiLimiter = rateLimit(rateLimitConfig.internal)
       const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: { error: 'Too many requests, please try again later.' },
+        ...rateLimitConfig.general,
         skip: (req: Request) =>
           req.path.startsWith('/api/spotify') ||
           req.path.startsWith('/api/internal'),
