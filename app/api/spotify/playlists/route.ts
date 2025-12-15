@@ -29,6 +29,10 @@ async function getPlaylists(_req: Request) {
     throw new ApiError(401, 'Not authenticated or token is missing.')
   }
 
+  if (!env.SPOTIFY_CLIENT_ID) {
+    throw new Error('Spotify client ID is not defined.')
+  }
+
   // 3. Initialize Spotify SDK with access token
   const spotify = SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, {
     access_token: session.accessToken,
