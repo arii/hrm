@@ -12,7 +12,7 @@ test.describe('API Rate Limiting - Sensitive Endpoints', () => {
   test('should return a 429 for sensitive API limit exceeding', async ({
     request,
   }) => {
-    test.setTimeout(30000)
+    test.setTimeout(20000)
     const endpoint = '/api/workout'
     const limit = 55 // Configured max is 50
 
@@ -34,7 +34,7 @@ test.describe('API Rate Limiting - Critical Endpoints', () => {
   test('should return 429 for critical API limit exceeding', async ({
     request,
   }) => {
-    test.setTimeout(30000)
+    test.setTimeout(20000)
     const endpoint = '/api/internal/health/services' // An example of a critical endpoint
     const limit = 105 // Configured max is 100
 
@@ -54,7 +54,7 @@ test.describe('API Rate Limiting - Authentication Endpoints', () => {
   test('should return 429 for authentication API limit exceeding', async ({
     request,
   }) => {
-    test.setTimeout(30000)
+    test.setTimeout(20000)
     // Use the session endpoint as it's a reliable auth-related route
     const endpoint = '/api/auth/session'
     const limit = 15 // Configured max is 10
@@ -75,7 +75,7 @@ test.describe('API Rate Limiting - General Endpoints', () => {
   test('should return 429 for general API limit exceeding', async ({
     request,
   }) => {
-    test.setTimeout(30000)
+    test.setTimeout(20000)
     const endpoint = '/api/health' // A general, non-specific endpoint
     const limit = 205 // Configured max is 200
 
