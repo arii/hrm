@@ -30,20 +30,20 @@ export const checkSpotifyAPI = async () => {
         ).toString('base64')}`,
       },
       body: 'grant_type=client_credentials',
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`Spotify API returned ${response.status}`);
+      throw new Error(`Spotify API returned ${response.status}`)
     }
 
-    return { healthy: true, message: 'Spotify API credentials are valid.' };
+    return { healthy: true, message: 'Spotify API credentials are valid.' }
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+      error instanceof Error ? error.message : 'An unknown error occurred'
     return {
       healthy: false,
       message: `Spotify API health check failed: ${errorMessage}`,
-    };
+    }
   }
 }
 
