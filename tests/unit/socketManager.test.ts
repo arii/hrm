@@ -15,6 +15,7 @@ import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { StateSnapshot } from '../../types/websocket'
 import { initSocketManager, _resetForTest } from '../../utils/socketManager'
+import * as broadcast from '../../utils/broadcast'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -26,10 +27,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock broadcaster to prevent side-effects between tests
-jest.mock('../../utils/broadcast', () => ({
-  initBroadcaster: jest.fn(),
-  broadcast: jest.fn(),
-}))
+jest.mock('../../utils/broadcast')
 
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
@@ -175,7 +173,7 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
-    let broadcastMock: jest.Mock
+    let broadcastMock: jest.SpyInstance
 
     beforeEach(() => {
       _resetForTest() // Reset the state before each test
@@ -191,7 +189,7 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
-      broadcastMock = require('../../utils/broadcast').broadcast
+      broadcastMock = jest.spyOn(broadcast, 'broadcast')
     })
 
     afterEach(() => {
