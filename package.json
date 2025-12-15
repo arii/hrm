@@ -6,10 +6,10 @@
   "scripts": {
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "prebuild": "pnpm run clean",
-    "dev": "cross-env NODE_ENV=development node --env-file=.env.local --loader tsconfig-paths/esm --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "pnpm run build:server && next build",
-    "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
+    "build:server": "pnpm exec tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
     "profile:server": "bash scripts/profile-server.sh",
@@ -82,7 +82,6 @@
     "react-dom": "19.2.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "tsconfig-paths": "^4.2.0",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"
@@ -150,6 +149,7 @@
     "storybook": "^8.6.14",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0",
