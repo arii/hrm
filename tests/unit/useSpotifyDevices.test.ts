@@ -4,6 +4,8 @@
 import { renderHook, act } from '@testing-library/react'
 import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 import { SpotifyDevice } from '@/types'
+import { ErrorProvider } from '@/context/ErrorContext'
+import React from 'react'
 
 // Mock fetch
 global.fetch = jest.fn()
@@ -29,6 +31,10 @@ const mockDevices: SpotifyDevice[] = [
   },
 ]
 
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <ErrorProvider>{children}</ErrorProvider>
+)
+
 describe('useSpotifyDevices', () => {
   beforeEach(() => {
     ;(fetch as jest.Mock).mockClear()
@@ -40,7 +46,7 @@ describe('useSpotifyDevices', () => {
       json: async () => mockDevices,
     })
 
-    const { result } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     expect(result.current.isLoading).toBe(true)
 
@@ -58,7 +64,7 @@ describe('useSpotifyDevices', () => {
       ok: false,
     })
 
-    const { result } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     expect(result.current.isLoading).toBe(true)
 
@@ -86,7 +92,7 @@ describe('useSpotifyDevices', () => {
           mockDevices.map((d) => ({ ...d, is_active: d.id === '2' })),
       })
 
-    const { result } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0)) // Initial fetch
@@ -115,7 +121,7 @@ describe('useSpotifyDevices', () => {
         ok: false, // For transfer playback
       })
 
-    const { result } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0))
