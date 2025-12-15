@@ -421,7 +421,7 @@ describe('SpotifyPolling Service', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         { command: 'PLAY', response: 'Invalid JSON' },
-        'Error executing Spotify command: Response body'
+        'Error executing Spotify command'
       )
     })
 
@@ -438,7 +438,7 @@ describe('SpotifyPolling Service', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         { command: 'PLAY', err: expect.any(Error) },
-        'Failed to retrieve error response text'
+        'Could not read response body for failed Spotify command'
       )
     })
 
