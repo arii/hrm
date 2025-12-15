@@ -94,13 +94,13 @@ export const useSpotifyRemoteExecution = (
     if (typeof window !== 'undefined') {
       window.addEventListener(
         'spotify-remote-command',
-        handleCustomEvent as EventListener
+        handleCustomEvent as unknown as EventListener
       )
 
       return () => {
         window.removeEventListener(
           'spotify-remote-command',
-          handleCustomEvent as EventListener
+          handleCustomEvent as unknown as EventListener
         )
       }
     }
