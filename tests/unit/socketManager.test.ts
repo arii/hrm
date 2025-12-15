@@ -241,8 +241,12 @@ describe('WebSocket Manager', () => {
       const lastBroadcastCall =
         broadcast.mock.calls[broadcast.mock.calls.length - 1]
       const broadcastPayload = lastBroadcastCall[0].payload
-      const clientData = broadcastPayload[0]
 
+      // Find the client that has updated calories (since other tests might leave stale data in module scope)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const clientData = broadcastPayload.find((c: any) => c.calories > 0)
+
+      expect(clientData).toBeDefined()
       expect(clientData.calories).toBeGreaterThan(1)
     })
   })
