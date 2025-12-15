@@ -317,6 +317,14 @@ const theme = createTheme({
         },
       },
     },
+    MuiAlert: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          borderRadius: 12,
+          boxShadow: theme.shadows[3],
+        }),
+      },
+    },
   },
 
   // Breakpoints for responsive design

@@ -116,6 +116,10 @@ export const WebSocketProvider = ({
             const updatedUser = payload.find(
               (newUser) => newUser.clientId === existingUser.clientId
             )
+            // CRITICAL FIX: The order of spread operators is essential.
+            // By spreading existingUser first, then updatedUser, we ensure
+            // that any fields NOT present in the (potentially partial) `updatedUser`
+            // payload are preserved from the existing state.
             return updatedUser
               ? {
                   ...existingUser,
