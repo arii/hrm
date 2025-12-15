@@ -30,6 +30,7 @@ interface DualModeTimerState {
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
+  phaseBeforePause?: TimerPhase // Store the phase before pausing
 }
 
 class TabataTimer {
@@ -69,7 +70,7 @@ class TabataTimer {
 
   private handleCountdownCue() {
     const phase = this.timerState.currentPhase
-    if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN') {
+    if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN' || phase === 'PAUSED') {
       return
     }
 
@@ -102,6 +103,7 @@ class TabataTimer {
         soundToPlay: this.timerState.soundToPlay,
       }),
       soundEventId: this.timerState.soundEventId,
+      phaseBeforePause: this.timerState.phaseBeforePause,
     }
   }
 
@@ -143,15 +145,17 @@ class TabataTimer {
     this.timerState.isRunning = true
     this.startTime = Date.now()
 
-    // --- UNIVERSAL PREPARE LOGIC ---
+    // If resuming from a paused state, restore the previous phase.
+    if (this.timerState.currentPhase === 'PAUSED' && this.timerState.phaseBeforePause) {
+        this.timerState.currentPhase = this.timerState.phaseBeforePause;
+        delete this.timerState.phaseBeforePause;
+    }
     // If starting from IDLE, always begin with the PREPARE countdown.
-    if (this.timerState.currentPhase === 'IDLE') {
+    else if (this.timerState.currentPhase === 'IDLE') {
       this.timerState.currentPhase = 'PREPARE'
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
-    // If resuming after PAUSE, restore previous state (no PREPARE)
-    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
 
     this.timerInterval = setInterval(this.updateTimer, 1000)
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
@@ -160,15 +164,14 @@ class TabataTimer {
   private pauseTimer() {
     if (!this.timerState.isRunning || !this.startTime) return
 
-    if (
-      this.timerState.mode === 'STOPWATCH' &&
-      this.timerState.currentPhase === 'RUNNING'
-    ) {
+    if (this.timerState.mode === 'STOPWATCH' && this.timerState.currentPhase === 'RUNNING') {
       this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
-      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
     }
 
+    this.timerState.phaseBeforePause = this.timerState.currentPhase
+    this.timerState.currentPhase = 'PAUSED'
     this.timerState.isRunning = false
+
     if (this.timerInterval) clearInterval(this.timerInterval)
     this.timerInterval = null
     this.startTime = null
@@ -189,6 +192,7 @@ class TabataTimer {
         this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
     }
     delete this.timerState.soundToPlay
+    delete this.timerState.phaseBeforePause
     this.resetCountdownMarker()
     this.pausedElapsedTime = 0
     this.startTime = null
@@ -206,7 +210,6 @@ class TabataTimer {
     this.timerState.restDuration = sanitizedRestDuration
 
     // If the timer is not running, update timeRemaining to reflect the new work duration.
-    // This ensures the UI shows the correct starting time when settings are changed on an idle timer.
     if (!this.timerState.isRunning && this.timerState.mode === 'TABATA') {
       this.timerState.timeRemaining = sanitizedWorkDuration
     }
@@ -251,6 +254,7 @@ class TabataTimer {
       case 'IDLE':
       case 'COOLDOWN':
       case 'RUNNING':
+      case 'PAUSED':
         this.stopTimer()
         break
     }
@@ -283,6 +287,7 @@ class TabataTimer {
       mode === 'TABATA' ? this.timerState.workDuration : 0
     this.timerState.timeElapsed = 0
     delete this.timerState.soundToPlay
+    delete this.timerState.phaseBeforePause
     this.resetCountdownMarker()
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }

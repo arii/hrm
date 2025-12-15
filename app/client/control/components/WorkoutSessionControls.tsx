@@ -7,6 +7,7 @@ import PlayArrow from '@mui/icons-material/PlayArrow'
 import Stop from '@mui/icons-material/Stop'
 import Pause from '@mui/icons-material/Pause'
 import { Box } from '@mui/material'
+import { Theme, useTheme } from '@mui/material/styles'
 
 type WorkoutSessionControlsProps = {
   isSessionActive: boolean
@@ -40,8 +41,6 @@ const actionButtonBaseSx = {
   justifyContent: 'center',
   gap: 1,
 }
-
-import { Theme, useTheme } from '@mui/material/styles'
 
 const startButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,

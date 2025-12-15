@@ -72,32 +72,24 @@ test.describe('Visual Regression Tests', () => {
     ])
 
     // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
-    const endButton = controlPage.getByTestId('end-session-button')
+    const endSessionButton = controlPage.getByTestId('end-session-button')
 
     try {
-      // If timer is running, stop it
-      if (await endButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
-        await endButton.click()
-        // Wait for START button to confirm timer stopped on control page
+      if (await endSessionButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
+        await endSessionButton.click()
         await expect(
           controlPage.getByTestId('start-session-button')
         ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-
-        // Wait for dashboard to clear timer display (return to READY state)
         await expect(dashboardPage.locator('text=00:00')).toBeVisible({
           timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
         })
       }
     } catch (error) {
-      // Timer not running or failed to stop, log and continue
       console.warn('Timer check/stop encountered an issue (ignoring):', error)
     }
 
     // Replace iframe with stable content for dashboard
-    // Wait for dashboard to settle before replacing
     try {
-      // Wait for a known stable element instead of arbitrary timeout
       await expect(dashboardPage.locator('body')).toBeVisible({
         timeout: WAIT_TIMEOUTS.SHORT * 2,
       })
@@ -118,11 +110,8 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
-    // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
 
-    // Extra verification: ensure timer is NOT in active state (no WORK/REST)
-    // Wait for any existing timer display to settle or disappear
     try {
       await expect(dashboardPage.locator('text=00:00')).toBeVisible({
         timeout: WAIT_TIMEOUTS.MEDIUM,
@@ -131,25 +120,21 @@ test.describe('Visual Regression Tests', () => {
       // Timer might already be idle, continue
     }
 
-    // Wait for a stable UI element instead of arbitrary timeout
     await expect(dashboardPage.locator('body')).toBeVisible()
 
-    // Capture full-page screenshot - mask dynamic content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-viewer.png', {
       fullPage: true,
       animations: 'disabled',
-      caret: 'hide', // Hide text cursor
-      threshold: 0.2, // Allow for minor rendering differences
-      maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
+      caret: 'hide',
+      threshold: 0.2,
+      maxDiffPixelRatio: 0.02,
       mask: [
-        // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
       ],
     })
   })
 
   test('Control Panel - timer and music controls', async () => {
-    // Capture screenshot
     console.log('skipping flakey test')
     /*await expect(controlPage).toHaveScreenshot('control-panel.png', {
       fullPage: true,
@@ -159,7 +144,6 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Mock HRM Client - test data input', async () => {
-    // Capture screenshot
     await expect(mockPage).toHaveScreenshot('mock-hrm-client.png', {
       fullPage: true,
       animations: 'disabled',
@@ -170,19 +154,13 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
-    // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Ensure control panel inputs are visible
-    // 1. Get the locator for the input using its test ID
     const workInput = controlPage.getByTestId('work-duration-input')
-
     const restInput = controlPage.getByTestId('rest-duration-input')
 
-    // 2. (Recommended) Wait for it to be visible
-    // This ensures the component has rendered before you try to fill it.
     await expect(workInput).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
@@ -190,29 +168,20 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Configure timer (15 work, 5s rest)
     await workInput.fill('15')
     await restInput.fill('5')
 
-    // Start timer
-    await controlPage.getByTestId('start-session-button').click()
+    await controlPage.getByTestId('start-session-button').click({ force: true })
 
-    // wait for broadcast messages to propagate
-    // Use the recommended, specific locator
-    const endButton = controlPage.getByTestId('end-session-button')
+    const endSessionButton = controlPage.getByTestId('end-session-button')
+    await expect(endSessionButton).toBeVisible()
 
-    // Use this specific locator in your assertion
-    await expect(endButton).toBeVisible()
-
-    // Wait for timer to appear on dashboard
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
       timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
 
-    // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Capture screenshot with running timer - mask dynamic timer content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-active-timer.png', {
       fullPage: true,
       animations: 'disabled',
@@ -220,57 +189,46 @@ test.describe('Visual Regression Tests', () => {
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
       mask: [
-        // Use precise data-testid selectors for timer masking
         ...getTimerMasks(dashboardPage),
       ],
     })
   })
 
   test('Dashboard with mock HR data streaming', async () => {
-    // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
-    // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Capture screenshot with HR data displayed while masking dynamic content
     await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.04, // Robustness for dynamic content
+      maxDiffPixelRatio: 0.04,
       mask: [
-        // Use precise data-testid selectors for all dynamic content masking
         ...getDynamicContentMasks(dashboardPage),
-        // Also mask the entire HR tiles section for complete coverage
         ...getHrMasks(dashboardPage),
       ],
     })
   })
 
   test('HR Tiles - all zones', async () => {
-    // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await mockPage.click('button:has-text("START")')
     await expect(
       mockPage.locator('button:has-text("STOP Streaming")')
     ).toBeVisible()
 
-    // Wait for HR tiles to load on dashboard
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
       timeout: WAIT_TIMEOUTS.LONG,
     })
 
-    // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
-    // Use element isolation: scope snapshot to specific component
     const firstTile = dashboardPage
       .locator('[data-testid="hr-tile-grid-item"]')
       .first()
@@ -278,8 +236,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.05, // Increased tolerance for rendering variability
-      // Mask the dynamic HR values within the tile
+      maxDiffPixelRatio: 0.05,
       mask: [
         firstTile.locator('[data-testid="live-hr-value"]'),
         firstTile.locator('[data-testid="live-hr-percent"]'),

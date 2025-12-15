@@ -36,6 +36,7 @@ export interface TimerData {
   restDuration: number // seconds for Tabata rest interval
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
+  phaseBeforePause?: TimerPhase
 }
 
 export type SpotifyCommand =

@@ -46,14 +46,14 @@ test.describe('Remote Capabilities & Command Relay', () => {
       )
 
     // 4. Test Interaction: Ensure timer is stopped, then start it.
-    const endButton = page.getByTestId('end-session-button')
-    if (await endButton.isVisible()) {
-      await endButton.click()
+    const endSessionButton = page.getByTestId('end-session-button')
+    if (await endSessionButton.isVisible()) {
+      await endSessionButton.click()
     }
 
-    const startButton = page.getByTestId('start-session-button')
-    await expect(startButton).toBeVisible() // Wait for start button to appear
-    await startButton.click()
+    const startSessionButton = page.getByTestId('start-session-button')
+    await expect(startSessionButton).toBeVisible() // Wait for start button to appear
+    await startSessionButton.click()
 
     // 5. Verify WebSocket Command
     await expect
@@ -66,8 +66,8 @@ test.describe('Remote Capabilities & Command Relay', () => {
       )
 
     expect(failedRequests).toEqual([])
-    await expect(endButton).toBeVisible() // Wait for start button to appear
-    await endButton.click()
+    await expect(endSessionButton).toBeVisible() // Wait for end button to appear
+    await endSessionButton.click()
     // 5. Verify WebSocket Command
     await expect
       .poll(() => sentMessages)
