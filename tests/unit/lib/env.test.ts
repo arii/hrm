@@ -55,7 +55,7 @@ describe('Environment variable validation', () => {
     process.env = originalEnv
   })
 
-  it('should parse valid environment variables', () => {
+  it('should parse valid environment variables', async () => {
     process.env = {
       ...process.env,
       NODE_ENV: 'test',
@@ -67,7 +67,7 @@ describe('Environment variable validation', () => {
       SPOTIFY_CLIENT_SECRET: 'spotify-client-secret',
     }
 
-    const { env } = require('@/lib/env')
+    const { env } = await import('@/lib/env');
     expect(env).toBeDefined()
     expect(env.NODE_ENV).toBe('test')
     expect(env.PORT).toBe(3000)

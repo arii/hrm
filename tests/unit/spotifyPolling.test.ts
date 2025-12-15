@@ -96,16 +96,33 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as any).pollInterval) {
-      clearInterval((spotifyService as any).pollInterval as NodeJS.Timeout)
-      ;(spotifyService as any).pollInterval = null
+    if ((spotifyService as { pollInterval: NodeJS.Timeout | null }).pollInterval) {
+      clearInterval(
+        (spotifyService as { pollInterval: NodeJS.Timeout | null })
+          .pollInterval as NodeJS.Timeout
+      )
+      ;(
+        spotifyService as { pollInterval: NodeJS.Timeout | null }
+      ).pollInterval = null
     }
 
-    if ((spotifyService as any).tokenRefreshInterval) {
+    if (
+      (
+        spotifyService as { tokenRefreshInterval: NodeJS.Timeout | null }
+      ).tokenRefreshInterval
+    ) {
       clearInterval(
-        (spotifyService as any).tokenRefreshInterval as NodeJS.Timeout
+        (
+          spotifyService as {
+            tokenRefreshInterval: NodeJS.Timeout | null
+          }
+        ).tokenRefreshInterval as NodeJS.Timeout
       )
-      ;(spotifyService as any).tokenRefreshInterval = null
+      ;(
+        spotifyService as {
+          tokenRefreshInterval: NodeJS.Timeout | null
+        }
+      ).tokenRefreshInterval = null
     }
   })
 
@@ -252,7 +269,10 @@ describe('SpotifyPolling Service', () => {
       const refreshToken = 'test_refresh_token'
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
-        .spyOn(spotifyService as any, 'initializeSdk')
+        .spyOn(
+          spotifyService as unknown as { initializeSdk: () => void },
+          'initializeSdk'
+        )
         .mockResolvedValue(undefined)
       spotifyService.setRefreshToken(refreshToken)
       // Advance timers to allow setTimeout to run
@@ -354,7 +374,10 @@ describe('SpotifyPolling Service', () => {
     it('should handle 401 unauthorized responses', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockRejectedValue({ status: 401 })
       // @ts-expect-error - Testing private method
-      const refreshSpy = jest.spyOn(spotifyService, 'checkAndRefreshSdkToken')
+      const refreshSpy = jest.spyOn(
+        spotifyService,
+        'checkAndRefreshSdkToken'
+      )
 
       await spotifyService.forcePollAndBroadcast()
 

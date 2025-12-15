@@ -41,7 +41,7 @@ describe('Health Check Logic', () => {
 
   describe('checkSpotifyAPI', () => {
     it('should return healthy when Spotify API is reachable', async () => {
-      const { SpotifyApi } = require('@spotify/web-api-ts-sdk')
+      const { SpotifyApi } = await import('@spotify/web-api-ts-sdk')
       ;(
         SpotifyApi.performClientCredentialsGrantRequest as jest.Mock
       ).mockResolvedValue(true)
@@ -50,7 +50,7 @@ describe('Health Check Logic', () => {
     })
 
     it('should return unhealthy when Spotify API is unreachable', async () => {
-      const { SpotifyApi } = require('@spotify/web-api-ts-sdk')
+      const { SpotifyApi } = await import('@spotify/web-api-ts-sdk')
       ;(
         SpotifyApi.performClientCredentialsGrantRequest as jest.Mock
       ).mockRejectedValue(new Error('Network error'))
