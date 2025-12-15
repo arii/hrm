@@ -21,7 +21,9 @@ export async function GET(_req: Request) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      logger.warn('No session or access token found in /api/spotify/access-token')
+      logger.warn(
+        'No session or access token found in /api/spotify/access-token'
+      )
       return NextResponse.json(
         { error: 'Not authenticated or token is missing.' },
         { status: 401 }

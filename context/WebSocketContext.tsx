@@ -238,9 +238,7 @@ export const WebSocketProvider = ({
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        logger.info(
-          `Sending ${pendingActions.current.length} pending actions.`
-        )
+        logger.info(`Sending ${pendingActions.current.length} pending actions.`)
         pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
