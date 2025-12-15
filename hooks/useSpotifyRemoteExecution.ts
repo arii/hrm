@@ -41,7 +41,7 @@ export const useSpotifyRemoteExecution = (
         console.log(`[Dashboard] Executing Remote Command: ${command}`)
 
         try {
-          let requestBody: Record<string, any>
+          let requestBody: Record<string, unknown>
 
           switch (command) {
             case 'PLAY':
@@ -69,7 +69,9 @@ export const useSpotifyRemoteExecution = (
               }
               break
             default:
-              console.warn(`[Dashboard] Unrecognized Spotify command: ${command}`)
+              console.warn(
+                `[Dashboard] Unrecognized Spotify command: ${command}`
+              )
               return // Exit if command is not recognized
           }
 

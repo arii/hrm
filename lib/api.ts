@@ -21,7 +21,10 @@ export const callSpotifyApi = async (
     if (error instanceof Error) {
       throw error
     }
-    logger.error({ err: error }, 'An unexpected error occurred in callSpotifyApi')
+    logger.error(
+      { err: error },
+      'An unexpected error occurred in callSpotifyApi'
+    )
     throw new Error('An unknown error occurred')
   }
 }
