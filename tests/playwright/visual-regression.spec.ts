@@ -111,6 +111,24 @@ test.describe('Visual Regression Tests', () => {
         e
       )
     }
+
+    // Stop mock client stream to ensure clean state
+    try {
+      const stopStreamingButton = mockPage.getByRole('button', {
+        name: 'STOP Streaming',
+      })
+      if (await stopStreamingButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT })) {
+        await stopStreamingButton.click()
+        await expect(
+          mockPage.getByRole('button', { name: 'START Continuous Stream' })
+        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+      }
+    } catch (error) {
+      console.warn(
+        'Mock client stream stop encountered an issue (ignoring):',
+        error
+      )
+    }
   })
 
   // Clean up after all tests
