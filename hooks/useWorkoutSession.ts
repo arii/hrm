@@ -36,11 +36,12 @@ function sessionReducer(
       }
       return state
     case 'DISCONNECT':
-    case 'END_WORKOUT':
       if (state.status === 'running') {
         return { ...state, status: 'paused' }
       }
       return state
+    case 'END_WORKOUT':
+      return initialState
     case 'TICK':
       return {
         ...state,
