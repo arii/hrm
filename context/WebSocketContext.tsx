@@ -19,6 +19,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
+import logger from '../utils/logger'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -203,8 +204,8 @@ export const WebSocketProvider = ({
 
         // Expect a pong within 5 seconds
         pongTimeoutRef.current = setTimeout(() => {
-          console.warn(
-            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
+          logger.warn(
+            'Pong not received in time. Connection may be stale. Forcing reconnect.'
           )
           wsRef.current?.close() // Triggers the onclose reconnect logic
         }, 5000)
@@ -225,7 +226,7 @@ export const WebSocketProvider = ({
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
+      logger.info('WebSocket connected to server.')
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
@@ -237,8 +238,8 @@ export const WebSocketProvider = ({
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        console.log(
-          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
+        logger.info(
+          `Sending ${pendingActions.current.length} pending actions.`
         )
         pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
@@ -260,11 +261,10 @@ export const WebSocketProvider = ({
     }
 
     ws.onclose = (event) => {
-      console.log(
-        '[WebSocketProvider] Disconnected from server',
-        event.code,
-        event.reason
-      )
+      logger.info('WebSocket disconnected from server', {
+        code: event.code,
+        reason: event.reason,
+      })
       setConnectionStatus('Disconnected')
 
       if (typeof window !== 'undefined') {
@@ -282,8 +282,8 @@ export const WebSocketProvider = ({
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
           const reconnectDelay = delay + jitter
 
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
+          logger.info(
+            `WebSocket reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms.`
           )
 
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -291,9 +291,7 @@ export const WebSocketProvider = ({
             connectRef.current()
           }, reconnectDelay)
         } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
+          logger.error('Max WebSocket reconnection attempts reached.')
           setConnectionStatus(
             'Failed to connect. Please check your connection and refresh the page.'
           )
@@ -302,7 +300,7 @@ export const WebSocketProvider = ({
     }
 
     ws.onerror = (_err) => {
-      console.warn('[WebSocketProvider] Connection error')
+      logger.warn('WebSocket connection error.')
       setConnectionStatus('Error')
     }
 
@@ -337,7 +335,7 @@ export const WebSocketProvider = ({
           dispatch(message)
         }
       } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
+        logger.error('Failed to parse WebSocket message', { error: e })
       }
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
@@ -353,7 +351,7 @@ export const WebSocketProvider = ({
     if (wsRef.current) {
       wsRef.current.close()
     }
-    console.log('[useWebSocket] Manually disconnected.')
+    logger.info('WebSocket manually disconnected.')
   }, [stopHeartbeat])
 
   useEffect(() => {
@@ -369,15 +367,16 @@ export const WebSocketProvider = ({
     const ws = wsRef.current
     if (ws && ws.readyState === WebSocket.OPEN) {
       const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
+      // Avoid logging high-frequency HRM data
+      if (data.type !== 'HRM_INPUT') {
+        logger.debug('Sending WebSocket data', { data })
+      }
       ws.send(jsonStr)
     } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
+      logger.warn('WebSocket not open, queueing action.', {
+        readyState: ws?.readyState,
+        actionType: data.type,
+      })
       pendingActions.current.push(data)
       localStorage.setItem(
         'pendingActions',

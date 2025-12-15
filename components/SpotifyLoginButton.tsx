@@ -4,6 +4,7 @@
 import Button from '@mui/material/Button'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import logger from '@/utils/logger'
 
 const SpotifyLoginButton = () => {
   const [isLoading, setIsLoading] = useState(false)
@@ -11,15 +12,16 @@ const SpotifyLoginButton = () => {
   const handleLogin = async () => {
     setIsLoading(true)
     try {
-      console.log('[SpotifyLoginButton] Clicking login, calling signIn()...')
+      logger.info('Attempting Spotify login')
       const result = await signIn('spotify', {
         callbackUrl: '/',
         redirect: true,
       })
-      console.log('[SpotifyLoginButton] signIn() result:', result)
+      // This part is unlikely to be reached due to the redirect
+      logger.info('Spotify signIn() call completed', { result })
     } catch (error) {
-      console.error('[SpotifyLoginButton] signIn() error:', error)
-      setIsLoading(false)
+      logger.error('Spotify signIn() failed', { error })
+      setIsLoading(false) // Only reached on error
     }
   }
 

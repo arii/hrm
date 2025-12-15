@@ -6,6 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
+import logger from './logger.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -57,7 +58,7 @@ const initSocketManager = (
     const extWs = ws as ExtWebSocket
     const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     extWs.lastPingTime = Date.now() // Initialize on connect
-    console.log(`WebSocket Client connected: ${clientId}`)
+    logger.info('WebSocket client connected', { clientId })
 
     // Initialize with minimal placeholder; omit name so UI can suppress until real data arrives
     const defaultClientData: HrmData = {
@@ -74,7 +75,7 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      console.log(`WebSocket Client disconnected: ${clientId}`)
+      logger.info('WebSocket client disconnected', { clientId })
       hrmClients.delete(clientId)
       broadcast({
         type: 'HRM_UPDATE',
@@ -94,9 +95,10 @@ const initSocketManager = (
 
       // If the client hasn't responded in time, terminate.
       if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
-        console.log(
-          `Terminating stale WebSocket connection for client (no pong received).`
-        )
+        logger.warn('Terminating stale WebSocket connection', {
+          reason: 'no pong received',
+          clientId: extWs.clientId,
+        })
         return ws.terminate()
       }
     })
@@ -113,18 +115,16 @@ const handleIncomingMessage = (
   jsonMessage: string,
   clientId: string
 ) => {
-  console.log(`[socketManager] INCOMING MESSAGE from ${clientId}:`, jsonMessage)
+  logger.debug('Incoming WebSocket message', { clientId, message: jsonMessage })
   try {
     // Parse and validate message type for type-safe routing
     const parsedMessage = JSON.parse(jsonMessage)
-    console.log(`[socketManager] PARSED JSON:`, parsedMessage)
-
     const message = ClientCommandMessageSchema.parse(parsedMessage) // Use Zod for parsing and validation
 
-    console.log(
-      `[socketManager] Received message from ${clientId}:`,
-      message.type
-    )
+    logger.debug('Validated WebSocket message', {
+      clientId,
+      type: message.type,
+    })
 
     switch (message.type) {
       case 'PING': {
@@ -137,7 +137,10 @@ const handleIncomingMessage = (
       case 'REGISTER_CLIENT': {
         // Role Registration - Dashboard identifies itself as the executor
         ws.clientType = (message as ClientRegistrationMessage).role
-        console.log(`[WS] Client registered as: ${ws.clientType}`)
+        logger.info('Client registered role', {
+          clientId,
+          role: ws.clientType,
+        })
         break
       }
 
@@ -161,12 +164,11 @@ const handleIncomingMessage = (
 
       case 'HRM_INPUT': {
         const existingClientData = hrmClients.get(clientId)
-        console.log(
-          `[socketManager] HRM_INPUT - clientId: ${clientId}, existingData:`,
-          existingClientData,
-          'newValue:',
-          message.data.value
-        )
+        logger.debug('Processing HRM_INPUT', {
+          clientId,
+          existingData: existingClientData,
+          newValue: message.data.value,
+        })
         if (existingClientData) {
           // Filter out null values to avoid overwriting valid data
           const updatedClientProperties = Object.fromEntries(
@@ -176,10 +178,10 @@ const handleIncomingMessage = (
             ...existingClientData,
             ...updatedClientProperties,
           })
-          console.log(
-            `[socketManager] HRM_INPUT - Updated clientData for ${clientId}:`,
-            hrmClients.get(clientId)
-          )
+          logger.debug('Updated HRM client data', {
+            clientId,
+            newData: hrmClients.get(clientId),
+          })
         }
         broadcast({
           type: 'HRM_UPDATE',
@@ -214,7 +216,10 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
-        console.log(`[WS Relay] Forwarding command: ${commandMsg.command}`)
+        logger.info('Relaying Spotify command', {
+          command: commandMsg.command,
+          deviceId: commandMsg.deviceId,
+        })
 
         // Broadcast ONLY to connected Dashboards for remote execution
         wsServerInstance.clients.forEach((client: WebSocket) => {
@@ -246,16 +251,17 @@ const handleIncomingMessage = (
 
       default:
         // This case should ideally not be reached if ClientCommandMessageSchema is exhaustive
-        console.warn(
-          'Unknown message type received:',
-          (message as { type: unknown }).type
-        )
+        logger.warn('Unknown message type received', {
+          type: (message as { type: unknown }).type,
+        })
     }
   } catch (e) {
-    console.error('Error processing incoming message:', e)
+    logger.error('Error processing incoming message', {
+      error: e instanceof Error ? e.message : e,
+    })
     // Add more specific error handling for Zod validation errors
     if (e instanceof z.ZodError) {
-      console.error('WebSocket message validation failed:', e.issues)
+      logger.error('WebSocket message validation failed', { errors: e.issues })
     }
   }
 }

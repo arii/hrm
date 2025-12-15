@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { ApiError } from '@/lib/errors'
+import logger from '@/utils/logger'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -24,8 +25,8 @@ export async function GET(_req: Request) {
       accessToken = session.accessToken
     } else {
       // Fallback to System Token
-      console.log(
-        '[API /devices] No user session found, attempting system token fallback.'
+      logger.info(
+        'No user session found in /api/spotify/devices, attempting system token fallback.'
       )
       const tokenManager = new SpotifyTokenManager(
         process.env.SPOTIFY_CLIENT_ID || '',
@@ -53,9 +54,10 @@ export async function GET(_req: Request) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(
-        `[API /devices] Spotify API error: ${response.status} ${errorText}`
-      )
+      logger.error('Spotify API error fetching devices', {
+        status: response.status,
+        error: errorText,
+      })
       return NextResponse.json(
         { error: 'Failed to fetch devices from Spotify.' },
         { status: response.status }
@@ -73,7 +75,9 @@ export async function GET(_req: Request) {
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
-    console.error(`[API /devices] Internal Server Error: ${message}`)
+    logger.error('Internal Server Error in /api/spotify/devices', {
+      error: message,
+    })
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

@@ -1,6 +1,7 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
 import { useSession, signOut } from 'next-auth/react'
+import logger from '@/utils/logger'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
@@ -32,10 +33,9 @@ const SpotifyDisplay = () => {
 
   // Debug: Log session status changes
   useEffect(() => {
-    console.log('[SpotifyDisplay] Session status changed:', {
+    logger.debug('SpotifyDisplay session status changed', {
       status,
       hasSession: !!session,
-      hasAccessToken: !!session?.accessToken,
       isLoggedIn,
     })
   }, [status, session, isLoggedIn])
@@ -111,7 +111,7 @@ const SpotifyDisplay = () => {
     player
       .setVolume(scalar)
       .catch((err) =>
-        console.warn('[Dashboard] Failed to adjust local Spotify volume:', err)
+        logger.warn('Failed to adjust local Spotify volume', { error: err })
       )
   }, [player, volume, muted])
 
@@ -127,7 +127,7 @@ const SpotifyDisplay = () => {
           const deviceArray = Array.isArray(devices) ? devices : []
           setAvailableDevices(deviceArray)
         } catch (error) {
-          console.error('[Dashboard] Failed to fetch Spotify devices:', error)
+          logger.error('Failed to fetch Spotify devices', { error })
         }
       }
       fetchDevices()

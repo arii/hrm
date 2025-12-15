@@ -90,9 +90,7 @@ export class SpotifyPolling {
       const sdkToken = this.tokenManager.getSdkAccessToken()
       if (sdkToken) {
         this.setupSdk(sdkToken)
-        logger.debug(
-          'Loaded existing Spotify tokens from file. Starting polling.'
-        )
+        logger.info('Loaded existing Spotify tokens. SDK is ready.')
         this.startPolling()
       }
     }
@@ -329,6 +327,7 @@ export class SpotifyPolling {
     volume?: number,
     playlistUri?: string
   ) {
+    logger.debug('Handling Spotify command', { command, deviceId, volume })
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
@@ -342,6 +341,7 @@ export class SpotifyPolling {
     return (async () => {
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        // Schedule a poll in the near future to get immediate feedback
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
