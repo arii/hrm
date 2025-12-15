@@ -17,7 +17,7 @@ const Toast = () => {
           onClose={() => hideToast(toast.id)}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           sx={{
-            top: theme.spacing(1 + index * 7.5),
+            top: theme.spacing(1 + index * 7),
             '& .MuiAlert-root': {
               boxShadow: theme.shadows[3],
             },
