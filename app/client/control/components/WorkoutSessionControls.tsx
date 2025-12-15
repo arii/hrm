@@ -29,9 +29,14 @@ const actionButtonBaseSx = {
     transform: 'scale(0.95)',
   },
   color: 'white',
-  borderRadius: 2,
+  borderRadius: 1,
   display: 'flex',
   alignItems: 'center',
+  '&:focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'info.main',
+    outlineOffset: 2,
+  },
   justifyContent: 'center',
   gap: 1,
 }
@@ -39,10 +44,10 @@ const actionButtonBaseSx = {
 const startButtonSx = {
   ...actionButtonBaseSx,
   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
-  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+  boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+    boxShadow: 4,
   },
   '&:disabled': {
     background: '#34495E',
@@ -54,20 +59,20 @@ const startButtonSx = {
 const pauseButtonSx = {
   ...actionButtonBaseSx,
   background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)',
-  boxShadow: '0 4px 12px rgba(243, 156, 18, 0.3)',
+  boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 24px rgba(243, 156, 18, 0.4)',
+    boxShadow: 4,
   },
 }
 
 const stopButtonSx = {
   ...actionButtonBaseSx,
   background: 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)',
-  boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)',
+  boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 24px rgba(231, 76, 60, 0.4)',
+    boxShadow: 4,
   },
 }
 
@@ -106,7 +111,9 @@ const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
               disabled={!isConnected}
               sx={pauseButtonSx}
               startIcon={isPaused ? <PlayArrow /> : <Pause />}
-              aria-label={isPaused ? 'Resume workout session' : 'Pause workout session'}
+              aria-label={
+                isPaused ? 'Resume workout session' : 'Pause workout session'
+              }
             >
               {isPaused ? 'Resume' : 'Pause'}
             </Button>

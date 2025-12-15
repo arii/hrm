@@ -472,9 +472,7 @@ const TimerControls = () => {
 
         <WorkoutSessionControls
           isSessionActive={timerData.isRunning}
-          isPaused={
-            timerData.isRunning && timerData.currentPhase === 'PAUSED'
-          }
+          isPaused={timerData.isRunning && timerData.currentPhase === 'PAUSED'}
           onStartSession={() => sendTimerCommand('START')}
           onPauseSession={() => sendTimerCommand('PAUSE')}
           onResumeSession={() => sendTimerCommand('START')} // Or a new 'RESUME' command

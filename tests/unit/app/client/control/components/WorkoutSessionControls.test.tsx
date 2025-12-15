@@ -85,12 +85,23 @@ describe('WorkoutSessionControls', () => {
   })
 
   it('disables all buttons when not connected', () => {
-    render(<WorkoutSessionControls {...defaultProps} connectionStatus="Disconnected" />)
+    render(
+      <WorkoutSessionControls
+        {...defaultProps}
+        connectionStatus="Disconnected"
+      />
+    )
     expect(screen.getByTestId('start-session-button')).toBeDisabled()
-  });
+  })
 
   it('disables pause and end buttons when not connected', () => {
-    render(<WorkoutSessionControls {...defaultProps} isSessionActive={true} connectionStatus="Disconnected" />)
+    render(
+      <WorkoutSessionControls
+        {...defaultProps}
+        isSessionActive={true}
+        connectionStatus="Disconnected"
+      />
+    )
     expect(screen.getByTestId('pause-resume-button')).toBeDisabled()
     expect(screen.getByTestId('end-session-button')).toBeDisabled()
   })
