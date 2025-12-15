@@ -11,7 +11,7 @@
  * - 'STOPWATCH': A simple count-up timer.
  * - 'TABATA': A high-intensity interval training (HIIT) timer with work and rest phases.
  */
-export type TimerMode = 'STOPWATCH' | 'TABATA';
+export type TimerMode = 'STOPWATCH' | 'TABATA'
 
 /**
  * Represents the distinct phases of the timer's lifecycle.
@@ -28,7 +28,7 @@ export type TimerPhase =
   | 'WORK'
   | 'REST'
   | 'COOLDOWN'
-  | 'RUNNING';
+  | 'RUNNING'
 
 /**
  * Defines the static, unchanging metadata for a connected Heart Rate Monitor (HRM) device.
@@ -38,17 +38,17 @@ export interface HrmStaticMetadata {
   /**
    * A unique identifier for the client or device, managed by the server.
    */
-  clientId: string;
+  clientId: string
   /**
    * The user-configured maximum heart rate. Defaults to a standard formula if not provided.
    */
-  maxHr: number;
+  maxHr: number
   /**
    * An optional, user-provided name for the device or workout session.
    */
-  name?: string;
+  name?: string
   /**
    * The age of the user, used for more accurate calorie calculations.
    */
-  age?: number;
+  age?: number
 }

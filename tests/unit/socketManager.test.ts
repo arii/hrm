@@ -14,6 +14,9 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { StateSnapshot } from '../../types/websocket'
+import { initSocketManager } from '../../utils/socketManager'
+import * as broadcast from '../../utils/broadcast'
+import * as ws from 'ws'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -25,25 +28,9 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock broadcaster to prevent side-effects between tests
-jest.mock('../../utils/broadcast', () => ({
-  initBroadcaster: jest.fn(),
-  broadcast: jest.fn(),
-}))
-
+jest.mock('../../utils/broadcast')
 // Manual mock for the 'ws' module
-jest.mock('ws', () => ({
-  Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter()
-    // @ts-expect-error-next-line
-    wss.clients = new Set()
-    // @ts-expect-error-next-line
-    wss.on = jest.fn(wss.on.bind(wss))
-    // @ts-expect-error-next-line
-    wss.emit = jest.fn(wss.emit.bind(wss))
-    return wss
-  }),
-  WebSocket: jest.fn(),
-}))
+jest.mock('ws')
 
 class MockWebSocket extends EventEmitter {
   lastPingTime: number | undefined
@@ -77,7 +64,6 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
-    let initSocketManager: any
 
     beforeEach(() => {
       jest.useFakeTimers()
@@ -92,7 +78,6 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
-      initSocketManager = require('../../utils/socketManager').initSocketManager
     })
 
     afterEach(() => {
@@ -176,10 +161,13 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
-    let broadcastMock: jest.Mock
-    let initSocketManager: (
+    let broadcastMock: jest.SpyInstance
+    let localInitSocketManager: (
       wss: WebSocketServer,
-      services: any,
+      services: {
+        tabataService: TabataTimer
+        spotifyService: SpotifyPolling
+      },
       getSnapshot: () => StateSnapshot
     ) => void
 
@@ -187,8 +175,7 @@ describe('WebSocket Manager', () => {
       jest.resetModules()
       jest.useFakeTimers()
 
-      const { Server } = require('ws')
-      mockWss = new (Server as jest.Mock)()
+      mockWss = new (ws.Server as jest.Mock)()
 
       mockServices = {
         tabataService: {
@@ -200,8 +187,9 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
-      broadcastMock = require('../../utils/broadcast').broadcast
-      initSocketManager = require('../../utils/socketManager').initSocketManager
+      broadcastMock = jest.spyOn(broadcast, 'broadcast')
+      localInitSocketManager =
+        require('../../utils/socketManager').initSocketManager
     })
 
     afterEach(() => {
@@ -214,7 +202,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should process HRM_INPUT, update client data, and broadcast the new metric', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
+      localInitSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
@@ -247,7 +235,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast the device list on new connection', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
+      localInitSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
@@ -265,7 +253,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast the device list on disconnection', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
+      localInitSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)

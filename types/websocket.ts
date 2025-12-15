@@ -4,7 +4,7 @@
  * and the client hooks via the WebSocket connection.
  */
 
-import { HrmStaticMetadata, TimerMode, TimerPhase } from './shared';
+import { HrmStaticMetadata, TimerMode, TimerPhase } from './shared'
 
 // --- Server Broadcast State Interfaces ---
 
@@ -16,15 +16,15 @@ export interface HrmMetric {
   /**
    * A unique identifier for the client or device, managed by the server.
    */
-  clientId: string;
+  clientId: string
   /**
    * The heart rate value in beats per minute (BPM).
    */
-  value: number;
+  value: number
   /**
    * The server-generated timestamp (ms since epoch) when the metric was processed.
    */
-  timestamp: number;
+  timestamp: number
 }
 
 /**
@@ -35,14 +35,14 @@ export interface HrmDevice extends HrmStaticMetadata {
   /**
    * The calculated total calories burned during the session for this device.
    */
-  calories: number;
+  calories: number
 }
 
 /**
  * @deprecated HrmData is deprecated and will be removed. Use HrmDevice for static data
  * and HrmMetric for time-series data.
  */
-export type HrmData = HrmDevice & { value: number };
+export type HrmData = HrmDevice & { value: number }
 
 export interface TimerData {
   isRunning: boolean
@@ -136,8 +136,7 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId' | 'calories'>;
-
+export type HrmInputData = Omit<Partial<HrmData>, 'clientId' | 'calories'>
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
@@ -208,7 +207,7 @@ export const HrmInputDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
-});
+})
 
 export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),

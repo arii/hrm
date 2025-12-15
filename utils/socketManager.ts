@@ -93,7 +93,6 @@ const initSocketManager = (
   const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
 
   const interval = setInterval(() => {
-    const now = Date.now()
     wss.clients.forEach((ws) => {
       const extWs = ws as ExtWebSocket
 
@@ -116,17 +115,17 @@ const broadcastHrmUpdate = (metrics: HrmMetric[]) => {
     broadcast({
       type: 'HRM_UPDATE',
       payload: metrics,
-    });
+    })
   }
-};
+}
 
 const broadcastDeviceList = () => {
-  const devices = Array.from(clientData.values());
+  const devices = Array.from(clientData.values())
   broadcast({
     type: 'HRM_DEVICE_UPDATE',
     payload: devices,
-  });
-};
+  })
+}
 
 /**
  * Handles incoming JSON messages from client applications.
@@ -193,21 +192,23 @@ const handleIncomingMessage = (
           }
 
           const updateData: Partial<HrmDevice> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null && value !== undefined)
+            Object.entries(message.data).filter(
+              ([_, value]) => value !== null && value !== undefined
+            )
           )
 
           clientData.set(clientId, {
             ...existingData,
             ...updateData,
             calories: Math.round(newCalories * 10) / 10,
-          });
+          })
 
           const newMetric: HrmMetric = {
             clientId,
             value: currentHr,
             timestamp: now,
-          };
-          broadcastHrmUpdate([newMetric]);
+          }
+          broadcastHrmUpdate([newMetric])
         }
         break
       }
