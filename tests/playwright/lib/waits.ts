@@ -32,6 +32,8 @@ export const WAIT_TIMEOUTS = {
   LONG: 8000,
   /** Infrastructure/server startup timeout */
   INFRASTRUCTURE: 10000,
+  /** Long timeout for visual regression test setup */
+  VISUAL_TEST_SETUP: 60000,
 } as const
 
 /**

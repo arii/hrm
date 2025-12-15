@@ -74,6 +74,7 @@ const HrmConnectionPanel = () => {
     return (
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
         <Box
+          data-testid="hr-tile-grid-item"
           sx={{
             width: {
               xs: '100%',

@@ -36,7 +36,7 @@ test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(WAIT_TIMEOUTS.LONG * 2) // Allow extra time for visual tests
+    test.setTimeout(WAIT_TIMEOUTS.VISUAL_TEST_SETUP) // Allow extra time for visual tests
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
