@@ -20,9 +20,17 @@ export default function ConnectPage() {
     batteryLevel,
     isConnected,
     isSupported,
+    disconnectionReason,
   } = useBluetoothHRM()
 
   const { connectionStatus, hrmData } = useWebSocket()
+
+  let deviceStatusMessage = deviceStatus
+  if (disconnectionReason === 'timeout') {
+    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
+  } else if (disconnectionReason === 'signal_loss') {
+    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
+  }
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
@@ -56,7 +64,7 @@ export default function ConnectPage() {
       userAge={userAge}
       setUserAge={setUserAge}
       isConnected={isConnected}
-      deviceStatus={deviceStatus}
+      deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
