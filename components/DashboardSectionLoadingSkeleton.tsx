@@ -1,10 +1,11 @@
+import React from 'react'
+import Skeleton from '@mui/material/Skeleton'
+import Box from '@mui/material/Box'
+import { DashboardSectionLoadingSkeletonProps } from '@/types'
 
-import React from 'react';
-import Skeleton from '@mui/material/Skeleton';
-import Box from '@mui/material/Box';
-import { DashboardSectionLoadingSkeletonProps } from '@/types';
-
-const DashboardSectionLoadingSkeleton: React.FC<DashboardSectionLoadingSkeletonProps> = ({
+const DashboardSectionLoadingSkeleton: React.FC<
+  DashboardSectionLoadingSkeletonProps
+> = ({
   width = '100%',
   height = '100px',
   shape = 'rectangle',
@@ -20,9 +21,9 @@ const DashboardSectionLoadingSkeleton: React.FC<DashboardSectionLoadingSkeletonP
       animation="wave"
       className={className}
     />
-  ));
+  ))
 
-  return <Box>{skeletons}</Box>;
-};
+  return <Box>{skeletons}</Box>
+}
 
-export default DashboardSectionLoadingSkeleton;
+export default DashboardSectionLoadingSkeleton
