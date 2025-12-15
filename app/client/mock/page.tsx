@@ -22,7 +22,6 @@ export default function MockPage() {
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
-  const maxHr = 220 - age
 
   // Signal when page is ready for testing
   useEffect(() => {
@@ -42,14 +41,11 @@ export default function MockPage() {
         type: 'HRM_INPUT',
         data: {
           value: hr,
-          maxHr: maxHr,
-          name: name,
-          age: age,
         },
       }
       sendData(message)
     },
-    [sendData, name, age, maxHr]
+    [sendData]
   )
 
   const startStreaming = () => {
@@ -113,7 +109,7 @@ export default function MockPage() {
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 8 }}>
+            <Grid item xs={8}>
               <TextField
                 label="User Name"
                 placeholder="e.g., Mock User"
@@ -122,7 +118,7 @@ export default function MockPage() {
                 fullWidth
               />
             </Grid>
-            <Grid size={{ xs: 4 }}>
+            <Grid item xs={4}>
               <TextField
                 label="Age"
                 placeholder="e.g., 30"
@@ -157,7 +153,7 @@ export default function MockPage() {
             Select a zone to set HR:
           </Typography>
           <Grid container spacing={1} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 'auto' }}>
+            <Grid item xs="auto">
               <Button
                 fullWidth
                 variant="contained"
@@ -168,7 +164,7 @@ export default function MockPage() {
                 Zone 1
               </Button>
             </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            <Grid item xs="auto">
               <Button
                 fullWidth
                 variant="contained"
@@ -179,7 +175,7 @@ export default function MockPage() {
                 Zone 2
               </Button>
             </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            <Grid item xs="auto">
               <Button
                 fullWidth
                 variant="contained"
@@ -190,7 +186,7 @@ export default function MockPage() {
                 Zone 3
               </Button>
             </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            <Grid item xs="auto">
               <Button
                 fullWidth
                 variant="contained"
@@ -201,7 +197,7 @@ export default function MockPage() {
                 Zone 4
               </Button>
             </Grid>
-            <Grid size={{ xs: 'auto' }}>
+            <Grid item xs="auto">
               <Button
                 fullWidth
                 variant="contained"
