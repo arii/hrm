@@ -12,100 +12,336 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+        with:
+          fetch-depth: 0  # Need full history for diff analysis
+
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
+
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'pnpm'
+
       - name: Install dependencies with fallback
         id: install
         continue-on-error: true
         run: |
-          echo "Attempting pnpm install with frozen lockfile..."
           if ! pnpm install --frozen-lockfile; then
-            echo "::warning::Frozen lockfile failed, attempting regular install"
             echo "LOCKFILE_MISMATCH=true" >> $GITHUB_ENV
-
-            if pnpm install; then
-              echo "::notice::Dependencies installed successfully with lockfile update"
-              echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
-            else
-              echo "::error::Dependency installation failed completely"
-              echo "INSTALL_FAILURE=true" >> $GITHUB_ENV
-              exit 1
-            fi
+            pnpm install && echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
           else
             echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
           fi
 
-      - name: Get PR Diff
+      # ============================================================================
+      # CONTEXT GATHERING - Collect all relevant information for intelligent review
+      # ============================================================================
+
+      - name: Analyze PR Change Patterns
+        id: analyze_changes
+        run: |
+          # Get the diff between base and current
+          DIFF_STATS=$(git diff --stat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+
+          # Count total files changed
+          FILES_CHANGED=$(echo "$DIFF_STATS" | wc -l)
+          FILES_CHANGED=$((FILES_CHANGED - 1))  # Remove summary line
+
+          # Calculate LOC changed
+          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= insertion)' || echo "0")
+          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= deletion)' || echo "0")
+          TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
+
+          # Determine review depth based on size
+          if [ $TOTAL_LOC -lt 100 ]; then
+            REVIEW_DEPTH="detailed"
+          elif [ $TOTAL_LOC -lt 400 ]; then
+            REVIEW_DEPTH="standard"
+          else
+            REVIEW_DEPTH="focused"
+          fi
+
+          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
+          echo "REVIEW_DEPTH=$REVIEW_DEPTH" >> $GITHUB_ENV
+
+          # Identify file types and architectural areas
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | \
+            awk -F/ '{print $1}' | sort | uniq > changed_areas.txt
+
+          CHANGED_AREAS=$(cat changed_areas.txt | tr '\n' ',' | sed 's/,$//')
+          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+
+      - name: Get PR Diff with Context
         id: diff
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} > pr.diff
+          # Get unified diff with more context for better understanding
+          gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+
+          # Also get a stat summary
+          gh pr diff ${{ github.event.pull_request.number }} > pr_summary.txt
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Get Additional Context
+      - name: Gather Review History
+        id: review_history
+        run: |
+          # Get all previous review comments from Gemini/bot
+          PREVIOUS_REVIEWS=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json comments \
+            --jq '[.comments[] | select(.author.login == "arii") | {body: .body, createdAt: .createdAt}]')
+
+          echo "PREVIOUS_REVIEWS<<EOF" >> $GITHUB_ENV
+          echo "$PREVIOUS_REVIEWS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Count number of review iterations
+          REVIEW_COUNT=$(echo "$PREVIOUS_REVIEWS" | jq '. | length')
+          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
+
+          # Get resolved conversations (GitHub doesn't expose this via CLI easily, so we approximate)
+          RESOLVED_COUNT=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json reviewThreads \
+            --jq '[.reviewThreads[] | select(.isResolved == true)] | length' || echo "0")
+          echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
+
+          # Check if there are any "requested changes" reviews
+          CHANGES_REQUESTED=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json reviews \
+            --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Get Issue Context
         id: context
         run: |
           # Get linked issue body
-          ISSUE_NUMBER=$(gh pr view ${{ github.event.pull_request.number }} --json closingIssuesReferences --jq '.closingIssuesReferences[0].number')
+          ISSUE_NUMBER=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json closingIssuesReferences \
+            --jq '.closingIssuesReferences[0].number' || echo "")
+
           if [ -n "$ISSUE_NUMBER" ] && [ "$ISSUE_NUMBER" != "null" ]; then
-            echo "Found linked issue: $ISSUE_NUMBER"
             ISSUE_BODY=$(gh issue view $ISSUE_NUMBER --json body --jq '.body')
+            ISSUE_TITLE=$(gh issue view $ISSUE_NUMBER --json title --jq '.title')
+            ISSUE_LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '[.labels[].name] | join(",")')
+
             echo "LINKED_ISSUE_BODY<<EOF" >> $GITHUB_ENV
             echo "$ISSUE_BODY" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
             echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
+            echo "ISSUE_TITLE=$ISSUE_TITLE" >> $GITHUB_ENV
+            echo "ISSUE_LABELS=$ISSUE_LABELS" >> $GITHUB_ENV
           else
-            echo "No linked issue found."
             echo "LINKED_ISSUE_BODY=" >> $GITHUB_ENV
             echo "ISSUE_NUMBER=" >> $GITHUB_ENV
           fi
-          # Get existing review comments from this bot (user 'arii')
-          COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '[.comments[] | select(.author.login == "arii") | .body] | .[]')
-          if [ -n "$COMMENTS" ]; then
-             echo "Found existing comments."
-             # Format for prompt by joining with a separator
-             FORMATTED_COMMENTS=$(echo "$COMMENTS" | paste -sd '---' -)
-             echo "EXISTING_COMMENTS<<EOF" >> $GITHUB_ENV
-             echo "$FORMATTED_COMMENTS" >> $GITHUB_ENV
-             echo "EOF" >> $GITHUB_ENV
-          else
-             echo "No existing comments from bot found."
-             echo "EXISTING_COMMENTS=" >> $GITHUB_ENV
-          fi
 
           # Get PR Labels
-          PR_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '[.labels[].name] | join(",")')
+          PR_LABELS=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json labels \
+            --jq '[.labels[].name] | join(",")')
           echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+
+          # Get commit messages for additional context
+          COMMIT_MESSAGES=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json commits \
+            --jq '[.commits[].commit.message] | join("\n---\n")')
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Run Gemini Review
+      - name: Check for Test Changes
+        id: test_coverage
+        run: |
+          # Check if tests were modified
+          TEST_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | \
+            grep -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
+
+          if [ -n "$TEST_FILES" ]; then
+            echo "HAS_TEST_CHANGES=true" >> $GITHUB_ENV
+            echo "TEST_FILES=$TEST_FILES" >> $GITHUB_ENV
+          else
+            echo "HAS_TEST_CHANGES=false" >> $GITHUB_ENV
+          fi
+
+          # Check if source files without tests were changed
+          SOURCE_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | \
+            grep -E '\.(ts|tsx|js|jsx)$' | \
+            grep -v -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
+
+          if [ -n "$SOURCE_FILES" ] && [ "${{ env.HAS_TEST_CHANGES }}" == "false" ]; then
+            echo "MISSING_TESTS=true" >> $GITHUB_ENV
+          else
+            echo "MISSING_TESTS=false" >> $GITHUB_ENV
+          fi
+
+      # ============================================================================
+      # INTELLIGENT REVIEW - Context-aware AI review with progressive focus
+      # ============================================================================
+
+      - name: Run Intelligent Gemini Review
         id: gemini
         if: env.INSTALL_SUCCESS == 'true'
         continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
-          EXISTING_COMMENTS: ${{ env.EXISTING_COMMENTS }}
-          PR_LABELS: ${{ env.PR_LABELS }}
-          ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
+
+          # PR Metadata
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_DESCRIPTION: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ env.PR_LABELS }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          PR_DESCRIPTION: ${{ github.event.pull_request.body }}
-          PR_DIFF_FILE: pr.diff
+
+          # Change Analysis
+          FILES_CHANGED: ${{ env.FILES_CHANGED }}
+          TOTAL_LOC: ${{ env.TOTAL_LOC }}
+          REVIEW_DEPTH: ${{ env.REVIEW_DEPTH }}
+          CHANGED_AREAS: ${{ env.CHANGED_AREAS }}
+
+          # Review History
+          REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
+          RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
+          CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
+          PREVIOUS_REVIEWS: ${{ env.PREVIOUS_REVIEWS }}
+
+          # Context
+          LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
+          ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
+          ISSUE_TITLE: ${{ env.ISSUE_TITLE }}
+          ISSUE_LABELS: ${{ env.ISSUE_LABELS }}
+          COMMIT_MESSAGES: ${{ env.COMMIT_MESSAGES }}
+
+          # Test Coverage
+          HAS_TEST_CHANGES: ${{ env.HAS_TEST_CHANGES }}
+          MISSING_TESTS: ${{ env.MISSING_TESTS }}
+          TEST_FILES: ${{ env.TEST_FILES }}
+
+          # Context Files
           REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
         run: |
           npx tsx scripts/gemini-client.ts \
             --preset review \
             --context "$REVIEW_CONTEXT_FILES" \
             --output "review_result.json"
+
+      # ============================================================================
+      # SMART FEEDBACK - Progressive feedback based on review iteration
+      # ============================================================================
+
+      - name: Determine Review Type
+        if: steps.gemini.outcome == 'success'
+        id: review_type
+        run: |
+          # Determine if this is initial review or re-review
+          if [ "${{ env.REVIEW_COUNT }}" -eq "0" ]; then
+            echo "REVIEW_TYPE=initial" >> $GITHUB_ENV
+            echo "FEEDBACK_STYLE=comprehensive" >> $GITHUB_ENV
+          elif [ "${{ env.REVIEW_COUNT }}" -eq "1" ]; then
+            echo "REVIEW_TYPE=first_revision" >> $GITHUB_ENV
+            echo "FEEDBACK_STYLE=focused" >> $GITHUB_ENV
+          else
+            echo "REVIEW_TYPE=subsequent_revision" >> $GITHUB_ENV
+            echo "FEEDBACK_STYLE=critical_only" >> $GITHUB_ENV
+          fi
+
+          # Check if we're close to approval
+          if [ "${{ env.RESOLVED_COUNT }}" -gt "3" ] && [ "${{ env.CHANGES_REQUESTED }}" -eq "0" ]; then
+            echo "NEAR_APPROVAL=true" >> $GITHUB_ENV
+          else
+            echo "NEAR_APPROVAL=false" >> $GITHUB_ENV
+          fi
+
+      - name: Process Review Result with Intelligence
+        if: steps.gemini.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('review_result.json')) {
+              console.log('No review result file found.');
+              return;
+            }
+
+            const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
+            let { reviewComment, labels } = result;
+
+            // Enhance comment with context-aware header
+            const reviewType = process.env.REVIEW_TYPE;
+            const reviewCount = parseInt(process.env.REVIEW_COUNT) + 1;
+            const filesChanged = process.env.FILES_CHANGED;
+            const totalLoc = process.env.TOTAL_LOC;
+            const nearApproval = process.env.NEAR_APPROVAL === 'true';
+
+            let header = `## 🤖 Gemini Code Review (${reviewType === 'initial' ? 'Initial Review' : `Revision #${reviewCount}`})\n\n`;
+
+            if (reviewType === 'initial') {
+              header += `📊 **Change Summary:** ${filesChanged} files, ~${totalLoc} LOC\n`;
+              header += `🎯 **Review Depth:** ${process.env.REVIEW_DEPTH}\n`;
+              header += `📁 **Areas Changed:** ${process.env.CHANGED_AREAS}\n\n`;
+            } else {
+              header += `✅ **Resolved Issues:** ${process.env.RESOLVED_COUNT}\n`;
+              if (nearApproval) {
+                header += `🎉 **Status:** Looking good! Just a few final items to address.\n\n`;
+              } else {
+                header += `🔄 **Status:** In revision. Addressing previous feedback.\n\n`;
+              }
+            }
+
+            // Add test coverage warning if applicable
+            if (process.env.MISSING_TESTS === 'true') {
+              header += `⚠️ **Test Coverage:** Source code changed without corresponding test updates.\n\n`;
+            }
+
+            reviewComment = header + reviewComment;
+
+            // Post the enhanced comment
+            if (reviewComment) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: reviewComment
+              });
+            }
+
+            // Apply labels intelligently
+            if (labels && labels.length > 0) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: labels
+              });
+            }
+
+            // Add progression labels
+            if (nearApproval) {
+              try {
+                await github.rest.issues.addLabels({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: ['ready-for-final-review']
+                });
+              } catch (e) {
+                // Label might not exist
+                console.log('Could not add ready-for-final-review label');
+              }
+            }
+
+      # ============================================================================
+      # ERROR HANDLING - Better failure communication
+      # ============================================================================
 
       - name: Post Configuration Warning
         if: env.LOCKFILE_MISMATCH == 'true' && env.INSTALL_SUCCESS == 'true'
@@ -114,20 +350,19 @@ jobs:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
             const warningComment = `## ⚠️ Configuration Issue Detected
+
             **Issue**: \`pnpm-lock.yaml\` is out of sync with \`package.json\`
-            **Impact**: This doesn't affect your code changes, but the dependency lockfile needs updating.
-            **Fix**: Run these commands locally and push the changes:
+
+            **Fix**: Run these commands locally:
             \`\`\`bash
             pnpm install
             git add pnpm-lock.yaml
             git commit -m "fix: update pnpm lockfile"
             git push
             \`\`\`
-            **Code Review**: ${{ steps.gemini.outcome == 'success' && '✅ Completed despite configuration issue' || '❌ Skipped due to setup failure' }}
-            <details>
-            <summary>Technical Details</summary>
-            The workflow attempted to install dependencies with \`--frozen-lockfile\` but found mismatches. This typically happens when dependencies in \`package.json\` are changed without committing the corresponding \`pnpm-lock.yaml\` update. This is an infrastructure issue, not a problem with your code changes.
-            </details>`;
+
+            **Code Review**: ${{ steps.gemini.outcome == 'success' && '✅ Completed' || '❌ Skipped' }}`;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -135,72 +370,18 @@ jobs:
               body: warningComment
             });
 
-      - name: Process Review Result
-        if: steps.gemini.outcome == 'success'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.ARI_PAT }}
-          script: |
-            const fs = require('fs');
-            try {
-              if (!fs.existsSync('review_result.json')) {
-                console.log('No review result file found. Likely skipped.');
-                return;
-              }
-              const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
-              const { reviewComment, labels } = result;
-
-              // Post the comment
-              if (reviewComment) {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: reviewComment
-                });
-              }
-
-              // Apply labels
-              if (labels && labels.length > 0) {
-                await github.rest.issues.addLabels({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  labels: labels
-                });
-              }
-
-            } catch (e) {
-              console.error('Error processing review result:', e);
-              core.setFailed('Failed to process Gemini review result');
-            }
-      - name: Handle Gemini Failure
+      - name: Handle Review Failure
         if: steps.gemini.outcome == 'failure'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
             const failureComment = `## 🤖 Gemini Review Status
-            **Status**: ❌ Review Failed
-            **Reason**: The Gemini review process encountered an unexpected error. This is likely an intermittent infrastructure issue.
-            **Next Steps**: The workflow will be automatically re-run on the next push. If the problem persists, please check the workflow logs for more details.`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: failureComment
-            });
 
-      - name: Handle Installation Failure
-        if: env.INSTALL_FAILURE == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const failureComment = `## 🤖 Gemini Review Status
-            **Status**: ❌ Review Skipped
-            **Reason**: Dependency installation failed completely. This is a blocking issue.
-            **Next Steps**: Please check your \`package.json\` for syntax errors or invalid dependencies and ensure \`pnpm-lock.yaml\` is not corrupted. Review the workflow logs for the specific error message from \`pnpm\`.`;
+            **Status**: ❌ Review Failed
+
+            The review process encountered an error. This will be automatically re-run on the next push.`;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
