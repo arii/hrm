@@ -67,7 +67,7 @@ describe('Environment variable validation', () => {
       SPOTIFY_CLIENT_SECRET: 'spotify-client-secret',
     }
 
-    const { env } = await import('@/lib/env');
+    const { env } = await import('@/lib/env')
     expect(env).toBeDefined()
     expect(env.NODE_ENV).toBe('test')
     expect(env.PORT).toBe(3000)
@@ -82,23 +82,23 @@ describe('Environment variable validation', () => {
     expect(env.SPOTIFY_CLIENT_SECRET).toBe('spotify-client-secret')
   })
 
-  it('should throw an error if required environment variables are missing', () => {
+  it('should throw an error if required environment variables are missing', async () => {
     process.env = {
       ...process.env,
       NODE_ENV: 'test',
       DATABASE_URL: undefined,
     }
 
-    expect(() => require('@/lib/env')).toThrow()
+    await expect(import('@/lib/env')).rejects.toThrow()
   })
 
-  it('should throw an error if environment variables have invalid types', () => {
+  it('should throw an error if environment variables have invalid types', async () => {
     process.env = {
       ...process.env,
       NODE_ENV: 'test',
       PORT: 'invalid-port',
     }
 
-    expect(() => require('@/lib/env')).toThrow()
+    await expect(import('@/lib/env')).rejects.toThrow()
   })
 })

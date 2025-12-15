@@ -270,8 +270,8 @@ describe('SpotifyPolling Service', () => {
       // Mock the initializeSdk to resolve immediately
       const initializeSdkSpy = jest
         .spyOn(
-          spotifyService as unknown as { initializeSdk: () => void },
-          'initializeSdk'
+          spotifyService as SpotifyPolling,
+          'initializeSdk' as keyof SpotifyPolling
         )
         .mockResolvedValue(undefined)
       spotifyService.setRefreshToken(refreshToken)
@@ -373,10 +373,9 @@ describe('SpotifyPolling Service', () => {
 
     it('should handle 401 unauthorized responses', async () => {
       mockPlayer.getCurrentlyPlayingTrack.mockRejectedValue({ status: 401 })
-      // @ts-expect-error - Testing private method
       const refreshSpy = jest.spyOn(
-        spotifyService,
-        'checkAndRefreshSdkToken'
+        spotifyService as SpotifyPolling,
+        'checkAndRefreshSdkToken' as keyof SpotifyPolling
       )
 
       await spotifyService.forcePollAndBroadcast()
