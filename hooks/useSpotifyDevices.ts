@@ -1,11 +1,13 @@
 // hooks/useSpotifyDevices.ts
 import { useState, useEffect, useCallback } from 'react'
 import { SpotifyDevice } from '@/types'
+import { useError } from '@/context/ErrorContext'
 
 export const useSpotifyDevices = () => {
   const [devices, setDevices] = useState<SpotifyDevice[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const { addError } = useError()
 
   const fetchDevices = useCallback(async () => {
     setIsLoading(true)
@@ -18,11 +20,12 @@ export const useSpotifyDevices = () => {
       const data = await response.json()
       setDevices(data)
     } catch (e) {
+      addError('Failed to load Spotify devices.')
       setError(e as Error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [addError])
 
   const transferPlayback = useCallback(
     async (deviceId: string) => {
@@ -52,11 +55,11 @@ export const useSpotifyDevices = () => {
         await fetchDevices()
       } catch (e) {
         console.error('Failed to transfer playback', e)
-        // TODO: Implement user-facing error handling via global toast
+        addError('Failed to transfer Spotify playback.')
         setError(e as Error)
       }
     },
-    [fetchDevices]
+    [fetchDevices, addError]
   )
 
   useEffect(() => {
