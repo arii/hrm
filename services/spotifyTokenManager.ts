@@ -33,10 +33,7 @@ export class SpotifyTokenManager {
       return null
     }
 
-    if (
-      account.expires_at &&
-      Date.now() < account.expires_at * 1000 - 60000
-    ) {
+    if (account.expires_at && Date.now() < account.expires_at * 1000 - 60000) {
       this.sdkAccessToken = {
         access_token: account.access_token!,
         token_type: account.token_type!,

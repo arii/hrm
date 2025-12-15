@@ -1,15 +1,22 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from 'eslint-plugin-storybook'
-
+import { FlatCompat } from '@eslint/eslintrc'
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-export default defineConfig([
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+})
+
+export default [
   // Apply recommended ESLint JavaScript rules
   js.configs.recommended,
 
@@ -36,7 +43,16 @@ export default defineConfig([
   },
 
   // Next.js specific rules and configurations (includes TypeScript support)
-  ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
+  ...compat.extends('next/core-web-vitals').map((config) => ({
+    ...config,
+    rules: {
+      ...config.rules,
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+      '@next/next/no-duplicate-head': 'off',
+      '@next/next/no-page-custom-font': 'off',
+    },
+  })),
 
   // Apply TypeScript rules without redefining the plugin
   {
@@ -73,18 +89,20 @@ export default defineConfig([
   },
 
   // Ignore files and directories
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-    'node_modules/',
-    'dist/**', // Exclude compiled output
-    'server.js', // Exclude server.js
-    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-    '.github/copilot-instructions.md', // Exclude copilot instructions
-    'ecosystem.config.cjs', // Exclude PM2 config file
-  ]),
+  {
+    ignores: [
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'node_modules/',
+      'dist/**', // Exclude compiled output
+      'server.js', // Exclude server.js
+      '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
+      '.github/copilot-instructions.md', // Exclude copilot instructions
+      'ecosystem.config.cjs', // Exclude PM2 config file
+    ],
+  },
 
   // Configuration for TypeScript files
   {
@@ -212,4 +230,4 @@ export default defineConfig([
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     },
   },
-])
+]

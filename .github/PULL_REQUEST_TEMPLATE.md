@@ -13,6 +13,7 @@ Please include a summary of the change and which issue is fixed. Please also inc
 Fixes # (issue)
 
 ## Change Type (select one)
+
 - [ ] 🐛 Bug fix (non-breaking change fixing an issue)
 - [ ] ✨ New feature (non-breaking change adding functionality)
 - [ ] 💥 Breaking change (fix/feature causing existing functionality to break)
@@ -21,7 +22,8 @@ Fixes # (issue)
 - [ ] 🎨 Styling (changes that do not affect functionality)
 
 ## PR Scope Checklist
-*This checklist is mandatory for all PRs.*
+
+_This checklist is mandatory for all PRs._
 
 - [ ] **PR has a clear, single purpose:** The title and description of the PR clearly state the purpose of the change.
 - [ ] **All changes relate to the stated objective:** The code changes should be directly related to the purpose of the PR.
@@ -30,6 +32,7 @@ Fixes # (issue)
 - [ ] **Tests cover the specific change scope:** The tests should be focused on the changes in the PR and should not include unrelated tests.
 
 ## Impact Assessment
+
 - [ ] Changes are **backward compatible** (or breaking changes are documented)
 - [ ] **Tests** are added/updated for new functionality
 - [ ] **Documentation** is updated if needed
