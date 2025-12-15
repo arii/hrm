@@ -82,13 +82,11 @@ const Dashboard = () => {
       }}
     >
       {!isLoadingSession && <UserGreetingDisplay user={user} />}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+      <Box>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 
         {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
+        <Box sx={{ mb: 2 }}>
           <TimerDisplay
             phase={timerData.currentPhase}
             timeRemaining={timerData.timeRemaining}
@@ -100,15 +98,7 @@ const Dashboard = () => {
           />
         </Box>
 
-        <Box
-          sx={{
-            flexGrow: 1,
-            width: { xs: '100%', lg: 'calc(50% - 16px)' },
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
+        <Box sx={{ mb: 2 }}>
           <ErrorBoundary fallback={<ErrorFallback />}>
             <HrmConnectionPanel />
           </ErrorBoundary>

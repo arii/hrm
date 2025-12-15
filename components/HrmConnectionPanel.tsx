@@ -123,10 +123,7 @@ const HrmConnectionPanel = () => {
           key={user.clientId}
           data-testid="hr-tile-grid-item"
           sx={{
-            width: {
-              xs: '100%',
-              sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-            },
+            width: '100%',
           }}
         >
           <HrTile
