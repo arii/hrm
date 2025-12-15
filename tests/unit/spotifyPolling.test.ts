@@ -93,7 +93,8 @@ describe('SpotifyPolling Service', () => {
     process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
+    const tokenManager = new SpotifyTokenManager()
+    spotifyService = await SpotifyPolling.create(broadcastMock, tokenManager)
     // Stop polling after service creation to avoid side effects in tests
 
     if ((spotifyService as unknown)['pollInterval']) {
@@ -264,18 +265,20 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Override the mock to return null token for this test to ensure SDK is not initialized
-      ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
-        () => ({
-          getValidAccessToken: jest.fn().mockResolvedValue(null),
-          getSdkAccessToken: jest.fn().mockReturnValue(null),
-        })
-      )
+      // Mock TokenManager to return null token for this test
+      const nullTokenManager = new SpotifyTokenManager()
+      jest
+        .spyOn(nullTokenManager, 'getValidAccessToken')
+        .mockResolvedValue(null)
+      jest.spyOn(nullTokenManager, 'getSdkAccessToken').mockReturnValue(null)
 
-      const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('PLAY')
-      // Should not make API call without token
-      expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
+      const newService = await SpotifyPolling.create(
+        broadcastMock,
+        nullTokenManager
+      )
+      await newService.handleCommand('SET_VOLUME', undefined, 50)
+      // Should not make API call without token (SDK not initialized)
+      expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
     })
   })
 
@@ -386,26 +389,20 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Mock SpotifyPolling.create to return an instance with a null SDK
-      const originalSpotifyPollingCreate = SpotifyPolling.create
-      SpotifyPolling.create = jest.fn().mockResolvedValue({
-        handleCommand: jest.fn(() => Promise.resolve()), // Mock handleCommand to return a resolved promise
-        getState: jest.fn(),
-        stopPolling: jest.fn(),
-        cleanup: jest.fn(),
-        initializeSdk: jest.fn(),
-        setRefreshToken: jest.fn(),
-        startPolling: jest.fn(),
-        getAvailableDevices: jest.fn(),
-        sdk: null, // Ensure SDK is null
-      })
+      // Mock TokenManager to return null token for this test
+      const nullTokenManager = new SpotifyTokenManager()
+      jest
+        .spyOn(nullTokenManager, 'getValidAccessToken')
+        .mockResolvedValue(null)
+      jest.spyOn(nullTokenManager, 'getSdkAccessToken').mockReturnValue(null)
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create(
+        broadcastMock,
+        nullTokenManager
+      )
       await newService.handleCommand('SET_VOLUME', undefined, 50)
+      // Should not make API call without token (SDK not initialized)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
-
-      // Restore original SpotifyPolling.create
-      SpotifyPolling.create = originalSpotifyPollingCreate
     })
 
     it('should handle SyntaxError during error logging gracefully', async () => {

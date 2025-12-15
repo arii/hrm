@@ -88,7 +88,8 @@ describe('Services Integration', () => {
 
     tabataTimer = new TabataTimer(broadcastFn)
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    const tokenManager = new SpotifyTokenManager()
+    spotifyService = await SpotifyPolling.create(broadcastFn, tokenManager)
   })
 
   afterEach(() => {
