@@ -55,8 +55,8 @@ const nextRequestHandler = app.getRequestHandler()
 // Create Express app for routing and middleware
 const expressApp = express()
 
-// Trust the reverse proxy (nginx) for X-Forwarded-* headers
-expressApp.set('trust proxy', true)
+// Trust the first hop from the reverse proxy (nginx)
+expressApp.set('trust proxy', 1)
 
 // --- Main Application Setup ---
 
