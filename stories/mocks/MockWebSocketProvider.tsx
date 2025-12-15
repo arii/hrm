@@ -43,6 +43,8 @@ const DEFAULT_STATE: MockAppState = {
     artist: 'Mock Artist',
     isPlaying: false,
     devices: [],
+    volume: 70,
+    isMuted: false,
   },
   activeAlerts: [],
   spotifyServiceInitialized: true,

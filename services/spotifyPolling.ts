@@ -58,6 +58,8 @@ export class SpotifyPolling {
     artist: '',
     isPlaying: false,
     devices: [], // <--- ADDED
+    volume: 70,
+    isMuted: false,
   }
 
   private sdk: SpotifyApi | null = null

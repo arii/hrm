@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -18,8 +18,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import logger from '@/utils/logger'
 import SpotifyLoginButton from './SpotifyLoginButton'
-import VolumeSlider from './PlaybackControls/VolumeSlider'
-import { useDebounce } from '@/hooks/useDebounce'
+import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types'
 
@@ -27,9 +26,12 @@ const SpotifyDisplay = () => {
   const { status, data: session } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
-  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
-  const debouncedVolume = useDebounce(volume, 500)
-  const isInitialLoad = useRef(true)
+
+  // State for immediate UI feedback on volume controls
+  const [displayVolume, setDisplayVolume] = useState(spotifyData.volume ?? 70)
+  const [isMuted, setIsMuted] = useState(spotifyData.isMuted ?? false)
+  const lastVolumeRef = useRef(spotifyData.volume ?? 70)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Debug: Log session status changes
   useEffect(() => {
@@ -49,7 +51,6 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const lastSentVolumeRef = useRef<string | null>(null)
   const {
     player,
     isReady,
@@ -66,19 +67,30 @@ const SpotifyDisplay = () => {
     null
   )
 
+  // Synchronize local UI state with WebSocket data (the source of truth)
+  useEffect(() => {
+    setDisplayVolume(spotifyData.volume ?? 70)
+    setIsMuted(spotifyData.isMuted ?? false)
+    // Keep track of the last non-zero volume from the server
+    if ((spotifyData.volume ?? 0) > 0) {
+      lastVolumeRef.current = spotifyData.volume!
+    }
+  }, [spotifyData.volume, spotifyData.isMuted])
+
+  // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
-    (value: number) => {
+    (volume: number) => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId =
         selectedDeviceId ||
         availableDevices.find((device) => device.is_active)?.id
-
-      // Prevent sending volume command if no device is targeted
-      if (!targetDeviceId) return
-
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
-      if (lastSentVolumeRef.current === messageKey) return
+      if (!targetDeviceId) {
+        console.warn(
+          '[SpotifyDisplay] No target device for volume command. Aborting.'
+        )
+        return
+      }
+      const sanitized = clampVolume(volume)
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
@@ -86,38 +98,56 @@ const SpotifyDisplay = () => {
         deviceId: targetDeviceId,
       }
       sendData(message)
-      lastSentVolumeRef.current = messageKey
     },
     [availableDevices, connectionStatus, selectedDeviceId, sendData]
   )
 
-  useEffect(() => {
-    // This effect handles ALL volume changes, debouncing them to prevent spamming the API.
-    // This includes direct user interaction with the slider and cross-tab synchronization.
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false
-      return
-    }
-    sendVolumeCommand(debouncedVolume)
-  }, [debouncedVolume, sendVolumeCommand])
+  // Handler for the VolumeSlider component's onChange
+  const handleVolumeChange = (newVolume: number) => {
+    // Update UI immediately for responsiveness
+    setDisplayVolume(newVolume)
+    setIsMuted(newVolume === 0)
 
-  useEffect(() => {
-    if (connectionStatus !== 'Connected') {
-      lastSentVolumeRef.current = null
+    // Debounce sending the command to avoid API flooding
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
     }
-  }, [connectionStatus])
+    debounceTimeoutRef.current = setTimeout(() => {
+      sendVolumeCommand(newVolume)
+    }, 300) // 300ms debounce delay
+  }
 
+  // Handler for the VolumeSlider's mute button
+  const handleToggleMute = useCallback(() => {
+    const newMutedState = !isMuted
+    setIsMuted(newMutedState)
+
+    if (newMutedState) {
+      // When muting, store the current volume if it's not already 0
+      if (displayVolume > 0) {
+        lastVolumeRef.current = displayVolume
+      }
+      setDisplayVolume(0)
+      sendVolumeCommand(0)
+    } else {
+      // When unmuting, restore to the last known volume
+      const restoreVolume =
+        lastVolumeRef.current > 0 ? lastVolumeRef.current : 50 // Fallback to 50
+      setDisplayVolume(restoreVolume)
+      sendVolumeCommand(restoreVolume)
+    }
+  }, [isMuted, displayVolume, sendVolumeCommand])
+
+  // Effect to manage the local browser player's volume
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return
-    // IF MUTED: Force 0
-    // IF ACTIVE: Use current volume scalar
-    const scalar = muted ? 0 : Math.min(Math.max(volume / 100, 0), 1)
+    const scalar = isMuted ? 0 : Math.min(Math.max(displayVolume / 100, 0), 1)
     player
       .setVolume(scalar)
       .catch((err) =>
         logger.warn({ error: err }, 'Failed to adjust local Spotify volume')
       )
-  }, [player, volume, muted])
+  }, [player, displayVolume, isMuted])
 
   useEffect(() => {
     if (isLoggedIn && spotifyData.trackName) {
@@ -318,10 +348,10 @@ const SpotifyDisplay = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolumeSlider
-            volume={volume}
-            muted={muted}
-            onVolumeChange={setVolume}
-            onToggleMute={toggleMute}
+            volume={displayVolume}
+            muted={isMuted}
+            onVolumeChange={handleVolumeChange}
+            onToggleMute={handleToggleMute}
           />
           <SpotifyDeviceSelectorWrapper
             availableDevices={availableDevices}
