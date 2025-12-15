@@ -28,7 +28,15 @@ jobs:
         run: |
           # Get the last commit that triggered this workflow
           LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
-          PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
+
+          # Determine PREVIOUS_COMMIT safely
+          if [ "${{ github.event_name }}" == "pull_request" ] && [ -n "${{ github.event.before }}" ]; then
+            # For synchronize events, use the previous commit from the push payload
+            PREVIOUS_COMMIT=${{ github.event.before }}
+          else
+            # Fallback for other events
+            PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
+          fi
 
           # Check if this is just a merge commit
           IS_MERGE=$(git log -1 --pretty=%P $LAST_COMMIT | wc -w)
