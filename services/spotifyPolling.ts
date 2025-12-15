@@ -154,7 +154,7 @@ export class SpotifyPolling {
       () => this.getCurrentlyPlaying(),
       intervalMs
     )
-    logger.debug(`Spotify polling started with interval: ${intervalMs}ms.`)
+    logger.debug({ intervalMs }, 'Spotify polling started')
   }
 
   public stopPolling() {
@@ -317,7 +317,7 @@ export class SpotifyPolling {
         type: 'SPOTIFY_UPDATE',
         payload: this.getState(),
       })
-      logger.debug('Devices refreshed:', this.state.devices.length)
+      logger.debug({ count: this.state.devices.length }, 'Devices refreshed')
     } catch (error) {
       logger.error({ err: error }, 'Error fetching Spotify devices')
     }
@@ -400,10 +400,10 @@ export class SpotifyPolling {
         }
         break
       case 'LOGIN':
-        logger.debug('Received LOGIN command.')
+        logger.debug('Received LOGIN command')
         break
       default:
-        logger.warn(`Unknown Spotify command: ${command}`)
+        logger.warn({ command }, 'Unknown Spotify command')
     }
   }
 
@@ -416,7 +416,8 @@ export class SpotifyPolling {
         // Suppress SyntaxError which usually occurs when Spotify returns a non-JSON response (e.g. 204 No Content or simple text error)
         // This is "expected" behavior from the SDK in some edge cases.
         logger.warn(
-          `[SpotifyPolling] Command ${command} executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.`
+          { command },
+          'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
         )
       } else if (error && typeof error === 'object') {
         if (
@@ -442,12 +443,12 @@ export class SpotifyPolling {
               } catch (textError) {
                 // Sometimes calling text() itself might fail if body was already consumed or invalid
                 logger.error(
-                  { err: textError },
-                  `Error executing Spotify command ${command}: Failed to retrieve error response text:`
+                  { command, err: textError },
+                  'Failed to retrieve error response text'
                 )
                 logger.error(
-                  { err: error },
-                  `Error executing Spotify command ${command}:`
+                  { command, err: error },
+                  'Error executing Spotify command'
                 )
                 return
               }
@@ -455,42 +456,39 @@ export class SpotifyPolling {
               const parsed = safeParseJSON(text)
               if (typeof parsed === 'object' && parsed !== null) {
                 logger.error(
-                  { response: parsed },
-                  `Error executing Spotify command ${command}: Parsed response:`
+                  { command, response: parsed },
+                  'Error executing Spotify command: Parsed response'
                 )
               } else {
                 logger.error(
-                  { response: text },
-                  `Error executing Spotify command ${command}: Response body:`
+                  { command, response: text },
+                  'Error executing Spotify command: Response body'
                 )
               }
             }
           } catch (e) {
             logger.error(
-              { err: e },
-              `Error executing Spotify command ${command}: Could not read response body.`
+              { command, err: e },
+              'Could not read response body for failed Spotify command'
             )
           }
         } else {
           // Log other object errors
           logger.error(
-            { err: error },
-            `Error executing Spotify command ${command}:`
+            { command, err: error },
+            'Error executing Spotify command'
           )
         }
       } else {
-        logger.error(
-          { err: error },
-          `Error executing Spotify command ${command}:`
-        )
+        logger.error({ command, err: error }, 'Error executing Spotify command')
       }
     } catch (loggingError) {
       // Absolute failsafe to prevent logger from crashing the app
       logger.error(
-        { err: loggingError },
-        `Error executing Spotify command ${command}: (Logging failed)`
+        { command, err: loggingError },
+        'Error executing Spotify command (Logging failed)'
       )
-      logger.error({ err: error }, `Original error for ${command}:`)
+      logger.error({ command, originalError: error }, 'Original error')
     }
   }
 }

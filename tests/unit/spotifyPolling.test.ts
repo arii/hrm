@@ -420,10 +420,8 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
-        { response: 'Invalid JSON' },
-        expect.stringContaining(
-          'Error executing Spotify command PLAY: Response body:'
-        )
+        { command: 'PLAY', response: 'Invalid JSON' },
+        'Error executing Spotify command: Response body'
       )
     })
 
@@ -439,10 +437,8 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
-        { err: expect.any(Error) },
-        expect.stringContaining(
-          'Error executing Spotify command PLAY: Failed to retrieve error response text:'
-        )
+        { command: 'PLAY', err: expect.any(Error) },
+        'Failed to retrieve error response text'
       )
     })
 
@@ -454,9 +450,8 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.stringContaining(
-          '[SpotifyPolling] Command PLAY executed, but response was not valid JSON'
-        )
+        { command: 'PLAY' },
+        'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
       )
       expect(logger.error).not.toHaveBeenCalled()
     })
