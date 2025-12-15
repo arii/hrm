@@ -28,9 +28,9 @@ describe('lib/hrm/zones', () => {
       })
     })
 
-    it('should return "No Data" for HR below the lowest zone', () => {
+    it('should return "Rest" for HR below the lowest zone', () => {
       const result = calculateHrZone(90, maxHr) // 45% of 200
-      expect(result.zoneName).toBe(HrZoneName.NoData)
+      expect(result.zoneName).toBe(HrZoneName.Rest)
       expect(result.percentage).toBe(45)
     })
 

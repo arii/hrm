@@ -53,7 +53,7 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   )
 
   return {
-    zoneName: currentZone ? currentZone.name : HrZoneName.NoData, // Default if below lowest zone
+    zoneName: currentZone ? currentZone.name : HrZoneName.Rest, // Default to Rest for valid HR below zones
     percentage: percentageOfMax,
     bpm: currentHr,
   }

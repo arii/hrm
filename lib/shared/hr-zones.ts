@@ -8,6 +8,7 @@
  * Enum for HR Zone names to provide compile-time safety and prevent string mismatches.
  */
 export enum HrZoneName {
+  Rest = 'Rest',
   WarmUp = 'Warm-up',
   FatBurn = 'Fat Burn',
   Cardio = 'Cardio',
