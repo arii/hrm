@@ -41,9 +41,9 @@ const actionButtonBaseSx = {
   gap: 1,
 }
 
-import { useTheme } from '@mui/material/styles'
+import { Theme, useTheme } from '@mui/material/styles'
 
-const startButtonSx = (theme: any) => ({
+const startButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,
   background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
   boxShadow: 3,
@@ -58,7 +58,7 @@ const startButtonSx = (theme: any) => ({
   },
 })
 
-const pauseButtonSx = (theme: any) => ({
+const pauseButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,
   background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
   boxShadow: 3,
@@ -68,7 +68,7 @@ const pauseButtonSx = (theme: any) => ({
   },
 })
 
-const stopButtonSx = (theme: any) => ({
+const stopButtonSx = (theme: Theme) => ({
   ...actionButtonBaseSx,
   background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
   boxShadow: 3,
