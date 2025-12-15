@@ -110,6 +110,7 @@ const HrmConnectionPanel = () => {
                     allowAutoStart: e.target.checked,
                   })
                 }
+                aria-label="Toggle automatic workout start when heart rate monitor connects"
               />
             }
             label="Auto-start workout on connect"
