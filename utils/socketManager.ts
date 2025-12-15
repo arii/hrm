@@ -180,7 +180,7 @@ const handleIncomingMessage = (
           const currentHr = message.data.value
           const currentAge = message.data.age ?? existingData.age ?? 30
 
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+          if (currentHr && currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const rate =
               (-CALORIE_DEFAULTS.INTERCEPT +
                 CALORIE_DEFAULTS.FACTOR_HR * currentHr +
@@ -204,12 +204,14 @@ const handleIncomingMessage = (
             calories: Math.round(newCalories * 10) / 10,
           })
 
-          const newMetric: HrmMetric = {
-            clientId,
-            value: currentHr,
-            timestamp: now,
+          if (currentHr) {
+            const newMetric: HrmMetric = {
+              clientId,
+              value: currentHr,
+              timestamp: now,
+            }
+            broadcastHrmUpdate([newMetric])
           }
-          broadcastHrmUpdate([newMetric])
         }
         break
       }
