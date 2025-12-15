@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
-import * as fs from 'fs'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**
@@ -64,9 +63,6 @@ test.describe('Infrastructure & Scripts', () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
-    // The dev server script relies on .env.local, so we create a minimal one.
-    fs.writeFileSync('.env.local', `NEXTAUTH_SECRET=test-secret-from-file\n`)
-
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
       stdio: 'pipe',
@@ -83,14 +79,13 @@ test.describe('Infrastructure & Scripts', () => {
       } catch (_e) {
         // Ignore errors, likely "ESRCH" (process already gone).
       }
-      fs.unlinkSync('.env.local')
     }
   })
 
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(60000) // Increased timeout for build
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production
