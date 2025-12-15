@@ -22,7 +22,7 @@ import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
-import { performHealthCheck } from './lib/healthCheck.js'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
@@ -188,16 +188,20 @@ app
       res.status(200).json({ status: 'ok' })
     })
 
+    // Internal endpoint for stateful service checks
     expressApp.get(
-      '/api/health/ready',
+      '/api/internal/health/services',
       async (_req: Request, res: Response) => {
-        const healthStatus = await performHealthCheck(
-          wss,
-          spotifyService,
-          tabataService
-        )
-        const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200
-        res.status(statusCode).json(healthStatus)
+        const timerCheck = checkTimerService(tabataService)
+        const wsCheck = await checkWebSocketService()
+
+        const healthy = timerCheck.healthy && wsCheck.healthy
+        const details = {
+          timer: timerCheck,
+          websocket: wsCheck,
+        }
+
+        res.status(200).json({ healthy, details })
       }
     )
 
