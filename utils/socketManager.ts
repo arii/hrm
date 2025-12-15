@@ -24,6 +24,7 @@ import logger from './logger.js'
 interface ExtWebSocket extends WebSocket {
   lastPingTime: number // Changed to non-optional
   clientType?: 'dashboard' | 'controller'
+  clientId: string
 }
 
 // Define service instances to be managed
@@ -59,29 +60,29 @@ const initSocketManager = (
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
-    const clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+    extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     extWs.lastPingTime = Date.now() // Initialize on connect
-    logger.info(`WebSocket Client connected: ${clientId}`)
+    logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
     const newClient: HrmData = {
-      clientId,
+      clientId: extWs.clientId,
       value: 0,
       maxHr: 185,
       age: 30,
       calories: 0, // Initialize to 0
     }
-    clientData.set(clientId, newClient)
-    clientSessionState.set(clientId, { lastUpdate: Date.now() })
+    clientData.set(extWs.clientId, newClient)
+    clientSessionState.set(extWs.clientId, { lastUpdate: Date.now() })
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), clientId)
+      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
     extWs.on('close', () => {
-      logger.info(`WebSocket Client disconnected: ${clientId}`)
-      clientData.delete(clientId)
-      clientSessionState.delete(clientId)
+      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      clientData.delete(extWs.clientId)
+      clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
   })
@@ -98,7 +99,8 @@ const initSocketManager = (
       // If the client hasn't responded in time, terminate.
       if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
         logger.warn(
-          `Terminating stale WebSocket connection for client (no pong received).`
+          { clientId: extWs.clientId },
+          'Terminating stale WebSocket connection (no pong received)'
         )
         return ws.terminate()
       }
@@ -135,7 +137,10 @@ const handleIncomingMessage = (
       }
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
-        logger.info(`[WS] Client registered as: ${ws.clientType}`)
+        logger.info(
+          { clientId, clientType: ws.clientType },
+          'Client registered'
+        )
         break
       }
       case 'GET_STATE': {
@@ -207,7 +212,10 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
-        logger.info(`[WS Relay] Forwarding command: ${commandMsg.command}`)
+        logger.info(
+          { clientId, command: commandMsg.command },
+          'Forwarding Spotify command'
+        )
 
         wsServerInstance.clients.forEach((client: WebSocket) => {
           const target = client as ExtWebSocket
@@ -231,16 +239,23 @@ const handleIncomingMessage = (
         )
         break
       }
-      default:
+      default: {
+        const unknownMessage = message as { type: unknown }
         logger.warn(
-          'Unknown message type received:',
-          (message as { type: unknown }).type
+          { clientId, type: unknownMessage.type },
+          'Unknown message type received'
         )
+        break
+      }
     }
   } catch (e) {
-    logger.error('Error processing incoming message:', e)
     if (e instanceof z.ZodError) {
-      logger.error('WebSocket message validation failed:', e.issues)
+      logger.error(
+        { clientId, errors: e.issues },
+        'WebSocket message validation failed'
+      )
+    } else {
+      logger.error({ clientId, error: e }, 'Error processing incoming message')
     }
   }
 }

@@ -2,6 +2,7 @@
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
+import logger from '../utils/logger'
 import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
@@ -33,10 +34,9 @@ function getCookieDomain(): string | undefined {
     }
     return url.hostname
   } catch (e) {
-    console.error(
-      'Failed to parse NEXTAUTH_URL for cookie domain:',
-      process.env.NEXTAUTH_URL,
-      e
+    logger.error(
+      { url: process.env.NEXTAUTH_URL, error: e },
+      'Failed to parse NEXTAUTH_URL for cookie domain'
     )
     return undefined
   }
@@ -97,7 +97,7 @@ async function refreshAccessToken(token: JWT) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     }
   } catch (error) {
-    console.error('[AUTH REFRESH ERROR]', error)
+    logger.error({ error }, 'Failed to refresh access token')
     // If refresh fails, return the original token and an error property
     return {
       ...token,
@@ -236,21 +236,14 @@ export const authOptions: AuthOptions = {
     async jwt({ token, account }: { token: JWT; account: Account | null }) {
       // 1. Initial sign-in
       if (account) {
-        console.log('[AUTH JWT] Initial sign-in - Full account object:', {
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-          hasAccessToken: !!account.access_token,
-          hasProfile: !!account.profile,
-          profileKeys: account.profile
-            ? Object.keys(account.profile)
-            : 'NO PROFILE',
-          profileEmail: (account.profile as Record<string, unknown>)?.email,
-          profileDisplayName: (account.profile as Record<string, unknown>)
-            ?.display_name,
-        })
-        console.log(
-          '[AUTH JWT] Initial token before modification:',
-          Object.keys(token)
+        logger.debug(
+          {
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            hasAccessToken: !!account.access_token,
+            hasProfile: !!account.profile,
+          },
+          '[AUTH] Initial sign-in'
         )
 
         // --- CRITICAL STEP: Deliver Refresh Token to Persistent Service ---
@@ -275,22 +268,18 @@ export const authOptions: AuthOptions = {
             })
             const responseBody = await response.text()
             if (response.ok) {
-              console.log(
-                'Internal token delivery successful. Status:',
-                response.status,
-                'Body:',
-                responseBody
+              logger.info(
+                { status: response.status, body: responseBody },
+                'Internal token delivery successful'
               )
             } else {
-              console.error(
-                'Internal token delivery failed. Status:',
-                response.status,
-                'Body:',
-                responseBody
+              logger.warn(
+                { status: response.status, body: responseBody },
+                'Internal token delivery failed'
               )
             }
           } catch (e) {
-            console.error('Internal token delivery failed:', e)
+            logger.error({ error: e }, 'Internal token delivery failed')
           }
         }
 
@@ -302,11 +291,9 @@ export const authOptions: AuthOptions = {
             Date.now() + (Number(account.expires_in) || 3600) * 1000,
           refreshToken: account.refresh_token,
         }
-        console.log(
-          '[AUTH JWT] Returning token with keys:',
-          Object.keys(updatedToken),
-          'has sub:',
-          !!updatedToken.sub
+        logger.debug(
+          { keys: Object.keys(updatedToken) },
+          'Returning updated token'
         )
         return updatedToken
       }
@@ -318,7 +305,7 @@ export const authOptions: AuthOptions = {
       }
 
       // 3. Token is expired - try to refresh it
-      console.log('[AUTH] Access token expired, refreshing...')
+      logger.info('[AUTH] Access token expired, refreshing...')
       return await refreshAccessToken(token)
     },
     /**
@@ -334,16 +321,10 @@ export const authOptions: AuthOptions = {
      */
     async session({ session, token }: { session: Session; token: JWT }) {
       // Pass the updated token and error info to the session object
-      console.log(
-        '[AUTH SESSION] Creating session, token keys:',
-        Object.keys(token)
-      )
+      logger.debug({ tokenKeys: Object.keys(token) }, 'Creating session')
       session.accessToken = token.accessToken as string
       session.error = token.error as string // Pass any refresh errors
-      console.log(
-        '[AUTH SESSION] Session created with accessToken:',
-        !!session.accessToken
-      )
+      logger.debug({ hasAccessToken: !!session.accessToken }, 'Session created')
       return session
     },
   },

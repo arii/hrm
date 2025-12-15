@@ -2,6 +2,7 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
+import logger from '../utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -108,7 +109,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         lastDataTime.current > 0
       ) {
         if (Date.now() - lastDataTime.current > dataLivenessTimeoutMs) {
-          console.warn('Bluetooth data stale. Forcing reconnection...')
+          logger.warn('Bluetooth data stale. Forcing reconnection...')
           setDisconnectionReason('timeout')
           setDeviceStatus('Connection unstable. Reconnecting...')
           if (deviceRef.current?.gatt?.connected)
@@ -132,7 +133,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [])
 
   const forgetDevice = useCallback(async () => {
-    console.log('Initiating device forget sequence...')
+    logger.info('Initiating device forget sequence...')
     disconnect()
     try {
       setCookie('hrm_device_id', '', -1)
@@ -144,7 +145,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       }
       setDeviceStatus('Device permissions revoked. Ready for new connection.')
     } catch (e) {
-      console.warn('Error during device forget:', e)
+      logger.warn({ error: e }, 'Error during device forget')
       setDeviceStatus('Error clearing device permissions.')
     }
   }, [disconnect])
@@ -175,7 +176,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const onDisconnected = useCallback(() => {
     setBatteryLevel(null)
     if (!isManualDisconnect.current && deviceRef.current) {
-      console.log('Attempting auto-reconnect...')
+      logger.info(
+        { device: deviceRef.current.name },
+        'Device disconnected, attempting auto-reconnect...'
+      )
       setDisconnectionReason('signal_loss')
       setDeviceStatus('Signal Lost. Retrying...')
       const deviceToReconnect = deviceRef.current
@@ -184,6 +188,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
           connectToGattRef.current(deviceToReconnect)
       }, 2000)
     } else {
+      logger.info('Device disconnected manually.')
       setDeviceStatus('Disconnected')
     }
   }, [])
@@ -268,7 +273,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         setDisconnectionReason(null)
         return true
       } catch (error) {
-        console.error('GATT Connection failed:', error)
+        logger.error({ error, device: device.name }, 'GATT Connection failed')
         throw error
       }
     },
@@ -306,7 +311,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 await connectToGatt(foundDevice)
                 return true
               } catch (err) {
-                console.warn('Reconnect failed. clearing preference.', err)
+                logger.warn(
+                  { error: err },
+                  'Reconnect failed, clearing preference'
+                )
                 setCookie('hrm_device_id', '', -1)
               }
             }
