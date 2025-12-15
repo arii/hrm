@@ -118,10 +118,6 @@ const SPOTIFY_SCOPES = [
   'streaming', // Required for Web Playback SDK
 ].join(',')
 
-if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-  throw new Error('Spotify client ID or secret is not defined.')
-}
-
 /**
  * Configuration options for NextAuth.js.
  *
@@ -136,8 +132,8 @@ export const authOptions: AuthOptions = {
     SpotifyProvider({
       id: 'spotify',
       name: 'Spotify',
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      clientId: env.SPOTIFY_CLIENT_ID || '',
+      clientSecret: env.SPOTIFY_CLIENT_SECRET || '',
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
