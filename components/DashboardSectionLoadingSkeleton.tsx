@@ -19,7 +19,7 @@ const DashboardSectionLoadingSkeleton: React.FC<
       width={width}
       height={height}
       animation="wave"
-      className={className}
+      {...(className && { className })}
     />
   ))
 
