@@ -14,10 +14,7 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { StateSnapshot } from '../../types/websocket'
-import { initSocketManager } from '../../utils/socketManager'
-import * as broadcast from '../../utils/broadcast'
-import * as ws from 'ws'
-import * as socketManager from '../../utils/socketManager'
+import { initSocketManager, _resetForTest } from '../../utils/socketManager'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -29,9 +26,25 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock broadcaster to prevent side-effects between tests
-jest.mock('../../utils/broadcast')
+jest.mock('../../utils/broadcast', () => ({
+  initBroadcaster: jest.fn(),
+  broadcast: jest.fn(),
+}))
+
 // Manual mock for the 'ws' module
-jest.mock('ws')
+jest.mock('ws', () => ({
+  Server: jest.fn().mockImplementation(() => {
+    const wss = new EventEmitter()
+    // @ts-expect-error Clients is a property on the real WSS
+    wss.clients = new Set()
+    // @ts-expect-error on is a method on the real WSS
+    wss.on = jest.fn(wss.on.bind(wss))
+    // @ts-expect-error emit is a method on the real WSS
+    wss.emit = jest.fn(wss.emit.bind(wss))
+    return wss
+  }),
+  WebSocket: jest.fn(),
+}))
 
 class MockWebSocket extends EventEmitter {
   lastPingTime: number | undefined
@@ -162,22 +175,12 @@ describe('WebSocket Manager', () => {
       spotifyService: SpotifyPolling
     }
     let getSnapshot: () => StateSnapshot
-    let broadcastMock: jest.SpyInstance
-    let localInitSocketManager: (
-      wss: WebSocketServer,
-      services: {
-        tabataService: TabataTimer
-        spotifyService: SpotifyPolling
-      },
-      getSnapshot: () => StateSnapshot
-    ) => void
+    let broadcastMock: jest.Mock
 
     beforeEach(() => {
-      jest.resetModules()
+      _resetForTest() // Reset the state before each test
       jest.useFakeTimers()
-
-      mockWss = new (ws.Server as jest.Mock)()
-
+      mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
         tabataService: {
           handleCommand: jest.fn(),
@@ -188,21 +191,18 @@ describe('WebSocket Manager', () => {
         } as unknown as SpotifyPolling,
       }
       getSnapshot = jest.fn()
-      broadcastMock = jest.spyOn(broadcast, 'broadcast')
-      localInitSocketManager = socketManager.initSocketManager
+      broadcastMock = require('../../utils/broadcast').broadcast
     })
 
     afterEach(() => {
       jest.useRealTimers()
       jest.clearAllMocks()
       // @ts-expect-error-next-line
-      if (mockWss && mockWss.clients) {
-        mockWss.clients.clear()
-      }
+      mockWss.clients.clear()
     })
 
     it('should process HRM_INPUT, update client data, and broadcast the new metric', () => {
-      localInitSocketManager(mockWss, mockServices, getSnapshot)
+      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
@@ -235,7 +235,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast the device list on new connection', () => {
-      localInitSocketManager(mockWss, mockServices, getSnapshot)
+      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)
@@ -253,7 +253,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast the device list on disconnection', () => {
-      localInitSocketManager(mockWss, mockServices, getSnapshot)
+      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       // @ts-expect-error-next-line
       mockWss.clients.add(mockWs)

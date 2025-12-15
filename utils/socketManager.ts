@@ -11,10 +11,11 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmData,
+  HrmDevice,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
+  HrmMetric,
 } from '../types/websocket.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
@@ -35,7 +36,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const clientData = new Map<string, HrmData>()
+const clientData = new Map<string, HrmDevice>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<string, { lastUpdate: number }>()
 
@@ -65,15 +66,15 @@ const initSocketManager = (
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
-    const newClient: HrmData = {
+    const newClient: HrmDevice = {
       clientId: extWs.clientId,
-      value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0, // Initialize to 0
+      calories: 0,
     }
     clientData.set(extWs.clientId, newClient)
     clientSessionState.set(extWs.clientId, { lastUpdate: Date.now() })
+    broadcastDeviceList()
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -83,7 +84,7 @@ const initSocketManager = (
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       clientData.delete(extWs.clientId)
       clientSessionState.delete(extWs.clientId)
-      broadcastState()
+      broadcastDeviceList()
     })
   })
 
@@ -110,10 +111,20 @@ const initSocketManager = (
   wss.on('close', () => clearInterval(interval))
 }
 
-const broadcastState = () => {
+const broadcastHrmUpdate = (metrics: HrmMetric[]) => {
+  if (metrics.length > 0) {
+    broadcast({
+      type: 'HRM_UPDATE',
+      payload: metrics,
+    })
+  }
+}
+
+const broadcastDeviceList = () => {
+  const devices = Array.from(clientData.values())
   broadcast({
-    type: 'HRM_UPDATE',
-    payload: Array.from(clientData.values()),
+    type: 'HRM_DEVICE_UPDATE',
+    payload: devices,
   })
 }
 
@@ -166,7 +177,7 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
 
           let newCalories = existingData.calories
-          const currentHr = message.data.value ?? existingData.value
+          const currentHr = message.data.value
           const currentAge = message.data.age ?? existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
@@ -181,8 +192,10 @@ const handleIncomingMessage = (
             newCalories += safeRate * dtMinutes
           }
 
-          const updateData: Partial<HrmData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+          const updateData: Partial<HrmDevice> = Object.fromEntries(
+            Object.entries(message.data).filter(
+              ([_, value]) => value !== null && value !== undefined
+            )
           )
 
           clientData.set(clientId, {
@@ -190,8 +203,14 @@ const handleIncomingMessage = (
             ...updateData,
             calories: Math.round(newCalories * 10) / 10,
           })
+
+          const newMetric: HrmMetric = {
+            clientId,
+            value: currentHr,
+            timestamp: now,
+          }
+          broadcastHrmUpdate([newMetric])
         }
-        broadcastState()
         break
       }
 
@@ -258,6 +277,15 @@ const handleIncomingMessage = (
       logger.error({ clientId, error: e }, 'Error processing incoming message')
     }
   }
+}
+
+/**
+ * Resets the internal state of the socket manager.
+ * **NOTE:** This function is intended for use in testing environments only.
+ */
+export const _resetForTest = () => {
+  clientData.clear()
+  clientSessionState.clear()
 }
 
 export { initSocketManager }
