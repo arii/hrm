@@ -45,17 +45,19 @@ describe('Services Integration', () => {
     }
 
     // Mock TokenManager to return a valid token
-    jest.spyOn(SpotifyTokenManager, 'mockImplementation').mockImplementation(() => ({
-      getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
-      getSdkAccessToken: jest.fn().mockReturnValue({
-        access_token: 'test_access_token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-        refresh_token: 'refresh_token',
-      }),
-      stopPolling: jest.fn(),
-      cleanup: jest.fn(),
-    }))
+    jest
+      .spyOn(SpotifyTokenManager, 'mockImplementation')
+      .mockImplementation(() => ({
+        getValidAccessToken: jest.fn().mockResolvedValue('test_access_token'),
+        getSdkAccessToken: jest.fn().mockReturnValue({
+          access_token: 'test_access_token',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          refresh_token: 'refresh_token',
+        }),
+        stopPolling: jest.fn(),
+        cleanup: jest.fn(),
+      }))
 
     // Mock SDK instance
     mockSdk = {
