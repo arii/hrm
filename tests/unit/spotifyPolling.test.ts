@@ -111,19 +111,23 @@ describe('SpotifyPolling Service', () => {
     )
 
     // Initialize the service with the mock token manager
-    spotifyService = await SpotifyPolling.create(broadcastMock, mockTokenManager)
+    spotifyService = await SpotifyPolling.create(
+      broadcastMock,
+      mockTokenManager
+    )
 
     // Stop polling after service creation to avoid side effects in tests
-    if ((spotifyService as any).pollInterval) {
-      clearInterval((spotifyService as any).pollInterval)
-      ;(spotifyService as any).pollInterval = null
-    }
-
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
+    if (
+      (spotifyService as unknown as { pollInterval: NodeJS.Timeout | null })
+        .pollInterval
+    ) {
       clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
+        (spotifyService as unknown as { pollInterval: NodeJS.Timeout | null })
+          .pollInterval as NodeJS.Timeout
       )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+      ;(
+        spotifyService as unknown as { pollInterval: NodeJS.Timeout | null }
+      ).pollInterval = null
     }
   })
 
