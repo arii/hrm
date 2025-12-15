@@ -23,6 +23,7 @@ export type TimerPhase =
   | 'REST'
   | 'COOLDOWN'
   | 'RUNNING'
+  | 'PAUSED'
 
 export interface TimerData {
   isRunning: boolean

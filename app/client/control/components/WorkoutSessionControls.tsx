@@ -41,40 +41,42 @@ const actionButtonBaseSx = {
   gap: 1,
 }
 
-const startButtonSx = {
+import { useTheme } from '@mui/material/styles'
+
+const startButtonSx = (theme: any) => ({
   ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
   boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: 4,
   },
   '&:disabled': {
-    background: '#34495E',
-    color: '#7F8C8D',
+    background: theme.palette.action.disabledBackground,
+    color: theme.palette.action.disabled,
     boxShadow: 'none',
   },
-}
+})
 
-const pauseButtonSx = {
+const pauseButtonSx = (theme: any) => ({
   ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)',
+  background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
   boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: 4,
   },
-}
+})
 
-const stopButtonSx = {
+const stopButtonSx = (theme: any) => ({
   ...actionButtonBaseSx,
-  background: 'linear-gradient(135deg, #E74C3C 0%, #C0392B 100%)',
+  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
   boxShadow: 3,
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: 4,
   },
-}
+})
 
 const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
   isSessionActive,
@@ -85,6 +87,7 @@ const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
   onEndSession,
   connectionStatus,
 }) => {
+  const theme = useTheme()
   const isConnected = connectionStatus === 'Connected'
 
   return (
@@ -96,7 +99,7 @@ const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
             variant="contained"
             onClick={onStartSession}
             disabled={!isConnected}
-            sx={startButtonSx}
+            sx={startButtonSx(theme)}
             startIcon={<PlayArrow />}
             aria-label="Start workout session"
           >
@@ -109,7 +112,7 @@ const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
               variant="contained"
               onClick={isPaused ? onResumeSession : onPauseSession}
               disabled={!isConnected}
-              sx={pauseButtonSx}
+              sx={pauseButtonSx(theme)}
               startIcon={isPaused ? <PlayArrow /> : <Pause />}
               aria-label={
                 isPaused ? 'Resume workout session' : 'Pause workout session'
@@ -122,7 +125,7 @@ const WorkoutSessionControls: React.FC<WorkoutSessionControlsProps> = ({
               variant="contained"
               onClick={onEndSession}
               disabled={!isConnected}
-              sx={stopButtonSx}
+              sx={stopButtonSx(theme)}
               startIcon={<Stop />}
               aria-label="End workout session"
             >
