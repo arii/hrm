@@ -147,6 +147,8 @@ test.describe('Visual Regression Tests', () => {
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getTimerMasks(dashboardPage),
+        // Mask HRM tile area to prevent dynamic content (like spinners) from causing VRT failures
+        ...getHrMasks(dashboardPage),
       ],
     })
   })
