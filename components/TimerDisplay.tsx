@@ -6,7 +6,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { TimerMode, TimerPhase } from '../types/websocket'
+import { TimerMode, TimerPhase } from '../types/shared'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
