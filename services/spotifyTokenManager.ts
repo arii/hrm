@@ -1,5 +1,5 @@
 // File: services/spotifyTokenManager.ts
-import { AccessToken } from '@spotify/web--api-ts-sdk'
+import { AccessToken } from '@spotify/web-api-ts-sdk'
 import { prisma } from '../lib/prisma'
 import logger from '../utils/logger'
 
@@ -36,9 +36,7 @@ export class SpotifyTokenManager {
       this.sdkAccessToken = {
         access_token: account.access_token,
         token_type: account.token_type ?? 'Bearer',
-        expires_in: Math.floor(
-          (account.expires_at * 1000 - Date.now()) / 1000
-        ),
+        expires_in: (account.expires_at * 1000 - Date.now()) / 1000,
         refresh_token: account.refresh_token,
       }
       return account.access_token
