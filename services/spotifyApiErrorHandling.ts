@@ -82,7 +82,10 @@ export async function handleSpotifyApiError(
   error: unknown,
   onTokenExpired: () => void
 ): Promise<boolean> {
-  const err = error as { status?: number; response?: { text: () => Promise<string> } }
+  const err = error as {
+    status?: number
+    response?: { text: () => Promise<string> }
+  }
 
   if (err?.status === 429) {
     logger.warn('Spotify API Rate Limited. Backing off...')
