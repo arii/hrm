@@ -66,7 +66,11 @@ test.describe('Infrastructure & Scripts', () => {
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
       stdio: 'pipe',
-      env: { ...process.env, PORT: String(PORT) },
+      env: {
+        ...process.env,
+        PORT: String(PORT),
+        NEXTAUTH_SECRET: 'test-secret-dev',
+      },
     })
 
     try {
@@ -85,7 +89,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
+    test.setTimeout(60000) // Increased timeout for build
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production

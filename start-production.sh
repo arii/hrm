@@ -4,6 +4,12 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Auto-build if dist directory doesn't exist
+if [ ! -d "dist" ]; then
+  echo "Production build not found. Running build..."
+  pnpm run build
+fi
+
 # Initialize NVM if it exists (for systems where Node is managed by NVM)
 export NVM_DIR="$HOME/.nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
