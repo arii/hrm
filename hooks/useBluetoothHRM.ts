@@ -56,9 +56,18 @@ const withTimeout = <T>(
   })
 }
 
-const useBluetoothHRM = () => {
+interface UseBluetoothHRMProps {
+  dataLivenessTimeoutMs?: number
+}
+
+type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
+
+const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
+  const { dataLivenessTimeoutMs = 10000 } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
+  const [disconnectionReason, setDisconnectionReason] =
+    useState<DisconnectionReason>(null)
   const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [isSupported] = useState(
@@ -90,24 +99,29 @@ const useBluetoothHRM = () => {
 
   // Watchdog for stale data
   useEffect(() => {
+    // A timeout of 0 disables the watchdog
+    if (!dataLivenessTimeoutMs) return
+
     const interval = setInterval(() => {
       if (
         statusRef.current.startsWith('Connected') &&
         lastDataTime.current > 0
       ) {
-        if (Date.now() - lastDataTime.current > 10000) {
+        if (Date.now() - lastDataTime.current > dataLivenessTimeoutMs) {
           console.warn('Bluetooth data stale. Forcing reconnection...')
+          setDisconnectionReason('timeout')
           setDeviceStatus('Connection unstable. Reconnecting...')
           if (deviceRef.current?.gatt?.connected)
             deviceRef.current.gatt.disconnect()
         }
       }
-    }, 2000)
+    }, 2000) // Check every 2s
     return () => clearInterval(interval)
-  }, [])
+  }, [dataLivenessTimeoutMs])
 
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
+    setDisconnectionReason('manual')
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
@@ -162,6 +176,7 @@ const useBluetoothHRM = () => {
     setBatteryLevel(null)
     if (!isManualDisconnect.current && deviceRef.current) {
       console.log('Attempting auto-reconnect...')
+      setDisconnectionReason('signal_loss')
       setDeviceStatus('Signal Lost. Retrying...')
       const deviceToReconnect = deviceRef.current
       reconnectTimeoutRef.current = setTimeout(() => {
@@ -250,6 +265,7 @@ const useBluetoothHRM = () => {
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
+        setDisconnectionReason(null)
         return true
       } catch (error) {
         console.error('GATT Connection failed:', error)
@@ -333,6 +349,7 @@ const useBluetoothHRM = () => {
     batteryLevel,
     isConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
+    disconnectionReason,
   }
 }
 
