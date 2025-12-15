@@ -64,7 +64,7 @@ The control panel has been optimized for mobile with larger touch targets, bette
 
 ### Dashboard Visual Hierarchy
 
-The dashboard layout has been improved with consistent proportions, rotated side labels for the timer, and a fixed height for the Google Doc viewer.
+The dashboard layout has been improved with consistent proportions and rotated side labels for the timer. The Google Doc viewer now uses a flexible, dynamic height to fill available vertical space, ensuring a responsive and gap-free presentation on various screen sizes.
 
 ### Accessibility (WCAG 2.1 AA Compliance)
 

@@ -10,6 +10,7 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
+import { useTheme } from '@mui/material/styles'
 import { memo, useEffect, useState } from 'react'
 
 interface GoogleDocViewerProps {
@@ -26,6 +27,7 @@ const GoogleDocViewer = ({
   isShrunk = false, // Default to not shrunk
   onToggleShrink,
 }: GoogleDocViewerProps) => {
+  const theme = useTheme()
   const [iframeLoading, setIframeLoading] = useState(true)
 
   // Ensure embedUrl always includes ?embedded=true
@@ -46,7 +48,7 @@ const GoogleDocViewer = ({
       elevation={6}
       sx={{
         position: 'relative',
-        height: isShrunk ? '200px' : '100%',
+        height: isShrunk ? theme.spacing(25) : '100%',
         display: 'flex',
         flexDirection: 'column',
         transition: 'height 0.3s ease-in-out',
