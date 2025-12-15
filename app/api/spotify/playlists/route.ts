@@ -23,7 +23,7 @@ export const runtime = 'nodejs' // Force Node.js runtime
 async function getPlaylistsHandler(): Promise<NextResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.accessToken) {
-    throw new ApiError('Not authenticated or token is missing.', 401)
+    throw new ApiError(401, 'Not authenticated or token is missing.')
   }
 
   // Initialize Spotify API with the user's access token
@@ -42,16 +42,18 @@ async function getPlaylistsHandler(): Promise<NextResponse> {
 
   try {
     // Fetch user's playlists from Spotify
-    const userPlaylistsResponse = await spotifyApi.currentUser.playlists.playlists(
-      50
-    )
+    const userPlaylistsResponse =
+      await spotifyApi.currentUser.playlists.playlists(50)
     userPlaylists = userPlaylistsResponse.items
   } catch (error) {
     // If fetching user playlists fails, we still return the presets
     // This provides a fallback and better user experience.
-    console.error('Failed to fetch user playlists, returning presets only', error)
+    console.error(
+      'Failed to fetch user playlists, returning presets only',
+      error
+    )
     // Optionally re-throw if user playlists are critical
-    // throw new ApiError('Failed to fetch user playlists.', 502);
+    // throw new ApiError(502, 'Failed to fetch user playlists.');
   }
 
   return NextResponse.json({
