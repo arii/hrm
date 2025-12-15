@@ -6,10 +6,9 @@
 set -e
 
 # Configuration
-TIMEOUT=60000
+TIMEOUT=120000 # Increased timeout for slower CI environments
 SERVER_LOG="/tmp/hrm-server.log"
-PID_FILE="/tmp/hrm-server.pid"
-HEALTH_CHECK_URL="http://127.0.0.1:3000/api/debug/ping"
+HEALTH_CHECK_URL_TEMPLATE="http://127.0.0.1:{{PORT}}/api/debug/ping"
 
 # Helper for logging to stderr (so it doesn't interfere with stdout piping)
 log() {
@@ -37,18 +36,33 @@ cleanup() {
 # Trap signals for cleanup
 trap cleanup EXIT INT TERM
 
-# Export environment variable for testing
+# Use pre-configured port or dynamically find an available one
+if [ -z "$PORT" ]; then
+  log "🔎 Finding an available port..."
+  PORT=$(node scripts/get-available-port.mjs)
+  if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
+      log "❌ Failed to get a valid port. Exiting."
+      exit 1
+  fi
+  log "✅ Found available port: $PORT"
+else
+  log "✅ Using pre-configured port: $PORT"
+fi
+
+# Export environment variables for testing
+export PORT
 export TESTING=true
 export NEXTAUTH_SECRET="test-secret-for-ci"
-export NEXTAUTH_URL="http://127.0.0.1:3000"
+export NEXTAUTH_URL="http://127.0.0.1:$PORT"
+HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
 
 # Clean up any stale PM2 processes
 log "🧹 Cleaning up any old PM2 processes..."
 pnpm pm2 kill || true
 
-
-log "🚀 Starting server with PM2..."
+log "🚀 Starting server with PM2 on port $PORT..."
 # Start server with `pnpm start`, which uses PM2
+# The PORT variable is passed via ecosystem.config.cjs
 pnpm start > "$SERVER_LOG" 2>&1 &
 log "✅ Server process started via PM2."
 
