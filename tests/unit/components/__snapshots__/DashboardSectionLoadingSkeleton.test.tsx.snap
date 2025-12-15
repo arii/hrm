@@ -6,7 +6,7 @@ exports[`DashboardSectionLoadingSkeleton renders a single skeleton when count is
     class="MuiBox-root css-0"
   >
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
   </div>
@@ -19,23 +19,23 @@ exports[`DashboardSectionLoadingSkeleton renders multiple skeletons when count i
     class="MuiBox-root css-0"
   >
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
   </div>
@@ -48,15 +48,15 @@ exports[`DashboardSectionLoadingSkeleton renders with custom props and matches s
     class="MuiBox-root css-0"
   >
     <span
-      class="MuiSkeleton-root MuiSkeleton-circle MuiSkeleton-wave custom-skeleton css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-wave custom-skeleton css-127vqmw-MuiSkeleton-root"
       style="width: 200px; height: 50px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-circle MuiSkeleton-wave custom-skeleton css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-wave custom-skeleton css-127vqmw-MuiSkeleton-root"
       style="width: 200px; height: 50px;"
     />
     <span
-      class="MuiSkeleton-root MuiSkeleton-circle MuiSkeleton-wave custom-skeleton css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-wave custom-skeleton css-127vqmw-MuiSkeleton-root"
       style="width: 200px; height: 50px;"
     />
   </div>
@@ -69,7 +69,7 @@ exports[`DashboardSectionLoadingSkeleton renders with default props and matches 
     class="MuiBox-root css-0"
   >
     <span
-      class="MuiSkeleton-root MuiSkeleton-rectangle MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
+      class="MuiSkeleton-root MuiSkeleton-rectangular MuiSkeleton-wave css-1lxq4wd-MuiSkeleton-root"
       style="width: 100%; height: 100px;"
     />
   </div>
