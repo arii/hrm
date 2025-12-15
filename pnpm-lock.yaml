@@ -126,8 +126,8 @@ importers:
         specifier: ^1.57.0
         version: 1.57.0
       '@storybook/addon-a11y':
-        specifier: ^10.1.4
-        version: 10.1.5(storybook@8.6.14(prettier@3.7.4))
+        specifier: ^10.1.9
+        version: 10.1.9(storybook@8.6.14(prettier@3.7.4))
       '@storybook/addon-actions':
         specifier: ^8.6.14
         version: 8.6.14(storybook@8.6.14(prettier@3.7.4))
@@ -2517,10 +2517,10 @@ packages:
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
 
-  '@storybook/addon-a11y@10.1.5':
-    resolution: {integrity: sha512-dMUrkuQyvDfD6SdvV7F7cbjRrhHN0kqCNhRfg1i1IJuLuck6kiALpx8176KhWBcAkN/0J/1V75n7+F9YU/JlPA==}
+  '@storybook/addon-a11y@10.1.9':
+    resolution: {integrity: sha512-MJjJQY9liDyOi7PIE9c0hfa+2jNCdRskRwoR8G3Klli0FIhXjxlAci6BjCGX9W3deOuwvDT13xwVg5YG6Mi13A==}
     peerDependencies:
-      storybook: ^10.1.5
+      storybook: ^10.1.9
 
   '@storybook/addon-actions@8.6.14':
     resolution: {integrity: sha512-mDQxylxGGCQSK7tJPkD144J8jWh9IU9ziJMHfB84PKpI/V5ZgqMDnpr2bssTrUaGDqU5e1/z8KcRF+Melhs9pQ==}
@@ -12029,7 +12029,7 @@ snapshots:
 
   '@standard-schema/spec@1.0.0': {}
 
-  '@storybook/addon-a11y@10.1.5(storybook@8.6.14(prettier@3.7.4))':
+  '@storybook/addon-a11y@10.1.9(storybook@8.6.14(prettier@3.7.4))':
     dependencies:
       '@storybook/global': 5.0.0
       axe-core: 4.11.0
