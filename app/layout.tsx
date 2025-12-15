@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import Main from './main'
 import './globals.css'
+import Toast from '@/components/shared/Toast'
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -37,7 +39,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <Main>{children}</Main>
+        <Main>
+          {children}
+          <Toast />
+        </Main>
       </body>
     </html>
   )
