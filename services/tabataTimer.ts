@@ -9,8 +9,8 @@ import {
   TimerData,
   TimerMode,
   TimerPhase,
-} from '../types/websocket'
-import GenericTimer from './genericTimer' // Leverage the high-accuracy generic timer
+} from '@/types/websocket'
+import GenericTimer from '@/services/genericTimer' // Leverage the high-accuracy generic timer
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION_S = 20
