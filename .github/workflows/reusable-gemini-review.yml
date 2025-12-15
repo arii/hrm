@@ -55,6 +55,11 @@ jobs:
           TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
 
           # Determine review depth based on size
+          # Thresholds:
+          # < 100 LOC: Detailed review (catch nitpicks, style, deep logic)
+          # < 400 LOC: Standard review (correctness, architecture, security)
+          # >= 400 LOC: Focused review (architecture, critical paths, public APIs)
+          # Note: These values are heuristics based on typical reviewer capacity.
           if [ $TOTAL_LOC -lt 100 ]; then
             REVIEW_DEPTH="detailed"
           elif [ $TOTAL_LOC -lt 400 ]; then
