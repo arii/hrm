@@ -21,7 +21,9 @@ describe('WorkoutSessionControls', () => {
   })
 
   // Use a helper to avoid repetition
-  const renderComponent = (props: Partial<React.ComponentProps<typeof WorkoutSessionControls>>) => {
+  const renderComponent = (
+    props: Partial<React.ComponentProps<typeof WorkoutSessionControls>>
+  ) => {
     const defaultProps: React.ComponentProps<typeof WorkoutSessionControls> = {
       isSessionActive: false,
       isPaused: false,

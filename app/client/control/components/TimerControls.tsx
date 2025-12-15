@@ -471,7 +471,9 @@ const TimerControls = () => {
         )}
 
         <WorkoutSessionControls
-          isSessionActive={timerData.isRunning || timerData.currentPhase === 'PAUSED'}
+          isSessionActive={
+            timerData.isRunning || timerData.currentPhase === 'PAUSED'
+          }
           isPaused={timerData.currentPhase === 'PAUSED'}
           onStartSession={() => sendTimerCommand('START')}
           onPauseSession={() => sendTimerCommand('PAUSE')}

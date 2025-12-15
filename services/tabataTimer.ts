@@ -70,7 +70,12 @@ class TabataTimer {
 
   private handleCountdownCue() {
     const phase = this.timerState.currentPhase
-    if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN' || phase === 'PAUSED') {
+    if (
+      phase === 'IDLE' ||
+      phase === 'RUNNING' ||
+      phase === 'COOLDOWN' ||
+      phase === 'PAUSED'
+    ) {
       return
     }
 
@@ -146,9 +151,12 @@ class TabataTimer {
     this.startTime = Date.now()
 
     // If resuming from a paused state, restore the previous phase.
-    if (this.timerState.currentPhase === 'PAUSED' && this.timerState.phaseBeforePause) {
-        this.timerState.currentPhase = this.timerState.phaseBeforePause;
-        delete this.timerState.phaseBeforePause;
+    if (
+      this.timerState.currentPhase === 'PAUSED' &&
+      this.timerState.phaseBeforePause
+    ) {
+      this.timerState.currentPhase = this.timerState.phaseBeforePause
+      delete this.timerState.phaseBeforePause
     }
     // If starting from IDLE, always begin with the PREPARE countdown.
     else if (this.timerState.currentPhase === 'IDLE') {
@@ -164,7 +172,10 @@ class TabataTimer {
   private pauseTimer() {
     if (!this.timerState.isRunning || !this.startTime) return
 
-    if (this.timerState.mode === 'STOPWATCH' && this.timerState.currentPhase === 'RUNNING') {
+    if (
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase === 'RUNNING'
+    ) {
       this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
     }
 

@@ -75,7 +75,9 @@ test.describe('Visual Regression Tests', () => {
     const endSessionButton = controlPage.getByTestId('end-session-button')
 
     try {
-      if (await endSessionButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
+      if (
+        await endSessionButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })
+      ) {
         await endSessionButton.click()
         await expect(
           controlPage.getByTestId('start-session-button')
@@ -128,9 +130,7 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide',
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
-      mask: [
-        ...getTimerMasks(dashboardPage),
-      ],
+      mask: [...getTimerMasks(dashboardPage)],
     })
   })
 
@@ -188,9 +188,7 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide',
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
-      mask: [
-        ...getTimerMasks(dashboardPage),
-      ],
+      mask: [...getTimerMasks(dashboardPage)],
     })
   })
 
