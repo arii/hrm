@@ -1,7 +1,7 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import { SpotifyTokenManager } from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+import logger from '@/utils/logger'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -341,8 +341,6 @@ export class SpotifyPolling {
     return (async () => {
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        // Schedule a poll in the near future to get immediate feedback
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         this.logSpotifyCommandError(command, error)
       }
