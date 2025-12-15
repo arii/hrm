@@ -49,7 +49,7 @@
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
-    "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
+    "test:infra": "playwright test tests/playwright/infrastructure.spec.ts --config=tests/playwright/playwright.config.ts",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
     "depcheck": "depcheck",
