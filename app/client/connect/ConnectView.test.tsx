@@ -38,6 +38,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const ageInput = screen.getByLabelText('Your Age')
     fireEvent.change(ageInput, { target: { value: '200' } })
+    fireEvent.blur(ageInput)
     expect(
       screen.getByText('Please enter a valid age (1-120)')
     ).toBeInTheDocument()
@@ -47,6 +48,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const ageInput = screen.getByLabelText('Your Age')
     fireEvent.change(ageInput, { target: { value: '35' } })
+    fireEvent.blur(ageInput)
     expect(
       screen.queryByText('Please enter a valid age (1-120)')
     ).not.toBeInTheDocument()
@@ -56,6 +58,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const heightInput = screen.getByLabelText('Your Height (cm)')
     fireEvent.change(heightInput, { target: { value: '300' } })
+    fireEvent.blur(heightInput)
     expect(
       screen.getByText('Please enter a valid height (100-250)')
     ).toBeInTheDocument()
@@ -65,6 +68,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const heightInput = screen.getByLabelText('Your Height (cm)')
     fireEvent.change(heightInput, { target: { value: '180' } })
+    fireEvent.blur(heightInput)
     expect(
       screen.queryByText('Please enter a valid height (100-250)')
     ).not.toBeInTheDocument()
@@ -74,6 +78,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const weightInput = screen.getByLabelText('Your Weight (kg)')
     fireEvent.change(weightInput, { target: { value: '300' } })
+    fireEvent.blur(weightInput)
     expect(
       screen.getByText('Please enter a valid weight (30-200)')
     ).toBeInTheDocument()
@@ -83,6 +88,7 @@ describe('ConnectView', () => {
     render(<ConnectView {...defaultProps} />)
     const weightInput = screen.getByLabelText('Your Weight (kg)')
     fireEvent.change(weightInput, { target: { value: '75' } })
+    fireEvent.blur(weightInput)
     expect(
       screen.queryByText('Please enter a valid weight (30-200)')
     ).not.toBeInTheDocument()

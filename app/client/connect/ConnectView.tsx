@@ -150,8 +150,8 @@ export default function ConnectView({
               placeholder="e.g., 30"
               type="number"
               value={userAge}
-              onChange={(e) => {
-                setUserAge(e.target.value)
+              onChange={(e) => setUserAge(e.target.value)}
+              onBlur={(e) => {
                 setAgeError(validate(e.target.value, 1, 120, 'age'))
               }}
               error={!!ageError}
@@ -164,8 +164,8 @@ export default function ConnectView({
               placeholder="e.g., 175"
               type="number"
               value={userHeight}
-              onChange={(e) => {
-                setUserHeight(e.target.value)
+              onChange={(e) => setUserHeight(e.target.value)}
+              onBlur={(e) => {
                 setHeightError(validate(e.target.value, 100, 250, 'height'))
               }}
               error={!!heightError}
@@ -178,8 +178,8 @@ export default function ConnectView({
               placeholder="e.g., 70"
               type="number"
               value={userWeight}
-              onChange={(e) => {
-                setUserWeight(e.target.value)
+              onChange={(e) => setUserWeight(e.target.value)}
+              onBlur={(e) => {
                 setWeightError(validate(e.target.value, 30, 200, 'weight'))
               }}
               error={!!weightError}
