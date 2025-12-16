@@ -67,6 +67,7 @@ const Dashboard = () => {
     <Container
       maxWidth="xl"
       onClick={handleInteraction}
+      className="h-screen"
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
