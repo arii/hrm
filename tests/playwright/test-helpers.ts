@@ -29,6 +29,7 @@ export {
   getHrMasks,
   getTimerMasks,
   // Setup utilities
+  dismissAudioOverlay,
   replaceIframeWithStableWorkout,
   setupVisualRegressionTest,
   setupMinimalVisualRegressionTest,

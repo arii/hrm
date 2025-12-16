@@ -115,6 +115,7 @@ export {
   // Mock utilities
   setupMockHrStreaming,
   startMockHrStreaming,
+  dismissAudioOverlay,
 } from './setup'
 
 // ============================================================================

@@ -413,3 +413,29 @@ export async function prepareForVisualRegression(
 ): Promise<void> {
   await Promise.all(pages.map((page) => waitForFontsLoaded(page)))
 }
+
+/**
+ * Dismiss the "Enable Audio" overlay if it is visible.
+ * This ensures that tests can interact with the main dashboard UI.
+ *
+ * @param page - The Playwright Page object
+ */
+export async function dismissAudioOverlay(page: Page): Promise<void> {
+  const enableAudioButton = page.getByRole('button', {
+    name: 'ENABLE AUDIO',
+  })
+
+  try {
+    // If the button is visible, click it and wait for the overlay to disappear
+    if (await enableAudioButton.isVisible({ timeout: 2000 })) {
+      await enableAudioButton.click()
+      await expect(enableAudioButton).not.toBeVisible({ timeout: 5000 })
+      // Wait for a known element on the dashboard to ensure it's ready
+      await expect(page.locator('text=00:00')).toBeVisible({ timeout: 5000 })
+    }
+  } catch (error) {
+    // If the button is not found or another error occurs, log it and continue.
+    // The overlay might not be present, which is not a failure.
+    console.warn('Could not dismiss audio overlay (ignoring):', error)
+  }
+}
