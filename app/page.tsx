@@ -8,6 +8,15 @@ const DOC_URL =
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
+/**
+ * DashboardPage Server Component
+ *
+ * This is the main server component for the dashboard page. It's responsible for
+ * fetching initial data on the server and passing it to the `DashboardClient`
+ * component for rendering.
+ *
+ * @returns {Promise<JSX.Element>} The rendered dashboard page.
+ */
 export default async function DashboardPage() {
   /**
    * SSR Data Fetching Strategy:

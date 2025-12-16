@@ -4,6 +4,7 @@ import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -74,6 +75,38 @@ const DashboardClient = ({
     }
   }, [])
 
+  if (!audioInitialized) {
+    return (
+      <Container
+        maxWidth="xl"
+        sx={{
+          py: { xs: 2, sm: 3 },
+          minHeight: '100vh',
+          backgroundColor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Audio Disabled
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          Click the button to enable audio for workout alerts.
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={handleInteraction}
+          aria-label="Initialize audio"
+        >
+          Enable Audio
+        </Button>
+      </Container>
+    )
+  }
+
   return (
     <Container
       maxWidth="xl"
@@ -83,17 +116,6 @@ const DashboardClient = ({
         backgroundColor: 'background.default',
       }}
     >
-      {!audioInitialized && (
-        <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
-            variant="contained"
-            onClick={handleInteraction}
-            aria-label="Initialize audio"
-          >
-            Enable Audio
-          </Button>
-        </Box>
-      )}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
