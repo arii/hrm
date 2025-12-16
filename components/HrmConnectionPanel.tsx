@@ -72,7 +72,15 @@ const HrmConnectionPanel = () => {
   // Future iterations may need to address a multi-device connection strategy.
   if (isLoading || tileData.length === 0) {
     return (
-      <>
+      <Box
+        sx={{
+          flexGrow: 1,
+          width: { xs: '100%', lg: 'calc(50% - 16px)' },
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
         <Box
           sx={{
             width: '100%',
@@ -112,12 +120,20 @@ const HrmConnectionPanel = () => {
             sx={{ borderRadius: 3 }}
           />
         </Box>
-      </>
+      </Box>
     )
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        flexGrow: 1,
+        width: { xs: '100%', lg: 'calc(50% - 16px)' },
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
       {tileData.map((user) => (
         <Box
           key={user.clientId}
@@ -140,7 +156,7 @@ const HrmConnectionPanel = () => {
           />
         </Box>
       ))}
-    </>
+    </Box>
   )
 }
 export default HrmConnectionPanel

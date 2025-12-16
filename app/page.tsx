@@ -83,19 +83,9 @@ const Dashboard = () => {
           <TimerDisplay />
         </Box>
 
-        <Box
-          sx={{
-            flexGrow: 1,
-            width: { xs: '100%', lg: 'calc(50% - 16px)' },
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmConnectionPanel />
-          </ErrorBoundary>
-        </Box>
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <HrmConnectionPanel />
+        </ErrorBoundary>
 
         <Box sx={{ width: '100%' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
