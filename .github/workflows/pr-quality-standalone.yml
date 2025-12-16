@@ -43,7 +43,7 @@ jobs:
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
-          clean: false # 🧹 Preserves previous run artifacts for speed
+          clean: false # 🧹 Preserves previous run artifacts for speed (Cold: ~33s vs Warm: ~4s)
 
       - name: Sanitize Workspace (Preserve Cache)
         run: |
