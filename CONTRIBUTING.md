@@ -52,6 +52,17 @@ Thank you for your interest in contributing to the HRM (Heart Rate Monitor) proj
 - Run `pnpm run format` before committing
 - Run `pnpm run lint:fix` to fix linting issues
 
+### Dependency Hygiene with Knip
+
+We use [Knip](https://knip.dev/) to find unused files, dependencies, and exports in the project. It's a great tool for keeping the project clean and lean.
+
+- **Run Knip:**
+  ```bash
+  pnpm knip
+  ```
+- **Addressing Issues:** Knip will report any issues it finds. You should address these issues by removing unused code or dependencies. If you believe an issue is a false positive, you can update the `knip.json` configuration file to ignore it.
+- **CI Integration:** Knip is integrated into our CI pipeline. Pull requests that introduce dependency hygiene issues will fail.
+
 ## Testing
 
 ### Running Tests

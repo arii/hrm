@@ -28,3 +28,7 @@ jobs:
           echo "ERROR: Dependency PR missing pnpm-lock.yaml changes. Please ensure pnpm-lock.yaml is updated and included in your PR. Refer to DEVELOPMENT.md and use the dependency.md PR template for guidance." >&2
           exit 1
         }
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+    - name: Run knip
+      run: pnpm knip
