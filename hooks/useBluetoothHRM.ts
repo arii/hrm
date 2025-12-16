@@ -1,4 +1,10 @@
-// File: hooks/useBluetoothHRM.ts
+/**
+ * @file useBluetoothHRM.ts
+ * @description This file exports a custom React hook, `useBluetoothHRM`, for managing
+ * interactions with Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
+ * It encapsulates the logic for device discovery, connection, disconnection,
+ * data streaming, and automatic reconnection on signal loss.
+ */
 import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmInputData,
@@ -453,11 +459,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         if (device) {
           await connectToGatt(device)
-        } else {
-          // This case should ideally not be reached if requestDevice resolves,
-          // but we handle it defensively.
-          throw new Error('No device selected or found.')
         }
+        // If `requestDevice` is cancelled by the user, it throws a `NotFoundError`,
+        // which is caught and handled below. A resolved promise without a device
+        // is not an expected behavior.
       } catch (error) {
         handleConnectionError(error)
         // Re-throw the error to ensure the promise rejects
