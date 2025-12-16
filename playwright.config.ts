@@ -17,6 +17,9 @@ const testIgnoreList = [
   'comprehensive-assessment.spec.ts',
   'mobile-assessment.spec.ts',
   'workflow-assessment.spec.ts',
+  // This test is incompatible with the webServer model as it tries to manage
+  // the server process itself using PM2.
+  'realtime-resilience.spec.ts',
   // OAuth tests are excluded from regular test runs (use separate npm script)
   'oauth/**/*.spec.ts',
 ]
@@ -36,9 +39,9 @@ export default defineConfig({
   testIgnore: testIgnoreList,
 
   // Performance Optimizations
-  fullyParallel: false,
-  workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
-  timeout: 30 * 1000, // Global test timeout (30s) - Restored to Playwright default to accommodate CI variance
+  fullyParallel: true,
+  workers: process.env.CI ? 2 : undefined, // Use 2 workers in CI, otherwise use all available cores.
+  timeout: 60 * 1000, // Increased global timeout to 60s to accommodate parallel execution in CI.
 
   // Fail build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -129,4 +132,28 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
   ],
+
+  // --- Web Server Configuration ---
+  // This section configures Playwright to automatically start and stop the
+  // application server, ensuring a clean and reliable test environment.
+  webServer: {
+    // Command to start the server. We use our custom script to ensure
+    // the environment is configured correctly for testing.
+    command: 'bash scripts/start-test.sh',
+
+    // The URL that Playwright will poll to determine if the server is ready.
+    // Playwright waits for this endpoint to return a 2xx status code.
+    url: `${getBaseURL()}/api/debug/ping`,
+
+    // A generous timeout for the server to start, especially in CI. (120 seconds)
+    timeout: 120 * 1000,
+
+    // When running locally (`playwright test --ui`), reuse the existing server
+    // to speed up development. In CI, always start a fresh server.
+    reuseExistingServer: !process.env.CI,
+
+    // Pipe server output to the console for easier debugging.
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
 })
