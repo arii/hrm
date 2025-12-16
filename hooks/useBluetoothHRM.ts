@@ -194,6 +194,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     // A timeout of 0 disables the watchdog
     if (!dataLivenessTimeoutMs) return
 
+    // This interval periodically checks if new data has been received.
+    // If the time since the last data point exceeds the timeout, it triggers a reconnection.
     const interval = setInterval(() => {
       if (
         statusRef.current.startsWith('Connected') &&
@@ -213,12 +215,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   /**
    * @function disconnect
-   * @description Manually disconnects from the currently connected Bluetooth device.
-   * This is treated as a manual action and will prevent automatic reconnection attempts.
-   * Resets the device status, saved device, and battery level.
-   * @sideeffect Clears any pending reconnection timeouts.
-   * @sideeffect Disconnects the GATT server if connected.
-   * @sideeffect Updates component state for status, saved device, and battery level.
+   * @description Manually disconnects the device, preventing auto-reconnection.
+   * @sideeffect Clears connection timeouts and resets device state.
    */
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
@@ -234,15 +232,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   /**
    * @function forgetDevice
-   * @description Disconnects from the device, clears any saved device ID from cookies,
-   * and attempts to use the `device.forget()` API to revoke permissions for all previously
-   * granted Bluetooth devices.
+   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
    * @async
-   * @returns {Promise<void>} A promise that resolves when the forget operation is complete.
-   * @sideeffect Calls the `disconnect` function.
-   * @sideeffect Deletes the 'hrm_device_id' cookie.
-   * @sideeffect Calls `device.forget()` on all granted Bluetooth devices.
-   * @sideeffect Updates the device status message.
+   * @returns {Promise<void>}
+   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
    */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
@@ -406,28 +399,28 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
   /**
    * @function connectAndStream
-   * @description Initiates the process of connecting to a Bluetooth HRM device and streaming data.
-   * It first checks for a previously saved device and attempts to reconnect. If no device is saved,
-   * it opens the browser's device picker UI for the user to select a new device.
+   * @description Connects to a Bluetooth HRM device and starts streaming data.
+   * It attempts to reconnect to a saved device or prompts the user to select a new one.
    *
-   * @param {string} [userName] - The name of the user, used for display purposes.
-   * @param {number} [userAge] - The age of the user, used to calculate max heart rate.
-   * @returns {Promise<boolean>} A promise that resolves to `true` if the connection is successful,
-   * and `false` otherwise.
-   * @sideeffect Updates user details ref for use in data streaming.
+   * @param {string} [userName] - The user's name for display.
+   * @param {number} [userAge] - The user's age to calculate max heart rate.
+   * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
+   * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
+   * device not found, user cancellation).
    * @sideeffect May trigger the browser's Bluetooth device picker.
-   * @sideeffect Updates component state to reflect the connection process.
+   * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<boolean> => {
+    async (userName?: string, userAge?: number): Promise<void> => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
       }
-      if (statusRef.current.startsWith('Connected')) return true
+      if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
-        setDeviceStatus('Waiting for WebSocket connection...')
-        return false
+        const err = new Error('WebSocket not connected')
+        handleConnectionError(err)
+        throw err
       }
 
       try {
@@ -441,43 +434,34 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const foundDevice = devices.find((d) => d.id === savedDeviceId)
 
             if (foundDevice) {
-              try {
-                await connectToGatt(foundDevice)
-                return true
-              } catch (err) {
-                logger.warn(
-                  { error: err },
-                  'Reconnect failed, clearing preference'
-                )
-                setCookie('hrm_device_id', '', -1)
-              }
+              // Attempt to reconnect to the previously saved device
+              await connectToGatt(foundDevice)
+              return
             }
           }
         }
 
         if (!device) {
           setDeviceStatus('Scanning for devices...')
-          try {
-            // Note: acceptAllDevices is an alternative if filters fail,
-            // but strict filtering is better for UX to avoid showing non-HRM devices.
-            device = await navigator.bluetooth.requestDevice({
-              filters: [{ services: [HR_SERVICE_UUID] }],
-              optionalServices: [BATTERY_SERVICE_UUID],
-            })
-          } catch (scanErr) {
-            handleConnectionError(scanErr)
-            return false
-          }
+          // Note: acceptAllDevices is an alternative if filters fail,
+          // but strict filtering is better for UX to avoid showing non-HRM devices.
+          device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [HR_SERVICE_UUID] }],
+            optionalServices: [BATTERY_SERVICE_UUID],
+          })
         }
 
         if (device) {
           await connectToGatt(device)
-          return true
+        } else {
+          // This case should ideally not be reached if requestDevice resolves,
+          // but we handle it defensively.
+          throw new Error('No device selected or found.')
         }
-        return false
       } catch (error) {
         handleConnectionError(error)
-        return false
+        // Re-throw the error to ensure the promise rejects
+        throw error
       }
     },
     [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
