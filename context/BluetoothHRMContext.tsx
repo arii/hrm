@@ -32,6 +32,7 @@ export const BluetoothHRMProvider = ({ children }: { children: ReactNode }) => {
 
 // Create a custom hook for using the context
 export const useBluetoothHRMContext = () => {
+  // This hook provides access to the BluetoothHRM context.
   const context = useContext(BluetoothHRMContext)
   if (!context) {
     throw new Error(
