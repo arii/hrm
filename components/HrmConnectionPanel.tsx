@@ -8,7 +8,11 @@ import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
+import {
+  CONNECT_HR_MONITOR_TITLE,
+  MAX_HR_DEFAULT,
+  CALORIE_DEFAULTS,
+} from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
@@ -31,7 +35,7 @@ const HrmConnectionPanel = () => {
     // Consolidate all user settings into a single object for the hook.
     const userProfile = {
       userName: session?.user?.name || userSettings.userName || 'Unknown User',
-      userAge: userSettings.userAge || 30, // Default age if not set
+      userAge: userSettings.userAge || CALORIE_DEFAULTS.AGE,
       userHeight: userSettings.userHeight,
       userWeight: userSettings.userWeight,
       userGender: userSettings.userGender,

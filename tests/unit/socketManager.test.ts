@@ -254,6 +254,90 @@ describe('WebSocket Manager', () => {
       // Use non-null assertion as we've checked definition
       expect(clientData!.calories).toBeGreaterThan(1)
     })
+
+    it('should calculate calories correctly for a male user', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+      mockWss.emit('connection', mockWs)
+
+      const hrmMetadataUpdate = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          age: 35,
+          weight: 80,
+          gender: 'male',
+        },
+      })
+      mockWs.emit('message', hrmMetadataUpdate.toString())
+
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // 1 minute at 150bpm
+      jest.advanceTimersByTime(60000)
+      sendHrmInput(150)
+
+      const mockBroadcast = broadcast as jest.Mock
+      const lastBroadcastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
+      const clientData = broadcastPayload[0]
+
+      // Expected calculation for male:
+      // rate = (-55.0969 + 0.6309 * 150 + 0.1988 * 80 + 0.2017 * 35) / 4.184
+      // rate = (-55.0969 + 94.635 + 15.904 + 7.0595) / 4.184
+      // rate = 62.5016 / 4.184 = 14.938
+      // Calories = rate * 1 minute = 14.9
+      expect(clientData.calories).toBeCloseTo(14.9, 1)
+    })
+
+    it('should calculate calories correctly for a female user', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+      mockWss.emit('connection', mockWs)
+
+      const hrmMetadataUpdate = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          age: 28,
+          weight: 60,
+          gender: 'female',
+        },
+      })
+      mockWs.emit('message', hrmMetadataUpdate.toString())
+
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // 1 minute at 160bpm
+      jest.advanceTimersByTime(60000)
+      sendHrmInput(160)
+
+      const mockBroadcast = broadcast as jest.Mock
+      const lastBroadcastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
+      const clientData = broadcastPayload[0]
+
+      // Expected calculation for female:
+      // rate = (-20.4022 + 0.4472 * 160 - 0.1263 * 60 + 0.074 * 28) / 4.184
+      // rate = (-20.4022 + 71.552 - 7.578 + 2.072) / 4.184
+      // rate = 45.6438 / 4.184 = 10.9
+      // Calories = rate * 1 minute = 10.9
+      expect(clientData.calories).toBeCloseTo(10.9, 1)
+    })
   })
 
   describe('Message Handling', () => {

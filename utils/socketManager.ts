@@ -16,7 +16,7 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { CALORIE_DEFAULTS } from './constants.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
 
@@ -72,7 +72,7 @@ const initSocketManager = (
       clientId: extWs.clientId,
       value: 0,
       maxHr: 185,
-      age: 30,
+      age: CALORIE_DEFAULTS.AGE,
       calories: 0, // Initialize to 0
     }
     clientData.set(extWs.clientId, newClient)
@@ -194,7 +194,7 @@ const handleIncomingMessage = (
           const currentHr = message.data.value ?? existingData.value
 
           // Use new user profile data for calorie calculation, with sensible defaults.
-          const age = existingData.age ?? 30
+          const age = existingData.age ?? CALORIE_DEFAULTS.AGE
           const weightKg = existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
           const gender = existingData.gender ?? 'male'
 

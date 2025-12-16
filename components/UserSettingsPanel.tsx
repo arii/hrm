@@ -9,17 +9,26 @@ import {
   MenuItem,
   Box,
   Typography,
+  SelectChangeEvent,
 } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 
 const UserSettingsPanel = () => {
   const [userSettings, setUserSettings] = useUserSettings()
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target
     setUserSettings((prev) => ({
       ...prev,
-      [name as string]: value,
+      [name]: value,
+    }))
+  }
+
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    const { name, value } = event.target
+    setUserSettings((prev) => ({
+      ...prev,
+      [name]: value,
     }))
   }
 
@@ -33,7 +42,7 @@ const UserSettingsPanel = () => {
           label="Name"
           name="userName"
           value={userSettings.userName || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           variant="outlined"
           fullWidth
         />
@@ -42,7 +51,7 @@ const UserSettingsPanel = () => {
           name="userAge"
           type="number"
           value={userSettings.userAge || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           variant="outlined"
           fullWidth
         />
@@ -51,7 +60,7 @@ const UserSettingsPanel = () => {
           name="userHeight"
           type="number"
           value={userSettings.userHeight || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           variant="outlined"
           fullWidth
         />
@@ -60,16 +69,17 @@ const UserSettingsPanel = () => {
           name="userWeight"
           type="number"
           value={userSettings.userWeight || ''}
-          onChange={handleChange}
+          onChange={handleTextChange}
           variant="outlined"
           fullWidth
         />
         <FormControl fullWidth variant="outlined">
-          <InputLabel>Gender</InputLabel>
+          <InputLabel id="gender-select-label">Gender</InputLabel>
           <Select
+            labelId="gender-select-label"
             name="userGender"
             value={userSettings.userGender || ''}
-            onChange={handleChange}
+            onChange={handleSelectChange}
             label="Gender"
           >
             <MenuItem value="">
