@@ -33,38 +33,6 @@ const parseHeartRate = (value: DataView): number => {
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
-/**
- * @function setCookie
- * @description Sets a browser cookie with a specified name, value, and expiration.
- * This function is a no-op in non-browser environments.
- * @param {string} name - The name of the cookie.
- * @param {string} value - The value to store in the cookie.
- * @param {number} [days=365] - The number of days until the cookie expires.
- * @sideeffect Creates or updates a cookie in `document.cookie`.
- */
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
-  }
-}
-
-/**
- * @function getCookie
- * @description Retrieves the value of a cookie by its name.
- * Returns an empty string if the cookie is not found or in a non-browser environment.
- * @param {string} name - The name of the cookie to retrieve.
- * @returns {string} The decoded value of the cookie.
- */
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
 
 /**
  * @function withTimeout
@@ -253,7 +221,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     logger.info('Initiating device forget sequence...')
     disconnect()
     try {
-      setCookie('hrm_device_id', '', -1)
+      localStorage.removeItem('hrm_device_id')
       if (navigator.bluetooth && navigator.bluetooth.getDevices) {
         const devices = await navigator.bluetooth.getDevices()
         for (const device of devices) {
@@ -268,23 +236,34 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [disconnect])
 
   const handleConnectionError = useCallback((error: unknown) => {
-    let msg = 'An unknown error occurred.'
+    logger.error({ error }, 'Bluetooth connection error')
+    let msg = 'An unknown error occurred. Please try again.'
     if (error instanceof DOMException) {
-      if (error.name === 'NotFoundError') {
-        msg = 'Connection cancelled. No device selected.'
-      } else if (error.name === 'SecurityError') {
-        msg = 'Security error. Use HTTPS or localhost.'
-      } else if (error.name === 'NetworkError') {
-        msg = 'Connection failed. Device might be too far or low battery.'
-      } else {
-        msg = `Bluetooth error: ${error.name}`
+      switch (error.name) {
+        case 'NotFoundError':
+          msg = 'Connection cancelled. No device was selected.'
+          break
+        case 'SecurityError':
+          msg =
+            'Connection failed due to a security issue. Ensure you are using HTTPS.'
+          break
+        case 'NetworkError':
+          msg =
+            'Connection failed. The device may be out of range, have low battery, or be disconnected.'
+          break
+        case 'NotSupportedError':
+          msg = 'Web Bluetooth is not supported on this browser or device.'
+          break
+        default:
+          msg = `A Bluetooth error occurred: ${error.name}. Please try again.`
+          break
       }
     } else if (error instanceof Error) {
-      // Handle our custom timeout error
       if (error.message.includes('timeout')) {
-        msg = 'Connection timed out. Wake up device and try again.'
+        msg =
+          'Connection timed out. Please wake up the device and try connecting again.'
       } else {
-        msg = `Error: ${error.message}`
+        msg = `An unexpected error occurred: ${error.message}`
       }
     }
     setDeviceStatus(`Failed: ${msg}`)
@@ -392,7 +371,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
         setDeviceStatus(`Connected to: ${device.name}`)
-        setCookie('hrm_device_id', device.id)
+        localStorage.setItem('hrm_device_id', device.id)
         failedConnectionAttemptsRef.current = 0 // Reset on successful connection
         isManualDisconnect.current = false
         setDisconnectionReason(null)
@@ -439,7 +418,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
       try {
         setDeviceStatus('Checking saved devices...')
-        const savedDeviceId = getCookie('hrm_device_id')
+        const savedDeviceId = localStorage.getItem('hrm_device_id')
 
         if (savedDeviceId && navigator.bluetooth?.getDevices) {
           const devices = await navigator.bluetooth.getDevices()
@@ -462,13 +441,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 logger.warn(
                   `Forgetting device after ${maxConnectionAttempts} failed attempts.`
                 )
-                setCookie('hrm_device_id', '', -1) // Clear cookie
+                localStorage.removeItem('hrm_device_id') // Clear storage
                 failedConnectionAttemptsRef.current = 0
                 setDeviceStatus(
-                  'Saved device unavailable. Cleared from memory.'
+                  'Saved device was not found and has been forgotten. Please select a new device.'
                 )
               } else {
-                setDeviceStatus('Saved device unavailable. Please re-select.')
+                setDeviceStatus(
+                  'Could not connect to saved device. Please ensure it is on and in range, then try again or select a new device.'
+                )
               }
               // Do not return, fall through to device picker
             }
