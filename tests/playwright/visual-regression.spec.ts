@@ -281,7 +281,10 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // Wait for the mock BPM value to appear, ensuring the tile has updated.
-    await expect(dashboardPage.locator(':text-is("155")')).toBeVisible()
+    await dashboardPage.waitForFunction(
+      () => document.querySelector('[data-testid="live-hr-value"]')?.textContent === '155',
+      { timeout: WAIT_TIMEOUTS.LONG }
+    )
 
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
