@@ -7,10 +7,20 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useState, useEffect } from 'react'
+
+const getCookie = (name: string): string => {
+  if (typeof document === 'undefined') return ''
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=')
+    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
+  }, '')
+}
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [hasSavedDevice, setHasSavedDevice] = useState(false)
 
   const {
     connectAndStream,
@@ -22,6 +32,18 @@ export default function ConnectPage() {
     isSupported,
     disconnectionReason,
   } = useBluetoothHRM()
+
+  useEffect(() => {
+    setHasSavedDevice(!!getCookie('hrm_device_id'))
+    if (deviceStatus.includes('memory')) {
+      setHasSavedDevice(false)
+    }
+  }, [deviceStatus])
+
+  const handleForgetDevice = async () => {
+    await forgetDevice()
+    setHasSavedDevice(false)
+  }
 
   const { connectionStatus, hrmData } = useWebSocket()
 
@@ -60,6 +82,7 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={caloriesBurned}
+      hasSavedDevice={hasSavedDevice}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}
@@ -69,7 +92,7 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
+      onForgetDevice={handleForgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
       hrZoneProps={{
