@@ -17,6 +17,28 @@ For detailed information on specific topics, please refer to the following docum
 - [Testing Guidelines](./docs/TESTING_GUIDELINES.md)
 - [Hook Design Patterns](./docs/HOOK_DESIGN_PATTERNS.md)
 
+## Architectural Decision Records (ADRs)
+
+To ensure that significant architectural decisions are well-reasoned, documented, and consistently applied, we use Architectural Decision Records (ADRs). ADRs capture the context, options considered, and rationale behind important technical choices.
+
+### When to Create an ADR
+
+An ADR should be created for any change that has a significant impact on the system's architecture, such as:
+
+- Adopting a new framework, library, or technology.
+- Changing a core architectural pattern (e.g., state management, data fetching).
+- Introducing a new major service or component.
+- Modifying a fundamental aspect of the deployment or infrastructure.
+
+### The ADR Process
+
+1.  **Drafting**: Copy the [ADR template](./docs/adr/template.md) to a new file in the `docs/adr/` directory. The filename should be in the format `{adr-number}-{title}.md` (e.g., `0001-use-nextjs-for-frontend.md`). The status should be "Proposed".
+2.  **Review**: The new ADR is included in the Pull Request for the architectural change. The PR review process serves as the formal review for the ADR.
+3.  **Approval & Status Change**: Once the PR is approved and merged, the ADR's status is updated to "Accepted".
+4.  **Updating**: If a decision is later changed, the original ADR should be marked as "Superseded" or "Deprecated" by a new ADR that documents the new decision.
+
+All ADRs are stored in the [`docs/adr/`](./docs/adr/) directory.
+
 ## Pull Request (PR) Process
 
 ### PR Scope
