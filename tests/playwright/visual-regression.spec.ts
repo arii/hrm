@@ -264,8 +264,12 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('HR Tiles - all zones', async () => {
-    // Set HR zone first, then start streaming
+    // Set HR to yellow zone on mock page
+    await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
+    await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
+
+    // Start streaming
     await mockPage.click('button:has-text("START")')
     await expect(
       mockPage.locator('button:has-text("STOP Streaming")')
