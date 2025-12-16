@@ -1,7 +1,7 @@
 'use client'
 
 import useLocalStorage from '@/hooks/useLocalStorage'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useBluetoothHRMContext } from '@/context/BluetoothHRMContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
@@ -21,7 +21,7 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
-  } = useBluetoothHRM()
+  } = useBluetoothHRMContext()
 
   const { connectionStatus, hrmData } = useWebSocket()
 
