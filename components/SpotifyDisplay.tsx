@@ -200,7 +200,11 @@ const SpotifyDisplay = () => {
   const handleToggleMute = useCallback(() => {
     // Calculate the next state to determine the command payload
     const newMutedState = !isMuted
-    const newVolume = newMutedState ? 0 : state.lastVolume > 0 ? state.lastVolume : 50
+    const newVolume = newMutedState
+      ? 0
+      : state.lastVolume > 0
+        ? state.lastVolume
+        : 50
 
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
@@ -423,7 +427,9 @@ const SpotifyDisplay = () => {
             availableDevices={availableDevices}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
-            onMenuOpen={(e) => dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })}
+            onMenuOpen={(e) =>
+              dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
+            }
             onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
           />
           <Button

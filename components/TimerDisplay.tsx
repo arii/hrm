@@ -69,11 +69,11 @@ const TimerDisplay = () => {
     <Card
       elevation={6}
       data-testid="timer-display-container"
-        sx={{
+      sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
-          display: 'flex',
+        display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
@@ -81,12 +81,12 @@ const TimerDisplay = () => {
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
-        }}
-      >
+      }}
+    >
       {/* Status Indicator */}
-        <Box
-          sx={{
-            position: 'absolute',
+      <Box
+        sx={{
+          position: 'absolute',
           top: 16,
           right: 16,
           display: 'flex',
