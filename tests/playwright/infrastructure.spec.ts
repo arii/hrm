@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
-import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**
  * HELPER: Waits for a port to be actively listening.
  * Used to verify servers (dev or prod) have actually started.
  */
-const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
+const waitForPort = (port: number, timeout = 10000) => {
   return new Promise<void>((resolve, reject) => {
     const start = Date.now()
     const interval = setInterval(() => {

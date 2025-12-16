@@ -21,7 +21,6 @@ import {
   waitForFontsLoaded,
   waitForPageReady,
 } from './test-helpers'
-import { WAIT_TIMEOUTS } from './lib/waits'
 
 // Configure tests to run serially for better performance
 test.describe.configure({ mode: 'serial' })
@@ -36,7 +35,7 @@ test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(WAIT_TIMEOUTS.LONG * 2) // Allow extra time for visual tests
+    test.setTimeout(16000) // Allow extra time for visual tests
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
@@ -80,16 +79,16 @@ test.describe('Visual Regression Tests', () => {
 
     try {
       // If timer is running, stop it
-      if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
+      if (await stopButton.isVisible({ timeout: 2000 })) {
         await stopButton.click()
         // Wait for START button to confirm timer stopped on control page
         await expect(
           controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+        ).toBeVisible({ timeout: 3000 })
 
         // Wait for dashboard to clear timer display (return to READY state)
         await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+          timeout: 3000,
         })
       }
     } catch (error) {
@@ -102,7 +101,7 @@ test.describe('Visual Regression Tests', () => {
     try {
       // Wait for a known stable element instead of arbitrary timeout
       await expect(dashboardPage.locator('body')).toBeVisible({
-        timeout: WAIT_TIMEOUTS.SHORT * 2,
+        timeout: 2000,
       })
       await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
@@ -128,7 +127,7 @@ test.describe('Visual Regression Tests', () => {
     // Wait for any existing timer display to settle or disappear
     try {
       await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-        timeout: WAIT_TIMEOUTS.MEDIUM,
+        timeout: 3000,
       })
     } catch {
       // Timer might already be idle, continue
@@ -175,7 +174,7 @@ test.describe('Visual Regression Tests', () => {
   test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+      timeout: 3000,
     })
 
     // Ensure control panel inputs are visible
@@ -187,10 +186,10 @@ test.describe('Visual Regression Tests', () => {
     // 2. (Recommended) Wait for it to be visible
     // This ensures the component has rendered before you try to fill it.
     await expect(workInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+      timeout: 3000,
     })
     await expect(restInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+      timeout: 3000,
     })
 
     // Configure timer (15 work, 5s rest)
@@ -213,7 +212,7 @@ test.describe('Visual Regression Tests', () => {
 
     // Wait for timer to appear on dashboard
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
-      timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
+      timeout: 10000,
     })
 
     // Wait for fonts to load before snapshot
@@ -271,7 +270,7 @@ test.describe('Visual Regression Tests', () => {
 
     // Wait for HR tiles to load on dashboard
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
-      timeout: WAIT_TIMEOUTS.LONG,
+      timeout: 8000,
     })
 
     // Wait for fonts to load before snapshot

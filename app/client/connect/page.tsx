@@ -3,7 +3,6 @@
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
@@ -38,8 +37,6 @@ export default function ConnectPage() {
   }
 
   const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
     workoutDuration,
@@ -72,8 +69,8 @@ export default function ConnectPage() {
       isSupported={isSupported}
       currentHR={currentHR}
       hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        percentage: 0,
+        progressColor: '#000000',
       }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
