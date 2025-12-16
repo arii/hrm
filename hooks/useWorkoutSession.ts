@@ -1,4 +1,11 @@
-import { useEffect, useReducer, useRef, useCallback, useMemo } from 'react'
+import {
+  useEffect,
+  useReducer,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -86,12 +93,12 @@ export const useWorkoutSession = ({
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const [startCalories, setStartCalories] = useState(0)
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
     pauseTime: null as number | null,
     totalPaused: 0,
-    startCalories: 0,
   })
 
   useEffect(() => {
@@ -119,7 +126,7 @@ export const useWorkoutSession = ({
       session.pauseTime = null
       session.totalPaused = 0
       // Capture the calorie count at the very beginning of the session.
-      session.startCalories = totalCalories
+      setStartCalories(totalCalories)
     } else if (state.status === 'running' && session.pauseTime !== null) {
       // A paused session is resuming.
       session.totalPaused += Date.now() - session.pauseTime
@@ -159,7 +166,7 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
-    session.startCalories = 0
+    setStartCalories(0)
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
@@ -174,11 +181,9 @@ export const useWorkoutSession = ({
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
-    const burned = Math.round(
-      state.calories - sessionDataRef.current.startCalories
-    )
+    const burned = Math.round(state.calories - startCalories)
     return burned > 0 ? burned : 0
-  }, [state.calories])
+  }, [state.calories, startCalories])
 
   return {
     workoutDuration: state.duration,
