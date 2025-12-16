@@ -25,48 +25,12 @@ jobs:
 
       - name: Analyze Change Significance
         id: analyze
-        run: |
-          # Get the last commit that triggered this workflow
-          LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
-
-          # Determine PREVIOUS_COMMIT safely
-          PREVIOUS_COMMIT=""
-          # For 'synchronize' events on a PR, github.event.before contains the SHA of the commit
-          # *before* the new commits were pushed. If the user rebased their branch, this 'before'
-          # SHA can become invalid and no longer part of the branch's history.
-          if git rev-parse --verify ${{ github.event.before }}^{commit} >/dev/null 2>&1; then
-              # If the 'before' commit is valid, use it to get the diff of just the new commits.
-              PREVIOUS_COMMIT=${{ github.event.before }}
-          else
-              # If 'before' is invalid (due to a rebase) or it's the initial push,
-              # fall back to the merge-base. This provides a diff of all changes in
-              # the PR against the target branch, which is a safe and robust fallback.
-              PREVIOUS_COMMIT=$(git merge-base ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }})
-          fi
-
-          # Check if this is just a merge commit
-          IS_MERGE=$(git log -1 --pretty=%P $LAST_COMMIT | wc -w)
-
-          # Get files changed in this push
-          CHANGED_FILES=$(git diff --name-only $PREVIOUS_COMMIT $LAST_COMMIT)
-
-          # Count significant changes (exclude trivial files)
-          SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | \
-            grep -v -E '\.(md|txt|json|yaml|yml)$' | \
-            grep -v -E 'package-lock.json|pnpm-lock.yaml' | \
-            wc -l)
-
-          echo "IS_MERGE=$IS_MERGE" >> $GITHUB_ENV
-          echo "SIGNIFICANT_CHANGES=$SIGNIFICANT_CHANGES" >> $GITHUB_ENV
-          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
-          echo "$CHANGED_FILES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-          # Get commit message
-          COMMIT_MSG=$(git log -1 --pretty=%B $LAST_COMMIT)
-          echo "COMMIT_MSG<<EOF" >> $GITHUB_ENV
-          echo "$COMMIT_MSG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+        env:
+          GITHUB_EVENT_AFTER: ${{ github.event.after }}
+          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: ./.github/scripts/analyze-changes.sh
 
       - name: Check Review State
         id: review_state
