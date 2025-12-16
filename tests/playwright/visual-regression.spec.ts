@@ -205,9 +205,6 @@ test.describe('Visual Regression Tests', () => {
 
     await controlPage.click('button:has-text("START")', { force: true })
 
-    // Dismiss the audio overlay which may have reappeared after interaction
-    await dismissAudioOverlay(dashboardPage)
-
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
     const stopButton = controlPage.getByRole('button', {
@@ -241,9 +238,6 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
-    // Dismiss the audio overlay before streaming mock data
-    await dismissAudioOverlay(dashboardPage)
-
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
