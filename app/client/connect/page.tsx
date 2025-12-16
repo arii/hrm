@@ -55,6 +55,10 @@ export default function ConnectPage() {
     userAge: userAge ? parseInt(userAge) : 0,
   })
 
+  const handleForgetDevice = async () => {
+    await forgetDevice()
+  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
@@ -68,7 +72,7 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
+      onForgetDevice={handleForgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
       hrZoneProps={{
