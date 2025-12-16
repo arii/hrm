@@ -37,7 +37,11 @@ const GoogleDocViewer = ({
       url.searchParams.set('embedded', 'true')
       return url.toString()
     } catch (e) {
-      console.error('Invalid embedUrl provided to GoogleDocViewer:', embedUrl, e)
+      console.error(
+        'Invalid embedUrl provided to GoogleDocViewer:',
+        embedUrl,
+        e
+      )
       // Return a safe, non-functional URL or the original if it's better than nothing
       return embedUrl
     }
