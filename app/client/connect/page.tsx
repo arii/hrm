@@ -1,7 +1,7 @@
 'use client'
 
 import useLocalStorage from '@/hooks/useLocalStorage'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useBluetoothHRM } from '@/context/BluetoothHRMContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
@@ -52,7 +52,6 @@ export default function ConnectPage() {
     endWorkout,
     workoutStatus,
   } = useWorkoutSession({
-    isConnected,
     totalCalories,
   })
 

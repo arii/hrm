@@ -70,15 +70,16 @@ function sessionReducer(
  * This hook consumes the final `totalCalories` value to ensure data consistency
  * across the application.
  */
+import { useBluetoothHRM } from '@/context/BluetoothHRMContext'
+
 interface WorkoutSessionOptions {
-  isConnected: boolean
   totalCalories?: number
 }
 
 export const useWorkoutSession = ({
-  isConnected,
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
+  const { isConnected } = useBluetoothHRM()
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
   const sessionDataRef = useRef({

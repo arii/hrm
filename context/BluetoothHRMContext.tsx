@@ -1,5 +1,14 @@
-// File: hooks/useBluetoothHRM.ts
-import { useCallback, useState, useRef, useEffect } from 'react'
+'use client'
+
+import {
+  createContext,
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  ReactNode,
+} from 'react'
 import {
   HrmInputData,
   HrmMetadataUpdateMessage,
@@ -8,13 +17,13 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserSettings } from './UserSettingsContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-// ... (Keep existing parseHeartRate and cookie helpers) ...
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
@@ -38,9 +47,6 @@ const getCookie = (name: string): string => {
   }, '')
 }
 
-/**
- * Helper to race a promise against a timeout
- */
 const withTimeout = <T>(
   promise: Promise<T>,
   ms: number,
@@ -61,15 +67,40 @@ const withTimeout = <T>(
   })
 }
 
-interface UseBluetoothHRMProps {
+type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
+
+interface BluetoothHRMContextType {
+  connectAndStream: (userName: string, userAge: number) => Promise<boolean>
+  disconnect: () => void
+  forgetDevice: () => void
+  deviceStatus: string
+  batteryLevel: number | null
+  isConnected: boolean
+  isSupported: boolean
+  disconnectionReason: DisconnectionReason
+}
+
+const BluetoothHRMContext = createContext<BluetoothHRMContextType | undefined>(
+  undefined
+)
+
+interface BluetoothHRMProviderProps {
+  children: ReactNode
   dataLivenessTimeoutMs?: number
 }
 
-type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
-
-const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000 } = props
+function BluetoothHRMProvider({
+  children,
+  dataLivenessTimeoutMs = 10000,
+}: BluetoothHRMProviderProps) {
   const { sendData, connectionStatus } = useWebSocket()
+  const [userSettings, setUserSettings] = useUserSettings()
+  const { deviceId } = userSettings
+
+  const setDeviceId = (id: string | null) => {
+    setUserSettings((prev) => ({ ...prev, deviceId: id }))
+  }
+
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -93,7 +124,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
@@ -102,9 +132,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  // Watchdog for stale data
   useEffect(() => {
-    // A timeout of 0 disables the watchdog
     if (!dataLivenessTimeoutMs) return
 
     const interval = setInterval(() => {
@@ -120,7 +148,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             deviceRef.current.gatt.disconnect()
         }
       }
-    }, 2000) // Check every 2s
+    }, 2000)
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs])
 
@@ -167,7 +195,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         msg = `Bluetooth error: ${error.name}`
       }
     } else if (error instanceof Error) {
-      // Handle our custom timeout error
       if (error.message.includes('timeout')) {
         msg = 'Connection timed out. Wake up device and try again.'
       } else {
@@ -203,8 +230,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
-        // Use a timeout for the initial GATT connection to avoid infinite hanging
-        // 10 seconds is usually enough for a healthy BLE connection
         const server = await withTimeout(
           device.gatt!.connect(),
           10000,
@@ -297,11 +322,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [connectToGatt])
 
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<boolean> => {
-      userDetailsRef.current = {
-        name: userName || '',
-        age: userAge || 0,
-      }
+    async (userName: string, userAge: number): Promise<boolean> => {
+      userDetailsRef.current = { name: userName, age: userAge }
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')
@@ -336,8 +358,6 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         if (!device) {
           setDeviceStatus('Scanning for devices...')
           try {
-            // Note: acceptAllDevices is an alternative if filters fail,
-            // but strict filtering is better for UX to avoid showing non-HRM devices.
             device = await navigator.bluetooth.requestDevice({
               filters: [{ services: [HR_SERVICE_UUID] }],
               optionalServices: [BATTERY_SERVICE_UUID],
@@ -361,16 +381,32 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
   )
 
-  return {
+  const value = {
     connectAndStream,
     disconnect,
     forgetDevice,
     deviceStatus,
     batteryLevel,
     isConnected: deviceStatus.startsWith('Connected'),
-    isSupported, // Export this flag
+    isSupported,
     disconnectionReason,
   }
+
+  return (
+    <BluetoothHRMContext.Provider value={value}>
+      {children}
+    </BluetoothHRMContext.Provider>
+  )
 }
 
-export default useBluetoothHRM
+function useBluetoothHRM(): BluetoothHRMContextType {
+  const context = useContext(BluetoothHRMContext)
+  if (context === undefined) {
+    throw new Error(
+      'useBluetoothHRM must be used within a BluetoothHRMProvider'
+    )
+  }
+  return context
+}
+
+export { BluetoothHRMProvider, useBluetoothHRM }
