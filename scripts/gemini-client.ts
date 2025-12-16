@@ -98,7 +98,7 @@ async function main() {
   }
 }
 
-async function readTask(task: string | null, taskFile: string | null): Promise<string> {
+async function readTask(task: string | null | undefined, taskFile: string | null | undefined): Promise<string> {
   if (task) return task
   if (taskFile) {
     try {
