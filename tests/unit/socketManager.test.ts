@@ -24,6 +24,7 @@ import {
 } from '../../types/websocket'
 import { broadcast } from '../../utils/broadcast'
 import logger from '@/utils/logger'
+import { createDynamicMock } from './test-utils'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -99,22 +100,17 @@ describe('WebSocket Manager', () => {
   describe('Heartbeat and Watchdog', () => {
     let mockWss: WebSocketServer
     let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
+      tabataService: jest.Mocked<TabataTimer>
+      spotifyService: jest.Mocked<SpotifyPolling>
     }
-    let getSnapshot: () => StateSnapshot
+    let getSnapshot: jest.Mock<() => StateSnapshot>
 
     beforeEach(() => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createDynamicMock<TabataTimer>(),
+        spotifyService: createDynamicMock<SpotifyPolling>(),
       }
       getSnapshot = jest.fn()
     })
@@ -189,22 +185,17 @@ describe('WebSocket Manager', () => {
   describe('Calorie Calculation', () => {
     let mockWss: WebSocketServer
     let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
+      tabataService: jest.Mocked<TabataTimer>
+      spotifyService: jest.Mocked<SpotifyPolling>
     }
-    let getSnapshot: () => StateSnapshot
+    let getSnapshot: jest.Mock<() => StateSnapshot>
 
     beforeEach(() => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createDynamicMock<TabataTimer>(),
+        spotifyService: createDynamicMock<SpotifyPolling>(),
       }
       getSnapshot = jest.fn()
     })
@@ -259,23 +250,17 @@ describe('WebSocket Manager', () => {
   describe('Message Handling', () => {
     let mockWss: WebSocketServer
     let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
+      tabataService: jest.Mocked<TabataTimer>
+      spotifyService: jest.Mocked<SpotifyPolling>
     }
-    let getSnapshot: () => StateSnapshot
+    let getSnapshot: jest.Mock<() => StateSnapshot>
     let mockWs: MockWebSocket
 
     beforeEach(() => {
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-          setConfig: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createDynamicMock<TabataTimer>(),
+        spotifyService: createDynamicMock<SpotifyPolling>(),
       }
       getSnapshot = jest.fn().mockReturnValue({
         timer: {
@@ -284,6 +269,7 @@ describe('WebSocket Manager', () => {
         spotify: {
           /* mock spotify state */
         },
+        hrmData: [], // Add this line
       })
       initSocketManager(mockWss, mockServices, getSnapshot)
 
@@ -371,9 +357,12 @@ describe('WebSocket Manager', () => {
 
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' })
+      const parseSpy = jest.spyOn(ClientCommandMessageSchema, 'parse')
+      // This is a bit of a hack to test the default case of the switch statement
+      // We are telling zod to parse the message as a valid message, but with a type that we know is not handled
+      parseSpy.mockReturnValue({
+        type: 'SOME_GARBAGE',
+      } as any)
 
       mockWs.emit('message', message.toString())
 
@@ -381,6 +370,7 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
+      parseSpy.mockRestore()
     })
   })
 })
