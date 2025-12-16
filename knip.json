@@ -28,7 +28,9 @@
   ],
   "ignoreBinaries": [
     "sleep",
-    "python3"
+    "python3",
+    "scripts/test-json-with-server.sh",
+    "scripts/test-with-server.sh"
   ],
   "next": {
     "entry": [
