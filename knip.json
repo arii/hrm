@@ -25,7 +25,8 @@
     ".next/**",
     "dist/**",
     ".storybook/preview.tsx",
-    "scripts/get-available-port.mjs"
+    "scripts/get-available-port.mjs",
+    "ecosystem.config.cjs"
   ],
   "ignoreBinaries": [
     "sleep",
