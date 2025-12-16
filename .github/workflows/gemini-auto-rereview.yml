@@ -30,12 +30,15 @@ jobs:
           LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
 
           # Determine PREVIOUS_COMMIT safely
-          if [ "${{ github.event_name }}" == "pull_request" ] && [ -n "${{ github.event.before }}" ]; then
-            # For synchronize events, use the previous commit from the push payload
-            PREVIOUS_COMMIT=${{ github.event.before }}
+          PREVIOUS_COMMIT=""
+          # For 'synchronize' events, the 'before' SHA is the commit before the push.
+          # If the PR was rebased, this SHA might become invalid.
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && git rev-parse --verify ${{ github.event.before }}^{commit} >/dev/null 2>&1; then
+              PREVIOUS_COMMIT=${{ github.event.before }}
           else
-            # Fallback for other events
-            PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
+              # If 'before' is invalid (rebase) or null (initial push), fall back to the merge-base.
+              # This provides a diff of all changes in the PR against the target branch.
+              PREVIOUS_COMMIT=$(git merge-base ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }})
           fi
 
           # Check if this is just a merge commit
