@@ -93,4 +93,34 @@ describe('ConnectView', () => {
       screen.queryByText('Please enter a valid weight (30-200)')
     ).not.toBeInTheDocument()
   })
+
+  it('does not show a validation error for an empty age', () => {
+    render(<ConnectView {...defaultProps} />)
+    const ageInput = screen.getByLabelText('Your Age')
+    fireEvent.change(ageInput, { target: { value: '' } })
+    fireEvent.blur(ageInput)
+    expect(
+      screen.queryByText('Please enter a valid age (1-120)')
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show a validation error for an empty height', () => {
+    render(<ConnectView {...defaultProps} />)
+    const heightInput = screen.getByLabelText('Your Height (cm)')
+    fireEvent.change(heightInput, { target: { value: '' } })
+    fireEvent.blur(heightInput)
+    expect(
+      screen.queryByText('Please enter a valid height (100-250)')
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show a validation error for an empty weight', () => {
+    render(<ConnectView {...defaultProps} />)
+    const weightInput = screen.getByLabelText('Your Weight (kg)')
+    fireEvent.change(weightInput, { target: { value: '' } })
+    fireEvent.blur(weightInput)
+    expect(
+      screen.queryByText('Please enter a valid weight (30-200)')
+    ).not.toBeInTheDocument()
+  })
 })
