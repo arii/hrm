@@ -39,6 +39,7 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  isStale: boolean
 }
 
 export default function ConnectView({
@@ -64,6 +65,7 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  isStale,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
 
@@ -247,6 +249,7 @@ export default function ConnectView({
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
               isAlerting={false}
+              isStale={isStale}
             />
           </Box>
         )}

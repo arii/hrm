@@ -12,6 +12,7 @@ export interface HrTileProps {
   isAlerting?: boolean
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
+  isStale?: boolean
 }
 
 export interface HeartRateZonesProps {

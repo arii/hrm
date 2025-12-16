@@ -23,6 +23,8 @@ import { getWebSocketURL } from '../utils/urls'
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
+  timestamp: number
+  isStale?: boolean
 }
 
 interface WebSocketState {
@@ -97,8 +99,11 @@ export const WebSocketProvider = ({
       case 'INITIAL_STATE': {
         // When the initial state is loaded, ensure all HRM data is marked as connected.
         const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
+          message.payload.hrmData?.map((d) => ({
+            ...d,
+            isConnected: true,
+            timestamp: Date.now(),
+          })) || []
         return {
           ...state,
           ...message.payload,
@@ -125,6 +130,7 @@ export const WebSocketProvider = ({
                   ...existingUser,
                   ...updatedUser,
                   isConnected: true,
+                  timestamp: Date.now(),
                 }
               : { ...existingUser, isConnected: true }
           }
@@ -138,7 +144,11 @@ export const WebSocketProvider = ({
               (existingUser) => existingUser.clientId === newUser.clientId
             )
           ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
+            mergedHrmData.push({
+              ...newUser,
+              isConnected: true,
+              timestamp: Date.now(),
+            })
           }
         })
 

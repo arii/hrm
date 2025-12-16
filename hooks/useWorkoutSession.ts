@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useCallback } from 'react'
+import { useEffect, useReducer, useRef, useCallback, useState } from 'react'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -73,13 +73,20 @@ function sessionReducer(
 interface WorkoutSessionOptions {
   isConnected: boolean
   totalCalories?: number
+  hrmDataTimestamp?: number
+  stalenessThreshold?: number
+  connectionStatus: string
 }
 
 export const useWorkoutSession = ({
   isConnected,
   totalCalories = 0,
+  hrmDataTimestamp,
+  stalenessThreshold = 5000,
+  connectionStatus,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const [isStale, setIsStale] = useState(true)
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -141,6 +148,25 @@ export const useWorkoutSession = ({
     }
   }, [state.status])
 
+  useEffect(() => {
+    const stalenessCheck = setInterval(() => {
+      if (connectionStatus !== 'Connected') {
+        setIsStale(true)
+        return
+      }
+      if (hrmDataTimestamp) {
+        const now = Date.now()
+        const timeDiff = now - hrmDataTimestamp
+        setIsStale(timeDiff > stalenessThreshold)
+      } else {
+        // If connected but no data yet, it's stale.
+        setIsStale(true)
+      }
+    }, 1000)
+
+    return () => clearInterval(stalenessCheck)
+  }, [hrmDataTimestamp, stalenessThreshold, connectionStatus])
+
   const resetWorkout = useCallback(() => {
     const session = sessionDataRef.current
     session.startTime = null
@@ -166,5 +192,6 @@ export const useWorkoutSession = ({
     endWorkout,
     workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
+    isStale,
   }
 }
