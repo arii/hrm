@@ -16,7 +16,7 @@ We need a structured and performant logging solution for the HRM application. Th
 - The goal of having a logger that is well-suited for a Node.js environment.
 - The need for a human-readable format for development.
 
-## Considered Options
+## Alternatives Considered
 
 - Pino
 - Winston

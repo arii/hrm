@@ -16,7 +16,7 @@ We need a secure and flexible authentication solution for the HRM application. T
 - The need for a solution that handles session management and token handling.
 - The goal of having a solution that is easy to integrate with Next.js.
 
-## Considered Options
+## Alternatives Considered
 
 - NextAuth.js
 - Auth0

@@ -16,7 +16,7 @@ As the project grows, the reasoning behind architectural decisions can be lost. 
 - The need to understand the consequences of past decisions.
 - The goal of maintaining a consistent architectural vision.
 
-## Considered Options
+## Alternatives Considered
 
 - Use ad-hoc documentation (e.g., in READMEs, wikis).
 - Use a formal ADR process.

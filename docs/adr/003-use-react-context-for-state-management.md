@@ -16,7 +16,7 @@ We need a consistent and predictable way to manage the global state of the appli
 - The goal of leveraging built-in React features as much as possible.
 - The need to share state between different components in the application.
 
-## Considered Options
+## Alternatives Considered
 
 - React Context API
 - Zustand

@@ -16,7 +16,7 @@ We need a modern, robust, and scalable framework for building the user interface
 - The need for a framework with a strong community and good documentation.
 - The goal of having an integrated routing and data-fetching solution.
 
-## Considered Options
+## Alternatives Considered
 
 - Next.js
 - Create React App (CRA)

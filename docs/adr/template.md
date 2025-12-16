@@ -15,7 +15,7 @@
 - {decision driver 2}
 - ...
 
-## Considered Options
+## Alternatives Considered
 
 - {option 1}
 - {option 2}
