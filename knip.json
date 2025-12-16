@@ -26,7 +26,6 @@
   ],
   "ignore": [
     "babel-jest",
-    "@/components/WorkoutColumns",
     "services/googleDocParser.ts#WorkoutTableData",
     "services/spotifyPlaylistService.ts#SpotifyPlaylistItem",
     "services/spotifyPlaylistService.ts#SpotifyPlaylist",
@@ -36,7 +35,9 @@
     "types/index.ts#HeartRateZonesProps",
     "types/index.ts#TimerDisplayProps",
     "types/index.ts#WorkoutColumnItem",
-    "types/index.ts#WorkoutColumnsProps"
+    "types/index.ts#WorkoutColumnsProps",
+    "types/index.ts#WorkoutItem",
+    "types/index.ts#WorkoutData"
   ],
   "ignoreBinaries": [
     "scripts/test-json-with-server.sh",
