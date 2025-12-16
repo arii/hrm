@@ -29,7 +29,7 @@ This section clarifies when and why `package.json` and `pnpm-lock.yaml` should b
 When a change requires adding, updating, or removing an external package from `node_modules`, the following are required:
 
 - **Required Files**: The PR **must** include changes to `package.json` and `pnpm-lock.yaml`.
-- **Security Review**: Run `pnpm audit` and document any new or existing vulnerabilities.
+- **Security Review**: Before committing, run `pnpm audit` to check for vulnerabilities. If any are found, document them in the pull request.
 - **Version Verification**: Confirm all new or updated package versions are stable (no alpha/beta/rc).
 - **Breaking Changes**: Document any breaking changes introduced by the dependency update and include necessary migration steps.
 - **Testing**: Verify the application builds and all tests pass with the new dependencies.
@@ -41,6 +41,8 @@ When a change requires adding, updating, or removing an external package from `n
 When creating new internal modules or utilities (e.g., a new file in `lib/` or `utils/`) that **only** use built-in Node.js APIs or dependencies already listed in `package.json`, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
 
 - **No Lockfile Changes**: The PR should not include modifications to `package.json` or `pnpm-lock.yaml`.
-- **Automated Checks**: The CI pipeline includes a `depcheck` step to help identify unused dependencies. Adding new internal modules should not introduce unused dependency warnings.
+- **Automated Checks**: The CI pipeline runs several checks to maintain code quality. We encourage running these locally before pushing your changes:
+  - **Linting**: Run `pnpm run lint` to catch common code quality issues.
+  - **Dependency Check**: The pipeline uses `depcheck` to identify unused dependencies. You can see the configuration and ignored packages in [`package.json`](./package.json) under the `depcheck` key. Adding new internal modules should not introduce unused dependency warnings.
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
