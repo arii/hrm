@@ -12,6 +12,7 @@ export interface HrmData {
   maxHr: number
   name?: string
   age?: number
+  weight?: number
   calories: number // Added field
 }
 
@@ -207,6 +208,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({

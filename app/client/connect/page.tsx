@@ -7,10 +7,12 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useState, useEffect } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [hasSavedDevice, setHasSavedDevice] = useState(false)
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
 
@@ -23,7 +25,20 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
+    hasSavedDevice,
   } = useBluetoothHRM()
+
+  useEffect(() => {
+    setHasSavedDevice(!!localStorage.getItem('hrm_device_id'))
+    if (deviceStatus.includes('memory')) {
+      setHasSavedDevice(false)
+    }
+  }, [deviceStatus])
+
+  const handleForgetDevice = async () => {
+    await forgetDevice()
+    setHasSavedDevice(false)
+  }
 
   const { connectionStatus, hrmData } = useWebSocket()
 
@@ -36,7 +51,8 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    const weight = userWeight ? parseFloat(userWeight) : 0
+    connectAndStream(userName, age, weight)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
@@ -62,6 +78,7 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={caloriesBurned}
+      hasSavedDevice={hasSavedDevice}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}
@@ -75,7 +92,7 @@ export default function ConnectPage() {
       batteryLevel={batteryLevel}
       onConnect={handleConnect}
       onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
+      onForgetDevice={handleForgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
       hrZoneProps={{

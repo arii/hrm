@@ -14,7 +14,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -30,6 +30,7 @@ const validate = (value: string, min: number, max: number, name: string) => {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  hasSavedDevice: boolean
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -59,6 +60,7 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
+  hasSavedDevice,
   userName,
   setUserName,
   userAge,
@@ -84,28 +86,37 @@ export default function ConnectView({
   onStartWorkout,
   onEndWorkout,
 }: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
+  const [isForgetting, setIsForgetting] = useState(false)
+  const [showForgetSuccess, setShowForgetSuccess] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (showForgetSuccess) {
+      const timer = setTimeout(() => setShowForgetSuccess(false), 3000)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [showForgetSuccess])
+
+  const handleForgetDevice = async () => {
+    setIsForgetting(true)
+    try {
+      await onForgetDevice()
+      setShowForgetSuccess(true)
+    } catch (error) {
+      console.error('Forget device failed:', error)
+    } finally {
+      setIsForgetting(false)
+    }
+  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
     if (level > 50) return <BatteryChargingFullIcon color="action" />
     if (level > 20) return <BatteryStdIcon color="warning" />
     return <BatteryAlertIcon color="error" />
-  }
-
-  const handleFullReset = async () => {
-    setIsResetting(true)
-    try {
-      await onForgetDevice()
-      onReset()
-    } catch (error) {
-      console.error('Reset failed:', error)
-    } finally {
-      setIsResetting(false)
-    }
   }
 
   if (!isSupported) {
@@ -134,6 +145,12 @@ export default function ConnectView({
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Connect Heart Rate Monitor
         </Typography>
+
+        {showForgetSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Device successfully forgotten.
+          </Alert>
+        )}
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
@@ -226,7 +243,12 @@ export default function ConnectView({
           !isConnected &&
           !deviceStatus.includes('Disconnected') && (
             <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
+              severity={
+                deviceStatus.includes('Failed') ||
+                deviceStatus.includes('unavailable')
+                  ? 'warning'
+                  : 'info'
+              }
               sx={{ mb: 2 }}
             >
               {deviceStatus}
@@ -292,6 +314,18 @@ export default function ConnectView({
                 </Typography>
               )}
             </Stack>
+          )}
+          {hasSavedDevice && !isConnected && (
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleForgetDevice}
+                disabled={isForgetting}
+              >
+                {isForgetting ? 'Forgetting...' : 'Forget Saved Device'}
+              </Button>
+            </Box>
           )}
         </Box>
 
@@ -397,18 +431,19 @@ export default function ConnectView({
         >
           <Button
             variant="contained"
-            color="error"
-            onClick={handleFullReset}
-            disabled={isResetting || !hasStarted}
+            color="warning"
+            onClick={onReset}
+            disabled={!hasStarted}
           >
-            {isResetting ? 'Resetting...' : 'Reset System & Device'}
+            Reset System & Device
           </Button>
           <Typography
             variant="caption"
             display="block"
             sx={{ mt: 1, color: 'text.secondary' }}
           >
-            Resets server state AND forgets Bluetooth device connection.
+            This will reset the current workout session and clear connection
+            data.
           </Typography>
         </Box>
       </Container>
