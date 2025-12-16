@@ -87,6 +87,7 @@ describe('useBluetoothHRM', () => {
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
+    localStorage.clear()
   })
 
   type UseBluetoothHRMReturn = ReturnType<typeof useBluetoothHRM>
@@ -225,5 +226,41 @@ describe('useBluetoothHRM', () => {
 
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
+  })
+
+  it('should clear saved device ID after 3 failed connection attempts', async () => {
+    localStorage.setItem('hrm_device_id', 'test-device-id')
+    mockBluetooth.getDevices.mockResolvedValue([mockDevice])
+    mockDevice.gatt.connect.mockRejectedValue(new Error('Connection failed'))
+
+    const { result } = renderHook(() =>
+      useBluetoothHRM({ maxConnectionAttempts: 3 })
+    )
+
+    // Attempt to connect 3 times
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        try {
+          await result.current.connectAndStream('Test User', 30)
+        } catch (_e) {
+          // Expected to fail
+        }
+      })
+    }
+
+    expect(localStorage.getItem('hrm_device_id')).toBe(null)
+    expect(result.current.deviceStatus).toContain('forgotten')
+  })
+
+  it('should forget device and clear from localStorage', async () => {
+    localStorage.setItem('hrm_device_id', 'test-device-id')
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      await result.current.forgetDevice()
+    })
+
+    expect(localStorage.getItem('hrm_device_id')).toBe(null)
+    expect(result.current.deviceStatus).toContain('revoked')
   })
 })
