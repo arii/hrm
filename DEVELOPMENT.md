@@ -20,6 +20,22 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Spotify Controls Overhaul**: The Spotify controls were redesigned and implemented, including volume control, device selection, and improved UI feedback.
 - **Bluetooth Connection Flow**: The Bluetooth HRM connection page (`client/connect`) was stabilized and now includes auto-connect functionality.
 
+## Dependency Management and Code Hygiene with Knip
+
+To maintain a clean and efficient codebase, this project uses [Knip](https://knip.dev/) to detect unused files, dependencies, and exports. Knip is integrated into our CI/CD pipeline to ensure that all code additions are continuously monitored for unused code.
+
+### Running Knip Locally
+
+Before submitting a pull request, you can run Knip locally to identify any issues:
+
+```bash
+pnpm run knip
+```
+
+### Configuration
+
+Knip is configured in the `knip.ts` file in the root of the project. This file defines the entry points for the application, as well as any files or dependencies that should be ignored.
+
 ## Dependency Management Guidelines
 
 This section clarifies when and why `package.json` and `pnpm-lock.yaml` should be modified.
@@ -43,6 +59,6 @@ When creating new internal modules or utilities (e.g., a new file in `lib/` or `
 - **No Lockfile Changes**: The PR should not include modifications to `package.json` or `pnpm-lock.yaml`.
 - **Running Local Checks**: The CI pipeline runs several checks to maintain code quality. We encourage running these locally before pushing your changes:
   - **Linting**: Run `pnpm run lint` to catch common code quality issues.
-  - **Dependency Check**: The pipeline uses `depcheck` to identify unused dependencies. You can see the configuration and ignored packages in the `depcheck` section of [`package.json`](./package.json). Adding new internal modules should not introduce unused dependency warnings.
+  - **Dependency Check**: The pipeline uses `knip` to identify unused dependencies. You can see the configuration in the [`knip.ts`](./knip.ts) file. Adding new internal modules should not introduce unused dependency warnings.
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.

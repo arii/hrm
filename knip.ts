@@ -45,7 +45,12 @@ const config: KnipConfig = {
     // Eslint plugin
     'eslint-plugin-react',
   ],
-  ignoreBinaries: [],
+  ignoreBinaries: [
+    'scripts/test-json-with-server.sh',
+    'scripts/test-with-server.sh',
+    'python3',
+    'sleep',
+  ],
 };
 
 export default config;
