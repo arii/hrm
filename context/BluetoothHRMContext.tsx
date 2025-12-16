@@ -6,7 +6,7 @@ import useBluetoothHRM from '../hooks/useBluetoothHRM'
 export interface BluetoothHRMContextType {
   connectAndStream: (userName?: string, userAge?: number) => Promise<boolean>
   disconnect: () => void
-  forgetDevice: () => void
+  forgetDevice: () => Promise<void>
   deviceStatus: string
   batteryLevel: number | null
   isConnected: boolean
@@ -15,8 +15,7 @@ export interface BluetoothHRMContextType {
 }
 
 // Create the context with a null default value
-export const BluetoothHRMContext =
-  createContext<BluetoothHRMContextType | null>(null)
+export const BluetoothHRMContext = createContext<BluetoothHRMContextType | null>(null)
 
 // Create the provider component
 export const BluetoothHRMProvider = ({ children }: { children: ReactNode }) => {

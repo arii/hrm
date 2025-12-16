@@ -1,8 +1,8 @@
 'use client'
 
-import { BluetoothHRMProvider } from '@/context/BluetoothHRMContext'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
+import { BluetoothHRMProvider } from '@/context/BluetoothHRMContext'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

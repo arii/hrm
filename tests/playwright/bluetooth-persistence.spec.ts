@@ -35,7 +35,9 @@ test.describe('Bluetooth HRM Connection Persistence', () => {
     // 3. Navigate to a different page (the main dashboard)
     await page.goto('/', { waitUntil: 'networkidle' })
     // Verify that navigation was successful by checking for a known element
-    await expect(page.getByRole('heading', { name: 'HRM Dashboard' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'HRM Dashboard' })
+    ).toBeVisible()
 
     // 4. Navigate back to the connect page
     await page.goto('/client/connect')
