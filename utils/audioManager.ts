@@ -3,7 +3,7 @@
  * Handles beep sounds for countdown and phase transitions
  */
 
-export class AudioManager {
+class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false

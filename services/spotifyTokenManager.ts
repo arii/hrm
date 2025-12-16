@@ -23,7 +23,7 @@ const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
   }
 }
 
-export interface SpotifyTokenPayload {
+interface SpotifyTokenPayload {
   provider: string
   sub: string
   access_token: string

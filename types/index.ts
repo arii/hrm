@@ -14,31 +14,10 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-export interface HeartRateZonesProps {
-  maxHr: number
-}
-
-import { TimerMode, TimerPhase } from './websocket'
-
-export interface TimerDisplayProps {
-  phase: TimerPhase
-  timeRemaining: number
-  timeElapsed: number
-  cycle: number
-  totalCycles: number
-  mode: TimerMode
-  workDuration?: number
-  restDuration?: number
-}
-
 // Renamed to avoid conflict
 export interface WorkoutColumnItem {
   title: string
   details?: string
-}
-
-export interface WorkoutColumnsProps {
-  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
 }
 
 // Correct WorkoutItem for the parser and WebSocket

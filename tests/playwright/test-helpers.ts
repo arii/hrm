@@ -22,18 +22,13 @@ export {
   // Wait utilities
   waitForPageReady,
   waitForFontsLoaded,
-  waitForWebSocketConnection,
+
   // Mask selectors and helpers
-  VRT_MASK_SELECTORS,
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
   // Setup utilities
   replaceIframeWithStableWorkout,
-  setupVisualRegressionTest,
-  setupMinimalVisualRegressionTest,
-  setupComprehensiveTest,
-  setupCoreTest,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

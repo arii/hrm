@@ -21,7 +21,7 @@ import {
 import { getWebSocketURL } from '../utils/urls'
 
 // Client-side extension of HrmData to include connection status
-export interface HrmData extends ServerHrmData {
+interface HrmData extends ServerHrmData {
   isConnected: boolean
 }
 
@@ -58,14 +58,14 @@ const INITIAL_STATE: WebSocketState = {
   spotifyServiceInitialized: true,
 }
 
-export interface WebSocketContextType extends WebSocketState {
+interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
   connect: () => void
   disconnect: () => void
 }
 
-export const WebSocketContext = createContext<WebSocketContextType | null>(null)
+const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider = ({
   children,

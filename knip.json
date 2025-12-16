@@ -1,0 +1,50 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "scripts/**/*.ts",
+    "server.ts",
+    "proxy.ts"
+  ],
+  "project": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "constants/**/*.ts",
+    "context/**/*.ts",
+    "context/**/*.tsx",
+    "hooks/**/*.ts",
+    "hooks/**/*.tsx",
+    "lib/**/*.ts",
+    "services/**/*.ts",
+    "stories/**/*.ts",
+    "stories/**/*.tsx",
+    "types/**/*.ts",
+    "utils/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ],
+  "ignore": [
+    "next.config.js",
+    ".next/**",
+    "dist/**"
+  ],
+  "ignoreBinaries": [
+    "sleep",
+    "python3"
+  ],
+  "next": {
+    "entry": [
+      "app/layout.tsx",
+      "app/page.tsx",
+      "app/api/**/route.ts",
+      "app/**/*.page.tsx",
+      "app/client/**/page.tsx"
+    ]
+  },
+  "storybook": {
+    "config": ".storybook/{main.ts,main.tsx,preview.ts,preview.tsx}",
+    "entry": ".storybook/**/*.{ts,tsx}",
+    "project": "**/*.{ts,tsx}"
+  }
+}

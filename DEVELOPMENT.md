@@ -14,6 +14,26 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
+### Dead Code Detection
+
+To maintain a clean and lean codebase, this project uses `knip` to detect and remove dead code (unused files, exports, dependencies, etc.).
+
+**How to run `knip` locally:**
+
+```bash
+pnpm run knip
+```
+
+This will run the dead code analysis and report any issues to the console.
+
+**How to automatically fix issues:**
+
+```bash
+pnpm run knip -- --fix
+```
+
+This will automatically remove any unused exports and dependencies.
+
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.

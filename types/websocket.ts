@@ -146,7 +146,7 @@ export interface SpotifyCommandMessage {
   playlistUri?: string
 }
 
-export interface GetStateMessage {
+interface GetStateMessage {
   type: 'GET_STATE'
 }
 
@@ -163,7 +163,7 @@ export interface SpotifyExecutionMessage {
   payload: SpotifyCommandMessage
 }
 
-export interface PingMessage {
+interface PingMessage {
   type: 'PING'
 }
 
@@ -181,35 +181,35 @@ import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
-export const HrmInputDataSchema = z.object({
+const HrmInputDataSchema = z.object({
   value: z.number().nullable().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
 })
 
-export const HrmInputMessageSchema = z.object({
+const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: HrmInputDataSchema,
 })
 
-export const TimerCommandMessageSchema = z.object({
+const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
 })
 
-export const TimerModeCommandMessageSchema = z.object({
+const TimerModeCommandMessageSchema = z.object({
   type: z.literal('SET_MODE'),
   mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
 })
 
-export const TimerConfigMessageSchema = z.object({
+const TimerConfigMessageSchema = z.object({
   type: z.literal('TIMER_CONFIG'),
   workDuration: z.number(),
   restDuration: z.number(),
 })
 
-export const SpotifyCommandMessageSchema = z.object({
+const SpotifyCommandMessageSchema = z.object({
   type: z.literal('SPOTIFY_COMMAND'),
   command: z.union([
     z.literal('PLAY'),
@@ -225,16 +225,16 @@ export const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(),
 })
 
-export const GetStateMessageSchema = z.object({
+const GetStateMessageSchema = z.object({
   type: z.literal('GET_STATE'),
 })
 
-export const ClientRegistrationMessageSchema = z.object({
+const ClientRegistrationMessageSchema = z.object({
   type: z.literal('REGISTER_CLIENT'),
   role: z.union([z.literal('dashboard'), z.literal('controller')]),
 })
 
-export const PingMessageSchema = z.object({
+const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
