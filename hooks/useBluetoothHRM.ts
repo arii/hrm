@@ -14,13 +14,28 @@ const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
 
-// ... (Keep existing parseHeartRate and cookie helpers) ...
+/**
+ * @function parseHeartRate
+ * @description Parses the heart rate value from the raw DataView received from a BLE device.
+ * It handles both 8-bit and 16-bit heart rate value formats based on the flags.
+ * @param {DataView} value - The raw data from the heart rate measurement characteristic.
+ * @returns {number} The parsed heart rate in beats per minute.
+ */
 const parseHeartRate = (value: DataView): number => {
   const flags = value.getUint8(0)
   const is16Bit = flags & 0x1
   return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
 }
 
+/**
+ * @function setCookie
+ * @description Sets a browser cookie with a specified name, value, and expiration.
+ * This function is a no-op in non-browser environments.
+ * @param {string} name - The name of the cookie.
+ * @param {string} value - The value to store in the cookie.
+ * @param {number} [days=365] - The number of days until the cookie expires.
+ * @sideeffect Creates or updates a cookie in `document.cookie`.
+ */
 const setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
@@ -30,6 +45,13 @@ const setCookie = (name: string, value: string, days = 365) => {
   }
 }
 
+/**
+ * @function getCookie
+ * @description Retrieves the value of a cookie by its name.
+ * Returns an empty string if the cookie is not found or in a non-browser environment.
+ * @param {string} name - The name of the cookie to retrieve.
+ * @returns {string} The decoded value of the cookie.
+ */
 const getCookie = (name: string): string => {
   if (typeof document === 'undefined') return ''
   return document.cookie.split('; ').reduce((r, v) => {
@@ -39,7 +61,16 @@ const getCookie = (name: string): string => {
 }
 
 /**
- * Helper to race a promise against a timeout
+ * @function withTimeout
+ * @description A utility that races a promise against a timeout.
+ * If the promise does not resolve or reject within the specified time, the returned promise
+ * will reject with a custom timeout error message.
+ * @template T
+ * @param {Promise<T>} promise - The promise to race against the timeout.
+ * @param {number} ms - The timeout duration in milliseconds.
+ * @param {string} msg - The error message to use if the timeout is reached.
+ * @returns {Promise<T>} A promise that resolves with the original promise's value or rejects
+ * if the original promise rejects or the timeout is exceeded.
  */
 const withTimeout = <T>(
   promise: Promise<T>,
@@ -61,12 +92,68 @@ const withTimeout = <T>(
   })
 }
 
+/**
+ * @interface UseBluetoothHRMProps
+ * @description Props for configuring the useBluetoothHRM hook.
+ */
 interface UseBluetoothHRMProps {
+  /**
+   * @property {number} [dataLivenessTimeoutMs=10000]
+   * @description The timeout in milliseconds for determining if the Bluetooth data stream is stale.
+   * If no new data is received within this period, the hook will attempt to reconnect.
+   * A value of 0 disables this feature.
+   */
   dataLivenessTimeoutMs?: number
 }
 
+/**
+ * @typedef {'manual' | 'timeout' | 'signal_loss' | null} DisconnectionReason
+ * @description Represents the reason for a device disconnection.
+ * - `manual`: The user explicitly called the `disconnect` function.
+ * - `timeout`: The connection was dropped due to stale data (no heart rate updates received).
+ * - `signal_loss`: The device's `gattserverdisconnected` event was fired unexpectedly.
+ * - `null`: The device is connected or has not yet been disconnected.
+ */
 type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 
+/**
+ * @hook useBluetoothHRM
+ * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
+ * It handles device discovery, connection, data streaming, and automatic reconnection.
+ *
+ * @param {UseBluetoothHRMProps} props - Configuration properties for the hook.
+ *
+ * @returns {object} An object containing functions and state for managing a Bluetooth HRM device.
+ * @property {Function} connectAndStream - Initiates device connection and data streaming.
+ * @property {Function} disconnect - Manually disconnects the device.
+ * @property {Function} forgetDevice - Disconnects and forgets the device.
+ * @property {string} deviceStatus - A human-readable string of the current connection status.
+ * @property {number | null} batteryLevel - The device's battery level (0-100), or null if unavailable.
+ * @property {boolean} isConnected - True if the device is connected and streaming.
+ * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
+ * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
+ *
+ * @example
+ * ```tsx
+ * const {
+ *   connectAndStream,
+ *   disconnect,
+ *   deviceStatus,
+ *   isConnected,
+ *   batteryLevel
+ * } = useBluetoothHRM({ dataLivenessTimeoutMs: 5000 });
+ *
+ * return (
+ *   <div>
+ *     <p>Device Status: {deviceStatus}</p>
+ *     <p>Connected: {isConnected ? 'Yes' : 'No'}</p>
+ *     {batteryLevel && <p>Battery: {batteryLevel}%</p>}
+ *     <button onClick={() => connectAndStream('John Doe', 30)}>Connect</button>
+ *     <button onClick={disconnect}>Disconnect</button>
+ *   </div>
+ * );
+ * ```
+ */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const { dataLivenessTimeoutMs = 10000 } = props
   const { sendData, connectionStatus } = useWebSocket()
@@ -124,6 +211,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     return () => clearInterval(interval)
   }, [dataLivenessTimeoutMs])
 
+  /**
+   * @function disconnect
+   * @description Manually disconnects from the currently connected Bluetooth device.
+   * This is treated as a manual action and will prevent automatic reconnection attempts.
+   * Resets the device status, saved device, and battery level.
+   * @sideeffect Clears any pending reconnection timeouts.
+   * @sideeffect Disconnects the GATT server if connected.
+   * @sideeffect Updates component state for status, saved device, and battery level.
+   */
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     setDisconnectionReason('manual')
@@ -136,6 +232,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     deviceRef.current = null
   }, [])
 
+  /**
+   * @function forgetDevice
+   * @description Disconnects from the device, clears any saved device ID from cookies,
+   * and attempts to use the `device.forget()` API to revoke permissions for all previously
+   * granted Bluetooth devices.
+   * @async
+   * @returns {Promise<void>} A promise that resolves when the forget operation is complete.
+   * @sideeffect Calls the `disconnect` function.
+   * @sideeffect Deletes the 'hrm_device_id' cookie.
+   * @sideeffect Calls `device.forget()` on all granted Bluetooth devices.
+   * @sideeffect Updates the device status message.
+   */
   const forgetDevice = useCallback(async () => {
     logger.info('Initiating device forget sequence...')
     disconnect()
@@ -296,6 +404,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     connectToGattRef.current = connectToGatt
   }, [connectToGatt])
 
+  /**
+   * @function connectAndStream
+   * @description Initiates the process of connecting to a Bluetooth HRM device and streaming data.
+   * It first checks for a previously saved device and attempts to reconnect. If no device is saved,
+   * it opens the browser's device picker UI for the user to select a new device.
+   *
+   * @param {string} [userName] - The name of the user, used for display purposes.
+   * @param {number} [userAge] - The age of the user, used to calculate max heart rate.
+   * @returns {Promise<boolean>} A promise that resolves to `true` if the connection is successful,
+   * and `false` otherwise.
+   * @sideeffect Updates user details ref for use in data streaming.
+   * @sideeffect May trigger the browser's Bluetooth device picker.
+   * @sideeffect Updates component state to reflect the connection process.
+   */
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: number): Promise<boolean> => {
       userDetailsRef.current = {
