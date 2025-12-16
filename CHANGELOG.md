@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.11.0](https://github.com/arii/hrm/compare/v0.10.0...v0.11.0) (2025-12-16)
+
+
+### Features
+
+* add health check endpoints ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* add health check endpoints ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* Address PR feedback for volume control consistency ([2a4912f](https://github.com/arii/hrm/commit/2a4912fa18be57e2bb990ba2b8fca89be4661ec0))
+* Arrange HR tiles horizontally ([#1551](https://github.com/arii/hrm/issues/1551)) ([9a33e0b](https://github.com/arii/hrm/commit/9a33e0bccc8993f18cc8f2e78e12af31e0dfb2e8))
+* **hooks:** make `useBluetoothHRM` data liveness timeout configurable ([#1536](https://github.com/arii/hrm/issues/1536)) ([6f18eb6](https://github.com/arii/hrm/commit/6f18eb631b09b5e80d8e3c6aff6743b4d1867502))
+* Implement Dynamic Port Configuration for Testing ([de84a93](https://github.com/arii/hrm/commit/de84a938740020ebaa84a2c3779a4b3dee4046e6))
+* Implement Volume Control Consistency ([2a4912f](https://github.com/arii/hrm/commit/2a4912fa18be57e2bb990ba2b8fca89be4661ec0))
+
+
+### Bug Fixes
+
+* Address final PR feedback and remove extraneous file ([2a4912f](https://github.com/arii/hrm/commit/2a4912fa18be57e2bb990ba2b8fca89be4661ec0))
+* address linting errors and apply PR feedback ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* Address Next.js middleware file convention deprecation ([#1623](https://github.com/arii/hrm/issues/1623)) ([9a61ca4](https://github.com/arii/hrm/commit/9a61ca46e69de0620938ade5105c91ec48d402a8))
+* Address PR feedback and fix linting errors ([2a4912f](https://github.com/arii/hrm/commit/2a4912fa18be57e2bb990ba2b8fca89be4661ec0))
+* **build:** Resolve TypeScript error in zones.ts ([3d2ad11](https://github.com/arii/hrm/commit/3d2ad117f337e43bd538e30ba2853c6ee8faf7ef))
+* correct path in health check unit test ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* **lint:** Correct formatting in zones.ts ([3d2ad11](https://github.com/arii/hrm/commit/3d2ad117f337e43bd538e30ba2853c6ee8faf7ef))
+* manually remove semicolons to fix linting errors ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+* resolve all linting errors ([492f26d](https://github.com/arii/hrm/commit/492f26d56537e1df0748f816dff7d4b6de1b53b3))
+* resolve build error by removing empty hook ([6a85900](https://github.com/arii/hrm/commit/6a85900dbab838e1f296e97e9d13d4ac787af33c))
+* resolve build errors ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting error in detailed health route ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting errors ([492f26d](https://github.com/arii/hrm/commit/492f26d56537e1df0748f816dff7d4b6de1b53b3))
+* resolve final linting errors ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve final linting issue ([5ad99db](https://github.com/arii/hrm/commit/5ad99db44548d34dad618f672907917e6742b70b))
+* resolve linting errors ([492f26d](https://github.com/arii/hrm/commit/492f26d56537e1df0748f816dff7d4b6de1b53b3))
+* resolve remaining linting errors ([492f26d](https://github.com/arii/hrm/commit/492f26d56537e1df0748f816dff7d4b6de1b53b3))
+* **test:** fix flaky calorie accumulation test ([#1553](https://github.com/arii/hrm/issues/1553)) ([3e3778a](https://github.com/arii/hrm/commit/3e3778ad14db66bd5b8c866c7f1480d9d230ce54))
+
 ## [0.10.0](https://github.com/arii/hrm/compare/v0.9.1...v0.10.0) (2025-12-14)
 
 
