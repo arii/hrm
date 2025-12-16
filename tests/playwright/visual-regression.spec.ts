@@ -112,6 +112,9 @@ test.describe('Visual Regression Tests', () => {
         e
       )
     }
+
+    // Dismiss audio overlay at the beginning of the test suite
+    await dismissAudioOverlay(dashboardPage)
   })
 
   // Clean up after all tests
@@ -207,6 +210,9 @@ test.describe('Visual Regression Tests', () => {
     // Start timer
 
     await controlPage.click('button:has-text("START")', { force: true })
+
+    // Dismiss the audio overlay which may have reappeared after interaction
+    await dismissAudioOverlay(dashboardPage)
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
