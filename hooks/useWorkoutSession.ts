@@ -57,6 +57,17 @@ function sessionReducer(
 
 // --- The Hook Implementation ---
 
+/**
+ * Manages a user's workout session, tracking duration and calories burned.
+ *
+ * @remarks
+ * This hook relies on the WebSocket for calorie data. The server is the single
+ * source of truth for calorie accumulation, which is calculated based on HR,
+ * age, and a default weight. The `hrmData` stream from `useWebSocket` is expected
+ * to provide the running total for calories burned.
+ *
+ * The server-side calculation logic can be found in `utils/socketManager.ts`.
+ */
 interface WorkoutSessionOptions {
   isConnected: boolean
   userName: string
