@@ -17,7 +17,7 @@ export const CONNECT_HR_MONITOR_BUTTON_TEXT = 'Connect HR Monitor'
 export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
 // --- Heart Rate Calculation Constants ---
-export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
+const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
 
 /**
  * Calculates Max Heart Rate based on age using the standard Fox formula.
@@ -36,14 +36,14 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 }
 
 // --- Heart Rate Zones Configuration ---
-export interface HeartRateZoneConfig {
+interface HeartRateZoneConfig {
   name: string
   minPercent: number // 0-100
   maxPercent: number // 0-100
   color: string
 }
 
-export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
+const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
   { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#F44336' },
   { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#FFEB3B' },
   { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#4CAF50' },

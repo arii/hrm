@@ -20,7 +20,7 @@ export const UserProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 })
 
-export const WorkoutSessionSchema = z.object({
+const WorkoutSessionSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   startedAt: z.string().datetime(),
@@ -28,7 +28,7 @@ export const WorkoutSessionSchema = z.object({
   notes: z.string(),
 })
 
-export const HeartRateDataPointSchema = z.object({
+const HeartRateDataPointSchema = z.object({
   id: z.string().uuid(),
   workoutSessionId: z.string().uuid(),
   timestamp: z.number(),
@@ -48,14 +48,14 @@ export const CreateUserProfileSchema = UserProfileSchema.pick({
 })
 
 // Example: Schema for creating a new workout session
-export const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
+const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
   userId: true,
   startedAt: true,
   notes: true,
 })
 
 // Example: Schema for adding a new heart rate data point
-export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
+const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   workoutSessionId: true,
   timestamp: true,
   heartRate: true,

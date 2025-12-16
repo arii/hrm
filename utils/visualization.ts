@@ -4,8 +4,6 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
-import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
@@ -27,7 +25,7 @@ type HrZoneUi = {
   bgColor: string
 }
 
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -67,7 +65,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
 }
 
 // Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
+const ZONE_COLORS = {
   grey: '#9E9E9E', // Below zone 1
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
   green: theme.palette.success.main, // Zone 2: Fat Burn
@@ -76,7 +74,7 @@ export const ZONE_COLORS = {
   purple: '#9C27B0', // Zone 5: Max
 }
 
-export interface HrZoneProps {
+interface HrZoneProps {
   zone: string
   percentage: number
   color: string // Tailwind text color class
@@ -121,7 +119,7 @@ interface TimerProps {
 /**
  * Returns props (color, text) for the Tabata Timer phase display.
  */
-export const getTimerProps = (
+const getTimerProps = (
   currentPhase: TimerData['currentPhase']
 ): TimerProps => {
   switch (currentPhase) {
@@ -169,17 +167,4 @@ export const getTimerProps = (
         progressColor: '#6b7280',
       }
   }
-}
-
-export const transformWorkoutDataToColumns = (
-  data: WorkoutData
-): WorkoutColumnsProps['columns'] => {
-  if (!data) return []
-
-  return data.map((category: WorkoutItem) => ({
-    title: category.category,
-    items: category.exercises.map((ex: string) => ({
-      title: ex,
-    })),
-  }))
 }

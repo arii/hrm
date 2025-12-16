@@ -13,7 +13,7 @@ type UserSettingsContextType = readonly [
   ) => void,
 ]
 
-export const UserSettingsContext = createContext<
+const UserSettingsContext = createContext<
   UserSettingsContextType | undefined
 >(undefined)
 

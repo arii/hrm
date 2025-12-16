@@ -18,7 +18,7 @@ export type TimerMode = 'STOPWATCH' | 'COUNTDOWN'
  * - `PAUSED`: The timer is temporarily stopped.
  * - `FINISHED`: The timer has completed its countdown.
  */
-export type TimerPhase = 'IDLE' | 'RUNNING' | 'PAUSED' | 'FINISHED'
+type TimerPhase = 'IDLE' | 'RUNNING' | 'PAUSED' | 'FINISHED'
 
 /**
  * Encapsulates the complete state of a timer instance.

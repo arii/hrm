@@ -7,8 +7,6 @@
     "app/**/*.{ts,tsx}",
     "scripts/**/*.{ts,cjs}",
     "tests/**/*.{ts,tsx}",
-    ".storybook/**/*.{ts,tsx}",
-    "stories/**/*.{ts,tsx}",
     "jest.config.cjs",
     "playwright.config.ts",
     "eslint.config.mjs"
@@ -23,5 +21,11 @@
     "services/**/*.ts",
     "types/**/*.ts",
     "utils/**/*.ts"
+  ],
+  "ignoreBinaries": [
+    "scripts/test-json-with-server.sh",
+    "scripts/test-with-server.sh",
+    "python3",
+    "sleep"
   ]
 }

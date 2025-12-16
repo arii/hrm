@@ -14,13 +14,13 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-export interface HeartRateZonesProps {
+interface HeartRateZonesProps {
   maxHr: number
 }
 
 import { TimerMode, TimerPhase } from './websocket'
 
-export interface TimerDisplayProps {
+interface TimerDisplayProps {
   phase: TimerPhase
   timeRemaining: number
   timeElapsed: number
@@ -32,22 +32,22 @@ export interface TimerDisplayProps {
 }
 
 // Renamed to avoid conflict
-export interface WorkoutColumnItem {
+interface WorkoutColumnItem {
   title: string
   details?: string
 }
 
-export interface WorkoutColumnsProps {
+interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutColumnItem[] }>
 }
 
 // Correct WorkoutItem for the parser and WebSocket
-export interface WorkoutItem {
+interface WorkoutItem {
   category: string
   exercises: string[]
 }
 
-export type WorkoutData = WorkoutItem[]
+type WorkoutData = WorkoutItem[]
 
 export interface SpotifyPlaylistItem {
   id: string

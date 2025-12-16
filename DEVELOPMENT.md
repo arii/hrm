@@ -14,6 +14,23 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
+## Code Quality & Tooling
+
+To maintain a clean and efficient codebase, we use automated tools to enforce standards and detect issues.
+
+### `knip` - Dead Code Detection
+
+`knip` is a tool that detects unused files, dependencies, and exports in the project. It helps us keep the codebase lean and free of clutter.
+
+**Local Usage:**
+
+- **To run a check:** Execute `pnpm run knip`. This will report any dead code but will not make changes.
+- **To automatically fix issues:** Execute `pnpm exec knip --fix`. This will remove any unused exports and types that `knip` finds.
+
+**CI/CD Integration:**
+
+The `knip` check is a mandatory step in our CI/CD pipeline. Any pull request containing dead code will fail this check. Before submitting a PR, please run `knip` locally to ensure your changes do not introduce any new issues.
+
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
