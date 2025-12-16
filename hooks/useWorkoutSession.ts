@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useCallback } from 'react'
+import { useEffect, useReducer, useRef, useCallback, useMemo } from 'react'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -173,13 +173,16 @@ export const useWorkoutSession = ({
   }, [])
 
   // Calculate the calories burned *during this session*.
-  const caloriesBurned = Math.round(
-    state.calories - sessionDataRef.current.startCalories
-  )
+  const caloriesBurned = useMemo(() => {
+    const burned = Math.round(
+      state.calories - sessionDataRef.current.startCalories
+    )
+    return burned > 0 ? burned : 0
+  }, [state.calories])
 
   return {
     workoutDuration: state.duration,
-    caloriesBurned: caloriesBurned > 0 ? caloriesBurned : 0,
+    caloriesBurned,
     resetWorkout,
     startWorkout,
     endWorkout,
