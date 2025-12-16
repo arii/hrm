@@ -64,6 +64,9 @@ export default function MockPage() {
     sendData(message)
   }, [sendData, name, age, maxHr])
 
+  // NOTE: In a real client, metadata would likely be sent once upon connection
+  // or when the user explicitly saves settings. For this mock, we send it
+  // on every change to the local state for simplicity and immediate feedback.
   useEffect(() => {
     sendMetadataPacket()
   }, [sendMetadataPacket])
