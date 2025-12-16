@@ -408,3 +408,98 @@ jobs:
               repo: context.repo.repo,
               body: failureComment
             });
+
+      - name: Post Review Check (Success)
+        if: steps.gemini.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const fs = require('fs');
+            let conclusion = 'success';
+            let title = '✅ Review Passed';
+            let summary = 'Code review completed successfully with no issues found.';
+            let reviewComment = '';
+
+            try {
+              if (fs.existsSync('review_result.json')) {
+                const fileContent = fs.readFileSync('review_result.json', 'utf8');
+                const result = JSON.parse(fileContent);
+
+                if (!result || typeof result !== 'object') {
+                  throw new Error('Invalid result object structure');
+                }
+
+                reviewComment = result.reviewComment || '';
+
+                if (result.verdict === 'request_changes') {
+                  conclusion = 'failure';
+                  title = '❌ Changes Requested';
+                  const issueCount = (reviewComment.match(/##|###/g) || []).length;
+                  summary = issueCount > 0 
+                    ? `Review completed - ${issueCount} issue(s) found requiring changes.`
+                    : 'Review completed - changes requested.';
+                } else if (result.verdict === 'comment') {
+                  conclusion = 'neutral';
+                  title = '⚠️ Review Comment';
+                  const commentCount = (reviewComment.match(/##|###/g) || []).length;
+                  summary = commentCount > 0
+                    ? `Review completed - ${commentCount} comment(s) provided for improvement.`
+                    : 'Review completed - comments provided.';
+                }
+              } else {
+                throw new Error('review_result.json file not found');
+              }
+            } catch (error) {
+              console.warn('Warning: Error processing review result:', error.message);
+              conclusion = 'neutral';
+              title = '⚠️ Review Status Unavailable';
+              summary = 'Review was generated but status could not be determined. Check the PR comment for details.';
+            }
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Gemini Code Review',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              output: {
+                title: title,
+                summary: summary
+              }
+            });
+
+      - name: Post Review Check (Failure)
+        if: steps.gemini.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            let summary = 'The review process encountered an error and could not be completed.';
+
+            try {
+              if (process.env.GEMINI_ERROR) {
+                summary = `Review failed: ${process.env.GEMINI_ERROR}`;
+              }
+            } catch (error) {
+              console.warn('Warning: Could not extract error details');
+            }
+
+            try {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'Gemini Code Review',
+                head_sha: context.payload.pull_request.head.sha,
+                status: 'completed',
+                conclusion: 'failure',
+                output: {
+                  title: '❌ Review Failed',
+                  summary: summary
+                }
+              });
+            } catch (checkError) {
+              console.error('Failed to create check:', checkError.message);
+              throw checkError;
+            }

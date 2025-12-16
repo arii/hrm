@@ -10,6 +10,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  checks: write
 
 jobs:
   analyze-changes:
@@ -18,6 +19,7 @@ jobs:
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       review-type: ${{ steps.decision.outputs.review-type }}
+      skip-reason: ${{ steps.decision.outputs.skip-reason }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,42 +27,12 @@ jobs:
 
       - name: Analyze Change Significance
         id: analyze
-        run: |
-          # Get the last commit that triggered this workflow
-          LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
-
-          # Determine PREVIOUS_COMMIT safely
-          if [ "${{ github.event_name }}" == "pull_request" ] && [ -n "${{ github.event.before }}" ]; then
-            # For synchronize events, use the previous commit from the push payload
-            PREVIOUS_COMMIT=${{ github.event.before }}
-          else
-            # Fallback for other events
-            PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
-          fi
-
-          # Check if this is just a merge commit
-          IS_MERGE=$(git log -1 --pretty=%P $LAST_COMMIT | wc -w)
-
-          # Get files changed in this push
-          CHANGED_FILES=$(git diff --name-only $PREVIOUS_COMMIT $LAST_COMMIT)
-
-          # Count significant changes (exclude trivial files)
-          SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | \
-            grep -v -E '\.(md|txt|json|yaml|yml)$' | \
-            grep -v -E 'package-lock.json|pnpm-lock.yaml' | \
-            wc -l)
-
-          echo "IS_MERGE=$IS_MERGE" >> $GITHUB_ENV
-          echo "SIGNIFICANT_CHANGES=$SIGNIFICANT_CHANGES" >> $GITHUB_ENV
-          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
-          echo "$CHANGED_FILES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-          # Get commit message
-          COMMIT_MSG=$(git log -1 --pretty=%B $LAST_COMMIT)
-          echo "COMMIT_MSG<<EOF" >> $GITHUB_ENV
-          echo "$COMMIT_MSG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+        env:
+          GITHUB_EVENT_AFTER: ${{ github.event.after }}
+          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: ./.github/scripts/analyze-changes.sh
 
       - name: Check Review State
         id: review_state
@@ -91,12 +63,14 @@ jobs:
         run: |
           NEEDS_REVIEW="false"
           REVIEW_TYPE="none"
+          SKIP_REASON="no criteria met"
 
           # Skip if just a merge commit with no changes
           if [ "${{ env.IS_MERGE }}" -gt "1" ] && [ "${{ env.SIGNIFICANT_CHANGES }}" -eq "0" ]; then
             echo "Skipping re-review: Merge commit with no significant changes"
             echo "needs-review=false" >> $GITHUB_OUTPUT
             echo "review-type=none" >> $GITHUB_OUTPUT
+            echo "skip-reason=merge" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -105,6 +79,7 @@ jobs:
             echo "Skipping re-review: Trivial change (docs/chore/style)"
             echo "needs-review=false" >> $GITHUB_OUTPUT
             echo "review-type=none" >> $GITHUB_OUTPUT
+            echo "skip-reason=trivial" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -128,6 +103,7 @@ jobs:
 
           else
             echo "No re-review needed at this time"
+            echo "skip-reason=no" >> $GITHUB_OUTPUT
           fi
 
           echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
@@ -142,45 +118,44 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ARI_PAT: ${{ secrets.ARI_PAT }}
 
-  post-skip-notice:
-    name: Post Skip Notice
+  post-skip-check:
+    name: Post Skip Check
     needs: analyze-changes
     if: needs.analyze-changes.outputs.needs-review == 'false'
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
     steps:
-      - name: Comment on PR
+      - name: Create skip check
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
-            const skipReasons = {
-              merge: '🔀 Merge commit without code changes',
-              trivial: '📝 Trivial change (docs/chore/style)',
-              none: 'No re-review criteria met'
-            };
+            let summary = 'Re-review was not needed for this push.';
+            let skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}' || 'unknown';
 
-            // Don't spam - only comment if there was a significant push
-            const body = `🤖 **Re-review skipped**: ${skipReasons['none']}`;
+            if (skipReason.includes('merge')) {
+              summary = 'Merge commit detected with no significant code changes.';
+            } else if (skipReason.includes('trivial')) {
+              summary = 'Trivial change detected (docs/chore/style only).';
+            } else if (skipReason.includes('no')) {
+              summary = 'No re-review criteria were met.';
+            }
 
-            // Check if we already have a recent skip notice
-            const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 5
-            });
-
-            const recentSkip = comments.find(c =>
-              c.user.login === 'arii' &&
-              c.body.includes('Re-review skipped') &&
-              new Date(c.created_at) > new Date(Date.now() - 3600000) // Within last hour
-            );
-
-            if (!recentSkip) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
+            try {
+              await github.rest.checks.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: body
+                name: 'Gemini Code Review',
+                head_sha: context.payload.pull_request.head.sha,
+                status: 'completed',
+                conclusion: 'skipped',
+                output: {
+                  title: '⏭️ Review Skipped',
+                  summary: summary
+                }
               });
+            } catch (error) {
+              console.error('Failed to create check:', error.message);
+              throw error;
             }
