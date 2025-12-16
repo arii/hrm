@@ -8,17 +8,13 @@
   "project": [
     "app/**/*.ts",
     "app/**/*.tsx",
-    "components/**/*.ts",
     "components/**/*.tsx",
     "constants/**/*.ts",
-    "context/**/*.ts",
     "context/**/*.tsx",
     "hooks/**/*.ts",
-    "hooks/**/*.tsx",
     "lib/**/*.ts",
     "services/**/*.ts",
     "stories/**/*.ts",
-    "stories/**/*.tsx",
     "types/**/*.ts",
     "utils/**/*.ts",
     "tests/**/*.ts",
@@ -44,7 +40,7 @@
     ]
   },
   "storybook": {
-    "config": ".storybook/{main.ts,main.tsx,preview.ts,preview.tsx}",
+    "config": ".storybook/{main.ts,main.tsx}",
     "entry": ".storybook/**/*.{ts,tsx}",
     "project": "**/*.{ts,tsx}"
   }
