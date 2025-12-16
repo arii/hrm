@@ -112,7 +112,6 @@ test.describe('Visual Regression Tests', () => {
         e
       )
     }
-
   })
 
   // Clean up after all tests
