@@ -6,6 +6,7 @@
 'use client'
 
 import { useEffect } from 'react'
+// @knip-ignore
 import { audioManager } from '../utils/audioManager'
 
 interface TimerSoundProviderProps {

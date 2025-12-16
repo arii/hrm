@@ -66,8 +66,3 @@ export const getSpotifyCallbackURL = (): string => {
     `${getBaseURL()}/api/auth/callback/spotify`
   )
 }
-
-// @knip-ignore
-export const getGoogleDocWorkoutUrl = (): string | undefined => {
-  return process.env.GOOGLE_DOC_WORKOUT_URL
-}

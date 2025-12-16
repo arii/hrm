@@ -20,23 +20,6 @@ export const UserProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 })
 
-// @knip-ignore
-export const WorkoutSessionSchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string().uuid(),
-  startedAt: z.string().datetime(),
-  endedAt: z.string().datetime().nullable(),
-  notes: z.string(),
-})
-
-// @knip-ignore
-export const HeartRateDataPointSchema = z.object({
-  id: z.string().uuid(),
-  workoutSessionId: z.string().uuid(),
-  timestamp: z.number(),
-  heartRate: z.number(),
-})
-
 // =================================================================
 // API Request Schemas
 // =================================================================
@@ -47,20 +30,4 @@ export const CreateUserProfileSchema = UserProfileSchema.pick({
   email: true,
   firstName: true,
   lastName: true,
-})
-
-// Example: Schema for creating a new workout session
-// @knip-ignore
-export const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
-  userId: true,
-  startedAt: true,
-  notes: true,
-})
-
-// Example: Schema for adding a new heart rate data point
-// @knip-ignore
-export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
-  workoutSessionId: true,
-  timestamp: true,
-  heartRate: true,
 })

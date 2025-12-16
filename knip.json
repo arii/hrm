@@ -24,13 +24,24 @@
     "types/**/*.ts",
     "utils/**/*.ts"
   ],
+  "ignore": [
+    "babel-jest",
+    "@/components/WorkoutColumns",
+    "services/googleDocParser.ts#WorkoutTableData",
+    "services/spotifyPlaylistService.ts#SpotifyPlaylistItem",
+    "services/spotifyPlaylistService.ts#SpotifyPlaylist",
+    "types/data-models.ts#WorkoutSession",
+    "types/data-models.ts#HeartRateDataPoint",
+    "types/genericTimer.ts#TimerPhase",
+    "types/index.ts#HeartRateZonesProps",
+    "types/index.ts#TimerDisplayProps",
+    "types/index.ts#WorkoutColumnItem",
+    "types/index.ts#WorkoutColumnsProps"
+  ],
   "ignoreBinaries": [
     "scripts/test-json-with-server.sh",
     "scripts/test-with-server.sh",
     "python3",
     "sleep"
-  ],
-  "ignoreUnresolved": [
-    "babel-jest"
   ]
 }

@@ -14,12 +14,14 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
+// @knip-ignore
 export interface HeartRateZonesProps {
   maxHr: number
 }
 
 import { TimerMode, TimerPhase } from './websocket'
 
+// @knip-ignore
 export interface TimerDisplayProps {
   phase: TimerPhase
   timeRemaining: number
@@ -32,11 +34,13 @@ export interface TimerDisplayProps {
 }
 
 // Renamed to avoid conflict
+// @knip-ignore
 export interface WorkoutColumnItem {
   title: string
   details?: string
 }
 
+// @knip-ignore
 export interface WorkoutColumnsProps {
   columns: Array<{ title: string; items: WorkoutColumnItem[] }>
 }

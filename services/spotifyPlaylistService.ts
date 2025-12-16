@@ -8,6 +8,7 @@ import { SpotifyPlaylistItem, SpotifyPlaylist } from '../types/index'
 import { presetPlaylists } from './seedData.js'
 
 // Re-export types for backward compatibility
+// @knip-ignore
 export type { SpotifyPlaylistItem, SpotifyPlaylist }
 
 /**
