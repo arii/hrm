@@ -37,6 +37,10 @@ An ADR should be created for any change that has a significant impact on the sys
 3.  **Approval & Status Change**: Once the PR is approved and merged, the ADR's status is updated to "Accepted".
 4.  **Updating**: If a decision is later changed, the original ADR should be marked as "Superseded" or "Deprecated" by a new ADR that documents the new decision.
 
+#### Conflict Resolution
+
+Disagreements on architectural decisions are expected and healthy. If a consensus cannot be reached during the PR review, the final decision will be made by the project's technical lead. The goal is to make a decision that is in the best interest of the project, even if it is not everyone's first choice. All viewpoints should be respectfully considered and documented in the ADR.
+
 All ADRs are stored in the [`docs/adr/`](./docs/adr/) directory.
 
 ## Pull Request (PR) Process
