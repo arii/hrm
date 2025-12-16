@@ -5,7 +5,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_USE_NATIVE_TABLE: z
     .string()
     .transform((val) => val === 'true')
-    .default('false'),
+    .default(false),
 })
 
 export const env = envSchema.parse(process.env)
