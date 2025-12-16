@@ -7,15 +7,6 @@ import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
 
-// Define types for MUI color props
-type MuiColor =
-  | 'primary'
-  | 'secondary'
-  | 'error'
-  | 'warning'
-  | 'info'
-  | 'success'
-
 // --- Constants ---
 // UI properties for each heart rate zone, mapped for efficient O(1) lookup.
 type HrZoneUi = {
