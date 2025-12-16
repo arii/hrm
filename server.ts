@@ -53,6 +53,8 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+// Enable JSON body parsing for all routes
+expressApp.use(express.json())
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
@@ -198,20 +200,18 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
+        // Await the token update and handle potential errors
+        if (spotifyService && req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await spotifyService.handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
           }
-        }, 1000)
+        }
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
