@@ -125,8 +125,6 @@ export const useWorkoutSession = ({
       session.startTime = Date.now()
       session.pauseTime = null
       session.totalPaused = 0
-      // Capture the calorie count at the very beginning of the session.
-      setStartCalories(totalCalories)
     } else if (state.status === 'running' && session.pauseTime !== null) {
       // A paused session is resuming.
       session.totalPaused += Date.now() - session.pauseTime
@@ -135,7 +133,7 @@ export const useWorkoutSession = ({
       // A running session is being paused.
       session.pauseTime = Date.now()
     }
-  }, [state.status, totalCalories])
+  }, [state.status])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -172,8 +170,10 @@ export const useWorkoutSession = ({
   }, [])
 
   const startWorkout = useCallback(() => {
+    // Capture the calorie count at the moment the workout starts.
+    setStartCalories(totalCalories)
     dispatch({ type: 'START_WORKOUT' })
-  }, [])
+  }, [totalCalories])
 
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
