@@ -23,6 +23,8 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
+  userWeight: string
+  setUserWeight: (weight: string) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -48,6 +50,8 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  userWeight,
+  setUserWeight,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -130,6 +134,15 @@ export default function ConnectView({
               value={userAge}
               onChange={(e) => setUserAge(e.target.value)}
               inputProps={{ min: 1, max: 120 }}
+            />
+            <TextField
+              fullWidth
+              label="Your Weight (kg)"
+              placeholder="e.g., 75"
+              type="number"
+              value={userWeight}
+              onChange={(e) => setUserWeight(e.target.value)}
+              inputProps={{ min: 20, max: 300 }}
             />
           </Stack>
         ) : (

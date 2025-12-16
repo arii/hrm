@@ -83,7 +83,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef =
+    useRef<{ name: string; age: number; weight: number } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -267,6 +268,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const data: HrmInputData = {
               value: heartRate,
+              weightKg: userDetailsRef.current?.weight,
             }
 
             sendData({
@@ -297,10 +299,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [connectToGatt])
 
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<boolean> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeight?: number
+    ): Promise<boolean> => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
+        weight: userWeight || 0,
       }
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {

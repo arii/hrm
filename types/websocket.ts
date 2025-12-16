@@ -117,6 +117,7 @@ export type ServerMessage =
 
 export type HrmInputData = {
   value: number | null
+  weightKg?: number | undefined // Client can optionally send weight for calorie calculation
 }
 
 export interface HrmInputMessage {
@@ -196,6 +197,7 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
+  weightKg: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({
