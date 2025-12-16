@@ -53,6 +53,8 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
+// Enable JSON body parsing for all routes
+expressApp.use(express.json())
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
@@ -198,11 +200,14 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Asynchronously handle the token update without blocking the response
-        if (spotifyService) {
-          spotifyService.handleTokenUpdate().catch((err) => {
-            logger.error({ err }, 'Error during async token update handling')
-          })
+        // Await the token update and handle potential errors
+        if (spotifyService && req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await spotifyService.handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error({ err }, 'Error during synchronous token update handling')
+          }
         }
       }
       return nextRequestHandler(req, res)

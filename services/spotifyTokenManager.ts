@@ -66,6 +66,23 @@ export class SpotifyTokenManager {
       console.log('Access token created via setAccessToken.')
     }
   }
+
+  /**
+   * Updates the in-memory token and persists it to disk.
+   * @param {SpotifyTokenPayload} payload - The new token payload.
+   */
+  public updateToken(payload: SpotifyTokenPayload): void {
+    this.currentToken = {
+      receivedAt: Date.now(),
+      payload: payload,
+    }
+    // Persist for future runs
+    writeTokenFileSafe(this.tokenFile, this.currentToken)
+    console.log(
+      'Updated in-memory and persisted Spotify tokens for:',
+      this.currentToken.payload.sub
+    )
+  }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null

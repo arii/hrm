@@ -128,15 +128,22 @@ export class SpotifyPolling {
   // --- Token Management (Used by NextAuth route) ---
 
   /**
-   * Asynchronously handles the token update signal.
-   * This function re-initializes the SDK with the new tokens from persistence
-   * and immediately triggers a poll and broadcast to reflect the updated state.
+   * Asynchronously handles the token update signal by directly accepting the payload.
+   * This function updates the token manager, re-initializes the SDK,
+   * and immediately triggers a poll and broadcast.
+   * @param {SpotifyTokenPayload} tokens - The new token payload.
    */
-  public async handleTokenUpdate(): Promise<void> {
+  public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
     logger.debug(
-      'Spotify token update signal received. Reloading SDK and forcing poll.'
+      'Spotify token payload received. Updating SDK and forcing poll.'
     )
-    await this.initializeSdk()
+    this.tokenManager.updateToken(tokens)
+    // Re-initialize the SDK with the new in-memory token
+    const sdkToken = this.tokenManager.getSdkAccessToken()
+    if (sdkToken) {
+      this.setupSdk(sdkToken)
+      this.startPolling() // Ensure polling is active
+    }
     await this.forcePollAndBroadcast()
   }
 
