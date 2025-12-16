@@ -112,12 +112,8 @@ describe('WebSocket Manager', () => {
       const MockedTabataTimer = jest.mocked(TabataTimer)
       const MockedSpotifyPolling = jest.mocked(SpotifyPolling)
       mockServices = {
-        tabataService: new MockedTabataTimer(
-          jest.fn()
-        ) as jest.Mocked<TabataTimer>,
-        spotifyService: new MockedSpotifyPolling(
-          jest.fn()
-        ) as jest.Mocked<SpotifyPolling>,
+        tabataService: new MockedTabataTimer(jest.fn()),
+        spotifyService: new MockedSpotifyPolling(jest.fn()),
       }
       getSnapshot = jest.fn()
     })
@@ -203,12 +199,8 @@ describe('WebSocket Manager', () => {
       const MockedTabataTimer = jest.mocked(TabataTimer)
       const MockedSpotifyPolling = jest.mocked(SpotifyPolling)
       mockServices = {
-        tabataService: new MockedTabataTimer(
-          jest.fn()
-        ) as jest.Mocked<TabataTimer>,
-        spotifyService: new MockedSpotifyPolling(
-          jest.fn()
-        ) as jest.Mocked<SpotifyPolling>,
+        tabataService: new MockedTabataTimer(jest.fn()),
+        spotifyService: new MockedSpotifyPolling(jest.fn()),
       }
       getSnapshot = jest.fn()
     })
@@ -274,12 +266,8 @@ describe('WebSocket Manager', () => {
       const MockedTabataTimer = jest.mocked(TabataTimer)
       const MockedSpotifyPolling = jest.mocked(SpotifyPolling)
       mockServices = {
-        tabataService: new MockedTabataTimer(
-          jest.fn()
-        ) as jest.Mocked<TabataTimer>,
-        spotifyService: new MockedSpotifyPolling(
-          jest.fn()
-        ) as jest.Mocked<SpotifyPolling>,
+        tabataService: new MockedTabataTimer(jest.fn()),
+        spotifyService: new MockedSpotifyPolling(jest.fn()),
       }
       getSnapshot = jest.fn().mockReturnValue({
         timer: {
