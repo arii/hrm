@@ -1,6 +1,10 @@
 // File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { HrmInputData, HrmMetadataUpdateMessage } from '../types/websocket'
+import {
+  HrmInputData,
+  HrmMetadataUpdateMessage,
+  HrmMetadataUpdateData,
+} from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
