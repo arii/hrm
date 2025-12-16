@@ -36,6 +36,10 @@ const config: KnipConfig = {
     'playwright-report',
     'test-results',
     'storybook-static',
+    'ecosystem.config.cjs',
+    'scripts/get-available-port.mjs',
+    'public/mockServiceWorker.js',
+    '.github/scripts/generate-release-notes.ts',
   ],
   ignoreDependencies: [
     // Used in tests, but Knip doesn't see it
@@ -44,6 +48,9 @@ const config: KnipConfig = {
     '@types/web-bluetooth',
     // Eslint plugin
     'eslint-plugin-react',
+    '@actions/core',
+    '@actions/github',
+    'wait-on',
   ],
   ignoreBinaries: [
     'scripts/test-json-with-server.sh',
