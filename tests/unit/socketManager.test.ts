@@ -44,8 +44,7 @@ jest.mock('../../utils/broadcast', () => ({
 
 // Mock logger globally for the test file
 jest.mock('../../utils/logger', () => ({
-  __esModule: true,
-  default: {
+  logger: {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
