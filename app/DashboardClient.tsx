@@ -54,6 +54,9 @@ const DashboardClient = ({
   }
 
   useEffect(() => {
+    // This effect signals to Playwright that the page is hydrated and ready for interaction.
+    // It dispatches a custom event that our E2E tests can wait for, ensuring that tests
+    // do not run against a partially rendered or non-interactive page.
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
