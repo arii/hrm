@@ -4,7 +4,7 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration } from '@/lib/shared/utils/formatters'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 

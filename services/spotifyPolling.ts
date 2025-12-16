@@ -8,7 +8,7 @@ import logger from '../utils/logger.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
+} from '../lib/shared/utils/apiUtils.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK

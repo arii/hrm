@@ -1,7 +1,24 @@
-import logger from '../utils/logger.js'
+/**
+ * @file This file contains utility functions for handling API-related tasks, such as error handling and data parsing.
+ * @module lib/shared/utils/apiUtils
+ */
 
-// Utility: Safely parse JSON, fallback to text
-function safeParseJSON(input: string): unknown {
+import logger from '../../../utils/logger.js'
+
+/**
+ * Safely parses a string into a JSON object. If parsing fails, it returns the original string.
+ * This prevents crashes when an API response is not valid JSON.
+ *
+ * @param {string} input - The string to parse.
+ * @returns {unknown} The parsed JSON object or the original string if parsing fails.
+ * @example
+ * // Returns { "key": "value" }
+ * safeParseJSON('{ "key": "value" }');
+ *
+ * // Returns "Invalid JSON"
+ * safeParseJSON('Invalid JSON');
+ */
+export function safeParseJSON(input: string): unknown {
   try {
     return JSON.parse(input)
   } catch {
@@ -11,9 +28,17 @@ function safeParseJSON(input: string): unknown {
 
 /**
  * Parses and logs detailed error information from a failed Spotify SDK command.
- * It handles different error shapes, including JSON bodies and plain text.
- * @param command The name of the command that failed (for logging).
- * @param error The error object caught.
+ * It handles different error shapes, including JSON bodies and plain text, to provide rich debugging information.
+ *
+ * @param {string} command - The name of the command that failed (for logging).
+ * @param {unknown} error - The error object caught.
+ * @returns {Promise<void>} A promise that resolves when the error has been logged.
+ * @example
+ * try {
+ *   await spotifyApi.player.play();
+ * } catch (error) {
+ *   await logSpotifyCommandError('play', error);
+ * }
  */
 export async function logSpotifyCommandError(
   command: string,
@@ -71,12 +96,21 @@ export async function logSpotifyCommandError(
 
 /**
  * Handles errors during the `getCurrentlyPlaying` poll.
- * Differentiates between rate limiting (429), token expiration (401),
- * and other errors.
+ * Differentiates between rate limiting (429), token expiration (401), and other errors,
+ * allowing for specific recovery actions like token refreshing.
  *
- * @param error The caught error object.
- * @param onTokenExpired A callback to trigger a token refresh.
- * @returns {boolean} - Returns true if the error was handled (e.g., rate limit, auth), false otherwise.
+ * @param {unknown} error - The caught error object.
+ * @param {() => void} onTokenExpired - A callback to trigger a token refresh.
+ * @returns {Promise<boolean>} - Returns true if the error was handled (e.g., rate limit, auth), false otherwise.
+ * @example
+ * try {
+ *   const currentlyPlaying = await spotifyApi.player.getCurrentlyPlayingTrack();
+ * } catch (error) {
+ *   const handled = await handleSpotifyApiError(error, refreshAccessToken);
+ *   if (!handled) {
+ *     // Handle other errors
+ *   }
+ * }
  */
 export async function handleSpotifyApiError(
   error: unknown,
