@@ -52,39 +52,35 @@ export class SpotifyPolling {
     trackName: 'Awaiting Login...',
     artist: '',
     isPlaying: false,
-    devices: [],
+    devices: [], // <--- ADDED
     volume: 70,
     isMuted: false,
   }
 
   private sdk: SpotifyApi | null = null
 
-  private constructor(
-    broadcastUpdate: (message: ServerMessage) => void,
-    tokenManager: SpotifyTokenManager
-  ) {
+  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
-    this.tokenManager = tokenManager // Injected dependency
     logger.debug('Spotify Polling Service Initialized.')
+
+    this.tokenManager = new SpotifyTokenManager(
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
+    )
   }
 
   public static async create(
-    broadcastUpdate: (message: ServerMessage) => void,
-    tokenManager: SpotifyTokenManager // Inject dependency
+    broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    const instance = new SpotifyPolling(broadcastUpdate, tokenManager)
-    await instance.initializeSdk() // Attempt to initialize with any persisted token
+    const instance = new SpotifyPolling(broadcastUpdate)
+    await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5 // Check every 5 minutes if we need to re-sync
-    )
+      1000 * 60 * 5
+    ) // Check every 5 minutes if we need to re-sync
     return instance
   }
 
-  /**
-   * Initializes the Spotify SDK if a valid token is available.
-   * This is called on service startup to resume state.
-   */
   private async initializeSdk() {
     const token = await this.tokenManager.getValidAccessToken() // Triggers refresh if needed
     if (token) {
@@ -92,14 +88,10 @@ export class SpotifyPolling {
       if (sdkToken) {
         this.setupSdk(sdkToken)
         logger.debug(
-          'Loaded existing Spotify tokens. Service is ready and will start polling.'
+          'Loaded existing Spotify tokens from file. Starting polling.'
         )
-        this.startPolling() // Start polling if we have a token
+        this.startPolling()
       }
-    } else {
-      logger.warn(
-        'No valid Spotify token found on startup. Service will wait for token delivery.'
-      )
     }
   }
 
@@ -110,23 +102,13 @@ export class SpotifyPolling {
     )
   }
 
-  /**
-   * Periodically checks if the SDK's token is still valid by consulting the token manager.
-   * If the token manager has a newer or refreshed token, it re-initializes the SDK instance.
-   */
   private async checkAndRefreshSdkToken() {
     // Force Manager to check validity and refresh if needed
     const newTokenString = await this.tokenManager.getValidAccessToken()
-    if (newTokenString) {
+    if (newTokenString && this.sdk) {
       const sdkToken = this.tokenManager.getSdkAccessToken()
       if (sdkToken) {
-        // This will create a new SDK instance with the latest token
         this.setupSdk(sdkToken)
-        // If polling wasn't running because we were waiting for a token, start it now.
-        if (!this.pollInterval) {
-          logger.info('SDK re-initialized with new token, starting polling.')
-          this.startPolling()
-        }
       }
     }
   }
@@ -141,6 +123,18 @@ export class SpotifyPolling {
    */
   public isReady(): boolean {
     return this.sdk !== null
+  }
+
+  // --- Token Management (Used by NextAuth route) ---
+
+  /**
+   * Called by server.ts POST /internal/token-delivery after NextAuth provides the refresh token.
+   */
+  public setRefreshToken(_token: string) {
+    logger.debug('Spotify Refresh Token signal received. Reloading SDK.')
+    // Reset the token manager state to ensure it re-reads the file
+    // Note: TokenManager reads file on every getValidAccessToken call, so we just need to trigger init
+    setTimeout(() => this.initializeSdk(), 1000) // Give FS a moment to settle
   }
 
   // --- Polling Logic ---
