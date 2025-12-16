@@ -176,7 +176,10 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test.skip('Dashboard with active timer', async () => {
+  test('Dashboard with active timer', async () => {
+    // Dismiss the audio overlay before starting the timer
+    await dismissAudioOverlay(dashboardPage)
+
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
@@ -204,9 +207,6 @@ test.describe('Visual Regression Tests', () => {
     // Start timer
 
     await controlPage.click('button:has-text("START")', { force: true })
-
-    // Dismiss the audio overlay which may have reappeared after interaction
-    await dismissAudioOverlay(dashboardPage)
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator

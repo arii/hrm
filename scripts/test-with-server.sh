@@ -78,7 +78,7 @@ log "---------------------------------------------------"
 # Execute the passed command
 log "🎯 Executing command: $*"
 unset SPOTIFY_CLIENT_ID
-"$@"
+eval "$@"
 TEST_EXIT_CODE=$?
 
 if [ $TEST_EXIT_CODE -ne 0 ]; then
