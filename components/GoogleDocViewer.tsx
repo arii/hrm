@@ -11,7 +11,7 @@ import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
 import { useTheme } from '@mui/material/styles'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
@@ -30,10 +30,18 @@ const GoogleDocViewer = ({
   const theme = useTheme()
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  // Ensure embedUrl always includes ?embedded=true
-  const finalEmbedUrl = embedUrl.includes('?embedded=true')
-    ? embedUrl
-    : `${embedUrl}?embedded=true`
+  const finalEmbedUrl = useMemo(() => {
+    try {
+      // In a client component, we can safely assume URL is available.
+      const url = new URL(embedUrl)
+      url.searchParams.set('embedded', 'true')
+      return url.toString()
+    } catch (e) {
+      console.error('Invalid embedUrl provided to GoogleDocViewer:', embedUrl, e)
+      // Return a safe, non-functional URL or the original if it's better than nothing
+      return embedUrl
+    }
+  }, [embedUrl])
 
   // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
