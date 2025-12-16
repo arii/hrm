@@ -52,7 +52,7 @@
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
-    "depcheck": "depcheck",
+    "knip": "knip",
     "storybook": "storybook dev -p 6006 --open",
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
@@ -139,6 +139,7 @@
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "jest-junit": "^16.0.0",
+    "knip": "^5.74.0",
     "lint-staged": "^16.2.7",
     "msw": "^2.12.4",
     "msw-storybook-addon": "^2.0.6",
@@ -161,13 +162,6 @@
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@9.0.0",
-  "depcheck": {
-    "ignores": [
-      "@types/web-bluetooth",
-      "cross-env",
-      "jest-environment-jsdom"
-    ]
-  },
   "pnpm": {
     "overrides": {
       "loader-utils@<1.4.1": ">=1.4.1",
