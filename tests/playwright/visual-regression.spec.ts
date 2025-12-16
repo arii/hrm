@@ -282,9 +282,11 @@ test.describe('Visual Regression Tests', () => {
 
     // Wait for the mock BPM value to appear, ensuring the tile has updated.
     await dashboardPage.waitForFunction(
-      () =>
-        document.querySelector('[data-testid="live-hr-value"]')?.textContent ===
-        '155',
+      () => {
+        const liveHrValue = document.querySelector('[data-testid="live-hr-value"]')?.textContent
+        console.log(`Live HR Value: ${liveHrValue}`)
+        return liveHrValue === '155'
+      },
       { timeout: WAIT_TIMEOUTS.LONG }
     )
 
