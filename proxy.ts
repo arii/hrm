@@ -129,6 +129,10 @@ export async function proxy(request: NextRequest) {
       console.error(
         'CRITICAL: Rate limiting is disabled in production due to missing Upstash Redis configuration.'
       )
+      return new NextResponse(
+        'Rate limiting system misconfigured. Please check server logs.',
+        { status: 500 }
+      )
     }
   }
 
