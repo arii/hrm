@@ -1,4 +1,5 @@
 import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
+import { SpotifyApiError } from '../lib/errors.js'
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import {
   SpotifyTokenManager,
@@ -253,7 +254,32 @@ export class SpotifyPolling {
         })
       }
     } catch (error) {
-      await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
+      try {
+        // This function will throw a standardized SpotifyApiError
+        await handleSpotifyApiError(error)
+      } catch (e) {
+        if (e instanceof SpotifyApiError) {
+          if (e.statusCode === 401) {
+            logger.warn(
+              'Spotify token expired during polling. Attempting refresh.'
+            )
+            // No need to await, let it refresh in the background
+            this.checkAndRefreshSdkToken()
+          } else if (e.statusCode === 429) {
+            logger.warn(
+              'Spotify API Rate Limited. Backing off for this poll cycle.'
+            )
+            // We just log and the next poll will try again.
+          } else {
+            logger.error(
+              { err: e },
+              'Unhandled Spotify API error during polling.'
+            )
+          }
+        } else {
+          logger.error({ err: e }, 'An unexpected error occurred during polling.')
+        }
+      }
     }
   }
 
@@ -329,31 +355,24 @@ export class SpotifyPolling {
       case 'PLAY':
         if (playlistUri) {
           // If deviceId is undefined, SDK targets active device
-          // Type assertion needed because SDK types incorrectly require string
+          // The SDK player methods accept an optional deviceId.
+          // Passing `undefined` correctly targets the active device.
           await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string,
+            deviceId || undefined,
             playlistUri
           )
         } else {
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string
-          )
+          await this.sdk!.player.startResumePlayback(deviceId || undefined)
         }
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(
-          (deviceId || undefined) as unknown as string
-        )
+        await this.sdk!.player.pausePlayback(deviceId || undefined)
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(
-          (deviceId || undefined) as unknown as string
-        )
+        await this.sdk!.player.skipToNext(deviceId || undefined)
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(
-          (deviceId || undefined) as unknown as string
-        )
+        await this.sdk!.player.skipToPrevious(deviceId || undefined)
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {

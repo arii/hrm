@@ -54,22 +54,33 @@ jest.mock('../../utils/logger', () => ({
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as unknown as WebSocketServer
-    wss.clients = new Set<MockWebSocket>()
-    const originalOn = wss.on.bind(wss)
-    const originalEmit = wss.emit.bind(wss)
-    wss.on = jest.fn(
-      (event: string, listener: (...args: unknown[]) => void) => {
-        return originalOn(event, listener)
-      }
-    )
-    wss.emit = jest.fn((event: string, ...args: unknown[]) => {
-      return originalEmit(event, ...args)
+    const emitter = new EventEmitter()
+    // Create a mock that adheres to the WebSocketServer shape by augmenting a real EventEmitter
+    const mockServer = Object.assign(emitter, {
+      clients: new Set<MockWebSocket>(),
+      close: jest.fn(),
     })
-    return wss
+    // Spy on methods for test assertions while preserving emitter functionality
+    jest.spyOn(mockServer, 'on')
+    jest.spyOn(mockServer, 'emit')
+    return mockServer
   }),
   WebSocket: jest.fn(),
 }))
+
+// Helper function to create a type-safe mock of TabataTimer
+const createMockTabataTimer = (): TabataTimer =>
+  ({
+    handleCommand: jest.fn(),
+    setMode: jest.fn(),
+    setConfig: jest.fn(),
+  } as TabataTimer)
+
+// Helper function to create a type-safe mock of SpotifyPolling
+const createMockSpotifyPolling = (): SpotifyPolling =>
+  ({
+    handleCommand: jest.fn(),
+  } as SpotifyPolling)
 
 class MockWebSocket extends EventEmitter {
   lastPingTime: number | undefined
@@ -108,13 +119,8 @@ describe('WebSocket Manager', () => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createMockTabataTimer(),
+        spotifyService: createMockSpotifyPolling(),
       }
       getSnapshot = jest.fn()
     })
@@ -198,13 +204,8 @@ describe('WebSocket Manager', () => {
       jest.useFakeTimers()
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createMockTabataTimer(),
+        spotifyService: createMockSpotifyPolling(),
       }
       getSnapshot = jest.fn()
     })
@@ -268,14 +269,8 @@ describe('WebSocket Manager', () => {
     beforeEach(() => {
       mockWss = new (WebSocketServer as jest.Mock)()
       mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-          setConfig: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+        tabataService: createMockTabataTimer(),
+        spotifyService: createMockSpotifyPolling(),
       }
       getSnapshot = jest.fn().mockReturnValue({
         timer: {

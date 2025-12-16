@@ -85,8 +85,14 @@ export const injectBluetoothMocks = async (page: Page) => {
         _connectedDevice = null
         // Trigger disconnection listener on device
         if (this.device.listeners['gattserverdisconnected']) {
+          // Create a mock event object that satisfies the listener's expected shape.
+          // This avoids the dangerous 'as unknown as' cast.
+          const mockEvent = {
+            target: this.device,
+            type: 'gattserverdisconnected',
+          } as Event
           this.device.listeners['gattserverdisconnected'].forEach((l) =>
-            l({ target: this.device } as unknown as Event)
+            l(mockEvent)
           )
         }
       }

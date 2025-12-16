@@ -35,8 +35,8 @@ export async function GET(_req: Request) {
 
     if (!accessToken) {
       throw new ApiError(
-        401,
-        'Not authenticated: No user session or valid system token available.'
+        'Not authenticated: No user session or valid system token available.',
+        401
       )
     }
 

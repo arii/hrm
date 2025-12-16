@@ -282,12 +282,16 @@ describe('SpotifyPolling Service', () => {
     })
 
     it('should not execute commands without access token', async () => {
-      // Override the mock to return null token for this test to ensure SDK is not initialized
-      ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
-        () => ({
-          getValidAccessToken: jest.fn().mockResolvedValue(null),
-          getSdkAccessToken: jest.fn().mockReturnValue(null),
-        })
+      // Safely mock the implementation for this specific test case
+      const mockedTokenManager = SpotifyTokenManager as jest.MockedClass<
+        typeof SpotifyTokenManager
+      >
+      mockedTokenManager.mockImplementationOnce(
+        () =>
+          ({
+            getValidAccessToken: jest.fn().mockResolvedValue(null),
+            getSdkAccessToken: jest.fn().mockReturnValue(null),
+          } as unknown as SpotifyTokenManager)
       )
 
       const newService = await SpotifyPolling.create(broadcastMock)
@@ -438,8 +442,13 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
-        { command: 'PLAY', response: 'Invalid JSON' },
-        'Error executing Spotify command'
+        expect.objectContaining({
+          command: 'PLAY',
+          error: expect.objectContaining({
+            message: 'Invalid JSON',
+          }),
+        }),
+        "Error executing Spotify command 'PLAY'."
       )
     })
 
@@ -455,8 +464,13 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
-        { command: 'PLAY', err: expect.any(Error) },
-        'Could not read response body for failed Spotify command'
+        expect.objectContaining({
+          command: 'PLAY',
+          error: expect.objectContaining({
+            message: 'Failed to read response body from Spotify error.',
+          }),
+        }),
+        "Error executing Spotify command 'PLAY'."
       )
     })
 

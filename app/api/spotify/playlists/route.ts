@@ -25,7 +25,7 @@ async function getPlaylists(_req: Request) {
 
   // 2. Check if the session and token exist.
   if (!session || !session.accessToken) {
-    throw new ApiError(401, 'Not authenticated or token is missing.')
+    throw new ApiError('Not authenticated or token is missing.', 401)
   }
 
   // 3. Initialize Spotify SDK with access token
