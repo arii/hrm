@@ -13,10 +13,11 @@ interface SessionState {
 type SessionAction =
   | { type: 'CONNECT' }
   | { type: 'DISCONNECT' }
-  | { type: 'TICK'; payload: { duration: number; calories: number } }
+  | { type: 'TICK'; payload: { duration: number } }
   | { type: 'RESET' }
   | { type: 'START_WORKOUT' }
   | { type: 'END_WORKOUT' }
+  | { type: 'UPDATE_CALORIES'; payload: number }
 
 const initialState: SessionState = {
   status: 'idle',
@@ -46,7 +47,11 @@ function sessionReducer(
       return {
         ...state,
         duration: action.payload.duration,
-        calories: action.payload.calories,
+      }
+    case 'UPDATE_CALORIES':
+      return {
+        ...state,
+        calories: action.payload,
       }
     case 'RESET':
       return initialState
@@ -59,14 +64,12 @@ function sessionReducer(
 
 interface WorkoutSessionOptions {
   isConnected: boolean
-  currentHR: number
-  userAge: number
+  totalCalories: number
 }
 
 export const useWorkoutSession = ({
   isConnected,
-  currentHR,
-  userAge,
+  totalCalories,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
@@ -74,13 +77,11 @@ export const useWorkoutSession = ({
     startTime: null as number | null,
     pauseTime: null as number | null,
     totalPaused: 0,
-    accumulatedCalories: 0,
   })
 
-  const latestMetrics = useRef({ currentHR, userAge })
   useEffect(() => {
-    latestMetrics.current = { currentHR, userAge }
-  }, [currentHR, userAge])
+    dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
+  }, [totalCalories])
 
   const prevIsConnected = useRef(isConnected)
   useEffect(() => {
@@ -114,33 +115,14 @@ export const useWorkoutSession = ({
 
     if (state.status === 'running') {
       interval = setInterval(() => {
-        const { currentHR: hr, userAge: age } = latestMetrics.current
         if (session.startTime) {
           const duration = Math.floor(
             (Date.now() - session.startTime - session.totalPaused) / 1000
           )
-          if (age > 0 && hr > 0) {
-            const weightKg = 75 // TODO: Make this configurable
-            const caloriesPerMinute =
-              (age * 0.2017 - weightKg * 0.09036 + hr * 0.6309 - 55.0969) /
-              4.184
-            const caloriesPerSecond = Math.max(0, caloriesPerMinute / 60)
-            session.accumulatedCalories += caloriesPerSecond
-            if (process.env.NODE_ENV === 'development') {
-              console.debug('Calorie calculation:', {
-                age,
-                hr,
-                caloriesPerMinute,
-                caloriesPerSecond,
-                accumulatedCalories: session.accumulatedCalories,
-              })
-            }
-          }
           dispatch({
             type: 'TICK',
             payload: {
               duration,
-              calories: session.accumulatedCalories,
             },
           })
         }
@@ -156,7 +138,6 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
-    session.accumulatedCalories = 0
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])

@@ -37,7 +37,9 @@ export default function ConnectPage() {
     connectAndStream(userName, age)
   }
 
-  const currentHR = hrmData.find((d) => d.name === userName)?.value || 0
+  const currentUserData = hrmData.find((d) => d.name === userName)
+  const currentHR = currentUserData?.value || 0
+  const totalCalories = currentUserData?.calories || 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
@@ -51,8 +53,7 @@ export default function ConnectPage() {
     workoutStatus,
   } = useWorkoutSession({
     isConnected,
-    currentHR,
-    userAge: userAge ? parseInt(userAge) : 0,
+    totalCalories,
   })
 
   return (
