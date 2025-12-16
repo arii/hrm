@@ -1,0 +1,186 @@
+name: Smart Re-Review Trigger
+
+on:
+  pull_request:
+    types: [synchronize]  # Triggered when new commits are pushed
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  analyze-changes:
+    name: Analyze Changes for Re-Review
+    runs-on: ubuntu-latest
+    outputs:
+      needs-review: ${{ steps.decision.outputs.needs-review }}
+      review-type: ${{ steps.decision.outputs.review-type }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze Change Significance
+        id: analyze
+        run: |
+          # Get the last commit that triggered this workflow
+          LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
+
+          # Determine PREVIOUS_COMMIT safely
+          if [ "${{ github.event_name }}" == "pull_request" ] && [ -n "${{ github.event.before }}" ]; then
+            # For synchronize events, use the previous commit from the push payload
+            PREVIOUS_COMMIT=${{ github.event.before }}
+          else
+            # Fallback for other events
+            PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
+          fi
+
+          # Check if this is just a merge commit
+          IS_MERGE=$(git log -1 --pretty=%P $LAST_COMMIT | wc -w)
+
+          # Get files changed in this push
+          CHANGED_FILES=$(git diff --name-only $PREVIOUS_COMMIT $LAST_COMMIT)
+
+          # Count significant changes (exclude trivial files)
+          SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | \
+            grep -v -E '\.(md|txt|json|yaml|yml)$' | \
+            grep -v -E 'package-lock.json|pnpm-lock.yaml' | \
+            wc -l)
+
+          echo "IS_MERGE=$IS_MERGE" >> $GITHUB_ENV
+          echo "SIGNIFICANT_CHANGES=$SIGNIFICANT_CHANGES" >> $GITHUB_ENV
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Get commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B $LAST_COMMIT)
+          echo "COMMIT_MSG<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MSG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Check Review State
+        id: review_state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Check for existing "changes requested" reviews
+          CHANGES_REQUESTED=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json reviews \
+            --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+
+          # Check for approved reviews
+          APPROVED=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json reviews \
+            --jq '[.reviews[] | select(.state == "APPROVED")] | length')
+
+          # Get review comments count
+          REVIEW_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json comments \
+            --jq '[.comments[] | select(.author.login == "arii")] | length')
+
+          echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
+          echo "APPROVED=$APPROVED" >> $GITHUB_ENV
+          echo "REVIEW_COMMENTS=$REVIEW_COMMENTS" >> $GITHUB_ENV
+
+      - name: Decide Re-Review Strategy
+        id: decision
+        run: |
+          NEEDS_REVIEW="false"
+          REVIEW_TYPE="none"
+
+          # Skip if just a merge commit with no changes
+          if [ "${{ env.IS_MERGE }}" -gt "1" ] && [ "${{ env.SIGNIFICANT_CHANGES }}" -eq "0" ]; then
+            echo "Skipping re-review: Merge commit with no significant changes"
+            echo "needs-review=false" >> $GITHUB_OUTPUT
+            echo "review-type=none" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Skip if commit message indicates trivial change
+          if echo "${{ env.COMMIT_MSG }}" | grep -qiE '^(docs?|chore|style):'; then
+            echo "Skipping re-review: Trivial change (docs/chore/style)"
+            echo "needs-review=false" >> $GITHUB_OUTPUT
+            echo "review-type=none" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Trigger full re-review if changes were requested
+          if [ "${{ env.CHANGES_REQUESTED }}" -gt "0" ]; then
+            NEEDS_REVIEW="true"
+            REVIEW_TYPE="full"
+            echo "Full re-review needed: Addressing requested changes"
+
+          # Trigger quick re-review if there are outstanding comments but no formal changes requested
+          elif [ "${{ env.REVIEW_COMMENTS }}" -gt "0" ] && [ "${{ env.APPROVED }}" -eq "0" ]; then
+            NEEDS_REVIEW="true"
+            REVIEW_TYPE="quick"
+            echo "Quick re-review needed: Outstanding comments"
+
+          # Trigger verification if already approved but new changes added
+          elif [ "${{ env.APPROVED }}" -gt "0" ] && [ "${{ env.SIGNIFICANT_CHANGES }}" -gt "0" ]; then
+            NEEDS_REVIEW="true"
+            REVIEW_TYPE="verification"
+            echo "Verification needed: New changes after approval"
+
+          else
+            echo "No re-review needed at this time"
+          fi
+
+          echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
+          echo "review-type=$REVIEW_TYPE" >> $GITHUB_OUTPUT
+
+  re-review:
+    name: Execute Re-Review
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.needs-review == 'true'
+    uses: ./.github/workflows/reusable-gemini-review.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ARI_PAT: ${{ secrets.ARI_PAT }}
+
+  post-skip-notice:
+    name: Post Skip Notice
+    needs: analyze-changes
+    if: needs.analyze-changes.outputs.needs-review == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ARI_PAT }}
+          script: |
+            const skipReasons = {
+              merge: '🔀 Merge commit without code changes',
+              trivial: '📝 Trivial change (docs/chore/style)',
+              none: 'No re-review criteria met'
+            };
+
+            // Don't spam - only comment if there was a significant push
+            const body = `🤖 **Re-review skipped**: ${skipReasons['none']}`;
+
+            // Check if we already have a recent skip notice
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 5
+            });
+
+            const recentSkip = comments.find(c =>
+              c.user.login === 'arii' &&
+              c.body.includes('Re-review skipped') &&
+              new Date(c.created_at) > new Date(Date.now() - 3600000) // Within last hour
+            );
+
+            if (!recentSkip) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
