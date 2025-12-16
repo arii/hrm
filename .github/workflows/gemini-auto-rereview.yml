@@ -18,6 +18,7 @@ jobs:
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       review-type: ${{ steps.decision.outputs.review-type }}
+      skip-reason: ${{ steps.decision.outputs.skip-reason }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,11 +63,21 @@ jobs:
           NEEDS_REVIEW="false"
           REVIEW_TYPE="none"
 
+          # Safety Brake: Limit max re-reviews to 15 to prevent infinite loops
+          if [ "${{ env.REVIEW_COMMENTS }}" -ge "15" ]; then
+            echo "Skipping re-review: Max review limit (15) reached."
+            echo "needs-review=false" >> $GITHUB_OUTPUT
+            echo "review-type=none" >> $GITHUB_OUTPUT
+            echo "skip-reason=limit_reached" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # Skip if just a merge commit with no changes
           if [ "${{ env.IS_MERGE }}" -gt "1" ] && [ "${{ env.SIGNIFICANT_CHANGES }}" -eq "0" ]; then
             echo "Skipping re-review: Merge commit with no significant changes"
             echo "needs-review=false" >> $GITHUB_OUTPUT
             echo "review-type=none" >> $GITHUB_OUTPUT
+            echo "skip-reason=merge" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -75,6 +86,7 @@ jobs:
             echo "Skipping re-review: Trivial change (docs/chore/style)"
             echo "needs-review=false" >> $GITHUB_OUTPUT
             echo "review-type=none" >> $GITHUB_OUTPUT
+            echo "skip-reason=trivial" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -123,14 +135,18 @@ jobs:
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
+            const skipReason = '${{ needs.analyze-changes.outputs.skip-reason }}';
             const skipReasons = {
               merge: '🔀 Merge commit without code changes',
               trivial: '📝 Trivial change (docs/chore/style)',
+              limit_reached: '🛑 Re-review limit (15) reached. Please request a manual review if needed.',
               none: 'No re-review criteria met'
             };
 
+            const reasonText = skipReasons[skipReason] || skipReasons['none'];
+
             // Don't spam - only comment if there was a significant push
-            const body = `🤖 **Re-review skipped**: ${skipReasons['none']}`;
+            const body = `🤖 **Re-review skipped**: ${reasonText}`;
 
             // Check if we already have a recent skip notice
             const { data: comments } = await github.rest.issues.listComments({
