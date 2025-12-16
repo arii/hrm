@@ -206,7 +206,10 @@ app
             // Await the handler to ensure sequential execution and catch errors
             await spotifyService.handleTokenUpdate(req.body)
           } catch (err) {
-            logger.error({ err }, 'Error during synchronous token update handling')
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
           }
         }
       }
