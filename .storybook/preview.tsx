@@ -26,17 +26,14 @@ const preview: Preview = {
   // Register the MSW loader
   loaders: [mswLoader],
   decorators: [
-    (Story) =>
-      React.createElement(
-        SessionProvider,
-        { session: null },
-        React.createElement(
-          ThemeProvider,
-          { theme: theme },
-          React.createElement(CssBaseline),
-          React.createElement(Story)
-        )
-      ),
+    (Story) => (
+      <SessionProvider session={null}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Story />
+        </ThemeProvider>
+      </SessionProvider>
+    ),
   ],
 }
 

@@ -27,7 +27,8 @@
   "ignore": [
     "next.config.js",
     ".next/**",
-    "dist/**"
+    "dist/**",
+    ".storybook/preview.tsx"
   ],
   "ignoreBinaries": [
     "sleep",
