@@ -46,15 +46,18 @@ importers:
       '@spotify/web-api-ts-sdk':
         specifier: ^1.2.0
         version: 1.2.0
+      '@upstash/ratelimit':
+        specifier: ^2.0.7
+        version: 2.0.7(@upstash/redis@1.35.8)
+      '@upstash/redis':
+        specifier: ^1.35.8
+        version: 1.35.8
       cheerio:
         specifier: ^1.1.2
         version: 1.1.2
       express:
         specifier: ^5.1.0
         version: 5.2.1
-      express-rate-limit:
-        specifier: ^8.2.1
-        version: 8.2.1(express@5.2.1)
       framer-motion:
         specifier: ^12.23.24
         version: 12.23.25(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -3225,6 +3228,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@upstash/core-analytics@0.0.10':
+    resolution: {integrity: sha512-7qJHGxpQgQr9/vmeS1PktEwvNAF7TI4iJDi8Pu2CFZ9YUGHZH4fOP5TfYlZ4aVxfopnELiE4BS4FBjyK7V1/xQ==}
+    engines: {node: '>=16.0.0'}
+
+  '@upstash/ratelimit@2.0.7':
+    resolution: {integrity: sha512-qNQW4uBPKVk8c4wFGj2S/vfKKQxXx1taSJoSGBN36FeiVBBKHQgsjPbKUijZ9Xu5FyVK+pfiXWKIsQGyoje8Fw==}
+    peerDependencies:
+      '@upstash/redis': ^1.34.3
+
+  '@upstash/redis@1.35.8':
+    resolution: {integrity: sha512-QqLpVCD9PCPE6hlRzOkz864nfijSdazxtyJLIy9ZeTh6kU2nBIKKfjT5HMHjIRD4BCm6TK1dbUT9pxhFjcvpng==}
+
   '@vitest/browser-playwright@4.0.15':
     resolution: {integrity: sha512-94yVpDbb+ykiT7mK6ToonGnq2GIHEQGBTZTAzGxBGQXcVNCh54YKC2/WkfaDzxy0m6Kgw05kq3FYHKHu+wRdIA==}
     peerDependencies:
@@ -5229,12 +5244,6 @@ packages:
     resolution: {integrity: sha512-u/feCi0GPsI+988gU2FLcsHyAHTU0MX1Wg68NhAnN7z/+C5wqG+CY8J53N9ioe8RXgaoz0nBR/TYMf3AycUuPw==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  express-rate-limit@8.2.1:
-    resolution: {integrity: sha512-PCZEIEIxqwhzw4KF0n7QF4QqruVTcF73O5kFKUnGOyjbCCgizBBiFaYpd/fnBLUMPw/BWw9OsiN7GgrNYr7j6g==}
-    engines: {node: '>= 16'}
-    peerDependencies:
-      express: '>= 4.11'
-
   express@5.2.1:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
     engines: {node: '>= 18'}
@@ -5977,10 +5986,6 @@ packages:
 
   iota-array@1.0.0:
     resolution: {integrity: sha512-pZ2xT+LOHckCatGQ3DcG/a+QuEqvoxqkiL7tvE8nn3uuu+f6i1TtpB5/FtWFbxUuVr5PZCx8KskuGatbJDXOWA==}
-
-  ip-address@10.0.1:
-    resolution: {integrity: sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA==}
-    engines: {node: '>= 12'}
 
   ip-address@10.1.0:
     resolution: {integrity: sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==}
@@ -9046,6 +9051,9 @@ packages:
   unbox-primitive@1.1.0:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
+
+  uncrypto@0.1.3:
+    resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
   undeclared-identifiers@1.1.3:
     resolution: {integrity: sha512-pJOW4nxjlmfwKApE4zvxLScM/njmwj/DiUBv7EabwE4O8kRUy+HIwxQtZLBPll/jx1LJyBcqNfB3/cpv9EZwOw==}
@@ -12947,6 +12955,19 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
+  '@upstash/core-analytics@0.0.10':
+    dependencies:
+      '@upstash/redis': 1.35.8
+
+  '@upstash/ratelimit@2.0.7(@upstash/redis@1.35.8)':
+    dependencies:
+      '@upstash/core-analytics': 0.0.10
+      '@upstash/redis': 1.35.8
+
+  '@upstash/redis@1.35.8':
+    dependencies:
+      uncrypto: 0.1.3
+
   '@vitest/browser-playwright@4.0.15(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(playwright@1.57.0)(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15)':
     dependencies:
       '@vitest/browser': 4.0.15(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(vite@7.2.7(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@4.0.15(@types/node@24.10.1)(@vitest/browser-playwright@4.0.15)(jiti@2.6.1)(jsdom@26.1.0)(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))
@@ -15480,11 +15501,6 @@ snapshots:
       jest-mock: 30.2.0
       jest-util: 30.2.0
 
-  express-rate-limit@8.2.1(express@5.2.1):
-    dependencies:
-      express: 5.2.1
-      ip-address: 10.0.1
-
   express@5.2.1:
     dependencies:
       accepts: 2.0.0
@@ -16339,8 +16355,6 @@ snapshots:
   internmap@1.0.1: {}
 
   iota-array@1.0.0: {}
-
-  ip-address@10.0.1: {}
 
   ip-address@10.1.0: {}
 
@@ -19934,6 +19948,8 @@ snapshots:
       has-bigints: 1.1.0
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
+
+  uncrypto@0.1.3: {}
 
   undeclared-identifiers@1.1.3:
     dependencies:
