@@ -2,7 +2,7 @@ name: Smart Re-Review Trigger
 
 on:
   pull_request:
-    types: [synchronize]  # Triggered when new commits are pushed
+    types: [synchronize] # Triggered when new commits are pushed
   pull_request_review:
     types: [submitted]
 

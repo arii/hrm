@@ -194,9 +194,15 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
-function buildReviewPrompt(diff: string, context: ReviewContext, contextContent: string): string {
+function buildReviewPrompt(
+  diff: string,
+  context: ReviewContext,
+  contextContent: string
+): string {
   const isReReview = context.reviewCount > 0
-  const reviewIteration = isReReview ? `Re-Review #${context.reviewCount + 1}` : 'Initial Review'
+  const reviewIteration = isReReview
+    ? `Re-Review #${context.reviewCount + 1}`
+    : 'Initial Review'
 
   let prompt = `# Code Review Task: ${reviewIteration}
 
@@ -228,15 +234,23 @@ function buildReviewPrompt(diff: string, context: ReviewContext, contextContent:
 4. Determine if the PR is ready for approval
 
 ### Previous Review Feedback:
-${context.previousReviews ? (() => {
-  try {
-    const reviews = JSON.parse(context.previousReviews);
-    return reviews.map((r: any, i: number) =>
-      `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`).join('\n---\n');
-  } catch (e) {
-    return context.previousReviews; // Fallback to raw string if parsing fails
-  }
-})() : 'None'}
+${
+  context.previousReviews
+    ? (() => {
+        try {
+          const reviews = JSON.parse(context.previousReviews)
+          return reviews
+            .map(
+              (r: any, i: number) =>
+                `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
+            )
+            .join('\n---\n')
+        } catch (e) {
+          return context.previousReviews // Fallback to raw string if parsing fails
+        }
+      })()
+    : 'None'
+}
 `
   }
 
@@ -399,16 +413,27 @@ async function runReviewPreset(
   const context = getReviewContextFromEnv()
 
   // Skip logic
-  if (context.prLabels.includes('ready-for-approval') || context.prLabels.includes('abandon')) {
-    console.log('PR is marked as "ready-for-approval" or "abandon". Skipping review.')
-    await writeOutput(JSON.stringify({ reviewComment: '', labels: [] }), outputFile)
+  if (
+    context.prLabels.includes('ready-for-approval') ||
+    context.prLabels.includes('abandon')
+  ) {
+    console.log(
+      'PR is marked as "ready-for-approval" or "abandon". Skipping review.'
+    )
+    await writeOutput(
+      JSON.stringify({ reviewComment: '', labels: [] }),
+      outputFile
+    )
     return
   }
 
   const diffFile = process.env.PR_DIFF_FILE
   if (!diffFile) {
     console.error('Error: PR_DIFF_FILE env var is required for review preset')
-    await writeOutput(JSON.stringify({ reviewComment: '', labels: [] }), outputFile)
+    await writeOutput(
+      JSON.stringify({ reviewComment: '', labels: [] }),
+      outputFile
+    )
     return
   }
 
@@ -422,7 +447,10 @@ async function runReviewPreset(
 
   if (!diff || diff.trim().length === 0) {
     console.log('Diff is empty. Skipping review.')
-    await writeOutput(JSON.stringify({ reviewComment: '', labels: [] }), outputFile)
+    await writeOutput(
+      JSON.stringify({ reviewComment: '', labels: [] }),
+      outputFile
+    )
     return
   }
 
@@ -449,40 +477,47 @@ async function runReviewPreset(
 
     // Immediate fallback check for empty/short raw text before JSON parsing
     if (!text || text.trim().length < 20) {
-       console.warn('Warning: Raw model response is empty or too short. Injecting fallback immediately.');
-       const fallback = {
-         reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
-         labels: ["ready-for-approval"],
-         verdict: 'approve'
-       };
-       await writeOutput(JSON.stringify(fallback, null, 2), outputFile);
-       return;
+      console.warn(
+        'Warning: Raw model response is empty or too short. Injecting fallback immediately.'
+      )
+      const fallback = {
+        reviewComment: `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`,
+        labels: ['ready-for-approval'],
+        verdict: 'approve',
+      }
+      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
+      return
     }
 
     // JSON Parsing and secondary fallback check
     try {
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(text)
       if (!parsed.reviewComment || parsed.reviewComment.trim().length < 20) {
-        console.warn('Warning: Parsed JSON has empty review comment. Injecting fallback.');
-        parsed.reviewComment = `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`;
-        parsed.verdict = 'approve';
-        await writeOutput(JSON.stringify(parsed, null, 2), outputFile);
+        console.warn(
+          'Warning: Parsed JSON has empty review comment. Injecting fallback.'
+        )
+        parsed.reviewComment = `### ✅ Verification Complete\n\nNo significant issues found in this iteration.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`
+        parsed.verdict = 'approve'
+        await writeOutput(JSON.stringify(parsed, null, 2), outputFile)
       } else {
-        await writeOutput(text, outputFile);
+        await writeOutput(text, outputFile)
       }
     } catch (e) {
-      console.warn('Warning: Failed to parse JSON response. Falling back if text is not useful JSON.', e);
+      console.warn(
+        'Warning: Failed to parse JSON response. Falling back if text is not useful JSON.',
+        e
+      )
       // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
       // If it's just raw text, maybe output it? But safer to standardise output.
       // Given we asked for JSON, any non-JSON response is suspect.
       // Let's output the text but wrapped in a valid JSON structure if possible, or just the fallback if it's garbage.
 
       const fallback = {
-         reviewComment: `### ⚠️ Review Generation Warning\n\nThe AI response could not be parsed as valid JSON. Raw output:\n\n${text}`,
-         labels: ["review-failed"],
-         verdict: 'comment'
-       };
-       await writeOutput(JSON.stringify(fallback, null, 2), outputFile);
+        reviewComment: `### ⚠️ Review Generation Warning\n\nThe AI response could not be parsed as valid JSON. Raw output:\n\n${text}`,
+        labels: ['review-failed'],
+        verdict: 'comment',
+      }
+      await writeOutput(JSON.stringify(fallback, null, 2), outputFile)
     }
   } catch (error) {
     handleError(error)
@@ -533,7 +568,10 @@ function handleError(error: any) {
     labels: ['review-failed'],
   }
 
-  console.error('Error generating content:', JSON.stringify(errorOutput, null, 2))
+  console.error(
+    'Error generating content:',
+    JSON.stringify(errorOutput, null, 2)
+  )
 
   // Write the error details to the output file so the workflow can use it
   if (outputFile) {

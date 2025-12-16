@@ -260,7 +260,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             lastDataTime.current = Date.now()
 
             const userProfile = userDetailsRef.current
-            const calculatedMaxHr = calculateMaxHr(userProfile?.userAge ?? undefined)
+            const calculatedMaxHr = calculateMaxHr(
+              userProfile?.userAge ?? undefined
+            )
 
             // Construct the metadata update message with all user profile data.
             const metadataData: HrmMetadataUpdateData = {

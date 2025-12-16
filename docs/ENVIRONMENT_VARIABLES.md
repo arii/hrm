@@ -22,7 +22,7 @@ Do not use type assertions (e.g., `as string`) to bypass TypeScript's type safet
 
 ```typescript
 // This is unsafe and prohibited.
-const myVar = process.env.MY_VAR as string;
+const myVar = process.env.MY_VAR as string
 ```
 
 ### 3. Use Explicit Validation and Error Handling
@@ -33,14 +33,14 @@ For any environment variable that is required for the application to function, y
 
 ```typescript
 // Example using a validation library like Zod
-import { z } from 'zod';
+import { z } from 'zod'
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   API_KEY: z.string().min(1),
-});
+})
 
-const env = envSchema.parse(process.env);
+const env = envSchema.parse(process.env)
 
 // Now 'env.API_KEY' is guaranteed to be a non-empty string.
 ```
@@ -48,9 +48,9 @@ const env = envSchema.parse(process.env);
 If not using a validation library, a manual check is required:
 
 ```typescript
-const apiKey = process.env.API_KEY;
+const apiKey = process.env.API_KEY
 if (!apiKey) {
-  throw new Error('Required environment variable API_KEY is not set.');
+  throw new Error('Required environment variable API_KEY is not set.')
 }
 // 'apiKey' is now known to be a string.
 ```
@@ -59,13 +59,13 @@ if (!apiKey) {
 
 All environment variables required by the project must be documented in the `.env.example` file. This file should:
 
--   List every required environment variable.
--   Provide a descriptive comment explaining the purpose of each variable.
--   Include placeholder or example values, but **never** real secrets.
+- List every required environment variable.
+- Provide a descriptive comment explaining the purpose of each variable.
+- Include placeholder or example values, but **never** real secrets.
 
 ### 5. Use Specific and Prefixed Names
 
 To avoid naming collisions and to make the purpose of variables clear, use a consistent naming convention. For example, prefix all Spotify-related variables with `SPOTIFY_`.
 
--   **Good**: `SPOTIFY_CLIENT_ID`, `DATABASE_URL`
--   **Bad**: `ID`, `URL`
+- **Good**: `SPOTIFY_CLIENT_ID`, `DATABASE_URL`
+- **Bad**: `ID`, `URL`
