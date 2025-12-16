@@ -81,6 +81,7 @@ const GoogleDocViewer = ({
               top: 0,
               left: 0,
               transition: 'height 0.3s ease-in-out',
+              willChange: 'height',
             }}
             onLoad={() => setIframeLoading(false)}
           />
