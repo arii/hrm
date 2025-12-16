@@ -24,7 +24,6 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
-import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -65,69 +64,6 @@ app
   .prepare()
   .then(async () => {
     const server = createServer(expressApp)
-
-    // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
-    if (process.env.TESTING !== 'true') {
-      const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to Spotify API, please try again later.',
-        },
-      })
-
-      const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: {
-          error: 'Too many requests to internal API, please try again later.',
-        },
-      })
-      const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
-        standardHeaders: true,
-        legacyHeaders: false,
-        keyGenerator: (req: Request) => {
-          // Use X-Forwarded-For if available (from reverse proxy), else use socket address
-          return (
-            (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-            req.socket.remoteAddress ||
-            'unknown'
-          )
-        },
-        message: { error: 'Too many requests, please try again later.' },
-        skip: (req: Request) =>
-          req.path.startsWith('/api/spotify') ||
-          req.path.startsWith('/api/internal'),
-      })
-
-      // Apply the rate limiters to specific routes
-      expressApp.use('/api/spotify/', spotifyApiLimiter)
-      expressApp.use('/api/internal/', internalApiLimiter)
-      expressApp.use('/api/', generalApiLimiter)
-    }
 
     // --- Static Asset Serving (Production Only) ---
     // In production, serve the Next.js static assets directly from the .next/static folder.
