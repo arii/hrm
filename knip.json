@@ -32,6 +32,9 @@
     "scripts/test-json-with-server.sh",
     "scripts/test-with-server.sh"
   ],
+  "ignoreDependencies": [
+    "@types/web-bluetooth"
+  ],
   "next": {
     "entry": [
       "app/layout.tsx",
