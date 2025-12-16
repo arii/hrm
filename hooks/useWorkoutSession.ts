@@ -62,14 +62,22 @@ function sessionReducer(
 
 // --- The Hook Implementation ---
 
+/**
+ * Manages the state of a client-side workout session, tracking duration.
+ *
+ * NOTE: Calorie calculation is no longer performed in this hook.
+ * It is now handled server-side and streamed via the WebSocket connection.
+ * This hook consumes the final `totalCalories` value to ensure data consistency
+ * across the application.
+ */
 interface WorkoutSessionOptions {
   isConnected: boolean
-  totalCalories: number
+  totalCalories?: number
 }
 
 export const useWorkoutSession = ({
   isConnected,
-  totalCalories,
+  totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
