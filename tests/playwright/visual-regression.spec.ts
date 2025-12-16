@@ -125,9 +125,6 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
-    // Dismiss the audio overlay before taking a screenshot
-    await dismissAudioOverlay(dashboardPage)
-
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
 
@@ -180,9 +177,6 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
-    // Dismiss the audio overlay before starting the timer
-    await dismissAudioOverlay(dashboardPage)
-
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
