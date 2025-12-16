@@ -9,9 +9,10 @@
     "skipLibCheck": true,
     "strict": true,
     "outDir": "../../dist/playwright",
+    "baseUrl": "../../.",
     "types": ["node", "@playwright/test"],
     "paths": {
-      "@/*": ["../.././*"]
+      "@/*": ["./*"]
     }
   },
   "include": [
