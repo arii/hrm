@@ -25,12 +25,42 @@ jobs:
 
       - name: Analyze Change Significance
         id: analyze
-        env:
-          GITHUB_EVENT_AFTER: ${{ github.event.after }}
-          PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: ./.github/scripts/analyze-changes.sh
+        run: |
+          # Get the last commit that triggered this workflow
+          LAST_COMMIT=${{ github.event.after || github.event.pull_request.head.sha }}
+
+          # Determine PREVIOUS_COMMIT safely
+          if [ "${{ github.event_name }}" == "pull_request" ] && [ -n "${{ github.event.before }}" ]; then
+            # For synchronize events, use the previous commit from the push payload
+            PREVIOUS_COMMIT=${{ github.event.before }}
+          else
+            # Fallback for other events
+            PREVIOUS_COMMIT=$(git rev-parse ${LAST_COMMIT}^)
+          fi
+
+          # Check if this is just a merge commit
+          IS_MERGE=$(git log -1 --pretty=%P $LAST_COMMIT | wc -w)
+
+          # Get files changed in this push
+          CHANGED_FILES=$(git diff --name-only $PREVIOUS_COMMIT $LAST_COMMIT)
+
+          # Count significant changes (exclude trivial files)
+          SIGNIFICANT_CHANGES=$(echo "$CHANGED_FILES" | \
+            grep -v -E '\.(md|txt|json|yaml|yml)$' | \
+            grep -v -E 'package-lock.json|pnpm-lock.yaml' | \
+            wc -l)
+
+          echo "IS_MERGE=$IS_MERGE" >> $GITHUB_ENV
+          echo "SIGNIFICANT_CHANGES=$SIGNIFICANT_CHANGES" >> $GITHUB_ENV
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Get commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B $LAST_COMMIT)
+          echo "COMMIT_MSG<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MSG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Check Review State
         id: review_state
