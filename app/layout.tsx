@@ -1,7 +1,9 @@
+import './globals.css'
+
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
+
 import Main from './main'
-import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',

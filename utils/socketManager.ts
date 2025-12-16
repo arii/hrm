@@ -2,22 +2,23 @@
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
-import { WebSocket, Server as WebSocketServer } from 'ws'
+import { Server as WebSocketServer, WebSocket } from 'ws'
 import { z } from 'zod' // Import z from zod
+
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
-  SpotifyCommandMessage,
-  SpotifyExecutionMessage,
   HrmData,
   InitialStateSnapshotPayload,
   ServerMessage,
+  SpotifyCommandMessage,
+  SpotifyExecutionMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
+import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import logger from './logger.js'
 
 // Extend WebSocket to track client role and connection health

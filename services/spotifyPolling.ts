@@ -1,14 +1,15 @@
-import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
+import { AccessToken, Device, SpotifyApi } from '@spotify/web-api-ts-sdk'
+
 import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
-import {
-  SpotifyTokenManager,
-  SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+import { logger } from '../utils/logger.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
+import {
+  SpotifyTokenManager,
+  SpotifyTokenPayload,
+} from './spotifyTokenManager.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK

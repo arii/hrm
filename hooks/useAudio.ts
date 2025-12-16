@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { audioManager } from '../utils/audioManager'
+
 import { useWebSocket } from '@/context/WebSocketContext'
+
+import { audioManager } from '../utils/audioManager'
 
 export const useAudio = () => {
   const { timerData } = useWebSocket()

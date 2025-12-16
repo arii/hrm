@@ -1,9 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen, fireEvent } from '@testing-library/react'
-import VolumeSlider from '@/components/Spotify/VolumeSlider'
 import '@testing-library/jest-dom'
+
+import { fireEvent, render, screen } from '@testing-library/react'
+
+import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 describe('components/Spotify/VolumeSlider', () => {
   it('renders the volume slider', () => {

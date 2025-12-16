@@ -1,9 +1,11 @@
 /** @jest-environment jsdom */
 
+import '@testing-library/jest-dom'
+
+import { render, screen, within } from '@testing-library/react'
+
 import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
-import '@testing-library/jest-dom'
-import { render, screen, within } from '@testing-library/react'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')

@@ -8,8 +8,8 @@
  *
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
-import { z } from 'zod'
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi'
+import { z } from 'zod'
 
 // Extend the Zod instance with OpenAPI-specific methods
 extendZodWithOpenApi(z)

@@ -1,11 +1,12 @@
 // File: components/ConnectHRMonitorButton.tsx
 'use client'
-import { memo } from 'react'
-import Button from '@mui/material/Button'
-import Box from '@mui/material/Box'
-import Tooltip from '@mui/material/Tooltip'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Tooltip from '@mui/material/Tooltip'
+import { memo } from 'react'
+
 import {
   BLUETOOTH_NOT_SUPPORTED_TEXT,
   CONNECT_HR_MONITOR_BUTTON_TEXT,

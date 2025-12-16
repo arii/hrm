@@ -1,10 +1,12 @@
 /** @jest-environment jsdom */
 
+import '@testing-library/jest-dom'
+
+import { render, screen } from '@testing-library/react'
+
 import TimerDisplay from '@/components/TimerDisplay'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
-import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext')

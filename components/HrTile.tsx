@@ -1,16 +1,18 @@
 // File: components/HrTile.tsx
 'use client'
-import { HrTileProps } from '@/types'
+import WifiOffIcon from '@mui/icons-material/WifiOff'
 import Box from '@mui/material/Box'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
+import { useTheme } from '@mui/material/styles'
 import Tooltip from '@mui/material/Tooltip'
-import WifiOffIcon from '@mui/icons-material/WifiOff'
-import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
+
+import { HrTileProps } from '@/types'
+import { getHrZoneProps } from '@/utils/visualization'
+
 import StyledCard from './shared/StyledCard'
-import { useTheme } from '@mui/material/styles'
 
 // Define the style for the centered overlay
 const overlayStyles = {

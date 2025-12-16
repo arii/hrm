@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
-import { useError } from '@/context/ErrorContext'
 import { Alert, Snackbar, Stack } from '@mui/material'
+import React from 'react'
+
+import { useError } from '@/context/ErrorContext'
 
 const ErrorDisplay: React.FC = () => {
   const { errors, removeError } = useError()

@@ -1,7 +1,8 @@
 'use client'
 
-import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
+
+import { WebSocketProvider } from '@/context/WebSocketContext'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

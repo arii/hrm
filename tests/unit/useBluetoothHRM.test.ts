@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { act, renderHook } from '@testing-library/react'
+
 import { useWebSocket } from '@/context/WebSocketContext'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({

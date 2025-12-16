@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai'
+
 import { GithubPullRequest, ReleaseNoteResult } from '../types/gemini'
 
 const getClient = () => {

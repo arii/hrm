@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import { act, renderHook } from '@testing-library/react'
+
 import useVolumePreference from '@/hooks/useVolumePreference'
 
 // Mock the audioManager

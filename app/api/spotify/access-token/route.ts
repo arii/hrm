@@ -1,7 +1,8 @@
-import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
-import logger from '@/utils/logger'
-import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+
+import { authOptions } from '@/lib/auth' // Using alias for cleaner imports
+import { logger } from '@/utils/logger'
 
 /**
  * API route to securely provide the Spotify access token to the client.

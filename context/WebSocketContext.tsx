@@ -6,17 +6,18 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useReducer,
   useRef,
   useState,
-  useReducer,
 } from 'react'
+
 import {
+  ActiveAlert,
   ClientCommandMessage,
   HrmData as ServerHrmData,
+  ServerMessage,
   SpotifyData,
   TimerData,
-  ServerMessage,
-  ActiveAlert,
 } from '../types/websocket'
 import { getWebSocketURL } from '../utils/urls'
 

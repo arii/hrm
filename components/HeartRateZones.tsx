@@ -1,6 +1,7 @@
 // File: components/HeartRateZones.tsx (Heart Rate Zone Display)
+import { Box, Paper, Typography } from '@mui/material'
 import React from 'react'
-import { Box, Typography, Paper } from '@mui/material'
+
 import { HEART_RATE_ZONES, HeartRateZoneConfig } from '../utils/constants'
 
 interface HeartRateZonesProps {

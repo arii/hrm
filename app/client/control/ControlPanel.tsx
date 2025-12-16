@@ -8,10 +8,11 @@ import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
+import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import { useEffect } from 'react'
+
 import { useWebSocket } from '@/context/WebSocketContext'
-import dynamic from 'next/dynamic'
 
 const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   loading: () => (

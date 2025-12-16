@@ -1,18 +1,20 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
-import { useMemo } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
+import { useMemo } from 'react'
+
+import HrTile from '@/components/HrTile'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
+
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()

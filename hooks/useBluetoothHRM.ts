@@ -1,13 +1,15 @@
 // File: hooks/useBluetoothHRM.ts
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { useWebSocket } from '@/context/WebSocketContext'
+import { logger } from '@/utils/logger'
+
 import {
   HrmInputData,
-  HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
+  HrmMetadataUpdateMessage,
 } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
-import logger from '@/utils/logger'
-import { useWebSocket } from '@/context/WebSocketContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'

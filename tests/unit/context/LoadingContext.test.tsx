@@ -1,11 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-import React from 'react'
-import { render, screen, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import { LoadingProvider, useLoading } from '@/context/LoadingContext'
+
 import { Button } from '@mui/material'
+import { act, render, screen } from '@testing-library/react'
+import React from 'react'
+
+import { LoadingProvider, useLoading } from '@/context/LoadingContext'
 
 const TestComponent = () => {
   const { isLoading, setIsLoading } = useLoading()

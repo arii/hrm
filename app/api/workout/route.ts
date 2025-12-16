@@ -1,5 +1,6 @@
 // app/api/workout/route.ts
 import { NextResponse } from 'next/server'
+
 import { parseGoogleDocTable } from '@/services/googleDocParser'
 
 export async function GET(request: Request) {

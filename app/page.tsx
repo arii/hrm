@@ -4,17 +4,19 @@
  * Consumes all real-time data streams and renders the unified MUI visualization.
  */
 'use client'
+import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
-import Box from '@mui/material/Box'
-import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
+
+import useVolumePreference from '@/hooks/useVolumePreference'
+
+import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
-import useVolumePreference from '@/hooks/useVolumePreference'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.

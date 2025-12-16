@@ -1,12 +1,13 @@
 'use client'
 
-import useLocalStorage from '@/hooks/useLocalStorage'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '@/utils/visualization'
-import { formatDuration } from '@/lib/utils'
-import ConnectView from './ConnectView'
+import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import useLocalStorage from '@/hooks/useLocalStorage'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { formatDuration } from '@/lib/utils'
+import { getHrZoneProps } from '@/utils/visualization'
+
+import ConnectView from './ConnectView'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')

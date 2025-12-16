@@ -1,13 +1,14 @@
 /**
  * @jest-environment node
  */
+import { WebSocket } from 'ws'
+
 import {
   checkMemoryUsage,
   checkSpotifyAPI,
-  checkWebSocketService,
   checkTimerService,
+  checkWebSocketService,
 } from '../../../lib/healthCheck'
-import { WebSocket } from 'ws'
 import TabataTimer from '../../../services/tabataTimer'
 
 // Mock the 'ws' module

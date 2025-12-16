@@ -1,9 +1,9 @@
-import Typography from '@mui/material/Typography'
+import WatchLaterIcon from '@mui/icons-material/WatchLater'
+import WhatshotIcon from '@mui/icons-material/Whatshot'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
-import WatchLaterIcon from '@mui/icons-material/WatchLater'
-import WhatshotIcon from '@mui/icons-material/Whatshot'
+import Typography from '@mui/material/Typography'
 
 interface WorkoutSummaryProps {
   duration: string

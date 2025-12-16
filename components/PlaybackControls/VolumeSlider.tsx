@@ -1,7 +1,7 @@
 // components/PlaybackControls/VolumeSlider.tsx
 'use client'
-import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
+import VolumeUp from '@mui/icons-material/VolumeUp'
 import IconButton from '@mui/material/IconButton'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'

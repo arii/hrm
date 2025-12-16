@@ -8,6 +8,7 @@ import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react'
+import importSort from 'eslint-plugin-simple-import-sort'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -200,9 +201,22 @@ export default defineConfig([
   {
     plugins: {
       prettier: prettierPlugin,
+      'simple-import-sort': importSort,
     },
     rules: {
       'prettier/prettier': 'error',
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+      'prefer-const': 'error',
+    },
+  },
+
+  // Override for utils files to prevent default exports
+  {
+    files: ['utils/**/*.ts'],
+    rules: {
+      'import/prefer-default-export': 'off',
+      'import/no-default-export': 'error',
     },
   },
 

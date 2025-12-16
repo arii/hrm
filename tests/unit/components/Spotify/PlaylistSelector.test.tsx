@@ -1,9 +1,11 @@
 /** @jest-environment jsdom */
 
-import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 import '@testing-library/jest-dom'
+
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+
+import PlaylistSelector from '@/components/Spotify/PlaylistSelector'
 
 const mockPlaylists = {
   presetPlaylists: [

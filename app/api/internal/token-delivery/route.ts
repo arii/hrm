@@ -1,8 +1,9 @@
-import { ApiError } from '@/lib/errors'
 import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
-import logger from '@/utils/logger'
+
+import { ApiError } from '@/lib/errors'
+import { logger } from '@/utils/logger'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.

@@ -1,5 +1,5 @@
 // File: tests/playwright/bluetooth-flow.spec.ts
-import { test, expect } from './fixtures'
+import { expect, test } from './fixtures'
 import { injectBluetoothMocks } from './lib/bluetooth-mocks'
 
 test.describe('Bluetooth HRM Connection', () => {

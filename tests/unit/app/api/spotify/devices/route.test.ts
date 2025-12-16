@@ -1,10 +1,11 @@
 // tests/unit/app/api/spotify/devices/route.test.ts
 /** @jest-environment node */
 
+import { getServerSession } from 'next-auth/next'
+
 import { GET } from '@/app/api/spotify/devices/route'
 import { authOptions } from '@/lib/auth'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
-import { getServerSession } from 'next-auth/next'
 
 // Mock 'next-auth/next'
 jest.mock('next-auth/next', () => ({

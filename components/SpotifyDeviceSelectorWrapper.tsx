@@ -1,8 +1,9 @@
 'use client'
 
-import { IconButton, Menu, MenuItem } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
+import { IconButton, Menu, MenuItem } from '@mui/material'
 import { MouseEvent } from 'react'
+
 import { SpotifyDevice } from '@/types'
 
 interface SpotifyDeviceSelectorWrapperProps {

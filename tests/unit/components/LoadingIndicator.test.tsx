@@ -1,8 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
+
+import { render, screen } from '@testing-library/react'
+
 import LoadingIndicator from '@/components/LoadingIndicator'
 import { useLoading } from '@/context/LoadingContext'
 

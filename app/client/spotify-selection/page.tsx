@@ -14,12 +14,14 @@ import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
+import { useWebSocket } from '@/context/WebSocketContext'
+
 import VolumeSlider from '../../../components/Spotify/VolumeSlider'
 import useVolumePreference from '../../../hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '../../../types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),

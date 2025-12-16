@@ -1,17 +1,18 @@
 // File: components/HRMonitorStatusIndicator.tsx
 'use client'
-import { memo } from 'react'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import Battery50Icon from '@mui/icons-material/Battery50'
 import Battery20Icon from '@mui/icons-material/Battery20'
+import Battery50Icon from '@mui/icons-material/Battery50'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
-import Tooltip from '@mui/material/Tooltip'
-import CircularProgress from '@mui/material/CircularProgress'
+import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import { memo } from 'react'
+
 import {
   BATTERY_LEVEL_FULL,
   BATTERY_LEVEL_HIGH,

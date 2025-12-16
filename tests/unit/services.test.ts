@@ -3,18 +3,19 @@
  * Tests state broadcasting and command routing through services
  */
 import {
-  describe,
-  it,
-  expect,
-  jest,
-  beforeEach,
   afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
 } from '@jest/globals'
-import TabataTimer from '../../services/tabataTimer'
-import { SpotifyPolling } from '../../services/spotifyPolling'
-import { ServerMessage } from '../../types/websocket'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
+
+import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
+import TabataTimer from '../../services/tabataTimer'
+import { ServerMessage } from '../../types/websocket'
 
 // Mock fetch globally
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useLoading } from '@/context/LoadingContext'
 import { Box, CircularProgress, useTheme } from '@mui/material'
+
+import { useLoading } from '@/context/LoadingContext'
 
 const LoadingIndicator = () => {
   const { isLoading } = useLoading()

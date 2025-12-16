@@ -1,11 +1,13 @@
 /** @jest-environment jsdom */
 
+import '@testing-library/jest-dom'
+
+import { render, screen, waitFor } from '@testing-library/react'
+import { SessionProvider } from 'next-auth/react'
+import React from 'react'
+
 import ControlPage from '@/app/client/control/page'
 import { WebSocketProvider } from '@/context/WebSocketContext'
-import { SessionProvider } from 'next-auth/react'
-import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
-import React from 'react'
 
 // Mock child components that have complex internal logic
 jest.mock('@/app/client/control/components/TimerControls', () => ({

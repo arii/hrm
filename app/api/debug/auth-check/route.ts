@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { getBaseURL, getSpotifyCallbackURL } from '@/utils/urls'
 
 /**

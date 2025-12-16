@@ -1,13 +1,15 @@
 /**
  * @jest-environment jsdom
  */
+import '@testing-library/jest-dom'
+
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
-import { useWebSocket } from '@/context/WebSocketContext'
+
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
-import { mockRouter } from '@/utils/test-utils/mockRouter'
+import { useWebSocket } from '@/context/WebSocketContext'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import '@testing-library/jest-dom'
+import { mockRouter } from '@/utils/test-utils/mockRouter'
 
 // Mock the router
 jest.mock('next/navigation', () => ({

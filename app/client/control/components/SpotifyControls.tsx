@@ -1,7 +1,7 @@
 // File: app/client/control/components/SpotifyControls.tsx
 'use client'
-import MusicNote from '@mui/icons-material/MusicNote'
 import LibraryMusic from '@mui/icons-material/LibraryMusic'
+import MusicNote from '@mui/icons-material/MusicNote'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -12,11 +12,13 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
-import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
-import PlaybackControls from './PlaybackControls'
+
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import { useWebSocket } from '@/context/WebSocketContext'
+import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
+
+import PlaybackControls from './PlaybackControls'
 
 const SpotifyControls = () => {
   const router = useRouter()

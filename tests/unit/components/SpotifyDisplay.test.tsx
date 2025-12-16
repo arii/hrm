@@ -5,14 +5,16 @@ jest.mock('uuid', () => ({
   v4: () => 'mock-uuid-1234',
 }))
 
+import '@testing-library/jest-dom'
+
+import { render, screen, waitFor } from '@testing-library/react'
+import { useSession } from 'next-auth/react'
+import React from 'react'
+
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
-import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
-import { useSession } from 'next-auth/react'
-import React from 'react'
 
 // Mock child components and dependencies
 jest.mock('@/components/SpotifyLoginButton', () => ({
