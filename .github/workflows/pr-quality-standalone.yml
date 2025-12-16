@@ -43,7 +43,7 @@ jobs:
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
-          clean: true # 🧹 Wipes previous run artifacts to ensure a fresh start
+          clean: false # 🧹 Preserves previous run artifacts for speed
 
       - name: Install GitHub CLI
         run: |
