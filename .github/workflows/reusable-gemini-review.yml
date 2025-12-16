@@ -326,13 +326,18 @@ jobs:
             }
 
             // Apply labels intelligently
-            if (labels && labels.length > 0) {
-              await github.rest.issues.addLabels({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: labels
-              });
+            if (labels && Array.isArray(labels) && labels.length > 0) {
+              console.log('Applying labels:', labels);
+              try {
+                await github.rest.issues.addLabels({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: labels
+                });
+              } catch (e) {
+                console.warn('Failed to add labels:', e.message);
+              }
             }
 
             // Add progression labels

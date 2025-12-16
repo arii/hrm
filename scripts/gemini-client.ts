@@ -82,20 +82,11 @@ async function main() {
 
   if (preset === 'review') {
     await runReviewPreset(genAI, contextContent, outputFile)
+  } else if (preset === 'triage') {
+    await runTriagePreset(genAI, task || taskFile ? await readTask(task, taskFile) : '', contextContent, outputFile)
   } else {
     // Default/Generic mode
-    let finalTask = task
-    if (taskFile) {
-      try {
-        finalTask = await readFile(
-          path.resolve(process.cwd(), taskFile),
-          'utf-8'
-        )
-      } catch (e) {
-        console.error(`Error reading task file ${taskFile}:`, e)
-        process.exit(1)
-      }
-    }
+    const finalTask = await readTask(task, taskFile)
 
     if (!finalTask) {
       console.error(
@@ -105,6 +96,19 @@ async function main() {
     }
     await runGenericTask(genAI, finalTask, contextContent, outputFile)
   }
+}
+
+async function readTask(task: string | null, taskFile: string | null): Promise<string> {
+  if (task) return task
+  if (taskFile) {
+    try {
+      return await readFile(path.resolve(process.cwd(), taskFile), 'utf-8')
+    } catch (e) {
+      console.error(`Error reading task file ${taskFile}:`, e)
+      process.exit(1)
+    }
+  }
+  return ''
 }
 
 async function generateContentWithFallback(
@@ -485,6 +489,67 @@ async function runReviewPreset(
        };
        await writeOutput(JSON.stringify(fallback, null, 2), outputFile);
     }
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+async function runTriagePreset(
+  genAI: GoogleGenerativeAI,
+  taskContent: string,
+  contextContent: string,
+  outputFile: string | null | undefined
+) {
+  const prompt = `
+You are an intelligent triage agent for a GitHub repository.
+Your goal is to analyze the following issue or feature request, categorize it, and provide an initial assessment.
+
+## Repository Context
+${contextContent}
+
+## Issue to Triage
+${taskContent}
+
+## Instructions
+1. **Analyze**: Understand the core problem or request.
+2. **Categorize**: Determine if it's a bug, feature request, question, documentation, or technical debt.
+3. **Assess Severity**: (If bug) Critical, High, Medium, Low.
+4. **Label Suggestion**: Suggest existing GitHub labels (e.g., 'bug', 'enhancement', 'question', 'documentation', 'wontfix', 'duplicate', 'needs-reproduction', 'good-first-issue').
+5. **Action Plan**: Suggest immediate next steps (e.g., "Ask for reproduction steps", "Assign to frontend team", "Close as duplicate").
+
+## Output Format (JSON)
+Return a valid JSON object with:
+- \`analysis\`: A concise markdown summary of the issue.
+- \`triageComment\`: A helpful comment to post on the issue (in Markdown).
+- \`labels\`: An array of strings representing the labels to apply.
+- \`severity\`: "critical" | "high" | "medium" | "low" | "none".
+
+## Example Triage Comment
+"Thanks for reporting this! It looks like a potential race condition in the WebSocket handler.
+I've marked this as 'bug' and 'high-priority'. Could you please provide the server logs?"
+`
+
+  try {
+    const text = await generateContentWithFallback(genAI, prompt, {
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            analysis: { type: SchemaType.STRING },
+            triageComment: { type: SchemaType.STRING },
+            labels: {
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
+            },
+            severity: { type: SchemaType.STRING },
+          },
+          required: ['analysis', 'triageComment', 'labels', 'severity'],
+        },
+      },
+    })
+
+    await writeOutput(text, outputFile)
   } catch (error) {
     handleError(error)
   }
