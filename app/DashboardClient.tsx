@@ -3,6 +3,7 @@
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -36,6 +37,16 @@ interface DashboardClientProps {
   useNativeTable: boolean
 }
 
+/**
+ * DashboardClient component
+ *
+ * This component is the client-side entry point for the main dashboard.
+ * It's responsible for handling all client-side logic, including state management,
+ * user interactions, and dynamic component loading.
+ *
+ * It's rendered by the `DashboardPage` server component, which passes in the
+ * initial data as props.
+ */
 const DashboardClient = ({
   docUrl,
   docId,
@@ -66,13 +77,23 @@ const DashboardClient = ({
   return (
     <Container
       maxWidth="xl"
-      onClick={handleInteraction}
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
         backgroundColor: 'background.default',
       }}
     >
+      {!audioInitialized && (
+        <Box sx={{ mb: 2, textAlign: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={handleInteraction}
+            aria-label="Initialize audio"
+          >
+            Enable Audio
+          </Button>
+        </Box>
+      )}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
