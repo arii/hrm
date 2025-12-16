@@ -9,6 +9,7 @@ export const API_SPOTIFY_DEVICES = '/api/spotify/devices'
 export const API_SPOTIFY_ACCESS_TOKEN = '/api/spotify/access-token'
 
 // Debug API endpoints
+const API_DEBUG_RESET = '/api/debug/reset'
 export const API_DEBUG_SPOTIFY_TOKEN = '/api/debug/spotify-token'
 
 // Internal API endpoints

@@ -26,14 +26,6 @@ pnpm run knip
 
 This will run the dead code analysis and report any issues to the console.
 
-**How to automatically fix issues:**
-
-```bash
-pnpm run knip -- --fix
-```
-
-This will automatically remove any unused exports and dependencies.
-
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.

@@ -24,3 +24,35 @@ export interface UserProfile {
   createdAt: string
   updatedAt: string
 }
+
+/**
+ * Represents a single workout session.
+ *
+ * @property {string} id - The unique identifier for the workout session (UUID).
+ * @property {string} userId - The ID of the user who performed the workout.
+ * @property {string} startedAt - The timestamp when the workout started (ISO 8601).
+ * @property {string | null} endedAt - The timestamp when the workout ended (ISO 8601).
+ * @property {string} notes - Any notes the user added for the workout.
+ */
+interface WorkoutSession {
+  id: string
+  userId: string
+  startedAt: string
+  endedAt: string | null
+  notes: string
+}
+
+/**
+ * Represents a single heart rate data point.
+ *
+ * @property {string} id - The unique identifier for the data point (UUID).
+ * @property {string} workoutSessionId - The ID of the workout session this data point belongs to.
+ * @property {number} timestamp - The Unix epoch milliseconds when the heart rate was measured.
+ * @property {number} heartRate - The heart rate in beats per minute.
+ */
+interface HeartRateDataPoint {
+  id: string
+  workoutSessionId: string
+  timestamp: number
+  heartRate: number
+}

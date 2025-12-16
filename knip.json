@@ -8,13 +8,17 @@
   "project": [
     "app/**/*.ts",
     "app/**/*.tsx",
+    "components/**/*.ts",
     "components/**/*.tsx",
     "constants/**/*.ts",
+    "context/**/*.ts",
     "context/**/*.tsx",
     "hooks/**/*.ts",
+    "hooks/**/*.tsx",
     "lib/**/*.ts",
     "services/**/*.ts",
     "stories/**/*.ts",
+    "stories/**/*.tsx",
     "types/**/*.ts",
     "utils/**/*.ts",
     "tests/**/*.ts",
@@ -24,19 +28,13 @@
     "next.config.js",
     ".next/**",
     "dist/**",
-    ".storybook/preview.tsx",
-    "scripts/get-available-port.mjs",
-    "ecosystem.config.cjs"
+    ".storybook/preview.tsx"
   ],
   "ignoreBinaries": [
     "sleep",
     "python3",
     "scripts/test-json-with-server.sh",
     "scripts/test-with-server.sh"
-  ],
-  "ignoreDependencies": [
-    "@types/web-bluetooth",
-    "jest-environment-jsdom"
   ],
   "next": {
     "entry": [

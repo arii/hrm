@@ -14,6 +14,41 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
+interface HeartRateZonesProps {
+  maxHr: number
+}
+
+import { TimerMode, TimerPhase } from './websocket'
+
+interface TimerDisplayProps {
+  phase: TimerPhase
+  timeRemaining: number
+  timeElapsed: number
+  cycle: number
+  totalCycles: number
+  mode: TimerMode
+  workDuration?: number
+  restDuration?: number
+}
+
+// Renamed to avoid conflict
+export interface WorkoutColumnItem {
+  title: string
+  details?: string
+}
+
+interface WorkoutColumnsProps {
+  columns: Array<{ title: string; items: WorkoutColumnItem[] }>
+}
+
+// Correct WorkoutItem for the parser and WebSocket
+export interface WorkoutItem {
+  category: string
+  exercises: string[]
+}
+
+export type WorkoutData = WorkoutItem[]
+
 export interface SpotifyPlaylistItem {
   id: string
   name: string
@@ -28,6 +63,11 @@ export interface SpotifyDevice {
   name: string
   type: string
   volume_percent: number
+}
+
+export interface SpotifyPlaylist {
+  name: string
+  uri: string
 }
 
 export interface DashboardSectionLoadingSkeletonProps {

@@ -1,7 +1,7 @@
 // File: utils/constants.ts
 // Centralized constants for the application.
 
-const MAX_HR_DEFAULT = 185
+export const MAX_HR_DEFAULT = 185
 
 // Battery level thresholds for UI icons
 export const BATTERY_LEVEL_FULL = 70
@@ -34,6 +34,22 @@ export const calculateMaxHr = (age?: number | string | null): number => {
 
   return MAX_HR_ESTIMATION_BASE - ageNum
 }
+
+// --- Heart Rate Zones Configuration ---
+interface HeartRateZoneConfig {
+  name: string
+  minPercent: number // 0-100
+  maxPercent: number // 0-100
+  color: string
+}
+
+const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
+  { name: 'Zone 5', minPercent: 90, maxPercent: 100, color: '#F44336' },
+  { name: 'Zone 4', minPercent: 80, maxPercent: 90, color: '#FFEB3B' },
+  { name: 'Zone 3', minPercent: 70, maxPercent: 80, color: '#4CAF50' },
+  { name: 'Zone 2', minPercent: 60, maxPercent: 70, color: '#2196F3' },
+  { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
+]
 
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)

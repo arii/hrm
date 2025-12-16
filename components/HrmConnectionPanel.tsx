@@ -8,7 +8,8 @@ import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
+import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
+import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
@@ -42,9 +43,10 @@ const HrmConnectionPanel = () => {
         return !(isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const hrZoneProps = {
-          percentage: 0,
-        }
+        const hrZoneProps = getHrZoneProps(
+          user.value,
+          user.maxHr || MAX_HR_DEFAULT
+        )
 
         const matchingAlert = activeAlerts.find(
           (alert) =>

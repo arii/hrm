@@ -206,7 +206,7 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           retry_on: error
-          command: bash -c 'set -o pipefail; PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit 2>&1 | tee logs/performance-output.log'
+          command: PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/perf-results.xml pnpm run test:perf --reporter=junit
 
       - name: Publish Performance Test Results to GitHub Checks
         uses: dorny/test-reporter@v1

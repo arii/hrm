@@ -13,9 +13,9 @@ type UserSettingsContextType = readonly [
   ) => void,
 ]
 
-const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
-  undefined
-)
+const UserSettingsContext = createContext<
+  UserSettingsContextType | undefined
+>(undefined)
 
 export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,

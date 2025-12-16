@@ -12,6 +12,16 @@
  */
 import { type BrowserContext, type Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import {
+  BASE_URL,
+  getDynamicContentMasks,
+  getHrMasks,
+  getTimerMasks,
+  replaceIframeWithStableWorkout,
+  waitForFontsLoaded,
+  waitForPageReady,
+} from './test-helpers'
+import { WAIT_TIMEOUTS } from './lib/waits'
 
 // Configure tests to run serially for better performance
 test.describe.configure({ mode: 'serial' })
@@ -26,7 +36,7 @@ test.describe('Visual Regression Tests', () => {
   // Set up all pages once before all tests
   test.beforeAll(async ({ browser }) => {
     // Increase timeout for setup to handle parallel page loads and potential server slowness
-    test.setTimeout(16000) // Allow extra time for visual tests
+    test.setTimeout(WAIT_TIMEOUTS.LONG * 2) // Allow extra time for visual tests
 
     context = await browser.newContext({
       // Start with a clean session - no cookies, cache, or storage
@@ -42,9 +52,23 @@ test.describe('Visual Regression Tests', () => {
 
     // Navigate all pages in parallel
     await Promise.all([
-      dashboardPage.goto('/'),
-      controlPage.goto('/client/control'),
-      mockPage.goto('/client/mock'),
+      dashboardPage.goto(BASE_URL),
+      controlPage.goto(`${BASE_URL}/client/control`),
+      mockPage.goto(`${BASE_URL}/client/mock`),
+    ])
+
+    // Wait for all pages to be ready in parallel (includes networkidle)
+    await Promise.all([
+      waitForPageReady(dashboardPage),
+      waitForPageReady(controlPage),
+      waitForPageReady(mockPage),
+    ])
+
+    // Wait for fonts to load on all pages to eliminate font-related shifts
+    await Promise.all([
+      waitForFontsLoaded(dashboardPage),
+      waitForFontsLoaded(controlPage),
+      waitForFontsLoaded(mockPage),
     ])
 
     // Ensure timer is stopped before tests start
@@ -56,16 +80,16 @@ test.describe('Visual Regression Tests', () => {
 
     try {
       // If timer is running, stop it
-      if (await stopButton.isVisible({ timeout: 2000 })) {
+      if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
         await stopButton.click()
         // Wait for START button to confirm timer stopped on control page
         await expect(
           controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: 3000 })
+        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
 
         // Wait for dashboard to clear timer display (return to READY state)
         await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: 3000,
+          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
         })
       }
     } catch (error) {
@@ -78,8 +102,9 @@ test.describe('Visual Regression Tests', () => {
     try {
       // Wait for a known stable element instead of arbitrary timeout
       await expect(dashboardPage.locator('body')).toBeVisible({
-        timeout: 2000,
+        timeout: WAIT_TIMEOUTS.SHORT * 2,
       })
+      await replaceIframeWithStableWorkout(dashboardPage)
     } catch (e) {
       console.warn(
         'Failed to replace iframe (it might be missing or slow to load):',
@@ -96,11 +121,14 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard - main viewer page', async () => {
+    // Wait for fonts to be fully loaded for consistent rendering
+    await waitForFontsLoaded(dashboardPage)
+
     // Extra verification: ensure timer is NOT in active state (no WORK/REST)
     // Wait for any existing timer display to settle or disappear
     try {
       await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-        timeout: 3000,
+        timeout: WAIT_TIMEOUTS.MEDIUM,
       })
     } catch {
       // Timer might already be idle, continue
@@ -116,6 +144,10 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide', // Hide text cursor
       threshold: 0.2, // Allow for minor rendering differences
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
+      mask: [
+        // Use precise data-testid selectors for dynamic content masking
+        ...getTimerMasks(dashboardPage),
+      ],
     })
   })
 
@@ -143,7 +175,7 @@ test.describe('Visual Regression Tests', () => {
   test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
-      timeout: 3000,
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
     // Ensure control panel inputs are visible
@@ -155,10 +187,10 @@ test.describe('Visual Regression Tests', () => {
     // 2. (Recommended) Wait for it to be visible
     // This ensures the component has rendered before you try to fill it.
     await expect(workInput).toBeVisible({
-      timeout: 3000,
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
     await expect(restInput).toBeVisible({
-      timeout: 3000,
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
     // Configure timer (15 work, 5s rest)
@@ -181,8 +213,11 @@ test.describe('Visual Regression Tests', () => {
 
     // Wait for timer to appear on dashboard
     await expect(dashboardPage.locator('text=/WORK|REST/')).toBeVisible({
-      timeout: 10000,
+      timeout: WAIT_TIMEOUTS.INFRASTRUCTURE,
     })
+
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
 
     // Capture screenshot with running timer - mask dynamic timer content using data-testid selectors
     await expect(dashboardPage).toHaveScreenshot('dashboard-active-timer.png', {
@@ -191,6 +226,10 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide',
       threshold: 0.2,
       maxDiffPixelRatio: 0.02,
+      mask: [
+        // Use precise data-testid selectors for timer masking
+        ...getTimerMasks(dashboardPage),
+      ],
     })
   })
 
@@ -203,6 +242,9 @@ test.describe('Visual Regression Tests', () => {
     // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
+
     // Capture screenshot with HR data displayed while masking dynamic content
     await expect(dashboardPage).toHaveScreenshot('dashboard-with-hr-data.png', {
       fullPage: true,
@@ -210,6 +252,12 @@ test.describe('Visual Regression Tests', () => {
       caret: 'hide',
       threshold: 0.2,
       maxDiffPixelRatio: 0.04, // Robustness for dynamic content
+      mask: [
+        // Use precise data-testid selectors for all dynamic content masking
+        ...getDynamicContentMasks(dashboardPage),
+        // Also mask the entire HR tiles section for complete coverage
+        ...getHrMasks(dashboardPage),
+      ],
     })
   })
 
@@ -223,8 +271,11 @@ test.describe('Visual Regression Tests', () => {
 
     // Wait for HR tiles to load on dashboard
     await dashboardPage.waitForSelector('[data-testid="hr-tile-grid-item"]', {
-      timeout: 8000,
+      timeout: WAIT_TIMEOUTS.LONG,
     })
+
+    // Wait for fonts to load before snapshot
+    await waitForFontsLoaded(dashboardPage)
 
     // Use element isolation: scope snapshot to specific component
     const firstTile = dashboardPage
