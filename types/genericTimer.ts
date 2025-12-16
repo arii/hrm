@@ -18,7 +18,6 @@ export type TimerMode = 'STOPWATCH' | 'COUNTDOWN'
  * - `PAUSED`: The timer is temporarily stopped.
  * - `FINISHED`: The timer has completed its countdown.
  */
-// @knip-ignore
 export type TimerPhase = 'IDLE' | 'RUNNING' | 'PAUSED' | 'FINISHED'
 
 /**

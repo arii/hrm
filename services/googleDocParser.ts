@@ -1,7 +1,6 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
 
-// @knip-ignore
 export interface WorkoutTableData {
   headers: string[]
   rows: string[][]

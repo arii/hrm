@@ -26,7 +26,6 @@ const config = {
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],
-  // @knip-ignore
   transform: {
     '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
     '^.+\\.(ts|tsx)$': [

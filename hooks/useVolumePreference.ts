@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-// @knip-ignore
 import { audioManager } from '../utils/audioManager'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume

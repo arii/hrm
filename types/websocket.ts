@@ -158,6 +158,10 @@ export interface SpotifyCommandMessage {
   playlistUri?: string
 }
 
+export interface GetStateMessage {
+  type: 'GET_STATE'
+}
+
 /**
  * Union type for all possible messages the client can send to the server.
  */
@@ -171,6 +175,10 @@ export interface SpotifyExecutionMessage {
   payload: SpotifyCommandMessage
 }
 
+export interface PingMessage {
+  type: 'PING'
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -178,49 +186,51 @@ export type ClientCommandMessage =
   | TimerModeCommandMessage
   | SpotifyCommandMessage
   | TimerConfigMessage
+  | GetStateMessage
   | ClientRegistrationMessage
+  | PingMessage
 
 import { z } from 'zod'
 
 // --- Zod Schemas for Client Input Command Interfaces ---
 
-const HrmInputDataSchema = z.object({
+export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
 })
 
-const HrmInputMessageSchema = z.object({
+export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: HrmInputDataSchema,
 })
 
-const HrmMetadataUpdateDataSchema = z.object({
+export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
 })
 
-const HrmMetadataUpdateMessageSchema = z.object({
+export const HrmMetadataUpdateMessageSchema = z.object({
   type: z.literal('HRM_METADATA_UPDATE'),
   data: HrmMetadataUpdateDataSchema,
 })
 
-const TimerCommandMessageSchema = z.object({
+export const TimerCommandMessageSchema = z.object({
   type: z.literal('TIMER_COMMAND'),
   command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
 })
 
-const TimerModeCommandMessageSchema = z.object({
+export const TimerModeCommandMessageSchema = z.object({
   type: z.literal('SET_MODE'),
   mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
 })
 
-const TimerConfigMessageSchema = z.object({
+export const TimerConfigMessageSchema = z.object({
   type: z.literal('TIMER_CONFIG'),
   workDuration: z.number(),
   restDuration: z.number(),
 })
 
-const SpotifyCommandMessageSchema = z.object({
+export const SpotifyCommandMessageSchema = z.object({
   type: z.literal('SPOTIFY_COMMAND'),
   command: z.union([
     z.literal('PLAY'),
@@ -236,12 +246,16 @@ const SpotifyCommandMessageSchema = z.object({
   playlistUri: z.string().optional(),
 })
 
-const ClientRegistrationMessageSchema = z.object({
+export const GetStateMessageSchema = z.object({
+  type: z.literal('GET_STATE'),
+})
+
+export const ClientRegistrationMessageSchema = z.object({
   type: z.literal('REGISTER_CLIENT'),
   role: z.union([z.literal('dashboard'), z.literal('controller')]),
 })
 
-const PingMessageSchema = z.object({
+export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
@@ -252,6 +266,7 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
+  GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
 ])

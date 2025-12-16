@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-// @knip-ignore
 import { audioManager } from '../utils/audioManager'
 import { useWebSocket } from '@/context/WebSocketContext'
 

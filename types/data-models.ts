@@ -34,7 +34,6 @@ export interface UserProfile {
  * @property {string | null} endedAt - The timestamp when the workout ended (ISO 8601).
  * @property {string} notes - Any notes the user added for the workout.
  */
-// @knip-ignore
 export interface WorkoutSession {
   id: string
   userId: string
@@ -51,7 +50,6 @@ export interface WorkoutSession {
  * @property {number} timestamp - The Unix epoch milliseconds when the heart rate was measured.
  * @property {number} heartRate - The heart rate in beats per minute.
  */
-// @knip-ignore
 export interface HeartRateDataPoint {
   id: string
   workoutSessionId: string

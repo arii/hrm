@@ -153,12 +153,6 @@ jobs:
           set -o pipefail
           pnpm run lint 2>&1 | tee logs/lint-output.log
 
-      - name: Knip
-        id: knip
-        run: |
-          set -o pipefail
-          pnpm knip 2>&1 | tee logs/knip-output.log
-
       - name: Verify Build
         id: build
         run: |

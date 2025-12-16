@@ -97,8 +97,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     return () => {
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (deviceRef.current?.gatt?.connected)
-        deviceRef.current.gatt.disconnect()
+      if (deviceRef.current?.gatt?.connect) deviceRef.current.gatt.disconnect()
     }
   }, [])
 
