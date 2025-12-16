@@ -19,7 +19,7 @@ import {
 } from '../types/websocket.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import logger from './logger.js'
+import { logger } from './logger.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
