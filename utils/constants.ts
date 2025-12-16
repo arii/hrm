@@ -57,3 +57,26 @@ export const CALORIE_DEFAULTS = {
   WEIGHT_KG: 75, // Default weight if not provided
   AGE: 30, // Default age if not provided
 }
+
+// Keytel et al. (2005) formula constants for calorie calculation
+export const KEYTEL_CONSTANTS = {
+  MALE: {
+    INTERCEPT: -55.0969,
+    HR_FACTOR: 0.6309,
+    WEIGHT_FACTOR: 0.1988,
+    AGE_FACTOR: 0.2017,
+  },
+  FEMALE: {
+    INTERCEPT: -20.4022,
+    HR_FACTOR: 0.4472,
+    WEIGHT_FACTOR: -0.1263,
+    AGE_FACTOR: 0.074,
+  },
+  AVERAGE: {
+    INTERCEPT: (-55.0969 + -20.4022) / 2,
+    HR_FACTOR: (0.6309 + 0.4472) / 2,
+    WEIGHT_FACTOR: (0.1988 + -0.1263) / 2,
+    AGE_FACTOR: (0.2017 + 0.074) / 2,
+  },
+  JOULE_TO_KCAL_CONVERSION: 4.184,
+}

@@ -1,6 +1,6 @@
 // components/UserSettingsPanel.tsx
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   TextField,
   FormControl,
@@ -15,9 +15,31 @@ import { useUserSettings } from '@/context/UserSettingsContext'
 
 const UserSettingsPanel = () => {
   const [userSettings, setUserSettings] = useUserSettings()
+  const [errors, setErrors] = useState({
+    userAge: '',
+    userHeight: '',
+    userWeight: '',
+  })
+
+  const validate = (name: string, value: string) => {
+    let error = ''
+    const numValue = parseInt(value, 10)
+    if (isNaN(numValue)) {
+      error = 'Please enter a valid number.'
+    } else if (name === 'userAge' && (numValue < 1 || numValue > 120)) {
+      error = 'Please enter an age between 1 and 120.'
+    } else if (name === 'userHeight' && (numValue < 50 || numValue > 300)) {
+      error = 'Please enter a height between 50 and 300 cm.'
+    } else if (name === 'userWeight' && (numValue < 20 || numValue > 500)) {
+      error = 'Please enter a weight between 20 and 500 kg.'
+    }
+    return error
+  }
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target
+    const error = validate(name, value)
+    setErrors((prev) => ({ ...prev, [name]: error }))
     setUserSettings((prev) => ({
       ...prev,
       [name]: value,
@@ -54,6 +76,8 @@ const UserSettingsPanel = () => {
           onChange={handleTextChange}
           variant="outlined"
           fullWidth
+          error={!!errors.userAge}
+          helperText={errors.userAge}
         />
         <TextField
           label="Height (cm)"
@@ -63,6 +87,8 @@ const UserSettingsPanel = () => {
           onChange={handleTextChange}
           variant="outlined"
           fullWidth
+          error={!!errors.userHeight}
+          helperText={errors.userHeight}
         />
         <TextField
           label="Weight (kg)"
@@ -72,6 +98,8 @@ const UserSettingsPanel = () => {
           onChange={handleTextChange}
           variant="outlined"
           fullWidth
+          error={!!errors.userWeight}
+          helperText={errors.userWeight}
         />
         <FormControl fullWidth variant="outlined">
           <InputLabel id="gender-select-label">Gender</InputLabel>
@@ -82,8 +110,8 @@ const UserSettingsPanel = () => {
             onChange={handleSelectChange}
             label="Gender"
           >
-            <MenuItem value="">
-              <em>None</em>
+            <MenuItem value="unknown">
+              <em>Prefer not to say</em>
             </MenuItem>
             <MenuItem value="male">Male</MenuItem>
             <MenuItem value="female">Female</MenuItem>

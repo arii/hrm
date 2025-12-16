@@ -16,7 +16,7 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { CALORIE_DEFAULTS } from './constants.js'
+import { CALORIE_DEFAULTS, KEYTEL_CONSTANTS } from './constants.js'
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
 
@@ -196,29 +196,35 @@ const handleIncomingMessage = (
           // Use new user profile data for calorie calculation, with sensible defaults.
           const age = existingData.age ?? CALORIE_DEFAULTS.AGE
           const weightKg = existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
-          const gender = existingData.gender ?? 'male'
+          const gender = existingData.gender ?? 'unknown'
 
           // Check for valid heart rate and time delta to prevent bogus calculations.
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             let rate: number // Calories per minute
 
             // Gender-specific calorie expenditure formulas (Keytel et al., 2005).
-            // Converted from kJ/min to kcal/min by dividing by 4.184.
             if (gender === 'female') {
               rate =
-                (-20.4022 +
-                  0.4472 * currentHr -
-                  0.1263 * weightKg +
-                  0.074 * age) /
-                4.184
-            } else {
-              // Default to male formula
+                (KEYTEL_CONSTANTS.FEMALE.INTERCEPT +
+                  KEYTEL_CONSTANTS.FEMALE.HR_FACTOR * currentHr +
+                  KEYTEL_CONSTANTS.FEMALE.WEIGHT_FACTOR * weightKg +
+                  KEYTEL_CONSTANTS.FEMALE.AGE_FACTOR * age) /
+                KEYTEL_CONSTANTS.JOULE_TO_KCAL_CONVERSION
+            } else if (gender === 'male') {
               rate =
-                (-55.0969 +
-                  0.6309 * currentHr +
-                  0.1988 * weightKg +
-                  0.2017 * age) /
-                4.184
+                (KEYTEL_CONSTANTS.MALE.INTERCEPT +
+                  KEYTEL_CONSTANTS.MALE.HR_FACTOR * currentHr +
+                  KEYTEL_CONSTANTS.MALE.WEIGHT_FACTOR * weightKg +
+                  KEYTEL_CONSTANTS.MALE.AGE_FACTOR * age) /
+                KEYTEL_CONSTANTS.JOULE_TO_KCAL_CONVERSION
+            } else {
+              // Default to averaged formula
+              rate =
+                (KEYTEL_CONSTANTS.AVERAGE.INTERCEPT +
+                  KEYTEL_CONSTANTS.AVERAGE.HR_FACTOR * currentHr +
+                  KEYTEL_CONSTANTS.AVERAGE.WEIGHT_FACTOR * weightKg +
+                  KEYTEL_CONSTANTS.AVERAGE.AGE_FACTOR * age) /
+                KEYTEL_CONSTANTS.JOULE_TO_KCAL_CONVERSION
             }
 
             const safeRate = Math.max(0, rate) // Ensure rate is not negative

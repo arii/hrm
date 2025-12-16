@@ -11,7 +11,7 @@ export interface UserPreferences {
   userAge: number | null
   userHeight: number | null
   userWeight: number | null
-  userGender: 'male' | 'female' | null
+  userGender: 'male' | 'female' | 'unknown' | null
 }
 export const useUserPreferences = () => {
   const [prefs, setPrefs] = useLocalStorage<UserPreferences>('user-prefs', {
@@ -24,7 +24,7 @@ export const useUserPreferences = () => {
     userAge: null,
     userHeight: null,
     userWeight: null,
-    userGender: null,
+    userGender: 'unknown',
   })
 
   return [prefs, setPrefs] as const

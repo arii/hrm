@@ -7,10 +7,13 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { CALORIE_DEFAULTS } from '@/utils/constants'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
+  const [userSettings] = useUserSettings()
 
   const {
     connectAndStream,
@@ -33,8 +36,14 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    const userProfile = {
+      userName: userName || 'Unknown User',
+      userAge: userAge ? parseInt(userAge, 10) : CALORIE_DEFAULTS.AGE,
+      userHeight: userSettings.userHeight,
+      userWeight: userSettings.userWeight,
+      userGender: userSettings.userGender,
+    }
+    connectAndStream(userProfile)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)

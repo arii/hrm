@@ -15,7 +15,7 @@ export interface HrmData {
   calories: number // Added field
   height?: number
   weight?: number
-  gender?: 'male' | 'female'
+  gender?: 'male' | 'female' | 'unknown'
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
@@ -212,7 +212,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   age: z.number().optional(),
   height: z.number().optional(),
   weight: z.number().optional(),
-  gender: z.enum(['male', 'female']).optional(),
+  gender: z.enum(['male', 'female', 'unknown']).optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
