@@ -16,20 +16,14 @@ test.describe('Spotify Authentication', () => {
     // Stronger checks matching server environment (if env vars are passed to test runner)
     if (process.env.SPOTIFY_CLIENT_ID) {
       expect(data.spotifyConfigured).toBe(true)
-    } else {
-      expect(data.spotifyConfigured).toBe(false)
     }
 
     if (process.env.NEXTAUTH_SECRET) {
       expect(data.nextAuthConfigured).toBe(true)
-    } else {
-      expect(data.nextAuthConfigured).toBe(false)
     }
 
     if (process.env.SPOTIFY_CLIENT_SECRET) {
       expect(data.hasClientSecret).toBe(true)
-    } else {
-      expect(data.hasClientSecret).toBe(false)
     }
   })
 

@@ -33,6 +33,7 @@ Fixes # (issue)
 - [ ] Changes are **backward compatible** (or breaking changes are documented)
 - [ ] **Tests** are added/updated for new functionality
 - [ ] **Documentation** is updated if needed
+- [ ] **ADR** is created/updated for significant architectural changes
 
 ## How Has This Been Tested?
 
