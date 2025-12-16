@@ -113,8 +113,6 @@ test.describe('Visual Regression Tests', () => {
       )
     }
 
-    // Dismiss audio overlay at the beginning of the test suite
-    await dismissAudioOverlay(dashboardPage)
   })
 
   // Clean up after all tests
@@ -122,6 +120,11 @@ test.describe('Visual Regression Tests', () => {
     if (context) {
       await context.close()
     }
+  })
+
+  // Dismiss audio overlay before each test
+  test.beforeEach(async () => {
+    await dismissAudioOverlay(dashboardPage)
   })
 
   test('Dashboard - main viewer page', async () => {
