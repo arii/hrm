@@ -111,6 +111,9 @@ jobs:
             pnpm install --frozen-lockfile
           fi
 
+      - name: Run Knip
+        run: pnpm run knip
+
       - name: Lint Code
         run: pnpm run lint
 
