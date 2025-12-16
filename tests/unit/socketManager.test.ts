@@ -254,58 +254,6 @@ describe('WebSocket Manager', () => {
       // Use non-null assertion as we've checked definition
       expect(clientData!.calories).toBeGreaterThan(1)
     })
-
-    it('should use the default weight if the client sends an invalid weight', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
-      // Send an invalid weight
-      const message = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 150, weightKg: 10 },
-      })
-      jest.advanceTimersByTime(1000)
-      mockWs.emit('message', message.toString())
-
-      // Check that the default weight was used in the calorie calculation
-      const mockBroadcast = broadcast as jest.Mock
-      const lastBroadcastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
-      const clientData = broadcastPayload.find((c) => c.calories > 0)
-
-      expect(clientData).toBeDefined()
-      // This is a rough check, but it should be greater than 0
-      expect(clientData!.calories).toBeGreaterThan(0)
-    })
-
-    it('should use the client-provided weight in the calorie calculation', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
-      // Send a valid weight
-      const message = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 150, weightKg: 100 },
-      })
-      jest.advanceTimersByTime(1000)
-      mockWs.emit('message', message.toString())
-
-      // Check that the client-provided weight was used in the calorie calculation
-      const mockBroadcast = broadcast as jest.Mock
-      const lastBroadcastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
-      const clientData = broadcastPayload.find((c) => c.calories > 0)
-
-      expect(clientData).toBeDefined()
-      // This is a rough check, but it should be greater than 0
-      expect(clientData!.calories).toBeGreaterThan(0)
-    })
   })
 
   describe('Message Handling', () => {

@@ -9,7 +9,6 @@ export interface UserPreferences {
   favoritePlaylist: string | null
   userName: string | null
   userAge: number | null
-  userWeight: number | null
 }
 
 export const useUserPreferences = () => {
@@ -21,7 +20,6 @@ export const useUserPreferences = () => {
     favoritePlaylist: null,
     userName: null,
     userAge: null,
-    userWeight: null,
   })
 
   return [prefs, setPrefs] as const

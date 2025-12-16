@@ -11,7 +11,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
+
   const {
     connectAndStream,
     disconnect,
@@ -34,8 +34,7 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    const weight = userWeight ? parseInt(userWeight, 10) : 0
-    connectAndStream(userName, age, weight)
+    connectAndStream(userName, age)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
@@ -65,8 +64,6 @@ export default function ConnectPage() {
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
-      userWeight={userWeight}
-      setUserWeight={setUserWeight}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}
