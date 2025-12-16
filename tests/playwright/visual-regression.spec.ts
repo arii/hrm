@@ -259,6 +259,9 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('HR Tiles - all zones', async () => {
+    // Reset the mock client page to ensure a clean state
+    await mockPage.reload()
+
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
