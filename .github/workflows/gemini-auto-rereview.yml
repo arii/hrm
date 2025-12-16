@@ -31,13 +31,16 @@ jobs:
 
           # Determine PREVIOUS_COMMIT safely
           PREVIOUS_COMMIT=""
-          # For 'synchronize' events, the 'before' SHA is the commit before the push.
-          # If the PR was rebased, this SHA might become invalid.
-          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && git rev-parse --verify ${{ github.event.before }}^{commit} >/dev/null 2>&1; then
+          # For 'synchronize' events on a PR, github.event.before contains the SHA of the commit
+          # *before* the new commits were pushed. If the user rebased their branch, this 'before'
+          # SHA can become invalid and no longer part of the branch's history.
+          if git rev-parse --verify ${{ github.event.before }}^{commit} >/dev/null 2>&1; then
+              # If the 'before' commit is valid, use it to get the diff of just the new commits.
               PREVIOUS_COMMIT=${{ github.event.before }}
           else
-              # If 'before' is invalid (rebase) or null (initial push), fall back to the merge-base.
-              # This provides a diff of all changes in the PR against the target branch.
+              # If 'before' is invalid (due to a rebase) or it's the initial push,
+              # fall back to the merge-base. This provides a diff of all changes in
+              # the PR against the target branch, which is a safe and robust fallback.
               PREVIOUS_COMMIT=$(git merge-base ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }})
           fi
 
