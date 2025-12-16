@@ -33,7 +33,8 @@
     "scripts/test-with-server.sh"
   ],
   "ignoreDependencies": [
-    "@types/web-bluetooth"
+    "@types/web-bluetooth",
+    "jest-environment-jsdom"
   ],
   "next": {
     "entry": [
