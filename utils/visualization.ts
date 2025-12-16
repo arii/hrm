@@ -27,6 +27,7 @@ type HrZoneUi = {
   bgColor: string
 }
 
+// @knip-ignore
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
@@ -67,6 +68,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
 }
 
 // Zone color lookup for easy access (zone 1-5)
+// @knip-ignore
 export const ZONE_COLORS = {
   grey: '#9E9E9E', // Below zone 1
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
@@ -76,6 +78,7 @@ export const ZONE_COLORS = {
   purple: '#9C27B0', // Zone 5: Max
 }
 
+// @knip-ignore
 export interface HrZoneProps {
   zone: string
   percentage: number
@@ -121,6 +124,7 @@ interface TimerProps {
 /**
  * Returns props (color, text) for the Tabata Timer phase display.
  */
+// @knip-ignore
 export const getTimerProps = (
   currentPhase: TimerData['currentPhase']
 ): TimerProps => {
@@ -171,6 +175,7 @@ export const getTimerProps = (
   }
 }
 
+// @knip-ignore
 export const transformWorkoutDataToColumns = (
   data: WorkoutData
 ): WorkoutColumnsProps['columns'] => {

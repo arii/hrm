@@ -59,4 +59,5 @@ const WorkoutColumns = ({ columns }: WorkoutColumnsProps) => {
   )
 }
 
+// @knip-ignore
 export default WorkoutColumns

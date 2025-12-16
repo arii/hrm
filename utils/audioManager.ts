@@ -3,6 +3,7 @@
  * Handles beep sounds for countdown and phase transitions
  */
 
+// @knip-ignore
 export class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "server.ts",
+    "proxy.ts",
+    "next.config.js",
+    "app/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,cjs}",
+    "tests/**/*.{ts,tsx}",
+    ".storybook/**/*.{ts,tsx}",
+    "stories/**/*.{ts,tsx}",
+    "jest.config.cjs",
+    "playwright.config.ts",
+    "eslint.config.mjs"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "constants/**/*.ts",
+    "context/**/*.tsx",
+    "hooks/**/*.ts",
+    "lib/**/*.ts",
+    "services/**/*.ts",
+    "types/**/*.ts",
+    "utils/**/*.ts"
+  ],
+  "ignoreBinaries": [
+    "scripts/test-json-with-server.sh",
+    "scripts/test-with-server.sh",
+    "python3",
+    "sleep"
+  ],
+  "ignoreUnresolved": [
+    "babel-jest"
+  ]
+}

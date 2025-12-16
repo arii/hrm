@@ -8,6 +8,7 @@ import { HrZoneName } from '../shared/hr-zones'
 
 // --- Constants ---
 // Heart Rate Zone Boundaries (as percentage of Max HR)
+// @knip-ignore
 export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.WarmUp, min: 0.5 },
   { name: HrZoneName.FatBurn, min: 0.6 },
@@ -16,6 +17,7 @@ export const HR_ZONE_DEFINITIONS = [
   { name: HrZoneName.Max, min: 0.95 },
 ]
 
+// @knip-ignore
 export interface HrZone {
   zoneName: HrZoneName
   percentage: number

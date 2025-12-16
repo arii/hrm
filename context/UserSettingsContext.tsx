@@ -13,6 +13,7 @@ type UserSettingsContextType = readonly [
   ) => void,
 ]
 
+// @knip-ignore
 export const UserSettingsContext = createContext<
   UserSettingsContextType | undefined
 >(undefined)

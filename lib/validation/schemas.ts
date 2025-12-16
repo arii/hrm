@@ -20,6 +20,7 @@ export const UserProfileSchema = z.object({
   updatedAt: z.string().datetime(),
 })
 
+// @knip-ignore
 export const WorkoutSessionSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
@@ -28,6 +29,7 @@ export const WorkoutSessionSchema = z.object({
   notes: z.string(),
 })
 
+// @knip-ignore
 export const HeartRateDataPointSchema = z.object({
   id: z.string().uuid(),
   workoutSessionId: z.string().uuid(),
@@ -48,6 +50,7 @@ export const CreateUserProfileSchema = UserProfileSchema.pick({
 })
 
 // Example: Schema for creating a new workout session
+// @knip-ignore
 export const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
   userId: true,
   startedAt: true,
@@ -55,6 +58,7 @@ export const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
 })
 
 // Example: Schema for adding a new heart rate data point
+// @knip-ignore
 export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   workoutSessionId: true,
   timestamp: true,
