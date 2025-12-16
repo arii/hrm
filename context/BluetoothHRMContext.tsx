@@ -38,5 +38,6 @@ export const useBluetoothHRMContext = () => {
       'useBluetoothHRMContext must be used within a BluetoothHRMProvider'
     )
   }
+
   return context
 }
