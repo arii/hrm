@@ -231,6 +231,9 @@ jobs:
 
           # Context Files
           REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
+
+          # Diff File (Critical for review)
+          PR_DIFF_FILE: pr.diff
         run: |
           npx tsx scripts/gemini-client.ts \
             --preset review \

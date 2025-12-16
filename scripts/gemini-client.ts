@@ -23,11 +23,10 @@ const preset = getArg('--preset')
 // List of models to try in order.
 // Prioritizing newer models as requested to fix 404 errors with older/deprecated ones.
 const MODEL_FALLBACKS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-pro',
   'gemini-2.0-flash-exp',
-  'gemini-1.5-flash',
   'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
 ]
 
 interface ReviewContext {
