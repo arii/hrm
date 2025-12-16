@@ -23,7 +23,7 @@ import {
   ClientCommandMessageSchema,
 } from '../../types/websocket'
 import { broadcast } from '../../utils/broadcast'
-import logger from '../../utils/logger'
+import logger from '@/utils/logger'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')

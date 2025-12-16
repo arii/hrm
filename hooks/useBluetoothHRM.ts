@@ -2,7 +2,7 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { HrmInputData } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
-import logger from '../utils/logger'
+import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
