@@ -24,7 +24,8 @@
     "next.config.js",
     ".next/**",
     "dist/**",
-    ".storybook/preview.tsx"
+    ".storybook/preview.tsx",
+    "scripts/get-available-port.mjs"
   ],
   "ignoreBinaries": [
     "sleep",
