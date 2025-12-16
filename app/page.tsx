@@ -65,7 +65,7 @@ const Dashboard = () => {
 
   return (
     <Container
-      maxWidth={false}
+      maxWidth="xl"
       onClick={handleInteraction}
       sx={{
         py: { xs: 2, sm: 3 },
