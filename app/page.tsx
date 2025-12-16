@@ -15,7 +15,6 @@ import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
-import { useWebSocket } from '@/context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -44,11 +43,10 @@ const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
-  const { timerData } = useWebSocket()
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   useVolumePreference()
-  const { initializeAudio } = useAudio(timerData)
+  const { initializeAudio } = useAudio()
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -82,15 +80,7 @@ const Dashboard = () => {
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
         >
-          <TimerDisplay
-            phase={timerData.currentPhase}
-            timeRemaining={timerData.timeRemaining}
-            timeElapsed={timerData.timeElapsed}
-            mode={timerData.mode}
-            workDuration={timerData.workDuration}
-            restDuration={timerData.restDuration}
-            soundEventId={timerData.soundEventId}
-          />
+          <TimerDisplay />
         </Box>
 
         <Box

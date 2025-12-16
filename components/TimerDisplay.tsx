@@ -6,42 +6,31 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import { TimerMode, TimerPhase } from '../types/websocket'
-
-export interface TimerDisplayProps {
-  phase: TimerPhase
-  timeRemaining: number // seconds (for countdown)
-  timeElapsed: number // seconds (for stopwatch)
-  mode: TimerMode
-  workDuration?: number
-  restDuration?: number
-  soundEventId?: number // Sound cue trigger
-  volume?: number // Master volume
-}
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const TimerDisplay = ({
-  phase,
-  timeRemaining,
-  timeElapsed,
-  mode,
-  workDuration = 20,
-  restDuration = 10,
-}: TimerDisplayProps) => {
-  const { connectionStatus } = useWebSocket()
+const TimerDisplay = () => {
+  const { connectionStatus, timerData } = useWebSocket()
+  const {
+    currentPhase,
+    timeRemaining,
+    timeElapsed,
+    mode,
+    workDuration = 20,
+    restDuration = 10,
+  } = timerData
 
   // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string
   let phaseLabel: string
 
-  if (phase === 'PREPARE') {
+  if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
     phaseColor = '#F59E0B' // Yellow/Warning
     phaseLabel = 'GET READY'
-  } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
+  } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
@@ -50,17 +39,19 @@ const TimerDisplay = ({
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
-    (phase === 'WORK' || phase === 'REST' || phase === 'COOLDOWN')
+    (currentPhase === 'WORK' ||
+      currentPhase === 'REST' ||
+      currentPhase === 'COOLDOWN')
   ) {
     // TABATA: Show remaining time MM:SS
     const mm = Math.floor(timeRemaining / 60)
     const ss = timeRemaining % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
 
-    if (phase === 'WORK') {
+    if (currentPhase === 'WORK') {
       phaseColor = '#EF4444' // Red
       phaseLabel = 'WORK'
-    } else if (phase === 'REST') {
+    } else if (currentPhase === 'REST') {
       phaseColor = '#22C55E' // Green
       phaseLabel = 'REST'
     } else {
@@ -78,24 +69,24 @@ const TimerDisplay = ({
     <Card
       elevation={6}
       data-testid="timer-display-container"
-      sx={{
+        sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
-        display: 'flex',
+          display: 'flex',
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
         animation:
-          phase === 'WORK' || phase === 'REST'
+          currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
-      }}
-    >
+        }}
+      >
       {/* Status Indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
+        <Box
+          sx={{
+            position: 'absolute',
           top: 16,
           right: 16,
           display: 'flex',
@@ -128,7 +119,7 @@ const TimerDisplay = ({
         />
       </Box>
       {/* Mode Indicator - Rotated on left side */}
-      {phase !== 'IDLE' && (
+      {currentPhase !== 'IDLE' && (
         <Box
           sx={{
             position: 'absolute',
@@ -201,7 +192,7 @@ const TimerDisplay = ({
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {phase !== 'IDLE' && phase !== 'RUNNING' && (
+        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
             variant="h6"
