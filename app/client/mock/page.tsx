@@ -12,7 +12,10 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HrmInputMessage } from '../../../types/websocket'
+import {
+  HrmInputMessage,
+  HrmMetadataUpdateMessage,
+} from '../../../types/websocket'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -42,15 +45,28 @@ export default function MockPage() {
         type: 'HRM_INPUT',
         data: {
           value: hr,
-          maxHr: maxHr,
-          name: name,
-          age: age,
         },
       }
       sendData(message)
     },
-    [sendData, name, age, maxHr]
+    [sendData]
   )
+
+  const sendMetadataPacket = useCallback(() => {
+    const message: HrmMetadataUpdateMessage = {
+      type: 'HRM_METADATA_UPDATE',
+      data: {
+        maxHr: maxHr,
+        name: name,
+        age: age,
+      },
+    }
+    sendData(message)
+  }, [sendData, name, age, maxHr])
+
+  useEffect(() => {
+    sendMetadataPacket()
+  }, [sendMetadataPacket])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
