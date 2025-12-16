@@ -51,8 +51,7 @@ export default function ConnectPage() {
     workoutStatus,
   } = useWorkoutSession({
     isConnected,
-    currentHR,
-    userAge: userAge ? parseInt(userAge) : 0,
+    userName,
   })
 
   return (
