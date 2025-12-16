@@ -240,7 +240,9 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Dashboard page already loaded via fixture
-    await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
+    // Wait for the mock BPM value to appear on a tile to ensure data is streaming.
+    // This is more specific than waiting for "Mock User", which can be ambiguous.
+    await expect(dashboardPage.locator(':text-is("155")')).toBeVisible()
 
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
