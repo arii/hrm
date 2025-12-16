@@ -168,9 +168,13 @@ jobs:
             grep -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
 
           if [ -n "$TEST_FILES" ]; then
+            HAS_TEST_CHANGES_VAR="true"
             echo "HAS_TEST_CHANGES=true" >> $GITHUB_ENV
-            echo "TEST_FILES=$TEST_FILES" >> $GITHUB_ENV
+            echo "TEST_FILES<<EOF" >> $GITHUB_ENV
+            echo "$TEST_FILES" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           else
+            HAS_TEST_CHANGES_VAR="false"
             echo "HAS_TEST_CHANGES=false" >> $GITHUB_ENV
           fi
 
@@ -179,7 +183,7 @@ jobs:
             grep -E '\.(ts|tsx|js|jsx)$' | \
             grep -v -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
 
-          if [ -n "$SOURCE_FILES" ] && [ "${{ env.HAS_TEST_CHANGES }}" == "false" ]; then
+          if [ -n "$SOURCE_FILES" ] && [ "$HAS_TEST_CHANGES_VAR" == "false" ]; then
             echo "MISSING_TESTS=true" >> $GITHUB_ENV
           else
             echo "MISSING_TESTS=false" >> $GITHUB_ENV
