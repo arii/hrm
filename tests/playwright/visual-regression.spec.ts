@@ -276,6 +276,9 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.LONG,
     })
 
+    // Wait for the mock BPM value to appear, ensuring the tile has updated.
+    await expect(dashboardPage.locator(':text-is("155")')).toBeVisible()
+
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
@@ -287,7 +290,7 @@ test.describe('Visual Regression Tests', () => {
       animations: 'disabled',
       caret: 'hide',
       threshold: 0.2,
-      maxDiffPixelRatio: 0.2, // Further increase tolerance for CI rendering
+      maxDiffPixelRatio: 0.05, // Reverted to a stricter tolerance
       // Mask the dynamic HR values within the tile
       mask: [
         firstTile.locator('[data-testid="live-hr-value"]'),
