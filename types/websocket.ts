@@ -115,11 +115,23 @@ export type ServerMessage =
 
 // --- Client Input Command Interfaces ---
 
-export type HrmInputData = Omit<Partial<HrmData>, 'clientId'>
+export type HrmInputData = {
+  value: number | null
+}
 
 export interface HrmInputMessage {
   type: 'HRM_INPUT'
   data: HrmInputData
+}
+
+export type HrmMetadataUpdateData = Omit<
+  Partial<HrmData>,
+  'clientId' | 'value' | 'calories'
+>
+
+export interface HrmMetadataUpdateMessage {
+  type: 'HRM_METADATA_UPDATE'
+  data: HrmMetadataUpdateData
 }
 
 export interface TimerCommandMessage {
@@ -169,6 +181,7 @@ export interface PingMessage {
 
 export type ClientCommandMessage =
   | HrmInputMessage
+  | HrmMetadataUpdateMessage
   | TimerCommandMessage
   | TimerModeCommandMessage
   | SpotifyCommandMessage
@@ -182,15 +195,23 @@ import { z } from 'zod'
 // --- Zod Schemas for Client Input Command Interfaces ---
 
 export const HrmInputDataSchema = z.object({
-  value: z.number().nullable().optional(),
-  maxHr: z.number().optional(),
-  name: z.string().optional(),
-  age: z.number().optional(),
+  value: z.number().nullable(),
 })
 
 export const HrmInputMessageSchema = z.object({
   type: z.literal('HRM_INPUT'),
   data: HrmInputDataSchema,
+})
+
+export const HrmMetadataUpdateDataSchema = z.object({
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+})
+
+export const HrmMetadataUpdateMessageSchema = z.object({
+  type: z.literal('HRM_METADATA_UPDATE'),
+  data: HrmMetadataUpdateDataSchema,
 })
 
 export const TimerCommandMessageSchema = z.object({
@@ -238,8 +259,9 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
-export const ClientCommandMessageSchema = z.union([
+export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
+  HrmMetadataUpdateMessageSchema,
   TimerCommandMessageSchema,
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,

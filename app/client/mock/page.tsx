@@ -12,7 +12,10 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { HrmInputMessage } from '../../../types/websocket'
+import {
+  HrmInputMessage,
+  HrmMetadataUpdateMessage,
+} from '../../../types/websocket'
 
 export default function MockPage() {
   const { sendData, connectionStatus } = useWebSocket()
@@ -42,15 +45,31 @@ export default function MockPage() {
         type: 'HRM_INPUT',
         data: {
           value: hr,
-          maxHr: maxHr,
-          name: name,
-          age: age,
         },
       }
       sendData(message)
     },
-    [sendData, name, age, maxHr]
+    [sendData]
   )
+
+  const sendMetadataPacket = useCallback(() => {
+    const message: HrmMetadataUpdateMessage = {
+      type: 'HRM_METADATA_UPDATE',
+      data: {
+        maxHr: maxHr,
+        name: name,
+        age: age,
+      },
+    }
+    sendData(message)
+  }, [sendData, name, age, maxHr])
+
+  // NOTE: In a real client, metadata would likely be sent once upon connection
+  // or when the user explicitly saves settings. For this mock, we send it
+  // on every change to the local state for simplicity and immediate feedback.
+  useEffect(() => {
+    sendMetadataPacket()
+  }, [sendMetadataPacket])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return

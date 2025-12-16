@@ -1,6 +1,10 @@
 // File: hooks/useBluetoothHRM.ts
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { HrmInputData } from '../types/websocket'
+import {
+  HrmInputData,
+  HrmMetadataUpdateMessage,
+  HrmMetadataUpdateData,
+} from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -247,14 +251,22 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
-            const data: HrmInputData = {
-              value: heartRate,
+            const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
             }
-
             if (typeof age === 'number') {
-              data.age = age
+              metadataData.age = age
+            }
+
+            const metadata: HrmMetadataUpdateMessage = {
+              type: 'HRM_METADATA_UPDATE',
+              data: metadataData,
+            }
+            sendData(metadata)
+
+            const data: HrmInputData = {
+              value: heartRate,
             }
 
             sendData({

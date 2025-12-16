@@ -170,6 +170,17 @@ const handleIncomingMessage = (
         ws.send(JSON.stringify(initialStateMessage))
         break
       }
+      case 'HRM_METADATA_UPDATE': {
+        const existingData = clientData.get(clientId)
+        if (existingData) {
+          const updateData: Partial<HrmData> = Object.fromEntries(
+            Object.entries(message.data).filter(([_, value]) => value !== null)
+          )
+          clientData.set(clientId, { ...existingData, ...updateData })
+        }
+        broadcastState()
+        break
+      }
       case 'HRM_INPUT': {
         const existingData = clientData.get(clientId)
         const sessionState = clientSessionState.get(clientId)
@@ -181,7 +192,7 @@ const handleIncomingMessage = (
 
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
-          const currentAge = message.data.age ?? existingData.age ?? 30
+          const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const rate =
@@ -198,13 +209,10 @@ const handleIncomingMessage = (
           // Update the internal state with high precision value
           sessionState.accumulatedCalories = currentAccumulated
 
-          const updateData: Partial<HrmData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-
+          // ONLY update the value and calories
           clientData.set(clientId, {
             ...existingData,
-            ...updateData,
+            value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
