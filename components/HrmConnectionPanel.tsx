@@ -28,10 +28,15 @@ const HrmConnectionPanel = () => {
   } = useBluetoothHRM()
 
   const handleConnect = () => {
-    const userName =
-      session?.user?.name || userSettings.userName || 'Unknown User'
-    const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    // Consolidate all user settings into a single object for the hook.
+    const userProfile = {
+      userName: session?.user?.name || userSettings.userName || 'Unknown User',
+      userAge: userSettings.userAge || 30, // Default age if not set
+      userHeight: userSettings.userHeight,
+      userWeight: userSettings.userWeight,
+      userGender: userSettings.userGender,
+    }
+    connectAndStream(userProfile)
   }
 
   const tileData = useMemo(() => {

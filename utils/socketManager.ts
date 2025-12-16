@@ -192,24 +192,43 @@ const handleIncomingMessage = (
 
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
 
+          // Use new user profile data for calorie calculation, with sensible defaults.
+          const age = existingData.age ?? 30
+          const weightKg = existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
+          const gender = existingData.gender ?? 'male'
+
+          // Check for valid heart rate and time delta to prevent bogus calculations.
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const rate =
-              (-CALORIE_DEFAULTS.INTERCEPT +
-                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
-                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
-                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
-              CALORIE_DEFAULTS.JOULE_CONVERSION
+            let rate: number // Calories per minute
 
-            const safeRate = Math.max(0, rate)
+            // Gender-specific calorie expenditure formulas (Keytel et al., 2005).
+            // Converted from kJ/min to kcal/min by dividing by 4.184.
+            if (gender === 'female') {
+              rate =
+                (-20.4022 +
+                  0.4472 * currentHr -
+                  0.1263 * weightKg +
+                  0.074 * age) /
+                4.184
+            } else {
+              // Default to male formula
+              rate =
+                (-55.0969 +
+                  0.6309 * currentHr +
+                  0.1988 * weightKg +
+                  0.2017 * age) /
+                4.184
+            }
+
+            const safeRate = Math.max(0, rate) // Ensure rate is not negative
             currentAccumulated += safeRate * dtMinutes
           }
 
           // Update the internal state with high precision value
           sessionState.accumulatedCalories = currentAccumulated
 
-          // ONLY update the value and calories
+          // ONLY update the value and calories for broadcasting
           clientData.set(clientId, {
             ...existingData,
             value: message.data.value ?? existingData.value,

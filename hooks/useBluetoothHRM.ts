@@ -8,6 +8,17 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { UserPreferences } from './useUserPreferences'
+
+// Define a type for the user profile data we need for HRM.
+type UserProfileData = Omit<
+  UserPreferences,
+  | 'theme'
+  | 'volumeLevel'
+  | 'defaultWorkDuration'
+  | 'defaultRestDuration'
+  | 'favoritePlaylist'
+>
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -83,7 +94,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<UserProfileData | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -248,15 +259,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = calculateMaxHr(age)
+            const userProfile = userDetailsRef.current
+            const calculatedMaxHr = calculateMaxHr(userProfile?.userAge ?? undefined)
 
+            // Construct the metadata update message with all user profile data.
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
-              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-            }
-            if (typeof age === 'number') {
-              metadataData.age = age
+              name:
+                userProfile?.userName ||
+                `Bluetooth HRM (${device.name || 'Unknown'})`,
+              age: userProfile?.userAge ?? undefined,
+              height: userProfile?.userHeight ?? undefined,
+              weight: userProfile?.userWeight ?? undefined,
+              gender: userProfile?.userGender ?? undefined,
             }
 
             const metadata: HrmMetadataUpdateMessage = {
@@ -297,11 +312,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   }, [connectToGatt])
 
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<boolean> => {
-      userDetailsRef.current = {
-        name: userName || '',
-        age: userAge || 0,
-      }
+    async (userProfile: UserProfileData): Promise<boolean> => {
+      userDetailsRef.current = userProfile
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {
         setDeviceStatus('Waiting for WebSocket connection...')

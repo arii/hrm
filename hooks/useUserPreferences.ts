@@ -9,8 +9,10 @@ export interface UserPreferences {
   favoritePlaylist: string | null
   userName: string | null
   userAge: number | null
+  userHeight: number | null
+  userWeight: number | null
+  userGender: 'male' | 'female' | null
 }
-
 export const useUserPreferences = () => {
   const [prefs, setPrefs] = useLocalStorage<UserPreferences>('user-prefs', {
     theme: 'dark',
@@ -20,6 +22,9 @@ export const useUserPreferences = () => {
     favoritePlaylist: null,
     userName: null,
     userAge: null,
+    userHeight: null,
+    userWeight: null,
+    userGender: null,
   })
 
   return [prefs, setPrefs] as const

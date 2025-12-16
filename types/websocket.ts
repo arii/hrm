@@ -13,6 +13,9 @@ export interface HrmData {
   name?: string
   age?: number
   calories: number // Added field
+  height?: number
+  weight?: number
+  gender?: 'male' | 'female'
 }
 
 export type TimerMode = 'STOPWATCH' | 'TABATA'
@@ -207,6 +210,9 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  height: z.number().optional(),
+  weight: z.number().optional(),
+  gender: z.enum(['male', 'female']).optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
