@@ -32,8 +32,13 @@ function sessionReducer(
   switch (action.type) {
     case 'CONNECT':
     case 'START_WORKOUT':
-      if (state.status === 'idle' || state.status === 'paused') {
+      if (state.status === 'paused') {
+        // This is a resume. Don't reset duration.
         return { ...state, status: 'running' }
+      }
+      if (state.status === 'idle') {
+        // This is a new workout. Reset duration.
+        return { ...state, status: 'running', duration: 0 }
       }
       return state
     case 'DISCONNECT':
@@ -42,7 +47,8 @@ function sessionReducer(
       }
       return state
     case 'END_WORKOUT':
-      return initialState
+      // Go idle, reset duration, but preserve calories for the final summary calculation.
+      return { ...state, status: 'idle', duration: 0 }
     case 'TICK':
       return {
         ...state,
@@ -85,6 +91,7 @@ export const useWorkoutSession = ({
     startTime: null as number | null,
     pauseTime: null as number | null,
     totalPaused: 0,
+    startCalories: 0,
   })
 
   useEffect(() => {
@@ -105,17 +112,23 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     const session = sessionDataRef.current
+
     if (state.status === 'running' && session.startTime === null) {
+      // A new session is starting.
       session.startTime = Date.now()
       session.pauseTime = null
       session.totalPaused = 0
+      // Capture the calorie count at the very beginning of the session.
+      session.startCalories = totalCalories
     } else if (state.status === 'running' && session.pauseTime !== null) {
+      // A paused session is resuming.
       session.totalPaused += Date.now() - session.pauseTime
       session.pauseTime = null
     } else if (state.status === 'paused' && session.pauseTime === null) {
+      // A running session is being paused.
       session.pauseTime = Date.now()
     }
-  }, [state.status])
+  }, [state.status, totalCalories])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -146,6 +159,7 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
+    session.startCalories = 0
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
@@ -158,9 +172,14 @@ export const useWorkoutSession = ({
     dispatch({ type: 'END_WORKOUT' })
   }, [])
 
+  // Calculate the calories burned *during this session*.
+  const caloriesBurned = Math.round(
+    state.calories - sessionDataRef.current.startCalories
+  )
+
   return {
     workoutDuration: state.duration,
-    caloriesBurned: Math.round(state.calories),
+    caloriesBurned: caloriesBurned > 0 ? caloriesBurned : 0,
     resetWorkout,
     startWorkout,
     endWorkout,
