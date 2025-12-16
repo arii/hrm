@@ -198,20 +198,12 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Wait a moment for token to be written
-        setTimeout(async () => {
-          if (spotifyService) {
-            // Signal the service to reload tokens from disk
-            spotifyService.setRefreshToken('signal')
-
-            // Wait a bit for reload, then force poll
-            setTimeout(async () => {
-              if (typeof spotifyService.forcePollAndBroadcast === 'function') {
-                await spotifyService.forcePollAndBroadcast()
-              }
-            }, 1500)
-          }
-        }, 1000)
+        // Asynchronously handle the token update without blocking the response
+        if (spotifyService) {
+          spotifyService.handleTokenUpdate().catch((err) => {
+            logger.error({ err }, 'Error during async token update handling')
+          })
+        }
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
