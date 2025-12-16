@@ -193,8 +193,14 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          const clientWeight = message.data.weightKg
           const weightKg =
-            message.data.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG
+            clientWeight &&
+            typeof clientWeight === 'number' &&
+            clientWeight >= 20 &&
+            clientWeight <= 300
+              ? clientWeight
+              : CALORIE_DEFAULTS.WEIGHT_KG
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const rate =

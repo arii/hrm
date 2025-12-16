@@ -268,7 +268,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const data: HrmInputData = {
               value: heartRate,
-              weightKg: userDetailsRef.current?.weight,
+            }
+
+            if (
+              userDetailsRef.current &&
+              typeof userDetailsRef.current.weight === 'number' &&
+              userDetailsRef.current.weight > 0
+            ) {
+              data.weightKg = userDetailsRef.current.weight
             }
 
             sendData({
@@ -307,7 +314,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight || 0,
+        weight: typeof userWeight === 'number' ? userWeight : 0,
       }
       if (statusRef.current.startsWith('Connected')) return true
       if (connectionStatus !== 'Connected') {

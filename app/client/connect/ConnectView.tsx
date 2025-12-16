@@ -3,6 +3,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
+import InputAdornment from '@mui/material/InputAdornment'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -137,12 +138,17 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Weight (kg)"
+              label="Your Weight"
               placeholder="e.g., 75"
               type="number"
               value={userWeight}
               onChange={(e) => setUserWeight(e.target.value)}
               inputProps={{ min: 20, max: 300 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">kg</InputAdornment>
+                ),
+              }}
             />
           </Stack>
         ) : (
