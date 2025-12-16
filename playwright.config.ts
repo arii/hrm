@@ -156,4 +156,6 @@ export default defineConfig({
     stdout: 'pipe',
     stderr: 'pipe',
   },
+
+  // Trivial comment to force commit of updated snapshots.
 })
