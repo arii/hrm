@@ -93,7 +93,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items: searchResults })
   } catch (error) {
     if (error instanceof SpotifyApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      )
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'

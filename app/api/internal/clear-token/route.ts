@@ -1,4 +1,4 @@
-import { SpotifyApiError } from '@/lib/errors'
+import { HttpError } from '@/lib/errors'
 import * as fs from 'fs'
 import { NextResponse } from 'next/server'
 import * as path from 'path'
@@ -32,7 +32,7 @@ export async function POST(_req: Request) {
       })
     }
   } catch (error) {
-    if (error instanceof SpotifyApiError) {
+    if (error instanceof HttpError) {
       return NextResponse.json(
         { error: error.message },
         { status: error.status }

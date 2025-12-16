@@ -25,6 +25,7 @@ const ErrorDisplay: React.FC = () => {
             onClose={() => removeError(error.id)}
             severity="error"
             variant="filled"
+            sx={{ width: '100%' }}
           >
             {error.message}
           </Alert>

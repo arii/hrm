@@ -1,6 +1,6 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse } from 'next/server'
-import { SpotifyApiError } from '@/lib/errors'
+import { HttpError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
 type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
@@ -19,7 +19,7 @@ export function withErrorHandler(handler: ApiHandler): ApiHandler {
     try {
       return await handler(req, ...args)
     } catch (error) {
-      if (error instanceof SpotifyApiError) {
+      if (error instanceof HttpError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
         return NextResponse.json(
           { error: error.message },

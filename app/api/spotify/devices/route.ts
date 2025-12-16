@@ -66,7 +66,10 @@ export async function GET(_req: Request) {
     return NextResponse.json(data.devices || [])
   } catch (error) {
     if (error instanceof SpotifyApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      )
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.'
