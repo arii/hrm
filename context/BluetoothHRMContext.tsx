@@ -15,9 +15,8 @@ export interface BluetoothHRMContextType {
 }
 
 // Create the context with a null default value
-export const BluetoothHRMContext = createContext<BluetoothHRMContextType | null>(
-  null
-)
+export const BluetoothHRMContext =
+  createContext<BluetoothHRMContextType | null>(null)
 
 // Create the provider component
 export const BluetoothHRMProvider = ({ children }: { children: ReactNode }) => {
