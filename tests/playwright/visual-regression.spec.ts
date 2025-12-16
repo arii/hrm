@@ -239,11 +239,6 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    // Dashboard page already loaded via fixture
-    // Wait for the mock BPM value to appear on a tile to ensure data is streaming.
-    // This is more specific than waiting for "Mock User", which can be ambiguous.
-    await expect(dashboardPage.locator(':text-is("155")')).toBeVisible()
-
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
 
@@ -281,16 +276,9 @@ test.describe('Visual Regression Tests', () => {
     })
 
     // Wait for the mock BPM value to appear, ensuring the tile has updated.
-    await dashboardPage.waitForFunction(
-      () => {
-        const liveHrValue = document.querySelector(
-          '[data-testid="live-hr-value"]'
-        )?.textContent
-        console.log(`Live HR Value: ${liveHrValue}`)
-        return liveHrValue === '155'
-      },
-      { timeout: WAIT_TIMEOUTS.LONG }
-    )
+    await expect(
+      dashboardPage.locator('[data-testid="live-hr-value"]')
+    ).toHaveText('155', { timeout: WAIT_TIMEOUTS.LONG })
 
     // Wait for fonts to load before snapshot
     await waitForFontsLoaded(dashboardPage)
