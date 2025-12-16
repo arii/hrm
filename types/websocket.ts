@@ -33,6 +33,8 @@ export interface TimerData {
   mode: TimerMode
   workDuration: number // seconds for Tabata work interval
   restDuration: number // seconds for Tabata rest interval
+  cycle: number
+  totalCycles: number
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number // increments whenever soundToPlay represents a fresh cue
 }

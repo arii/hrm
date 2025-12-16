@@ -31,7 +31,14 @@ interface ConnectViewProps {
   onForgetDevice: () => Promise<void>
   isSupported: boolean
   currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
+  hrZoneProps: {
+    zone: string
+    percentage: number
+    color: string
+    progressColor: string
+    backgroundColor: string
+    bpm: number
+  }
   connectionStatus: string
   bluetoothConnected: boolean
   hasStarted: boolean
@@ -246,7 +253,7 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
-              isAlerting={false}
+               background={hrZoneProps.backgroundColor}
             />
           </Box>
         )}

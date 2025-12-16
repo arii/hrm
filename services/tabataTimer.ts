@@ -28,6 +28,8 @@ interface DualModeTimerState {
   timeRemaining: number // For Tabata mode
   workDuration: number // Configurable work duration
   restDuration: number // Configurable rest duration
+  cycle: number
+  totalCycles: number
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
 }
@@ -47,6 +49,8 @@ class TabataTimer {
     timeRemaining: 0,
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
+    cycle: 0,
+    totalCycles: 0,
     soundEventId: 0,
   }
 
@@ -98,6 +102,8 @@ class TabataTimer {
       mode: this.timerState.mode,
       workDuration: this.timerState.workDuration,
       restDuration: this.timerState.restDuration,
+      cycle: this.timerState.cycle,
+      totalCycles: this.timerState.totalCycles,
       ...(this.timerState.soundToPlay !== undefined && {
         soundToPlay: this.timerState.soundToPlay,
       }),
@@ -187,6 +193,7 @@ class TabataTimer {
       timeElapsed: 0,
       timeRemaining:
         this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
+      cycle: 0,
     }
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
@@ -239,6 +246,7 @@ class TabataTimer {
         this.queueSound('REST')
         this.timerState.currentPhase = 'REST'
         this.timerState.timeRemaining = this.timerState.restDuration
+        this.timerState.cycle += 1
         break
 
       case 'REST':

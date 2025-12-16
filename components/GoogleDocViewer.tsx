@@ -1,62 +1,50 @@
-// File: components/GoogleDocViewer.tsx (Google Doc Viewer Component)
-/**
- * Google Doc Viewer Component: Embeds a Google Doc/Sheet/Presentation using an iframe.
- * Uses Material UI for responsive card structure.
- */
+// File: components/GoogleDocViewer.tsx
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import IconButton from '@mui/material/IconButton'
-import Skeleton from '@mui/material/Skeleton'
-import { memo, useEffect, useState } from 'react'
+import { Box, Card, CardContent, IconButton, Skeleton, Fade } from '@mui/material'
+import { useEffect, useState } from 'react'
 
 interface GoogleDocViewerProps {
   title: string
-  // URL must be the 'embed' version of the Google Doc/Sheet/etc.
   embedUrl: string
   height?: number
-  isShrunk?: boolean // New prop
-  onToggleShrink?: () => void // New callback prop
+  isShrunk?: boolean
+  onToggleShrink?: () => void
 }
 
 const GoogleDocViewer = ({
   title,
   embedUrl,
   height = 700,
-  isShrunk = false, // Default to not shrunk
+  isShrunk = false,
   onToggleShrink,
 }: GoogleDocViewerProps) => {
   const [iframeLoading, setIframeLoading] = useState(true)
 
-  // Ensure embedUrl always includes ?embedded=true
   const finalEmbedUrl = embedUrl.includes('?embedded=true')
     ? embedUrl
     : `${embedUrl}?embedded=true`
 
-  const dynamicHeight = isShrunk ? 200 : height // Use a smaller height when shrunk
+  const dynamicHeight = isShrunk ? 200 : height
 
-  // Use useEffect to set a timeout fallback in case onLoad doesn't fire
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIframeLoading(false)
-    }, 3000) // Show iframe after 3 seconds regardless
+    const timeout = setTimeout(() => setIframeLoading(false), 3000)
     return () => clearTimeout(timeout)
   }, [])
 
   return (
-    <Card elevation={6} sx={{ position: 'relative' }}>
-      <CardContent sx={{ p: 1 }}>
+    <Card elevation={6} sx={{ position: 'relative', overflow: 'hidden' }}>
+      <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
         <Box
           sx={{
             width: '100%',
             height: `${dynamicHeight}px`,
-            overflow: 'hidden',
+            transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth resize
             borderRadius: 1,
             border: '1px solid',
-            borderColor: 'grey.300',
+            borderColor: 'divider',
             position: 'relative',
+            backgroundColor: 'background.paper',
           }}
         >
           {iframeLoading && (
@@ -64,43 +52,45 @@ const GoogleDocViewer = ({
               variant="rectangular"
               width="100%"
               height="100%"
-              sx={{ position: 'absolute', top: 0, left: 0 }}
+              animation="wave"
+              sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
             />
           )}
-          <Box
-            component="iframe"
-            src={finalEmbedUrl}
-            title={title}
-            width="100%"
-            height="100%"
-            loading="lazy"
-            sx={{
-              border: 'none',
-              display: iframeLoading ? 'none' : 'block',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              transition: 'height 0.3s ease-in-out',
-            }}
-            onLoad={() => setIframeLoading(false)}
-          />
+
+          <Fade in={!iframeLoading} timeout={500}>
+            <Box
+              component="iframe"
+              src={finalEmbedUrl}
+              title={title}
+              width="100%"
+              height="100%"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              onLoad={() => setIframeLoading(false)}
+              sx={{ border: 'none' }}
+            />
+          </Fade>
         </Box>
+
         {onToggleShrink && (
           <IconButton
             onClick={onToggleShrink}
+            // Accessibility: Clear label
+            aria-label={isShrunk ? `Expand ${title}` : `Collapse ${title}`}
             sx={{
               position: 'absolute',
-              bottom: 16,
-              right: 16,
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              bottom: 24, // Increased padding from edge
+              right: 24,
+              backgroundColor: 'background.paper',
+              boxShadow: 3,
+              width: 48, // Minimum touch target 48px
+              height: 48,
               '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
+                backgroundColor: 'grey.100',
               },
               zIndex: 10,
             }}
-            aria-label={isShrunk ? 'Expand document' : 'Collapse document'}
           >
-            {isShrunk ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            {isShrunk ? <ExpandMoreIcon fontSize="medium" /> : <ExpandLessIcon fontSize="medium" />}
           </IconButton>
         )}
       </CardContent>
@@ -108,4 +98,4 @@ const GoogleDocViewer = ({
   )
 }
 
-export default memo(GoogleDocViewer)
+export default GoogleDocViewer

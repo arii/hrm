@@ -71,10 +71,7 @@ export default function ConnectPage() {
       onForgetDevice={forgetDevice}
       isSupported={isSupported}
       currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
-      }}
+      hrZoneProps={hrZoneProps}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}

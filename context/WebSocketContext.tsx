@@ -44,6 +44,8 @@ const INITIAL_STATE: WebSocketState = {
     mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
+    cycle: 0,
+    totalCycles: 0,
     soundEventId: 0,
   },
   spotifyData: {

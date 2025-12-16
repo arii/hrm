@@ -4,6 +4,7 @@ import { HrmInputData } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { getHrZoneProps, HrZoneProps } from '@/utils/visualization'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -74,6 +75,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
+  const [hrZoneProps, setHrZoneProps] = useState<HrZoneProps | null>(null)
 
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
@@ -247,6 +249,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
+            setHrZoneProps(getHrZoneProps(heartRate, calculatedMaxHr))
+
             const data: HrmInputData = {
               value: heartRate,
               maxHr: calculatedMaxHr,
@@ -358,6 +362,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     isConnected: deviceStatus.startsWith('Connected'),
     isSupported, // Export this flag
     disconnectionReason,
+    hrZoneProps,
   }
 }
 

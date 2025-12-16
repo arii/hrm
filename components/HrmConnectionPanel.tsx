@@ -133,10 +133,7 @@ const HrmConnectionPanel = () => {
             name={user.name || ''}
             bpm={user.value}
             percentMax={user.percentage}
-            calories={user.calories}
-            isConnected={user.isConnected}
-            isAlerting={user.isAlerting}
-            {...(user.alertMessage && { alertMessage: user.alertMessage })}
+            background={user.backgroundColor}
           />
         </Box>
       ))}

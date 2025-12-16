@@ -25,12 +25,6 @@ const HrmTiles = () => {
           user.maxHr || MAX_HR_DEFAULT
         )
 
-        // Find the alert specific to this HR Monitor's clientId
-        const matchingAlert = activeAlerts.find(
-          (alert) =>
-            alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-        )
 
         return (
           <Grid
@@ -42,10 +36,7 @@ const HrmTiles = () => {
               name={user.name || ''}
               bpm={user.value}
               percentMax={hrZoneProps.percentage}
-              calories={user.calories || 0} // Pass calories
-              isAlerting={!!matchingAlert}
-              // Conditionally add alertMessage to avoid passing `undefined`
-              {...(matchingAlert && { alertMessage: matchingAlert.message })}
+                background={hrZoneProps.backgroundColor}
             />
           </Grid>
         )

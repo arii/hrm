@@ -1,22 +1,17 @@
 // File: components/TimerDisplay.tsx
 'use client'
-import { useWebSocket } from '@/context/WebSocketContext'
-import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import { Box, Card, CardContent, Typography } from '@mui/material'
 import { TimerMode, TimerPhase } from '../types/websocket'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
-  timeRemaining: number // seconds (for countdown)
-  timeElapsed: number // seconds (for stopwatch)
+  timeRemaining: number
+  timeElapsed: number
+  cycle: number
+  totalCycles: number
   mode: TimerMode
   workDuration?: number
   restDuration?: number
-  soundEventId?: number // Sound cue trigger
-  volume?: number // Master volume
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -25,166 +20,95 @@ const TimerDisplay = ({
   phase,
   timeRemaining,
   timeElapsed,
+  cycle,
+  totalCycles,
   mode,
-  workDuration = 20,
-  restDuration = 10,
 }: TimerDisplayProps) => {
-  const { connectionStatus } = useWebSocket()
-
-  // Determine what to display based on mode and phase
   let displayTime: string
   let phaseColor: string
   let phaseLabel: string
 
   if (phase === 'PREPARE') {
-    // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = '#F59E0B' // Amber-500 (Warning)
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && phase === 'RUNNING') {
-    // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
+    // Improved contrast for black background (was #2563EB)
+    phaseColor = '#60A5FA' // Blue-400
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
     (phase === 'WORK' || phase === 'REST' || phase === 'COOLDOWN')
   ) {
-    // TABATA: Show remaining time MM:SS
     const mm = Math.floor(timeRemaining / 60)
     const ss = timeRemaining % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (phase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = '#EF4444' // Red-500
       phaseLabel = 'WORK'
     } else if (phase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = '#22C55E' // Green-500
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = '#3B82F6' // Blue-500
       phaseLabel = 'COOLDOWN'
     }
   } else {
-    // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
+    phaseColor = '#9CA3AF' // Gray-400 (Improved contrast from #6B7280)
     phaseLabel = 'READY'
   }
 
   return (
     <Card
       elevation={6}
-      data-testid="timer-display-container"
+      component="section"
+      aria-label={`${mode} Timer: ${phaseLabel}`}
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
-        color: phaseColor, // Dynamic color based on phase
+        backgroundColor: '#000000',
+        color: phaseColor,
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: '2px solid #1a1a1a',
         position: 'relative',
-        animation:
-          phase === 'WORK' || phase === 'REST'
-            ? 'pulse-opacity 1.5s infinite'
-            : 'none',
+        transition: 'border-color 0.3s ease',
+        '&:hover': {
+          borderColor: phaseColor,
+        }
       }}
     >
-      {/* Status Indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          zIndex: 2,
-        }}
-      >
-        <Typography
-          variant="caption"
-          sx={{ color: '#fff' }}
-          data-testid="ws-status-indicator"
-        >
-          {connectionStatus}
-        </Typography>
-        <Box
-          sx={{
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            backgroundColor:
-              connectionStatus === 'Connected'
-                ? '#10B981'
-                : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
-            animation:
-              connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
-          }}
-        />
-      </Box>
-      {/* Mode Indicator - Rotated on left side */}
+      {/* Mode Indicator */}
       {phase !== 'IDLE' && (
         <Box
           sx={{
             position: 'absolute',
-            left: 16,
+            left: { xs: 8, sm: 16 },
             top: '50%',
             transform: 'translateY(-50%) rotate(-90deg)',
             transformOrigin: 'center',
             zIndex: 1,
+            display: { xs: 'none', sm: 'block' } // Hide on very small screens
           }}
         >
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: 'rgba(255,255,255,0.9)',
               fontWeight: 700,
               letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
+              fontSize: '0.75rem',
               backgroundColor: 'rgba(255,255,255,0.1)',
               px: 1,
               py: 0.5,
               borderRadius: 1,
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
-        </Box>
-      )}
-
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
+            {mode}
           </Typography>
         </Box>
       )}
@@ -200,45 +124,59 @@ const TimerDisplay = ({
           justifyContent: 'center',
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {phase !== 'IDLE' && phase !== 'RUNNING' && (
           <Typography
-            data-testid="timer-phase"
             variant="h6"
-            aria-live="polite"
             sx={{
               mb: 1,
               color: phaseColor,
               fontWeight: 700,
-              letterSpacing: 2,
+              letterSpacing: 3,
             }}
+            data-testid="timer-phase"
           >
             {phaseLabel}
           </Typography>
         )}
 
-        {/* Giant Timer Display */}
+        {/* Responsive Timer Display */}
         <Typography
-          data-testid="timer-countdown"
           component="div"
           role="timer"
           aria-live="polite"
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            // Fluid typography: 6rem min, 15vw preferred, 10rem max
+            fontSize: 'clamp(6rem, 15vw, 10rem)',
             fontWeight: 800,
-            letterSpacing: '0.12rem',
+            letterSpacing: '0.05em',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 30px ${phaseColor}66`, // Softer glow
           }}
+          data-testid="timer-countdown"
         >
           {displayTime}
         </Typography>
+
+        {mode === 'TABATA' && cycle > 0 && (
+          <Typography
+            variant="h5"
+            aria-label={`Cycle ${cycle} of ${totalCycles}`}
+            sx={{
+              mt: 2,
+              color: '#9CA3AF',
+              fontWeight: 600,
+              fontSize: { xs: '1.25rem', md: '1.5rem' }
+            }}
+          >
+            Cycle {cycle} / {totalCycles}
+          </Typography>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-export default memo(TimerDisplay)
+export default TimerDisplay
