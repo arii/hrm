@@ -128,7 +128,6 @@
     "eslint-config-next": "16.0.10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-storybook": "^10.1.8",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
@@ -159,27 +158,17 @@
     "ignores": [
       "@types/web-bluetooth",
       "cross-env",
-      "jest-environment-jsdom",
-      "@commitlint/cli",
-      "@commitlint/config-conventional",
-      "@storybook/addon-a11y",
-      "@storybook/addon-docs",
-      "@storybook/addon-essentials",
-      "@storybook/addon-interactions",
-      "@storybook/addon-vitest",
-      "@storybook/blocks",
-      "@storybook/nextjs-vite",
-      "@vitest/browser-playwright",
-      "@vitest/coverage-v8",
-      "clinic",
+      "jest-environment-jsdom"
+    ],
+    "specials": [
+      "bin",
+      "commitlint",
+      "eslint",
+      "husky",
+      "jest",
       "lint-staged",
-      "vite",
-      "vitest",
-      "wait-on",
-      "swagger-jsdoc",
-      "swagger-ui-express",
-      "@types/swagger-jsdoc",
-      "@types/swagger-ui-express"
+      "prettier",
+      "storybook"
     ]
   },
   "pnpm": {
