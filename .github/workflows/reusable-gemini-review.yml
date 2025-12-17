@@ -274,9 +274,9 @@ jobs:
           fi
 
           # Check for excessive comment loops (prevent code review spam)
-          TOTAL_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments,reviewThreads --jq '(.comments | length) + (.reviewThreads | length)')
+          TOTAL_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments,reviews --jq '(.comments | length) + (.reviews | length)')
           
-          if [ "$TOTAL_COMMENTS" -ge "15" ]; then
+          if [ "$TOTAL_COMMENTS" -ge "30" ]; then
             echo "POST_COMMENT=false" >> $GITHUB_ENV
           else
             echo "POST_COMMENT=true" >> $GITHUB_ENV
@@ -424,7 +424,7 @@ jobs:
         if: steps.gemini.outcome == 'success'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.ARI_PAT }}
           script: |
             const fs = require('fs');
             let conclusion = 'success';
@@ -485,7 +485,7 @@ jobs:
         if: steps.gemini.outcome == 'failure'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ secrets.ARI_PAT }}
           script: |
             let summary = 'The review process encountered an error and could not be completed.';
 
