@@ -7,7 +7,7 @@ import {
   toUnixTimestamp,
   nowAsISO,
   nowAsUnix,
-} from '../../../../lib/core/date'
+} from '../../../../utils/core/date'
 
 describe('lib/core/date.ts', () => {
   // Test for toISO8601

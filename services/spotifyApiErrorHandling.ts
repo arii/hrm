@@ -1,5 +1,5 @@
 import logger from '../utils/logger.js'
-import { safeParseJSON } from '@/lib/core/json'
+import { safeParseJSON } from '@/utils/core/json'
 
 /**
  * Parses and logs detailed error information from a failed Spotify SDK command.

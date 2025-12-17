@@ -2,7 +2,7 @@
  * @file Unit tests for the JSON utility functions in `lib/core/json.ts`.
  * @jest-environment node
  */
-import { safeParseJSON } from '../../../../lib/core/json'
+import { safeParseJSON } from '../../../../utils/core/json'
 
 describe('lib/core/json.ts', () => {
   describe('safeParseJSON', () => {
