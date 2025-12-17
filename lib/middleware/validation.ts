@@ -42,7 +42,11 @@ type AppRouterHandler<T, P> = (
  *
  * export const POST = withValidation({ schema: CreateUserSchema })(postHandler);
  */
-export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
+export function withValidation<T, P = unknown>({
+  schema,
+}: {
+  schema: z.ZodType<T>
+}) {
   return (handler: AppRouterHandler<T, P>) =>
     async (req: Request, context: { params: P }) => {
       try {

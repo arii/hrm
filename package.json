@@ -72,7 +72,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "lodash": "^4.17.21",
-    "next": "16.0.10",
+    "next": "15.5.9",
     "next-auth": "^4.24.13",
     "pino": "^10.1.0",
     "react": "19.2.3",
@@ -84,10 +84,11 @@
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
+    "@eslint/eslintrc": "3.3.3",
     "@eslint/js": "^9.39.1",
     "@google/generative-ai": "0.24.1",
     "@jest/globals": "^30.2.0",
-    "@next/bundle-analyzer": "^16.0.5",
+    "@next/bundle-analyzer": "^15.5.9",
     "@playwright/test": "^1.57.0",
     "@storybook/addon-a11y": "^10.1.4",
     "@storybook/addon-actions": "^8.6.14",
@@ -112,7 +113,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
     "eslint": "9.39.2",
-    "eslint-config-next": "16.0.10",
+    "eslint-config-next": "15.5.9",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-storybook": "^10.1.8",
@@ -151,8 +152,7 @@
       "path-to-regexp@>=2.0.0 <3.3.0": ">=3.3.0",
       "cookie@<0.7.0": ">=0.7.0",
       "on-headers@<1.1.0": ">=1.1.0",
-      "send@<0.19.0": ">=0.19.0",
-      "next@>=16.0.0-canary.0 <16.0.7": ">=16.0.7"
+      "send@<0.19.0": ">=0.19.0"
     }
   }
 }
