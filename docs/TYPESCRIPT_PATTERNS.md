@@ -19,7 +19,7 @@ Type assertions are a way to tell the compiler "trust me, I know what I'm doing.
 ```typescript
 // Unsafe: This bypasses compiler checks and can lead to runtime errors
 // if the environment variable is not set.
-const apiKey = process.env.API_KEY as string;
+const apiKey = process.env.API_KEY as string
 ```
 
 ## Prefer Explicit Type Guards and Validation
@@ -29,11 +29,11 @@ Instead of asserting a type, use runtime checks like `if` statements or validati
 ### Correct Pattern
 
 ```typescript
-const apiKey = process.env.API_KEY;
+const apiKey = process.env.API_KEY
 
 if (!apiKey) {
   // Fail-fast mechanism for critical variables
-  throw new Error('API_KEY environment variable is required and was not found.');
+  throw new Error('API_KEY environment variable is required and was not found.')
 }
 
 // From this point on, the TypeScript compiler correctly infers
