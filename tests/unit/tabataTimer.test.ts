@@ -24,6 +24,7 @@ describe('TabataTimer Service', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    jest.restoreAllMocks()
   })
 
   describe('Initialization', () => {
@@ -448,11 +449,11 @@ describe('TabataTimer Service', () => {
 
   describe('Calorie Calculation', () => {
     it('should not accumulate calories when the timer is not running', () => {
-      let clientData = new Map()
+      const clientData = new Map()
       clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
 
       const updatedClientData = timer.updateHrmData(clientData)
-      let state = timer.getState()
+      const state = timer.getState()
       expect(state.caloriesBurned).toBe(0)
 
       const clientInfo = updatedClientData.get('client1')
@@ -463,7 +464,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START') // Start the timer
       jest.advanceTimersByTime(5000) // Get past PREPARE phase
 
-      let clientData = new Map()
+      const clientData = new Map()
       clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
       let updatedClientData = new Map()
 
@@ -484,7 +485,7 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
 
-      let clientData = new Map()
+      const clientData = new Map()
       clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
       clientData.set('client2', { clientId: 'client2', value: 160, age: 25 })
       let updatedClientData = new Map()
@@ -498,7 +499,9 @@ describe('TabataTimer Service', () => {
       const client1Info = updatedClientData.get('client1')
       const client2Info = updatedClientData.get('client2')
 
-      const totalCalories = Math.floor(client1Info.calories + client2Info.calories)
+      const totalCalories = Math.floor(
+        client1Info.calories + client2Info.calories
+      )
 
       expect(state.caloriesBurned).toBe(totalCalories)
       expect(state.caloriesBurned).toBeGreaterThan(10) // Combined should be higher
@@ -508,10 +511,19 @@ describe('TabataTimer Service', () => {
       timer.handleCommand('START')
       jest.advanceTimersByTime(5000)
 
-      let clientData = new Map()
+      const clientData = new Map()
       clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
-      timer.updateHrmData(clientData)
-      jest.advanceTimersByTime(1000)
+
+      // Mock Date.now() to control time
+      let time = Date.now()
+      jest.spyOn(Date, 'now').mockImplementation(() => time)
+
+      // Simulate 10 seconds of activity
+      for (let i = 0; i < 10; i++) {
+        timer.updateHrmData(clientData)
+        time += 1000 // Advance time by 1 second
+        jest.advanceTimersByTime(1000)
+      }
 
       // Ensure calories have accumulated
       const stateBeforeStop = timer.getState()

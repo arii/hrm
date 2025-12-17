@@ -18,7 +18,6 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
 } from '../../types/websocket'
@@ -237,9 +236,7 @@ describe('WebSocket Manager', () => {
       sendHrmInput(150)
 
       // Verify that the timer service's update method was called
-      expect(
-        mockServices.tabataService.updateHrmData
-      ).toHaveBeenCalled()
+      expect(mockServices.tabataService.updateHrmData).toHaveBeenCalled()
 
       // Check the payload sent to the service
       const callPayload = (

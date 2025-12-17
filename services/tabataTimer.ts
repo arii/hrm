@@ -115,9 +115,7 @@ class TabataTimer {
   }
 
   // --- Calorie Calculation ---
-  public updateHrmData(
-    clientData: Map<string, HrmData>
-  ): Map<string, HrmData> {
+  public updateHrmData(clientData: Map<string, HrmData>): Map<string, HrmData> {
     const now = Date.now()
     let totalCalories = 0
     const updatedClientData = new Map<string, HrmData>()
