@@ -1,4 +1,11 @@
-import { useEffect, useReducer, useRef, useCallback } from 'react'
+import {
+  useEffect,
+  useReducer,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -32,8 +39,13 @@ function sessionReducer(
   switch (action.type) {
     case 'CONNECT':
     case 'START_WORKOUT':
-      if (state.status === 'idle' || state.status === 'paused') {
+      if (state.status === 'paused') {
+        // This is a resume. Don't reset duration.
         return { ...state, status: 'running' }
+      }
+      if (state.status === 'idle') {
+        // This is a new workout. Reset duration.
+        return { ...state, status: 'running', duration: 0 }
       }
       return state
     case 'DISCONNECT':
@@ -42,7 +54,8 @@ function sessionReducer(
       }
       return state
     case 'END_WORKOUT':
-      return initialState
+      // Go idle, reset duration, but preserve calories for the final summary calculation.
+      return { ...state, status: 'idle', duration: 0 }
     case 'TICK':
       return {
         ...state,
@@ -80,6 +93,7 @@ export const useWorkoutSession = ({
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const [startCalories, setStartCalories] = useState(0)
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -105,14 +119,18 @@ export const useWorkoutSession = ({
 
   useEffect(() => {
     const session = sessionDataRef.current
+
     if (state.status === 'running' && session.startTime === null) {
+      // A new session is starting.
       session.startTime = Date.now()
       session.pauseTime = null
       session.totalPaused = 0
     } else if (state.status === 'running' && session.pauseTime !== null) {
+      // A paused session is resuming.
       session.totalPaused += Date.now() - session.pauseTime
       session.pauseTime = null
     } else if (state.status === 'paused' && session.pauseTime === null) {
+      // A running session is being paused.
       session.pauseTime = Date.now()
     }
   }, [state.status])
@@ -146,21 +164,30 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
+    setStartCalories(0)
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 
   const startWorkout = useCallback(() => {
+    // Capture the calorie count at the moment the workout starts.
+    setStartCalories(totalCalories)
     dispatch({ type: 'START_WORKOUT' })
-  }, [])
+  }, [totalCalories])
 
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
   }, [])
 
+  // Calculate the calories burned *during this session*.
+  const caloriesBurned = useMemo(() => {
+    const burned = Math.round(state.calories - startCalories)
+    return burned > 0 ? burned : 0
+  }, [state.calories, startCalories])
+
   return {
     workoutDuration: state.duration,
-    caloriesBurned: Math.round(state.calories),
+    caloriesBurned,
     resetWorkout,
     startWorkout,
     endWorkout,
