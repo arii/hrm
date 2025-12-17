@@ -8,6 +8,8 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
+import { useDebounce } from '@/hooks/useDebounce'
+import { useEffect } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -15,6 +17,11 @@ export default function ConnectPage() {
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
   const [userPreferences, setUserPreferences] = useUserPreferences()
+  const debouncedUserPreferences = useDebounce(userPreferences, 500)
+
+  useEffect(() => {
+    setUserPreferences(debouncedUserPreferences)
+  }, [debouncedUserPreferences, setUserPreferences])
 
   const {
     connectAndStream,
