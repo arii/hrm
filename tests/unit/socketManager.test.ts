@@ -245,7 +245,8 @@ describe('WebSocket Manager', () => {
       const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
       expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const finalPayload: HrmData[] = lastCall[0].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 

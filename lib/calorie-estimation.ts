@@ -12,8 +12,6 @@
  * age, weight, heart rate, and duration.
  */
 
-import { CALORIE_DEFAULTS } from '../utils/constants'
-
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
