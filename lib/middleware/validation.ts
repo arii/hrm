@@ -96,25 +96,26 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
   return (handler: AppRouterHandler<TBody, TQuery, TParams, THeaders>) =>
     async (req: Request, context: { params: TParams }) => {
       try {
-        let body: TBody = undefined as TBody
+        let body: TBody | undefined = undefined
         if (bodySchema) {
           try {
             const json = await req.json()
             body = bodySchema.parse(json)
           } catch (error) {
-            if (error instanceof SyntaxError) {
-              return createErrorResponse(
-                'Invalid JSON in request body.',
-                400,
-                'SyntaxError'
-              )
+            // If the error is from Zod, re-throw it to be handled by the outer catch
+            if (error instanceof z.ZodError) {
+              throw error
             }
-            // Re-throw ZodError to be caught by the outer try-catch
-            throw error
+            // Otherwise, assume it's a JSON parsing error from req.json()
+            return createErrorResponse(
+              'Invalid JSON in request body.',
+              400,
+              'SyntaxError'
+            )
           }
         }
 
-        let query: TQuery = undefined as TQuery
+        let query: TQuery | undefined = undefined
         if (querySchema) {
           const { searchParams } = new URL(req.url)
           const queryParams = Object.fromEntries(searchParams)
@@ -126,7 +127,7 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
           params = paramsSchema.parse(context.params)
         }
 
-        let headers: THeaders = undefined as THeaders
+        let headers: THeaders | undefined = undefined
         if (headersSchema) {
           const headersObject = Object.fromEntries(
             (req.headers as Headers).entries()
@@ -134,7 +135,14 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
           headers = headersSchema.parse(headersObject)
         }
 
-        return handler(req, { ...context, body, query, params, headers })
+        const validatedContext = {
+          params,
+          body: body as TBody,
+          query: query as TQuery,
+          headers: headers as THeaders,
+        }
+
+        return handler(req, validatedContext)
       } catch (error) {
         if (error instanceof z.ZodError) {
           return createErrorResponse(
