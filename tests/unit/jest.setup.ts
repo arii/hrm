@@ -10,6 +10,5 @@ if (typeof Request === 'undefined') {
   } as any
 }
 
-
 // Mock the `fail` function for the knip test
 ;(global as any).fail = jest.fn()
