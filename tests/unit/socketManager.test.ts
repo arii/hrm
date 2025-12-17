@@ -13,6 +13,7 @@ import {
   initSocketManager,
   resetSocketManager,
 } from '../../utils/socketManager'
+import { CALORIE_DEFAULTS } from '../../utils/constants'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
@@ -226,7 +227,7 @@ describe('WebSocket Manager', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30, weight: 165 },
+          data: { value: hr, age: 30, weight: CALORIE_DEFAULTS.WEIGHT_LBS },
         })
         mockWs.emit('message', message.toString())
       }
