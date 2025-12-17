@@ -19,6 +19,7 @@ import {
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -97,7 +98,7 @@ const initSocketManager = (
   const WATCHDOG_INTERVAL = 30000 // 30 seconds
   const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
 
-  setInterval(() => {
+  const interval = setInterval(() => {
     wss.clients.forEach((ws) => {
       const extWs = ws as ExtWebSocket
       if (Date.now() - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
@@ -110,10 +111,8 @@ const initSocketManager = (
     })
   }, WATCHDOG_INTERVAL)
 
-  const broadcastInterval = setInterval(broadcastState, 1000)
-
   wss.on('close', () => {
-    clearInterval(broadcastInterval)
+    clearInterval(interval)
   })
 }
 
@@ -196,15 +195,13 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const rate =
-              (-CALORIE_DEFAULTS.INTERCEPT +
-                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
-                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
-                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
-              CALORIE_DEFAULTS.JOULE_CONVERSION
-
-            const safeRate = Math.max(0, rate)
-            currentAccumulated += safeRate * dtMinutes
+            const caloriesBurned = estimateCaloriesBurned({
+              heartRate: currentHr,
+              age: currentAge,
+              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              durationMinutes: dtMinutes,
+            })
+            currentAccumulated += caloriesBurned
           }
 
           // Update the internal state with high precision value
