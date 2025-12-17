@@ -129,7 +129,7 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
         let headers: THeaders = undefined as THeaders
         if (headersSchema) {
           const headersObject = Object.fromEntries(
-            (req.headers as any).entries()
+            (req.headers as Headers).entries()
           )
           headers = headersSchema.parse(headersObject)
         }
