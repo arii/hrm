@@ -3,12 +3,12 @@ import { ServerMessage, SpotifyData, SpotifyDevice } from '../types/websocket'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+} from './spotifyTokenManager'
+import logger from '../utils/logger'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
+} from './spotifyApiErrorHandling'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
