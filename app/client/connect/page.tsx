@@ -7,12 +7,10 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useState, useEffect } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [hasSavedDevice, setHasSavedDevice] = useState(false)
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
 
@@ -28,16 +26,8 @@ export default function ConnectPage() {
     hasSavedDevice,
   } = useBluetoothHRM()
 
-  useEffect(() => {
-    setHasSavedDevice(!!localStorage.getItem('hrm_device_id'))
-    if (deviceStatus.includes('memory')) {
-      setHasSavedDevice(false)
-    }
-  }, [deviceStatus])
-
   const handleForgetDevice = async () => {
     await forgetDevice()
-    setHasSavedDevice(false)
   }
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -73,6 +63,16 @@ export default function ConnectPage() {
     totalCalories,
   })
 
+  // Wrap resetWorkout to also forget device if needed,
+  // but based on UI description "Reset System & Device" implies forgetting device
+  // However, the existing UI code just called resetWorkout.
+  // The test expects "Reset Server button triggers device forget".
+  // Let's modify handleReset to call forgetDevice as well.
+  const handleReset = async () => {
+    resetWorkout()
+    await forgetDevice()
+  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
@@ -101,7 +101,7 @@ export default function ConnectPage() {
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}
       hasStarted={hasStarted}
-      onReset={resetWorkout}
+      onReset={handleReset}
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={endWorkout}
