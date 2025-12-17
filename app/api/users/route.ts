@@ -1,6 +1,9 @@
 // app/api/users/route.ts
 import { withValidation } from '@/lib/middleware/validation'
-import { CreateUserProfileSchema } from '@/lib/validation/schemas'
+import {
+  CreateUserProfileSchema,
+  GetUserProfileSchema,
+} from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/data-models'
 import { NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
@@ -32,6 +35,36 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST = withValidation({ schema: CreateUserProfileSchema })(
+export const POST = withValidation({ bodySchema: CreateUserProfileSchema })(
   createUser
 )
+
+/**
+ * Handles the GET request to fetch a user profile.
+ *
+ * @param {Request} _req - The incoming request (unused).
+ * @param {object} context - The context object, containing the validated query.
+ * @param {object} context.query - The validated query parameters.
+ * @param {string} context.query.userId - The user ID to fetch.
+ * @returns {Promise<NextResponse>} A promise that resolves to the response.
+ */
+async function getUser(
+  _req: Request,
+  { query }: { query: { userId: string } }
+): Promise<NextResponse> {
+  // In a real application, you would fetch the user from a database.
+  // For this example, we'll just return a mock user.
+  const mockUser: UserProfile = {
+    id: query.userId,
+    username: 'testuser',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+
+  return NextResponse.json(mockUser)
+}
+
+export const GET = withValidation({ querySchema: GetUserProfileSchema })(getUser)

@@ -60,3 +60,8 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   timestamp: true,
   heartRate: true,
 })
+
+// Example: Schema for getting a user profile by ID
+export const GetUserProfileSchema = z.object({
+  userId: z.string().uuid('Invalid user ID format.'),
+})
