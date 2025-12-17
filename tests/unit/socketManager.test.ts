@@ -226,7 +226,7 @@ describe('WebSocket Manager', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr, age: 30, weight: 165 },
         })
         mockWs.emit('message', message.toString())
       }

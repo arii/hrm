@@ -51,10 +51,13 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
   { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
 ]
 
+import { Units } from '@/hooks/useUserPreferences'
+import { lbsToKg } from './units'
+
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
 export const CALORIE_DEFAULTS = {
-  WEIGHT_KG: 75, // Default weight if not provided
+  WEIGHT_LBS: 165, // Default weight if not provided
   // Simplified Factors (Male/Female average or specific)
   // Formula: Calories/min = (-55.0969 + 0.6309 x HR + 0.1988 x Weight + 0.2017 x Age) / 4.184
   FACTOR_HR: 0.6309,
@@ -62,4 +65,20 @@ export const CALORIE_DEFAULTS = {
   FACTOR_AGE: 0.2017,
   INTERCEPT: 55.0969,
   JOULE_CONVERSION: 4.184,
+}
+
+export const calculateCalories = (
+  hr: number,
+  age: number,
+  weight: number,
+  units: Units
+) => {
+  const weightInKg = units === 'metric' ? weight : lbsToKg(weight)
+  return (
+    (-CALORIE_DEFAULTS.INTERCEPT +
+      CALORIE_DEFAULTS.FACTOR_HR * hr +
+      CALORIE_DEFAULTS.FACTOR_WEIGHT * weightInKg +
+      CALORIE_DEFAULTS.FACTOR_AGE * age) /
+    CALORIE_DEFAULTS.JOULE_CONVERSION
+  )
 }

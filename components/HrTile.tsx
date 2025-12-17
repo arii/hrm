@@ -11,6 +11,8 @@ import Typography from '@mui/material/Typography'
 import { memo } from 'react'
 import StyledCard from './shared/StyledCard'
 import { useTheme } from '@mui/material/styles'
+import { useUserPreferences } from '@/hooks/useUserPreferences'
+import { calculateCalories, CALORIE_DEFAULTS } from '@/utils/constants'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -32,19 +34,32 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
+  age,
+  weight,
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
+  const [prefs] = useUserPreferences()
   const { backgroundColor } = getHrZoneProps(percentMax, 100)
+
+  const calories = bpm
+    ? calculateCalories(
+        bpm,
+        age || 30,
+        weight || CALORIE_DEFAULTS.WEIGHT_LBS,
+        prefs.units
+      )
+    : 0
 
   const tooltipTitle = isAlerting
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
+      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories.toFixed(
+          2
+        )}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -175,7 +190,6 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
-    prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage

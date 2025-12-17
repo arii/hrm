@@ -16,9 +16,9 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { broadcast, initBroadcaster } from './broadcast.js'
-import logger from './logger.js'
+import { CALORIE_DEFAULTS, calculateCalories } from './constants'
+import { broadcast, initBroadcaster } from './broadcast'
+import logger from './logger'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -192,16 +192,20 @@ const handleIncomingMessage = (
 
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
+          const currentAge = message.data.age ?? existingData.age ?? 30
+          const currentWeight =
+            message.data.weight ??
+            existingData.weight ??
+            CALORIE_DEFAULTS.WEIGHT_LBS
+          const currentUnits = existingData.units ?? 'imperial'
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const rate =
-              (-CALORIE_DEFAULTS.INTERCEPT +
-                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
-                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
-                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
-              CALORIE_DEFAULTS.JOULE_CONVERSION
-
+            const rate = calculateCalories(
+              currentHr,
+              currentAge,
+              currentWeight,
+              currentUnits
+            )
             const safeRate = Math.max(0, rate)
             currentAccumulated += safeRate * dtMinutes
           }
@@ -213,6 +217,8 @@ const handleIncomingMessage = (
           clientData.set(clientId, {
             ...existingData,
             value: message.data.value ?? existingData.value,
+            age: currentAge,
+            weight: currentWeight,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
