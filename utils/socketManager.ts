@@ -5,6 +5,7 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling'
+import TabataTimer from '../services/tabataTimer'
 import { logger } from './logger'
 import {
   ClientCommandMessageSchema,
@@ -18,7 +19,6 @@ import {
 } from '../types/websocket'
 import { CALORIE_DEFAULTS } from './constants' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast'
-import logger from './logger'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
