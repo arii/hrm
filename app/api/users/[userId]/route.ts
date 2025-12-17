@@ -1,6 +1,4 @@
 // app/api/users/[userId]/route.ts
-import { withValidation } from '@/lib/middleware/validation'
-import { GetUserProfileSchema } from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/data-models'
 import { NextResponse } from 'next/server'
 
@@ -13,7 +11,7 @@ import { NextResponse } from 'next/server'
  * @param {string} context.params.userId - The user ID to fetch.
  * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
-async function getUser(
+export async function GET(
   _req: Request,
   { params }: { params: { userId: string } }
 ): Promise<NextResponse> {
@@ -31,7 +29,3 @@ async function getUser(
 
   return NextResponse.json(mockUser)
 }
-
-export const GET = withValidation({
-  paramsSchema: GetUserProfileSchema,
-})(getUser)
