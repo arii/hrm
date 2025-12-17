@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server'
 export async function GET(
   _req: Request,
   { params }: { params: { userId: string } }
-): Promise<NextResponse> {
+) {
   // In a real application, you would fetch the user from a database.
   // For this example, we'll just return a mock user.
   const mockUser: UserProfile = {
