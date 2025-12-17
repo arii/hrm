@@ -16,6 +16,17 @@ import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
 
+const validate = (value: string, min: number, max: number, name: string) => {
+  if (!value || value.trim() === '') {
+    return null
+  }
+  const num = Number(value)
+  if (isNaN(num) || num < min || num > max) {
+    return `Please enter a valid ${name} (${min}-${max})`
+  }
+  return null
+}
+
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
@@ -23,6 +34,10 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
+  userHeight: string
+  setUserHeight: (height: string) => void
+  userWeight: string
+  setUserWeight: (weight: string) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -48,6 +63,10 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  userHeight,
+  setUserHeight,
+  userWeight,
+  setUserWeight,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -66,6 +85,9 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -128,8 +150,53 @@ export default function ConnectView({
               placeholder="e.g., 30"
               type="number"
               value={userAge}
-              onChange={(e) => setUserAge(e.target.value)}
-              inputProps={{ min: 1, max: 120 }}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserAge(e.target.value)
+                }
+              }}
+              onBlur={(e) => {
+                setAgeError(validate(e.target.value, 1, 120, 'age'))
+              }}
+              error={!!ageError}
+              helperText={ageError}
+              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
+            />
+            <TextField
+              fullWidth
+              label="Your Height (cm)"
+              placeholder="e.g., 175"
+              type="number"
+              value={userHeight}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserHeight(e.target.value)
+                }
+              }}
+              onBlur={(e) => {
+                setHeightError(validate(e.target.value, 100, 250, 'height'))
+              }}
+              error={!!heightError}
+              helperText={heightError}
+              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
+            />
+            <TextField
+              fullWidth
+              label="Your Weight (kg)"
+              placeholder="e.g., 70"
+              type="number"
+              value={userWeight}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserWeight(e.target.value)
+                }
+              }}
+              onBlur={(e) => {
+                setWeightError(validate(e.target.value, 30, 200, 'weight'))
+              }}
+              error={!!weightError}
+              helperText={weightError}
+              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
             />
           </Stack>
         ) : (
