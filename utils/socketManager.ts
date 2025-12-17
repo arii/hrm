@@ -4,8 +4,8 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '@/services/spotifyPolling'
-import TabataTimer from '@/services/tabataTimer'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -15,10 +15,10 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-} from '@/types/websocket'
-import { CALORIE_DEFAULTS } from '@/utils/constants' // Ensure this import exists
-import { broadcast, initBroadcaster } from '@/utils/broadcast'
-import logger from '@/utils/logger'
+} from '../types/websocket.js'
+import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { broadcast, initBroadcaster } from './broadcast.js'
+import logger from './logger.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {

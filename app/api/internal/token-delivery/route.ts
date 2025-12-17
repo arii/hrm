@@ -1,29 +1,47 @@
 // app/api/internal/token-delivery/route.ts
 import { NextResponse } from 'next/server'
-import { spotifyService } from '@/utils/socketManager' // Assuming spotifyService is exported from socketManager
 import logger from '@/utils/logger'
+import { getBaseURL } from '@/utils/urls'
 
 /**
  * Handles the POST request to deliver a new Spotify token.
  * This route is called by the NextAuth callback after a successful
- * Spotify authentication.
+ * Spotify authentication. It then forwards the token to the internal
+ * Express server endpoint.
  *
  * @param {Request} req - The incoming request, containing the new token in its body.
  * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
 export async function POST(req: Request): Promise<NextResponse> {
-  if (!spotifyService) {
-    logger.error('Spotify service is not available on the server.')
-    return NextResponse.json(
-      { message: 'Internal server error: Spotify service not initialized.' },
-      { status: 500 }
-    )
-  }
-
   try {
     const newTokens = await req.json()
-    await spotifyService.handleTokenUpdate(newTokens)
-    logger.info('Spotify tokens delivered and updated successfully.')
+    const internalUpdateUrl = `${getBaseURL()}/api/internal/server/token-update`
+
+    const response = await fetch(internalUpdateUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newTokens),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      logger.error(
+        {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody,
+        },
+        'Internal token update failed.'
+      )
+      return NextResponse.json(
+        { message: 'Internal server error: Failed to update token.' },
+        { status: 500 }
+      )
+    }
+
+    logger.info('Spotify tokens delivered and forwarded successfully.')
     return NextResponse.json(
       { message: 'Tokens delivered successfully' },
       { status: 200 }

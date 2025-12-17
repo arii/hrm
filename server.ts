@@ -190,8 +190,28 @@ app
       }
     )
 
+    // New internal endpoint to handle token updates from the Next.js API route
+    expressApp.post(
+      '/api/internal/server/token-update',
+      async (req: Request, res: Response) => {
+        if (spotifyService && req.body) {
+          try {
+            await spotifyService.handleTokenUpdate(req.body)
+            logger.info('Spotify tokens updated via internal endpoint.')
+            return res.status(200).json({ message: 'Tokens updated.' })
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during internal token update handling'
+            )
+            return res.status(500).json({ message: 'Internal server error.' })
+          }
+        }
+        return res.status(400).json({ message: 'Bad request.' })
+      }
+    )
+
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
