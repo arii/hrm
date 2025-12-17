@@ -6,7 +6,7 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import { SpotifyPolling } from '../services/spotifyPolling'
 import TabataTimer from '../services/tabataTimer'
-import { logger } from './logger'
+import logger from './logger'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
