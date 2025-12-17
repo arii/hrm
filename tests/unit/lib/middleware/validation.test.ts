@@ -130,7 +130,7 @@ describe('withValidation Middleware', () => {
 
       expect(mockHandler).not.toHaveBeenCalled()
       expect(NextResponse.json).toHaveBeenCalledWith(
-        { message: 'Invalid JSON in request body.' },
+        { message: 'Invalid JSON in request body.', type: 'SyntaxError' },
         { status: 400 }
       )
     })
@@ -148,7 +148,7 @@ describe('withValidation Middleware', () => {
 
       expect(mockHandler).not.toHaveBeenCalled()
       expect(NextResponse.json).toHaveBeenCalledWith(
-        { message: 'Invalid JSON in request body.' },
+        { message: 'Invalid JSON in request body.', type: 'SyntaxError' },
         { status: 400 }
       )
     })

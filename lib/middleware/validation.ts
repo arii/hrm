@@ -121,7 +121,7 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
           query = querySchema.parse(queryParams)
         }
 
-        let params: TParams = undefined as TParams
+        let params: TParams = context.params
         if (paramsSchema) {
           params = paramsSchema.parse(context.params)
         }
