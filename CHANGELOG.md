@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.0](https://github.com/arii/hrm/compare/v0.11.0...v0.12.0) (2025-12-17)
+
+
+### Features
+
+* **deps:** Optimize knip Configuration and Resolve Dependency Hygiene Issues ([#1747](https://github.com/arii/hrm/issues/1747)) ([9a9a288](https://github.com/arii/hrm/commit/9a9a288b95791e129828a6d8e45b0b204458a0ad))
+
+
+### Bug Fixes
+
+* Calorie display on /client/connect page ([#1741](https://github.com/arii/hrm/issues/1741)) ([4028f5d](https://github.com/arii/hrm/commit/4028f5d39ed1329c65503f24dcb13afaa2ebd42c))
+* udpate token ([e7e6abd](https://github.com/arii/hrm/commit/e7e6abdbef48a6036b055469dbf4aa9fd2c05c8d))
+
 ## [0.11.0](https://github.com/arii/hrm/compare/v0.10.0...v0.11.0) (2025-12-16)
 
 
