@@ -287,7 +287,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         abortControllerRef.current = new AbortController()
         const server = await cancellablePromise(device.gatt!.connect(), {
           timeoutMs: 10000,
-          timeoutMsg: 'GATT connection timeout',
+          errorMessage: 'GATT connection timeout',
           signal: abortControllerRef.current.signal,
         })
 

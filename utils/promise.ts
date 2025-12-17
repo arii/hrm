@@ -11,22 +11,39 @@
  * @param {Promise<T>} promise - The promise to make cancellable.
  * @param {object} options - Configuration for cancellation.
  * @param {number} options.timeoutMs - The timeout duration in milliseconds.
- * @param {string} options.timeoutMsg - The error message to use if the timeout is reached.
+ * @param {string} options.errorMessage - The error message to use if the timeout is reached.
  * @param {AbortSignal} [options.signal] - An optional AbortSignal to externally cancel the promise.
  * @returns {Promise<T>} A promise that resolves/rejects with the original promise, or rejects on timeout/abort.
+ *
+ * @example
+ * ```ts
+ * const controller = new AbortController();
+ * const signal = controller.signal;
+ *
+ * const longRunningTask = new Promise(resolve => setTimeout(() => resolve('done'), 20000));
+ *
+ * cancellablePromise(longRunningTask, {
+ *   timeoutMs: 10000,
+ *   errorMessage: 'Task timed out',
+ *   signal
+ * }).then(console.log).catch(console.error);
+ *
+ * // To cancel the task manually:
+ * // controller.abort();
+ * ```
  */
 export const cancellablePromise = <T>(
   promise: Promise<T>,
   options: {
     timeoutMs: number
-    timeoutMsg: string
+    errorMessage: string
     signal?: AbortSignal
   }
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
-    const { timeoutMs, signal, timeoutMsg } = options
+    const { timeoutMs, signal, errorMessage } = options
 
-    const timeoutError = new Error(timeoutMsg)
+    const timeoutError = new Error(errorMessage)
     const abortError = new DOMException('Connection cancelled', 'AbortError')
 
     let timer: NodeJS.Timeout | undefined
@@ -58,11 +75,19 @@ export const cancellablePromise = <T>(
     promise.then(
       (res) => {
         cleanup()
-        resolve(res)
+        if (signal?.aborted) {
+          reject(abortError)
+        } else {
+          resolve(res)
+        }
       },
       (err) => {
         cleanup()
-        reject(err)
+        if (signal?.aborted) {
+          reject(abortError)
+        } else {
+          reject(err)
+        }
       }
     )
   })
