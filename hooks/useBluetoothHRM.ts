@@ -14,7 +14,7 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { cancellablePromise } from '@/utils/promise'
+import { _cancellablePromise } from '@/utils/promise'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -35,7 +35,7 @@ const parseHeartRate = (value: DataView): number => {
 }
 
 /**
- * @function setCookie
+ * @function _setCookie
  * @description Sets a browser cookie with a specified name, value, and expiration.
  * This function is a no-op in non-browser environments.
  * @param {string} name - The name of the cookie.
@@ -43,7 +43,7 @@ const parseHeartRate = (value: DataView): number => {
  * @param {number} [days=365] - The number of days until the cookie expires.
  * @sideeffect Creates or updates a cookie in `document.cookie`.
  */
-const setCookie = (name: string, value: string, days = 365) => {
+const _setCookie = (name: string, value: string, days = 365) => {
   if (typeof document !== 'undefined') {
     const expires = new Date(Date.now() + days * 864e5).toUTCString()
     document.cookie = `${name}=${encodeURIComponent(
@@ -53,13 +53,13 @@ const setCookie = (name: string, value: string, days = 365) => {
 }
 
 /**
- * @function getCookie
+ * @function _getCookie
  * @description Retrieves the value of a cookie by its name.
  * Returns an empty string if the cookie is not found or in a non-browser environment.
  * @param {string} name - The name of the cookie to retrieve.
  * @returns {string} The decoded value of the cookie.
  */
-const getCookie = (name: string): string => {
+const _getCookie = (name: string): string => {
   if (typeof document === 'undefined') return ''
   return document.cookie.split('; ').reduce((r, v) => {
     const parts = v.split('=')
@@ -173,7 +173,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
-  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
+  const [_savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const [hasSavedDevice, setHasSavedDevice] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -189,7 +189,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number; weight: number } | null>(null)
+  const userDetailsRef = useRef<{
+    name: string
+    age: number
+    weight: number
+  } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
@@ -460,7 +464,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number, userWeight?: number): Promise<void> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeight?: number
+    ): Promise<void> => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
