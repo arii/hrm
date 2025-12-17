@@ -156,7 +156,8 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
           )
         }
 
-        console.error('Unhandled error in withValidation:', error)
+        // The error is unknown, so we return a generic 500 error.
+        // In a real application, you would want to log this error.
         return createErrorResponse(
           'An internal server error occurred.',
           500,
