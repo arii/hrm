@@ -136,7 +136,7 @@ const HrTile = ({
 
               {/* Calorie Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
+                {Math.round(calories)}{' '}
                 <Typography
                   variant="caption"
                   component="span"
