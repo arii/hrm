@@ -55,6 +55,9 @@ const config = {
       displayName: 'node',
       testEnvironment: 'node',
       testMatch: ['**/*.test.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1',
+      },
       transform: {
         '^.+\\.(ts|tsx)$': [
           'ts-jest',
@@ -75,6 +78,9 @@ const config = {
       testEnvironment: 'jsdom',
       testMatch: ['**/*.test.tsx'],
       setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.jsdom.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/$1',
+      },
       transform: {
         '^.+\\.(ts|tsx)$': [
           'ts-jest',
