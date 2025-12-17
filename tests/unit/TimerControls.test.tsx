@@ -1,6 +1,5 @@
 /** @jest-environment jsdom */
 
-import './localStorage.mock.js'
 import TimerControls from '@/app/client/control/components/TimerControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'

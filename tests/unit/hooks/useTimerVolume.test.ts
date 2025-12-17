@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import './localStorage.mock.js'
 import { renderHook, act } from '@testing-library/react'
 import useTimerVolume from '@/hooks/useTimerVolume'
 import { audioManager } from '@/utils/audioManager'

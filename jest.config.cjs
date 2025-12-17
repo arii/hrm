@@ -50,6 +50,47 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  projects: [
+    {
+      displayName: 'node',
+      testEnvironment: 'node',
+      testMatch: ['**/*.test.ts'],
+      transform: {
+        '^.+\\.(ts|tsx)$': [
+          'ts-jest',
+          {
+            useESM: true,
+            tsconfig: {
+              module: 'ES2022',
+              moduleResolution: 'bundler',
+              esModuleInterop: true,
+              allowSyntheticDefaultImports: true,
+            },
+          },
+        ],
+      },
+    },
+    {
+      displayName: 'jsdom',
+      testEnvironment: 'jsdom',
+      testMatch: ['**/*.test.tsx'],
+      setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.jsdom.js'],
+      transform: {
+        '^.+\\.(ts|tsx)$': [
+          'ts-jest',
+          {
+            useESM: true,
+            tsconfig: {
+              module: 'ES2022',
+              moduleResolution: 'bundler',
+              esModuleInterop: true,
+              allowSyntheticDefaultImports: true,
+            },
+          },
+        ],
+      },
+    },
+  ],
 }
 
 module.exports = config

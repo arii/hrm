@@ -1,4 +1,6 @@
-// tests/unit/localStorage.mock.js
+// tests/unit/jest.setup.jsdom.js
+require('@testing-library/jest-dom')
+
 let store = {}
 const localStorageMock = {
   getItem: (key) => store[key] || null,
