@@ -69,6 +69,13 @@ test.describe('Infrastructure & Scripts', () => {
       env: { ...process.env, PORT: String(PORT) },
     })
 
+    devServer.stdout.on('data', (data) => {
+      console.log(`[DEV STDOUT]: ${data}`)
+    })
+    devServer.stderr.on('data', (data) => {
+      console.error(`[DEV STDERR]: ${data}`)
+    })
+
     try {
       await waitForPort(PORT)
     } finally {
@@ -103,8 +110,12 @@ test.describe('Infrastructure & Scripts', () => {
       env,
     })
 
-    prodServer.stdout.on('data', (data) => console.log(`[PROD STDOUT]: ${data}`))
-    prodServer.stderr.on('data', (data) => console.error(`[PROD STDERR]: ${data}`))
+    prodServer.stdout.on('data', (data) => {
+      console.log(`[PROD STDOUT]: ${data}`)
+    })
+    prodServer.stderr.on('data', (data) => {
+      console.error(`[PROD STDERR]: ${data}`)
+    })
 
     try {
       await waitForPort(PORT)
