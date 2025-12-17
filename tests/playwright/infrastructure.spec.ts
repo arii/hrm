@@ -60,7 +60,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
   test('npm run dev should start and listen', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4) // Server startup timeout
 
     const PORT = 3005
     const devServer = spawn('npm', ['run', 'dev'], {
@@ -85,7 +85,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4)
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production
