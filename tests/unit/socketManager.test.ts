@@ -243,15 +243,17 @@ describe('WebSocket Manager', () => {
 
       // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
-      const lastBroadcastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
-
-      // Find the client that has updated calories
-      const clientData = broadcastPayload.find((c) => c.calories > 0)
+      jest.runOnlyPendingTimers()
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[0].payload
+      const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
-      // Use non-null assertion as we've checked definition
+      expect(clientData!.calories).toBeGreaterThan(0.1)
+      // A more precise check based on the known formula for short duration.
+      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
+      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
       expect(clientData!.calories).toBeGreaterThan(1)
     })
   })

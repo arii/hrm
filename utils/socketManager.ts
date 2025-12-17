@@ -97,23 +97,24 @@ const initSocketManager = (
   const WATCHDOG_INTERVAL = 30000 // 30 seconds
   const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
 
-  const interval = setInterval(() => {
-    const now = Date.now()
+  setInterval(() => {
     wss.clients.forEach((ws) => {
       const extWs = ws as ExtWebSocket
-
-      // If the client hasn't responded in time, terminate.
-      if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
+      if (Date.now() - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
         logger.warn(
           { clientId: extWs.clientId },
-          'Terminating stale WebSocket connection (no pong received)'
+          'Terminating stale WebSocket connection'
         )
-        return ws.terminate()
+        ws.terminate()
       }
     })
   }, WATCHDOG_INTERVAL)
 
-  wss.on('close', () => clearInterval(interval))
+  const broadcastInterval = setInterval(broadcastState, 1000)
+
+  wss.on('close', () => {
+    clearInterval(broadcastInterval)
+  })
 }
 
 /**
