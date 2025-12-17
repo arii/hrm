@@ -4,6 +4,7 @@ import storybook from 'eslint-plugin-storybook'
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
+import jsdoc from 'eslint-plugin-jsdoc'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
@@ -210,6 +211,27 @@ export default defineConfig([
   {
     rules: {
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    },
+  },
+  // JSDoc rule to enforce documentation on all functions and classes.
+  // This is the first of several project-specific rules to be re-introduced.
+  {
+    plugins: {
+      jsdoc,
+    },
+    rules: {
+      'jsdoc/require-jsdoc': [
+        'error',
+        {
+          require: {
+            FunctionDeclaration: true,
+            MethodDefinition: true,
+            ClassDeclaration: true,
+            ArrowFunctionExpression: true,
+            FunctionExpression: true,
+          },
+        },
+      ],
     },
   },
 ])
