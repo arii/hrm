@@ -25,6 +25,8 @@ import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import useTimerVolume from '@/hooks/useTimerVolume'
+import VolumeControl from '@/components/shared/VolumeControl'
 
 const actionButtonBaseSx = {
   flex: 1,
@@ -71,6 +73,9 @@ const stepperButtonSx = {
 
 const TimerControls = () => {
   const { timerData, sendData, connectionStatus } = useWebSocket()
+  const { volume, muted, handleVolumeChange, handleToggleMute } =
+    useTimerVolume()
+
   // Local state is source of truth for editing
   const [workTime, setWorkTime] = useState(20)
   const [restTime, setRestTime] = useState(10)
@@ -209,6 +214,25 @@ const TimerControls = () => {
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 1.5 }}
+        >
+          <Typography
+            variant="subtitle1"
+            sx={{ color: 'white', fontWeight: 'medium' }}
+          >
+            Sound
+          </Typography>
+          <VolumeControl
+            volume={volume}
+            muted={muted}
+            onVolumeChange={handleVolumeChange}
+            onToggleMute={handleToggleMute}
+          />
+        </Stack>
         <Box sx={{ mb: 1.5 }}>
           <Typography
             variant="subtitle1"
