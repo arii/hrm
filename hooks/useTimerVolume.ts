@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { audioManager } from '@/utils/audioManager'
-import { useLocalStorage } from './useLocalStorage'
+import useLocalStorage from './useLocalStorage'
 
 const useTimerVolume = () => {
   const [storedVolume, setStoredVolume] = useLocalStorage('timerVolume', 70)
