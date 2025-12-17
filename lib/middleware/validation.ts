@@ -145,8 +145,10 @@ export function withValidation<TBody, TQuery, TParams, THeaders>({
         return handler(req, validatedContext)
       } catch (error) {
         if (error instanceof z.ZodError) {
+          const issueCount = error.issues.length
+          const issueNoun = issueCount === 1 ? 'issue' : 'issues'
           return createErrorResponse(
-            'Validation failed.',
+            `Validation failed with ${issueCount} ${issueNoun}.`,
             400,
             'ZodError',
             error.issues.map((e) => ({

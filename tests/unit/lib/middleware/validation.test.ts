@@ -61,7 +61,7 @@ describe('withValidation Middleware', () => {
 
       const json = await response.json()
       expect(json.type).toBe('ZodError')
-      expect(json.message).toBe('Validation failed.')
+      expect(json.message).toBe('Validation failed with 2 issues.')
       expect(json.issues).toHaveLength(2)
       expect(json.issues[0].path).toBe('name')
       expect(json.issues[1].path).toBe('age')
