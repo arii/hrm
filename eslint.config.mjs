@@ -223,14 +223,14 @@ export default defineConfig([
       'jsdoc/require-jsdoc': [
         'error',
         {
-          exemptedBy: ['inheritdoc', 'override'],
-          require: {
-            FunctionDeclaration: true,
-            MethodDefinition: true,
-            ClassDeclaration: true,
-            ArrowFunctionExpression: true,
-            FunctionExpression: true,
-          },
+          contexts: [
+            'ArrowFunctionExpression',
+            'ClassDeclaration',
+            'ClassExpression',
+            'FunctionDeclaration',
+            'FunctionExpression',
+            'MethodDefinition',
+          ],
         },
       ],
       'jsdoc/check-param-names': 'error',
