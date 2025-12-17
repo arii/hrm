@@ -6,10 +6,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
-    "traceResolution": false,
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "traceResolution": false
   },
   "include": ["server.ts", "services/**/*.ts", "utils/**/*.ts", "types/**/*.ts"]
 }
