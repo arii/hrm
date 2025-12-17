@@ -1,5 +1,13 @@
 import logger from '../utils/logger.js'
-import { safeParseJSON } from '@/utils/core/json'
+
+// Utility: Safely parse JSON, fallback to text
+function safeParseJSON(input: string): unknown {
+  try {
+    return JSON.parse(input)
+  } catch {
+    return input // Return raw text if not JSON
+  }
+}
 
 /**
  * Parses and logs detailed error information from a failed Spotify SDK command.
