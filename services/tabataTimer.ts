@@ -6,11 +6,13 @@
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
 import {
+  HrmData,
   ServerMessage,
   TimerData,
   TimerMode,
   TimerPhase,
 } from '../types/websocket'
+import { CALORIE_DEFAULTS } from '../utils/constants.js'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -30,6 +32,7 @@ interface DualModeTimerState {
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
+  totalCaloriesBurned: number
 }
 
 class TabataTimer {
@@ -38,6 +41,10 @@ class TabataTimer {
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
+  private clientSessionState: Map<
+    string,
+    { lastUpdate: number; accumulatedCalories: number }
+  >
 
   private timerState: DualModeTimerState = {
     mode: 'TABATA', // Default mode
@@ -48,12 +55,14 @@ class TabataTimer {
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
+    totalCaloriesBurned: 0,
   }
 
   private countdownMarker: string | null = null
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
+    this.clientSessionState = new Map()
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
@@ -94,7 +103,7 @@ class TabataTimer {
       currentPhase: this.timerState.currentPhase,
       timeRemaining: this.timerState.timeRemaining,
       timeElapsed: this.timerState.timeElapsed,
-      caloriesBurned: 0, // Placeholder
+      caloriesBurned: this.timerState.totalCaloriesBurned,
       mode: this.timerState.mode,
       workDuration: this.timerState.workDuration,
       restDuration: this.timerState.restDuration,
@@ -103,6 +112,65 @@ class TabataTimer {
       }),
       soundEventId: this.timerState.soundEventId,
     }
+  }
+
+  // --- Calorie Calculation ---
+  public updateHrmData(
+    clientData: Map<string, HrmData>
+  ): Map<string, HrmData> {
+    const now = Date.now()
+    let totalCalories = 0
+    const updatedClientData = new Map<string, HrmData>()
+
+    clientData.forEach((client, clientId) => {
+      if (!this.clientSessionState.has(clientId)) {
+        this.clientSessionState.set(clientId, {
+          lastUpdate: now,
+          accumulatedCalories: 0,
+        })
+      }
+
+      const sessionState = this.clientSessionState.get(clientId)!
+      const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
+      sessionState.lastUpdate = now
+
+      const currentHr = client.value ?? 0
+      const currentAge = client.age ?? 30
+
+      if (
+        this.timerState.isRunning &&
+        currentHr > 30 &&
+        dtMinutes > 0 &&
+        dtMinutes < 5
+      ) {
+        const rate =
+          (-CALORIE_DEFAULTS.INTERCEPT +
+            CALORIE_DEFAULTS.FACTOR_HR * currentHr +
+            CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
+            CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
+          CALORIE_DEFAULTS.JOULE_CONVERSION
+
+        const safeRate = Math.max(0, rate)
+        sessionState.accumulatedCalories += safeRate * dtMinutes
+      }
+
+      const updatedClient = {
+        ...client,
+        calories: Math.round(sessionState.accumulatedCalories * 10) / 10,
+      }
+      updatedClientData.set(clientId, updatedClient)
+      totalCalories += sessionState.accumulatedCalories
+    })
+
+    this.timerState.totalCaloriesBurned = Math.floor(totalCalories)
+
+    // Broadcast both HRM and Timer updates
+    this.broadcastUpdate({
+      type: 'HRM_UPDATE',
+      payload: Array.from(updatedClientData.values()),
+    })
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+    return updatedClientData
   }
 
   // --- Core Timer Logic ---
@@ -193,6 +261,10 @@ class TabataTimer {
     this.pausedElapsedTime = 0
     this.startTime = null
     this.timerInterval = null
+
+    // Reset calorie tracking
+    this.timerState.totalCaloriesBurned = 0
+    this.clientSessionState.clear()
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }

@@ -217,7 +217,10 @@ describe('WebSocket Manager', () => {
       resetSocketManager()
     })
 
-    it('should accumulate calories correctly with small frequent updates', () => {
+    it('should delegate calorie calculation to TabataTimer service', () => {
+      // Mock the method on the service instance
+      mockServices.tabataService.updateHrmData = jest.fn()
+
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
@@ -231,28 +234,21 @@ describe('WebSocket Manager', () => {
         mockWs.emit('message', message.toString())
       }
 
-      // Initial input
       sendHrmInput(150)
 
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
-        sendHrmInput(150)
-      }
+      // Verify that the timer service's update method was called
+      expect(
+        mockServices.tabataService.updateHrmData
+      ).toHaveBeenCalled()
 
-      // Check the last broadcasted state
-      const mockBroadcast = broadcast as jest.Mock
-      const lastBroadcastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const broadcastPayload: HrmData[] = lastBroadcastCall[0].payload
-
-      // Find the client that has updated calories
-      const clientData = broadcastPayload.find((c) => c.calories > 0)
-
-      expect(clientData).toBeDefined()
-      // Use non-null assertion as we've checked definition
-      expect(clientData!.calories).toBeGreaterThan(1)
+      // Check the payload sent to the service
+      const callPayload = (
+        mockServices.tabataService.updateHrmData as jest.Mock
+      ).mock.calls[0][0]
+      expect(callPayload).toBeInstanceOf(Map)
+      expect(callPayload.size).toBe(1)
+      const clientData = Array.from(callPayload.values())[0]
+      expect(clientData.value).toBe(150)
     })
   })
 

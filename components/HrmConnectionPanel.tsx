@@ -17,7 +17,7 @@ import HrTile from '@/components/HrTile'
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
-  const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const { hrmData, timerData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
     disconnect,
@@ -145,6 +145,27 @@ const HrmConnectionPanel = () => {
             />
           </Box>
         ))
+      )}
+
+      {tileData.length > 0 && timerData.caloriesBurned > 0 && (
+        <Box sx={{ width: '100%', mt: 2, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Total Workout Calories
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, color: 'primary.main' }}
+          >
+            {Math.floor(timerData.caloriesBurned)}{' '}
+            <Typography
+              variant="caption"
+              component="span"
+              sx={{ opacity: 0.7 }}
+            >
+              KCAL
+            </Typography>
+          </Typography>
+        </Box>
       )}
     </Box>
   )

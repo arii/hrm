@@ -15,6 +15,7 @@ const TimerDisplay = () => {
     currentPhase,
     timeRemaining,
     timeElapsed,
+    caloriesBurned,
     mode,
     workDuration = 20,
     restDuration = 10,
@@ -227,6 +228,28 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
+
+        {/* Total Calories Display */}
+        {caloriesBurned > 0 && (
+          <Typography
+            variant="h5"
+            sx={{
+              mt: 2,
+              fontWeight: 700,
+              color: 'white',
+              opacity: 0.9,
+            }}
+          >
+            {Math.floor(caloriesBurned)}{' '}
+            <Typography
+              variant="caption"
+              component="span"
+              sx={{ opacity: 0.7 }}
+            >
+              TOTAL KCAL
+            </Typography>
+          </Typography>
+        )}
       </CardContent>
     </Card>
   )

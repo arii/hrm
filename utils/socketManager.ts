@@ -16,7 +16,6 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
 
@@ -36,11 +35,6 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const clientData = new Map<string, HrmData>()
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
 
 interface Services {
   tabataService: TabataTimer
@@ -76,10 +70,6 @@ const initSocketManager = (
       calories: 0, // Initialize to 0
     }
     clientData.set(extWs.clientId, newClient)
-    clientSessionState.set(extWs.clientId, {
-      lastUpdate: Date.now(),
-      accumulatedCalories: 0,
-    })
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -88,7 +78,6 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       clientData.delete(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
   })
@@ -121,7 +110,6 @@ const initSocketManager = (
  */
 export const resetSocketManager = () => {
   clientData.clear()
-  clientSessionState.clear()
 }
 
 const broadcastState = () => {
@@ -183,46 +171,31 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const existingData = clientData.get(clientId)
-        const sessionState = clientSessionState.get(clientId)
-
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const rate =
-              (-CALORIE_DEFAULTS.INTERCEPT +
-                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
-                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
-                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
-              CALORIE_DEFAULTS.JOULE_CONVERSION
-
-            const safeRate = Math.max(0, rate)
-            currentAccumulated += safeRate * dtMinutes
-          }
-
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
+        if (existingData) {
           clientData.set(clientId, {
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
-        broadcastState()
+
+        // Delegate calorie calculation to the timer service
+        if (tabataServiceInstance) {
+          const updatedClientData =
+            tabataServiceInstance.updateHrmData(clientData)
+          // The timer service will broadcast the new state, so we just update our local map
+          updatedClientData.forEach((client, id) => {
+            clientData.set(id, client)
+          })
+        }
+
+        // The broadcast is now handled by the timer service's update loop
         break
       }
 
-      case 'TIMER_COMMAND':
+      case 'TIMER_COMMAND': {
         tabataServiceInstance?.handleCommand(message.command)
         break
+      }
 
       case 'SET_MODE':
         tabataServiceInstance?.setMode(message.mode)

@@ -445,4 +445,86 @@ describe('TabataTimer Service', () => {
       expect(lastBroadcast).toHaveProperty('restDuration')
     })
   })
+
+  describe('Calorie Calculation', () => {
+    it('should not accumulate calories when the timer is not running', () => {
+      let clientData = new Map()
+      clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
+
+      const updatedClientData = timer.updateHrmData(clientData)
+      let state = timer.getState()
+      expect(state.caloriesBurned).toBe(0)
+
+      const clientInfo = updatedClientData.get('client1')
+      expect(clientInfo.calories).toBe(0)
+    })
+
+    it('should accumulate calories for a single client when the timer is running', () => {
+      timer.handleCommand('START') // Start the timer
+      jest.advanceTimersByTime(5000) // Get past PREPARE phase
+
+      let clientData = new Map()
+      clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
+      let updatedClientData = new Map()
+
+      // Simulate 60 seconds of HRM data
+      for (let i = 0; i < 60; i++) {
+        updatedClientData = timer.updateHrmData(clientData)
+        jest.advanceTimersByTime(1000)
+      }
+
+      const state = timer.getState()
+      expect(state.caloriesBurned).toBeGreaterThan(5) // Expect some reasonable calorie burn
+
+      const clientInfo = updatedClientData.get('client1')
+      expect(clientInfo.calories).toBeGreaterThan(5)
+    })
+
+    it('should accumulate total calories from multiple clients', () => {
+      timer.handleCommand('START')
+      jest.advanceTimersByTime(5000)
+
+      let clientData = new Map()
+      clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
+      clientData.set('client2', { clientId: 'client2', value: 160, age: 25 })
+      let updatedClientData = new Map()
+
+      for (let i = 0; i < 60; i++) {
+        updatedClientData = timer.updateHrmData(clientData)
+        jest.advanceTimersByTime(1000)
+      }
+
+      const state = timer.getState()
+      const client1Info = updatedClientData.get('client1')
+      const client2Info = updatedClientData.get('client2')
+
+      const totalCalories = Math.floor(client1Info.calories + client2Info.calories)
+
+      expect(state.caloriesBurned).toBe(totalCalories)
+      expect(state.caloriesBurned).toBeGreaterThan(10) // Combined should be higher
+    })
+
+    it('should reset total and individual calories on STOP', () => {
+      timer.handleCommand('START')
+      jest.advanceTimersByTime(5000)
+
+      let clientData = new Map()
+      clientData.set('client1', { clientId: 'client1', value: 150, age: 30 })
+      timer.updateHrmData(clientData)
+      jest.advanceTimersByTime(1000)
+
+      // Ensure calories have accumulated
+      const stateBeforeStop = timer.getState()
+      expect(stateBeforeStop.caloriesBurned).toBeGreaterThan(0)
+
+      timer.handleCommand('STOP')
+
+      // After stop, calories should be zero
+      expect(timer.getState().caloriesBurned).toBe(0)
+
+      // Verify internal state is cleared
+      const updatedClientData = timer.updateHrmData(clientData)
+      expect(updatedClientData.get('client1').calories).toBe(0)
+    })
+  })
 })
