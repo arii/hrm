@@ -62,14 +62,22 @@ type AppRouterHandler<S extends ValidationSchemas<any, any, any>> = (
  * export const POST = withValidation({ body: CreateUserSchema })(postHandler);
  *
  * @example
- * // GET request with query parameter validation
+ * // GET request with query and route parameter validation
  * import { z } from 'zod';
- * const SearchQuerySchema = z.object({ q: z.string() });
+ * const GetUserSchema = z.object({
+ *   query: z.object({
+ *     include: z.enum(['posts', 'comments']).optional(),
+ *   }),
+ *   params: z.object({
+ *     userId: z.string().uuid(),
+ *   }),
+ * });
  *
- * async function getHandler(req, { query }) {
- *   // 'query.q' is a validated string
+ * async function getUser(req, { query, params }) {
+ *   // 'query.include' is an optional, validated enum
+ *   // 'params.userId' is a validated UUID string
  * }
- * export const GET = withValidation({ query: SearchQuerySchema })(getHandler);
+ * export const GET = withValidation(GetUserSchema)(getUser);
  */
 export function withValidation<S extends ValidationSchemas<any, any, any>>(
   schemas: S
@@ -80,13 +88,13 @@ export function withValidation<S extends ValidationSchemas<any, any, any>>(
       context: { params: Record<string, string | string[] | undefined> }
     ) => {
       try {
-        let validatedBody: any;
+        let validatedBody: S['body'] extends z.ZodType ? z.infer<S['body']> : undefined;
         if (schemas.body) {
           const body = await req.json();
           validatedBody = schemas.body.parse(body);
         }
 
-        let validatedQuery: any;
+        let validatedQuery: S['query'] extends z.ZodType ? z.infer<S['query']> : undefined;
         if (schemas.query) {
           const { searchParams } = new URL(req.url);
           const queryData: { [key: string]: string | string[] } = {};
@@ -98,7 +106,7 @@ export function withValidation<S extends ValidationSchemas<any, any, any>>(
           validatedQuery = schemas.query.parse(queryData);
         }
 
-        let validatedParams: any;
+        let validatedParams: S['params'] extends z.ZodType ? z.infer<S['params']> : Record<string, string | string[] | undefined>;
         if (schemas.params) {
           validatedParams = schemas.params.parse(context.params);
         } else {
@@ -125,7 +133,6 @@ export function withValidation<S extends ValidationSchemas<any, any, any>>(
           );
         }
 
-        // Handle cases where req.json() fails (e.g., empty or malformed body)
         if (error instanceof SyntaxError) {
           return NextResponse.json(
             { message: 'Invalid JSON in request body.' },
@@ -133,7 +140,7 @@ export function withValidation<S extends ValidationSchemas<any, any, any>>(
           );
         }
 
-        console.error('Unhandled error in withValidation:', error);
+        console.error('Unhandled error in withValidation:', error instanceof Error ? error.message : error);
         return NextResponse.json(
           { message: 'An internal server error occurred.' },
           { status: 500 }
