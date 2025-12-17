@@ -8,6 +8,9 @@ import { v4 as uuidv4 } from 'uuid'
 /**
  * Handles the POST request to create a new user.
  *
+ * @param {Request} req - The incoming request.
+ * @param {object} context - The context object, containing the validated body.
+ * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
  * @param {Request} _req - The incoming request (unused).
  * @param {object} context - The context object, containing the validated body.
  * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
@@ -29,6 +32,6 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST = withValidation({ body: CreateUserProfileSchema })(
+export const POST = withValidation({ schema: CreateUserProfileSchema })(
   createUser
 )

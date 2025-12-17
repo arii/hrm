@@ -1,130 +1,54 @@
 /**
  * @file This file contains the withValidation middleware for App Router API routes.
- * It is designed to be a flexible and reusable solution for validating incoming
- * requests using Zod schemas for the request body, query parameters, and route
- * parameters.
+ *
+ * @see /docs/decisions/0002-api-validation-with-zod.md
  */
 
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 
 /**
- * Defines the schemas for validating different parts of an incoming request.
- * @template B The expected type of the request body.
- * @template Q The expected type of the query parameters.
- * @template P The expected type of the route parameters.
+ * Defines the type for an App Router API route handler after it has been
+ * processed by the validation middleware. It receives the original request
+ * and the validated data as arguments.
+ *
+ * @template T The expected type of the validated data.
+ * @param {Request} req The original Next.js request object.
+ * @param {{ params: P; body: T }} context An object containing URL parameters and the validated request body.
+ * @returns {Promise<NextResponse>} A promise that resolves to a Next.js response.
  */
-interface ValidationSchemas<B, Q, P> {
-  body?: z.ZodType<B>
-  query?: z.ZodType<Q>
-  params?: z.ZodType<P>
-}
-
-/**
- * Defines the shape of the context object passed to the API route handler.
- * It contains the validated data from the request body, query, and params.
- * Types are inferred from the provided Zod schemas.
- */
-type ValidatedContext<S extends ValidationSchemas<unknown, unknown, unknown>> =
-  {
-    body: S['body'] extends z.ZodType ? z.infer<S['body']> : undefined
-    query: S['query'] extends z.ZodType ? z.infer<S['query']> : undefined
-    params: S['params'] extends z.ZodType
-      ? z.infer<S['params']>
-      : Record<string, string | string[] | undefined>
-  }
-
-/**
- * Defines the type for an App Router API route handler that uses the
- * withValidation middleware. It receives the original request and a context
- * object containing the validated data.
- */
-type AppRouterHandler<S extends ValidationSchemas<unknown, unknown, unknown>> =
-  (req: Request, context: ValidatedContext<S>) => Promise<NextResponse>
+type AppRouterHandler<T, P> = (
+  req: Request,
+  context: { params: P; body: T }
+) => Promise<NextResponse>
 
 /**
  * A higher-order function that wraps an App Router API route handler to provide
- * automatic request validation using Zod schemas for the body, query, and params.
+ * automatic request body validation using a Zod schema.
  *
- * @template S The type of the validation schemas object.
- * @param {S} schemas An object containing Zod schemas for `body`, `query`, and/or `params`.
+ * @template T The expected type of the validated data.
+ * @template P The expected type of the URL parameters.
+ * @param {z.ZodType<T>} schema The Zod schema to validate the request body against.
  * @returns A function that takes a handler and returns a new handler with validation logic.
  *
  * @example
- * // Basic POST request body validation
  * import { withValidation } from '@/lib/middleware/validation';
  * import { CreateUserSchema } from '@/lib/validation/schemas';
  *
  * async function postHandler(req, { body }) {
  *   // 'body' is now guaranteed to match CreateUserSchema
+ *   // ...
  * }
- * export const POST = withValidation({ body: CreateUserSchema })(postHandler);
  *
- * @example
- * // GET request with query and route parameter validation
- * import { z } from 'zod';
- * const GetUserSchema = z.object({
- *   query: z.object({
- *     include: z.enum(['posts', 'comments']).optional(),
- *   }),
- *   params: z.object({
- *     userId: z.string().uuid(),
- *   }),
- * });
- *
- * async function getUser(req, { query, params }) {
- *   // 'query.include' is an optional, validated enum
- *   // 'params.userId' is a validated UUID string
- * }
- * export const GET = withValidation(GetUserSchema)(getUser);
+ * export const POST = withValidation({ schema: CreateUserSchema })(postHandler);
  */
-export function withValidation<
-  S extends ValidationSchemas<unknown, unknown, unknown>,
->(schemas: S) {
-  return (handler: AppRouterHandler<S>) =>
-    async (
-      req: Request,
-      context: { params: Record<string, string | string[] | undefined> }
-    ) => {
+export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
+  return (handler: AppRouterHandler<T, P>) =>
+    async (req: Request, context: { params: P }) => {
       try {
-        let validatedBody: S['body'] extends z.ZodType
-          ? z.infer<S['body']>
-          : undefined
-        if (schemas.body) {
-          const body = await req.json()
-          validatedBody = schemas.body.parse(body)
-        }
-
-        let validatedQuery: S['query'] extends z.ZodType
-          ? z.infer<S['query']>
-          : undefined
-        if (schemas.query) {
-          const { searchParams } = new URL(req.url)
-          const queryData: { [key: string]: string | string[] } = {}
-          const keys = Array.from(searchParams.keys())
-          for (const key of new Set(keys)) {
-            const allVals = searchParams.getAll(key)
-            queryData[key] = allVals.length > 1 ? allVals : allVals[0]
-          }
-          validatedQuery = schemas.query.parse(queryData)
-        }
-
-        let validatedParams: S['params'] extends z.ZodType
-          ? z.infer<S['params']>
-          : Record<string, string | string[] | undefined>
-        if (schemas.params) {
-          validatedParams = schemas.params.parse(context.params)
-        } else {
-          validatedParams = context.params // Pass through if no schema
-        }
-
-        const validatedContext = {
-          body: validatedBody,
-          query: validatedQuery,
-          params: validatedParams,
-        }
-
-        return handler(req, validatedContext as ValidatedContext<S>)
+        const body = await req.json()
+        const validatedData = schema.parse(body)
+        return handler(req, { ...context, body: validatedData })
       } catch (error) {
         if (error instanceof z.ZodError) {
           return NextResponse.json(
@@ -137,18 +61,14 @@ export function withValidation<
             { status: 400 }
           )
         }
-
+        // Handle cases where req.json() fails (e.g., empty body)
         if (error instanceof SyntaxError) {
           return NextResponse.json(
             { message: 'Invalid JSON in request body.' },
             { status: 400 }
           )
         }
-
-        console.error(
-          'Unhandled error in withValidation:',
-          error instanceof Error ? error.message : error
-        )
+        console.error('Unhandled error in withValidation:', error)
         return NextResponse.json(
           { message: 'An internal server error occurred.' },
           { status: 500 }
