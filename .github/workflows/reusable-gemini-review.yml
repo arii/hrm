@@ -273,8 +273,19 @@ jobs:
             echo "NEAR_APPROVAL=false" >> $GITHUB_ENV
           fi
 
+          # Check for excessive comment loops (prevent code review spam)
+          TOTAL_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments,reviewThreads --jq '(.comments | length) + (.reviewThreads | length)')
+          
+          if [ "$TOTAL_COMMENTS" -ge "15" ]; then
+            echo "POST_COMMENT=false" >> $GITHUB_ENV
+          else
+            echo "POST_COMMENT=true" >> $GITHUB_ENV
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Process Review Result with Intelligence
-        if: steps.gemini.outcome == 'success'
+        if: steps.gemini.outcome == 'success' && env.POST_COMMENT == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
