@@ -40,7 +40,7 @@
     "test:oauth:playwright": "playwright test --config=playwright.oauth.config.ts",
     "test:remote": "scripts/test-with-server.sh playwright test remote-capabilities --project=chromium",
     "pretest:perf": "pnpm run build",
-    "test:perf": "scripts/test-with-server.sh playwright test tests/playwright/performance.spec.ts --project=chromium",
+    "test:perf": "scripts/test-with-server.sh playwright test tests/playwright/performance.spec.ts --project=chromium || (cat /tmp/hrm-server.log && exit 1)",
     "test:perf:debug": "cross-env PWDEBUG=1 pnpm run test:perf",
     "verify:spotify": "bash scripts/verify-spotify.sh",
     "kill-all": "./scripts/kill-all.sh",
