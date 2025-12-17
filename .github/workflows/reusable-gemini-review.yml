@@ -468,18 +468,6 @@ jobs:
               summary = 'Review was generated but status could not be determined. Check the PR comment for details.';
             }
 
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'Gemini Code Review',
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: title,
-                summary: summary
-              }
-            });
 
       - name: Post Review Check (Failure)
         if: steps.gemini.outcome == 'failure'
@@ -498,18 +486,6 @@ jobs:
             }
 
             try {
-              await github.rest.checks.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'Gemini Code Review',
-                head_sha: context.payload.pull_request.head.sha,
-                status: 'completed',
-                conclusion: 'failure',
-                output: {
-                  title: '❌ Review Failed',
-                  summary: summary
-                }
-              });
             } catch (checkError) {
               console.error('Failed to create check:', checkError.message);
               throw checkError;
