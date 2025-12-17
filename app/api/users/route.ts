@@ -3,6 +3,7 @@ import { withValidation } from '@/lib/middleware/validation'
 import {
   CreateUserProfileSchema,
   GetUserProfileSchema,
+  RequestHeadersSchema,
 } from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/data-models'
 import { NextResponse } from 'next/server'
@@ -50,12 +51,12 @@ export const POST = withValidation({ bodySchema: CreateUserProfileSchema })(
  */
 async function getUser(
   _req: Request,
-  { query }: { query: { userId: string } }
+  { params }: { params: { userId: string } }
 ): Promise<NextResponse> {
   // In a real application, you would fetch the user from a database.
   // For this example, we'll just return a mock user.
   const mockUser: UserProfile = {
-    id: query.userId,
+    id: params.userId,
     username: 'testuser',
     email: 'test@example.com',
     firstName: 'Test',
@@ -67,4 +68,7 @@ async function getUser(
   return NextResponse.json(mockUser)
 }
 
-export const GET = withValidation({ querySchema: GetUserProfileSchema })(getUser)
+export const GET = withValidation({
+  paramsSchema: GetUserProfileSchema,
+  headersSchema: RequestHeadersSchema,
+})(getUser)

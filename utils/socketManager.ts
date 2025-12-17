@@ -29,7 +29,7 @@ interface ExtWebSocket extends WebSocket {
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+export let spotifyService: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -58,7 +58,7 @@ const initSocketManager = (
   initBroadcaster(wss)
   wsServerInstance = wss
   tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
+  spotifyService = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -256,7 +256,7 @@ const handleIncomingMessage = (
           }
         })
 
-        spotifyServiceInstance?.handleCommand(
+        spotifyService?.handleCommand(
           commandMsg.command,
           commandMsg.deviceId,
           commandMsg.volume,

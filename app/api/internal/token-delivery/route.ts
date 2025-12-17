@@ -1,51 +1,44 @@
-import { ApiError } from '@/lib/errors'
-import fs from 'fs'
-import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
+// app/api/internal/token-delivery/route.ts
+import { NextResponse } from 'next/server'
+import { spotifyService } from '@/utils/socketManager' // Assuming spotifyService is exported from socketManager
 import logger from '@/utils/logger'
 
 /**
- * Internal endpoint for NextAuth to post refresh tokens.
- * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * Handles the POST request to deliver a new Spotify token.
+ * This route is called by the NextAuth callback after a successful
+ * Spotify authentication.
+ *
+ * @param {Request} req - The incoming request, containing the new token in its body.
+ * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
-
-const LOG_DIR = path.resolve(process.cwd(), 'logs')
-const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
-
-export async function POST(req: NextRequest) {
-  try {
-    const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
-    if (expected && secretHeader !== expected) {
-      throw new ApiError(401, 'Unauthorized')
-    }
-
-    const payload = await req.json()
-
-    // ensure logs dir
-    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
-
-    // write timestamped record (overwrite with latest)
-    const record = {
-      receivedAt: Date.now(),
-      payload,
-    }
-    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
-
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
+export async function POST(req: Request): Promise<NextResponse> {
+  if (!spotifyService) {
+    logger.error('Spotify service is not available on the server.')
+    return NextResponse.json(
+      { message: 'Internal server error: Spotify service not initialized.' },
+      { status: 500 }
     )
-    return NextResponse.json({ ok: true })
-  } catch (err) {
-    if (err instanceof ApiError) {
+  }
+
+  try {
+    const newTokens = await req.json()
+    await spotifyService.handleTokenUpdate(newTokens)
+    logger.info('Spotify tokens delivered and updated successfully.')
+    return NextResponse.json(
+      { message: 'Tokens delivered successfully' },
+      { status: 200 }
+    )
+  } catch (error) {
+    logger.error({ err: error }, 'Error processing token delivery.')
+    if (error instanceof SyntaxError) {
       return NextResponse.json(
-        { error: err.message },
-        { status: err.statusCode }
+        { message: 'Invalid JSON in request body.' },
+        { status: 400 }
       )
     }
-    logger.error('token-delivery error:', err)
-    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+    return NextResponse.json(
+      { message: 'An internal server error occurred.' },
+      { status: 500 }
+    )
   }
 }

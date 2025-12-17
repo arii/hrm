@@ -261,6 +261,40 @@ This project follows a standard Next.js application structure with a few key add
 - **`/services`**: Backend business logic (e.g., Tabata timer, Spotify polling).
 - **`/utils`**: Helper functions and utilities.
 
+## API Validation Middleware
+
+This project includes a `withValidation` middleware to provide robust, reusable schema validation for Next.js API routes. It leverages Zod to enforce schemas on request bodies, query parameters, URL parameters, and headers.
+
+### Example Usage
+
+```typescript
+// app/api/users/[userId]/route.ts
+import { withValidation } from '@/lib/middleware/validation'
+import {
+  UpdateUserProfileSchema,
+  GetUserProfileSchema,
+  RequestHeadersSchema,
+} from '@/lib/validation/schemas'
+import { NextResponse } from 'next/server'
+
+// Define the handler for the PUT request
+async function updateUser(
+  _req: Request,
+  { params, body }: { params: { userId: string }; body: any }
+): Promise<NextResponse> {
+  // The 'params' and 'body' objects are guaranteed to be valid
+  // according to the schemas provided to the middleware.
+  return NextResponse.json({ ...params, ...body })
+}
+
+// Wrap the handler with the validation middleware
+export const PUT = withValidation({
+  paramsSchema: GetUserProfileSchema,
+  bodySchema: UpdateUserProfileSchema,
+  headersSchema: RequestHeadersSchema,
+})(updateUser)
+```
+
 ## Available Commands
 
 ### Primary Scripts

@@ -65,3 +65,8 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
 export const GetUserProfileSchema = z.object({
   userId: z.string().uuid('Invalid user ID format.'),
 })
+
+// Example: Schema for validating request headers
+export const RequestHeadersSchema = z.object({
+  'x-request-id': z.string().uuid('Invalid X-Request-ID format.'),
+})
