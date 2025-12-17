@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.1](https://github.com/arii/hrm/compare/v0.11.0...v0.11.1) (2025-12-17)
+
+
+### Bug Fixes
+
+* Calorie display on /client/connect page ([#1741](https://github.com/arii/hrm/issues/1741)) ([4028f5d](https://github.com/arii/hrm/commit/4028f5d39ed1329c65503f24dcb13afaa2ebd42c))
+* udpate token ([e7e6abd](https://github.com/arii/hrm/commit/e7e6abdbef48a6036b055469dbf4aa9fd2c05c8d))
+
 ## [0.11.0](https://github.com/arii/hrm/compare/v0.10.0...v0.11.0) (2025-12-16)
 
 
