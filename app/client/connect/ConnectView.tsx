@@ -13,7 +13,16 @@ import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
-
+import {
+  HEIGHT_IMPERIAL_MAX,
+  HEIGHT_IMPERIAL_MIN,
+  HEIGHT_METRIC_MAX,
+  HEIGHT_METRIC_MIN,
+  WEIGHT_IMPERIAL_MAX,
+  WEIGHT_IMPERIAL_MIN,
+  WEIGHT_METRIC_MAX,
+  WEIGHT_METRIC_MIN,
+} from '../../../constants/units/validation'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
@@ -213,8 +222,8 @@ export default function ConnectView({
               error={!!heightError}
               helperText={heightError}
               inputProps={{
-                min: isImperial ? 39 : 100,
-                max: isImperial ? 98 : 250,
+                min: isImperial ? HEIGHT_IMPERIAL_MIN : HEIGHT_METRIC_MIN,
+                max: isImperial ? HEIGHT_IMPERIAL_MAX : HEIGHT_METRIC_MAX,
                 'aria-invalid': !!heightError,
               }}
             />
@@ -235,8 +244,8 @@ export default function ConnectView({
               error={!!weightError}
               helperText={weightError}
               inputProps={{
-                min: isImperial ? 66 : 30,
-                max: isImperial ? 440 : 200,
+                min: isImperial ? WEIGHT_IMPERIAL_MIN : WEIGHT_METRIC_MIN,
+                max: isImperial ? WEIGHT_IMPERIAL_MAX : WEIGHT_METRIC_MAX,
                 'aria-invalid': !!weightError,
               }}
             />
