@@ -14,6 +14,7 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { cancellablePromise } from '@/utils/promise'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -64,38 +65,6 @@ const getCookie = (name: string): string => {
     const parts = v.split('=')
     return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
   }, '')
-}
-
-/**
- * @function withTimeout
- * @description A utility that races a promise against a timeout.
- * If the promise does not resolve or reject within the specified time, the returned promise
- * will reject with a custom timeout error message.
- * @template T
- * @param {Promise<T>} promise - The promise to race against the timeout.
- * @param {number} ms - The timeout duration in milliseconds.
- * @param {string} msg - The error message to use if the timeout is reached.
- * @returns {Promise<T>} A promise that resolves with the original promise's value or rejects
- * if the original promise rejects or the timeout is exceeded.
- */
-const withTimeout = <T>(
-  promise: Promise<T>,
-  ms: number,
-  msg: string
-): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(msg)), ms)
-    promise.then(
-      (res) => {
-        clearTimeout(timer)
-        resolve(res)
-      },
-      (err) => {
-        clearTimeout(timer)
-        reject(err)
-      }
-    )
-  })
 }
 
 /**
@@ -178,6 +147,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const isManualDisconnect = useRef(false)
   const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
@@ -227,6 +197,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const disconnect = useCallback(() => {
     isManualDisconnect.current = true
     setDisconnectionReason('manual')
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
     if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
     if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
 
@@ -310,13 +284,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         deviceRef.current = device
         setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
-        // Use a timeout for the initial GATT connection to avoid infinite hanging
-        // 10 seconds is usually enough for a healthy BLE connection
-        const server = await withTimeout(
-          device.gatt!.connect(),
-          10000,
-          'GATT connection timeout'
-        )
+        abortControllerRef.current = new AbortController()
+        const server = await cancellablePromise(device.gatt!.connect(), {
+          timeoutMs: 10000,
+          errorMessage: 'GATT connection timeout',
+          signal: abortControllerRef.current.signal,
+        })
 
         const service = await server.getPrimaryService(HR_SERVICE_UUID)
         const characteristic = await service.getCharacteristic(
@@ -418,6 +391,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    */
   const connectAndStream = useCallback(
     async (userName?: string, userAge?: number): Promise<void> => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
