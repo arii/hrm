@@ -11,10 +11,14 @@ import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
+import { UserPreferences } from '../../../hooks/useUserPreferences'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -54,6 +58,10 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  userPreferences: UserPreferences
+  setUserPreferences: (
+    value: UserPreferences | ((val: UserPreferences) => UserPreferences)
+  ) => void
 }
 
 export default function ConnectView({
@@ -83,11 +91,24 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  userPreferences,
+  setUserPreferences,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  const handleUnitsChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newUnits: 'imperial' | 'metric'
+  ) => {
+    if (newUnits !== null) {
+      setUserPreferences((prev) => ({ ...prev, units: newUnits }))
+    }
+  }
+
+  const isImperial = userPreferences.units === 'imperial'
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -137,6 +158,19 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={userPreferences.units}
+              exclusive
+              onChange={handleUnitsChange}
+              aria-label="units"
+            >
+              <ToggleButton value="imperial" aria-label="imperial units">
+                Imperial
+              </ToggleButton>
+              <ToggleButton value="metric" aria-label="metric units">
+                Metric
+              </ToggleButton>
+            </ToggleButtonGroup>
             <TextField
               fullWidth
               label="Your Name"
@@ -164,8 +198,8 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Height (cm)"
-              placeholder="e.g., 175"
+              label={`Your Height (${isImperial ? 'in' : 'cm'})`}
+              placeholder={isImperial ? `e.g., 69` : `e.g., 175`}
               type="number"
               value={userHeight}
               onChange={(e) => {
@@ -178,12 +212,16 @@ export default function ConnectView({
               }}
               error={!!heightError}
               helperText={heightError}
-              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
+              inputProps={{
+                min: isImperial ? 39 : 100,
+                max: isImperial ? 98 : 250,
+                'aria-invalid': !!heightError,
+              }}
             />
             <TextField
               fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
+              label={`Your Weight (${isImperial ? 'lbs' : 'kg'})`}
+              placeholder={isImperial ? `e.g., 154` : `e.g., 70`}
               type="number"
               value={userWeight}
               onChange={(e) => {
@@ -196,7 +234,11 @@ export default function ConnectView({
               }}
               error={!!weightError}
               helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
+              inputProps={{
+                min: isImperial ? 66 : 30,
+                max: isImperial ? 440 : 200,
+                'aria-invalid': !!weightError,
+              }}
             />
           </Stack>
         ) : (

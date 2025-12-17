@@ -4,6 +4,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import ConnectView from './ConnectView'
 
+import { USER_UNITS } from '../../../constants/units/user'
+
 describe('ConnectView', () => {
   const defaultProps = {
     duration: '00:00:00',
@@ -32,6 +34,17 @@ describe('ConnectView', () => {
     workoutStatus: 'idle' as 'idle' | 'running' | 'paused',
     onStartWorkout: jest.fn(),
     onEndWorkout: jest.fn(),
+    userPreferences: {
+      theme: 'dark',
+      volumeLevel: 100,
+      defaultWorkDuration: 25,
+      defaultRestDuration: 5,
+      favoritePlaylist: null,
+      userName: 'Test User',
+      userAge: 30,
+      units: 'imperial' as (typeof USER_UNITS)[number],
+    },
+    setUserPreferences: jest.fn(),
   }
 
   it('shows a validation error for an invalid age', () => {
