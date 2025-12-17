@@ -223,6 +223,7 @@ export default defineConfig([
       'jsdoc/require-jsdoc': [
         'error',
         {
+          exemptedBy: ['inheritdoc', 'override'],
           require: {
             FunctionDeclaration: true,
             MethodDefinition: true,
@@ -232,6 +233,9 @@ export default defineConfig([
           },
         },
       ],
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/check-tag-names': 'error',
+      'jsdoc/require-param': 'error',
     },
   },
 ])
