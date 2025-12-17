@@ -49,6 +49,7 @@
     "release:patch": "pnpm version patch -m \"release: patch %s\"",
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
+    "pretest:infra": "pnpm run build:server",
     "test:infra": "cross-env NEXTAUTH_SECRET=test-secret-infra NEXTAUTH_URL=http://localhost:3005 playwright test tests/playwright/infrastructure.spec.ts",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
