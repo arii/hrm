@@ -39,6 +39,7 @@ const config: KnipConfig = {
     'ecosystem.config.cjs',
     'scripts/get-available-port.mjs',
     'public/mockServiceWorker.js',
+    'tsconfig-paths/register',
   ],
   ignoreDependencies: [
     // Used in tests, but Knip doesn't see it
