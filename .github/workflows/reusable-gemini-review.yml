@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Need full history for diff analysis
+          fetch-depth: 0 # Need full history for diff analysis
 
       - uses: pnpm/action-setup@v4
         # with:
@@ -275,7 +275,7 @@ jobs:
 
           # Check for excessive comment loops (prevent code review spam)
           TOTAL_COMMENTS=$(gh pr view ${{ github.event.pull_request.number }} --json comments,reviews --jq '(.comments | length) + (.reviews | length)')
-          
+
           if [ "$TOTAL_COMMENTS" -ge "30" ]; then
             echo "POST_COMMENT=false" >> $GITHUB_ENV
           else
