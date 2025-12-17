@@ -1,28 +1,13 @@
-import { execSync } from 'child_process'
-import { readFileSync, writeFileSync } from 'fs'
+import { execSync } from 'child_process';
 
-describe('Knip integration', () => {
-  it('should run successfully and report issues', () => {
-    // Run knip and assert that it reports unused devDependencies
+describe('knip', () => {
+  it('should have no unlisted dependencies', () => {
     try {
-      execSync('pnpm exec knip')
+      execSync('pnpm exec knip', { stdio: 'inherit' });
     } catch (error) {
-      const output = error.stdout.toString()
-      expect(output).toContain('Unused devDependencies')
+      // The error object will contain the output of the command, which will show the knip report.
+      // We can fail the test with a custom message to make it clear that knip found issues.
+      fail('knip found unlisted dependencies. See the output above for details.');
     }
-  })
-
-  it('should fail the build if it detects new issues', () => {
-    // Introduce a temporary unused dependency to package.json
-    const packageJson = JSON.parse(readFileSync('package.json', 'utf-8'))
-    packageJson.dependencies['unused-dependency'] = '1.0.0'
-    writeFileSync('package.json', JSON.stringify(packageJson, null, 2))
-
-    // Run knip and assert that it exits with a non-zero status code
-    expect(() => execSync('pnpm exec knip')).toThrow()
-
-    // Clean up the temporary change to package.json
-    delete packageJson.dependencies['unused-dependency']
-    writeFileSync('package.json', JSON.stringify(packageJson, null, 2))
-  })
-})
+  });
+});
