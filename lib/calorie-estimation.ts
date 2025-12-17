@@ -41,11 +41,22 @@ export const estimateCaloriesBurned = (
   }
 
   // A simplified, gender-neutral version of the Harris-Benedict equation, adapted for activity.
-  const heartRateTerm = 0.6309 * heartRate
-  const weightTerm = 0.1988 * weightKg
-  const ageTerm = 0.2017 * age
+  const CALORIE_FORMULA_CONSTANTS = {
+    INTERCEPT: -55.0969,
+    HR_FACTOR: 0.6309,
+    WEIGHT_FACTOR: 0.1988,
+    AGE_FACTOR: 0.2017,
+    KJ_TO_KCAL: 4.184,
+  }
+  const heartRateTerm = CALORIE_FORMULA_CONSTANTS.HR_FACTOR * heartRate
+  const weightTerm = CALORIE_FORMULA_CONSTANTS.WEIGHT_FACTOR * weightKg
+  const ageTerm = CALORIE_FORMULA_CONSTANTS.AGE_FACTOR * age
   const caloriesPerMinute =
-    (-55.0969 + heartRateTerm + weightTerm + ageTerm) / 4.184
+    (CALORIE_FORMULA_CONSTANTS.INTERCEPT +
+      heartRateTerm +
+      weightTerm +
+      ageTerm) /
+    CALORIE_FORMULA_CONSTANTS.KJ_TO_KCAL
 
   const totalCalories = caloriesPerMinute * durationMinutes
   return Math.max(0, totalCalories) // Ensure result is non-negative
