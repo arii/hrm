@@ -2,7 +2,7 @@
  * @file Unit tests for the time utility functions in `utils/core/time.ts`.
  * @jest-environment node
  */
-import { formatDuration } from '../../../../utils/core/time.js'
+import { formatDuration } from '../../../utils/time.js'
 
 describe('utils/core/time.ts', () => {
   describe('formatDuration', () => {

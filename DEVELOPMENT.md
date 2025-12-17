@@ -54,7 +54,7 @@ When a change requires adding, updating, or removing an external package from `n
 
 ### Creating Internal Modules
 
-When creating new internal modules or utilities (e.g., a new file in `lib/` or a new subdirectory in `utils/` like `utils/core`) that **only** use built-in Node.js APIs or dependencies already listed in `package.json`, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
+When creating new internal modules or utilities (e.g., a new file in `lib/` or `utils/`) that **only** use built-in Node.js APIs or dependencies already listed in `package.json`, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
 
 - **No Lockfile Changes**: The PR should not include modifications to `package.json` or `pnpm-lock.yaml`.
 - **Running Local Checks**: The CI pipeline runs several checks to maintain code quality. We encourage running these locally before pushing your changes:
