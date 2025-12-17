@@ -12,8 +12,6 @@ export interface HrmData {
   maxHr: number
   name?: string
   age?: number
-  weight?: number
-  units?: 'metric' | 'imperial'
   calories: number // Added field
 }
 
@@ -198,8 +196,6 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
-  age: z.number().optional(),
-  weight: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({

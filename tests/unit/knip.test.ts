@@ -8,9 +8,9 @@ describe('knip', () => {
     } catch (_error) {
       // The error object will contain the output of the command, which will show the knip report.
       // We can fail the test with a custom message to make it clear that knip found issues.
-      // fail(
-      //   'knip found unlisted dependencies. See the output above for details.'
-      // )
+      fail(
+        'knip found unlisted dependencies. See the output above for details.'
+      )
     }
   })
 })
