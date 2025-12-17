@@ -46,6 +46,7 @@ All ADRs are stored in the [`docs/adr/`](./docs/adr/) directory.
 ## Pull Request (PR) Process
 
 ### PR Scope
+
 To ensure a smooth and efficient review process, every PR must be tightly scoped.
 
 - **One Logical Change Per PR**: Each PR should address a single concern (e.g., one bug fix, one feature).
@@ -55,6 +56,7 @@ To ensure a smooth and efficient review process, every PR must be tightly scoped
 Refer to the PR template for a detailed scope validation checklist.
 
 ### Security & Quality Review
+
 The security and quality review process is a critical step in our development lifecycle. It helps us catch potential issues before they make it into production.
 
 - **Standardized Review Format**: We use a standardized format for security and quality summaries to ensure consistency and thoroughness.

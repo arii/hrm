@@ -200,10 +200,7 @@ app
             logger.info('Spotify tokens updated via internal endpoint.')
             return res.status(200).json({ message: 'Tokens updated.' })
           } catch (err) {
-            logger.error(
-              { err },
-              'Error during internal token update handling'
-            )
+            logger.error({ err }, 'Error during internal token update handling')
             return res.status(500).json({ message: 'Internal server error.' })
           }
         }
