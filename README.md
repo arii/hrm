@@ -14,6 +14,8 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Manual Setup](#manual-setup)
     - [Production Build](#production-build)
   - [Project Structure](#project-structure)
+  - [API Validation Middleware](#api-validation-middleware)
+    - [Example Usage](#example-usage)
   - [Available Commands](#available-commands)
     - [Primary Scripts](#primary-scripts)
     - [Navigation Shortcuts](#navigation-shortcuts)
@@ -37,6 +39,14 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
     - [Production Readiness](#production-readiness)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
+  - [Troubleshooting](#troubleshooting)
+    - [Production Deployment](#production-deployment)
+    - [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration)
+    - [Server Bringup](#server-bringup)
+    - [Spotify Integration](#spotify-integration)
+  - [📦 Release \& Commit Standards](#-release--commit-standards)
+    - [Commit Convention](#commit-convention)
+    - [🚀 Production Deployment Checklist](#-production-deployment-checklist)
 
 ## Features
 
@@ -268,31 +278,29 @@ This project includes a `withValidation` middleware to provide robust, reusable 
 ### Example Usage
 
 ```typescript
-// app/api/users/[userId]/route.ts
+// app/api/users/route.ts
 import { withValidation } from '@/lib/middleware/validation'
-import {
-  UpdateUserProfileSchema,
-  GetUserProfileSchema,
-  RequestHeadersSchema,
-} from '@/lib/validation/schemas'
+import { CreateUserProfileSchema } from '@/lib/validation/schemas'
 import { NextResponse } from 'next/server'
+import { v4 as uuidv4 } from 'uuid'
 
-// Define the handler for the PUT request
-async function updateUser(
+async function createUser(
   _req: Request,
-  { params, body }: { params: { userId: string }; body: any }
+  { body }: { body: any }
 ): Promise<NextResponse> {
-  // The 'params' and 'body' objects are guaranteed to be valid
-  // according to the schemas provided to the middleware.
-  return NextResponse.json({ ...params, ...body })
+  const newUser = {
+    id: uuidv4(),
+    ...body,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+
+  return NextResponse.json(newUser, { status: 201 })
 }
 
-// Wrap the handler with the validation middleware
-export const PUT = withValidation({
-  paramsSchema: GetUserProfileSchema,
-  bodySchema: UpdateUserProfileSchema,
-  headersSchema: RequestHeadersSchema,
-})(updateUser)
+export const POST = withValidation({ bodySchema: CreateUserProfileSchema })(
+  createUser
+)
 ```
 
 ## Available Commands
