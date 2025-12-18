@@ -1,6 +1,6 @@
 // hooks/useUserPreferences.ts
 import useLocalStorage from './useLocalStorage'
-import { Unit, lbsToKg } from '@/lib/units'
+import { Unit } from '@/lib/units'
 
 export interface UserPreferences {
   theme: 'dark' | 'light'
@@ -25,8 +25,8 @@ export const useUserPreferences = () => {
     userName: null,
     userAge: null,
     unit: 'imperial',
-    height: 180,
-    weight: lbsToKg(175),
+    height: null,
+    weight: null,
   })
 
   return [prefs, setPrefs] as const

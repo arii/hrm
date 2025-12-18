@@ -20,13 +20,21 @@ import WorkoutSummary from './WorkoutSummary'
 import { UserPreferences } from '@/hooks/useUserPreferences'
 import { cmToInches, inchesToCm, kgToLbs, lbsToKg } from '@/lib/units'
 
-const validate = (value: string, min: number, max: number, name: string) => {
+const validate = (
+  value: string,
+  min: number,
+  max: number,
+  name: string
+): string | null => {
   if (!value || value.trim() === '') {
-    return null
+    return `${name} is required.`
   }
   const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
+  if (isNaN(num)) {
+    return `${name} must be a number.`
+  }
+  if (num < min || num > max) {
+    return `${name} must be between ${min} and ${max}.`
   }
   return null
 }
@@ -89,8 +97,12 @@ export default function ConnectView({
   useEffect(() => {
     if (userSettings.unit === 'imperial' && userSettings.height) {
       const totalInches = cmToInches(userSettings.height)
-      const ft = Math.floor(totalInches / 12)
-      const inch = Math.round(totalInches % 12)
+      let ft = Math.floor(totalInches / 12)
+      let inch = Math.round(totalInches % 12)
+      if (inch === 12) {
+        ft += 1
+        inch = 0
+      }
       setFeet(ft.toString())
       setInches(inch.toString())
     }
@@ -172,12 +184,16 @@ export default function ConnectView({
               label="Your Name"
               placeholder="e.g., Jane Doe"
               value={userSettings.userName || ''}
-              onChange={(e) =>
+              onChange={(e) => {
+                const sanitizedName = e.target.value.replace(
+                  /[^a-zA-Z0-9 ]/g,
+                  ''
+                )
                 setUserSettings((prev) => ({
                   ...prev,
-                  userName: e.target.value,
+                  userName: sanitizedName,
                 }))
-              }
+              }}
             />
             <TextField
               fullWidth
@@ -366,14 +382,20 @@ export default function ConnectView({
               Age: {userSettings.userAge}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {userSettings.unit === 'imperial'
-                ? `Height: ${feet} ft ${inches} in`
-                : `Height: ${userSettings.height} cm`}
+              Height:{' '}
+              {userSettings.height
+                ? userSettings.unit === 'imperial'
+                  ? `${feet} ft ${inches} in`
+                  : `${userSettings.height} cm`
+                : '--'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {userSettings.unit === 'imperial'
-                ? `Weight: ${kgToLbs(userSettings.weight || 0).toFixed(1)} lbs`
-                : `Weight: ${userSettings.weight} kg`}
+              Weight:{' '}
+              {userSettings.weight
+                ? userSettings.unit === 'imperial'
+                  ? `${kgToLbs(userSettings.weight).toFixed(1)} lbs`
+                  : `${userSettings.weight} kg`
+                : '--'}
             </Typography>
           </Box>
         )}
