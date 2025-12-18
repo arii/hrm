@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -6,6 +7,8 @@ import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
@@ -14,7 +17,8 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import { useState } from 'react'
+import { UserPreferences } from '@/hooks/useUserPreferences'
+import { cmToInches, inchesToCm, kgToLbs, lbsToKg } from '@/lib/units'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -30,14 +34,10 @@ const validate = (value: string, min: number, max: number, name: string) => {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
-  userName: string
-  setUserName: (name: string) => void
-  userAge: string
-  setUserAge: (age: string) => void
-  userHeight: string
-  setUserHeight: (height: string) => void
-  userWeight: string
-  setUserWeight: (weight: string) => void
+  userSettings: UserPreferences
+  setUserSettings: (
+    value: UserPreferences | ((val: UserPreferences) => UserPreferences)
+  ) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -59,14 +59,8 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  userHeight,
-  setUserHeight,
-  userWeight,
-  setUserWeight,
+  userSettings,
+  setUserSettings,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -88,6 +82,42 @@ export default function ConnectView({
   const [ageError, setAgeError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+  const [feet, setFeet] = useState('')
+  const [inches, setInches] = useState('')
+  const [localWeight, setLocalWeight] = useState('')
+
+  useEffect(() => {
+    if (userSettings.unit === 'imperial' && userSettings.height) {
+      const totalInches = cmToInches(userSettings.height)
+      const ft = Math.floor(totalInches / 12)
+      const inch = Math.round(totalInches % 12)
+      setFeet(ft.toString())
+      setInches(inch.toString())
+    }
+    if (userSettings.unit === 'imperial' && userSettings.weight) {
+      setLocalWeight(kgToLbs(userSettings.weight).toFixed(1))
+    }
+  }, [userSettings.unit, userSettings.height, userSettings.weight])
+
+  const handleImperialHeightChange = (ft: string, inch: string) => {
+    const totalInches = (parseInt(ft, 10) || 0) * 12 + (parseInt(inch, 10) || 0)
+    setUserSettings((prev) => ({
+      ...prev,
+      height: inchesToCm(totalInches),
+    }))
+  }
+
+  const validateImperialHeight = (ft: string, inch: string) => {
+    const feetAsNum = Number(ft)
+    const inchesAsNum = Number(inch)
+    if (isNaN(feetAsNum) || feetAsNum < 3 || feetAsNum > 8) {
+      return 'Please enter a valid height (feet between 3 and 8)'
+    }
+    if (isNaN(inchesAsNum) || inchesAsNum < 0 || inchesAsNum > 11) {
+      return 'Please enter a valid height (inches between 0 and 11)'
+    }
+    return null
+  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -141,18 +171,28 @@ export default function ConnectView({
               fullWidth
               label="Your Name"
               placeholder="e.g., Jane Doe"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              value={userSettings.userName || ''}
+              onChange={(e) =>
+                setUserSettings((prev) => ({
+                  ...prev,
+                  userName: e.target.value,
+                }))
+              }
             />
             <TextField
               fullWidth
               label="Your Age"
               placeholder="e.g., 30"
               type="number"
-              value={userAge}
+              value={userSettings.userAge?.toString() || ''}
               onChange={(e) => {
                 if (/^\d*$/.test(e.target.value)) {
-                  setUserAge(e.target.value)
+                  setUserSettings((prev) => ({
+                    ...prev,
+                    userAge: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : null,
+                  }))
                 }
               }}
               onBlur={(e) => {
@@ -162,42 +202,148 @@ export default function ConnectView({
               helperText={ageError}
               inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
             />
-            <TextField
-              fullWidth
-              label="Your Height (cm)"
-              placeholder="e.g., 175"
-              type="number"
-              value={userHeight}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserHeight(e.target.value)
+            <ToggleButtonGroup
+              value={userSettings.unit}
+              exclusive
+              onChange={(_, newUnit) => {
+                if (newUnit) {
+                  setUserSettings((prev) => ({ ...prev, unit: newUnit }))
                 }
               }}
-              onBlur={(e) => {
-                setHeightError(validate(e.target.value, 100, 250, 'height'))
-              }}
-              error={!!heightError}
-              helperText={heightError}
-              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
-            />
-            <TextField
-              fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
-              type="number"
-              value={userWeight}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserWeight(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
-              }}
-              error={!!weightError}
-              helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
-            />
+              aria-label="Unit system"
+            >
+              <ToggleButton value="imperial" aria-label="imperial units">
+                Imperial (lbs, ft, in)
+              </ToggleButton>
+              <ToggleButton value="metric" aria-label="metric units">
+                Metric (kg, cm)
+              </ToggleButton>
+            </ToggleButtonGroup>
+            {userSettings.unit === 'metric' ? (
+              <>
+                <TextField
+                  fullWidth
+                  label="Your Height (cm)"
+                  placeholder="e.g., 175"
+                  type="number"
+                  value={userSettings.height?.toString() || ''}
+                  onChange={(e) => {
+                    if (/^\d*\.?\d*$/.test(e.target.value)) {
+                      setUserSettings((prev) => ({
+                        ...prev,
+                        height: e.target.value
+                          ? parseFloat(e.target.value)
+                          : null,
+                      }))
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setHeightError(validate(e.target.value, 100, 250, 'height'))
+                  }}
+                  error={!!heightError}
+                  helperText={heightError}
+                  inputProps={{
+                    min: 100,
+                    max: 250,
+                    'aria-invalid': !!heightError,
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Your Weight (kg)"
+                  placeholder="e.g., 70"
+                  type="number"
+                  value={userSettings.weight?.toString() || ''}
+                  onChange={(e) => {
+                    if (/^\d*\.?\d*$/.test(e.target.value)) {
+                      setUserSettings((prev) => ({
+                        ...prev,
+                        weight: e.target.value
+                          ? parseFloat(e.target.value)
+                          : null,
+                      }))
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setWeightError(validate(e.target.value, 30, 200, 'weight'))
+                  }}
+                  error={!!weightError}
+                  helperText={weightError}
+                  inputProps={{
+                    min: 30,
+                    max: 200,
+                    'aria-invalid': !!weightError,
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <Stack direction="row" spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Feet"
+                    placeholder="e.g., 5"
+                    type="number"
+                    value={feet}
+                    onChange={(e) => {
+                      if (/^\d*$/.test(e.target.value)) {
+                        setFeet(e.target.value)
+                        handleImperialHeightChange(e.target.value, inches)
+                      }
+                    }}
+                    onBlur={() =>
+                      setHeightError(validateImperialHeight(feet, inches))
+                    }
+                    error={!!heightError}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Inches"
+                    placeholder="e.g., 9"
+                    type="number"
+                    value={inches}
+                    onChange={(e) => {
+                      if (/^\d*$/.test(e.target.value)) {
+                        setInches(e.target.value)
+                        handleImperialHeightChange(feet, e.target.value)
+                      }
+                    }}
+                    onBlur={() =>
+                      setHeightError(validateImperialHeight(feet, inches))
+                    }
+                    error={!!heightError}
+                  />
+                </Stack>
+                {heightError && (
+                  <Typography color="error" variant="caption">
+                    {heightError}
+                  </Typography>
+                )}
+                <TextField
+                  fullWidth
+                  label="Your Weight (lbs)"
+                  placeholder="e.g., 154"
+                  type="number"
+                  value={localWeight}
+                  onChange={(e) => {
+                    if (/^\d*\.?\d*$/.test(e.target.value)) {
+                      setLocalWeight(e.target.value)
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setUserSettings((prev) => ({
+                      ...prev,
+                      weight: e.target.value
+                        ? lbsToKg(parseFloat(e.target.value))
+                        : null,
+                    }))
+                    setWeightError(validate(e.target.value, 60, 440, 'weight'))
+                  }}
+                  error={!!weightError}
+                  helperText={weightError}
+                />
+              </>
+            )}
           </Stack>
         ) : (
           <Box
@@ -214,10 +360,20 @@ export default function ConnectView({
               Connected as
             </Typography>
             <Typography variant="h5" fontWeight="bold">
-              {userName}
+              {userSettings.userName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Age: {userAge}
+              Age: {userSettings.userAge}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userSettings.unit === 'imperial'
+                ? `Height: ${feet} ft ${inches} in`
+                : `Height: ${userSettings.height} cm`}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {userSettings.unit === 'imperial'
+                ? `Weight: ${kgToLbs(userSettings.weight || 0).toFixed(1)} lbs`
+                : `Weight: ${userSettings.weight} kg`}
             </Typography>
           </Box>
         )}
@@ -240,8 +396,8 @@ export default function ConnectView({
               size="large"
               onClick={onConnect}
               disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
+                !userSettings.userName?.trim() ||
+                !userSettings.userAge ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -310,7 +466,7 @@ export default function ConnectView({
         {isConnected && currentHR > 0 && (
           <Box sx={{ mt: 2 }}>
             <HrTile
-              name={userName}
+              name={userSettings.userName || ''}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
               isAlerting={false}
