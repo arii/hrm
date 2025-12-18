@@ -213,6 +213,15 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
+
+          // After updating one client, recalculate total calories for the workout summary
+          const totalCalories = Array.from(clientSessionState.values()).reduce(
+            (sum, state) => sum + state.accumulatedCalories,
+            0
+          )
+          tabataServiceInstance?.setCaloriesBurned(
+            Math.round(totalCalories * 10) / 10
+          )
         }
         broadcastState()
         break

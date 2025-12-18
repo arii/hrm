@@ -22,6 +22,7 @@ interface DualModeTimerState {
   currentPhase: TimerPhase
   timeElapsed: number // For Stopwatch mode
   timeRemaining: number // For Tabata mode
+  caloriesBurned: number
   workDuration: number // Configurable work duration
   restDuration: number // Configurable rest duration
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
@@ -41,6 +42,7 @@ class TabataTimer {
     currentPhase: 'IDLE',
     timeElapsed: 0,
     timeRemaining: 0,
+    caloriesBurned: 0,
     workDuration: DEFAULT_WORK_DURATION,
     restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
@@ -90,7 +92,7 @@ class TabataTimer {
       currentPhase: this.timerState.currentPhase,
       timeRemaining: this.timerState.timeRemaining,
       timeElapsed: this.timerState.timeElapsed,
-      caloriesBurned: 0, // Placeholder
+      caloriesBurned: this.timerState.caloriesBurned,
       mode: this.timerState.mode,
       workDuration: this.timerState.workDuration,
       restDuration: this.timerState.restDuration,
@@ -181,6 +183,7 @@ class TabataTimer {
       isRunning: false,
       currentPhase: 'IDLE',
       timeElapsed: 0,
+      caloriesBurned: 0,
       timeRemaining:
         this.timerState.mode === 'TABATA' ? this.timerState.workDuration : 0,
     }
@@ -191,6 +194,12 @@ class TabataTimer {
     this.timerInterval = null
 
     this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
+  }
+
+  // --- Calorie Setter ---
+  public setCaloriesBurned(calories: number) {
+    this.timerState.caloriesBurned = calories
+    // Optionally broadcast, but the next timer tick will do it anyway
   }
 
   // --- Configuration ---

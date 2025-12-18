@@ -217,7 +217,10 @@ describe('WebSocket Manager', () => {
       resetSocketManager()
     })
 
-    it('should accumulate calories correctly with small frequent updates', () => {
+    it('should accumulate calories correctly and update the timer service', () => {
+      // Mock the setCaloriesBurned method
+      mockServices.tabataService.setCaloriesBurned = jest.fn()
+
       initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
@@ -235,27 +238,28 @@ describe('WebSocket Manager', () => {
       sendHrmInput(150)
 
       // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
       for (let i = 0; i < 100; i++) {
         jest.advanceTimersByTime(100) // 100ms
         sendHrmInput(150)
       }
 
-      // Check the last broadcasted state
-      const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[0].payload
-      const clientData = finalPayload.find((c) => c.calories > 0)
+      // Verify that setCaloriesBurned was called
+      expect(
+        mockServices.tabataService.setCaloriesBurned
+      ).toHaveBeenCalled()
 
-      expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
+      // Check the value of the last call to setCaloriesBurned
+      const setCaloriesBurnedMock = mockServices.tabataService
+        .setCaloriesBurned as jest.Mock
+      const lastCallValue =
+        setCaloriesBurnedMock.mock.calls[
+          setCaloriesBurnedMock.mock.calls.length - 1
+        ][0]
+
       // A more precise check based on the known formula for short duration.
       // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
       // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
+      expect(lastCallValue).toBeGreaterThan(1)
     })
   })
 
