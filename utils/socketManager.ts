@@ -19,6 +19,7 @@ import {
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -98,22 +99,21 @@ const initSocketManager = (
   const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
 
   const interval = setInterval(() => {
-    const now = Date.now()
     wss.clients.forEach((ws) => {
       const extWs = ws as ExtWebSocket
-
-      // If the client hasn't responded in time, terminate.
-      if (now - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
+      if (Date.now() - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
         logger.warn(
           { clientId: extWs.clientId },
-          'Terminating stale WebSocket connection (no pong received)'
+          'Terminating stale WebSocket connection'
         )
-        return ws.terminate()
+        ws.terminate()
       }
     })
   }, WATCHDOG_INTERVAL)
 
-  wss.on('close', () => clearInterval(interval))
+  wss.on('close', () => {
+    clearInterval(interval)
+  })
 }
 
 /**
@@ -195,15 +195,13 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const rate =
-              (-CALORIE_DEFAULTS.INTERCEPT +
-                CALORIE_DEFAULTS.FACTOR_HR * currentHr +
-                CALORIE_DEFAULTS.FACTOR_WEIGHT * CALORIE_DEFAULTS.WEIGHT_KG +
-                CALORIE_DEFAULTS.FACTOR_AGE * currentAge) /
-              CALORIE_DEFAULTS.JOULE_CONVERSION
-
-            const safeRate = Math.max(0, rate)
-            currentAccumulated += safeRate * dtMinutes
+            const caloriesBurned = estimateCaloriesBurned({
+              heartRate: currentHr,
+              age: currentAge,
+              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              durationMinutes: dtMinutes,
+            })
+            currentAccumulated += caloriesBurned
           }
 
           // Update the internal state with high precision value
