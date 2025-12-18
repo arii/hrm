@@ -24,7 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
-import { SpotifyTokenPayloadSchema } from './lib/validation/schemas.js'
+import { createTokenUpdateHandler } from './lib/ipc/tokenUpdateHandler.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -194,68 +194,7 @@ app
     // --- Internal IPC Endpoint for Token Delivery ---
     expressApp.post(
       '/api/internal/ipc/token-update',
-      async (req: Request, res: Response) => {
-        const secret = req.headers['x-internal-token-secret']
-        const expectedSecret = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
-
-        if (!expectedSecret || secret !== expectedSecret) {
-          logger.warn('Unauthorized attempt to access internal IPC endpoint')
-          return res.status(401).json({ error: 'Unauthorized' })
-        }
-
-        const { timestamp, payload } = req.body
-
-        const REPLAY_THRESHOLD_MS = 30000 // 30 seconds
-        if (
-          !timestamp ||
-          typeof timestamp !== 'number' ||
-          Date.now() - timestamp > REPLAY_THRESHOLD_MS
-        ) {
-          logger.warn('Stale or invalid timestamp in IPC request')
-          return res.status(400).json({ error: 'Invalid timestamp' })
-        }
-
-        const validationResult = SpotifyTokenPayloadSchema.safeParse(payload)
-
-        if (!validationResult.success) {
-          return res.status(400).json({
-            error: 'Invalid token payload',
-            details: validationResult.error.issues,
-          })
-        }
-
-        const MAX_RETRIES = 3
-        const RETRY_DELAY_MS = 1000
-        let retries = 0
-
-        while (retries < MAX_RETRIES) {
-          try {
-            // Directly call the handleTokenUpdate method on the singleton instance
-            await spotifyService.handleTokenUpdate(validationResult.data)
-            logger.info(
-              { source: 'ipc', attempt: retries + 1 },
-              'Successfully processed token update via IPC'
-            )
-            return res.status(200).json({ success: true })
-          } catch (error) {
-            retries++
-            logger.warn(
-              { err: error, attempt: retries },
-              `IPC token update attempt ${retries} failed`
-            )
-            if (retries >= MAX_RETRIES) {
-              logger.error(
-                { err: error },
-                'IPC token update failed after multiple retries'
-              )
-              return res
-                .status(500)
-                .json({ error: 'Failed to process token update' })
-            }
-            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-          }
-        }
-      }
+      createTokenUpdateHandler(spotifyService)
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
