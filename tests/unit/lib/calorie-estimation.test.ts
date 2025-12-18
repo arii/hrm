@@ -84,5 +84,53 @@ describe('lib/calorie-estimation', () => {
       // Calories = 8.55 * (1622 / (24 * 60)) * 30 = 289.1
       expect(calories).toBeCloseTo(289, 0)
     })
+
+    it('should handle very high heart rate', () => {
+      const highHrParams = { ...newParams, heartRate: 200 }
+      const calories = estimateCaloriesBurned(highHrParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very low but valid heart rate', () => {
+      const lowHrParams = { ...newParams, heartRate: 40 }
+      const calories = estimateCaloriesBurned(lowHrParams)
+      expect(calories).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should handle very high age', () => {
+      const highAgeParams = { ...newParams, age: 100 }
+      const calories = estimateCaloriesBurned(highAgeParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very low age', () => {
+      const lowAgeParams = { ...newParams, age: 10 }
+      const calories = estimateCaloriesBurned(lowAgeParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very high weight', () => {
+      const highWeightParams = { ...newParams, weightKg: 200 }
+      const calories = estimateCaloriesBurned(highWeightParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very low weight', () => {
+      const lowWeightParams = { ...newParams, weightKg: 40 }
+      const calories = estimateCaloriesBurned(lowWeightParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very high height', () => {
+      const highHeightParams = { ...newParams, heightCm: 220 }
+      const calories = estimateCaloriesBurned(highHeightParams)
+      expect(calories).toBeGreaterThan(0)
+    })
+
+    it('should handle very low height', () => {
+      const lowHeightParams = { ...newParams, heightCm: 120 }
+      const calories = estimateCaloriesBurned(lowHeightParams)
+      expect(calories).toBeGreaterThan(0)
+    })
   })
 })

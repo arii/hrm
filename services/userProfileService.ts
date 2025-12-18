@@ -60,7 +60,20 @@ export const getProfile = async (
   userName: string
 ): Promise<UserProfile | null> => {
   const profiles = await readProfiles()
-  return profiles[userName] || null
+  if (profiles[userName]) {
+    return profiles[userName]
+  }
+  // If no profile exists, create a default one
+  const defaultProfile: UserProfile = {
+    name: userName,
+    age: 30,
+    height: 175,
+    weight: 75,
+    assignedGenderAtBirth: 'other',
+  }
+  profiles[userName] = defaultProfile
+  await writeProfiles(profiles)
+  return defaultProfile
 }
 
 /**

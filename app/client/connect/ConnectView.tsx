@@ -19,17 +19,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
-
-const validate = (value: string, min: number, max: number, name: string) => {
-  if (!value || value.trim() === '') {
-    return null
-  }
-  const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
-  }
-  return null
-}
+import { z } from 'zod'
 
 interface ConnectViewProps {
   duration: string
@@ -60,6 +50,8 @@ interface ConnectViewProps {
   workoutStatus: 'idle' | 'running' | 'paused'
   onStartWorkout: () => void
   onEndWorkout: () => void
+  errors: z.ZodError | null
+  saveError: string | null
 }
 
 export default function ConnectView({
@@ -91,11 +83,10 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
+  errors,
+  saveError,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [heightError, setHeightError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -114,6 +105,10 @@ export default function ConnectView({
     } finally {
       setIsResetting(false)
     }
+  }
+
+  const getError = (field: string) => {
+    return errors?.issues.find((issue) => issue.path[0] === field)?.message
   }
 
   if (!isSupported) {
@@ -143,6 +138,12 @@ export default function ConnectView({
           Connect Heart Rate Monitor
         </Typography>
 
+        {saveError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {saveError}
+          </Alert>
+        )}
+
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
             <TextField
@@ -151,6 +152,8 @@ export default function ConnectView({
               placeholder="e.g., Jane Doe"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
+              error={!!getError('userName')}
+              helperText={getError('userName')}
             />
             <TextField
               fullWidth
@@ -163,12 +166,8 @@ export default function ConnectView({
                   setUserAge(e.target.value)
                 }
               }}
-              onBlur={(e) => {
-                setAgeError(validate(e.target.value, 1, 120, 'age'))
-              }}
-              error={!!ageError}
-              helperText={ageError}
-              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
+              error={!!getError('userAge')}
+              helperText={getError('userAge')}
             />
             <TextField
               fullWidth
@@ -181,12 +180,8 @@ export default function ConnectView({
                   setUserHeight(e.target.value)
                 }
               }}
-              onBlur={(e) => {
-                setHeightError(validate(e.target.value, 100, 250, 'height'))
-              }}
-              error={!!heightError}
-              helperText={heightError}
-              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
+              error={!!getError('userHeight')}
+              helperText={getError('userHeight')}
             />
             <TextField
               fullWidth
@@ -199,14 +194,10 @@ export default function ConnectView({
                   setUserWeight(e.target.value)
                 }
               }}
-              onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
-              }}
-              error={!!weightError}
-              helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
+              error={!!getError('userWeight')}
+              helperText={getError('userWeight')}
             />
-            <FormControl fullWidth>
+            <FormControl fullWidth error={!!getError('assignedGenderAtBirth')}>
               <InputLabel id="gender-select-label">Gender</InputLabel>
               <Select
                 labelId="gender-select-label"
@@ -264,7 +255,8 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                deviceStatus.includes('Connecting') ||
+                !!errors
               }
             >
               {deviceStatus.includes('Connecting') ? (

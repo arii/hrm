@@ -208,8 +208,7 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
-          const currentWeight =
-            existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
+          const currentWeight = existingData.weight
           const currentHeight = existingData.height
           const currentGender = existingData.gender
 

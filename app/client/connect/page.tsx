@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -9,6 +9,34 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { debounce } from 'lodash'
+import { z } from 'zod'
+
+const UserProfileSchema = z.object({
+  userName: z.string().min(1, 'Name is required'),
+  userAge: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().min(1, 'Age must be at least 1').max(120, 'Age must be 120 or less')
+  ),
+  userHeight: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z
+      .number()
+      .min(100, 'Height must be at least 100cm')
+      .max(250, 'Height must be 250cm or less')
+  ),
+  userWeight: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z
+      .number()
+      .min(30, 'Weight must be at least 30kg')
+      .max(200, 'Weight must be 200kg or less')
+  ),
+  assignedGenderAtBirth: z.union([
+    z.literal('male'),
+    z.literal('female'),
+    z.literal('other'),
+  ]),
+})
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -19,6 +47,9 @@ export default function ConnectPage() {
     'hrm-user-gender',
     ''
   )
+  const [errors, setErrors] = useState<z.ZodError | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   const {
     connectAndStream,
     disconnect,
@@ -46,6 +77,7 @@ export default function ConnectPage() {
           }
         } catch (error) {
           console.error('Failed to fetch profile', error)
+          setSaveError('Failed to load profile.')
         }
       }
     }
@@ -60,21 +92,44 @@ export default function ConnectPage() {
 
   const saveProfile = useCallback(
     debounce(async (profileData) => {
-      if (userName) {
-        try {
-          await fetch(`/api/profile/${userName}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(profileData),
-          })
-        } catch (error) {
-          console.error('Failed to save profile', error)
+      const result = UserProfileSchema.safeParse({
+        userName,
+        userAge,
+        userHeight,
+        userWeight,
+        assignedGenderAtBirth,
+      })
+      if (result.success) {
+        setErrors(null)
+        setSaveError(null)
+        if (userName) {
+          try {
+            const response = await fetch(`/api/profile/${userName}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(profileData),
+            })
+            if (!response.ok) {
+              throw new Error('Failed to save profile')
+            }
+          } catch (error) {
+            console.error('Failed to save profile', error)
+            setSaveError('Failed to save profile.')
+          }
         }
+      } else {
+        setErrors(result.error)
       }
     }, 500),
-    [userName]
+    [
+      userName,
+      userAge,
+      userHeight,
+      userWeight,
+      assignedGenderAtBirth,
+    ]
   )
 
   useEffect(() => {
@@ -154,6 +209,8 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={endWorkout}
+      errors={errors}
+      saveError={saveError}
     />
   )
 }

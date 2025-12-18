@@ -15,7 +15,7 @@
 export interface CalorieEstimationParams {
   heartRate: number
   age: number
-  weightKg: number
+  weightKg?: number
   durationMinutes: number
   heightCm?: number
   gender?: 'male' | 'female' | 'other'
@@ -85,7 +85,14 @@ export const estimateCaloriesBurned = (
   }
 
   // Fallback to old formula if new parameters are not provided
-  if (typeof heightCm === 'undefined' || typeof gender === 'undefined') {
+  if (
+    typeof heightCm === 'undefined' ||
+    typeof gender === 'undefined' ||
+    typeof weightKg === 'undefined'
+  ) {
+    if (typeof weightKg === 'undefined') {
+      return 0
+    }
     // A simplified, gender-neutral version of the Harris-Benedict equation, adapted for activity.
     /**
      * Constants used in the calorie estimation formula.
