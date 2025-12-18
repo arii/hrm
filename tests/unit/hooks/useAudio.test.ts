@@ -1,4 +1,3 @@
-
 /**
  * @jest-environment jsdom
  */
@@ -34,7 +33,7 @@ describe('useAudio', () => {
     const { rerender } = renderHook(() => useAudio())
 
     act(() => {
-        rerender()
+      rerender()
     })
 
     expect(setVolumeSpy).toHaveBeenCalledWith(75)
@@ -48,7 +47,7 @@ describe('useAudio', () => {
     const { rerender } = renderHook(() => useAudio())
 
     act(() => {
-        rerender()
+      rerender()
     })
 
     expect(setVolumeSpy).toHaveBeenCalledWith(100)
@@ -62,7 +61,7 @@ describe('useAudio', () => {
     const { rerender } = renderHook(() => useAudio())
 
     act(() => {
-        rerender()
+      rerender()
     })
 
     expect(playShortSpy).toHaveBeenCalled()
@@ -76,7 +75,7 @@ describe('useAudio', () => {
     const { rerender } = renderHook(() => useAudio())
 
     act(() => {
-        rerender()
+      rerender()
     })
 
     expect(playLongSpy).toHaveBeenCalled()
@@ -90,7 +89,7 @@ describe('useAudio', () => {
     const { rerender } = renderHook(() => useAudio())
 
     act(() => {
-        rerender()
+      rerender()
     })
 
     expect(playLongSpy).toHaveBeenCalled()
