@@ -4,20 +4,16 @@
  * and the client hooks via the WebSocket connection.
  */
 
-import {
-  HrmStreamData,
-  TimerState,
-  SpotifyPlaybackState,
+import type {
+  HrmStreamData as HrmData,
+  TimerState as TimerData,
+  SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
 
 // --- Server Broadcast State Interfaces ---
 
-export type {
-  HrmStreamData,
-  TimerState as TimerData,
-  SpotifyPlaybackState as SpotifyData,
-} from './core'
+export type { HrmData, TimerData, SpotifyData, TimerMode }
 
 export type SpotifyCommand =
   | 'PLAY'
