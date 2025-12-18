@@ -144,6 +144,12 @@ export default function ConnectView({
           </Alert>
         )}
 
+        {!userWeight && !showUserDetails && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Please enter your weight to enable calorie calculation.
+          </Alert>
+        )}
+
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
             <TextField
@@ -254,7 +260,6 @@ export default function ConnectView({
               onClick={onConnect}
               disabled={
                 !userName.trim() ||
-                !userAge.trim() ||
                 deviceStatus.includes('Connecting') ||
                 !!errors
               }

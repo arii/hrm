@@ -24,13 +24,20 @@ const UserProfileSchema = z.object({
       .min(100, 'Height must be at least 100cm')
       .max(250, 'Height must be 250cm or less')
   ),
-  userWeight: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z
-      .number()
-      .min(30, 'Weight must be at least 30kg')
-      .max(200, 'Weight must be 200kg or less')
-  ),
+  userWeight: z
+    .string()
+    .optional()
+    .refine(
+      (val) =>
+        val === '' ||
+        val === undefined ||
+        (!isNaN(parseInt(val, 10)) &&
+          parseInt(val, 10) >= 30 &&
+          parseInt(val, 10) <= 200),
+      {
+        message: 'Weight must be between 30 and 200kg',
+      }
+    ),
   assignedGenderAtBirth: z.union([
     z.literal('male'),
     z.literal('female'),
