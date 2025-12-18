@@ -91,7 +91,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           }
         }}
         aria-label="Unit system"
+        aria-describedby="unit-system-description"
       >
+        <p id="unit-system-description" style={{ display: 'none' }}>
+          Currently selected unit system is {unit}.
+        </p>
         <ToggleButton value="imperial" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
