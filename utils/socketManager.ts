@@ -173,9 +173,24 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = clientData.get(clientId)
         if (existingData) {
+          const {
+            height,
+            weight,
+            assignedGenderAtBirth,
+            ...restOfData
+          } = message.data
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
+            Object.entries(restOfData).filter(([_, value]) => value !== null)
           )
+          if (typeof height !== 'undefined') {
+            updateData.height = height
+          }
+          if (typeof weight !== 'undefined') {
+            updateData.weight = weight
+          }
+          if (typeof assignedGenderAtBirth !== 'undefined') {
+            updateData.gender = assignedGenderAtBirth
+          }
           clientData.set(clientId, { ...existingData, ...updateData })
         }
         broadcastState()
@@ -193,13 +208,19 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          const currentWeight =
+            existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
+          const currentHeight = existingData.height
+          const currentGender = existingData.gender
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              weightKg: currentWeight,
               durationMinutes: dtMinutes,
+              heightCm: currentHeight,
+              gender: currentGender,
             })
             currentAccumulated += caloriesBurned
           }

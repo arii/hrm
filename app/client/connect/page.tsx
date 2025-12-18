@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useCallback } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -7,13 +8,17 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { debounce } from 'lodash'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
-
+  const [assignedGenderAtBirth, setAssignedGenderAtBirth] = useLocalStorage(
+    'hrm-user-gender',
+    ''
+  )
   const {
     connectAndStream,
     disconnect,
@@ -27,6 +32,61 @@ export default function ConnectPage() {
 
   const { connectionStatus, hrmData } = useWebSocket()
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (userName) {
+        try {
+          const response = await fetch(`/api/profile/${userName}`)
+          if (response.ok) {
+            const profile = await response.json()
+            setUserAge(profile.age?.toString() || '')
+            setUserHeight(profile.height?.toString() || '')
+            setUserWeight(profile.weight?.toString() || '')
+            setAssignedGenderAtBirth(profile.assignedGenderAtBirth || '')
+          }
+        } catch (error) {
+          console.error('Failed to fetch profile', error)
+        }
+      }
+    }
+    fetchProfile()
+  }, [
+    userName,
+    setUserAge,
+    setUserHeight,
+    setUserWeight,
+    setAssignedGenderAtBirth,
+  ])
+
+  const saveProfile = useCallback(
+    debounce(async (profileData) => {
+      if (userName) {
+        try {
+          await fetch(`/api/profile/${userName}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(profileData),
+          })
+        } catch (error) {
+          console.error('Failed to save profile', error)
+        }
+      }
+    }, 500),
+    [userName]
+  )
+
+  useEffect(() => {
+    const profileData = {
+      age: userAge ? parseInt(userAge, 10) : undefined,
+      height: userHeight ? parseInt(userHeight, 10) : undefined,
+      weight: userWeight ? parseInt(userWeight, 10) : undefined,
+      assignedGenderAtBirth,
+    }
+    saveProfile(profileData)
+  }, [userAge, userHeight, userWeight, assignedGenderAtBirth, saveProfile])
+
   let deviceStatusMessage = deviceStatus
   if (disconnectionReason === 'timeout') {
     deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
@@ -36,7 +96,10 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    const height = userHeight ? parseInt(userHeight, 10) : 0
+    const weight = userWeight ? parseInt(userWeight, 10) : 0
+    const gender = assignedGenderAtBirth as 'male' | 'female' | 'other'
+    connectAndStream(userName, age, height, weight, gender)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
@@ -70,6 +133,8 @@ export default function ConnectPage() {
       setUserHeight={setUserHeight}
       userWeight={userWeight}
       setUserWeight={setUserWeight}
+      assignedGenderAtBirth={assignedGenderAtBirth}
+      setAssignedGenderAtBirth={setAssignedGenderAtBirth}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}

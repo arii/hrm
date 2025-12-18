@@ -3,6 +3,10 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
@@ -38,6 +42,8 @@ interface ConnectViewProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  assignedGenderAtBirth: string
+  setAssignedGenderAtBirth: (gender: string) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -67,6 +73,8 @@ export default function ConnectView({
   setUserHeight,
   userWeight,
   setUserWeight,
+  assignedGenderAtBirth,
+  setAssignedGenderAtBirth,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -198,6 +206,20 @@ export default function ConnectView({
               helperText={weightError}
               inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
             />
+            <FormControl fullWidth>
+              <InputLabel id="gender-select-label">Gender</InputLabel>
+              <Select
+                labelId="gender-select-label"
+                id="gender-select"
+                value={assignedGenderAtBirth}
+                label="Gender"
+                onChange={(e) => setAssignedGenderAtBirth(e.target.value)}
+              >
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
         ) : (
           <Box
