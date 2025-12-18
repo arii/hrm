@@ -42,6 +42,24 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   validateHeight,
   validateWeight,
 }) => {
+  const [feet, setFeet] = React.useState('')
+  const [inches, setInches] = React.useState('')
+
+  React.useEffect(() => {
+    if (unit === 'imperial') {
+      const [ft, inch] = userHeight.split('.')
+      setFeet(ft || '')
+      setInches(inch || '')
+    }
+  }, [unit, userHeight])
+
+  const handleImperialHeightChange = (
+    ft: string,
+    inch: string
+  ) => {
+    setUserHeight(`${ft}.${inch}`)
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -78,27 +96,60 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         aria-label="Unit system"
       >
         <ToggleButton value="imperial" aria-label="imperial units">
-          Imperial (lbs, ft)
+          Imperial (lbs, ft, in)
         </ToggleButton>
         <ToggleButton value="metric" aria-label="metric units">
           Metric (kg, cm)
         </ToggleButton>
       </ToggleButtonGroup>
-      <TextField
-        fullWidth
-        label={`Your Height (${unit === 'metric' ? 'cm' : 'ft'})`}
-        placeholder={unit === 'metric' ? 'e.g., 175' : 'e.g., 5.9'}
-        type="number"
-        value={userHeight}
-        onChange={(e) => {
-          if (/^\d*\.?\d*$/.test(e.target.value)) {
-            setUserHeight(e.target.value)
-          }
-        }}
-        onBlur={(e) => validateHeight(e.target.value)}
-        error={!!heightError}
-        helperText={heightError}
-      />
+      {unit === 'metric' ? (
+        <TextField
+          fullWidth
+          label="Your Height (cm)"
+          placeholder="e.g., 175"
+          type="number"
+          value={userHeight}
+          onChange={(e) => {
+            if (/^\d*\.?\d*$/.test(e.target.value)) {
+              setUserHeight(e.target.value)
+            }
+          }}
+          onBlur={(e) => validateHeight(e.target.value)}
+          error={!!heightError}
+          helperText={heightError}
+        />
+      ) : (
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            label="Feet"
+            placeholder="e.g., 5"
+            type="number"
+            value={feet}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setFeet(e.target.value)
+                handleImperialHeightChange(e.target.value, inches)
+              }
+            }}
+            onBlur={() => validateHeight(`${feet}.${inches}`)}
+          />
+          <TextField
+            fullWidth
+            label="Inches"
+            placeholder="e.g., 9"
+            type="number"
+            value={inches}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setInches(e.target.value)
+                handleImperialHeightChange(feet, e.target.value)
+              }
+            }}
+            onBlur={() => validateHeight(`${feet}.${inches}`)}
+          />
+        </Stack>
+      )}
       <TextField
         fullWidth
         label={`Your Weight (${unit === 'metric' ? 'kg' : 'lbs'})`}

@@ -59,4 +59,11 @@ describe('ConnectView', () => {
     render(<ConnectView {...props} />)
     expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
+
+  it('calls setUnit when the unit toggle is clicked', () => {
+    render(<ConnectView {...defaultProps} />)
+    const metricButton = screen.getByText('Metric (kg, cm)')
+    fireEvent.click(metricButton)
+    expect(defaultProps.setUnit).toHaveBeenCalledWith('metric')
+  })
 })

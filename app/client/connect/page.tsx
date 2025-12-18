@@ -11,9 +11,10 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import {
   kgToLbs,
   lbsToKg,
-  cmToFeet,
-  feetToCm,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
 } from '../../../utils/units'
+import { validate } from '../../../utils/validation'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -54,51 +55,42 @@ export default function ConnectPage() {
     connectAndStream(userName, age)
   }
 
-  const validate = (
-    value: string,
-    min: number,
-    max: number,
-    name: string,
-    setter: (error: string | null) => void
-  ) => {
-    if (!value || value.trim() === '') {
-      setter(null)
-      return
-    }
-    const num = Number(value)
-    if (isNaN(num) || num < min || num > max) {
-      setter(`Please enter a valid ${name} (${min}-${max})`)
-    } else {
-      setter(null)
-    }
-  }
-
-  const validateAge = (value: string) => validate(value, 1, 120, 'age', setAgeError)
+  const validateAge = (value: string) => setAgeError(validate(value, 1, 120, 'age'))
   const validateHeight = (value: string) => {
     if (unit === 'metric') {
-      validate(value, 100, 250, 'height (cm)', setHeightError)
+      setHeightError(validate(value, 100, 250, 'height (cm)'))
     } else {
-      validate(value, 3.28, 8.2, 'height (ft)', setHeightError)
+      const [feet, inches] = value.split('.').map(Number)
+      if (isNaN(feet) || isNaN(inches) || feet < 3 || feet > 8 || inches < 0 || inches > 11) {
+        setHeightError('Please enter a valid height (3-8 ft, 0-11 in)')
+      } else {
+        setHeightError(null)
+      }
     }
   }
   const validateWeight = (value: string) => {
     if (unit === 'metric') {
-      validate(value, 30, 200, 'weight (kg)', setWeightError)
+      setWeightError(validate(value, 30, 200, 'weight (kg)'))
     } else {
-      validate(value, 66, 440, 'weight (lbs)', setWeightError)
+      setWeightError(validate(value, 66, 440, 'weight (lbs)'))
     }
   }
 
   const handleUnitChange = (newUnit: 'metric' | 'imperial') => {
     if (unit === newUnit) return
 
-    const currentHeight = parseFloat(userHeight)
-    if (!isNaN(currentHeight)) {
-      const newHeight =
-        newUnit === 'metric'
-          ? feetToCm(currentHeight)
-          : cmToFeet(currentHeight)
-      setUserHeight(newHeight.toFixed(2))
+    if (newUnit === 'metric') {
+      const [feet, inches] = userHeight.split('.').map(Number)
+      if (!isNaN(feet) && !isNaN(inches)) {
+        const cm = feetAndInchesToCm(feet, inches)
+        setUserHeight(cm.toFixed(2))
+      }
+    } else {
+      const cm = parseFloat(userHeight)
+      if (!isNaN(cm)) {
+        const [feet, inches] = cmToFeetAndInches(cm)
+        setUserHeight(`${feet}.${inches}`)
+      }
     }
 
     const currentWeight = parseFloat(userWeight)
