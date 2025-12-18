@@ -347,12 +347,18 @@ jobs:
           if [ -n "$FAILED_CHECKS_LIST" ]; then
             # Construct the final comment body
             COMMENT_HEADER="@jules fix ${FAILED_CHECKS_LIST}\n\n"
-            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n</details>"
+            # Add a notice about truncated logs and a link to the full logs
+            LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
+            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
             # Write to file
             echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
 
-            # Post the comment to the PR
-            gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"
+            # Post the comment to the PR, with error handling
+            if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
+              echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
+              # To prevent failing the entire workflow for a reporting issue, we don't exit 1 here.
+              # The overall job will still fail based on the test steps.
+            fi
           else
             echo "::warning::Job failed, but no specific test outcome was 'failure'. A step may have failed unexpectedly."
           fi
