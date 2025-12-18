@@ -2,24 +2,38 @@
 /** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/access-token/route'
-import { authOptions } from '@/lib/auth'
-import { getServerSession } from 'next-auth/next'
+import { headers, cookies } from 'next/headers'
 
-// Mock 'next-auth/next' for getServerSession
-jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
+// Mock the auth function from our library
+const mockAuth = jest.fn()
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(() => mockAuth()),
+}))
+
+// Mock 'next/headers'
+jest.mock('next/headers', () => ({
+  headers: jest.fn(),
+  cookies: jest.fn(),
 }))
 
 // Type assertion for mocked function
-const mockedGetServerSession = getServerSession as jest.Mock
+const mockedHeaders = headers as jest.Mock
+const mockedCookies = cookies as jest.Mock
 
 describe('API Route: /api/spotify/access-token', () => {
   afterEach(() => {
     jest.clearAllMocks()
   })
 
+  beforeEach(() => {
+    mockedHeaders.mockReturnValue(new Headers())
+    mockedCookies.mockReturnValue({
+      getAll: () => [],
+    })
+  })
+
   it('should return 401 Unauthorized if no session is found', async () => {
-    mockedGetServerSession.mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
 
     const response = await GET(
       new Request('http://localhost/api/spotify/access-token')
@@ -28,11 +42,11 @@ describe('API Route: /api/spotify/access-token', () => {
 
     expect(response.status).toBe(401)
     expect(data.error).toBe('Not authenticated or token is missing.')
-    expect(getServerSession).toHaveBeenCalledWith(authOptions)
+    expect(mockAuth).toHaveBeenCalled()
   })
 
   it('should return 401 Unauthorized if session has RefreshAccessTokenError', async () => {
-    mockedGetServerSession.mockResolvedValue({
+    mockAuth.mockResolvedValue({
       accessToken: 'dummy-token', // Add a token to pass the first check
       error: 'RefreshAccessTokenError',
     })
@@ -48,7 +62,7 @@ describe('API Route: /api/spotify/access-token', () => {
 
   it('should return the access token on success', async () => {
     const fakeToken = 'fake-spotify-access-token'
-    mockedGetServerSession.mockResolvedValue({
+    mockAuth.mockResolvedValue({
       accessToken: fakeToken,
     })
 
@@ -61,8 +75,8 @@ describe('API Route: /api/spotify/access-token', () => {
     expect(data.accessToken).toBe(fakeToken)
   })
 
-  it('should return 500 Internal Server Error if getServerSession fails', async () => {
-    mockedGetServerSession.mockRejectedValue(new Error('Test error'))
+  it('should return 500 Internal Server Error if auth fails', async () => {
+    mockAuth.mockRejectedValue(new Error('Test error'))
 
     const response = await GET(
       new Request('http://localhost/api/spotify/access-token')

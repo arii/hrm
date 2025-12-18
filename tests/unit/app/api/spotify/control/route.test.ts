@@ -2,17 +2,25 @@
 /** @jest-environment node */
 
 import { POST } from '@/app/api/spotify/control/route'
-import { getServerSession } from 'next-auth/next'
+import { headers, cookies } from 'next/headers'
 
-// Mock 'next-auth/next' for getServerSession
-jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
+// Mock the auth function from our library
+const mockAuth = jest.fn()
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(() => mockAuth()),
+}))
+
+// Mock 'next/headers'
+jest.mock('next/headers', () => ({
+  headers: jest.fn(),
+  cookies: jest.fn(),
 }))
 
 // Mock global fetch
 global.fetch = jest.fn()
 
-const mockedGetServerSession = getServerSession as jest.Mock
+const mockedHeaders = headers as jest.Mock
+const mockedCookies = cookies as jest.Mock
 const mockedFetch = global.fetch as jest.Mock
 
 const createRequest = (body: object | string) => {
@@ -28,8 +36,12 @@ const createRequest = (body: object | string) => {
 describe('API Route: /api/spotify/control', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockedGetServerSession.mockResolvedValue({
+    mockAuth.mockResolvedValue({
       accessToken: 'fake-access-token',
+    })
+    mockedHeaders.mockReturnValue(new Headers())
+    mockedCookies.mockReturnValue({
+      getAll: () => [],
     })
     mockedFetch.mockResolvedValue({
       ok: true,
@@ -39,7 +51,7 @@ describe('API Route: /api/spotify/control', () => {
   })
 
   it('should return 401 Unauthorized if no session is found', async () => {
-    mockedGetServerSession.mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     const req = createRequest({ command: 'PLAY' })
     const response = await POST(req)
     const data = await response.json()

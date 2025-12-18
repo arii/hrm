@@ -15,7 +15,7 @@ import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
@@ -64,6 +64,7 @@ const HrmConnectionPanel = () => {
   }, [hrmData, activeAlerts])
 
   const isLoading =
+    status === 'loading' ||
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 

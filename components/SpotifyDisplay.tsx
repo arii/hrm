@@ -287,6 +287,10 @@ const SpotifyDisplay = () => {
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
   }
 
+  if (status === 'loading') {
+    return null
+  }
+
   if (!isLoggedIn) {
     return (
       <Box

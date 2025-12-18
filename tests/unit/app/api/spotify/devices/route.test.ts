@@ -2,13 +2,19 @@
 /** @jest-environment node */
 
 import { GET } from '@/app/api/spotify/devices/route'
-import { authOptions } from '@/lib/auth'
 import { SpotifyTokenManager } from '@/services/spotifyTokenManager'
-import { getServerSession } from 'next-auth/next'
+import { headers, cookies } from 'next/headers'
 
-// Mock 'next-auth/next'
-jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
+// Mock the auth function from our library
+const mockAuth = jest.fn()
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(() => mockAuth()),
+}))
+
+// Mock 'next/headers'
+jest.mock('next/headers', () => ({
+  headers: jest.fn(),
+  cookies: jest.fn(),
 }))
 
 // Mock SpotifyTokenManager
@@ -25,7 +31,8 @@ jest.mock('@/services/spotifyTokenManager', () => {
 // Mock global fetch
 global.fetch = jest.fn()
 
-const mockedGetServerSession = getServerSession as jest.Mock
+const mockedHeaders = headers as jest.Mock
+const mockedCookies = cookies as jest.Mock
 const mockedFetch = global.fetch as jest.Mock
 const MockedSpotifyTokenManager = SpotifyTokenManager as jest.Mock
 
@@ -42,10 +49,14 @@ describe('API Route: /api/spotify/devices', () => {
         'client-secret'
       )
     MockedSpotifyTokenManager.mockImplementation(() => tokenManagerInstance)
+    mockedHeaders.mockReturnValue(new Headers())
+    mockedCookies.mockReturnValue({
+      getAll: () => [],
+    })
   })
 
   it('should return 401 if no user session and no system token is available', async () => {
-    mockedGetServerSession.mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     tokenManagerInstance.getValidAccessToken.mockResolvedValue(null)
 
     const req = new Request('http://localhost/api/spotify/devices')
@@ -54,13 +65,13 @@ describe('API Route: /api/spotify/devices', () => {
 
     expect(response.status).toBe(401)
     expect(data.error).toContain('No user session or valid system token')
-    expect(getServerSession).toHaveBeenCalledWith(authOptions)
+    expect(mockAuth).toHaveBeenCalled()
     expect(tokenManagerInstance.getValidAccessToken).toHaveBeenCalledTimes(1)
   })
 
   it('should return devices successfully with a user session', async () => {
     const mockDevices = [{ id: '1', name: 'User Device' }]
-    mockedGetServerSession.mockResolvedValue({
+    mockAuth.mockResolvedValue({
       accessToken: 'user-access-token',
     })
     mockedFetch.mockResolvedValue({
@@ -83,7 +94,7 @@ describe('API Route: /api/spotify/devices', () => {
 
   it('should return devices successfully with a system token fallback', async () => {
     const mockDevices = [{ id: '2', name: 'System Device' }]
-    mockedGetServerSession.mockResolvedValue(null)
+    mockAuth.mockResolvedValue(null)
     tokenManagerInstance.getValidAccessToken.mockResolvedValue(
       'system-access-token'
     )
@@ -105,7 +116,7 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should forward Spotify API errors', async () => {
-    mockedGetServerSession.mockResolvedValue({
+    mockAuth.mockResolvedValue({
       accessToken: 'user-access-token',
     })
     mockedFetch.mockResolvedValue({
@@ -123,7 +134,7 @@ describe('API Route: /api/spotify/devices', () => {
   })
 
   it('should return 500 on unexpected errors', async () => {
-    mockedGetServerSession.mockRejectedValue(new Error('Unexpected DB error'))
+    mockAuth.mockRejectedValue(new Error('Unexpected DB error'))
 
     const req = new Request('http://localhost/api/spotify/devices')
     const response = await GET(req)
