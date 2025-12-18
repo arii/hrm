@@ -20,7 +20,7 @@ import logger from '@/utils/logger'
 import SpotifyLoginButton from './SpotifyLoginButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
-import { SpotifyDevice } from '@/types'
+import { SpotifyDevice } from '@/types/core'
 
 // 1. State Shape
 interface SpotifyDisplayState {

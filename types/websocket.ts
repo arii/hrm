@@ -6,7 +6,7 @@
 
 import type {
   HrmStreamData as HrmData,
-  TimerState as TimerData,
+  TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'

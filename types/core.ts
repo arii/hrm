@@ -100,7 +100,7 @@ export type TimerPhase =
 /**
  * Represents the complete state of the application timer.
  */
-export interface TimerState {
+export interface TimerData {
   isRunning: boolean
   currentPhase: TimerPhase
   timeRemaining: number

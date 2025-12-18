@@ -11,11 +11,11 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmStreamData,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
+import { HrmStreamData } from '../types/core'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
