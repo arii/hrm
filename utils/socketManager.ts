@@ -19,7 +19,10 @@ import { HrmStreamData } from '../types/core'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import {
+  estimateCaloriesBurned,
+  CalorieEstimationFormula,
+} from '../lib/calorie-estimation.js'
 
 // Extend WebSocket to track client role and connection health
 interface ExtWebSocket extends WebSocket {
@@ -202,7 +205,7 @@ const handleIncomingMessage = (
               weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
               gender: existingData.gender,
-              formula: 'GenderSpecific',
+              formula: CalorieEstimationFormula.GenderSpecific,
             })
             currentAccumulated += caloriesBurned
           }

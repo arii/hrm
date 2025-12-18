@@ -16,8 +16,15 @@
  * The formula to use for calorie estimation.
  * 'GenderSpecific' is recommended for higher accuracy.
  */
-export type CalorieEstimationFormula = 'GenderSpecific' | 'GenderNeutral'
-export type Gender = 'male' | 'female'
+export enum CalorieEstimationFormula {
+  GenderSpecific = 'GenderSpecific',
+  GenderNeutral = 'GenderNeutral',
+}
+
+export enum Gender {
+  Male = 'male',
+  Female = 'female',
+}
 
 export interface CalorieEstimationParams {
   heartRate: number
@@ -29,19 +36,7 @@ export interface CalorieEstimationParams {
 }
 
 /**
- * Constants for the gender-neutral calorie estimation formula.
- * These values are derived from the male-specific formula in the Journal of Sports Sciences.
- */
-const CALORIE_CONSTANTS_NEUTRAL = {
-  INTERCEPT: -55.0969,
-  HR_FACTOR: 0.6309,
-  WEIGHT_FACTOR: 0.1988,
-  AGE_FACTOR: 0.2017,
-  KJ_TO_KCAL: 4.184,
-}
-
-/**
- * Constants for the male-specific calorie estimation formula.
+ * Constants for the male-specific (and default gender-neutral) calorie estimation formula.
  */
 const CALORIE_CONSTANTS_MALE = {
   INTERCEPT: -55.0969,
@@ -67,8 +62,7 @@ const CALORIE_CONSTANTS_FEMALE = {
  *
  * This function will use gender-specific formulas if a gender is provided, which is
  * the recommended approach for accuracy. If no gender is provided, it falls back
- to a
- * gender-neutral formula.
+ * to a gender-neutral formula.
  *
  * @param params - The physiological data for the calculation.
  * @returns The estimated number of calories burned.
@@ -82,21 +76,19 @@ export const estimateCaloriesBurned = (
     weightKg,
     durationMinutes,
     gender,
-    formula = 'GenderSpecific',
+    formula = CalorieEstimationFormula.GenderSpecific,
   } = params
 
   if (heartRate <= 30 || durationMinutes <= 0) {
     return 0
   }
 
-  let constants = CALORIE_CONSTANTS_NEUTRAL
+  // Default to the male/gender-neutral constants.
+  let constants = CALORIE_CONSTANTS_MALE
 
-  if (formula === 'GenderSpecific') {
-    if (gender === 'male') {
-      constants = CALORIE_CONSTANTS_MALE
-    } else if (gender === 'female') {
-      constants = CALORIE_CONSTANTS_FEMALE
-    }
+  // Use the female-specific formula if requested and applicable.
+  if (formula === CalorieEstimationFormula.GenderSpecific && gender === Gender.Female) {
+    constants = CALORIE_CONSTANTS_FEMALE
   }
 
   const heartRateTerm = constants.HR_FACTOR * heartRate
