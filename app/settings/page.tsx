@@ -1,6 +1,6 @@
 // File: app/settings/page.tsx
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Container,
   Typography,
@@ -15,6 +15,8 @@ import { useUserSettings } from '../../context/UserSettingsContext'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
+  const [hrError, setHrError] = useState('')
+  const [durationError, setDurationError] = useState('')
 
   const handleToggleAutoStart = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserSettings((prev) => ({
@@ -24,16 +26,37 @@ const SettingsPage = () => {
   }
 
   const handleHeartRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10)
-    if (!isNaN(value)) {
-      setUserSettings((prev) => ({ ...prev, autoStartHeartRate: value }))
+    const value = event.target.value
+    if (value === '') {
+      setHrError('Heart rate cannot be empty.')
+      return
+    }
+
+    const numericValue = parseInt(value, 10)
+    if (isNaN(numericValue) || numericValue <= 0 || numericValue > 250) {
+      setHrError('Please enter a valid heart rate (1-250 BPM).')
+    } else {
+      setHrError('')
+      setUserSettings((prev) => ({ ...prev, autoStartHeartRate: numericValue }))
     }
   }
 
   const handleDurationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value, 10)
-    if (!isNaN(value)) {
-      setUserSettings((prev) => ({ ...prev, autoStartSustainedDuration: value }))
+    const value = event.target.value
+    if (value === '') {
+      setDurationError('Duration cannot be empty.')
+      return
+    }
+
+    const numericValue = parseInt(value, 10)
+    if (isNaN(numericValue) || numericValue <= 0 || numericValue > 600) {
+      setDurationError('Please enter a valid duration (1-600 seconds).')
+    } else {
+      setDurationError('')
+      setUserSettings((prev) => ({
+        ...prev,
+        autoStartSustainedDuration: numericValue,
+      }))
     }
   }
 
@@ -64,6 +87,8 @@ const SettingsPage = () => {
               type="number"
               value={userSettings.autoStartHeartRate}
               onChange={handleHeartRateChange}
+              error={!!hrError}
+              helperText={hrError}
               fullWidth
               sx={{ mb: 2 }}
             />
@@ -72,6 +97,8 @@ const SettingsPage = () => {
               type="number"
               value={userSettings.autoStartSustainedDuration}
               onChange={handleDurationChange}
+              error={!!durationError}
+              helperText={durationError}
               fullWidth
             />
           </Box>

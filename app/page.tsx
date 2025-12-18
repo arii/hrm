@@ -61,6 +61,14 @@ const Dashboard = () => {
     if (typeof window !== 'undefined') {
       window.__TEST_READY__ = true
       window.dispatchEvent(new CustomEvent('test-ready'))
+
+      // Expose a function for Playwright to send mock HRM data
+      ;(window as any).sendMockHrmData = (data: any) => {
+        const ws = new WebSocket('ws://127.0.0.1:3000/ws')
+        ws.onopen = () => {
+          ws.send(JSON.stringify(data))
+        }
+      }
     }
   }, [])
 

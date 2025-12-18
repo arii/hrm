@@ -1,4 +1,4 @@
-// hooks/useWorkoutAutoStart.ts
+// hooks/useWorkoutAutoStart.tsx
 import { useState, useEffect, useRef, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import Button from '@mui/material/Button'
@@ -37,13 +37,14 @@ export const useWorkoutAutoStart = ({
       toast.dismiss(toastIdRef.current)
       toastIdRef.current = null
     }
-
-    if (status !== 'idle') {
-      toast.error('Workout auto-start cancelled.')
-    }
-
-    setStatus('idle')
-  }, [status])
+    // Use functional update to avoid dependency on status
+    setStatus((prevStatus) => {
+      if (prevStatus !== 'idle') {
+        toast.error('Workout auto-start cancelled.')
+      }
+      return 'idle'
+    })
+  }, []) // Empty dependency array
 
   useEffect(() => {
     const {
@@ -89,7 +90,9 @@ export const useWorkoutAutoStart = ({
 
   useEffect(() => {
     if (status === 'countdown') {
-      toast.dismiss(toastIdRef.current ?? undefined)
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current)
+      }
 
       toastIdRef.current = toast.custom(
         (t) => (
@@ -109,16 +112,14 @@ export const useWorkoutAutoStart = ({
             <Button
               variant="contained"
               size="small"
-              onClick={() => {
-                cancelAutoStart()
-                toast.dismiss(t.id)
-              }}
+              onClick={cancelAutoStart} // Simplified to just call the cancel function
             >
               Cancel
             </Button>
           </Box>
         ),
         {
+          id: 'countdown-toast', // Use a stable ID
           duration: COUNTDOWN_DURATION * 1000,
         }
       )
@@ -131,6 +132,7 @@ export const useWorkoutAutoStart = ({
       }, COUNTDOWN_DURATION * 1000)
     }
 
+    // Cleanup function for the countdown timer
     return () => {
       if (countdownTimerRef.current) {
         clearTimeout(countdownTimerRef.current)
