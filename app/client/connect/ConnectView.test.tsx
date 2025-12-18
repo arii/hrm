@@ -12,10 +12,18 @@ describe('ConnectView', () => {
     setUserName: jest.fn(),
     userAge: '30',
     setUserAge: jest.fn(),
-    userHeight: '175',
+    userHeight: '5.9',
     setUserHeight: jest.fn(),
-    userWeight: '70',
+    userWeight: '154',
     setUserWeight: jest.fn(),
+    unit: 'imperial' as 'metric' | 'imperial',
+    setUnit: jest.fn(),
+    ageError: null,
+    heightError: null,
+    weightError: null,
+    validateAge: jest.fn(),
+    validateHeight: jest.fn(),
+    validateWeight: jest.fn(),
     isConnected: false,
     deviceStatus: 'Disconnected',
     batteryLevel: null,
@@ -34,93 +42,21 @@ describe('ConnectView', () => {
     onEndWorkout: jest.fn(),
   }
 
-  it('shows a validation error for an invalid age', () => {
-    render(<ConnectView {...defaultProps} />)
-    const ageInput = screen.getByLabelText('Your Age')
-    fireEvent.change(ageInput, { target: { value: '200' } })
-    fireEvent.blur(ageInput)
-    expect(
-      screen.getByText('Please enter a valid age (1-120)')
-    ).toBeInTheDocument()
+  it('displays an error message for invalid age', () => {
+    const props = { ...defaultProps, ageError: 'Invalid age' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid age')).toBeInTheDocument()
   })
 
-  it('does not show a validation error for a valid age', () => {
-    render(<ConnectView {...defaultProps} />)
-    const ageInput = screen.getByLabelText('Your Age')
-    fireEvent.change(ageInput, { target: { value: '35' } })
-    fireEvent.blur(ageInput)
-    expect(
-      screen.queryByText('Please enter a valid age (1-120)')
-    ).not.toBeInTheDocument()
+  it('displays an error message for invalid height', () => {
+    const props = { ...defaultProps, heightError: 'Invalid height' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid height')).toBeInTheDocument()
   })
 
-  it('shows a validation error for an invalid height', () => {
-    render(<ConnectView {...defaultProps} />)
-    const heightInput = screen.getByLabelText('Your Height (cm)')
-    fireEvent.change(heightInput, { target: { value: '300' } })
-    fireEvent.blur(heightInput)
-    expect(
-      screen.getByText('Please enter a valid height (100-250)')
-    ).toBeInTheDocument()
-  })
-
-  it('does not show a validation error for a valid height', () => {
-    render(<ConnectView {...defaultProps} />)
-    const heightInput = screen.getByLabelText('Your Height (cm)')
-    fireEvent.change(heightInput, { target: { value: '180' } })
-    fireEvent.blur(heightInput)
-    expect(
-      screen.queryByText('Please enter a valid height (100-250)')
-    ).not.toBeInTheDocument()
-  })
-
-  it('shows a validation error for an invalid weight', () => {
-    render(<ConnectView {...defaultProps} />)
-    const weightInput = screen.getByLabelText('Your Weight (kg)')
-    fireEvent.change(weightInput, { target: { value: '300' } })
-    fireEvent.blur(weightInput)
-    expect(
-      screen.getByText('Please enter a valid weight (30-200)')
-    ).toBeInTheDocument()
-  })
-
-  it('does not show a validation error for a valid weight', () => {
-    render(<ConnectView {...defaultProps} />)
-    const weightInput = screen.getByLabelText('Your Weight (kg)')
-    fireEvent.change(weightInput, { target: { value: '75' } })
-    fireEvent.blur(weightInput)
-    expect(
-      screen.queryByText('Please enter a valid weight (30-200)')
-    ).not.toBeInTheDocument()
-  })
-
-  it('does not show a validation error for an empty age', () => {
-    render(<ConnectView {...defaultProps} />)
-    const ageInput = screen.getByLabelText('Your Age')
-    fireEvent.change(ageInput, { target: { value: '' } })
-    fireEvent.blur(ageInput)
-    expect(
-      screen.queryByText('Please enter a valid age (1-120)')
-    ).not.toBeInTheDocument()
-  })
-
-  it('does not show a validation error for an empty height', () => {
-    render(<ConnectView {...defaultProps} />)
-    const heightInput = screen.getByLabelText('Your Height (cm)')
-    fireEvent.change(heightInput, { target: { value: '' } })
-    fireEvent.blur(heightInput)
-    expect(
-      screen.queryByText('Please enter a valid height (100-250)')
-    ).not.toBeInTheDocument()
-  })
-
-  it('does not show a validation error for an empty weight', () => {
-    render(<ConnectView {...defaultProps} />)
-    const weightInput = screen.getByLabelText('Your Weight (kg)')
-    fireEvent.change(weightInput, { target: { value: '' } })
-    fireEvent.blur(weightInput)
-    expect(
-      screen.queryByText('Please enter a valid weight (30-200)')
-    ).not.toBeInTheDocument()
+  it('displays an error message for invalid weight', () => {
+    const props = { ...defaultProps, weightError: 'Invalid weight' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid weight')).toBeInTheDocument()
   })
 })
