@@ -74,6 +74,7 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
+      gender: undefined,
       calories: 0, // Initialize to 0
     }
     clientData.set(extWs.clientId, newClient)
@@ -200,6 +201,8 @@ const handleIncomingMessage = (
               age: currentAge,
               weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
               durationMinutes: dtMinutes,
+              gender: existingData.gender,
+              formula: 'GenderSpecific',
             })
             currentAccumulated += caloriesBurned
           }
