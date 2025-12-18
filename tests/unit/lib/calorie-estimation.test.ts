@@ -51,6 +51,10 @@ describe('lib/calorie-estimation', () => {
 
     // Comprehensive test cases for various user profiles and activity levels
     describe('with diverse user profiles and activities', () => {
+      // Expected values are calculated based on the formula implemented in
+      // `lib/calorie-estimation.ts`.
+      // Formula: ((-55.0969 + (0.6309 * HR) + (0.1988 * W) + (0.2017 * A)) / 4.184) * T
+      // Where HR=Heart Rate, W=Weight(kg), A=Age, T=Time(min)
       const testCases = [
         // profile, params, expected approx calories
         {
@@ -87,6 +91,11 @@ describe('lib/calorie-estimation', () => {
           profile: 'Edge Case: Very old individual',
           params: { heartRate: 130, age: 75, weightKg: 70, durationMinutes: 25 },
           expected: 334.4,
+        },
+        {
+          profile: 'Resting individual, minimal activity',
+          params: { heartRate: 60, age: 40, weightKg: 80, durationMinutes: 60 },
+          expected: 96.5,
         },
       ]
 
