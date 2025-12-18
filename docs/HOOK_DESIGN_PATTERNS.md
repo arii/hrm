@@ -8,7 +8,7 @@ When designing custom hooks, it is crucial to expose granular state to the consu
 
 ### The Problem with a Single `isLoading` Flag
 
-A single `isLoading` flag is ambiguous. It doesn't tell the user *what* is loading. Is the application making an initial connection? Is it waiting for data to stream? Has an error occurred?
+A single `isLoading` flag is ambiguous. It doesn't tell the user _what_ is loading. Is the application making an initial connection? Is it waiting for data to stream? Has an error occurred?
 
 ### Best Practice: Use Descriptive, Granular State
 
@@ -21,7 +21,7 @@ A hook that connects to a service and streams data should expose its internal st
 **Instead of this:**
 
 ```typescript
-const { isLoading, data, error } = useDataStream();
+const { isLoading, data, error } = useDataStream()
 // What does isLoading mean here? Initial connect? Reconnecting?
 ```
 
@@ -38,9 +38,9 @@ if (!isStreaming && !data) return <p>Waiting for data...</p>;
 
 ### Benefits of Granular State
 
--   **Clearer UI**: Allows for more specific and helpful loading and error messages.
--   **Easier Debugging**: The state of the hook is explicit, making it easier to trace its lifecycle.
--   **More Flexible Components**: Components can react to specific states, rather than trying to infer the state from a single flag.
+- **Clearer UI**: Allows for more specific and helpful loading and error messages.
+- **Easier Debugging**: The state of the hook is explicit, making it easier to trace its lifecycle.
+- **More Flexible Components**: Components can react to specific states, rather than trying to infer the state from a single flag.
 
 ### Timeout Mechanisms
 

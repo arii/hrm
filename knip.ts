@@ -1,4 +1,4 @@
-import type { KnipConfig } from 'knip';
+import type { KnipConfig } from 'knip'
 
 const config: KnipConfig = {
   entry: [
@@ -55,6 +55,6 @@ const config: KnipConfig = {
     'python3',
     'sleep',
   ],
-};
+}
 
-export default config;
+export default config
