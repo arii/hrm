@@ -13,6 +13,7 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
+import WorkoutSessionManager from '../components/WorkoutSessionManager'
 import { useAudio } from '../hooks/useAudio'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
@@ -73,6 +74,7 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
+      <WorkoutSessionManager />
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
         {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
 

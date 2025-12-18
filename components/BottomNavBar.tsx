@@ -3,6 +3,7 @@
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import SettingsIcon from '@mui/icons-material/Settings'
+import SmartphoneIcon from '@mui/icons-material/Smartphone'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
 import Link from 'next/link'
@@ -12,12 +13,18 @@ import { useState } from 'react'
 export default function BottomNavBar() {
   const pathname = usePathname()
   const [value, setValue] = useState(() => {
-    if (pathname === '/client/control') {
-      return 1
-    } else if (pathname === '/client/connect') {
-      return 2
+    switch (pathname) {
+      case '/':
+        return 0
+      case '/client/control':
+        return 1
+      case '/client/connect':
+        return 2
+      case '/settings':
+        return 3
+      default:
+        return 0
     }
-    return 0 // Default to Dashboard
   })
 
   return (
@@ -52,7 +59,7 @@ export default function BottomNavBar() {
       <BottomNavigationAction
         label="Phone Controls"
         aria-label="Navigate to Phone Controls page"
-        icon={<SettingsIcon />}
+        icon={<SmartphoneIcon />}
         component={Link}
         href="/client/control"
         sx={{
@@ -67,6 +74,18 @@ export default function BottomNavBar() {
         icon={<FavoriteIcon />}
         component={Link}
         href="/client/connect"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
+      <BottomNavigationAction
+        label="Settings"
+        aria-label="Navigate to Settings page"
+        icon={<SettingsIcon />}
+        component={Link}
+        href="/settings"
         sx={{
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',

@@ -12,6 +12,7 @@ import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { Toaster } from 'react-hot-toast'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   return (
@@ -21,7 +22,10 @@ export default function Main({ children }: { children: React.ReactNode }) {
           <Providers>
             <UserSettingsProvider>
               <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
+                <TimerSoundProvider>
+                  <Toaster />
+                  {children}
+                </TimerSoundProvider>
               </ErrorBoundary>
             </UserSettingsProvider>
           </Providers>
