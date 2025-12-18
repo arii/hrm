@@ -266,15 +266,19 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: failure()
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
+          # Pass all test outcomes to the script as env vars for easier access
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          INFRA_TESTS_OUTCOME: ${{ steps.infra_tests.outcome }}
+          UNIT_TESTS_OUTCOME: ${{ steps.unit_tests.outcome }}
+          VISUAL_TESTS_OUTCOME: ${{ steps.visual_tests.outcome }}
+          PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
         run: |
-          # 1. Identify the PR Number
-          # Try getting it from the event (pull_request)
+          # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
-
-          # If triggered by workflow_dispatch, find the PR associated with this branch
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
             PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number')
           fi
@@ -284,92 +288,79 @@ jobs:
             exit 0
           fi
 
-          # 2. Build the list of failed checks and collect logs to temp files
-          FAILED_CHECKS=""
-
-          # Define comment file path in workspace
           COMMENT_FILE="test-results/pr-comment.md"
-          # Ensure test-results exists (it should, but safety first)
           mkdir -p test-results
 
-          # Initialize the comment file with header
-          # We construct the content directly into the final file to avoid temp file issues
+          # Define checks in a readable, maintainable format.
+          # Each line: <OUTCOME_VAR_NAME> "<Display Name>" <primary_log_file>
+          read -r -d '' CHECKS_DEFINITION <<'EOF'
+          LINT_OUTCOME "Lint" "logs/lint-output.log"
+          BUILD_OUTCOME "Build" "logs/build-output.log"
+          INFRA_TESTS_OUTCOME "Infrastructure Tests" "logs/infra-output.log"
+          UNIT_TESTS_OUTCOME "Unit Tests" "logs/unit-output.log"
+          VISUAL_TESTS_OUTCOME "Visual Tests" "logs/visual-output.log"
+          PERF_TESTS_OUTCOME "Performance Tests" "logs/performance-output.log"
+          EOF
 
-          # 1. Collect failed checks
-          if [ "${{ steps.lint.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Lint, "
-          fi
-          if [ "${{ steps.build.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Build, "
-          fi
-          if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Infrastructure Tests, "
-          fi
-          if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Unit Tests, "
-          fi
-          if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
-            FAILED_CHECKS="${FAILED_CHECKS}Visual Tests, "
-          fi
-          if [ "${{ steps.perf_tests.outcome }}" == "failure" ]; then
-             FAILED_CHECKS="${FAILED_CHECKS}Performance Tests, "
-          fi
-          FAILED_CHECKS="${FAILED_CHECKS%, }"
+          # 2. AGGREGATION: Loop through checks to find failures and collect logs
+          FAILED_CHECKS_LIST=""
+          LOGS_BODY=""
 
-          # 2. Write Header
-          echo "@jules fix ${FAILED_CHECKS}" > "$COMMENT_FILE"
-          echo "" >> "$COMMENT_FILE"
-          echo "<details>" >> "$COMMENT_FILE"
-          echo "<summary><strong>Failed Test Report Log</strong></summary>" >> "$COMMENT_FILE"
-
-          # 3. Append Logs
-          append_log() {
+          # Helper function to append a log file's content to the comment body
+          append_log_to_body() {
             local log_file="$1"
             local test_name="$2"
             if [ -f "$log_file" ]; then
-              echo "" >> "$COMMENT_FILE"
-              echo "### ${test_name} Log" >> "$COMMENT_FILE"
-              echo '```' >> "$COMMENT_FILE"
-              tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g' >> "$COMMENT_FILE"
-              echo '```' >> "$COMMENT_FILE"
+              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log\n"
+              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
+              # Append truncated, color-code-stripped log content
+              LOGS_BODY="${LOGS_BODY}$(tail -c "${{ env.LOG_TRUNCATE_BYTES }}" "$log_file" | sed -r 's/\x1b\[[0-9;]*m//g')\n"
+              LOGS_BODY="${LOGS_BODY}\`\`\`\n"
             else
-              echo "" >> "$COMMENT_FILE"
-              echo "### ${test_name} Log" >> "$COMMENT_FILE"
-              echo "_Log file not found: ${log_file}_" >> "$COMMENT_FILE"
+              LOGS_BODY="${LOGS_BODY}\n### ${test_name} Log\n_Log file not found: ${log_file}_\n"
             fi
           }
 
-          if [ "${{ steps.lint.outcome }}" == "failure" ]; then
-            append_log "logs/lint-output.log" "Lint"
-          fi
-          if [ "${{ steps.build.outcome }}" == "failure" ]; then
-            append_log "logs/build-output.log" "Build"
-          fi
-          if [ "${{ steps.infra_tests.outcome }}" == "failure" ]; then
-            append_log "logs/infra-output.log" "Infrastructure Tests"
-          fi
-          if [ "${{ steps.unit_tests.outcome }}" == "failure" ]; then
-            append_log "logs/unit-output.log" "Unit Tests"
-          fi
-          if [ "${{ steps.visual_tests.outcome }}" == "failure" ]; then
-            append_log "logs/visual-output.log" "Visual Tests"
-          fi
-          if [ "${{ steps.perf_tests.outcome }}" == "failure" ]; then
-            append_log "logs/performance-output.log" "Performance Test Output"
-            # Also attach the specific background logs if they exist
-            append_log "logs/ws-stress-client.log" "WebSocket Stress Client"
-            append_log "logs/frontend-perf-server.log" "Frontend Perf Server"
-          fi
+          while read -r outcome_var display_name log_file; do
+            # Use indirect expansion to get the outcome value (e.g., $LINT_OUTCOME)
+            if [ "${!outcome_var}" == "failure" ]; then
+              # Add to the comma-separated list of failed checks
+              if [ -z "$FAILED_CHECKS_LIST" ]; then
+                FAILED_CHECKS_LIST="$display_name"
+              else
+                FAILED_CHECKS_LIST="$FAILED_CHECKS_LIST, $display_name"
+              fi
 
-          # 4. Close Details
-          echo "</details>" >> "$COMMENT_FILE"
+              # Append the primary log file for this check
+              append_log_to_body "$log_file" "$display_name"
 
-          # 5. Post the Comment
-          if [ -s "$COMMENT_FILE" ]; then
-            gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"
+              # Special case: Performance tests have additional, specific logs
+              if [ "$display_name" == "Performance Tests" ]; then
+                append_log_to_body "logs/ws-stress-client.log" "WebSocket Stress Client"
+                append_log_to_body "logs/frontend-perf-server.log" "Frontend Perf Server"
+              fi
+            fi
+          done <<< "$CHECKS_DEFINITION"
+
+
+          # 3. REPORTING: If any checks failed, construct and post the comment
+          if [ -n "$FAILED_CHECKS_LIST" ]; then
+            # Construct the final comment body
+            COMMENT_HEADER="@jules fix ${FAILED_CHECKS_LIST}\n\n"
+            # Add a notice about truncated logs and a link to the full logs
+            LOG_FOOTER="---\n*Note: Logs are truncated. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.*"
+            COMMENT_DETAILS="<details><summary><strong>Failed Test Report Log</strong></summary>${LOGS_BODY}\n${LOG_FOOTER}\n</details>"
+            # Write to file
+            echo -e "${COMMENT_HEADER}${COMMENT_DETAILS}" > "$COMMENT_FILE"
+
+            # Post the comment to the PR, with error handling
+            if ! gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE"; then
+              echo "::error::Failed to post comment to PR. The GitHub token may have expired or lack permissions."
+              # To prevent failing the entire workflow for a reporting issue, we don't exit 1 here.
+              # The overall job will still fail based on the test steps.
+            fi
           else
-            echo "::error::Comment file is empty, skipping comment."
-            exit 1
+            echo "::warning::Job failed, but no specific test outcome was 'failure'. A step may have failed unexpectedly."
           fi
 
       - name: Checkout
