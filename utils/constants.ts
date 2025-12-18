@@ -63,3 +63,11 @@ export const CALORIE_DEFAULTS = {
   INTERCEPT: 55.0969,
   JOULE_CONVERSION: 4.184,
 }
+
+// --- User Profile Constants ---
+export const PROFILE_DEFAULTS = {
+  AGE: 30,
+  HEIGHT: 175,
+  WEIGHT: 75,
+  GENDER: 'other' as 'male' | 'female' | 'other',
+}

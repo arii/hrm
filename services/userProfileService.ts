@@ -8,6 +8,7 @@
 import { promises as fs } from 'fs'
 import path from 'path'
 import logger from '../utils/logger'
+import { PROFILE_DEFAULTS } from '../utils/constants'
 
 const PROFILES_FILE_PATH = path.join(process.cwd(), 'logs', 'user_profiles.json')
 
@@ -66,10 +67,10 @@ export const getProfile = async (
   // If no profile exists, create a default one
   const defaultProfile: UserProfile = {
     name: userName,
-    age: 30,
-    height: 175,
-    weight: 75,
-    assignedGenderAtBirth: 'other',
+    age: PROFILE_DEFAULTS.AGE,
+    height: PROFILE_DEFAULTS.HEIGHT,
+    weight: PROFILE_DEFAULTS.WEIGHT,
+    assignedGenderAtBirth: PROFILE_DEFAULTS.GENDER,
   }
   profiles[userName] = defaultProfile
   await writeProfiles(profiles)
