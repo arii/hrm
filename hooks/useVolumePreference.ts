@@ -12,7 +12,7 @@ export const clampVolume = (value: number): number =>
  * This hook handles the logic of restoring volume after unmuting.
  * @param {number} defaultVolume - The default volume level (0-100).
  */
-const useVolumePreference = (defaultVolume = 100) => {
+const useVolumePreference = (defaultVolume = 90) => {
   const sanitizedDefault = clampVolume(defaultVolume)
   const lastVolumeRef = useRef(sanitizedDefault)
 
