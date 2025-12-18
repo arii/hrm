@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/arii/hrm/compare/v0.12.0...v0.13.0) (2025-12-18)
+
+
+### Features
+
+* Set Imperial Units as Default for Weight and Height Input ([#1811](https://github.com/arii/hrm/issues/1811)) ([69bbaba](https://github.com/arii/hrm/commit/69bbaba0860f3c417b9cfe01842d6e99ee1ff2a9))
+
 ## [0.12.0](https://github.com/arii/hrm/compare/v0.11.0...v0.12.0) (2025-12-18)
 
 
