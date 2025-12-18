@@ -66,4 +66,18 @@ describe('ConnectView', () => {
     fireEvent.click(metricButton)
     expect(defaultProps.setUnit).toHaveBeenCalledWith('metric')
   })
+
+  it('renders metric inputs when unit is metric', () => {
+    const props = { ...defaultProps, unit: 'metric' as 'metric' | 'imperial' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (kg)')).toBeInTheDocument()
+  })
+
+  it('renders imperial inputs when unit is imperial', () => {
+    render(<ConnectView {...defaultProps} />)
+    expect(screen.getByLabelText('Feet')).toBeInTheDocument()
+    expect(screen.getByLabelText('Inches')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
+  })
 })

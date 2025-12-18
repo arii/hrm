@@ -55,13 +55,21 @@ export default function ConnectPage() {
     connectAndStream(userName, age)
   }
 
-  const validateAge = (value: string) => setAgeError(validate(value, 1, 120, 'age'))
+  const validateAge = (value: string) =>
+    setAgeError(validate(value, 1, 120, 'age'))
   const validateHeight = (value: string) => {
     if (unit === 'metric') {
       setHeightError(validate(value, 100, 250, 'height (cm)'))
     } else {
       const [feet, inches] = value.split('.').map(Number)
-      if (isNaN(feet) || isNaN(inches) || feet < 3 || feet > 8 || inches < 0 || inches > 11) {
+      if (
+        isNaN(feet) ||
+        isNaN(inches) ||
+        feet < 3 ||
+        feet > 8 ||
+        inches < 0 ||
+        inches > 11
+      ) {
         setHeightError('Please enter a valid height (3-8 ft, 0-11 in)')
       } else {
         setHeightError(null)
@@ -96,9 +104,7 @@ export default function ConnectPage() {
     const currentWeight = parseFloat(userWeight)
     if (!isNaN(currentWeight)) {
       const newWeight =
-        newUnit === 'metric'
-          ? lbsToKg(currentWeight)
-          : kgToLbs(currentWeight)
+        newUnit === 'metric' ? lbsToKg(currentWeight) : kgToLbs(currentWeight)
       setUserWeight(newWeight.toFixed(2))
     }
 

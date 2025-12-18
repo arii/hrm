@@ -53,10 +53,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     }
   }, [unit, userHeight])
 
-  const handleImperialHeightChange = (
-    ft: string,
-    inch: string
-  ) => {
+  const handleImperialHeightChange = (ft: string, inch: string) => {
     setUserHeight(`${ft}.${inch}`)
   }
 
