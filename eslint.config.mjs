@@ -103,6 +103,7 @@ export default defineConfig([
       },
     },
     rules: {
+      '@typescript-eslint/no-require-imports': 'error',
       // TypeScript specific rules
       // For example, to prevent unused variables:
       // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
