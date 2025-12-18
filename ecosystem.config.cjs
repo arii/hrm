@@ -19,6 +19,8 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
       },
+      output: '/dev/stdout',
+      error: '/dev/stderr',
     },
   ],
 }
