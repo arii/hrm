@@ -29,6 +29,7 @@ export class SpotifyPolling {
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
   private sdk: SpotifyApi | null = null
+  private isPolling = false // Lock to prevent concurrent polling
 
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
@@ -150,7 +151,8 @@ export class SpotifyPolling {
   }
 
   private getCurrentlyPlaying = async (): Promise<void> => {
-    if (!this.sdk) return
+    if (!this.sdk || this.isPolling) return
+    this.isPolling = true
 
     try {
       const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
@@ -205,6 +207,8 @@ export class SpotifyPolling {
       }
     } catch (error) {
       await handleSpotifyApiError(error, () => this.checkAndRefreshSdkToken())
+    } finally {
+      this.isPolling = false
     }
   }
 

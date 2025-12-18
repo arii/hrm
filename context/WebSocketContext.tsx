@@ -175,8 +175,13 @@ export const WebSocketProvider = ({
 
       // Expect a pong within the timeout period
       pongTimeoutRef.current = setTimeout(() => {
-        console.warn('[WS] Pong not received. Connection stale. Reconnecting.')
-        wsRef.current?.close() // Triggers 'onclose' which handles reconnection
+        // Guard against acting on a closed or closing socket
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          console.warn(
+            '[WS] Pong not received. Connection stale. Reconnecting.'
+          )
+          wsRef.current?.close() // Triggers 'onclose' which handles reconnection
+        }
       }, PONG_TIMEOUT)
 
       // Schedule the next heartbeat
