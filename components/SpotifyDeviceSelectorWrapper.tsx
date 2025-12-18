@@ -3,7 +3,7 @@
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import { MouseEvent } from 'react'
-import { SpotifyDevice } from '@/types'
+import { SpotifyDevice } from '@/types/core'
 
 interface SpotifyDeviceSelectorWrapperProps {
   availableDevices: SpotifyDevice[]

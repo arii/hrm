@@ -14,11 +14,11 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
+import { TimerMode, TimerPhase } from './core'
+
 export interface HeartRateZonesProps {
   maxHr: number
 }
-
-import { TimerMode, TimerPhase } from './websocket'
 
 export interface TimerDisplayProps {
   phase: TimerPhase
@@ -48,27 +48,6 @@ export interface WorkoutItem {
 }
 
 export type WorkoutData = WorkoutItem[]
-
-export interface SpotifyPlaylistItem {
-  id: string
-  name: string
-  uri: string
-}
-
-export interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
-
-export interface SpotifyPlaylist {
-  name: string
-  uri: string
-}
 
 export interface DashboardSectionLoadingSkeletonProps {
   width?: string | number
