@@ -40,10 +40,17 @@ export const useAudio = () => {
   useEffect(() => {
     if (typeof timerData.spotifyVolume === 'number') {
       const spotifyVolume = timerData.spotifyVolume / 100 // Convert to 0-1 scale
-      const adjustedBeepVolume = Math.min(
-        1,
-        spotifyVolume * TIMER_BEEP_VOLUME_TO_SPOTIFY_RATIO
-      )
+      let adjustedBeepVolume = spotifyVolume * TIMER_BEEP_VOLUME_TO_SPOTIFY_RATIO
+
+      if (adjustedBeepVolume > 1) {
+        console.log(
+          `[useAudio] Calculated beep volume (${adjustedBeepVolume.toFixed(
+            2
+          )}) exceeds 100%. Clamping to 100%.`
+        )
+        adjustedBeepVolume = 1
+      }
+
       console.log(
         `[useAudio] Spotify volume changed: ${spotifyVolume.toFixed(
           2
