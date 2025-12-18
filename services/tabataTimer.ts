@@ -36,7 +36,7 @@ interface DualModeTimerState {
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
-  private spotifyService?: SpotifyPolling
+  private spotifyService: SpotifyPolling
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
@@ -56,7 +56,7 @@ class TabataTimer {
 
   constructor(
     broadcastUpdate: (message: ServerMessage) => void,
-    spotifyService?: SpotifyPolling
+    spotifyService: SpotifyPolling
   ) {
     this.broadcastUpdate = broadcastUpdate
     this.spotifyService = spotifyService
