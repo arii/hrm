@@ -24,6 +24,8 @@ import {
 } from '../../types/websocket'
 import { broadcast } from '../../utils/broadcast'
 import logger from '@/utils/logger'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { CALORIE_DEFAULTS } from '@/utils/constants'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -256,10 +258,18 @@ describe('WebSocket Manager', () => {
           setCaloriesBurnedMock.mock.calls.length - 1
         ][0]
 
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(lastCallValue).toBeGreaterThan(1)
+      // Calculate the expected calories burned for a single 100ms interval
+      const caloriesPerInterval = estimateCaloriesBurned({
+        heartRate: 150,
+        age: 30,
+        weightKg: CALORIE_DEFAULTS.WEIGHT_KG, // Assuming default weight
+        durationMinutes: 100 / (1000 * 60), // 100ms in minutes
+      })
+
+      // The total should be approximately 100 times this value
+      const expectedTotalCalories = caloriesPerInterval * 100
+
+      expect(lastCallValue).toBeCloseTo(expectedTotalCalories, 1)
     })
   })
 

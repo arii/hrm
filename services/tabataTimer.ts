@@ -199,7 +199,8 @@ class TabataTimer {
   // --- Calorie Setter ---
   public setCaloriesBurned(calories: number) {
     this.timerState.caloriesBurned = calories
-    // Optionally broadcast, but the next timer tick will do it anyway
+    // Broadcast immediately to ensure UI consistency.
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   // --- Configuration ---
