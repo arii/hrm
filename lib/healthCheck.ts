@@ -1,6 +1,7 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
+import { cancellablePromise } from '../utils/promise'
 
 // Individual health check functions
 export function checkMemoryUsage() {
@@ -18,38 +19,43 @@ export function checkMemoryUsage() {
   }
 }
 
+/**
+ * Checks if the WebSocket server is alive by attempting a connection.
+ * Uses a cancellable promise to enforce a timeout.
+ */
 export async function checkWebSocketService(): Promise<{
   healthy: boolean
   details: Record<string, unknown>
 }> {
+  // Default to 127.0.0.1 for consistency with other parts of the app
+  const wsUrl = process.env.WS_URL || 'ws://127.0.0.1:3000'
+
   try {
-    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
-    // Check if WebSocket server is accepting connections
-    const wsHealth = await new Promise((resolve) => {
+    const connectionPromise = new Promise<boolean>((resolve, reject) => {
       const testWs = new WebSocket(wsUrl)
-
-      const timeout = setTimeout(() => {
-        testWs.close()
-        resolve(false)
-      }, 5000)
-
-      testWs.onopen = () => {
-        clearTimeout(timeout)
+      testWs.on('open', () => {
         testWs.close()
         resolve(true)
-      }
+      })
+      testWs.on('error', (err) => {
+        // The error event is fired for connection errors. Rejecting here allows
+        // the cancellablePromise to fail fast instead of waiting for the timeout.
+        testWs.terminate() // Use terminate for forceful close on error
+        reject(err)
+      })
+    })
 
-      testWs.onerror = () => {
-        clearTimeout(timeout)
-        resolve(false)
-      }
+    await cancellablePromise(connectionPromise, {
+      timeoutMs: 5000,
+      errorMessage: `WebSocket connection to ${wsUrl} timed out after 5s`,
     })
 
     return {
-      healthy: Boolean(wsHealth),
+      healthy: true,
       details: {
         service: 'websocket',
         url: wsUrl,
+        status: 'connected',
       },
     }
   } catch (error) {
@@ -57,7 +63,9 @@ export async function checkWebSocketService(): Promise<{
       healthy: false,
       details: {
         service: 'websocket',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        url: wsUrl,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown connection error',
       },
     }
   }

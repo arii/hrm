@@ -9,6 +9,7 @@ import {
 } from '../../../lib/healthCheck'
 import { WebSocket } from 'ws'
 import TabataTimer from '../../../services/tabataTimer'
+import { EventEmitter } from 'events'
 
 // Mock the 'ws' module
 jest.mock('ws')
@@ -52,26 +53,52 @@ describe('Health Check Logic', () => {
 
   describe('checkWebSocketService', () => {
     it('should return healthy when WebSocket connection is successful', async () => {
-      MockedWebSocket.mockImplementation(function (this: WebSocket) {
-        this.close = jest.fn()
-        setTimeout(() => this.onopen && this.onopen(), 50)
-        return this
+      const mockWsInstance = new EventEmitter()
+      // Add mock methods that are called in the implementation
+      mockWsInstance.close = jest.fn()
+      mockWsInstance.terminate = jest.fn()
+
+      MockedWebSocket.mockImplementation(() => {
+        // Use process.nextTick to simulate the async nature of the connection
+        process.nextTick(() => mockWsInstance.emit('open'))
+        return mockWsInstance
       })
+
       const result = await checkWebSocketService()
       expect(result.healthy).toBe(true)
+      expect(result.details.status).toBe('connected')
     })
 
     it('should return unhealthy when WebSocket connection fails', async () => {
-      MockedWebSocket.mockImplementation(function (this: WebSocket) {
-        this.close = jest.fn()
-        setTimeout(
-          () => this.onerror && this.onerror(new Error('Connection failed')),
-          50
+      const mockWsInstance = new EventEmitter()
+      mockWsInstance.close = jest.fn()
+      mockWsInstance.terminate = jest.fn()
+
+      MockedWebSocket.mockImplementation(() => {
+        process.nextTick(() =>
+          mockWsInstance.emit('error', new Error('Connection failed'))
         )
-        return this
+        return mockWsInstance
       })
+
       const result = await checkWebSocketService()
       expect(result.healthy).toBe(false)
+      expect(result.details.status).toBe('failed')
+      expect((result.details.error as string)).toContain('Connection failed')
+    })
+
+    it('should return unhealthy when WebSocket connection times out', async () => {
+      const mockWsInstance = new EventEmitter()
+      mockWsInstance.close = jest.fn()
+      mockWsInstance.terminate = jest.fn()
+
+      // The mock never emits 'open' or 'error', forcing a timeout
+      MockedWebSocket.mockImplementation(() => mockWsInstance)
+
+      const result = await checkWebSocketService()
+      expect(result.healthy).toBe(false)
+      expect(result.details.status).toBe('failed')
+      expect((result.details.error as string)).toContain('timed out')
     })
   })
 
