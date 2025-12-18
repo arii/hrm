@@ -4,38 +4,20 @@
  * and the client hooks via the WebSocket connection.
  */
 
+import {
+  HrmStreamData,
+  TimerState,
+  SpotifyPlaybackState,
+  TimerMode,
+} from './core'
+
 // --- Server Broadcast State Interfaces ---
 
-export interface HrmData {
-  clientId: string
-  value: number
-  maxHr: number
-  name?: string
-  age?: number
-  calories: number // Added field
-}
-
-export type TimerMode = 'STOPWATCH' | 'TABATA'
-export type TimerPhase =
-  | 'IDLE'
-  | 'PREPARE'
-  | 'WORK'
-  | 'REST'
-  | 'COOLDOWN'
-  | 'RUNNING'
-
-export interface TimerData {
-  isRunning: boolean
-  currentPhase: TimerPhase
-  timeRemaining: number // Used for countdowns (Tabata, Prepare)
-  timeElapsed: number // Used for count-ups (Stopwatch)
-  caloriesBurned: number
-  mode: TimerMode
-  workDuration: number // seconds for Tabata work interval
-  restDuration: number // seconds for Tabata rest interval
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
-  soundEventId: number // increments whenever soundToPlay represents a fresh cue
-}
+export type {
+  HrmStreamData,
+  TimerState as TimerData,
+  SpotifyPlaybackState as SpotifyData,
+} from './core'
 
 export type SpotifyCommand =
   | 'PLAY'
@@ -45,25 +27,6 @@ export type SpotifyCommand =
   | 'TRANSFER_PLAYBACK'
   | 'SET_VOLUME'
   | 'GET_DEVICES'
-// 1. Update SpotifyData to include the device list
-export interface SpotifyDevice {
-  id: string
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number
-}
-
-export interface SpotifyData {
-  trackName: string
-  artist: string
-  isPlaying: boolean
-  devices: SpotifyDevice[] // <--- ADDED: Synced device list
-  volume: number
-  isMuted: boolean
-}
 
 /**
  * The payload for the INITIAL_STATE message, representing the full application state.

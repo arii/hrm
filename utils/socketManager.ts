@@ -11,7 +11,7 @@ import {
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
-  HrmData,
+  HrmStreamData,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -36,7 +36,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const clientData = new Map<string, HrmData>()
+const clientData = new Map<string, HrmStreamData>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -69,7 +69,7 @@ const initSocketManager = (
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
-    const newClient: HrmData = {
+    const newClient: HrmStreamData = {
       clientId: extWs.clientId,
       value: 0,
       maxHr: 185,
@@ -173,7 +173,7 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = clientData.get(clientId)
         if (existingData) {
-          const updateData: Partial<HrmData> = Object.fromEntries(
+          const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
           clientData.set(clientId, { ...existingData, ...updateData })
