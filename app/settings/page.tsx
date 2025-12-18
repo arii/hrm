@@ -1,6 +1,6 @@
 // File: app/settings/page.tsx
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Container,
   Typography,
@@ -10,6 +10,7 @@ import {
   Switch,
   TextField,
   Box,
+  CircularProgress,
 } from '@mui/material'
 import { useUserSettings } from '../../context/UserSettingsContext'
 
@@ -17,6 +18,15 @@ const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
   const [hrError, setHrError] = useState('')
   const [durationError, setDurationError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // The useUserSettings hook loads from localStorage, which can cause a flicker.
+    // This effect waits for the hook to be hydrated before rendering the page.
+    if (userSettings) {
+      setIsLoading(false)
+    }
+  }, [userSettings])
 
   const handleToggleAutoStart = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserSettings((prev) => ({
@@ -58,6 +68,14 @@ const SettingsPage = () => {
         autoStartSustainedDuration: numericValue,
       }))
     }
+  }
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
+        <CircularProgress />
+      </Container>
+    )
   }
 
   return (

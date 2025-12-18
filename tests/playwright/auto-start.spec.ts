@@ -13,11 +13,11 @@ test.describe('Workout Auto-Start Feature', () => {
 
     // 2. Go to Dashboard and Mock HRM Data
     await page.goto('/')
-    await page.waitForFunction(() => (window as any).__TEST_WEBSOCKET_READY__)
+    await page.waitForFunction(() => (window as any).__TEST_HOOK_READY__)
     await page.evaluate(() => {
       ;(window as any).sendMockHrmData({
         type: 'HRM_INPUT',
-        payload: { clientId: 'test-client', heartRate: 90, value: 90 },
+        data: { value: 90 },
       })
     })
 
@@ -39,7 +39,7 @@ test.describe('Workout Auto-Start Feature', () => {
     await page.evaluate(() => {
       ;(window as any).sendMockHrmData({
         type: 'HRM_INPUT',
-        payload: { clientId: 'test-client', heartRate: 90, value: 90 },
+        data: { value: 90 },
       })
     })
 

@@ -140,6 +140,13 @@ export const useWorkoutAutoStart = ({
     }
   }, [status, startWorkout, cancelAutoStart])
 
+  // Signal when the hook is ready for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;(window as any).__TEST_HOOK_READY__ = true
+    }
+  }, [])
+
   return {
     autoStartStatus: status,
     cancelAutoStart,

@@ -139,6 +139,7 @@ const handleIncomingMessage = (
   messageString: string,
   clientId: string
 ) => {
+  logger.info({ clientId, message: messageString }, 'Received WebSocket message')
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
