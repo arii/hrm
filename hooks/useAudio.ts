@@ -3,7 +3,7 @@ import { audioManager } from '../utils/audioManager'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 // --- Constants ---
-const TIMER_BEEP_VOLUME_RATIO = 1.5 // Make beeps 50% louder than Spotify
+const TIMER_BEEP_VOLUME_TO_SPOTIFY_RATIO = 1.5 // Make beeps 50% louder than Spotify
 
 export const useAudio = () => {
   const { timerData } = useWebSocket()
@@ -42,7 +42,7 @@ export const useAudio = () => {
       const spotifyVolume = timerData.spotifyVolume / 100 // Convert to 0-1 scale
       const adjustedBeepVolume = Math.min(
         1,
-        spotifyVolume * TIMER_BEEP_VOLUME_RATIO
+        spotifyVolume * TIMER_BEEP_VOLUME_TO_SPOTIFY_RATIO
       )
       console.log(
         `[useAudio] Spotify volume changed: ${spotifyVolume.toFixed(
