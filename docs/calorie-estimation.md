@@ -79,6 +79,8 @@ console.log(`Estimated calories burned: ${caloriesBurned.toFixed(2)} kcal`);
 
 The calorie estimation is based on a formula derived from the **Journal of Sports Sciences**. The specific formula is a gender-neutral adaptation that uses heart rate, age, and weight to estimate energy expenditure.
 
+**Source:** [https://www.tandfonline.com/doi/abs/10.1080/02640410400023363](https://www.tandfonline.com/doi/abs/10.1080/02640410400023363)
+
 The core formula is:
 
 `Calories/Minute = (-55.0969 + (0.6309 * heartRate) + (0.1988 * weightKg) + (0.2017 * age)) / 4.184`
