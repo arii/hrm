@@ -151,7 +151,7 @@ app
 
     // 2. Initialize Persistent Services
     const spotifyService = await SpotifyPolling.create(broadcast)
-    const tabataService = new TabataTimer(broadcast)
+    const tabataService = new TabataTimer(broadcast, spotifyService)
 
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({

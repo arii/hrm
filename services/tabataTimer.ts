@@ -11,6 +11,7 @@ import {
   TimerMode,
   TimerPhase,
 } from '../types/websocket'
+import { SpotifyPolling } from './spotifyPolling'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
@@ -35,6 +36,7 @@ interface DualModeTimerState {
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
   private broadcastUpdate: (message: ServerMessage) => void
+  private spotifyService?: SpotifyPolling
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
@@ -52,8 +54,12 @@ class TabataTimer {
 
   private countdownMarker: string | null = null
 
-  constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor(
+    broadcastUpdate: (message: ServerMessage) => void,
+    spotifyService?: SpotifyPolling
+  ) {
     this.broadcastUpdate = broadcastUpdate
+    this.spotifyService = spotifyService
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
@@ -89,6 +95,7 @@ class TabataTimer {
 
   // Adapt getState to return the expected TimerData structure for the front-end
   public getState(): TimerData {
+    const spotifyVolume = this.spotifyService?.getState().volume
     return {
       isRunning: this.timerState.isRunning,
       currentPhase: this.timerState.currentPhase,
@@ -102,6 +109,7 @@ class TabataTimer {
         soundToPlay: this.timerState.soundToPlay,
       }),
       soundEventId: this.timerState.soundEventId,
+      ...(spotifyVolume !== undefined && { spotifyVolume }),
     }
   }
 
