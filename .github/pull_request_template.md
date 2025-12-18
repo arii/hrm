@@ -1,18 +1,34 @@
-## Description
+# Description
 
-Brief description of the changes in this PR.
+_Please provide a clear and concise description of the changes in this pull request._
+
+## Related Issues
+
+_Link to any related issues here. For example: `Closes #123`_
 
 ## Type of Change
 
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] 🐛 Bug fix
+- [ ] ✨ New feature
+- [ ] 💥 Breaking change
 - [ ] 📚 Documentation update
-- [ ] 🔧 Refactor (code change that neither fixes a bug nor adds a feature)
+- [ ] 🔧 Refactor
 - [ ] ⚡ Performance improvement
-- [ ] 🧪 Test addition or update
+- [ ] 🧪 Test addition/update
+
+## Definition of Done
+
+I have completed all of the items in the **[Development Checklist](development-checklist.md)**.
+
+- [ ] I have read and followed the development checklist.
+- [ ] I have performed a self-review of my own code.
+- [ ] My changes generate no new warnings.
+- [ ] I have added tests that prove my fix is effective or that my feature works.
+- [ ] New and existing unit tests pass locally with my changes.
 
 ## Changes Made
+
+_Please provide a detailed list of the changes made in this pull request._
 
 - Change 1
 - Change 2
@@ -20,30 +36,19 @@ Brief description of the changes in this PR.
 
 ## Testing
 
+_Please describe the testing that was performed to verify your changes._
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] Visual regression tests passed
 - [ ] Manual testing completed
 
+_Please provide details on the manual testing that was performed._
+
 ## Screenshots (if applicable)
 
-Please add screenshots to help explain your changes.
-
-## Checklist
-
-- [ ] My code follows the project style guidelines
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published
-
-## Related Issues
-
-Closes #(issue_number)
+_Please add screenshots to help explain your changes._
 
 ## Additional Notes
 
-Any additional information that might be helpful for reviewers.
+_Any additional information that might be helpful for reviewers._

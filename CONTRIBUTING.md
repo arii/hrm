@@ -112,49 +112,74 @@ test: add unit tests for timer utilities
 
 ## Pull Request Process
 
-1. **Create a feature branch**
+1.  **Create a feature branch**
 
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
 
-2. **Make your changes**
-   - Write clean, well-documented code
-   - Add tests for new functionality
-   - Update documentation as needed
+2.  **Make your changes**
+    - Write clean, well-documented code.
+    - Add tests for new functionality.
+    - Update documentation as needed.
 
-3. **Test your changes**
+3.  **Test your changes locally**
 
-   ```bash
-   pnpm run lint
-   pnpm run test:coverage
-   pnpm run build
-   pnpm run test:visual
-   ```
+    Before submitting a pull request, please run all the following checks locally to ensure your changes meet our quality standards.
 
-4. **Commit your changes**
+    ```bash
+    pnpm run lint
+    pnpm run format:check
+    pnpm run test:coverage
+    pnpm run knip
+    pnpm audit
+    pnpm run build
+    pnpm run test:visual
+    ```
 
-   ```bash
-   git add .
-   git commit -m "feat: your descriptive commit message"
-   ```
+4.  **Commit your changes**
 
-5. **Push to your branch**
+    ```bash
+    git add .
+    git commit -m "feat: your descriptive commit message"
+    ```
 
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+5.  **Push to your branch**
 
-6. **Create a Pull Request**
-   - Use the PR template
-   - Provide clear description of changes
-   - Link related issues
-   - Request appropriate reviewers
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+
+6.  **Create a Pull Request**
+    - Use the PR template by filling out the **[Development Checklist](development-checklist.md)**.
+    - Provide a clear description of your changes.
+    - Link any related issues.
+    - Request appropriate reviewers.
+
+## Automated Quality Gates
+
+All pull requests are automatically checked by our CI/CD pipeline. The following checks must pass before a pull request can be merged:
+
+- **Linting**: Ensures code style and consistency.
+- **Formatting**: Ensures code is formatted with Prettier.
+- **Knip**: Detects unused files, dependencies, and exports.
+- **Security Audit**: Checks for vulnerabilities in dependencies.
+- **Unit Tests & Coverage**: Runs all unit tests and enforces a 70% code coverage minimum.
+- **Build**: Ensures the application builds successfully.
+- **Visual Regression Tests**: Ensures there are no unintended UI changes.
+
+If any of these checks fail, the pull request will be blocked. You can see the details of the failure in the "Checks" tab of the pull request.
 
 ### Dependency Updates
 
+<<<<<<< Updated upstream
+
 - For pull requests that update dependencies, please use the specific `dependency.md` template.
-- Ensure you follow the guidelines outlined in the `DEVELOPMENT.md` file under the "Dependency PR Requirements" section.
+- # Ensure you follow the guidelines outlined in the `DEVELOPMENT.md` file under the "Dependency PR Requirements" section.
+
+* For pull requests that update dependencies, please use the specific `dependency.md` template.
+* Ensure you follow the guidelines outlined in the `DEVELOPMENT.md` file under the "Dependency PR Requirements" section.
+  > > > > > > > Stashed changes
 
 ## Troubleshooting CI/CD Issues
 

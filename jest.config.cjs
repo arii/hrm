@@ -50,6 +50,14 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
 }
 
 module.exports = config

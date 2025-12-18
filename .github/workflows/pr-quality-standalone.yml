@@ -152,6 +152,28 @@ jobs:
         run: |
           set -o pipefail
           pnpm run lint 2>&1 | tee logs/lint-output.log
+        continue-on-error: true
+
+      - name: Check Formatting
+        id: format_check
+        run: |
+          set -o pipefail
+          pnpm run format:check 2>&1 | tee logs/format-check-output.log
+        continue-on-error: true
+
+      - name: Run Knip
+        id: knip_check
+        run: |
+          set -o pipefail
+          pnpm run knip 2>&1 | tee logs/knip-output.log
+        continue-on-error: true
+
+      - name: Run Audit
+        id: audit_check
+        run: |
+          set -o pipefail
+          pnpm audit 2>&1 | tee logs/audit-output.log
+        continue-on-error: true
 
       - name: Verify Build
         id: build
@@ -266,7 +288,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.format_check.outcome == 'failure' || steps.knip_check.outcome == 'failure' || steps.audit_check.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
@@ -298,6 +320,15 @@ jobs:
           # 1. Collect failed checks
           if [ "${{ steps.lint.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Lint, "
+          fi
+          if [ "${{ steps.format_check.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Format Check, "
+          fi
+          if [ "${{ steps.knip_check.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Knip Check, "
+          fi
+          if [ "${{ steps.audit_check.outcome }}" == "failure" ]; then
+            FAILED_CHECKS="${FAILED_CHECKS}Audit Check, "
           fi
           if [ "${{ steps.build.outcome }}" == "failure" ]; then
             FAILED_CHECKS="${FAILED_CHECKS}Build, "
@@ -341,6 +372,15 @@ jobs:
 
           if [ "${{ steps.lint.outcome }}" == "failure" ]; then
             append_log "logs/lint-output.log" "Lint"
+          fi
+          if [ "${{ steps.format_check.outcome }}" == "failure" ]; then
+            append_log "logs/format-check-output.log" "Format Check"
+          fi
+          if [ "${{ steps.knip_check.outcome }}" == "failure" ]; then
+            append_log "logs/knip-output.log" "Knip Check"
+          fi
+          if [ "${{ steps.audit_check.outcome }}" == "failure" ]; then
+            append_log "logs/audit-output.log" "Audit Check"
           fi
           if [ "${{ steps.build.outcome }}" == "failure" ]; then
             append_log "logs/build-output.log" "Build"
@@ -398,7 +438,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.format_check.outcome == 'failure' || steps.knip_check.outcome == 'failure' || steps.audit_check.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
