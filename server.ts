@@ -23,7 +23,6 @@ import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -191,28 +190,42 @@ app
       }
     )
 
+    // --- Internal IPC Endpoint for Token Delivery ---
+    expressApp.post(
+      '/api/internal/ipc/token-update',
+      async (req: Request, res: Response) => {
+        const secret = req.headers['x-internal-token-secret']
+        const expectedSecret = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
+
+        if (!expectedSecret || secret !== expectedSecret) {
+          logger.warn('Unauthorized attempt to access internal IPC endpoint')
+          return res.status(401).json({ error: 'Unauthorized' })
+        }
+
+        const { payload } = req.body
+
+        if (!payload) {
+          return res.status(400).json({ error: 'Missing token payload' })
+        }
+
+        try {
+          // Directly call the handleTokenUpdate method on the singleton instance
+          await spotifyService.handleTokenUpdate(payload)
+          logger.info(
+            { source: 'ipc' },
+            'Successfully processed token update via IPC'
+          )
+          res.status(200).json({ success: true })
+        } catch (error) {
+          logger.error({ err: error }, 'IPC token update failed')
+          res.status(500).json({ error: 'Failed to process token update' })
+        }
+      }
+    )
+
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
-        }
-      }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 

@@ -33,10 +33,32 @@ export async function POST(req: NextRequest) {
     }
     fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
+    // Notify the main server process via an internal HTTP request
+    try {
+      const internalUrl = `${process.env.NEXTAUTH_URL}/api/internal/ipc/token-update`
+      const response = await fetch(internalUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-token-secret': process.env.INTERNAL_TOKEN_DELIVERY_SECRET || '',
+        },
+        body: JSON.stringify({ payload }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`IPC request failed with status ${response.status}`)
+      }
+      logger.info(
+        { subject: payload.sub ?? payload.provider },
+        'Successfully forwarded token-delivery to main server'
+      )
+    } catch (ipcError) {
+      logger.error(
+        { err: ipcError },
+        'Failed to forward token-delivery to main server'
+      )
+      // Do not block the client response for an IPC failure
+    }
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
