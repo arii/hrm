@@ -40,18 +40,22 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-internal-token-secret': process.env.INTERNAL_TOKEN_DELIVERY_SECRET || '',
+          'x-internal-token-secret':
+            process.env.INTERNAL_TOKEN_DELIVERY_SECRET || '',
         },
-        body: JSON.stringify({ payload }),
+        body: JSON.stringify({ timestamp: Date.now(), payload }),
       })
 
+      logger.info(
+        {
+          subject: payload.sub ?? payload.provider,
+          status: response.status,
+        },
+        'Forwarded token-delivery to main server'
+      )
       if (!response.ok) {
         throw new Error(`IPC request failed with status ${response.status}`)
       }
-      logger.info(
-        { subject: payload.sub ?? payload.provider },
-        'Successfully forwarded token-delivery to main server'
-      )
     } catch (ipcError) {
       logger.error(
         { err: ipcError },

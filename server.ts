@@ -24,6 +24,7 @@ import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
+import { SpotifyTokenPayloadSchema } from './lib/validation/schemas.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -63,7 +64,7 @@ expressApp.set('trust proxy', true)
 app
   .prepare()
   .then(async () => {
-    const server = createServer(expressApp)
+    const httpServer = createServer(expressApp)
 
     // --- Rate Limiting Setup ---
     // Skip rate limiting for tests to avoid flakes
@@ -202,23 +203,57 @@ app
           return res.status(401).json({ error: 'Unauthorized' })
         }
 
-        const { payload } = req.body
+        const { timestamp, payload } = req.body
 
-        if (!payload) {
-          return res.status(400).json({ error: 'Missing token payload' })
+        const REPLAY_THRESHOLD_MS = 30000 // 30 seconds
+        if (
+          !timestamp ||
+          typeof timestamp !== 'number' ||
+          Date.now() - timestamp > REPLAY_THRESHOLD_MS
+        ) {
+          logger.warn('Stale or invalid timestamp in IPC request')
+          return res.status(400).json({ error: 'Invalid timestamp' })
         }
 
-        try {
-          // Directly call the handleTokenUpdate method on the singleton instance
-          await spotifyService.handleTokenUpdate(payload)
-          logger.info(
-            { source: 'ipc' },
-            'Successfully processed token update via IPC'
-          )
-          res.status(200).json({ success: true })
-        } catch (error) {
-          logger.error({ err: error }, 'IPC token update failed')
-          res.status(500).json({ error: 'Failed to process token update' })
+        const validationResult = SpotifyTokenPayloadSchema.safeParse(payload)
+
+        if (!validationResult.success) {
+          return res.status(400).json({
+            error: 'Invalid token payload',
+            details: validationResult.error.issues,
+          })
+        }
+
+        const MAX_RETRIES = 3
+        const RETRY_DELAY_MS = 1000
+        let retries = 0
+
+        while (retries < MAX_RETRIES) {
+          try {
+            // Directly call the handleTokenUpdate method on the singleton instance
+            await spotifyService.handleTokenUpdate(validationResult.data)
+            logger.info(
+              { source: 'ipc', attempt: retries + 1 },
+              'Successfully processed token update via IPC'
+            )
+            return res.status(200).json({ success: true })
+          } catch (error) {
+            retries++
+            logger.warn(
+              { err: error, attempt: retries },
+              `IPC token update attempt ${retries} failed`
+            )
+            if (retries >= MAX_RETRIES) {
+              logger.error(
+                { err: error },
+                'IPC token update failed after multiple retries'
+              )
+              return res
+                .status(500)
+                .json({ error: 'Failed to process token update' })
+            }
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+          }
         }
       }
     )
@@ -233,7 +268,7 @@ app
     const WS_MAX_CONNECTIONS = 5
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
+    httpServer.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
         const { pathname } = parse(req.url || '')
@@ -274,17 +309,18 @@ app
     // --- Start Server ---
 
     // Handle server errors (e.g., port already in use)
-    server.on('error', (err: Error) => {
+    httpServer.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
     })
 
     // Begin listening
-    server.listen(port, hostname, () => {
+    httpServer.listen(port, hostname, () => {
       // This callback only runs on successful listening
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
+
   })
   .catch((err: Error) => {
     logger.error({ err }, 'Next.js preparation failed')
