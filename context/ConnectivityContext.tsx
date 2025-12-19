@@ -66,11 +66,18 @@ export const ConnectivityProvider = ({
   }, [])
 
   useEffect(() => {
-    const handleOnline = () => {
+    const handleOnline = async () => {
       console.log('[ConnectivityProvider] Browser detected online status.')
-      // Don't immediately set to 'online', trigger a check to confirm real connectivity.
-      checkConnectivity()
-      // Start periodic checks
+
+      // Stop any existing timer to prevent overlap.
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+      }
+
+      // Perform an immediate check to confirm real connectivity.
+      await checkConnectivity()
+
+      // After the first check completes, start the regular interval.
       pingIntervalRef.current = setInterval(checkConnectivity, PING_INTERVAL)
     }
 

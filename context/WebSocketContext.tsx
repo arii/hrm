@@ -230,11 +230,12 @@ export const WebSocketProvider = ({
     }
 
     shouldReconnect.current = true
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
+    try {
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
 
-    ws.onopen = () => {
-      console.log('[WebSocketProvider] Connected to server')
+      ws.onopen = () => {
+        console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
@@ -348,6 +349,12 @@ export const WebSocketProvider = ({
       } catch (e) {
         console.error('Failed to parse WebSocket message:', e)
       }
+    }
+    } catch (err) {
+      console.error('[WebSocketProvider] Failed to create WebSocket:', err)
+      setConnectionStatus(
+        'Failed to connect. Please check your connection and refresh the page.'
+      )
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
