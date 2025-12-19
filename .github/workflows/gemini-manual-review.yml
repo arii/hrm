@@ -82,6 +82,7 @@ jobs:
         id: analyze_changes
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Fetch PR details using gh CLI
           PR_JSON=$(gh pr view "$PR_NUMBER" --json commits,files,baseRefOid,headRefOid)
@@ -118,23 +119,21 @@ jobs:
           
           CHANGED_AREAS=$(cat changed_areas.txt | tr '\n' ',' | sed 's/,$//')
           echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Get PR Diff with Context
         id: diff
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh pr diff "$PR_NUMBER" --patch > pr.diff
           gh pr diff "$PR_NUMBER" > pr_summary.txt
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Gather Review History
         id: review_history
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           PREVIOUS_REVIEWS=$(gh pr view "$PR_NUMBER" \
             --json comments \
@@ -156,13 +155,12 @@ jobs:
             --json reviews \
             --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
           echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Get Issue Context
         id: context
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           ISSUE_NUMBER=$(gh pr view "$PR_NUMBER" \
             --json closingIssuesReferences \
@@ -195,13 +193,12 @@ jobs:
           echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
           echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Check for Test Changes
         id: test_coverage
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Get base and head SHAs
           PR_JSON=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid)
@@ -229,8 +226,6 @@ jobs:
           else
             echo "MISSING_TESTS=false" >> $GITHUB_ENV
           fi
-        env:
-          GH_TOKEN: ${{ github.token }}
 
       - name: Run Intelligent Gemini Review
         id: gemini
@@ -270,12 +265,11 @@ jobs:
       - name: Process Review Result
         if: steps.gemini.outcome == 'success'
         uses: actions/github-script@v7
-        env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
             const fs = require('fs');
+            const prNumber = ${{ steps.pr_info.outputs.PR_NUMBER }};
             
             if (!fs.existsSync('review_result.json')) {
               console.log('No review result file found.');
@@ -306,7 +300,7 @@ jobs:
             
             if (reviewComment) {
               await github.rest.issues.createComment({
-                issue_number: process.env.PR_NUMBER,
+                issue_number: prNumber,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: reviewComment
@@ -316,7 +310,7 @@ jobs:
             if (labels && labels.length > 0) {
               try {
                 await github.rest.issues.addLabels({
-                  issue_number: process.env.PR_NUMBER,
+                  issue_number: prNumber,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   labels: labels
@@ -328,16 +322,15 @@ jobs:
 
       - name: Handle Review Failure
         if: steps.gemini.outcome == 'failure'
-        env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ARI_PAT }}
           script: |
+            const prNumber = ${{ steps.pr_info.outputs.PR_NUMBER }};
             const failureComment = '## Gemini Review Status\n\n**Status**: Review Failed\n\nThe review process encountered an error. Please check the workflow logs for details.';
             
             await github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
+              issue_number: prNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: failureComment
