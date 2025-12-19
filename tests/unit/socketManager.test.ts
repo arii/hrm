@@ -223,10 +223,22 @@ describe('WebSocket Manager', () => {
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
 
+      // Set user profile data for calorie calculation
+      const metadataMessage = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          age: 30,
+          weight: 75,
+          height: 180,
+          assignedGenderAtBirth: 'male',
+        },
+      })
+      mockWs.emit('message', metadataMessage.toString())
+
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr },
         })
         mockWs.emit('message', message.toString())
       }
