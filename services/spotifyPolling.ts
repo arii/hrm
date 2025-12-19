@@ -36,9 +36,7 @@ export class SpotifyPolling {
    */
   public forcePollAndBroadcast() {
     if (this.isPollingRequestInProgress) {
-      logger.debug(
-        'Poll request is already in progress. Skipping forced poll.'
-      )
+      logger.debug('Poll request is already in progress. Skipping forced poll.')
       return
     }
     // Clear any existing timeout and poll immediately
