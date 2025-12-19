@@ -50,6 +50,7 @@ interface ReviewContext {
   hasTestChanges: boolean
   missingTests: boolean
   testFiles?: string | undefined
+  checkResults?: string | undefined
 }
 
 async function main() {
@@ -191,6 +192,7 @@ function getReviewContextFromEnv(): ReviewContext {
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
+    checkResults: process.env.CHECK_RESULTS,
   }
 }
 
@@ -259,6 +261,11 @@ ${
     prompt += `\n⚠️ **TEST COVERAGE ALERT**: Source code was modified without corresponding test changes.\n`
   } else if (context.hasTestChanges) {
     prompt += `\n✅ **Test Coverage**: Tests were updated (${context.testFiles})\n`
+  }
+
+  // Add Check Results
+  if (context.checkResults) {
+    prompt += `\n## CI/CD Check Results\n${context.checkResults}\n`
   }
 
   // Issue context

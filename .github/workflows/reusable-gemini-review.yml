@@ -191,6 +191,22 @@ jobs:
             echo "MISSING_TESTS=false" >> $GITHUB_ENV
           fi
 
+      - name: Fetch Check Results
+        id: checks
+        run: |
+          CHECKS=$(gh api repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/check-runs \
+            --jq '.check_runs[] | select(.name != "Gemini Code Review") | "- " + .name + ": " + (.conclusion // .status)')
+
+          if [ -z "$CHECKS" ]; then
+            CHECKS="No check results available yet."
+          fi
+
+          echo "CHECK_RESULTS<<EOF" >> $GITHUB_ENV
+          echo "$CHECKS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       # ============================================================================
       # INTELLIGENT REVIEW - Context-aware AI review with progressive focus
       # ============================================================================
@@ -234,6 +250,7 @@ jobs:
           HAS_TEST_CHANGES: ${{ env.HAS_TEST_CHANGES }}
           MISSING_TESTS: ${{ env.MISSING_TESTS }}
           TEST_FILES: ${{ env.TEST_FILES }}
+          CHECK_RESULTS: ${{ env.CHECK_RESULTS }}
 
           # Context Files
           REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
