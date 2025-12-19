@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/arii/hrm/compare/v0.13.0...v0.13.1) (2025-12-19)
+
+
+### Bug Fixes
+
+* continue to post errors ([#1827](https://github.com/arii/hrm/issues/1827)) ([055c8db](https://github.com/arii/hrm/commit/055c8db1d555c6aefa1d15b625d788a6033f6ac1))
+
 ## [0.13.0](https://github.com/arii/hrm/compare/v0.12.0...v0.13.0) (2025-12-18)
 
 
