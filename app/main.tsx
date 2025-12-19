@@ -6,7 +6,6 @@ import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
-import NetworkStatusBanner from '@/components/NetworkStatusBanner'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
@@ -20,7 +19,6 @@ export default function Main({ children }: { children: React.ReactNode }) {
       <ErrorProvider>
         <LoadingProvider>
           <Providers>
-            <NetworkStatusBanner />
             <UserSettingsProvider>
               <ErrorBoundary fallback={<ErrorFallback />}>
                 <TimerSoundProvider>{children}</TimerSoundProvider>

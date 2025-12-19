@@ -10,7 +10,6 @@ import {
   useState,
   useReducer,
 } from 'react'
-import { useConnectivity } from './ConnectivityContext'
 import {
   ClientCommandMessage,
   SpotifyData,
@@ -76,7 +75,6 @@ export const WebSocketProvider = ({
   serverUrl?: string
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
-  const { isOnline } = useConnectivity()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -220,22 +218,19 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   const connect = useCallback(() => {
-    // Do not attempt to connect if the browser reports offline.
     if (
       typeof window === 'undefined' ||
-      !isOnline ||
       wsRef.current?.readyState === WebSocket.OPEN
     ) {
       return
     }
 
     shouldReconnect.current = true
-    try {
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
+    const ws = new WebSocket(wsUrl)
+    wsRef.current = ws
 
-      ws.onopen = () => {
-        console.log('[WebSocketProvider] Connected to server')
+    ws.onopen = () => {
+      console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
       // Set test flag for Playwright tests - use a more reliable method
@@ -350,12 +345,6 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-    } catch (err) {
-      console.error('[WebSocketProvider] Failed to create WebSocket:', err)
-      setConnectionStatus(
-        'Failed to connect. Please check your connection and refresh the page.'
-      )
-    }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
@@ -374,17 +363,12 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     connectRef.current = connect
-    // Only attempt to connect if the browser is online.
-    if (isOnline) {
-      connect()
-    }
+    connect()
 
-    // The cleanup function will handle disconnection when the component unmounts
-    // or when isOnline becomes false.
     return () => {
       disconnect()
     }
-  }, [connect, disconnect, isOnline])
+  }, [connect, disconnect])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current

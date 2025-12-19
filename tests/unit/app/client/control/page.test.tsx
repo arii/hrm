@@ -1,35 +1,38 @@
-/**
- * @jest-environment jsdom
- */
-import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+/** @jest-environment jsdom */
+
 import ControlPage from '@/app/client/control/page'
+import { WebSocketProvider } from '@/context/WebSocketContext'
+import { SessionProvider } from 'next-auth/react'
+import '@testing-library/jest-dom'
+import { render, screen, waitFor } from '@testing-library/react'
+import React from 'react'
 
-// Mock the child client-side component that is rendered by the page.
-// This isolates the server-side Page component for a clean unit test.
-jest.mock('@/app/client/control/ControlPanel', () => {
-  return function MockControlPanel() {
-    return (
-      <div>
-        {/* The child component is responsible for its own titles */}
-        <h1>Timer Controls</h1>
-        <div data-testid="timer-controls" />
-        <h1>Spotify Controls</h1>
-        <div data-testid="spotify-controls" />
-      </div>
+// Mock child components that have complex internal logic
+jest.mock('@/app/client/control/components/TimerControls', () => ({
+  __esModule: true,
+  default: () => <div data-testid="mock-timer-controls">Timer Controls</div>,
+}))
+jest.mock('@/app/client/control/components/SpotifyControls', () => ({
+  __esModule: true,
+  default: () => (
+    <div data-testid="mock-spotify-controls">Spotify Controls</div>
+  ),
+}))
+
+describe('ControlPage Integration', () => {
+  it('should render all child components within the providers', async () => {
+    render(
+      <SessionProvider session={null}>
+        <WebSocketProvider>
+          <ControlPage />
+        </WebSocketProvider>
+      </SessionProvider>
     )
-  }
-})
 
-describe('ControlPage', () => {
-  it('should render the ControlPanel client component', () => {
-    render(<ControlPage />)
-
-    // The Page component's main job is to render the ControlPanel.
-    // We verify that the key elements from our mocked ControlPanel are present.
-    expect(screen.getByText('Timer Controls')).toBeInTheDocument()
-    expect(screen.getByText('Spotify Controls')).toBeInTheDocument()
-    expect(screen.getByTestId('timer-controls')).toBeInTheDocument()
-    expect(screen.getByTestId('spotify-controls')).toBeInTheDocument()
+    // Wait for all components to be rendered, including dynamic ones
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-timer-controls')).toBeInTheDocument()
+      expect(screen.getByTestId('mock-spotify-controls')).toBeInTheDocument()
+    })
   })
 })
