@@ -124,7 +124,7 @@ export async function handleSpotifyApiError(
   ) {
     logger.warn(
       { err: error },
-      'Temporary network error during Spotify polling'
+      `Temporary network connectivity issue during Spotify polling: ${errMsg} (suppressed)`
     )
     return true // Handled (suppressed)
   }
