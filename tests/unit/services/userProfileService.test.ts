@@ -48,11 +48,13 @@ describe('services/userProfileService', () => {
 
       const profile = await getProfile('test-user')
       expect(profile).not.toBeNull()
-      expect(profile?.name).toBe('test-user')
-      expect(profile).toHaveProperty('age')
-      expect(profile).toHaveProperty('height')
-      expect(profile).toHaveProperty('weight')
-      expect(profile).toHaveProperty('assignedGenderAtBirth')
+      expect(profile).toEqual({
+        name: 'test-user',
+        age: 30,
+        height: 175,
+        weight: 75,
+        assignedGenderAtBirth: 'other',
+      })
       expect(mockedFs.writeFile).toHaveBeenCalled()
     })
 
@@ -64,7 +66,13 @@ describe('services/userProfileService', () => {
 
       const profile = await getProfile('test-user')
       expect(profile).not.toBeNull()
-      expect(profile?.name).toBe('test-user')
+      expect(profile).toEqual({
+        name: 'test-user',
+        age: 30,
+        height: 175,
+        weight: 75,
+        assignedGenderAtBirth: 'other',
+      })
       expect(mockedFs.writeFile).toHaveBeenCalled()
     })
   })
