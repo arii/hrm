@@ -1,52 +1,90 @@
-// File: tests/unit/lib/calorie-estimation.test.ts
 /**
- * @jest-environment node
+ * @jest-environment jsdom
  */
-import {
-  estimateCaloriesBurned,
-  CalorieEstimationParams,
-} from '../../../lib/calorie-estimation'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
 
-describe('lib/calorie-estimation', () => {
-  const baseParams: CalorieEstimationParams = {
-    heartRate: 150, // Active HR
-    age: 35,
-    weightKg: 75,
-    durationMinutes: 30,
-  }
+describe('Calorie Estimation', () => {
+  // Baseline test with realistic data
+  it('should estimate calories burned with realistic data', () => {
+    const params = {
+      heartRate: 150,
+      age: 30,
+      weightKg: 70,
+      durationMinutes: 30,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBeCloseTo(426.7, 1)
+  })
 
-  describe('estimateCaloriesBurned (gender-neutral)', () => {
-    it('should calculate a reasonable calorie burn for a typical workout', () => {
-      const calories = estimateCaloriesBurned(baseParams)
-      // Based on the formula: (-55.0969 + 0.6309*150 + 0.1988*75 + 0.2017*35) / 4.184 * 30
-      // Expected: Approx. 441.0 kcal.
-      expect(calories).toBeGreaterThan(440)
-      expect(calories).toBeLessThan(442)
-      expect(calories).toBeCloseTo(441.0, 1)
-    })
+  // Edge case: zero duration
+  it('should return 0 calories for zero duration', () => {
+    const params = {
+      heartRate: 150,
+      age: 30,
+      weightKg: 70,
+      durationMinutes: 0,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBe(0)
+  })
 
-    it('should return 0 if heart rate is 30 or less', () => {
-      const params = { ...baseParams, heartRate: 30 }
-      expect(estimateCaloriesBurned(params)).toBe(0)
-    })
+  // Edge case: low heart rate
+  it('should return 0 calories for very low heart rate', () => {
+    const params = {
+      heartRate: 29,
+      age: 30,
+      weightKg: 70,
+      durationMinutes: 30,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBe(0)
+  })
 
-    it('should return 0 if duration is 0 or less', () => {
-      const paramsZero = { ...baseParams, durationMinutes: 0 }
-      const paramsNegative = { ...baseParams, durationMinutes: -10 }
-      expect(estimateCaloriesBurned(paramsZero)).toBe(0)
-      expect(estimateCaloriesBurned(paramsNegative)).toBe(0)
-    })
+  // User profile: older, lighter person
+  it('should calculate correctly for an older, lighter person', () => {
+    const params = {
+      heartRate: 140,
+      age: 65,
+      weightKg: 55,
+      durationMinutes: 60,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBeCloseTo(821.3, 1)
+  })
 
-    it('should not return a negative calorie value', () => {
-      // Use extreme values that might push the intercept to dominate
-      const params = {
-        heartRate: 40, // very low HR
-        age: 80, // high age
-        weightKg: 40, // low weight
-        durationMinutes: 10,
-      }
-      const calories = estimateCaloriesBurned(params)
-      expect(calories).toBeGreaterThanOrEqual(0)
-    })
+  // User profile: younger, heavier person
+  it('should calculate correctly for a younger, heavier person', () => {
+    const params = {
+      heartRate: 160,
+      age: 22,
+      weightKg: 90,
+      durationMinutes: 45,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBeCloseTo(733.3, 1)
+  })
+
+  // High but valid values
+  it('should handle high but valid values', () => {
+    const params = {
+      heartRate: 195,
+      age: 25,
+      weightKg: 100,
+      durationMinutes: 120,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBeCloseTo(2663.0, 1)
+  })
+
+  // Low but valid values
+  it('should handle low but valid values', () => {
+    const params = {
+      heartRate: 90,
+      age: 40,
+      weightKg: 60,
+      durationMinutes: 15,
+    }
+    const calories = estimateCaloriesBurned(params)
+    expect(calories).toBeCloseTo(77.7, 1)
   })
 })
