@@ -20,6 +20,22 @@ export async function logSpotifyCommandError(
   error: unknown
 ): Promise<void> {
   try {
+    const errObj = error as { message?: string; status?: number }
+
+    // Check for "No active device" error (404)
+    if (
+      (errObj?.message &&
+        (errObj.message.includes('NO_ACTIVE_DEVICE') ||
+          errObj.message.includes('Device not found'))) ||
+      errObj?.status === 404
+    ) {
+      logger.warn(
+        { command },
+        'Spotify command failed: No active device found. Playback cannot be controlled.'
+      )
+      return
+    }
+
     if (error instanceof SyntaxError) {
       logger.warn(
         { command },
@@ -96,6 +112,21 @@ export async function handleSpotifyApiError(
     logger.warn('Spotify token expired during polling. Attempting refresh.')
     onTokenExpired()
     return true // Handled
+  }
+
+  // Check for network errors
+  const errMsg = (error as { message?: string })?.message || ''
+  if (
+    errMsg.includes('fetch failed') ||
+    errMsg.includes('EAI_AGAIN') ||
+    errMsg.includes('ENETUNREACH') ||
+    errMsg.includes('ECONNREFUSED')
+  ) {
+    logger.warn(
+      { err: error },
+      'Temporary network error during Spotify polling'
+    )
+    return true // Handled (suppressed)
   }
 
   // For other errors, log the response if available
