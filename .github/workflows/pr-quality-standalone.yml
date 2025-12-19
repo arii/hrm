@@ -87,14 +87,6 @@ jobs:
           pnpm config set store-dir ~/.local/share/pnpm/store
           pnpm config set side-effects-cache true
 
-      - name: Cache pnpm Store
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/pnpm/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -136,16 +128,6 @@ jobs:
         # if: steps.playwright-cache.outputs.cache-hit != 'true'
         # CHANGE: Removed --with-deps (System deps are already on your server)
         run: pnpm exec playwright install chromium
-
-      - name: Cache Next.js Build
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            # ADD THIS LINE: Matches any previous Next.js cache
-            ${{ runner.os }}-nextjs-
 
       - name: Lint Code
         id: lint
