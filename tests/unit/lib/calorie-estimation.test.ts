@@ -1,7 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { estimateCaloriesBurned, CalorieEstimationParams } from '@/lib/calorie-estimation'
+import {
+  estimateCaloriesBurned,
+  CalorieEstimationParams,
+} from '@/lib/calorie-estimation'
 
 describe('Calorie Estimation', () => {
   const testCases: Array<[string, CalorieEstimationParams, number]> = [
