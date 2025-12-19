@@ -106,7 +106,7 @@ export class SpotifyPolling {
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
     this.sdk = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID || '',
-      tokenWithoutRefresh
+      tokenWithoutRefresh as AccessToken
     )
   }
 
