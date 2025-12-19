@@ -59,37 +59,72 @@ describe('lib/calorie-estimation', () => {
         // profile, params, expected approx calories
         {
           profile: 'Younger, lighter individual, lower intensity',
-          params: { heartRate: 120, age: 25, weightKg: 60, durationMinutes: 45 },
+          params: {
+            heartRate: 120,
+            age: 25,
+            weightKg: 60,
+            durationMinutes: 45,
+          },
           expected: 404.2,
         },
         {
           profile: 'Older, heavier individual, higher intensity',
-          params: { heartRate: 160, age: 55, weightKg: 90, durationMinutes: 20 },
+          params: {
+            heartRate: 160,
+            age: 55,
+            weightKg: 90,
+            durationMinutes: 20,
+          },
           expected: 357.7,
         },
         {
           profile: 'Average individual, very high intensity',
-          params: { heartRate: 180, age: 35, weightKg: 75, durationMinutes: 60 },
+          params: {
+            heartRate: 180,
+            age: 35,
+            weightKg: 75,
+            durationMinutes: 60,
+          },
           expected: 1153.5,
         },
         {
           profile: 'Edge Case: Very lightweight individual',
-          params: { heartRate: 140, age: 30, weightKg: 45, durationMinutes: 30 },
+          params: {
+            heartRate: 140,
+            age: 30,
+            weightKg: 45,
+            durationMinutes: 30,
+          },
           expected: 345.8,
         },
         {
           profile: 'Edge Case: Very heavyweight individual',
-          params: { heartRate: 140, age: 30, weightKg: 120, durationMinutes: 30 },
+          params: {
+            heartRate: 140,
+            age: 30,
+            weightKg: 120,
+            durationMinutes: 30,
+          },
           expected: 452.7,
         },
         {
           profile: 'Edge Case: Very young individual',
-          params: { heartRate: 160, age: 18, weightKg: 65, durationMinutes: 40 },
+          params: {
+            heartRate: 160,
+            age: 18,
+            weightKg: 65,
+            durationMinutes: 40,
+          },
           expected: 596.6,
         },
         {
           profile: 'Edge Case: Very old individual',
-          params: { heartRate: 130, age: 75, weightKg: 70, durationMinutes: 25 },
+          params: {
+            heartRate: 130,
+            age: 75,
+            weightKg: 70,
+            durationMinutes: 25,
+          },
           expected: 334.4,
         },
         {
