@@ -8,7 +8,10 @@ export class AudioManager {
   private longBeep: HTMLAudioElement | null = null
   private isMuted = false
   private loadedAudio = false
-  private volume = 0.9 // Default to max, will be overridden by user preference
+  // Default to 0.9 (90%) for high visibility/audibility by default,
+  // while leaving some headroom and being less jarring than 100%.
+  // This will be overridden by user preference.
+  private volume = 0.9
 
   constructor() {
     if (typeof window !== 'undefined') {
