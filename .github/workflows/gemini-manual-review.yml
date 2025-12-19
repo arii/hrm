@@ -56,13 +56,22 @@ jobs:
 
       - name: Install dependencies with fallback
         id: install
-        continue-on-error: true
         run: |
-          if ! pnpm install --frozen-lockfile; then
-            echo "LOCKFILE_MISMATCH=true" >> $GITHUB_ENV
-            pnpm install && echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
-          else
+          set -e
+          if pnpm install --frozen-lockfile 2>&1; then
             echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
+            echo "Installation successful with frozen lockfile"
+          else
+            echo "⚠️ Frozen lockfile mismatch detected, attempting flexible install..."
+            if pnpm install 2>&1; then
+              echo "INSTALL_SUCCESS=true" >> $GITHUB_ENV
+              echo "LOCKFILE_MISMATCH=true" >> $GITHUB_ENV
+              echo "Installation successful with flexible lockfile"
+            else
+              echo "INSTALL_SUCCESS=false" >> $GITHUB_ENV
+              echo "::error::Failed to install dependencies. Check lockfile and package.json"
+              exit 1
+            fi
           fi
 
       - name: Post Review Started Comment
@@ -81,29 +90,39 @@ jobs:
       - name: Analyze PR Change Patterns
         id: analyze_changes
         env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Fetch PR details using gh CLI
-          PR_JSON=$(gh pr view "$PR_NUMBER" --json commits,files,baseRefOid,headRefOid)
+          set -e
+          PR_NUMBER="${{ steps.pr_info.outputs.PR_NUMBER }}"
+          
+          # Fetch PR details with error handling
+          if ! PR_JSON=$(gh pr view "$PR_NUMBER" --json commits,files,baseRefOid,headRefOid 2>&1); then
+            echo "::error::Failed to fetch PR details for #$PR_NUMBER"
+            exit 1
+          fi
           
           # Get commit SHAs for diff
           BASE_SHA=$(echo "$PR_JSON" | jq -r '.baseRefOid')
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
           
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ] || [ "$BASE_SHA" == "null" ] || [ "$HEAD_SHA" == "null" ]; then
+            echo "::error::Failed to extract commit SHAs from PR"
+            exit 1
+          fi
+          
           # Count total files changed
           FILES_CHANGED=$(echo "$PR_JSON" | jq '.files | length')
           
-          # Calculate LOC changed
-          DIFF_STATS=$(git diff --shortstat "$BASE_SHA".."$HEAD_SHA" || echo "0 files changed")
+          # Calculate LOC changed with robust error handling
+          DIFF_STATS=$(git diff --shortstat "$BASE_SHA".."$HEAD_SHA" 2>/dev/null || echo "0 files changed")
           LOC_CHANGED=$(echo "$DIFF_STATS" | grep -oP '\d+(?= insertion)' || echo "0")
           LOC_DELETED=$(echo "$DIFF_STATS" | grep -oP '\d+(?= deletion)' || echo "0")
           TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
           
           # Determine review depth based on size
-          if [ $TOTAL_LOC -lt 100 ]; then
+          if [ "$TOTAL_LOC" -lt 100 ]; then
             REVIEW_DEPTH="detailed"
-          elif [ $TOTAL_LOC -lt 400 ]; then
+          elif [ "$TOTAL_LOC" -lt 400 ]; then
             REVIEW_DEPTH="standard"
           else
             REVIEW_DEPTH="focused"
@@ -114,7 +133,7 @@ jobs:
           echo "REVIEW_DEPTH=$REVIEW_DEPTH" >> $GITHUB_ENV
           
           # Identify file types and architectural areas
-          git diff --name-only "$BASE_SHA".."$HEAD_SHA" | \
+          git diff --name-only "$BASE_SHA".."$HEAD_SHA" 2>/dev/null | \
             awk -F/ '{print $1}' | sort | uniq > changed_areas.txt
           
           CHANGED_AREAS=$(cat changed_areas.txt | tr '\n' ',' | sed 's/,$//')
@@ -123,106 +142,124 @@ jobs:
       - name: Get PR Diff with Context
         id: diff
         env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr diff "$PR_NUMBER" --patch > pr.diff
-          gh pr diff "$PR_NUMBER" > pr_summary.txt
+          set -e
+          PR_NUMBER="${{ steps.pr_info.outputs.PR_NUMBER }}"
+          
+          if ! gh pr diff "$PR_NUMBER" --patch > pr.diff 2>&1; then
+            echo "::error::Failed to retrieve PR diff"
+            exit 1
+          fi
+          
+          if ! gh pr diff "$PR_NUMBER" > pr_summary.txt 2>&1; then
+            echo "::warning::Failed to retrieve PR summary"
+          fi
 
       - name: Gather Review History
         id: review_history
         env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -e
+          PR_NUMBER="${{ steps.pr_info.outputs.PR_NUMBER }}"
+          
+          # Extract review history (generalized for any user - not just "arii")
           PREVIOUS_REVIEWS=$(gh pr view "$PR_NUMBER" \
             --json comments \
-            --jq '[.comments[] | select(.author.login == "arii") | {body: .body, createdAt: .createdAt}]')
+            --jq '[.comments[]] | length' 2>/dev/null || echo "0")
           
-          echo "PREVIOUS_REVIEWS<<EOF" >> $GITHUB_ENV
-          echo "$PREVIOUS_REVIEWS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "REVIEW_COUNT=$PREVIOUS_REVIEWS" >> $GITHUB_ENV
           
-          REVIEW_COUNT=$(echo "$PREVIOUS_REVIEWS" | jq '. | length')
-          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
-          
+          # Extract resolved conversation count
           RESOLVED_COUNT=$(gh pr view "$PR_NUMBER" \
             --json reviewThreads \
-            --jq '[.reviewThreads[] | select(.isResolved == true)] | length' || echo "0")
+            --jq '[.reviewThreads[] | select(.isResolved == true)] | length' 2>/dev/null || echo "0")
           echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
           
+          # Extract changes requested count
           CHANGES_REQUESTED=$(gh pr view "$PR_NUMBER" \
             --json reviews \
-            --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+            --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length' 2>/dev/null || echo "0")
           echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
 
       - name: Get Issue Context
         id: context
         env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -e
+          PR_NUMBER="${{ steps.pr_info.outputs.PR_NUMBER }}"
+          
+          # Retrieve PR labels (only relevant info, not full objects)
+          PR_LABELS=$(gh pr view "$PR_NUMBER" \
+            --json labels \
+            --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+          
+          # Retrieve commit messages (relevant for context)
+          COMMIT_MESSAGES=$(gh pr view "$PR_NUMBER" \
+            --json commits \
+            --jq '[.commits[].commit.message] | join("\n---\n")' 2>/dev/null || echo "")
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          # Extract linked issue info (only if it exists)
           ISSUE_NUMBER=$(gh pr view "$PR_NUMBER" \
             --json closingIssuesReferences \
-            --jq '.closingIssuesReferences[0].number' || echo "")
+            --jq '.closingIssuesReferences[0].number' 2>/dev/null || echo "")
           
           if [ -n "$ISSUE_NUMBER" ] && [ "$ISSUE_NUMBER" != "null" ]; then
-            ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body')
-            ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq '.title')
-            ISSUE_LABELS=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(",")')
-            
-            echo "LINKED_ISSUE_BODY<<EOF" >> $GITHUB_ENV
-            echo "$ISSUE_BODY" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
+            ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq '.title' 2>/dev/null || echo "")
+            ISSUE_LABELS=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
             echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
             echo "ISSUE_TITLE=$ISSUE_TITLE" >> $GITHUB_ENV
             echo "ISSUE_LABELS=$ISSUE_LABELS" >> $GITHUB_ENV
           else
-            echo "LINKED_ISSUE_BODY=" >> $GITHUB_ENV
             echo "ISSUE_NUMBER=" >> $GITHUB_ENV
           fi
-          
-          PR_LABELS=$(gh pr view "$PR_NUMBER" \
-            --json labels \
-            --jq '[.labels[].name] | join(",")')
-          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
-          
-          COMMIT_MESSAGES=$(gh pr view "$PR_NUMBER" \
-            --json commits \
-            --jq '[.commits[].commit.message] | join("\n---\n")')
-          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
-          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
 
       - name: Check for Test Changes
         id: test_coverage
         env:
-          PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -e
+          PR_NUMBER="${{ steps.pr_info.outputs.PR_NUMBER }}"
+          
           # Get base and head SHAs
-          PR_JSON=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid)
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json baseRefOid,headRefOid 2>/dev/null)
           BASE_SHA=$(echo "$PR_JSON" | jq -r '.baseRefOid')
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
           
-          TEST_FILES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | \
-            grep -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
+          if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ] || [ "$BASE_SHA" == "null" ] || [ "$HEAD_SHA" == "null" ]; then
+            echo "::warning::Could not retrieve commit SHAs, skipping test coverage check"
+            echo "HAS_TEST_CHANGES=false" >> $GITHUB_ENV
+            echo "MISSING_TESTS=false" >> $GITHUB_ENV
+            exit 0
+          fi
+          
+          # Robust test file detection using multiple patterns
+          TEST_FILES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" 2>/dev/null | \
+            grep -E '(\.test\.|\.spec\.|__tests__|tests?/)' || echo "")
           
           if [ -n "$TEST_FILES" ]; then
             echo "HAS_TEST_CHANGES=true" >> $GITHUB_ENV
-            echo "TEST_FILES<<EOF" >> $GITHUB_ENV
-            echo "$TEST_FILES" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
+            echo "TEST_FILE_COUNT=$(echo "$TEST_FILES" | wc -l)" >> $GITHUB_ENV
           else
             echo "HAS_TEST_CHANGES=false" >> $GITHUB_ENV
           fi
           
-          SOURCE_FILES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | \
+          # Check for untested source files using glob patterns
+          SOURCE_FILES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" 2>/dev/null | \
             grep -E '\.(ts|tsx|js|jsx)$' | \
-            grep -v -E '(test|spec|__tests__|\.test\.|\.spec\.)' || echo "")
+            grep -v -E '(\.test\.|\.spec\.|__tests__|tests?/)' || echo "")
           
-          if [ -n "$SOURCE_FILES" ] && [ "$(cat /dev/null 2>/dev/null || echo false)" == "false" ]; then
+          # Flag missing tests if source changed but tests didn't
+          if [ -n "$SOURCE_FILES" ] && [ -z "$TEST_FILES" ]; then
             echo "MISSING_TESTS=true" >> $GITHUB_ENV
+            echo "SOURCE_FILE_COUNT=$(echo "$SOURCE_FILES" | wc -l)" >> $GITHUB_ENV
           else
             echo "MISSING_TESTS=false" >> $GITHUB_ENV
           fi
@@ -245,22 +282,27 @@ jobs:
           REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
           RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
           CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
-          PREVIOUS_REVIEWS: ${{ env.PREVIOUS_REVIEWS }}
-          LINKED_ISSUE_BODY: ${{ env.LINKED_ISSUE_BODY }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
           ISSUE_TITLE: ${{ env.ISSUE_TITLE }}
           ISSUE_LABELS: ${{ env.ISSUE_LABELS }}
           COMMIT_MESSAGES: ${{ env.COMMIT_MESSAGES }}
           HAS_TEST_CHANGES: ${{ env.HAS_TEST_CHANGES }}
           MISSING_TESTS: ${{ env.MISSING_TESTS }}
-          TEST_FILES: ${{ env.TEST_FILES }}
           REVIEW_CONTEXT_FILES: ${{ vars.REVIEW_CONTEXT_FILES || 'DEVELOPMENT.md,DESIGN_GUIDELINES.md,docs/audits/AUDIT_CODE_HYGIENE.md' }}
           PR_DIFF_FILE: pr.diff
         run: |
-          npx tsx scripts/gemini-client.ts \
+          if ! npx tsx scripts/gemini-client.ts \
             --preset review \
             --context "$REVIEW_CONTEXT_FILES" \
-            --output "review_result.json"
+            --output "review_result.json" 2>&1; then
+            echo "::error::Gemini review failed - script execution error"
+            exit 1
+          fi
+          
+          if [ ! -f "review_result.json" ]; then
+            echo "::error::Gemini review failed - no output file generated"
+            exit 1
+          fi
 
       - name: Process Review Result
         if: steps.gemini.outcome == 'success'
@@ -277,48 +319,56 @@ jobs:
               return;
             }
             
-            const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
-            let { reviewComment, labels } = result;
-            
-            const reviewType = process.env.REVIEW_COUNT === '0' ? 'initial' : `revision #${parseInt(process.env.REVIEW_COUNT) + 1}`;
-            const filesChanged = process.env.FILES_CHANGED;
-            const totalLoc = process.env.TOTAL_LOC;
-            
-            let header = `## 🤖 Gemini Code Review (${reviewType})\n\n`;
-            header += `📊 **Change Summary:** ${filesChanged} files, ~${totalLoc} LOC\n`;
-            header += `🎯 **Review Depth:** ${process.env.REVIEW_DEPTH}\n`;
-            header += `📁 **Areas Changed:** ${process.env.CHANGED_AREAS}\n\n`;
-            
-            if (process.env.MISSING_TESTS === 'true') {
-              header += `⚠️ **Test Coverage:** Source code changed without corresponding test updates.\n\n`;
-            }
-            
-            if (!reviewComment || reviewComment.trim() === '') {
-              reviewComment = `### ✅ Verification Complete\n\nNo significant issues found in this review.\n\n- **Verified:** Code changes align with requirements.\n- **Regressions:** None detected.\n- **Verdict:** Ready for approval.`;
-            }
-            
-            reviewComment = header + reviewComment;
-            
-            if (reviewComment) {
+            try {
+              const result = JSON.parse(fs.readFileSync('review_result.json', 'utf8'));
+              let { reviewComment, labels } = result;
+              
+              const reviewCount = parseInt(process.env.REVIEW_COUNT || '0');
+              const reviewType = reviewCount === 0 ? 'Initial Review' : `Revision #${reviewCount + 1}`;
+              const filesChanged = process.env.FILES_CHANGED || '0';
+              const totalLoc = process.env.TOTAL_LOC || '0';
+              
+              let header = `## Gemini Code Review (${reviewType})\n\n`;
+              header += `**Change Summary:** ${filesChanged} files, ~${totalLoc} LOC\n`;
+              header += `**Review Depth:** ${process.env.REVIEW_DEPTH || 'standard'}\n`;
+              
+              const changedAreas = process.env.CHANGED_AREAS || 'various';
+              if (changedAreas !== '') {
+                header += `**Areas Changed:** ${changedAreas}\n`;
+              }
+              header += '\n';
+              
+              if (process.env.MISSING_TESTS === 'true') {
+                header += `**Note:** Source code changed without corresponding test updates.\n\n`;
+              }
+              
+              if (!reviewComment || reviewComment.trim() === '') {
+                reviewComment = '### Verification Complete\n\nNo significant issues found in this review.';
+              }
+              
+              const finalComment = header + reviewComment;
+              
               await github.rest.issues.createComment({
                 issue_number: process.env.PR_NUMBER,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: reviewComment
+                body: finalComment
               });
-            }
-            
-            if (labels && labels.length > 0) {
-              try {
-                await github.rest.issues.addLabels({
-                  issue_number: process.env.PR_NUMBER,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  labels: labels
-                });
-              } catch (e) {
-                console.log('Could not add labels:', e.message);
+              
+              if (labels && Array.isArray(labels) && labels.length > 0) {
+                try {
+                  await github.rest.issues.addLabels({
+                    issue_number: process.env.PR_NUMBER,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    labels: labels
+                  });
+                } catch (labelError) {
+                  console.log('Could not apply labels:', labelError.message);
+                }
               }
+            } catch (parseError) {
+              core.setFailed('Failed to parse review result: ' + parseError.message);
             }
 
       - name: Handle Review Failure
@@ -331,9 +381,13 @@ jobs:
           script: |
             const failureComment = '## Gemini Review Status\n\n**Status**: Review Failed\n\nThe review process encountered an error. Please check the workflow logs for details.';
             
-            await github.rest.issues.createComment({
-              issue_number: process.env.PR_NUMBER,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: failureComment
-            });
+            try {
+              await github.rest.issues.createComment({
+                issue_number: process.env.PR_NUMBER,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: failureComment
+              });
+            } catch (error) {
+              core.warning('Failed to post failure comment: ' + error.message);
+            }
