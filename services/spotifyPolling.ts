@@ -100,9 +100,13 @@ export class SpotifyPolling {
   }
 
   private setupSdk(accessToken: AccessToken) {
+    // Remove refresh_token to prevent SDK from attempting auto-refresh without client secret.
+    // We handle refreshing manually via SpotifyTokenManager.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { refresh_token, ...tokenWithoutRefresh } = accessToken
     this.sdk = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID || '',
-      accessToken
+      tokenWithoutRefresh as AccessToken
     )
   }
 
