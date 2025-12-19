@@ -230,6 +230,7 @@ jobs:
 
       - name: Fetch Check Results
         id: checks
+        continue-on-error: true
         env:
           PR_NUMBER: ${{ steps.pr_info.outputs.PR_NUMBER }}
           GH_TOKEN: ${{ github.token }}
@@ -238,15 +239,23 @@ jobs:
           PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefOid)
           HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
 
+          # Fetch checks and format with emojis for better readability
           CHECKS=$(gh api repos/${{ github.repository }}/commits/$HEAD_SHA/check-runs \
-            --jq '.check_runs[] | select(.name != "Gemini Code Review") | "- " + .name + ": " + (.conclusion // .status)')
+            --jq '.check_runs[] | select(.name != "Gemini Code Review") |
+            (if .conclusion == "success" then "✅"
+             elif .conclusion == "failure" then "❌"
+             elif .conclusion == "skipped" then "⚪"
+             else "⏳" end) + " " + .name + ": " + (.conclusion // .status)')
 
           if [ -z "$CHECKS" ]; then
             CHECKS="No check results available yet."
           fi
 
+          # Truncate to avoid exceeding env var limits (5000 chars safe limit)
+          CHECKS_TRUNCATED=$(echo "$CHECKS" | head -c 5000)
+
           echo "CHECK_RESULTS<<EOF" >> $GITHUB_ENV
-          echo "$CHECKS" >> $GITHUB_ENV
+          echo "$CHECKS_TRUNCATED" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Run Intelligent Gemini Review

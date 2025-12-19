@@ -29,7 +29,7 @@ const MODEL_FALLBACKS = [
   'gemini-1.5-flash-8b',
 ]
 
-interface ReviewContext {
+export interface ReviewContext {
   prNumber: string
   prTitle: string
   prAuthor: string
@@ -196,7 +196,7 @@ function getReviewContextFromEnv(): ReviewContext {
   }
 }
 
-function buildReviewPrompt(
+export function buildReviewPrompt(
   diff: string,
   context: ReviewContext,
   contextContent: string
@@ -593,4 +593,6 @@ function handleError(error: any) {
   process.exit(1)
 }
 
-main()
+if (process.env.NODE_ENV !== 'test') {
+  main()
+}
