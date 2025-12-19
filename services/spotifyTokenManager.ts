@@ -111,58 +111,91 @@ export class SpotifyTokenManager {
   private async refreshToken(): Promise<boolean> {
     if (!this.currentToken?.payload.refresh_token) return false
 
-    try {
-      const basic = Buffer.from(
-        `${this.clientId}:${this.clientSecret}`
-      ).toString('base64')
+    const maxRetries = 3
+    let attempt = 0
 
-      const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${basic}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: this.currentToken.payload.refresh_token,
-        }).toString(),
-      })
+    while (attempt < maxRetries) {
+      attempt++
+      try {
+        const basic = Buffer.from(
+          `${this.clientId}:${this.clientSecret}`
+        ).toString('base64')
 
-      if (!response.ok) {
-        const errorBody = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errorBody}`)
+        const response = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${basic}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: this.currentToken.payload.refresh_token,
+          }).toString(),
+        })
+
+        if (!response.ok) {
+          const errorBody = await response.text()
+          // Don't retry client errors (4xx) unless it's rate limiting (429)
+          if (
+            response.status >= 400 &&
+            response.status < 500 &&
+            response.status !== 429
+          ) {
+            throw new Error(
+              `HTTP ${response.status}: ${errorBody} (Non-retriable)`
+            )
+          }
+          throw new Error(`HTTP ${response.status}: ${errorBody}`)
+        }
+
+        const data = (await response.json()) as SpotifyTokenResponse
+        console.log(
+          'Spotify token refresh successful. Status:',
+          response.status,
+          'Body:',
+          data
+        )
+
+        // Update current token with new values
+        this.currentToken = {
+          receivedAt: Date.now(),
+          payload: {
+            ...this.currentToken.payload,
+            access_token: data.access_token,
+            expires_in: data.expires_in,
+            refresh_token:
+              data.refresh_token ?? this.currentToken.payload.refresh_token,
+            obtainedAt: Date.now(),
+          },
+        }
+
+        // Save updated token
+        writeTokenFileSafe(this.tokenFile, this.currentToken)
+
+        console.log(
+          'Refreshed Spotify token for:',
+          this.currentToken.payload.sub
+        )
+        return true
+      } catch (error: unknown) {
+        const err = error as Error
+        if (err.message && err.message.includes('(Non-retriable)')) {
+          console.error('Failed to refresh Spotify token (fatal):', err)
+          return false
+        }
+
+        console.error(
+          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}):`,
+          err
+        )
+        if (attempt >= maxRetries) return false
+        // Exponential backoff
+        await new Promise((res) =>
+          setTimeout(res, 1000 * Math.pow(2, attempt - 1))
+        )
       }
-
-      const data = (await response.json()) as SpotifyTokenResponse
-      console.log(
-        'Spotify token refresh successful. Status:',
-        response.status,
-        'Body:',
-        data
-      )
-
-      // Update current token with new values
-      this.currentToken = {
-        receivedAt: Date.now(),
-        payload: {
-          ...this.currentToken.payload,
-          access_token: data.access_token,
-          expires_in: data.expires_in,
-          refresh_token:
-            data.refresh_token ?? this.currentToken.payload.refresh_token,
-          obtainedAt: Date.now(),
-        },
-      }
-
-      // Save updated token
-      writeTokenFileSafe(this.tokenFile, this.currentToken)
-
-      console.log('Refreshed Spotify token for:', this.currentToken.payload.sub)
-      return true
-    } catch (err) {
-      console.error('Failed to refresh Spotify token:', err)
-      return false
     }
+    return false
   }
 
   async getValidAccessToken(): Promise<string | null> {

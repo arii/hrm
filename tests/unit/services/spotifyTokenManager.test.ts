@@ -134,13 +134,13 @@ describe('SpotifyTokenManager', () => {
     const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
     const accessToken = await tokenManager.getValidAccessToken()
 
-    expect(global.fetch).toHaveBeenCalled()
+    expect(global.fetch).toHaveBeenCalledTimes(3)
     // It should return the old, expired token on failure
     expect(accessToken).toBe('access_token')
     expect(fs.writeFileSync).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith(
-      'Failed to refresh Spotify token:',
-      new Error('HTTP 500: Internal Server Error')
+      expect.stringContaining('Failed to refresh Spotify token (attempt'),
+      expect.any(Error)
     )
   })
 
