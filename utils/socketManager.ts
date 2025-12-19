@@ -207,10 +207,13 @@ const handleIncomingMessage = (
 
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-          const currentWeight = existingData.weight
-          const currentHeight = existingData.height
-          const currentGender = existingData.gender
+          const currentAge = existingData.age ?? CALORIE_DEFAULTS.AGE
+          const currentWeight =
+            existingData.weight ?? CALORIE_DEFAULTS.WEIGHT
+          const currentHeight =
+            existingData.height ?? CALORIE_DEFAULTS.HEIGHT
+          const currentGender =
+            existingData.gender ?? CALORIE_DEFAULTS.GENDER
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({

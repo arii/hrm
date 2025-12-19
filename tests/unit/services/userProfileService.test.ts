@@ -39,23 +39,33 @@ describe('services/userProfileService', () => {
       expect(mockedFs.readFile).toHaveBeenCalledWith(PROFILES_FILE_PATH, 'utf-8')
     })
 
-    it('should return null if the user profile does not exist', async () => {
+    it('should create a default profile if the user profile does not exist', async () => {
       const profiles = {
         'another-user': { name: 'another-user', age: 40 },
       }
       mockedFs.readFile.mockResolvedValue(JSON.stringify(profiles))
+      mockedFs.writeFile.mockResolvedValue()
 
       const profile = await getProfile('test-user')
-      expect(profile).toBeNull()
+      expect(profile).not.toBeNull()
+      expect(profile?.name).toBe('test-user')
+      expect(profile).toHaveProperty('age')
+      expect(profile).toHaveProperty('height')
+      expect(profile).toHaveProperty('weight')
+      expect(profile).toHaveProperty('assignedGenderAtBirth')
+      expect(mockedFs.writeFile).toHaveBeenCalled()
     })
 
-    it('should return null if the profiles file does not exist', async () => {
+    it('should create a default profile if the profiles file does not exist', async () => {
       const error = new Error('File not found') as NodeJS.ErrnoException
       error.code = 'ENOENT'
       mockedFs.readFile.mockRejectedValue(error)
+      mockedFs.writeFile.mockResolvedValue()
 
       const profile = await getProfile('test-user')
-      expect(profile).toBeNull()
+      expect(profile).not.toBeNull()
+      expect(profile?.name).toBe('test-user')
+      expect(mockedFs.writeFile).toHaveBeenCalled()
     })
   })
 
