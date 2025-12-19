@@ -23,6 +23,8 @@ These are the most frequently used commands for testing and code quality checks.
 - **`npm run test:visual`**: Runs the main visual regression test suite.
 - **`npm run test:visual:headed`**: Runs the visual tests with a visible browser for debugging.
 - **`npm run test:visual:update`**: Updates the visual test snapshots.
+- **`npm run test:storybook:visual`**: Runs the Storybook visual regression test suite.
+- **`npm run test:storybook:visual:update`**: Updates the Storybook visual test snapshots.
 - **`npm run test:comprehensive`**: Runs a longer, more detailed E2E test suite covering full user journeys.
 - **`npm run test:visual:report`**: Opens a detailed web report of the last Playwright test run.
 
