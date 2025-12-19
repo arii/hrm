@@ -38,7 +38,7 @@ describe('handleSpotifyApiError', () => {
 
     expect(onTokenExpiredMock).not.toHaveBeenCalled()
     expect(logger.warn).toHaveBeenCalledWith(
-      'Spotify API Rate Limited. Backing off until next poll.'
+      'Spotify API Rate Limited. Backing off.'
     )
     expect(result).toBe(true)
   })

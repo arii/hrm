@@ -99,7 +99,7 @@ export async function handleSpotifyApiError(
       onTokenExpired()
       return true // Handled
     case 429:
-      logger.warn('Spotify API Rate Limited. Backing off until next poll.')
+      logger.warn('Spotify API Rate Limited. Backing off.')
       return true // Handled
     case 400:
     case 403:

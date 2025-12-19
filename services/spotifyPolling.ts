@@ -30,12 +30,26 @@ export interface SpotifyTokenResponse {
 }
 
 export class SpotifyPolling {
+  /**
+   * Forces an immediate poll for the currently playing track, bypassing the current polling interval.
+   * If a poll is already in progress, this method will do nothing to prevent overlapping requests.
+   */
   public forcePollAndBroadcast() {
+    if (this.isPollingRequestInProgress) {
+      logger.debug(
+        'Poll request is already in progress. Skipping forced poll.'
+      )
+      return
+    }
     // Clear any existing timeout and poll immediately
     if (this.pollTimeout) {
       clearTimeout(this.pollTimeout)
     }
-    this.getCurrentlyPlaying()
+    try {
+      this.getCurrentlyPlaying()
+    } catch (error) {
+      logger.error({ err: error }, 'Error during forcePollAndBroadcast')
+    }
   }
 
   private tokenManager: SpotifyTokenManager
@@ -63,7 +77,8 @@ export class SpotifyPolling {
   }
 
   private sdk: SpotifyApi | null = null
-  private isPolling: boolean = false
+  private isPollingEnabled: boolean = false
+  private isPollingRequestInProgress: boolean = false
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -144,8 +159,8 @@ export class SpotifyPolling {
   }
 
   public startPolling() {
-    if (this.isPolling) return
-    this.isPolling = true
+    if (this.isPollingEnabled) return
+    this.isPollingEnabled = true
     logger.debug(
       { intervalMs: this.currentPollingInterval },
       'Spotify polling started'
@@ -158,7 +173,7 @@ export class SpotifyPolling {
       clearTimeout(this.pollTimeout)
       this.pollTimeout = null
     }
-    this.isPolling = false
+    this.isPollingEnabled = false
     logger.debug('Spotify polling stopped.')
   }
 
@@ -171,7 +186,7 @@ export class SpotifyPolling {
   }
 
   private scheduleNextPoll() {
-    if (!this.isPolling) return
+    if (!this.isPollingEnabled) return
     this.pollTimeout = setTimeout(
       () => this.getCurrentlyPlaying(),
       this.currentPollingInterval
@@ -179,15 +194,20 @@ export class SpotifyPolling {
   }
 
   private getCurrentlyPlaying = async () => {
+    if (this.isPollingRequestInProgress) {
+      return
+    }
+
     if (!this.sdk) {
       this.scheduleNextPoll()
       return
     }
 
+    this.isPollingRequestInProgress = true
+
     try {
       const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
-      // Success: reset backoff strategy
       if (this.consecutiveFailures > 0) {
         logger.info(
           `Spotify API recovered after ${this.consecutiveFailures} failures. Resetting polling interval.`
@@ -258,10 +278,10 @@ export class SpotifyPolling {
           `Spotify API server error. Increasing polling interval to ${this.currentPollingInterval}ms due to ${this.consecutiveFailures} consecutive failures.`
         )
       } else if (!wasHandled) {
-        // For unhandled errors, reset to base interval to avoid getting stuck in a long poll cycle for a client error
         this.currentPollingInterval = this.basePollingInterval
       }
     } finally {
+      this.isPollingRequestInProgress = false
       this.scheduleNextPoll()
     }
   }
