@@ -76,7 +76,7 @@ export async function logSpotifyCommandError(
  *
  * @param error The caught error object.
  * @param onTokenExpired A callback to trigger a token refresh.
- * @returns {boolean} - Returns true if the error was handled (e.g., rate limit, auth), false otherwise.
+ * @returns {Promise<boolean>} - Returns true if the error was handled (e.g., rate limit, auth), false otherwise.
  */
 export async function handleSpotifyApiError(
   error: unknown,
@@ -85,29 +85,54 @@ export async function handleSpotifyApiError(
   const err = error as {
     status?: number
     response?: { text: () => Promise<string> }
+    message?: string
   }
 
-  if (err?.status === 429) {
-    logger.warn('Spotify API Rate Limited. Backing off...')
-    return true // Handled
-  }
+  const status = err?.status
 
-  if (err?.status === 401) {
-    logger.warn('Spotify token expired during polling. Attempting refresh.')
-    onTokenExpired()
-    return true // Handled
-  }
+  // Always log the original error for full context in debug logs
+  logger.debug({ err: error }, 'Spotify API Error encountered')
 
-  // For other errors, log the response if available
-  if (err?.response && typeof err.response.text === 'function') {
-    const text = await err.response.text()
-    const parsed = safeParseJSON(text)
-    logger.error(
-      { response: parsed },
-      'Unhandled Spotify API error during polling'
-    )
-  } else {
-    logger.error({ err: error }, 'Error fetching currently playing track')
+  switch (status) {
+    case 401:
+      logger.warn('Spotify token expired during polling. Attempting refresh.')
+      onTokenExpired()
+      return true // Handled
+    case 429:
+      logger.warn('Spotify API Rate Limited. Backing off until next poll.')
+      return true // Handled
+    case 400:
+    case 403:
+    case 404:
+      logger.error(
+        { status, message: err.message },
+        'Spotify API returned a client-side error. This may indicate a bug or configuration issue.'
+      )
+      break
+    case 500:
+    case 502:
+    case 503:
+      logger.warn(
+        { status, message: err.message },
+        'Spotify API returned a server-side error. Service may be temporarily unavailable.'
+      )
+      return true // Handled as a transient error
+    default:
+      // Handle non-HTTP errors (e.g., network issues) or unhandled statuses
+      if (err?.response && typeof err.response.text === 'function') {
+        const text = await err.response.text()
+        const parsed = safeParseJSON(text)
+        logger.error(
+          { status, response: parsed },
+          'Unhandled Spotify API error during polling'
+        )
+      } else {
+        logger.error(
+          { err: error, message: err?.message },
+          'An unexpected error occurred during Spotify polling (e.g., network issue)'
+        )
+      }
+      break
   }
   return false // Not a specifically handled API error
 }
