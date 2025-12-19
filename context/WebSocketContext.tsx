@@ -10,6 +10,7 @@ import {
   useState,
   useReducer,
 } from 'react'
+import { useConnectivity } from './ConnectivityContext'
 import {
   ClientCommandMessage,
   SpotifyData,
@@ -75,6 +76,7 @@ export const WebSocketProvider = ({
   serverUrl?: string
 }) => {
   const wsUrl = serverUrl || getWebSocketURL()
+  const { isOnline } = useConnectivity()
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -218,8 +220,10 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   const connect = useCallback(() => {
+    // Do not attempt to connect if the browser reports offline.
     if (
       typeof window === 'undefined' ||
+      !isOnline ||
       wsRef.current?.readyState === WebSocket.OPEN
     ) {
       return
@@ -363,12 +367,17 @@ export const WebSocketProvider = ({
 
   useEffect(() => {
     connectRef.current = connect
-    connect()
+    // Only attempt to connect if the browser is online.
+    if (isOnline) {
+      connect()
+    }
 
+    // The cleanup function will handle disconnection when the component unmounts
+    // or when isOnline becomes false.
     return () => {
       disconnect()
     }
-  }, [connect, disconnect])
+  }, [connect, disconnect, isOnline])
 
   const sendData = useCallback((data: ClientCommandMessage) => {
     const ws = wsRef.current
