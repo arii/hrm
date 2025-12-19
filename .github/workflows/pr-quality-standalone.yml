@@ -277,6 +277,8 @@ jobs:
           VISUAL_TESTS_OUTCOME: ${{ steps.visual_tests.outcome }}
           PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
         run: |
+          set +e  # Disable exit on error to continue reporting even if commands fail
+          
           # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
@@ -393,14 +395,3 @@ jobs:
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
-
-  # ===========================================================================
-  # FOLLOW-UP GEMINI REVIEW (Runs only if tests pass)
-  # ===========================================================================
-  followup-review:
-    needs: test
-    if: github.event_name == 'pull_request' && needs.test.result == 'success'
-    uses: ./.github/workflows/reusable-gemini-review.yml
-    secrets:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      ARI_PAT: ${{ secrets.ARI_PAT }}
