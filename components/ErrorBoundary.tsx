@@ -33,7 +33,10 @@ class ErrorBoundary extends Component<Props, State> {
     // Example:
     // import * as Sentry from "@sentry/nextjs";
     // Sentry.captureException(error, { extra: errorDetails });
-    console.error('ErrorBoundary caught an error:', JSON.stringify(errorDetails, null, 2))
+    console.error(
+      'ErrorBoundary caught an error:',
+      JSON.stringify(errorDetails, null, 2)
+    )
   }
 
   public render() {

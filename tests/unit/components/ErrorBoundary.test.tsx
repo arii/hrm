@@ -7,7 +7,9 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorFallback from '@/components/ErrorFallback'
 
 // Mock the console.error function to spy on its calls
-const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+const consoleErrorSpy = jest
+  .spyOn(console, 'error')
+  .mockImplementation(() => {})
 
 const ThrowError = () => {
   throw new Error('Test error')
@@ -26,7 +28,9 @@ describe('ErrorBoundary', () => {
     )
 
     expect(screen.getByText('Something went wrong.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Reload Page' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Reload Page' })
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Go Home' })).toBeInTheDocument()
   })
 
