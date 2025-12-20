@@ -29,7 +29,10 @@ class ErrorBoundary extends Component<Props, State> {
       // In a real application, you might add user info, session ID, etc.
       // E.g., user: { id: '...', name: '...' }
     }
-    // In a real app, you would send this to a service like Sentry, LogRocket, etc.
+    // In a production environment, you would send `errorDetails` to a dedicated error reporting service.
+    // Example:
+    // import * as Sentry from "@sentry/nextjs";
+    // Sentry.captureException(error, { extra: errorDetails });
     console.error('ErrorBoundary caught an error:', JSON.stringify(errorDetails, null, 2))
   }
 
