@@ -4,9 +4,6 @@ import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
-import { ThemeProvider } from '@/context/ThemeContext'
-import { createCustomTheme } from '@/lib/theme'
-import { useTheme } from '@mui/material/styles'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
@@ -19,23 +16,12 @@ jest.mock('@/components/HrTile', () => ({
     </div>
   ),
 }))
-jest.mock('@mui/material/styles', () => ({
-  ...jest.requireActual('@mui/material/styles'),
-  useTheme: jest.fn(),
-}))
 
 const mockedUseWebSocket = useWebSocket as jest.Mock
-const mockedUseTheme = useTheme as jest.Mock
 
-const renderWithTheme = (ui: React.ReactElement) => {
-  return render(<ThemeProvider>{ui}</ThemeProvider>)
-}
-
-describe.skip('HrmTiles', () => {
+describe('HrmTiles', () => {
   beforeEach(() => {
     jest.resetAllMocks()
-    const theme = createCustomTheme('light')
-    mockedUseTheme.mockReturnValue(theme)
   })
 
   it('should render HRM data correctly for a user', () => {
@@ -45,7 +31,7 @@ describe.skip('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    renderWithTheme(<HrmTiles />)
+    render(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -59,7 +45,7 @@ describe.skip('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    renderWithTheme(<HrmTiles />)
+    render(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -73,7 +59,7 @@ describe.skip('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    renderWithTheme(<HrmTiles />)
+    render(<HrmTiles />)
 
     // The component renders skeleton containers when there's no data
     expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
@@ -88,7 +74,7 @@ describe.skip('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    renderWithTheme(<HrmTiles />)
+    render(<HrmTiles />)
 
     expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
@@ -105,7 +91,7 @@ describe.skip('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    renderWithTheme(<HrmTiles />)
+    render(<HrmTiles />)
 
     // Only the 'Valid User' tile should be rendered
     const tiles = screen.getAllByTestId('mock-hr-tile')
