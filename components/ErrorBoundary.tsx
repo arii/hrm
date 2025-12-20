@@ -26,13 +26,7 @@ class ErrorBoundary extends Component<Props, State> {
       stack: error.stack,
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
-      // In a real application, you might add user info, session ID, etc.
-      // E.g., user: { id: '...', name: '...' }
     }
-    // In a production environment, you would send `errorDetails` to a dedicated error reporting service.
-    // Example:
-    // import * as Sentry from "@sentry/nextjs";
-    // Sentry.captureException(error, { extra: errorDetails });
     console.error(
       'ErrorBoundary caught an error:',
       JSON.stringify(errorDetails, null, 2)
