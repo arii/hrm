@@ -201,7 +201,7 @@ app
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
         // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
+        if (spotifyService && req.body && req.body.payload) {
           try {
             // Await the handler to ensure sequential execution and catch errors
             await spotifyService.handleTokenUpdate(req.body.payload)
