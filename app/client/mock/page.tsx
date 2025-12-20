@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { calculateMaxHr } from '@/lib/shared/utils/health'
 import {
   HrmInputMessage,
   HrmMetadataUpdateMessage,
@@ -25,7 +26,7 @@ export default function MockPage() {
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
 
   const isStreaming = intervalId !== null
-  const maxHr = 220 - age
+  const maxHr = calculateMaxHr(age)
 
   // Signal when page is ready for testing
   useEffect(() => {

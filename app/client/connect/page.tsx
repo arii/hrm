@@ -4,7 +4,8 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration } from '@/lib/shared/utils/time'
+import { calculateMaxHr } from '@/lib/shared/utils/health'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
@@ -42,7 +43,7 @@ export default function ConnectPage() {
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
+  const maxHr = calculateMaxHr(userAge)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
