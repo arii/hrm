@@ -248,9 +248,13 @@ const TimerDisplay = ({
 
         {/* Volume Control */}
         <Stack
-          spacing={2}
+          spacing={{ xs: 1, sm: 2 }}
           direction="row"
-          sx={{ mt: 2, mb: 1, width: '80%', maxWidth: 300 }}
+          sx={{
+            mt: 2,
+            mb: 1,
+            width: 'clamp(200px, 80%, 300px)',
+          }}
           alignItems="center"
         >
           <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
