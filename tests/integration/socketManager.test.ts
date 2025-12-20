@@ -2,11 +2,32 @@
 import { spawn, ChildProcess, execSync } from 'child_process'
 import WebSocket from 'ws'
 import http from 'http'
-import {
-  UnifiedStateMessage,
-  TimerCommandMessage,
-  HrmInputMessage,
-} from '../../types/websocket'
+import { ServerMessage, TimerCommandMessage, HrmInputMessage } from '../../types/websocket'
+
+// Helper to wait for a specific message that satisfies a predicate
+const waitForMessage = (
+  ws: WebSocket,
+  predicate: (msg: ServerMessage) => boolean,
+  timeout = 5000
+): Promise<ServerMessage> => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      ws.removeListener('message', messageHandler)
+      reject(new Error(`Timeout waiting for message after ${timeout}ms`))
+    }, timeout)
+
+    const messageHandler = (data: WebSocket.Data) => {
+      const message = JSON.parse(data.toString()) as ServerMessage
+      if (predicate(message)) {
+        clearTimeout(timer)
+        ws.removeListener('message', messageHandler)
+        resolve(message)
+      }
+    }
+
+    ws.on('message', messageHandler)
+  })
+}
 
 jest.setTimeout(60000) // 60s timeout for server start and tests
 
@@ -14,7 +35,7 @@ describe('WebSocket Full Integration Test', () => {
   let serverProcess: ChildProcess
   const PORT = 3005 // Use a fresh port
   const wsUrl = `ws://127.0.0.1:${PORT}/ws`
-  const healthCheckUrl = `http://127.0.0.1:${PORT}/health/ready`
+  const healthCheckUrl = `http://127.0.0.1:${PORT}/api/internal/health/services`
 
   beforeAll((done) => {
     try {
@@ -28,8 +49,6 @@ describe('WebSocket Full Integration Test', () => {
       detached: true,
     })
 
-    // Silence verbose server output in tests, but log errors
-    serverProcess.stdout?.on('data', (_data: Buffer) => {})
     serverProcess.stderr?.on('data', (data: Buffer) =>
       console.error(`[Server ERR]: ${data.toString().trim()}`)
     )
@@ -37,24 +56,16 @@ describe('WebSocket Full Integration Test', () => {
 
     const checkHealth = () => {
       const req = http.get(healthCheckUrl, (res) => {
-        if (res.statusCode === 200) {
-          console.log('Server is ready.')
+        // The server is "ready" even if unhealthy (e.g., Spotify disconnected),
+        // as long as it's running and responding.
+        if (res.statusCode && res.statusCode < 599) {
+          console.log(`Server is running (Status: ${res.statusCode}).`)
           clearInterval(interval)
           clearTimeout(timeout)
           done()
-        } else {
-          // It can be unhealthy if Spotify isn't configured, but we check for 503 as a valid "running" state.
-          if (res.statusCode === 503) {
-            console.log(
-              'Server is running but unhealthy (as expected without Spotify).'
-            )
-            clearInterval(interval)
-            clearTimeout(timeout)
-            done()
-          }
         }
       })
-      req.on('error', () => {})
+      req.on('error', () => {}) // Ignore connection errors while polling
     }
 
     const interval = setInterval(checkHealth, 1000)
@@ -70,73 +81,77 @@ describe('WebSocket Full Integration Test', () => {
 
   afterAll((done) => {
     if (serverProcess && serverProcess.pid) {
+      serverProcess.on('close', done)
       try {
-        process.kill(-serverProcess.pid, 'SIGKILL')
+        process.kill(-serverProcess.pid, 'SIGTERM')
       } catch (_e) {
-        /* ignore */
+        done() // Process already gone
       }
-    }
-    setTimeout(done, 500)
-  })
-
-  it('should handle a full user workflow: connect, send HR, start timer, receive updates, stop timer', (done) => {
-    const ws = new WebSocket(wsUrl)
-    const receivedMessages: UnifiedStateMessage[] = []
-
-    ws.on('message', (data: WebSocket.Data) => {
-      const message = JSON.parse(data.toString()) as UnifiedStateMessage
-      receivedMessages.push(message)
-    })
-
-    // Use a sequence of events to test the workflow
-    const runWorkflow = async () => {
-      // 1. Wait for initial connection and state update
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      expect(receivedMessages.length).toBeGreaterThanOrEqual(1)
-      const initialState = receivedMessages[0]
-      expect(initialState.type).toBe('STATE_UPDATE')
-
-      // 2. Send HR data
-      const hrmInput: HrmInputMessage = {
-        type: 'HRM_INPUT',
-        data: { value: 135, name: 'Workflow Test' },
-      }
-      ws.send(JSON.stringify(hrmInput))
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      let lastMessage = receivedMessages[receivedMessages.length - 1]
-      const clientData = lastMessage.hrmData?.find(
-        (c) => c.name === 'Workflow Test'
-      )
-      expect(clientData).toBeDefined()
-      expect(clientData?.value).toBe(135)
-
-      // 3. Start the timer
-      const startCommand: TimerCommandMessage = {
-        type: 'TIMER_COMMAND',
-        command: 'START',
-      }
-      ws.send(JSON.stringify(startCommand))
-      await new Promise((resolve) => setTimeout(resolve, 1500)) // Wait for prepare phase
-      lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(true)
-      expect(lastMessage.timerData?.currentPhase).toBe('PREPARE')
-
-      // 4. Stop the timer
-      const stopCommand: TimerCommandMessage = {
-        type: 'TIMER_COMMAND',
-        command: 'STOP',
-      }
-      ws.send(JSON.stringify(stopCommand))
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      lastMessage = receivedMessages[receivedMessages.length - 1]
-      expect(lastMessage.timerData?.isRunning).toBe(false)
-      expect(lastMessage.timerData?.currentPhase).toBe('IDLE')
-
-      ws.close()
+    } else {
       done()
     }
+  })
 
-    ws.on('open', runWorkflow)
-    ws.on('error', done)
+  it('should handle a full user workflow: connect, send HR, start timer, receive updates, stop timer', async () => {
+    const ws = new WebSocket(wsUrl)
+
+    // Wait for the WebSocket to open before proceeding
+    await new Promise<void>((resolve, reject) => {
+      ws.on('open', resolve)
+      ws.on('error', reject)
+    })
+
+    // 1. Get initial state (server sends updates automatically on connect)
+    // We'll wait for the timer update as a signal of readiness.
+    const initialState = await waitForMessage(
+      ws,
+      (msg) => msg.type === 'TIMER_UPDATE'
+    )
+    expect(initialState.type).toBe('TIMER_UPDATE')
+
+    // 2. Send HR data and wait for the corresponding HRM_UPDATE
+    const hrmInput: HrmInputMessage = {
+      type: 'HRM_INPUT',
+      data: { value: 135 },
+    }
+    ws.send(JSON.stringify(hrmInput))
+
+    const hrmUpdate = await waitForMessage(ws, (msg) => {
+      if (msg.type !== 'HRM_UPDATE') return false
+      return msg.payload.some((client: any) => client.value === 135)
+    })
+    const clientData = (hrmUpdate.payload as any[]).find(c => c.value === 135)
+    expect(clientData).toBeDefined()
+
+    // 3. Start the timer and wait for the PREPARE phase update
+    const startCommand: TimerCommandMessage = {
+      type: 'TIMER_COMMAND',
+      command: 'START',
+    }
+    ws.send(JSON.stringify(startCommand))
+
+    const timerStartUpdate = await waitForMessage(ws, (msg) => {
+      if (msg.type !== 'TIMER_UPDATE') return false
+      return msg.payload.currentPhase === 'PREPARE'
+    })
+    expect(timerStartUpdate.payload.isRunning).toBe(true)
+    expect(timerStartUpdate.payload.currentPhase).toBe('PREPARE')
+
+
+    // 4. Stop the timer and wait for the IDLE phase update
+    const stopCommand: TimerCommandMessage = {
+      type: 'TIMER_COMMAND',
+      command: 'STOP',
+    }
+    ws.send(JSON.stringify(stopCommand))
+
+    const timerStopUpdate = await waitForMessage(ws, (msg) => {
+      if (msg.type !== 'TIMER_UPDATE') return false
+      return msg.payload.currentPhase === 'IDle'
+    })
+    expect(timerStopUpdate.payload.isRunning).toBe(false)
+    expect(timerStopUpdate.payload.currentPhase).toBe('IDLE')
+
+    ws.close()
   })
 })

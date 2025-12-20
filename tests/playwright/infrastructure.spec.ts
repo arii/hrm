@@ -95,6 +95,7 @@ test.describe('Infrastructure & Scripts', () => {
       PORT: String(PORT),
       NEXTAUTH_SECRET: 'test-secret-mock',
       NEXTAUTH_URL: `http://localhost:${PORT}`,
+      ENCRYPTION_KEY: 'a'.repeat(64), // Mock key
     }
 
     const prodServer = spawn('./start-production.sh', [], {

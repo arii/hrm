@@ -18,12 +18,12 @@ import { WebSocketServer } from 'ws'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
+import { setSpotifyService, setTabataService } from './lib/services.js'
 import { broadcast } from './utils/broadcast.js'
 import { getBaseURL } from './utils/urls.js'
 import { StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -153,6 +153,10 @@ app
     const spotifyService = await SpotifyPolling.create(broadcast)
     const tabataService = new TabataTimer(broadcast)
 
+    // Make service instances available to other modules (e.g., API routes)
+    setSpotifyService(spotifyService)
+    setTabataService(tabataService)
+
     // 3. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
@@ -192,29 +196,12 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
-        }
-      }
+    // Token delivery is now handled directly by the Next.js API route.
+    expressApp.use((req: Request, res: Response) => {
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
+
+    // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
