@@ -8,7 +8,7 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ServerMessage } from '../types/websocket'
-import logger from './logger'
+import logger from './logger.js'
 
 // Define a custom WebSocket type that includes our application-specific properties
 interface ExtWebSocket extends WebSocket {
