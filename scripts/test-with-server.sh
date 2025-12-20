@@ -7,7 +7,6 @@ set -e
 
 # Configuration
 TIMEOUT=120000 # Increased timeout for slower CI environments
-SERVER_LOG="/tmp/hrm-server.log"
 HEALTH_CHECK_URL_TEMPLATE="http://127.0.0.1:{{PORT}}/api/debug/ping"
 
 # Helper for logging to stderr (so it doesn't interfere with stdout piping)
@@ -22,13 +21,9 @@ cleanup() {
 
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
-        if [ -f "$SERVER_LOG" ]; then
-            log "--- Server Logs (Tail 50 lines) ---"
-            tail -n 50 "$SERVER_LOG" >&2
-            log "-----------------------------------"
-        else
-            log "No server log found at $SERVER_LOG"
-        fi
+        log "--- PM2 Logs ---"
+        pnpm pm2:logs --lines 50 --nostream >&2 || true
+        log "----------------"
     fi
     exit $EXIT_CODE
 }
@@ -63,7 +58,7 @@ pnpm pm2 kill || true
 log "🚀 Starting server with PM2 on port $PORT..."
 # Start server with `pnpm start`, which uses PM2
 # The PORT variable is passed via ecosystem.config.cjs
-pnpm start > "$SERVER_LOG" 2>&1 &
+pnpm start &
 log "✅ Server process started via PM2."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
