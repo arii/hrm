@@ -314,13 +314,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(
-          command,
-          deviceId,
-          volume,
-          playlistUri,
-          trackUri
-        )
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri, trackUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         await logSpotifyCommandError(command, error)
@@ -340,11 +334,11 @@ export class SpotifyPolling {
 
     switch (command) {
       case 'PLAY':
-        await this.sdk!.player.startResumePlayback({
-          device_id: deviceId,
-          uris: trackUri ? [trackUri] : undefined,
-          context_uri: playlistUri,
-        })
+        await this.sdk!.player.startResumePlayback(
+          deviceId,
+          playlistUri,
+          trackUri ? [trackUri] : undefined
+        )
         break
       case 'PAUSE':
         await this.sdk!.player.pausePlayback(
