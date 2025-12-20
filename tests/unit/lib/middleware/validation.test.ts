@@ -81,7 +81,7 @@ describe('withValidation Middleware', () => {
       await validatedHandler(req, { params: { id: uuid } })
 
       expect(mockHandler).toHaveBeenCalledTimes(1)
-      const [calledReq, calledContext] = mock.calls[0]
+      const [calledReq, calledContext] = mockHandler.mock.calls[0]
       expect(calledReq).toBe(req)
       expect(calledContext.body).toEqual(validBody)
       expect(calledContext.query).toEqual({ search: 'valid' })
