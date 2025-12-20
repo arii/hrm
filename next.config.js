@@ -1,15 +1,17 @@
-import { env, publicEnv } from '@/lib/env.js' // Early validation of environment variables
 import bundleAnalyzer from '@next/bundle-analyzer'
 
 const withBundleAnalyzer = bundleAnalyzer({
-  enabled: env.ANALYZE === 'true',
+  enabled: process.env.ANALYZE === 'true',
 })
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
   env: {
-    ...publicEnv,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+    NEXT_PUBLIC_USE_NATIVE_TABLE: process.env.NEXT_PUBLIC_USE_NATIVE_TABLE,
+    NEXT_PUBLIC_TESTING: process.env.NEXT_PUBLIC_TESTING,
   },
   async redirects() {
     return [

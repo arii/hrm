@@ -5,7 +5,7 @@
  * and internal data endpoints (like NextAuth token delivery).
  */
 
-import { env } from '@/lib/env.js' // Early validation of environment variables
+import { env } from './lib/env.js' // Early validation of environment variables
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
