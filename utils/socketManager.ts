@@ -30,7 +30,7 @@ interface ExtWebSocket extends WebSocket {
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
+export let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay

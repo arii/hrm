@@ -1,18 +1,14 @@
 import { ApiError } from '@/lib/errors'
-import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
 import logger from '@/utils/logger'
+import { spotifyServiceInstance } from '@/utils/socketManager.js'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager.js'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
  * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * It directly notifies the running Spotify service of the new token.
  */
-
-const LOG_DIR = path.resolve(process.cwd(), 'logs')
-const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
-
 export async function POST(req: NextRequest) {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
@@ -21,22 +17,23 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized')
     }
 
-    const payload = await req.json()
+    const payload = (await req.json()) as SpotifyTokenPayload
 
-    // ensure logs dir
-    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
-
-    // write timestamped record (overwrite with latest)
-    const record = {
-      receivedAt: Date.now(),
-      payload,
+    // Directly update the service instance
+    if (spotifyServiceInstance) {
+      await spotifyServiceInstance.handleTokenUpdate(payload)
+      logger.info(
+        { subject: payload.sub ?? payload.provider },
+        'Delivered token directly to Spotify service'
+      )
+    } else {
+      // This case should ideally not happen if the server is running correctly
+      logger.error(
+        'Spotify service not available for direct token delivery. This may indicate a startup issue.'
+      )
+      throw new ApiError(503, 'Spotify service is unavailable')
     }
-    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
 
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
