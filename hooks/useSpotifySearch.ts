@@ -34,6 +34,7 @@ export const useSpotifySearch = () => {
       const data: Track[] = await response.json()
       setSearchState({ results: data, loading: false, error: null })
     } catch (err) {
+      console.error('Spotify search error:', err)
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
       setSearchState({ results: [], loading: false, error: errorMessage })
     }

@@ -50,7 +50,7 @@ export const SpotifySearchInput = ({ onTrackSelected }: SpotifySearchInputProps)
                 <CircularProgress size={20} />
               ) : (
                 query && (
-                  <IconButton onClick={handleClear} edge="end">
+                  <IconButton onClick={handleClear} edge="end" aria-label="clear search">
                     <ClearIcon />
                   </IconButton>
                 )

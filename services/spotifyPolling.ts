@@ -334,12 +334,10 @@ export class SpotifyPolling {
 
     switch (command) {
       case 'PLAY':
-        // If deviceId is undefined, SDK targets the active device.
-        // The SDK's startResumePlayback method can take a context_uri (for playlists) or a list of uris (for tracks).
-        await this.sdk!.player.startResumePlayback(
+        await this.sdk!.player.play(
           deviceId || undefined,
-          playlistUri || undefined, // context_uri
-          trackUri ? [trackUri] : undefined // uris
+          trackUri ? { uris: [trackUri] } : undefined,
+          playlistUri ? { context_uri: playlistUri } : undefined
         )
         break
       case 'PAUSE':

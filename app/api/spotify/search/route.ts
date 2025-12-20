@@ -23,7 +23,6 @@ export async function GET(request: Request) {
       access_token: session.accessToken,
       token_type: 'Bearer',
       expires_in: 3600, // This is a dummy value, token is managed by NextAuth
-      refresh_token: '', // Not needed for this call
     }
 
     const sdk = SpotifyApi.withAccessToken(
