@@ -227,7 +227,10 @@ export class SpotifyPolling {
       const isPlaying = playbackState.is_playing
 
       // Only broadcast if track ID or playback state has changed
-      if (item.id !== this.lastTrackId || isPlaying !== this.lastPlaybackState) {
+      if (
+        item.id !== this.lastTrackId ||
+        isPlaying !== this.lastPlaybackState
+      ) {
         this.lastTrackId = item.id
         this.lastPlaybackState = isPlaying
 
