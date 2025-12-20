@@ -406,7 +406,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [
+      onDisconnected,
+      sendData,
+      userSettings.autoStartWorkout,
+      userSettings.autoStartThreshold,
+      userSettings.autoStartDuration,
+      onAutoStart,
+      onAutoStartDetecting,
+    ]
   )
 
   useEffect(() => {

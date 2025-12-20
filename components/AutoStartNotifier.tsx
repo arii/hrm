@@ -33,17 +33,15 @@ const AutoStartNotifier: React.FC<AutoStartNotifierProps> = ({
     } else {
       setOpen(false)
     }
-  }, [isDetecting, countdownSeconds])
 
-  useEffect(() => {
-    if (open && countdown > 0) {
+    if (isDetecting && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
-    } else if (open && countdown === 0) {
+    } else if (isDetecting && countdown === 0) {
       onConfirm()
       setOpen(false)
     }
-  }, [open, countdown, onConfirm])
+  }, [isDetecting, countdown, countdownSeconds, onConfirm])
 
   const handleCancel = () => {
     onCancel()
@@ -53,7 +51,10 @@ const AutoStartNotifier: React.FC<AutoStartNotifierProps> = ({
   const progress = (countdown / countdownSeconds) * 100
 
   return (
-    <Snackbar open={open} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+    <Snackbar
+      open={open}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
       <Alert
         severity="info"
         action={
@@ -78,7 +79,11 @@ const AutoStartNotifier: React.FC<AutoStartNotifierProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="caption" component="div" color="text.secondary">
+              <Typography
+                variant="caption"
+                component="div"
+                color="text.secondary"
+              >
                 {countdown}
               </Typography>
             </Box>

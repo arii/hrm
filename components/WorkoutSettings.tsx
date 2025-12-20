@@ -14,7 +14,9 @@ import {
 const WorkoutSettings = () => {
   const [userSettings, setUserSettings] = useUserSettings()
 
-  const handleAutoStartChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAutoStartChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setUserSettings((prev) => ({
       ...prev,
       autoStartWorkout: event.target.checked,
@@ -54,9 +56,7 @@ const WorkoutSettings = () => {
       {userSettings.autoStartWorkout && (
         <>
           <Box sx={{ mt: 2 }}>
-            <Typography gutterBottom>
-              Heart Rate Threshold (BPM)
-            </Typography>
+            <Typography gutterBottom>Heart Rate Threshold (BPM)</Typography>
             <Slider
               value={userSettings.autoStartThreshold}
               onChange={handleThresholdChange}
@@ -72,9 +72,7 @@ const WorkoutSettings = () => {
             />
           </Box>
           <Box sx={{ mt: 2 }}>
-            <Typography gutterBottom>
-              Sustained Duration (seconds)
-            </Typography>
+            <Typography gutterBottom>Sustained Duration (seconds)</Typography>
             <Slider
               value={userSettings.autoStartDuration}
               onChange={handleDurationChange}
