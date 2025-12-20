@@ -10,24 +10,37 @@ const isTruthy = (val: unknown): boolean => {
   return val === true || val === 1
 }
 
-
 /**
  * Server-side environment variables schema.
  */
 const serverSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
   PORT: z.coerce.number().default(3000),
   HOST: z.string().default('127.0.0.1'),
-  NEXTAUTH_SECRET: z.string().min(1, { message: 'NEXTAUTH_SECRET is required' }),
+  NEXTAUTH_SECRET: z
+    .string()
+    .min(1, { message: 'NEXTAUTH_SECRET is required' }),
   NEXTAUTH_URL: z.string().url({ message: 'NEXTAUTH_URL must be a valid URL' }),
   BASE_URL: z.string().url({ message: 'BASE_URL must be a valid URL' }),
-  SPOTIFY_CLIENT_ID: z.string().min(1, { message: 'SPOTIFY_CLIENT_ID is required' }),
-  SPOTIFY_CLIENT_SECRET: z.string().min(1, { message: 'SPOTIFY_CLIENT_SECRET is required' }),
-  SPOTIFY_CALLBACK_URL: z.string().url({ message: 'SPOTIFY_CALLBACK_URL must be a valid URL' }),
-  INTERNAL_TOKEN_DELIVERY_SECRET: z.string().min(1, { message: 'INTERNAL_TOKEN_DELIVERY_SECRET is required' }),
+  SPOTIFY_CLIENT_ID: z
+    .string()
+    .min(1, { message: 'SPOTIFY_CLIENT_ID is required' }),
+  SPOTIFY_CLIENT_SECRET: z
+    .string()
+    .min(1, { message: 'SPOTIFY_CLIENT_SECRET is required' }),
+  SPOTIFY_CALLBACK_URL: z
+    .string()
+    .url({ message: 'SPOTIFY_CALLBACK_URL must be a valid URL' }),
+  INTERNAL_TOKEN_DELIVERY_SECRET: z
+    .string()
+    .min(1, { message: 'INTERNAL_TOKEN_DELIVERY_SECRET is required' }),
   SPOTIFY_DEBUG: z.preprocess(isTruthy, z.boolean().default(false)),
   CI: z.preprocess(isTruthy, z.boolean().default(false)),
-  GOOGLE_DOC_WORKOUT_URL: z.string().url({ message: 'GOOGLE_DOC_WORKOUT_URL must be a valid URL' }),
+  GOOGLE_DOC_WORKOUT_URL: z
+    .string()
+    .url({ message: 'GOOGLE_DOC_WORKOUT_URL must be a valid URL' }),
   ANALYZE: z.preprocess(isTruthy, z.boolean().default(false)),
 })
 
@@ -36,9 +49,18 @@ const serverSchema = z.object({
  * Must be prefixed with `NEXT_PUBLIC_`.
  */
 const clientSchema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().url({ message: 'NEXT_PUBLIC_API_URL must be a valid URL' }).optional(),
-  NEXT_PUBLIC_WS_URL: z.string().url({ message: 'NEXT_PUBLIC_WS_URL must be a valid URL' }).optional(),
-  NEXT_PUBLIC_USE_NATIVE_TABLE: z.preprocess(isTruthy, z.boolean().default(false)),
+  NEXT_PUBLIC_API_URL: z
+    .string()
+    .url({ message: 'NEXT_PUBLIC_API_URL must be a valid URL' })
+    .optional(),
+  NEXT_PUBLIC_WS_URL: z
+    .string()
+    .url({ message: 'NEXT_PUBLIC_WS_URL must be a valid URL' })
+    .optional(),
+  NEXT_PUBLIC_USE_NATIVE_TABLE: z.preprocess(
+    isTruthy,
+    z.boolean().default(false)
+  ),
   NEXT_PUBLIC_TESTING: z.preprocess(isTruthy, z.boolean().default(false)),
 })
 
@@ -63,7 +85,6 @@ if (!parsedEnv.success) {
   )
   process.exit(1)
 }
-
 
 /**
  * A type-safe object with all validated environment variables.
