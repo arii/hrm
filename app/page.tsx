@@ -45,7 +45,7 @@ const DOC_ID =
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
-  useVolumePreference()
+  const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const { initializeAudio } = useAudio()
 
   const handleInteraction = () => {
@@ -80,7 +80,12 @@ const Dashboard = () => {
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
         >
-          <TimerDisplay />
+          <TimerDisplay
+            volume={volume}
+            setVolume={setVolume}
+            muted={muted}
+            toggleMute={toggleMute}
+          />
         </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>
