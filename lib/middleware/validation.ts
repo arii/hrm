@@ -64,7 +64,12 @@ export function withValidation<
         if (bodySchema) {
           const result = bodySchema.safeParse(body)
           if (!result.success) {
-            validationIssues.push(...result.error.issues)
+            validationIssues.push(
+              ...result.error.issues.map((issue) => ({
+                ...issue,
+                path: ['body', ...issue.path],
+              }))
+            )
           } else {
             validatedBody = result.data
           }
@@ -73,7 +78,12 @@ export function withValidation<
         if (querySchema) {
           const result = querySchema.safeParse(query)
           if (!result.success) {
-            validationIssues.push(...result.error.issues)
+            validationIssues.push(
+              ...result.error.issues.map((issue) => ({
+                ...issue,
+                path: ['query', ...issue.path],
+              }))
+            )
           } else {
             validatedQuery = result.data
           }
@@ -82,7 +92,12 @@ export function withValidation<
         if (paramsSchema) {
           const result = paramsSchema.safeParse(params)
           if (!result.success) {
-            validationIssues.push(...result.error.issues)
+            validationIssues.push(
+              ...result.error.issues.map((issue) => ({
+                ...issue,
+                path: ['params', ...issue.path],
+              }))
+            )
           } else {
             validatedParams = result.data
           }
@@ -91,7 +106,12 @@ export function withValidation<
         if (headersSchema) {
           const result = headersSchema.safeParse(headers)
           if (!result.success) {
-            validationIssues.push(...result.error.issues)
+            validationIssues.push(
+              ...result.error.issues.map((issue) => ({
+                ...issue,
+                path: ['headers', ...issue.path],
+              }))
+            )
           } else {
             validatedHeaders = result.data
           }
