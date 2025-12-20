@@ -68,6 +68,3 @@ diff.txt
 !.vscode/settings.json
 !.vscode/tasks.json
 verification/screenshots/
-
-*storybook.log
-storybook-static
