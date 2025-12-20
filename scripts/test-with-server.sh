@@ -5,14 +5,6 @@
 
 set -e
 
-# Source the test environment file if it exists
-if [ -f .env.test ]; then
-  echo "Loading .env.test..."
-  set -a
-  source .env.test
-  set +a
-fi
-
 # Configuration
 TIMEOUT=120000 # Increased timeout for slower CI environments
 SERVER_LOG="/tmp/hrm-server.log"
@@ -63,6 +55,10 @@ fi
 export PORT
 export TESTING=true
 export NEXTAUTH_URL="http://127.0.0.1:$PORT"
+export NEXTAUTH_SECRET="test-secret-for-ci"
+export SPOTIFY_CLIENT_ID="test-client-id"
+export SPOTIFY_CLIENT_SECRET="test-client-secret"
+export INTERNAL_TOKEN_DELIVERY_SECRET="test-secret"
 HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
 
 log "🚀 Starting server directly on port $PORT..."

@@ -9,19 +9,15 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      // Pass critical environment variables from the calling environment.
-      // This is especially important for CI/CD and testing environments.
+      // Pass PORT from the environment, otherwise it will be undefined
+      // and the application can decide on a default.
       env: {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
-        TESTING: process.env.TESTING,
-        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
       },
       env_production: {
         NODE_ENV: 'production',
         PORT: process.env.PORT,
-        TESTING: process.env.TESTING,
-        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
       },
     },
   ],
