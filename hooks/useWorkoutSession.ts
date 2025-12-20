@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import useLocalStorage from './useLocalStorage'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -67,7 +68,8 @@ function sessionReducer(
         calories: action.payload,
       }
     case 'RESET':
-      return initialState
+      // When resetting, preserve the last known calorie count.
+      return { ...initialState, calories: state.calories }
     default:
       return state
   }
@@ -92,7 +94,14 @@ export const useWorkoutSession = ({
   isConnected,
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
-  const [state, dispatch] = useReducer(sessionReducer, initialState)
+  const [persistedCalories, setPersistedCalories] = useLocalStorage(
+    'totalAccumulatedCalories',
+    0
+  )
+  const [state, dispatch] = useReducer(sessionReducer, {
+    ...initialState,
+    calories: persistedCalories,
+  })
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -105,6 +114,15 @@ export const useWorkoutSession = ({
     // accumulated value streamed from the server.
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
   }, [totalCalories])
+
+  useEffect(() => {
+    // Persist the final calorie count on unmount to prevent constant writes.
+    return () => {
+      if (totalCalories > 0) {
+        setPersistedCalories(totalCalories)
+      }
+    }
+  }, [totalCalories, setPersistedCalories])
 
   const prevIsConnected = useRef(isConnected)
   useEffect(() => {
@@ -177,14 +195,27 @@ export const useWorkoutSession = ({
     dispatch({ type: 'END_WORKOUT' })
   }, [])
 
-  return {
-    workoutDuration: state.duration,
-    // Expose the total accumulated calories directly.
-    accumulatedCalories: state.calories,
-    resetWorkout,
-    startWorkout,
-    endWorkout,
-    workoutStatus: state.status,
-    hasStarted: state.status !== 'idle',
-  }
+  // Memoize the returned object to prevent unnecessary re-renders in consumer components.
+  const memoizedValue = useMemo(
+    () => ({
+      workoutDuration: state.duration,
+      // Expose the total accumulated calories directly.
+      accumulatedCalories: state.calories,
+      resetWorkout,
+      startWorkout,
+      endWorkout,
+      workoutStatus: state.status,
+      hasStarted: state.status !== 'idle',
+    }),
+    [
+      state.duration,
+      state.calories,
+      resetWorkout,
+      startWorkout,
+      endWorkout,
+      state.status,
+    ]
+  )
+
+  return memoizedValue
 }
