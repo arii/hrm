@@ -18,7 +18,9 @@ log() {
 cleanup() {
     EXIT_CODE=$?
     log "🛑 Shutting down server..."
-    pnpm pm2 kill || true
+    if [ -n "$SERVER_PID" ]; then
+        kill "$SERVER_PID" || true
+    fi
 
     if [ $EXIT_CODE -ne 0 ]; then
         log "❌ Failure detected (Exit Code: $EXIT_CODE)."
@@ -56,15 +58,10 @@ export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:$PORT"
 HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
 
-# Clean up any stale PM2 processes
-log "🧹 Cleaning up any old PM2 processes..."
-pnpm pm2 kill || true
-
-log "🚀 Starting server with PM2 on port $PORT..."
-# Start server with `pnpm start`, which uses PM2
-# The PORT variable is passed via ecosystem.config.cjs
-pnpm start > "$SERVER_LOG" 2>&1 &
-log "✅ Server process started via PM2."
+log "🚀 Starting server directly on port $PORT..."
+./start-production.sh > "$SERVER_LOG" 2>&1 &
+SERVER_PID=$!
+log "✅ Server process started with PID: $SERVER_PID."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
 if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
