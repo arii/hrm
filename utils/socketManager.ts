@@ -170,11 +170,7 @@ const handleIncomingMessage = (
           type: 'INITIAL_STATE',
           payload: payload,
         }
-        sendWebSocketMessage(
-          ws,
-          initialStateMessage,
-          'socketManager.GET_STATE'
-        )
+        sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
         break
       }
       case 'HRM_METADATA_UPDATE': {

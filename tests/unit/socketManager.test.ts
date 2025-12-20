@@ -22,10 +22,7 @@ import {
   StateSnapshot,
   ClientCommandMessageSchema,
 } from '../../types/websocket'
-import {
-  broadcast,
-  sendWebSocketMessage,
-} from '../../utils/websocketUtils.js'
+import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 
 // Mock dependencies
@@ -154,7 +151,11 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(mockWs, { type: 'PONG' }, 'socketManager.PING')
+      expect(sendWebSocketMessage).toHaveBeenCalledWith(
+        mockWs,
+        { type: 'PONG' },
+        'socketManager.PING'
+      )
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {

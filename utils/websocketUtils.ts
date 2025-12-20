@@ -10,6 +10,11 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ServerMessage } from '../types/websocket'
 import logger from './logger'
 
+// Define a custom WebSocket type that includes our application-specific properties
+interface ExtWebSocket extends WebSocket {
+  clientId: string
+}
+
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
  * method for direct-to-client communication.
@@ -23,19 +28,20 @@ export const sendWebSocketMessage = (
   message: ServerMessage,
   origin?: string
 ): void => {
-  if (ws.readyState !== WebSocket.OPEN) {
+  const extWs = ws as ExtWebSocket
+  if (extWs.readyState !== WebSocket.OPEN) {
     logger.warn(
-      { clientId: (ws as any).clientId, origin }, // Assuming clientId is attached
+      { clientId: extWs.clientId, origin }, // Assuming clientId is attached
       'Attempted to send message to a non-open WebSocket.'
     )
     return
   }
   try {
-    ws.send(JSON.stringify(message))
+    extWs.send(JSON.stringify(message))
   } catch (error) {
     logger.error(
       {
-        clientId: (ws as any).clientId,
+        clientId: extWs.clientId,
         error,
         origin,
       },
@@ -59,13 +65,14 @@ export const broadcast = (
 ): void => {
   const messageString = JSON.stringify(message)
   wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
+    const extClient = client as ExtWebSocket
+    if (extClient.readyState === WebSocket.OPEN) {
       try {
-        client.send(messageString)
+        extClient.send(messageString)
       } catch (error) {
         logger.error(
           {
-            clientId: (client as any).clientId,
+            clientId: extClient.clientId,
             error,
             origin,
           },
