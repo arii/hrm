@@ -153,7 +153,7 @@ describe('WebSocket Full Integration Test', () => {
 
     const timerStopUpdate = await waitForMessage(ws, (msg) => {
       if (msg.type !== 'TIMER_UPDATE') return false
-      return msg.payload.currentPhase === 'IDle'
+      return msg.payload.currentPhase === 'IDLE'
     })
     expect(timerStopUpdate.payload.isRunning).toBe(false)
     expect(timerStopUpdate.payload.currentPhase).toBe('IDLE')
