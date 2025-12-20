@@ -1,34 +1,33 @@
-// app/api/users/route.ts
+/**
+ * @jest-environment node
+ */
+import { NextRequest, NextResponse } from 'next/server'
 import { withValidation } from '@/lib/middleware/validation'
-import { CreateUserProfileSchema } from '@/lib/validation/schemas'
-import { UserProfile } from '@/types/core'
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { v4 as uuidv4 } from 'uuid'
 
-/**
- * Handles the POST request to create a new user.
- *
- * @param {Request} req - The incoming request.
- * @param {object} context - The context object, containing the validated body.
- * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
- * @param {Request} _req - The incoming request (unused).
- * @param {object} context - The context object, containing the validated body.
- * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
- * @returns {Promise<NextResponse>} A promise that resolves to the response.
- */
+export const CreateUserProfileSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters long.' })
+    .max(20, { message: 'Username must be no longer than 20 characters.' }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+})
+
+type CreateUserProfile = z.infer<typeof CreateUserProfileSchema>
+
 async function createUser(
-  _req: Request,
-  { body }: { body: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> }
-): Promise<NextResponse> {
-  // In a real application, you would save the user to a database.
-  // For this example, we'll just return the created user.
-  const newUser: UserProfile = {
+  req: NextRequest,
+  { body }: { body: CreateUserProfile }
+) {
+  const newUser = {
     id: uuidv4(),
     ...body,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
-
   return NextResponse.json(newUser, { status: 201 })
 }
 

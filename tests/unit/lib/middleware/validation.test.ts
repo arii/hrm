@@ -59,17 +59,14 @@ describe('withValidation Middleware', () => {
     it('should call the handler with validated data when the request is valid', async () => {
       const validBody = { name: 'John Doe', age: 30 }
       const uuid = 'a1b2c3d4-a1b2-c3d4-a1b2-c3d4a1b2c3d4'
-      const req = new NextRequest(
-        `http://localhost/api/test/${uuid}?search=valid`,
-        {
-          method: 'POST',
-          body: JSON.stringify(validBody),
-          headers: {
-            'x-api-key': '1234567890123456',
-            'content-type': 'application/json',
-          },
-        }
-      )
+      const req = new NextRequest(`http://localhost/api/test/${uuid}?search=valid`, {
+        method: 'POST',
+        body: JSON.stringify(validBody),
+        headers: {
+          'x-api-key': '1234567890123456',
+          'content-type': 'application/json',
+        },
+      })
 
       const validatedHandler = withValidation({
         body: bodySchema,
@@ -81,14 +78,11 @@ describe('withValidation Middleware', () => {
       await validatedHandler(req, { params: { id: uuid } })
 
       expect(mockHandler).toHaveBeenCalledTimes(1)
-      const [calledReq, calledContext] = mockHandler.mock.calls[0]
+      const [calledReq, calledContext] = mock.calls[0]
       expect(calledReq).toBe(req)
       expect(calledContext.body).toEqual(validBody)
       expect(calledContext.query).toEqual({ search: 'valid' })
       expect(calledContext.params).toEqual({ id: uuid })
-      expect(calledContext.headers).toEqual(
-        expect.objectContaining({ 'x-api-key': '1234567890123456' })
-      )
       expect(calledContext.headers).toEqual(
         expect.objectContaining({ 'x-api-key': '1234567890123456' })
       )
