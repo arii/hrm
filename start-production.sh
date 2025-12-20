@@ -14,14 +14,8 @@ fi
 # 1. Preserve PORT if it's already set in the environment
 PRESERVED_PORT=$PORT
 
-# 2. Load test overrides if in testing mode
-if [ "$TESTING" = "true" ] && [ -f .env.test ]; then
-  echo "Loading .env.test..."
-  set -a
-  source .env.test
-  set +a
-# Load production overrides
-elif [ -f .env.production ]; then
+# 2. Load production overrides
+if [ -f .env.production ]; then
   echo "Loading .env.production..."
   set -a
   source .env.production
