@@ -1,8 +1,8 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
-import { spotifyServiceInstance } from '@/utils/socketManager.js'
-import { SpotifyTokenPayload } from '@/services/spotifyTokenManager.js'
+import { spotifyServiceInstance } from '@/utils/socketManager'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
