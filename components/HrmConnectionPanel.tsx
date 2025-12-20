@@ -1,22 +1,25 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
+import AutoStartNotifier from './AutoStartNotifier'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
+  const [isDetecting, setIsDetecting] = useState(false)
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -25,7 +28,23 @@ const HrmConnectionPanel = () => {
     batteryLevel,
     isConnected,
     isSupported,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    onAutoStart: handleAutoStartWorkout,
+    onAutoStartDetecting: setIsDetecting,
+  })
+
+  const { startWorkout, resetWorkout } = useWorkoutSession({
+    isConnected: isConnected,
+    totalCalories: hrmData.length > 0 ? hrmData[0].calories : 0,
+  })
+
+  function handleAutoStartWorkout() {
+    startWorkout()
+  }
+
+  const handleCancelAutoStart = () => {
+    setIsDetecting(false)
+  }
 
   const handleConnect = () => {
     const userName =
@@ -71,9 +90,16 @@ const HrmConnectionPanel = () => {
   // Note: This UI currently assumes a single, primary HRM connection.
   // Future iterations may need to address a multi-device connection strategy.
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
+    <>
+      <AutoStartNotifier
+        isDetecting={isDetecting}
+        onConfirm={handleAutoStartWorkout}
+        onCancel={handleCancelAutoStart}
+        countdownSeconds={userSettings.autoStartDuration}
+      />
+      <Box
+        sx={{
+          flexGrow: 1,
         width: { xs: '100%', lg: 'calc(50% - 16px)' },
         display: 'flex',
         flexWrap: 'wrap',
@@ -147,6 +173,7 @@ const HrmConnectionPanel = () => {
         ))
       )}
     </Box>
+    </>
   )
 }
 export default HrmConnectionPanel

@@ -14,6 +14,7 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
+import WorkoutSettings from '../components/WorkoutSettings'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
@@ -86,6 +87,8 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmConnectionPanel />
         </ErrorBoundary>
+
+        <WorkoutSettings />
 
         <Box sx={{ width: '100%' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (

@@ -4,6 +4,8 @@
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import React from 'react'
 
 // Mock the WebSocket context
 jest.mock('@/context/WebSocketContext', () => ({
@@ -105,8 +107,12 @@ describe('useBluetoothHRM', () => {
     })
   }
 
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <UserSettingsProvider>{children}</UserSettingsProvider>
+  )
+
   it('should use default timeout of 10 seconds and trigger reconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() => useBluetoothHRM(), { wrapper })
 
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -122,8 +128,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should use custom timeout from props', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 5000 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 5000 }),
+      { wrapper }
     )
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -144,8 +151,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should disable watchdog if timeout is 0', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 0 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 0 }),
+      { wrapper }
     )
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
@@ -160,7 +168,7 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should set disconnectionReason to "manual" on disconnect', async () => {
-    const { result } = renderHook(() => useBluetoothHRM())
+    const { result } = renderHook(() => useBluetoothHRM(), { wrapper })
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
 
@@ -173,8 +181,9 @@ describe('useBluetoothHRM', () => {
   })
 
   it('should reset disconnectionReason on successful reconnect', async () => {
-    const { result } = renderHook(() =>
-      useBluetoothHRM({ dataLivenessTimeoutMs: 2000 })
+    const { result } = renderHook(
+      () => useBluetoothHRM({ dataLivenessTimeoutMs: 2000 }),
+      { wrapper }
     )
     await simulateConnection({ result })
 
@@ -225,5 +234,47 @@ describe('useBluetoothHRM', () => {
 
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
+  })
+
+  describe('auto-start functionality', () => {
+    it('should trigger auto-start when HR is sustained above threshold', async () => {
+      const onAutoStart = jest.fn()
+      const onAutoStartDetecting = jest.fn()
+
+      const { result } = renderHook(
+        () => useBluetoothHRM({ onAutoStart, onAutoStartDetecting }),
+        { wrapper }
+      )
+
+      await simulateConnection({ result })
+      expect(result.current.isConnected).toBe(true)
+
+      // Simulate HR data
+      const heartRateListener = mockCharacteristic.addEventListener.mock.calls.find(
+        (call) => call[0] === 'characteristicvaluechanged'
+      )[1]
+
+      act(() => {
+        heartRateListener({
+          target: { value: new DataView(new Uint8Array([0, 101]).buffer) },
+        })
+      })
+
+      expect(onAutoStartDetecting).toHaveBeenCalledWith(true)
+
+      // Advance time
+      act(() => {
+        jest.advanceTimersByTime(30000)
+      })
+
+      act(() => {
+        heartRateListener({
+          target: { value: new DataView(new Uint8Array([0, 101]).buffer) },
+        })
+      })
+
+      expect(onAutoStart).toHaveBeenCalled()
+      expect(onAutoStartDetecting).toHaveBeenCalledWith(false)
+    })
   })
 })

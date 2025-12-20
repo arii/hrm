@@ -15,6 +15,7 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -79,6 +80,8 @@ interface UseBluetoothHRMProps {
    * A value of 0 disables this feature.
    */
   dataLivenessTimeoutMs?: number
+  onAutoStart?: () => void
+  onAutoStartDetecting?: (isDetecting: boolean) => void
 }
 
 /**
@@ -130,8 +133,13 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * ```
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000 } = props
+  const {
+    dataLivenessTimeoutMs = 10000,
+    onAutoStart,
+    onAutoStartDetecting,
+  } = props
   const { sendData, connectionStatus } = useWebSocket()
+  const [userSettings] = useUserSettings()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -151,6 +159,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const connectToGattRef = useRef<
     ((device: BluetoothDevice) => Promise<boolean>) | null
   >(null)
+  const highHrSince = useRef<number | null>(null)
 
   useEffect(() => {
     statusRef.current = deviceStatus
@@ -327,6 +336,34 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
+
+            if (
+              userSettings.autoStartWorkout &&
+              heartRate > userSettings.autoStartThreshold
+            ) {
+              if (highHrSince.current === null) {
+                highHrSince.current = Date.now()
+                if (onAutoStartDetecting) {
+                  onAutoStartDetecting(true)
+                }
+              }
+              const secondsAtHighHr = (Date.now() - highHrSince.current) / 1000
+              if (
+                secondsAtHighHr >= userSettings.autoStartDuration &&
+                onAutoStart
+              ) {
+                onAutoStart()
+                highHrSince.current = null // Reset after starting
+                if (onAutoStartDetecting) {
+                  onAutoStartDetecting(false)
+                }
+              }
+            } else {
+              if (highHrSince.current !== null && onAutoStartDetecting) {
+                onAutoStartDetecting(false)
+              }
+              highHrSince.current = null // Reset if HR drops
+            }
 
             const { name, age } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
