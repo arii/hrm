@@ -19,7 +19,7 @@ export const CreateUserProfileSchema = z.object({
 type CreateUserProfile = z.infer<typeof CreateUserProfileSchema>
 
 async function createUser(
-  req: NextRequest,
+  _: NextRequest,
   { body }: { body: CreateUserProfile }
 ) {
   const newUser = {
