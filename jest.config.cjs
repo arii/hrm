@@ -41,9 +41,7 @@ const config = {
       },
     ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid)', // Ensure uuid is transformed
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
