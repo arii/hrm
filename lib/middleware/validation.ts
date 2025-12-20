@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
 import { fromZodError } from 'zod-validation-error'
+import { ZodError } from 'zod'
 
 type AppRouterHandler<TBody, TQuery, TParams, THeaders> = (
   req: NextRequest,
@@ -40,13 +41,13 @@ export function withValidation<
     async (req: NextRequest, context: { params: TParams }) => {
       try {
         let body: TBody | undefined
-        if (req.body) {
+        // Only parse body if a schema is provided and the request has a body
+        if (bodySchema && req.body) {
           const contentType = req.headers.get('content-type')
           if (contentType?.includes('application/json')) {
             const bodyText = await req.text()
-            if (bodyText.length) {
-              body = JSON.parse(bodyText)
-            }
+            // Zod will handle empty body validation, so we parse even if bodyText is empty
+            body = bodyText.length > 0 ? JSON.parse(bodyText) : undefined
           }
         }
 
@@ -54,17 +55,50 @@ export function withValidation<
         const params = context.params
         const headers = Object.fromEntries(req.headers)
 
-        const finalSchema = z.object({
-          ...(bodySchema && { body: bodySchema }),
-          ...(querySchema && { query: querySchema }),
-          ...(paramsSchema && { params: paramsSchema }),
-          ...(headersSchema && { headers: headersSchema }),
-        })
+        const validationIssues: z.ZodIssue[] = []
+        let validatedBody: TBody = body as TBody
+        let validatedQuery: TQuery = query as TQuery
+        let validatedParams: TParams = params as TParams
+        let validatedHeaders: THeaders = headers as THeaders
 
-        const result = finalSchema.safeParse({ body, query, params, headers })
+        if (bodySchema) {
+          const result = bodySchema.safeParse(body)
+          if (!result.success) {
+            validationIssues.push(...result.error.issues)
+          } else {
+            validatedBody = result.data
+          }
+        }
 
-        if (!result.success) {
-          const validationError = fromZodError(result.error)
+        if (querySchema) {
+          const result = querySchema.safeParse(query)
+          if (!result.success) {
+            validationIssues.push(...result.error.issues)
+          } else {
+            validatedQuery = result.data
+          }
+        }
+
+        if (paramsSchema) {
+          const result = paramsSchema.safeParse(params)
+          if (!result.success) {
+            validationIssues.push(...result.error.issues)
+          } else {
+            validatedParams = result.data
+          }
+        }
+
+        if (headersSchema) {
+          const result = headersSchema.safeParse(headers)
+          if (!result.success) {
+            validationIssues.push(...result.error.issues)
+          } else {
+            validatedHeaders = result.data
+          }
+        }
+
+        if (validationIssues.length > 0) {
+          const validationError = fromZodError(new ZodError(validationIssues))
           return NextResponse.json(
             {
               message: 'Validation failed',
@@ -75,10 +109,10 @@ export function withValidation<
         }
 
         return handler(req, {
-          body: result.data.body,
-          query: result.data.query,
-          params: result.data.params,
-          headers: result.data.headers,
+          body: validatedBody as TBody,
+          query: validatedQuery as TQuery,
+          params: validatedParams as TParams,
+          headers: validatedHeaders as THeaders,
         })
       } catch (error) {
         if (error instanceof SyntaxError) {
