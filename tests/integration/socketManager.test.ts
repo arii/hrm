@@ -2,7 +2,12 @@
 import { spawn, ChildProcess, execSync } from 'child_process'
 import WebSocket from 'ws'
 import http from 'http'
-import { ServerMessage, TimerCommandMessage, HrmInputMessage } from '../../types/websocket'
+import {
+  ServerMessage,
+  TimerCommandMessage,
+  HrmInputMessage,
+} from '../../types/websocket'
+import { HrmStreamData } from '../../types/core'
 
 // Helper to wait for a specific message that satisfies a predicate
 const waitForMessage = (
@@ -118,9 +123,11 @@ describe('WebSocket Full Integration Test', () => {
 
     const hrmUpdate = await waitForMessage(ws, (msg) => {
       if (msg.type !== 'HRM_UPDATE') return false
-      return msg.payload.some((client: any) => client.value === 135)
+      return msg.payload.some((client: HrmStreamData) => client.value === 135)
     })
-    const clientData = (hrmUpdate.payload as any[]).find(c => c.value === 135)
+    const clientData = (hrmUpdate.payload as HrmStreamData[]).find(
+      (c) => c.value === 135
+    )
     expect(clientData).toBeDefined()
 
     // 3. Start the timer and wait for the PREPARE phase update
@@ -136,7 +143,6 @@ describe('WebSocket Full Integration Test', () => {
     })
     expect(timerStartUpdate.payload.isRunning).toBe(true)
     expect(timerStartUpdate.payload.currentPhase).toBe('PREPARE')
-
 
     // 4. Stop the timer and wait for the IDLE phase update
     const stopCommand: TimerCommandMessage = {
