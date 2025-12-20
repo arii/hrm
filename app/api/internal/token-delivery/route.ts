@@ -12,6 +12,13 @@ export async function POST(req: NextRequest) {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
     if (expected && secretHeader !== expected) {
+      logger.warn(
+        {
+          remoteIp: req.ip,
+          userAgent: req.headers.get('user-agent'),
+        },
+        'Unauthorized attempt to access token delivery endpoint'
+      )
       throw new ApiError(401, 'Unauthorized')
     }
 
