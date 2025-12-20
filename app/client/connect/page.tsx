@@ -47,7 +47,7 @@ export default function ConnectPage() {
 
   const {
     workoutDuration,
-    caloriesBurned,
+    accumulatedCalories,
     resetWorkout,
     hasStarted,
     startWorkout,
@@ -61,7 +61,7 @@ export default function ConnectPage() {
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
+      accumulatedCalories={accumulatedCalories}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}

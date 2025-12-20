@@ -5,69 +5,30 @@ import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
 describe('useWorkoutSession calorie logic', () => {
-  it('should initialize with zero calories burned', () => {
+  it('should initialize with the provided totalCalories', () => {
     const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 0 })
+      useWorkoutSession({ isConnected: false, totalCalories: 150 })
     )
-    expect(result.current.caloriesBurned).toBe(0)
+    expect(result.current.accumulatedCalories).toBe(150)
   })
 
-  it('should start with zero calories burned even if totalCalories is non-zero', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 100 })
-    )
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should capture the starting calorie count on startWorkout', () => {
+  it('should always reflect the current totalCalories passed to it', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: false, totalCalories }),
+        useWorkoutSession({ isConnected: true, totalCalories }),
       { initialProps: { totalCalories: 100 } }
     )
 
-    act(() => {
-      result.current.startWorkout()
-    })
+    expect(result.current.accumulatedCalories).toBe(100)
 
     rerender({ totalCalories: 110 })
-    expect(result.current.caloriesBurned).toBe(10)
+    expect(result.current.accumulatedCalories).toBe(110)
+
+    rerender({ totalCalories: 150 })
+    expect(result.current.accumulatedCalories).toBe(150)
   })
 
-  it('should calculate calories burned based on the difference from the start', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 50 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-
-    rerender({ totalCalories: 55 })
-    expect(result.current.caloriesBurned).toBe(5)
-
-    rerender({ totalCalories: 75 })
-    expect(result.current.caloriesBurned).toBe(25)
-  })
-
-  it('should not show negative calories if totalCalories decreases', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-
-    rerender({ totalCalories: 90 }) // totalCalories decreased
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should preserve the last calculated calories when the workout ends', () => {
+  it('should not be affected by starting or ending a workout', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
@@ -78,58 +39,33 @@ describe('useWorkoutSession calorie logic', () => {
       result.current.startWorkout()
     })
 
-    rerender({ totalCalories: 250 })
-    expect(result.current.caloriesBurned).toBe(50)
+    rerender({ totalCalories: 220 })
+    expect(result.current.accumulatedCalories).toBe(220)
 
     act(() => {
       result.current.endWorkout()
     })
 
-    expect(result.current.caloriesBurned).toBe(50)
-    rerender({ totalCalories: 260 }) // Further changes should not affect burned calories
-    expect(result.current.caloriesBurned).toBe(50)
+    rerender({ totalCalories: 230 })
+    expect(result.current.accumulatedCalories).toBe(230)
   })
 
-  it('should reset caloriesBurned to zero on resetWorkout', () => {
+  it('should reset calories to zero on resetWorkout', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
       { initialProps: { totalCalories: 300 } }
     )
 
-    act(() => {
-      result.current.startWorkout()
-    })
-
-    rerender({ totalCalories: 320 })
-    expect(result.current.caloriesBurned).toBe(20)
+    expect(result.current.accumulatedCalories).toBe(300)
 
     act(() => {
       result.current.resetWorkout()
     })
 
-    expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should not be affected by pause and resume', () => {
-    const { result, rerender } = renderHook(
-      ({ isConnected, totalCalories }) =>
-        useWorkoutSession({ isConnected, totalCalories }),
-      { initialProps: { isConnected: true, totalCalories: 100 } }
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-    rerender({ isConnected: true, totalCalories: 110 })
-    expect(result.current.caloriesBurned).toBe(10)
-
-    // Pause
-    rerender({ isConnected: false, totalCalories: 115 })
-    expect(result.current.caloriesBurned).toBe(15)
-
-    // Resume
-    rerender({ isConnected: true, totalCalories: 125 })
-    expect(result.current.caloriesBurned).toBe(25)
+    // After reset, the hook's internal state is cleared. It will reflect
+    // the totalCalories prop value on the *next* render.
+    rerender({ totalCalories: 0 })
+    expect(result.current.accumulatedCalories).toBe(0)
   })
 })

@@ -93,7 +93,6 @@ export const useWorkoutSession = ({
   totalCalories = 0,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
-  const [startCalories, setStartCalories] = useState(0)
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -102,13 +101,10 @@ export const useWorkoutSession = ({
   })
 
   useEffect(() => {
-    // A workout is considered "over" if the status is idle but we have a startCalories value.
-    const isWorkoutOver = state.status === 'idle' && startCalories > 0
-    if (isWorkoutOver) {
-      return // Don't update calories anymore
-    }
+    // The hook's internal state for calories should always reflect the total
+    // accumulated value streamed from the server.
     dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
-  }, [totalCalories, state.status, startCalories])
+  }, [totalCalories])
 
   const prevIsConnected = useRef(isConnected)
   useEffect(() => {
@@ -169,33 +165,22 @@ export const useWorkoutSession = ({
     session.startTime = null
     session.pauseTime = null
     session.totalPaused = 0
-    setStartCalories(0)
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 
   const startWorkout = useCallback(() => {
-    // Capture the calorie count at the moment the workout starts.
-    setStartCalories(totalCalories)
     dispatch({ type: 'START_WORKOUT' })
-  }, [totalCalories])
+  }, [])
 
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
   }, [])
 
-  // Calculate the calories burned *during this session*.
-  const caloriesBurned = useMemo(() => {
-    if (startCalories === 0) {
-      return 0
-    }
-    const burned = Math.round(state.calories - startCalories)
-    return burned > 0 ? burned : 0
-  }, [state.calories, startCalories])
-
   return {
     workoutDuration: state.duration,
-    caloriesBurned,
+    // Expose the total accumulated calories directly.
+    accumulatedCalories: state.calories,
     resetWorkout,
     startWorkout,
     endWorkout,
