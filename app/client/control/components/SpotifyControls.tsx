@@ -17,6 +17,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import { SpotifySearchInput } from '@/components/Spotify/SpotifySearchInput'
 
 const SpotifyControls = () => {
   const router = useRouter()
@@ -27,6 +28,28 @@ const SpotifyControls = () => {
   const lastSentVolumeRef = useRef<string | null>(null)
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const prevActiveIdRef = useRef<string | undefined>(undefined)
+
+  const resolveTargetDeviceId = useCallback(() => {
+    if (selectedDeviceId) {
+      return selectedDeviceId
+    }
+    const activeDevice = devices.find((device) => device.is_active)
+    return activeDevice?.id
+  }, [devices, selectedDeviceId])
+
+  const handleTrackSelected = useCallback(
+    (trackUri: string) => {
+      const targetDeviceId = resolveTargetDeviceId()
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        trackUri,
+        ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+      }
+      sendData(message)
+    },
+    [resolveTargetDeviceId, sendData]
+  )
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection')
@@ -80,14 +103,6 @@ const SpotifyControls = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [devices]) // Rely on devices update to trigger sync
-
-  const resolveTargetDeviceId = useCallback(() => {
-    if (selectedDeviceId) {
-      return selectedDeviceId
-    }
-    const activeDevice = devices.find((device) => device.is_active)
-    return activeDevice?.id
-  }, [devices, selectedDeviceId])
 
   const sendSpotifyCommand = useCallback(
     (
@@ -259,6 +274,9 @@ const SpotifyControls = () => {
                 </FormControl>
               </Box>
             )}
+            <Box sx={{ mt: 2 }}>
+              <SpotifySearchInput onTrackSelected={handleTrackSelected} />
+            </Box>
             <Button
               variant="outlined"
               size="small"

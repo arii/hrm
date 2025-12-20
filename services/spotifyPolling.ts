@@ -299,7 +299,8 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    trackUri?: string
   ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -313,7 +314,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri, trackUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         await logSpotifyCommandError(command, error)
@@ -325,25 +326,21 @@ export class SpotifyPolling {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    playlistUri?: string
+    playlistUri?: string,
+    trackUri?: string
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
 
     switch (command) {
       case 'PLAY':
-        if (playlistUri) {
-          // If deviceId is undefined, SDK targets active device
-          // Type assertion needed because SDK types incorrectly require string
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string,
-            playlistUri
-          )
-        } else {
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string
-          )
-        }
+        // If deviceId is undefined, SDK targets the active device.
+        // The SDK's startResumePlayback method can take a context_uri (for playlists) or a list of uris (for tracks).
+        await this.sdk!.player.startResumePlayback(
+          deviceId || undefined,
+          playlistUri || undefined, // context_uri
+          trackUri ? [trackUri] : undefined // uris
+        )
         break
       case 'PAUSE':
         await this.sdk!.player.pausePlayback(
