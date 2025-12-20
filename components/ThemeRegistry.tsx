@@ -4,7 +4,6 @@ import { useServerInsertedHTML } from 'next/navigation'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 import { getInitColorSchemeScript } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 

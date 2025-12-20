@@ -1,3 +1,5 @@
+import { Theme } from '@mui/material/styles'
+
 export const components = {
   MuiButton: {
     styleOverrides: {
@@ -104,7 +106,7 @@ export const components = {
   },
   MuiAlert: {
     styleOverrides: {
-      root: ({ theme }: { theme: any }) => ({
+      root: ({ theme }: { theme: Theme }) => ({
         borderRadius: 12,
         boxShadow: theme.shadows[3],
       }),

@@ -18,7 +18,7 @@ declare module '@mui/material/styles' {
 
 const commonSettings = {
   typography,
-  // @ts-ignore
+  // @ts-expect-error - The components object is not fully compatible with the ThemeOptions type, but it works at runtime.
   components,
   spacing: 8,
   shape: {

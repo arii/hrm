@@ -260,7 +260,7 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
         run: |
           set +e  # Disable exit on error to continue reporting even if commands fail
-          
+
           # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then

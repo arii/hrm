@@ -20,11 +20,7 @@ export default function Footer() {
         backgroundColor: 'background.paper',
       }}
     >
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="body2" color="text.secondary">
           © {currentYear} HRM Dashboard. All rights reserved.
         </Typography>
