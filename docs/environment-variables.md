@@ -70,3 +70,9 @@ For local development, copy `.env.example` to a new file named `.env.local` and 
 ```bash
 cp .env.example .env.local
 ```
+
+## CI/CD Environments
+
+In CI/CD environments like GitHub Actions, environment variables should be set up as repository or organization secrets. **Do not commit `.env.production` or similar files containing secrets to the repository.**
+
+The CI/CD pipeline should be configured to inject these secrets into the environment where the build and deployment processes run. The validation system will then pick them up and ensure the application is configured correctly for the target environment.
