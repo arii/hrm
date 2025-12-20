@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import TimerDisplay from '@/components/TimerDisplay'
+import { AudioProvider } from '@/context/AudioContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
@@ -27,7 +28,11 @@ describe('TimerDisplay', () => {
       timeElapsed: 0,
       mode: 'TABATA',
     })
-    render(<TimerDisplay />)
+    render(
+      <AudioProvider>
+        <TimerDisplay />
+      </AudioProvider>
+    )
     // In the IDLE state, a phase label is not shown
     expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
@@ -40,7 +45,11 @@ describe('TimerDisplay', () => {
       timeElapsed: 5,
       mode: 'TABATA',
     })
-    render(<TimerDisplay />)
+    render(
+      <AudioProvider>
+        <TimerDisplay />
+      </AudioProvider>
+    )
 
     expect(screen.getByTestId('timer-phase')).toHaveTextContent('WORK')
     // It should display the remaining time formatted as MM:SS
@@ -54,7 +63,11 @@ describe('TimerDisplay', () => {
       timeElapsed: 15,
       mode: 'TABATA',
     })
-    render(<TimerDisplay />)
+    render(
+      <AudioProvider>
+        <TimerDisplay />
+      </AudioProvider>
+    )
 
     expect(screen.getByTestId('timer-phase')).toHaveTextContent('REST')
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:05')
@@ -67,7 +80,11 @@ describe('TimerDisplay', () => {
       timeElapsed: 125, // 2 minutes and 5 seconds
       mode: 'STOPWATCH',
     })
-    render(<TimerDisplay />)
+    render(
+      <AudioProvider>
+        <TimerDisplay />
+      </AudioProvider>
+    )
 
     // In stopwatch mode, a phase label is not shown
     expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
@@ -82,7 +99,11 @@ describe('TimerDisplay', () => {
       timeElapsed: 0,
       mode: 'TABATA',
     })
-    render(<TimerDisplay />)
+    render(
+      <AudioProvider>
+        <TimerDisplay />
+      </AudioProvider>
+    )
 
     expect(screen.getByTestId('timer-phase')).toHaveTextContent('GET READY')
     // Prepare phase shows seconds only

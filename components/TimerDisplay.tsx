@@ -13,22 +13,13 @@ import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 
+import { useAudioContext } from '@/context/AudioContext'
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
-interface TimerDisplayProps {
-  volume: number
-  setVolume: (volume: number) => void
-  muted: boolean
-  toggleMute: () => void
-}
-
-const TimerDisplay = ({
-  volume,
-  setVolume,
-  muted,
-  toggleMute,
-}: TimerDisplayProps) => {
+const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
+  const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
     currentPhase,
     timeRemaining,
@@ -253,7 +244,8 @@ const TimerDisplay = ({
           sx={{
             mt: 2,
             mb: 1,
-            width: 'clamp(200px, 80%, 300px)',
+            width: { xs: '90%', md: '80%' },
+            maxWidth: 300,
           }}
           alignItems="center"
         >
