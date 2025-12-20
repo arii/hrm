@@ -75,10 +75,10 @@ export function withValidation<
         }
 
         return handler(req, {
-          body: result.data.body,
-          query: result.data.query,
-          params: result.data.params,
-          headers: result.data.headers,
+          body: result.data.body as TBody,
+          query: result.data.query as TQuery,
+          params: result.data.params as TParams,
+          headers: result.data.headers as THeaders,
         })
       } catch (error) {
         if (error instanceof SyntaxError) {
