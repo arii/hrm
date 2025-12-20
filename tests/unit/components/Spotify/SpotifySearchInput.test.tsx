@@ -32,13 +32,10 @@ describe('SpotifySearchInput', () => {
     fireEvent.change(input, { target: { value: 'test' } })
 
     // Should not call immediately
-    // The hook is called once with "" when the component mounts
     await waitFor(() => expect(mockSearchTracks).toHaveBeenCalledWith(''))
 
     // Should call after debounce
-    await waitFor(() => expect(mockSearchTracks).toHaveBeenCalledWith('test'), {
-      timeout: 600,
-    })
+    await waitFor(() => expect(mockSearchTracks).toHaveBeenCalledWith('test'), { timeout: 600 })
   })
 
   it('should show loading indicator', () => {
@@ -67,12 +64,7 @@ describe('SpotifySearchInput', () => {
 
   it('should display search results and handle selection', () => {
     const mockResults = [
-      {
-        id: '1',
-        name: 'Track 1',
-        uri: 'uri:1',
-        artists: [{ name: 'Artist 1' }],
-      },
+      { id: '1', name: 'Track 1', uri: 'uri:1', artists: [{ name: 'Artist 1' }] },
     ]
     mockUseSpotifySearch.mockReturnValue({
       results: mockResults,

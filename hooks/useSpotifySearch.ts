@@ -23,16 +23,10 @@ export const useSpotifySearch = () => {
       return
     }
 
-    setSearchState((prevState) => ({
-      ...prevState,
-      loading: true,
-      error: null,
-    }))
+    setSearchState((prevState) => ({ ...prevState, loading: true, error: null }))
 
     try {
-      const response = await fetch(
-        `/api/spotify/search?q=${encodeURIComponent(query)}`
-      )
+      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`)
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to fetch search results')
@@ -41,8 +35,7 @@ export const useSpotifySearch = () => {
       setSearchState({ results: data, loading: false, error: null })
     } catch (err) {
       console.error('Spotify search error:', err)
-      const errorMessage =
-        err instanceof Error ? err.message : 'An unknown error occurred'
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
       setSearchState({ results: [], loading: false, error: errorMessage })
     }
   }, [])
