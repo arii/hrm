@@ -22,8 +22,14 @@ const serverSchema = z.object({
   NEXTAUTH_SECRET: z
     .string()
     .min(1, { message: 'NEXTAUTH_SECRET is required' }),
-  NEXTAUTH_URL: z.string().url({ message: 'NEXTAUTH_URL must be a valid URL' }).default('http://127.0.0.1:3000'),
-  BASE_URL: z.string().url({ message: 'BASE_URL must be a valid URL' }).default('http://127.0.0.1:3000'),
+  NEXTAUTH_URL: z
+    .string()
+    .url({ message: 'NEXTAUTH_URL must be a valid URL' })
+    .default('http://127.0.0.1:3000'),
+  BASE_URL: z
+    .string()
+    .url({ message: 'BASE_URL must be a valid URL' })
+    .default('http://127.0.0.1:3000'),
   SPOTIFY_CLIENT_ID: z
     .string()
     .min(1, { message: 'SPOTIFY_CLIENT_ID is required' }),
@@ -32,7 +38,8 @@ const serverSchema = z.object({
     .min(1, { message: 'SPOTIFY_CLIENT_SECRET is required' }),
   SPOTIFY_CALLBACK_URL: z
     .string()
-    .url({ message: 'SPOTIFY_CALLBACK_URL must be a valid URL' }).default('http://127.0.0.1:3000/api/auth/callback/spotify'),
+    .url({ message: 'SPOTIFY_CALLBACK_URL must be a valid URL' })
+    .default('http://127.0.0.1:3000/api/auth/callback/spotify'),
   INTERNAL_TOKEN_DELIVERY_SECRET: z
     .string()
     .min(1, { message: 'INTERNAL_TOKEN_DELIVERY_SECRET is required' }),
@@ -40,7 +47,10 @@ const serverSchema = z.object({
   CI: z.preprocess(isTruthy, z.boolean().default(false)),
   GOOGLE_DOC_WORKOUT_URL: z
     .string()
-    .url({ message: 'GOOGLE_DOC_WORKOUT_URL must be a valid URL' }).default('https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'),
+    .url({ message: 'GOOGLE_DOC_WORKOUT_URL must be a valid URL' })
+    .default(
+      'https://docs.google.com/document/d/e/2PACX-1vTev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ/pub?embedded=true'
+    ),
   ANALYZE: z.preprocess(isTruthy, z.boolean().default(false)),
 })
 
