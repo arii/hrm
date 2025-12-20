@@ -35,7 +35,7 @@ describe('lib/shared/utils/health.ts', () => {
     })
 
     it('should handle a valid age string with extra spaces', () => {
-        expect(calculateMaxHr(' 40 ')).toBe(180);
-    });
+      expect(calculateMaxHr(' 40 ')).toBe(180)
+    })
   })
 })

@@ -16,7 +16,7 @@ describe('lib/shared/utils/date.ts', () => {
 
   // Helper to mock the Date object to a fixed value
   const mockDate = (isoDate: string) => {
-    // @ts-ignore
+    // @ts-expect-error - Mocking the global Date object for testing purposes
     global.Date = class extends RealDate {
       constructor(dateString?: string | number | Date) {
         // If a date string is provided, use it; otherwise, use the mock date.

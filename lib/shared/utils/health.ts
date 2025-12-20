@@ -16,12 +16,14 @@
  * calculateMaxHr("25")    // 195
  * calculateMaxHr(null)    // 190
  */
-export const calculateMaxHr = (age: number | string | null | undefined): number => {
+export const calculateMaxHr = (
+  age: number | string | null | undefined
+): number => {
   if (age) {
-    const ageAsNumber = typeof age === 'string' ? parseInt(age, 10) : age;
+    const ageAsNumber = typeof age === 'string' ? parseInt(age, 10) : age
     if (!isNaN(ageAsNumber) && ageAsNumber > 0) {
-      return 220 - ageAsNumber;
+      return 220 - ageAsNumber
     }
   }
-  return 190;
-};
+  return 190
+}

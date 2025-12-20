@@ -39,7 +39,7 @@ describe('lib/shared/utils/time.ts', () => {
     })
 
     it('should correctly pad single-digit hours, minutes, and seconds', () => {
-        expect(formatDuration(3661)).toBe('01:01:01')
-    });
+      expect(formatDuration(3661)).toBe('01:01:01')
+    })
   })
 })
