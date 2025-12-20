@@ -14,14 +14,18 @@ describe('useWorkoutSession', () => {
   })
 
   it('should initialize with idle status and zero duration', () => {
-    const { result } = renderHook(() => useWorkoutSession({ isConnected: false }))
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: false })
+    )
     expect(result.current.workoutStatus).toBe('idle')
     expect(result.current.workoutDuration).toBe(0)
     expect(result.current.hasStarted).toBe(false)
   })
 
   it('should transition to running when startWorkout is called', () => {
-    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: true })
+    )
     act(() => {
       result.current.startWorkout()
     })
@@ -30,7 +34,9 @@ describe('useWorkoutSession', () => {
   })
 
   it('should increment duration every second when running', () => {
-    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: true })
+    )
     act(() => {
       result.current.startWorkout()
     })
@@ -92,7 +98,9 @@ describe('useWorkoutSession', () => {
   })
 
   it('should transition to idle and reset duration on endWorkout', () => {
-    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: true })
+    )
     act(() => {
       result.current.startWorkout()
     })
@@ -111,7 +119,9 @@ describe('useWorkoutSession', () => {
   })
 
   it('should reset the entire state on resetWorkout', () => {
-    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    const { result } = renderHook(() =>
+      useWorkoutSession({ isConnected: true })
+    )
     act(() => {
       result.current.startWorkout()
     })
