@@ -7,7 +7,7 @@ type SessionStatus = 'idle' | 'running' | 'paused'
 interface SessionState {
   status: SessionStatus
   duration: number
-  calories: number
+  hasBeenStarted: boolean // New state to track if a workout has ever started
 }
 
 type SessionAction =
@@ -17,12 +17,11 @@ type SessionAction =
   | { type: 'RESET' }
   | { type: 'START_WORKOUT' }
   | { type: 'END_WORKOUT' }
-  | { type: 'UPDATE_CALORIES'; payload: number }
 
 const initialState: SessionState = {
   status: 'idle',
   duration: 0,
-  calories: 0,
+  hasBeenStarted: false,
 }
 
 function sessionReducer(
@@ -33,12 +32,15 @@ function sessionReducer(
     case 'CONNECT':
     case 'START_WORKOUT':
       if (state.status === 'paused') {
-        // This is a resume. Don't reset duration.
         return { ...state, status: 'running' }
       }
       if (state.status === 'idle') {
-        // This is a new workout. Reset duration.
-        return { ...state, status: 'running', duration: 0 }
+        return {
+          ...state,
+          status: 'running',
+          duration: 0,
+          hasBeenStarted: true, // Mark as started
+        }
       }
       return state
     case 'DISCONNECT':
@@ -47,17 +49,12 @@ function sessionReducer(
       }
       return state
     case 'END_WORKOUT':
-      // Go idle, reset duration, but preserve calories for the final summary calculation.
+      // Go idle, reset duration, but keep hasBeenStarted true
       return { ...state, status: 'idle', duration: 0 }
     case 'TICK':
       return {
         ...state,
         duration: action.payload.duration,
-      }
-    case 'UPDATE_CALORIES':
-      return {
-        ...state,
-        calories: action.payload,
       }
     case 'RESET':
       return initialState
@@ -69,22 +66,13 @@ function sessionReducer(
 // --- The Hook Implementation ---
 
 /**
- * Manages the state of a client-side workout session, tracking duration.
- *
- * NOTE: Calorie calculation is no longer performed in this hook.
- * It is now handled server-side and streamed via the WebSocket connection.
- * This hook consumes the final `totalCalories` value to ensure data consistency
- * across the application.
+ * Manages the state of a client-side workout session, tracking duration and status.
  */
 interface WorkoutSessionOptions {
   isConnected: boolean
-  totalCalories?: number
 }
 
-export const useWorkoutSession = ({
-  isConnected,
-  totalCalories = 0,
-}: WorkoutSessionOptions) => {
+export const useWorkoutSession = ({ isConnected }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
 
   const sessionDataRef = useRef({
@@ -92,12 +80,6 @@ export const useWorkoutSession = ({
     pauseTime: null as number | null,
     totalPaused: 0,
   })
-
-  useEffect(() => {
-    // The hook's internal state for calories should always reflect the total
-    // accumulated value streamed from the server.
-    dispatch({ type: 'UPDATE_CALORIES', payload: totalCalories })
-  }, [totalCalories])
 
   const prevIsConnected = useRef(isConnected)
   useEffect(() => {
@@ -172,11 +154,10 @@ export const useWorkoutSession = ({
 
   return {
     workoutDuration: state.duration,
-    accumulatedCalories: state.calories,
     resetWorkout,
     startWorkout,
     endWorkout,
     workoutStatus: state.status,
-    hasStarted: state.status !== 'idle',
+    hasStarted: state.hasBeenStarted, // Use the new state property
   }
 }

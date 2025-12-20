@@ -4,69 +4,126 @@
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
-describe('useWorkoutSession calorie logic', () => {
-  it('should initialize with the provided totalCalories', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 150 })
-    )
-    expect(result.current.accumulatedCalories).toBe(150)
+describe('useWorkoutSession', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
   })
 
-  it('should always reflect the current totalCalories passed to it', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
-    )
-
-    expect(result.current.accumulatedCalories).toBe(100)
-
-    rerender({ totalCalories: 110 })
-    expect(result.current.accumulatedCalories).toBe(110)
-
-    rerender({ totalCalories: 150 })
-    expect(result.current.accumulatedCalories).toBe(150)
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
-  it('should not be affected by starting or ending a workout', () => {
+  it('should initialize with idle status and zero duration', () => {
+    const { result } = renderHook(() => useWorkoutSession({ isConnected: false }))
+    expect(result.current.workoutStatus).toBe('idle')
+    expect(result.current.workoutDuration).toBe(0)
+    expect(result.current.hasStarted).toBe(false)
+  })
+
+  it('should transition to running when startWorkout is called', () => {
+    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    act(() => {
+      result.current.startWorkout()
+    })
+    expect(result.current.workoutStatus).toBe('running')
+    expect(result.current.hasStarted).toBe(true)
+  })
+
+  it('should increment duration every second when running', () => {
+    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    act(() => {
+      result.current.startWorkout()
+    })
+
+    act(() => {
+      jest.advanceTimersByTime(1000)
+    })
+    expect(result.current.workoutDuration).toBe(1)
+
+    act(() => {
+      jest.advanceTimersByTime(4000)
+    })
+    expect(result.current.workoutDuration).toBe(5)
+  })
+
+  it('should pause when the device disconnects and resume on reconnect', () => {
     const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 200 } }
+      ({ isConnected }) => useWorkoutSession({ isConnected }),
+      { initialProps: { isConnected: true } }
     )
 
     act(() => {
       result.current.startWorkout()
     })
+    expect(result.current.workoutStatus).toBe('running')
 
-    rerender({ totalCalories: 220 })
-    expect(result.current.accumulatedCalories).toBe(220)
+    rerender({ isConnected: false })
+    expect(result.current.workoutStatus).toBe('paused')
+
+    rerender({ isConnected: true })
+    expect(result.current.workoutStatus).toBe('running')
+  })
+
+  it('should not count duration while paused', () => {
+    const { result, rerender } = renderHook(
+      ({ isConnected }) => useWorkoutSession({ isConnected }),
+      { initialProps: { isConnected: true } }
+    )
+
+    act(() => {
+      result.current.startWorkout()
+    })
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
+    expect(result.current.workoutDuration).toBe(2)
+
+    rerender({ isConnected: false })
+    act(() => {
+      jest.advanceTimersByTime(3000)
+    })
+    expect(result.current.workoutDuration).toBe(2)
+
+    rerender({ isConnected: true })
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
+    expect(result.current.workoutDuration).toBe(4)
+  })
+
+  it('should transition to idle and reset duration on endWorkout', () => {
+    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    act(() => {
+      result.current.startWorkout()
+    })
+    act(() => {
+      jest.advanceTimersByTime(10000)
+    })
+    expect(result.current.workoutDuration).toBe(10)
 
     act(() => {
       result.current.endWorkout()
     })
-
-    rerender({ totalCalories: 230 })
-    expect(result.current.accumulatedCalories).toBe(230)
+    expect(result.current.workoutStatus).toBe('idle')
+    expect(result.current.workoutDuration).toBe(0)
+    // hasStarted should be true to show the summary
+    expect(result.current.hasStarted).toBe(true)
   })
 
-  it('should reset calories to zero on resetWorkout', () => {
-    const { result, rerender } = renderHook(
-      ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 300 } }
-    )
-
-    expect(result.current.accumulatedCalories).toBe(300)
+  it('should reset the entire state on resetWorkout', () => {
+    const { result } = renderHook(() => useWorkoutSession({ isConnected: true }))
+    act(() => {
+      result.current.startWorkout()
+    })
+    act(() => {
+      jest.advanceTimersByTime(5000)
+    })
 
     act(() => {
       result.current.resetWorkout()
     })
-
-    // After reset, the hook's internal state is cleared. It will reflect
-    // the totalCalories prop value on the *next* render, which is 0
-    // because the parent component will reset it.
-    rerender({ totalCalories: 0 })
-    expect(result.current.accumulatedCalories).toBe(0)
+    expect(result.current.workoutStatus).toBe('idle')
+    expect(result.current.workoutDuration).toBe(0)
+    expect(result.current.hasStarted).toBe(false)
   })
 })
