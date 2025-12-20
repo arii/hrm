@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     if (expected && secretHeader !== expected) {
       logger.warn(
         {
-          remoteIp: req.ip,
+          remoteIp: req.headers.get('x-forwarded-for'),
           userAgent: req.headers.get('user-agent'),
         },
         'Unauthorized attempt to access token delivery endpoint'
