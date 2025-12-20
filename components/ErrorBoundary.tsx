@@ -21,7 +21,16 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      // In a real application, you might add user info, session ID, etc.
+      // E.g., user: { id: '...', name: '...' }
+    }
+    // In a real app, you would send this to a service like Sentry, LogRocket, etc.
+    console.error('ErrorBoundary caught an error:', JSON.stringify(errorDetails, null, 2))
   }
 
   public render() {
