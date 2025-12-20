@@ -352,11 +352,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                 secondsAtHighHr >= userSettings.autoStartDuration &&
                 onAutoStart
               ) {
-                onAutoStart()
                 highHrSince.current = null // Reset after starting
                 if (onAutoStartDetecting) {
                   onAutoStartDetecting(false)
                 }
+                onAutoStart()
               }
             } else {
               if (highHrSince.current !== null && onAutoStartDetecting) {

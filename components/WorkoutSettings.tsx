@@ -63,7 +63,10 @@ const WorkoutSettings = () => {
               aria-labelledby="hr-threshold-slider"
               valueLabelDisplay="auto"
               step={5}
-              marks
+              marks={[
+                { value: 80, label: '80' },
+                { value: 150, label: '150' },
+              ]}
               min={80}
               max={150}
             />
@@ -78,7 +81,10 @@ const WorkoutSettings = () => {
               aria-labelledby="duration-slider"
               valueLabelDisplay="auto"
               step={5}
-              marks
+              marks={[
+                { value: 10, label: '10' },
+                { value: 60, label: '60' },
+              ]}
               min={10}
               max={60}
             />

@@ -35,7 +35,7 @@ const HrmConnectionPanel = () => {
 
   const { startWorkout, resetWorkout } = useWorkoutSession({
     isConnected: isConnected,
-    totalCalories: hrmData.length > 0 ? hrmData[0].calories : 0,
+    totalCalories: hrmData?.[0]?.calories ?? 0,
   })
 
   function handleAutoStartWorkout() {
