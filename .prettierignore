@@ -1,0 +1,13 @@
+# Test & Build Artifacts
+/test-results/
+/coverage/
+/dist/
+/.next/
+/node_modules/
+
+# Logs
+*.log
+/logs/
+
+# System Files
+.DS_Store

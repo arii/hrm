@@ -12,7 +12,6 @@ package-lock.json
 # Testing & Coverage
 /coverage
 /test-results/
-/playwright-report/
 /playwright/.cache/
 .nycrc
 /oauth-test-report/
