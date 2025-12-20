@@ -151,7 +151,9 @@ app
 
     // 2. Create a broadcast function wrapper to decouple services from WSS instance
     const broadcastUpdate = (message: ServerMessage) => {
-      broadcast(wss, message)
+      // Dynamically set origin based on the message type for better logging
+      const origin = `service.${message.type}`
+      broadcast(wss, message, origin)
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster

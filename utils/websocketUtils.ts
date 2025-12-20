@@ -1,8 +1,10 @@
 // File: utils/websocketUtils.ts (New)
 /**
+ * @internal
  * Provides standardized, type-safe utilities for sending and broadcasting
  * WebSocket messages, ensuring all outgoing data conforms to the
- * canonical `ServerMessage` types.
+ * canonical `ServerMessage` types. These functions are intended for
+ * internal server use only.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ServerMessage } from '../types/websocket'
@@ -14,11 +16,16 @@ import logger from './logger'
  *
  * @param ws The WebSocket client instance to send the message to.
  * @param message The `ServerMessage` object to send.
+ * @param origin Optional identifier of the calling service for contextual logging.
  */
-export const sendMessage = (ws: WebSocket, message: ServerMessage): void => {
+export const sendWebSocketMessage = (
+  ws: WebSocket,
+  message: ServerMessage,
+  origin?: string
+): void => {
   if (ws.readyState !== WebSocket.OPEN) {
     logger.warn(
-      { clientId: (ws as any).clientId }, // Assuming clientId is attached
+      { clientId: (ws as any).clientId, origin }, // Assuming clientId is attached
       'Attempted to send message to a non-open WebSocket.'
     )
     return
@@ -30,6 +37,7 @@ export const sendMessage = (ws: WebSocket, message: ServerMessage): void => {
       {
         clientId: (ws as any).clientId,
         error,
+        origin,
       },
       'Failed to send WebSocket message.'
     )
@@ -42,10 +50,12 @@ export const sendMessage = (ws: WebSocket, message: ServerMessage): void => {
  *
  * @param wss The WebSocketServer instance.
  * @param message The `ServerMessage` object to broadcast.
+ * @param origin Optional identifier of the calling service for contextual logging.
  */
 export const broadcast = (
   wss: WebSocketServer,
-  message: ServerMessage
+  message: ServerMessage,
+  origin?: string
 ): void => {
   const messageString = JSON.stringify(message)
   wss.clients.forEach((client) => {
@@ -57,6 +67,7 @@ export const broadcast = (
           {
             clientId: (client as any).clientId,
             error,
+            origin,
           },
           'Failed to broadcast WebSocket message to a client.'
         )

@@ -17,7 +17,7 @@ import {
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { broadcast, sendMessage } from './websocketUtils.js'
+import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
@@ -124,10 +124,14 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
-  broadcast(wsServerInstance, {
-    type: 'HRM_UPDATE',
-    payload: Array.from(clientData.values()),
-  })
+  broadcast(
+    wsServerInstance,
+    {
+      type: 'HRM_UPDATE',
+      payload: Array.from(clientData.values()),
+    },
+    'socketManager.broadcastState'
+  )
 }
 
 /**
@@ -145,7 +149,7 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         ws.lastPingTime = Date.now()
-        sendMessage(ws, { type: 'PONG' })
+        sendWebSocketMessage(ws, { type: 'PONG' }, 'socketManager.PING')
         break
       }
       case 'REGISTER_CLIENT': {
@@ -166,7 +170,11 @@ const handleIncomingMessage = (
           type: 'INITIAL_STATE',
           payload: payload,
         }
-        sendMessage(ws, initialStateMessage)
+        sendWebSocketMessage(
+          ws,
+          initialStateMessage,
+          'socketManager.GET_STATE'
+        )
         break
       }
       case 'HRM_METADATA_UPDATE': {
@@ -249,7 +257,11 @@ const handleIncomingMessage = (
               type: 'EXECUTE_SPOTIFY',
               payload: commandMsg,
             }
-            sendMessage(target, executionMessage)
+            sendWebSocketMessage(
+              target,
+              executionMessage,
+              'socketManager.SPOTIFY_COMMAND'
+            )
           }
         })
 

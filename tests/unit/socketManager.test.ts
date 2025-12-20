@@ -24,7 +24,7 @@ import {
 } from '../../types/websocket'
 import {
   broadcast,
-  sendMessage,
+  sendWebSocketMessage,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 
@@ -39,7 +39,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 
 // Mock broadcaster to prevent side-effects between tests
 jest.mock('../../utils/websocketUtils.js', () => ({
-  sendMessage: jest.fn(),
+  sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
 }))
 
@@ -154,7 +154,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
-      expect(sendMessage).toHaveBeenCalledWith(mockWs, { type: 'PONG' })
+      expect(sendWebSocketMessage).toHaveBeenCalledWith(mockWs, { type: 'PONG' }, 'socketManager.PING')
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {
@@ -318,8 +318,8 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(getSnapshot).toHaveBeenCalled()
-      expect(sendMessage).toHaveBeenCalled()
-      const sentData = (sendMessage as jest.Mock).mock.calls[0][1]
+      expect(sendWebSocketMessage).toHaveBeenCalled()
+      const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
       expect(sentData.type).toBe('INITIAL_STATE')
       expect(sentData.payload).toHaveProperty('timer')
       expect(sentData.payload).toHaveProperty('spotify')
@@ -345,10 +345,14 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-      expect(broadcast).toHaveBeenCalledWith(mockWss, {
-        type: 'HRM_UPDATE',
-        payload: [],
-      })
+      expect(broadcast).toHaveBeenCalledWith(
+        mockWss,
+        {
+          type: 'HRM_UPDATE',
+          payload: [],
+        },
+        'socketManager.broadcastState'
+      )
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
@@ -365,10 +369,11 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      expect(sendMessage).toHaveBeenCalled()
-      expect(sendMessage).toHaveBeenCalledWith(
+      expect(sendWebSocketMessage).toHaveBeenCalled()
+      expect(sendWebSocketMessage).toHaveBeenCalledWith(
         dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' })
+        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
+        'socketManager.SPOTIFY_COMMAND'
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
