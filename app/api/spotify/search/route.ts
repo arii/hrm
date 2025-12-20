@@ -15,7 +15,10 @@ export async function GET(request: Request) {
   const query = searchParams.get('q')
 
   if (!query) {
-    return NextResponse.json({ error: 'Query parameter "q" is required' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Query parameter "q" is required' },
+      { status: 400 }
+    )
   }
 
   try {
@@ -35,6 +38,9 @@ export async function GET(request: Request) {
     return NextResponse.json(results.tracks.items)
   } catch (error) {
     console.error('Error searching Spotify:', error)
-    return NextResponse.json({ error: 'Failed to fetch search results from Spotify' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch search results from Spotify' },
+      { status: 500 }
+    )
   }
 }
