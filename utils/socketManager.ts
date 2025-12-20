@@ -17,7 +17,7 @@ import {
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { broadcast, initBroadcaster } from './broadcast.js'
+import { broadcast, sendMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
@@ -56,7 +56,6 @@ const initSocketManager = (
   services: Services,
   getSnapshot: () => StateSnapshot
 ) => {
-  initBroadcaster(wss)
   wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
@@ -125,7 +124,7 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
-  broadcast({
+  broadcast(wsServerInstance, {
     type: 'HRM_UPDATE',
     payload: Array.from(clientData.values()),
   })
@@ -146,7 +145,7 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         ws.lastPingTime = Date.now()
-        ws.send(JSON.stringify({ type: 'PONG' }))
+        sendMessage(ws, { type: 'PONG' })
         break
       }
       case 'REGISTER_CLIENT': {
@@ -167,7 +166,7 @@ const handleIncomingMessage = (
           type: 'INITIAL_STATE',
           payload: payload,
         }
-        ws.send(JSON.stringify(initialStateMessage))
+        sendMessage(ws, initialStateMessage)
         break
       }
       case 'HRM_METADATA_UPDATE': {
@@ -250,7 +249,7 @@ const handleIncomingMessage = (
               type: 'EXECUTE_SPOTIFY',
               payload: commandMsg,
             }
-            target.send(JSON.stringify(executionMessage))
+            sendMessage(target, executionMessage)
           }
         })
 

@@ -18,9 +18,9 @@ import { WebSocketServer } from 'ws'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
+import { broadcast } from './utils/websocketUtils.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
+import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
@@ -149,18 +149,23 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // 2. Initialize Persistent Services
-    const spotifyService = await SpotifyPolling.create(broadcast)
-    const tabataService = new TabataTimer(broadcast)
+    // 2. Create a broadcast function wrapper to decouple services from WSS instance
+    const broadcastUpdate = (message: ServerMessage) => {
+      broadcast(wss, message)
+    }
 
-    // 3. State Snapshot Function
+    // 3. Initialize Persistent Services with the wrapped broadcaster
+    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+    const tabataService = new TabataTimer(broadcastUpdate)
+
+    // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    // 5. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(
       wss,
       { tabataService, spotifyService },
