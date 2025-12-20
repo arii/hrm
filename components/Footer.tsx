@@ -2,7 +2,8 @@
 
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { ThemeSwitcher } from './ThemeSwitcher'
+import ThemeSwitcher from './ThemeSwitcher'
+import { Stack } from '@mui/material'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -14,22 +15,21 @@ export default function Footer() {
         mt: 'auto',
         py: 2,
         px: 2,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
         borderTop: '1px solid',
         borderColor: 'divider',
         backgroundColor: 'background.paper',
       }}
     >
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        sx={{ flexGrow: 1, textAlign: 'center' }}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
       >
-        © {currentYear} HRM Dashboard. All rights reserved.
-      </Typography>
-      <ThemeSwitcher />
+        <Typography variant="body2" color="text.secondary">
+          © {currentYear} HRM Dashboard. All rights reserved.
+        </Typography>
+        <ThemeSwitcher />
+      </Stack>
     </Box>
   )
 }

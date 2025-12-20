@@ -1,6 +1,4 @@
-import { PaletteOptions } from '@mui/material/styles'
-
-export const lightPalette: PaletteOptions = {
+export const palette = {
   primary: {
     main: '#F44336', // Red - matches Peak HR zone, high energy
     light: '#EF5350',

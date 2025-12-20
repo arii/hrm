@@ -1,29 +1,31 @@
 'use client'
-
-import React, {
+import {
   createContext,
   useState,
   useMemo,
   useContext,
   ReactNode,
+  useEffect,
 } from 'react'
-import { ThemeProvider as MuiThemeProvider, Theme } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import { createAppTheme } from '@/lib/theme/index'
-
-type ThemeMode = 'light' | 'dark'
+import {
+  ThemeProvider as MUIThemeProvider,
+  CssBaseline,
+  PaletteMode,
+} from '@mui/material'
+import { createCustomTheme } from '@/lib/theme'
+import useLocalStorage from '@/hooks/useLocalStorage'
 
 interface ThemeContextType {
-  mode: ThemeMode
   toggleTheme: () => void
+  mode: PaletteMode
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export const useThemeMode = () => {
+export const useTheme = () => {
   const context = useContext(ThemeContext)
   if (!context) {
-    throw new Error('useThemeMode must be used within a ThemeProvider')
+    throw new Error('useTheme must be used within a ThemeProvider')
   }
   return context
 }
@@ -32,43 +34,29 @@ interface ThemeProviderProps {
   children: ReactNode
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    try {
-      const savedMode =
-        typeof window !== 'undefined'
-          ? (window.localStorage.getItem('themeMode') as ThemeMode | null)
-          : null
-      return savedMode || 'light'
-    } catch (error) {
-      console.error('Could not access localStorage:', error)
-      return 'light'
-    }
-  })
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
+  const [storedMode, setStoredMode] = useLocalStorage<PaletteMode>(
+    'themeMode',
+    'light'
+  )
+  const [mode, setMode] = useState<PaletteMode>(storedMode)
+
+  useEffect(() => {
+    setMode(storedMode)
+  }, [storedMode])
 
   const toggleTheme = () => {
-    setMode((prevMode) => {
-      const newMode = prevMode === 'light' ? 'dark' : 'light'
-      try {
-        window.localStorage.setItem('themeMode', newMode)
-      } catch (error) {
-        console.error('Could not access localStorage:', error)
-      }
-      return newMode
-    })
+    setStoredMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
   }
 
-  // Memoize the theme object to prevent unnecessary re-renders
-  const theme: Theme = useMemo(() => createAppTheme(mode), [mode])
-
-  const contextValue = useMemo(() => ({ mode, toggleTheme }), [mode])
+  const theme = useMemo(() => createCustomTheme(mode), [mode])
 
   return (
-    <ThemeContext.Provider value={contextValue}>
-      <MuiThemeProvider theme={theme}>
+    <ThemeContext.Provider value={{ toggleTheme, mode }}>
+      <MUIThemeProvider theme={theme}>
         <CssBaseline />
         {children}
-      </MuiThemeProvider>
+      </MUIThemeProvider>
     </ThemeContext.Provider>
   )
 }

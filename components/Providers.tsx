@@ -2,14 +2,17 @@
 
 import { WebSocketProvider } from '@/context/WebSocketContext'
 import { SessionProvider } from 'next-auth/react'
-import { ThemeProvider } from '@/context/ThemeContext' // Import the new ThemeProvider
+import { ThemeProvider } from '@/context/ThemeContext'
+import ThemeRegistry from './ThemeRegistry'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
-        <WebSocketProvider>{children}</WebSocketProvider>
-      </SessionProvider>
-    </ThemeProvider>
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
+      <ThemeProvider>
+        <ThemeRegistry>
+          <WebSocketProvider>{children}</WebSocketProvider>
+        </ThemeRegistry>
+      </ThemeProvider>
+    </SessionProvider>
   )
 }

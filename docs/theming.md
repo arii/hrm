@@ -1,110 +1,121 @@
 # Frontend Theming Architecture
 
-This document outlines the architecture of the configurable and extendable theme system for the HRM application.
+This document outlines the architecture of the frontend theming system, which is built upon Material-UI's (MUI) powerful theming capabilities. The goal is to create a robust, configurable, and extendable system that ensures visual consistency and improves developer experience.
 
-## 1. Overview
+## 1. Core Principles
 
-The theme system is built upon Material-UI's (MUI) theming capabilities and is designed to be modular, extensible, and easy to use. It supports both light and dark modes out of the box and can be easily extended with new themes.
+-   **Centralized Design Tokens**: All core design tokens (colors, typography, spacing, etc.) are managed in a central location for consistency.
+-   **Modularity**: The theme is broken down into smaller, manageable modules (palette, typography, components) to improve maintainability.
+-   **Extensibility**: The system is designed to be easily extended with new themes (e.g., dark mode) or variations without significant refactoring.
+-   **Developer Experience**: Components should be able to consume theme tokens intuitively, and the process for styling new components should be straightforward.
 
-## 2. Architecture
+## 2. Directory Structure
 
-The theme is defined in the `lib/theme` directory and is broken down into the following modular files:
+The entire theme system is located in the `lib/theme/` directory:
 
--   `lib/theme/index.ts`: The theme factory that assembles the theme object.
--   `lib/theme/lightPalette.ts`: The color palette for the light theme.
--   `lib/theme/darkPalette.ts`: The color palette for the dark theme.
--   `lib/theme/typography.ts`: The typography scale.
--   `lib/theme/components.ts`: Component-specific style overrides.
--   `lib/theme/shape.ts`: Border radius and shape definitions.
--   `lib/theme/shadows.ts`: Shadow definitions.
--   `lib/theme/spacing.ts`: The spacing system.
--   `lib/theme/transitions.ts`: Animation and transition definitions.
--   `lib/theme/zIndex.ts`: Z-index definitions.
--   `lib/theme/breakpoints.ts`: Responsive breakpoints.
+```
+lib/
+└── theme/
+    ├── components.ts       # MUI component style overrides
+    ├── darkPalette.ts      # Color palette for dark mode
+    ├── index.ts            # Main theme factory
+    ├── lightPalette.ts     # Color palette for light mode
+    └── typography.ts       # Typography scale and font settings
+```
 
-## 3. Usage
+## 3. Key Files and Concepts
 
-### Accessing Theme Values
+### `index.ts` (Theme Factory)
 
-To access theme values in your components, use the `useTheme` hook from `@mui/material/styles`:
+This is the heart of the theming system. It contains a `createCustomTheme` function that assembles and returns a complete MUI theme object.
 
-```tsx
-import { useTheme } from '@mui/material/styles'
+-   It imports the different theme modules (palettes, typography, components).
+-   It accepts a `mode` argument (`'light'` or `'dark'`) to dynamically select the appropriate color palette.
+-   It combines the selected palette with common settings (typography, spacing, component overrides) to generate the final theme.
+
+### `lightPalette.ts` & `darkPalette.ts`
+
+These files define the color palettes for the application's light and dark themes.
+
+-   They export a `palette` object that adheres to the MUI `PaletteOptions` structure.
+-   This is where all application colors are defined, including `primary`, `secondary`, `background`, `text`, etc.
+
+### `typography.ts`
+
+This file defines the typographic scale for the application, from `h1` to `caption`.
+
+-   It specifies `fontFamily`, `fontSize`, `fontWeight`, and `lineHeight` for each text variant.
+-   Using these predefined variants in components ensures a consistent type hierarchy.
+
+### `components.ts`
+
+This module contains all global style overrides for MUI components.
+
+-   It allows us to customize the default appearance and behavior of components like `MuiButton`, `MuiCard`, and `MuiTextField`.
+-   This is the ideal place to enforce a consistent look and feel for base components across the application.
+
+## 4. Consuming the Theme in Components
+
+The theme is made available to all components via the `ThemeProvider` in `context/ThemeContext.tsx`. To access theme properties within a component:
+
+### Using the `useTheme` Hook
+
+The `useTheme` hook from `@mui/material/styles` provides direct access to the theme object. This is useful for applying theme-based styles that aren't covered by component props.
+
+```jsx
+import { useTheme } from '@mui/material/styles';
+import Box from '@mui/material/Box';
 
 const MyComponent = () => {
-  const theme = useTheme()
-  const primaryColor = theme.palette.primary.main
-  // ...
-}
+  const theme = useTheme();
+
+  return (
+    <Box sx={{ color: theme.palette.primary.main }}>
+      This text uses the primary color from the theme.
+    </Box>
+  );
+};
 ```
 
 ### Using the `sx` Prop
 
-The `sx` prop is the recommended way to apply styles to MUI components. It allows you to use theme tokens directly:
+The `sx` prop, available on all MUI components, is the most common and recommended way to apply custom, one-off styles. It has access to the theme object, so you can reference design tokens directly.
 
-```tsx
-import { Box } from '@mui/material'
+```jsx
+import Button from '@mui/material/Button';
 
-const MyComponent = () => {
-  return (
-    <Box
-      sx={{
-        backgroundColor: 'primary.main',
-        color: 'primary.contrastText',
-        p: 2, // 16px padding
-      }}
-    >
-      Hello, World!
-    </Box>
-  )
-}
+const MyButton = () => (
+  <Button
+    sx={{
+      backgroundColor: 'primary.main', // Accesses theme.palette.primary.main
+      padding: (theme) => theme.spacing(2), // Use theme for spacing
+      fontSize: 'h6.fontSize', // Access typography scale
+    }}
+  >
+    Click Me
+  </Button>
+);
 ```
 
-## 4. Theme Switching
+## 5. Adding and Modifying Themes
 
-The theme can be switched between light and dark modes using the `useThemeMode` hook and the `ThemeSwitcher` component.
+### To modify an existing theme:
 
-### `useThemeMode` Hook
+-   **Colors**: Edit the `lightPalette.ts` or `darkPalette.ts` files.
+-   **Typography**: Modify the values in `typography.ts`.
+-   **Component Styles**: Update the overrides in `components.ts`.
 
-The `useThemeMode` hook provides the current theme mode and a function to toggle the theme:
+### To add a new theme (e.g., "contrast"):
 
-```tsx
-import { useThemeMode } from '@/context/ThemeContext'
-
-const MyComponent = () => {
-  const { mode, toggleTheme } = useThemeMode()
-  // ...
-}
-```
-
-### `ThemeSwitcher` Component
-
-The `ThemeSwitcher` component is a simple button that toggles the theme. It can be added to any component:
-
-```tsx
-import { ThemeSwitcher } from '@/components/ThemeSwitcher'
-
-const MyAppBar = () => {
-  return (
-    {/* ... */}
-    <ThemeSwitcher />
-    {/* ... */}
-  )
-}
-```
-
-## 5. Extending the Theme
-
-### Adding a New Theme
-
-To add a new theme, create a new palette file (e.g., `lib/theme/bluePalette.ts`) and then update the `createAppTheme` function in `lib/theme/index.ts` to accept the new theme mode.
-
-### Modifying an Existing Theme
-
-To modify an existing theme, simply edit the corresponding palette file or any of the other theme modules.
+1.  Create a new palette file, e.g., `contrastPalette.ts`, in `lib/theme/`.
+2.  Import the new palette in the theme factory (`lib/theme/index.ts`).
+3.  Update the `createCustomTheme` function to accept the new theme name and return the corresponding palette.
+4.  Update the `ThemeContext` to allow switching to the new theme.
 
 ## 6. Best Practices
 
--   **Use the `sx` prop**: Always use the `sx` prop for styling to ensure that your components are theme-aware.
--   **Use theme tokens**: Avoid hardcoding values like colors, spacing, and font sizes. Instead, use the theme tokens provided by the theme object.
--   **Keep it consistent**: Follow the existing design patterns and conventions to maintain a consistent look and feel across the application.
+-   **Always use theme tokens** for colors, spacing, and typography. Avoid hardcoding values (e.g., `'#FF0000'`, `'16px'`).
+-   For component-specific styles that will be reused, consider creating a `Styled` component using MUI's `styled()` utility.
+-   For one-off styles, the `sx` prop is preferred.
+-   Keep the theme modules focused. `palette` should only contain colors, `typography` only type styles, etc.
+-   When overriding component styles globally, do so in `components.ts`.
