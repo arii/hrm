@@ -51,7 +51,8 @@ export default function ConnectPage() {
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   // Use the server value if it's non-zero, otherwise fall back to the persisted value.
-  const displayCalories = serverCalories > 0 ? serverCalories : persistedCalories
+  const displayCalories =
+    serverCalories > 0 ? serverCalories : persistedCalories
 
   useEffect(() => {
     // Persist the latest calorie count whenever it changes.
