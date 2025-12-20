@@ -38,7 +38,7 @@ To access the artifacts:
 1.  Navigate to the **Actions** tab in the GitHub repository.
 2.  Find the failed workflow run for your branch or pull request.
 3.  On the summary page for the run, you will find an **Artifacts** section.
-4.  Download the `test-results-<ID>` zip file, which contains all the reports and logs from the failed run.
+4.  Download the `test-results-<GITHUB_RUN_ID>` zip file, which contains all the reports and logs from the failed run. The `<GITHUB_RUN_ID>` corresponds to the unique identifier for that specific workflow run.
 
 ## Local Cleanup
 

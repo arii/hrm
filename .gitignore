@@ -12,6 +12,7 @@ package-lock.json
 # Testing & Coverage
 /coverage
 /test-results/
+/playwright-report/
 /playwright/.cache/
 .nycrc
 /oauth-test-report/
@@ -41,7 +42,7 @@ logs/spotify_tokens.json
 logs/*
 
 # Misc / System / Editor
-.eslintcache
+/.eslintcache
 /blob-report/
 .DS_Store
 *.pem

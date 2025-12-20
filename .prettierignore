@@ -4,6 +4,7 @@
 /dist/
 /.next/
 /node_modules/
+/.eslintcache
 
 # Logs
 *.log
