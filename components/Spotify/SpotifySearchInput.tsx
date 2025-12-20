@@ -20,10 +20,13 @@ interface SpotifySearchInputProps {
   onTrackSelected: (trackUri: string) => void
 }
 
-export const SpotifySearchInput = ({ onTrackSelected }: SpotifySearchInputProps) => {
+export const SpotifySearchInput = ({
+  onTrackSelected,
+}: SpotifySearchInputProps) => {
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, 500)
-  const { results, loading, error, searchTracks, clearSearch } = useSpotifySearch()
+  const { results, loading, error, searchTracks, clearSearch } =
+    useSpotifySearch()
 
   useEffect(() => {
     searchTracks(debouncedQuery)
@@ -49,7 +52,11 @@ export const SpotifySearchInput = ({ onTrackSelected }: SpotifySearchInputProps)
                 <CircularProgress size={20} />
               ) : (
                 query && (
-                  <IconButton onClick={handleClear} edge="end" aria-label="clear search">
+                  <IconButton
+                    onClick={handleClear}
+                    edge="end"
+                    aria-label="clear search"
+                  >
                     <ClearIcon />
                   </IconButton>
                 )
@@ -58,7 +65,9 @@ export const SpotifySearchInput = ({ onTrackSelected }: SpotifySearchInputProps)
           ),
         }}
       />
-      {(results.length > 0 || error || (debouncedQuery && !loading && results.length === 0)) && (
+      {(results.length > 0 ||
+        error ||
+        (debouncedQuery && !loading && results.length === 0)) && (
         <Paper
           sx={{
             position: 'absolute',
@@ -84,7 +93,10 @@ export const SpotifySearchInput = ({ onTrackSelected }: SpotifySearchInputProps)
                   key={track.id}
                   onClick={() => onTrackSelected(track.uri)}
                 >
-                  <ListItemText primary={track.name} secondary={track.artists.map((a) => a.name).join(', ')} />
+                  <ListItemText
+                    primary={track.name}
+                    secondary={track.artists.map((a) => a.name).join(', ')}
+                  />
                 </ListItem>
               ))}
             </List>

@@ -314,7 +314,13 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri, trackUri)
+        await this.executeSpotifyCommand(
+          command,
+          deviceId,
+          volume,
+          playlistUri,
+          trackUri
+        )
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         await logSpotifyCommandError(command, error)

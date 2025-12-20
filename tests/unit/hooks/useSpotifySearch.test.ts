@@ -32,7 +32,9 @@ describe('useSpotifySearch', () => {
   })
 
   it('should fetch and set results on successful search', async () => {
-    const mockTracks: Track[] = [{ id: '1', name: 'Test Track', uri: 'spotify:track:1' } as Track]
+    const mockTracks: Track[] = [
+      { id: '1', name: 'Test Track', uri: 'spotify:track:1' } as Track,
+    ]
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockTracks,
@@ -67,7 +69,9 @@ describe('useSpotifySearch', () => {
   })
 
   it('should clear search results', async () => {
-    const mockTracks: Track[] = [{ id: '1', name: 'Test Track', uri: 'spotify:track:1' } as Track]
+    const mockTracks: Track[] = [
+      { id: '1', name: 'Test Track', uri: 'spotify:track:1' } as Track,
+    ]
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockTracks,
