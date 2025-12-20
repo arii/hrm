@@ -70,7 +70,6 @@ const Dashboard = () => {
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
-        backgroundColor: 'background.default',
       }}
     >
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>

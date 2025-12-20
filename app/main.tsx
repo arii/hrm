@@ -7,30 +7,39 @@ import ErrorFallback from '@/components/ErrorFallback'
 import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import Providers from '@/components/Providers'
-import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import Box from '@mui/material/Box'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeRegistry options={{ key: 'mui' }}>
-      <ErrorProvider>
-        <LoadingProvider>
-          <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
-          </Providers>
-          <LoadingIndicator />
-          <ErrorDisplay />
-        </LoadingProvider>
-      </ErrorProvider>
-      <Footer />
-      <BottomNavBar />
-    </ThemeRegistry>
+    <ErrorProvider>
+      <LoadingProvider>
+        <Providers>
+          <UserSettingsProvider>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+                bgcolor: 'background.default',
+              }}
+            >
+              <Box sx={{ flex: '1 0 auto' }}>
+                <ErrorBoundary fallback={<ErrorFallback />}>
+                  <TimerSoundProvider>{children}</TimerSoundProvider>
+                </ErrorBoundary>
+              </Box>
+              <Footer />
+            </Box>
+            <BottomNavBar />
+          </UserSettingsProvider>
+        </Providers>
+        <LoadingIndicator />
+        <ErrorDisplay />
+      </LoadingProvider>
+    </ErrorProvider>
   )
 }
