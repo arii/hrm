@@ -41,6 +41,8 @@ const DEFAULT_STATE: MockAppState = {
   spotifyData: {
     trackName: 'Storybook Simulation',
     artist: 'Mock Artist',
+    albumName: 'Mock Album',
+    albumArtUrl: '',
     isPlaying: false,
     devices: [],
     volume: 70,

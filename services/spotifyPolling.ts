@@ -1,4 +1,10 @@
-import { AccessToken, SpotifyApi, Device } from '@spotify/web-api-ts-sdk'
+import {
+  AccessToken,
+  SpotifyApi,
+  Device,
+  Track,
+  Episode,
+} from '@spotify/web-api-ts-sdk'
 import { ServerMessage, SpotifyData } from '../types/websocket'
 import { SpotifyDevice } from '../types/core'
 import {
@@ -55,8 +61,10 @@ export class SpotifyPolling {
   private state: SpotifyData = {
     trackName: 'Awaiting Login...',
     artist: '',
+    albumName: '',
+    albumArtUrl: '',
     isPlaying: false,
-    devices: [], // <--- ADDED
+    devices: [],
     volume: 70,
     isMuted: false,
   }
@@ -195,14 +203,16 @@ export class SpotifyPolling {
     try {
       const playbackState = await this.sdk.player.getCurrentlyPlayingTrack()
 
-      if (!playbackState) {
-        // Nothing playing or 204
+      if (!playbackState || !playbackState.item) {
+        // Nothing playing, 204, or private session
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
           this.state = {
             ...this.state,
             trackName: 'Nothing is currently playing.',
             artist: '',
+            albumName: '',
+            albumArtUrl: '',
             isPlaying: false,
           }
           this.broadcastUpdate({
@@ -213,45 +223,40 @@ export class SpotifyPolling {
         return
       }
 
-      // Check if it's a track or episode
-      if (
-        playbackState.currently_playing_type !== 'track' &&
-        playbackState.currently_playing_type !== 'episode'
-      ) {
-        // Unknown type
-        return
-      }
-
-      // item can be null if it's private session or unknown
       const item = playbackState.item
-
-      // We need to handle Track vs Episode. SDK types are union.
-      // For simplicity, we access common fields or check type.
-      const trackName = item?.name || 'Unknown Content'
-      // Artists exists on Track, not necessarily Episode in the same way?
-      // SDK `Track` has artists, `Episode` has show.
-      let artistName = 'Unknown Artist'
-      if (item && 'artists' in item) {
-        artistName = item.artists.map((a) => a.name).join(', ')
-      } else if (item && 'show' in item) {
-        artistName = item.show.name
-      }
-
       const isPlaying = playbackState.is_playing
 
       // Only broadcast if track ID or playback state has changed
-      if (
-        item?.id !== this.lastTrackId ||
-        isPlaying !== this.lastPlaybackState
-      ) {
-        this.lastTrackId = item?.id || null
+      if (item.id !== this.lastTrackId || isPlaying !== this.lastPlaybackState) {
+        this.lastTrackId = item.id
         this.lastPlaybackState = isPlaying
+
+        const trackName = item.name
+        let artistName = ''
+        let albumName = ''
+        let albumArtUrl = ''
+
+        if (item.type === 'track') {
+          const track = item as Track
+          artistName = track.artists.map((a) => a.name).join(', ')
+          albumName = track.album.name
+          albumArtUrl = track.album.images?.[0]?.url ?? ''
+        } else if (item.type === 'episode') {
+          const episode = item as Episode
+          artistName = episode.show.publisher
+          albumName = episode.show.name
+          albumArtUrl = episode.show.images?.[0]?.url ?? ''
+        }
+
         this.state = {
           ...this.state,
-          trackName: trackName,
+          trackName,
           artist: artistName,
-          isPlaying: isPlaying,
+          albumName,
+          albumArtUrl,
+          isPlaying,
         }
+
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',
           payload: this.getState(),

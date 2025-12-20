@@ -136,6 +136,8 @@ export interface SpotifyDevice {
 export interface SpotifyPlaybackState {
   trackName: string
   artist: string
+  albumName: string
+  albumArtUrl: string
   isPlaying: boolean
   devices: SpotifyDevice[]
   volume: number
