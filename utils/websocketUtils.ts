@@ -7,7 +7,7 @@
  * internal server use only.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { ServerMessage } from '../types/websocket'
+import { ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
 
 // Define a custom WebSocket type that includes our application-specific properties

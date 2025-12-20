@@ -15,7 +15,7 @@ import {
   ServerMessage,
   StateSnapshot,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core'
+import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'

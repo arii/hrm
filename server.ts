@@ -18,9 +18,9 @@ import { WebSocketServer } from 'ws'
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/broadcast.js'
+import { broadcast } from './utils/websocketUtils.js'
 import { getBaseURL } from './utils/urls.js'
-import { StateSnapshot } from './types/websocket.js'
+import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
@@ -149,18 +149,25 @@ app
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
 
-    // 2. Initialize Persistent Services
-    const spotifyService = await SpotifyPolling.create(broadcast)
-    const tabataService = new TabataTimer(broadcast)
+    // 2. Create a broadcast function wrapper to decouple services from WSS instance
+    const broadcastUpdate = (message: ServerMessage) => {
+      // Dynamically set origin based on the message type for better logging
+      const origin = `service.${message.type}`
+      broadcast(wss, message, origin)
+    }
 
-    // 3. State Snapshot Function
+    // 3. Initialize Persistent Services with the wrapped broadcaster
+    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+    const tabataService = new TabataTimer(broadcastUpdate)
+
+    // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: tabataService.getState(),
       spotifyData: spotifyService.getState(),
       spotifyServiceInitialized: spotifyService.isReady(),
     })
 
-    // 4. Initialize WebSocket Manager (to handle commands and connections)
+    // 5. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(
       wss,
       { tabataService, spotifyService },
@@ -190,31 +197,6 @@ app
         res.status(200).json({ healthy, details })
       }
     )
-
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
-        }
-      }
-      return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -257,6 +239,31 @@ app
         // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
       }
     )
+
+    // Handle all Next.js routing (pages, API routes, etc.)
+    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Await the token update and handle potential errors
+        if (spotifyService && req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await spotifyService.handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
+          }
+        }
+      }
+      return nextRequestHandler(req, res)
+    })
 
     // --- Start Server ---
 
