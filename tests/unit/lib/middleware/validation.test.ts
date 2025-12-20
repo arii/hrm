@@ -89,6 +89,9 @@ describe('withValidation Middleware', () => {
       expect(calledContext.headers).toEqual(
         expect.objectContaining({ 'x-api-key': '1234567890123456' })
       )
+      expect(calledContext.headers).toEqual(
+        expect.objectContaining({ 'x-api-key': '1234567890123456' })
+      )
     })
   })
 
