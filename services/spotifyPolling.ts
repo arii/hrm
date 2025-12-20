@@ -340,7 +340,7 @@ export class SpotifyPolling {
 
     switch (command) {
       case 'PLAY':
-        await this.sdk!.player.play({
+        await this.sdk!.player.startResumePlayback({
           device_id: deviceId,
           uris: trackUri ? [trackUri] : undefined,
           context_uri: playlistUri,
