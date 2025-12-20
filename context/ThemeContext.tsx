@@ -5,7 +5,6 @@ import React, {
   useState,
   useMemo,
   useContext,
-  useEffect,
   ReactNode,
 } from 'react'
 import { ThemeProvider as MuiThemeProvider, Theme } from '@mui/material/styles'
@@ -34,21 +33,18 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>('light')
-
-  // On initial mount, read the theme from localStorage
-  useEffect(() => {
+  const [mode, setMode] = useState<ThemeMode>(() => {
     try {
-      const savedMode = window.localStorage.getItem(
-        'themeMode'
-      ) as ThemeMode | null
-      if (savedMode) {
-        setMode(savedMode)
-      }
+      const savedMode =
+        typeof window !== 'undefined'
+          ? (window.localStorage.getItem('themeMode') as ThemeMode | null)
+          : null
+      return savedMode || 'light'
     } catch (error) {
       console.error('Could not access localStorage:', error)
+      return 'light'
     }
-  }, [])
+  })
 
   const toggleTheme = () => {
     setMode((prevMode) => {

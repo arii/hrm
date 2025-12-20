@@ -22,7 +22,11 @@ export default function Footer() {
         backgroundColor: 'background.paper',
       }}
     >
-      <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, textAlign: 'center' }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ flexGrow: 1, textAlign: 'center' }}
+      >
         © {currentYear} HRM Dashboard. All rights reserved.
       </Typography>
       <ThemeSwitcher />
