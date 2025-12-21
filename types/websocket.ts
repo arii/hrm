@@ -3,7 +3,6 @@
  * Defines the strict interfaces for all data passed between the server services
  * and the client hooks via the WebSocket connection.
  */
-
 import { WebSocket } from 'ws'
 import type {
   HrmStreamData as HrmData,

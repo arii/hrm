@@ -21,6 +21,7 @@ import {
   HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
+  ExtWebSocket,
 } from '../../types/websocket'
 import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
@@ -129,7 +130,7 @@ describe('WebSocket Manager', () => {
 
     it('should set lastPingTime on new connection', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
+      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs) // Manually trigger connection event
 
@@ -139,7 +140,7 @@ describe('WebSocket Manager', () => {
 
     it('should update lastPingTime on PING message and respond with PONG', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
+      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
 
