@@ -24,3 +24,14 @@ export const setSpotifyService = (service: SpotifyPolling) => {
 export const setTabataService = (service: TabataTimer) => {
   services.tabataService = service
 }
+
+/**
+ * Resets the services to their initial state.
+ * This is intended for use in testing environments only.
+ */
+export const _resetServices = () => {
+  if (process.env.NODE_ENV !== 'production') {
+    services.spotifyService = null
+    services.tabataService = null
+  }
+}
