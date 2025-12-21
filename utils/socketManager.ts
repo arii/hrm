@@ -14,19 +14,13 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
+  ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
-
-// Extend WebSocket to track client role and connection health
-interface ExtWebSocket extends WebSocket {
-  lastPingTime: number // Changed to non-optional
-  clientType?: 'dashboard' | 'controller'
-  clientId: string
-}
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer

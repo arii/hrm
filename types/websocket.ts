@@ -4,12 +4,25 @@
  * and the client hooks via the WebSocket connection.
  */
 
+import { WebSocket } from 'ws'
 import type {
   HrmStreamData as HrmData,
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
 } from './core'
+
+// --- WebSocket Connection & Augmentation ---
+
+/**
+ * Extends the base WebSocket type from the 'ws' library to include
+ * application-specific properties for tracking client state.
+ */
+export interface ExtWebSocket extends WebSocket {
+  clientId: string
+  lastPingTime: number
+  clientType?: 'dashboard' | 'controller'
+}
 
 // --- Server Broadcast State Interfaces ---
 
