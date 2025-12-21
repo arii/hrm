@@ -7,17 +7,14 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
-  const [accumulatedCalories, setAccumulatedCalories] = useLocalStorage(
-    'totalAccumulatedCalories',
-    0
-  )
+  const [accumulatedCalories, setAccumulatedCalories] = useState(0)
 
   const {
     connectAndStream,
