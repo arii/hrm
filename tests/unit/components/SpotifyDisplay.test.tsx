@@ -66,6 +66,7 @@ describe('SpotifyDisplay', () => {
         albumArtUrl: '',
         isPlaying: false,
       },
+      connectionStatus: 'Connected',
       spotifyServiceInitialized: true,
     })
     mockedUseSpotifyWebPlayback.mockReturnValue({
@@ -94,6 +95,7 @@ describe('SpotifyDisplay', () => {
   //       albumArtUrl: '',
   //       isPlaying: false,
   //     },
+  //     connectionStatus: 'Connected',
   //     spotifyServiceInitialized: true,
   //   })
 
@@ -119,6 +121,7 @@ describe('SpotifyDisplay', () => {
   //       albumArtUrl: 'http://example.com/art.jpg',
   //       isPlaying: true,
   //     },
+  //     connectionStatus: 'Connected',
   //     spotifyServiceInitialized: true,
   //   })
 
