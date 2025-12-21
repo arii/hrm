@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
+import { useDebounce } from './useDebounce'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
@@ -17,6 +18,7 @@ const useVolumePreference = (defaultVolume = 70) => {
   const lastVolumeRef = useRef(sanitizedDefault)
 
   const [volume, setVolumeState] = useState(sanitizedDefault) // Effective volume
+  const debouncedVolume = useDebounce(volume, 200) // Debounce volume changes for performance
   const [muted, setMutedState] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -41,31 +43,39 @@ const useVolumePreference = (defaultVolume = 70) => {
   useEffect(() => {
     if (isLoaded) {
       audioManager.setMuted(muted)
-      // We still set volume for non-Spotify sounds that respect volume but not the mute toggle
       audioManager.setVolume(volume)
     }
   }, [volume, muted, isLoaded])
+
+  // Effect to persist debounced volume and mute state to localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        if (debouncedVolume > 0) {
+          window.localStorage.setItem(STORAGE_KEY_VOL, String(debouncedVolume))
+          window.localStorage.setItem(STORAGE_KEY_MUTE, 'false')
+        } else {
+          window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
+        }
+      } catch (error) {
+        console.warn('Could not persist volume preference:', error)
+      }
+    }
+  }, [debouncedVolume, isLoaded])
 
   const setVolume = useCallback(
     (value: number) => {
       const sanitized = clampVolume(value)
       setVolumeState(sanitized)
-      try {
-        if (sanitized > 0) {
-          lastVolumeRef.current = sanitized
-          setMutedState(false)
-          window.localStorage.setItem(STORAGE_KEY_VOL, String(sanitized))
-          window.localStorage.setItem(STORAGE_KEY_MUTE, 'false')
-        } else {
-          setMutedState(true)
-          window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
-        }
-        window.dispatchEvent(
-          new CustomEvent('hrm:volumeChange', { detail: sanitized })
-        )
-      } catch (error) {
-        console.warn('Could not persist volume preference:', error)
+      if (sanitized > 0) {
+        lastVolumeRef.current = sanitized
+        setMutedState(false)
+      } else {
+        setMutedState(true)
       }
+      window.dispatchEvent(
+        new CustomEvent('hrm:volumeChange', { detail: sanitized })
+      )
     },
     [setMutedState]
   )
