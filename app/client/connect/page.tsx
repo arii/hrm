@@ -7,14 +7,12 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { useEffect, useState } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
   const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
-  const [accumulatedCalories, setAccumulatedCalories] = useState(0)
 
   const {
     connectAndStream,
@@ -43,15 +41,8 @@ export default function ConnectPage() {
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
-  const serverCalories = currentUserData?.calories
-
-  useEffect(() => {
-    // The server is the source of truth. If we receive a value, update our state.
-    // This handles initialization, live updates, and resets from the server.
-    if (serverCalories !== undefined) {
-      setAccumulatedCalories(serverCalories)
-    }
-  }, [serverCalories, setAccumulatedCalories])
+  // Derive calories directly from the WebSocket source of truth, defaulting to 0.
+  const accumulatedCalories = currentUserData?.calories ?? 0
 
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
