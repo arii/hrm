@@ -28,6 +28,11 @@ export interface ValidatedData<
   headers: THeaders
 }
 
+// Minimal RouteContext to ensure params are expected
+interface RouteContext {
+  params: any
+}
+
 type Handler<
   TBody,
   TQuery,
@@ -35,8 +40,7 @@ type Handler<
   THeaders extends Record<string, unknown>,
 > = (
   req: NextRequest,
-  context: {
-    params: TParams
+  context: RouteContext & {
     validatedData: ValidatedData<TBody, TQuery, TParams, THeaders>
   }
 ) => Promise<NextResponse> | NextResponse
@@ -56,10 +60,7 @@ export function withValidation<
   schemas: ValidationSchemas<TBody, TQuery, TParams, THeaders>
 ): (
   handler: Handler<TBody, TQuery, TParams, THeaders>
-) => (
-  req: NextRequest,
-  context: { params: TParams }
-) => Promise<NextResponse> | NextResponse {
+) => (req: NextRequest, context: RouteContext) => Promise<NextResponse> {
   return (handler) => async (req, context) => {
     try {
       const { bodySchema, querySchema, paramsSchema, headersSchema } = schemas
@@ -70,7 +71,6 @@ export function withValidation<
 
       // Validate request body
       if (bodySchema) {
-        // Check for empty body before parsing
         const textBody = await req.text()
         if (textBody === '') {
           return NextResponse.json(
@@ -165,8 +165,7 @@ export function withValidation<
 
       return handler(req, { ...context, validatedData })
     } catch (error) {
-      // Temporarily log the error to debug the test failure
-      console.error('withValidation caught an error:', error)
+      console.error('An unexpected error occurred in withValidation:', error)
       return NextResponse.json(
         { message: 'An internal server error occurred.' },
         { status: 500 }
