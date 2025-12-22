@@ -5,105 +5,137 @@ import { withValidation } from '@/lib/middleware/validation'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { createTestRequest } from '../next-request-helper'
+import { fromZodError } from 'zod-validation-error'
 
-// Mock the NextResponse
-const mockJson = jest.fn()
+// Mock NextResponse.json to spy on its calls and return a mock response
 jest.mock('next/server', () => ({
   ...jest.requireActual('next/server'),
   NextResponse: {
-    json: (...args: unknown[]) => {
-      mockJson(...args)
-      // Return a mock response object that can be checked in tests
-      return {
-        json: () => Promise.resolve(args[0]),
-        status: args[1]?.status || 200,
-        headers: new Headers(args[1]?.headers),
-      }
-    },
+    json: jest.fn((body, init) => ({
+      body: JSON.stringify(body),
+      status: init?.status || 200,
+      json: () => Promise.resolve(body),
+    })),
   },
 }))
+const mockedNextResponseJson = NextResponse.json as jest.Mock
+
+// A simple mock handler that returns the validated data.
+const mockHandler = jest.fn(async (_req, { validatedData }) => {
+  return mockedNextResponseJson({ success: true, validatedData })
+})
+
+const bodySchema = z.object({ name: z.string(), age: z.number().min(18) })
+const querySchema = z.object({ id: z.string().uuid() })
+const paramsSchema = z.object({ userId: z.string().uuid() })
 
 describe('withValidation Middleware', () => {
-  // A mock handler to be wrapped by the middleware
-  const mockHandler = jest.fn(async (req, { body, query, params, headers }) => {
-    return NextResponse.json({
-      message: 'Success',
-      data: { body, query, params, headers },
-    })
-  })
-
-  // Sample Zod schemas for validation
-  const bodySchema = z.object({
-    name: z.string(),
-    age: z.number().min(18),
-  })
-
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks()
-    mockHandler.mockClear()
   })
 
-  describe('Successful Validation Scenarios', () => {
-    it('should call the handler with validated data when the request is valid', async () => {
-      const validBody = { name: 'John Doe', age: 30 }
-      const req = createTestRequest({
-        body: validBody,
+  it('should call handler with validated data on success', async () => {
+    const validBody = { name: 'John Doe', age: 30 }
+    const req = createTestRequest({ body: validBody })
+    const handler = withValidation({ bodySchema })(mockHandler)
+    await handler(req, { params: {} })
+
+    expect(mockHandler).toHaveBeenCalledTimes(1)
+    expect(mockHandler).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        validatedData: expect.objectContaining({ body: validBody }),
       })
-
-      const validatedHandler = withValidation({ schema: bodySchema })(
-        mockHandler
-      )
-
-      await validatedHandler(req, { params: {} })
-
-      expect(mockHandler).toHaveBeenCalledTimes(1)
-      const [calledReq, calledContext] = mockHandler.mock.calls[0]
-      expect(calledReq).toBe(req)
-      expect(calledContext.body).toEqual(validBody)
-    })
+    )
   })
 
-  describe('Body Validation Scenarios', () => {
-    it('should return a 400 error for a request with an empty body', async () => {
-      const req = createTestRequest({
-        body: '',
-      })
-
-      const validatedHandler = withValidation({ schema: bodySchema })(
-        mockHandler
-      )
-      const response = await validatedHandler(req, { params: {} })
-
-      expect(mockHandler).not.toHaveBeenCalled()
-      expect(mockJson).toHaveBeenCalledWith(
-        { message: 'Invalid JSON in request body.' },
-        { status: 400 }
-      )
-      expect(response.status).toBe(400)
+  it('should handle combined validation (body, query, params)', async () => {
+    const validBody = { name: 'John Doe', age: 30 }
+    const validQuery = { id: '123e4567-e89b-12d3-a456-426614174000' }
+    const validParams = { userId: '7a8b1c2d-3e4f-5a6b-7c8d-9e0f1a2b3c4d' }
+    const req = createTestRequest({
+      body: validBody,
+      url: `http://localhost?id=${validQuery.id}`,
     })
-
-    it('should return a 400 error for a request with unexpected data types', async () => {
-      const invalidBody = { name: 'John Doe', age: 'twenty' } // 'age' is a string, not a number
-      const req = createTestRequest({
-        body: invalidBody,
-      })
-
-      const validatedHandler = withValidation({ schema: bodySchema })(
-        mockHandler
-      )
-      const response = await validatedHandler(req, { params: {} })
-
-      expect(mockHandler).not.toHaveBeenCalled()
-
-      const responseBody = await response.json()
-      expect(responseBody.errors).toEqual([
-        {
-          path: 'age',
-          message: 'Expected number, received string',
+    const handler = withValidation({ bodySchema, querySchema, paramsSchema })(
+      mockHandler
+    )
+    await handler(req, { params: validParams })
+    expect(mockHandler).toHaveBeenCalledTimes(1)
+    expect(mockHandler).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        validatedData: {
+          body: validBody,
+          query: validQuery,
+          params: validParams,
+          headers: undefined, // headersSchema was not provided
         },
-      ])
-      expect(response.status).toBe(400)
-    })
+      })
+    )
+  })
+
+  it('should return 400 for empty body when required', async () => {
+    const req = createTestRequest({ body: '' })
+    const handler = withValidation({ bodySchema })(mockHandler)
+    await handler(req, { params: {} })
+
+    expect(mockHandler).not.toHaveBeenCalled()
+    expect(mockedNextResponseJson).toHaveBeenCalledWith(
+      { message: 'Request body cannot be empty.' },
+      { status: 400 }
+    )
+  })
+
+  it('should return 400 for invalid JSON syntax', async () => {
+    const req = createTestRequest({ body: '{"bad json"' })
+    const handler = withValidation({ bodySchema })(mockHandler)
+    await handler(req, { params: {} })
+
+    expect(mockHandler).not.toHaveBeenCalled()
+    expect(mockedNextResponseJson).toHaveBeenCalledWith(
+      { message: 'Invalid JSON in request body.' },
+      { status: 400 }
+    )
+  })
+
+  it('should return 400 for incorrect data type', async () => {
+    const invalidBody = { name: 'test', age: 'invalid' }
+    const req = createTestRequest({ body: invalidBody })
+    const handler = withValidation({ bodySchema })(mockHandler)
+    await handler(req, { params: {} })
+
+    expect(mockHandler).not.toHaveBeenCalled()
+    const expectedError = fromZodError(
+      bodySchema.safeParse(invalidBody).error as z.ZodError
+    )
+    expect(mockedNextResponseJson).toHaveBeenCalledWith(
+      { message: 'Validation failed', errors: expectedError.details },
+      { status: 400 }
+    )
+  })
+
+  it('should return 400 for invalid query params', async () => {
+    const req = createTestRequest({ url: 'http://localhost?id=not-a-uuid' })
+    const handler = withValidation({ querySchema })(mockHandler)
+    await handler(req, { params: {} })
+
+    expect(mockHandler).not.toHaveBeenCalled()
+    expect(mockedNextResponseJson).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Validation failed' }),
+      { status: 400 }
+    )
+  })
+
+  it('should return 400 for invalid route params', async () => {
+    const req = createTestRequest({})
+    const handler = withValidation({ paramsSchema })(mockHandler)
+    await handler(req, { params: { userId: 'not-a-uuid' } })
+
+    expect(mockHandler).not.toHaveBeenCalled()
+    expect(mockedNextResponseJson).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Validation failed' }),
+      { status: 400 }
+    )
   })
 })

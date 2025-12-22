@@ -135,7 +135,8 @@
     "tsx": "4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "zod-validation-error": "^5.0.0"
   },
   "engines": {
     "node": ">=20.0.0",
