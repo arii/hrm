@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const { _spawn } = require('child_process')
+const { execSync, spawn } = require('child_process')
 const fs = require('fs')
 const https = require('https')
 const path = require('path')
@@ -19,7 +18,7 @@ function getSourceHash() {
 }
 
 // 2. Get Current Commit SHA
-function _getCommitSha() {
+function getCommitSha() {
   return execSync('git rev-parse HEAD').toString().trim()
 }
 
@@ -41,7 +40,7 @@ function publishStatus(sha, context, state, description) {
       .trim()
     const match = remoteUrl.match(/github\.com[:/](.+?)\/(.+?)(\.git)?$/)
     if (match) repoPath = `${match[1]}/${match[2]}`
-  } catch (_e) {
+  } catch (e) {
     console.error('❌ Could not detect git remote')
     return Promise.resolve()
   }
@@ -75,8 +74,8 @@ function publishStatus(sha, context, state, description) {
       resolve()
     })
 
-    req.on('error', (_e) => {
-      console.error(`   ❌ Network Error: ${_e.message}`)
+    req.on('error', (e) => {
+      console.error(`   ❌ Network Error: ${e.message}`)
       resolve()
     })
 
@@ -116,7 +115,7 @@ async function main() {
   try {
     execSync('npm run build', { stdio: 'inherit', timeout: 60000 }) // 1 minute for build
     console.log('✅ Build completed successfully')
-  } catch (_e) {
+  } catch (e) {
     console.error('❌ Build failed')
     process.exit(1)
   }
@@ -126,7 +125,7 @@ async function main() {
   let globalSuccess = true
   try {
     execSync('npm run test:json', { stdio: 'inherit', timeout: 60000 }) // 1 minute for tests
-  } catch (_e) {
+  } catch (e) {
     console.log('⚠️  Tests finished with failures.')
   }
 

@@ -109,7 +109,7 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: unknown
+  config?: any
 ) {
   let lastError
 
@@ -119,18 +119,15 @@ async function generateContentWithFallback(
       const model = genAI.getGenerativeModel({ model: modelName })
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        ...(config as any),
+        ...config,
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
-    } catch (error: unknown) {
+    } catch (error: any) {
       lastError = error
-      const isNotFound =
-        (error as Error).message?.includes('404') ||
-        (error as { status?: number }).status === 404
+      const isNotFound = error.message?.includes('404') || error.status === 404
       const isBadRequest =
-        (error as Error).message?.includes('400') ||
-        (error as { status?: number }).status === 400 // Sometimes invalid model is 400
+        error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
 
       if (isNotFound || isBadRequest) {
         console.warn(
@@ -144,7 +141,7 @@ async function generateContentWithFallback(
     }
   }
 
-  throw new Error(`All models failed. Last error: ${(lastError as Error)?.message}`)
+  throw new Error(`All models failed. Last error: ${lastError?.message}`)
 }
 
 async function runGenericTask(
@@ -181,9 +178,7 @@ function getReviewContextFromEnv(): ReviewContext {
     prLabels: process.env.PR_LABELS || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
-    reviewDepth:
-      (process.env.REVIEW_DEPTH as 'detailed' | 'standard' | 'focused') ||
-      'standard',
+    reviewDepth: (process.env.REVIEW_DEPTH as any) || 'standard',
     changedAreas: process.env.CHANGED_AREAS || '',
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
@@ -246,11 +241,11 @@ ${
           const reviews = JSON.parse(context.previousReviews)
           return reviews
             .map(
-              (r: { createdAt: string; body: string }, i: number) =>
+              (r: any, i: number) =>
                 `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
-        } catch (_e) {
+        } catch (e) {
           return context.previousReviews // Fallback to raw string if parsing fails
         }
       })()
@@ -507,10 +502,10 @@ async function runReviewPreset(
       } else {
         await writeOutput(text, outputFile)
       }
-    } catch (_e) {
+    } catch (e) {
       console.warn(
         'Warning: Failed to parse JSON response. Falling back if text is not useful JSON.',
-        _e
+        e
       )
       // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
       // If it's just raw text, maybe output it? But safer to standardise output.
@@ -541,11 +536,11 @@ async function writeOutput(
   }
 }
 
-function handleError(error: unknown) {
+function handleError(error: any) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'
-  const technicalDetails = (error as Error).message || 'No technical details available.'
+  const technicalDetails = error.message || 'No technical details available.'
 
   if (error instanceof GoogleGenerativeAIError) {
     if (error.message.includes('400') || error.message.includes('404')) {
@@ -557,7 +552,7 @@ function handleError(error: unknown) {
       userMessage =
         'The generative AI service is temporarily unavailable. Please try again later.'
     }
-  } else if ((error as Error).message.includes('api key')) {
+  } else if (error.message.includes('api key')) {
     category = 'Configuration Issue'
     userMessage = 'The GEMINI_API_KEY is either invalid or missing.'
   }

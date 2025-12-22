@@ -27,10 +27,11 @@ class ErrorBoundary extends Component<Props, State> {
       componentStack: errorInfo.componentStack,
       timestamp: new Date().toISOString(),
     }
-    console.error(
-      'ErrorBoundary caught an error:',
-      JSON.stringify(errorDetails, null, 2)
-    )
+    // In a production environment, you would send `errorDetails` to a dedicated error reporting service.
+    // Example:
+    // import * as Sentry from "@sentry/nextjs";
+    // Sentry.captureException(error, { extra: errorDetails });
+    console.error('ErrorBoundary caught an error:', JSON.stringify(errorDetails, null, 2))
   }
 
   public render() {

@@ -1,4 +1,6 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook'
+
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
@@ -174,20 +176,6 @@ export default defineConfig([
     },
     rules: {
       // Jest specific rules or overrides
-    },
-  },
-
-  // Override for .cjs files
-  {
-    files: ['**/*.cjs'],
-    languageOptions: {
-      globals: {
-        module: 'readonly',
-        require: 'readonly',
-        console: 'readonly',
-        process: 'readonly',
-        execSync: 'readonly',
-      },
     },
   },
 
