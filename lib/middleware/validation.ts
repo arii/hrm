@@ -3,140 +3,65 @@
  *
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
+
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { NextRequest } from 'next/server'
-import { ZodError } from 'zod'
 
-type AppRouterHandler<TBody, TQuery, TParams, THeaders> = (
-  req: NextRequest,
-  context: {
-    params: TParams
-    body: TBody
-    query: TQuery
-    headers: THeaders
-  }
+/**
+ * Defines the type for an App Router API route handler after it has been
+ * processed by the validation middleware. It receives the original request
+ * and the validated data as arguments.
+ *
+ * @template T The expected type of the validated data.
+ * @param {Request} req The original Next.js request object.
+ * @param {{ params: P; body: T }} context An object containing URL parameters and the validated request body.
+ * @returns {Promise<NextResponse>} A promise that resolves to a Next.js response.
+ */
+type AppRouterHandler<T, P> = (
+  req: Request,
+  context: { params: P; body: T }
 ) => Promise<NextResponse>
 
-interface ValidationSchemas<TBody, TQuery, TParams, THeaders> {
-  body?: z.ZodType<TBody>
-  query?: z.ZodType<TQuery>
-  params?: z.ZodType<TParams>
-  headers?: z.ZodType<THeaders>
-}
-
-export function withValidation<
-  TBody = unknown,
-  TQuery = unknown,
-  TParams = unknown,
-  THeaders = unknown,
->({
-  body: bodySchema,
-  query: querySchema,
-  params: paramsSchema,
-  headers: headersSchema,
-}: ValidationSchemas<TBody, TQuery, TParams, THeaders>) {
-  return (handler: AppRouterHandler<TBody, TQuery, TParams, THeaders>) =>
-    async (req: NextRequest, context: { params: TParams }) => {
+/**
+ * A higher-order function that wraps an App Router API route handler to provide
+ * automatic request body validation using a Zod schema.
+ *
+ * @template T The expected type of the validated data.
+ * @template P The expected type of the URL parameters.
+ * @param {z.ZodType<T>} schema The Zod schema to validate the request body against.
+ * @returns A function that takes a handler and returns a new handler with validation logic.
+ *
+ * @example
+ * import { withValidation } from '@/lib/middleware/validation';
+ * import { CreateUserSchema } from '@/lib/validation/schemas';
+ *
+ * async function postHandler(req, { body }) {
+ *   // 'body' is now guaranteed to match CreateUserSchema
+ *   // ...
+ * }
+ *
+ * export const POST = withValidation({ schema: CreateUserSchema })(postHandler);
+ */
+export function withValidation<T, P>({ schema }: { schema: z.ZodType<T> }) {
+  return (handler: AppRouterHandler<T, P>) =>
+    async (req: Request, context: { params: P }) => {
       try {
-        let body: TBody | undefined
-        // Only parse body if a schema is provided and the request has a body
-        if (bodySchema && req.body) {
-          const contentType = req.headers.get('content-type')
-          if (contentType?.includes('application/json')) {
-            const bodyText = await req.text()
-            // Zod will handle empty body validation, so we parse even if bodyText is empty
-            body = bodyText.length > 0 ? JSON.parse(bodyText) : undefined
-          }
-        }
-
-        const query = Object.fromEntries(req.nextUrl.searchParams)
-        const params = context.params || {}
-        const headers: { [key: string]: string } = {}
-        req.headers.forEach((value, key) => {
-          headers[key] = value
-        })
-
-        const validationIssues: z.ZodIssue[] = []
-        let validatedBody: TBody = body as TBody
-        let validatedQuery: TQuery = query as TQuery
-        let validatedParams: TParams = params as TParams
-        let validatedHeaders: THeaders = headers as THeaders
-
-        if (bodySchema) {
-          const result = bodySchema.safeParse(body)
-          if (!result.success) {
-            validationIssues.push(
-              ...result.error.issues.map((issue) => ({
-                ...issue,
-                path: ['body', ...issue.path],
-              }))
-            )
-          } else {
-            validatedBody = result.data
-          }
-        }
-
-        if (querySchema) {
-          const result = querySchema.safeParse(query)
-          if (!result.success) {
-            validationIssues.push(
-              ...result.error.issues.map((issue) => ({
-                ...issue,
-                path: ['query', ...issue.path],
-              }))
-            )
-          } else {
-            validatedQuery = result.data
-          }
-        }
-
-        if (paramsSchema) {
-          const result = paramsSchema.safeParse(params)
-          if (!result.success) {
-            validationIssues.push(
-              ...result.error.issues.map((issue) => ({
-                ...issue,
-                path: ['params', ...issue.path],
-              }))
-            )
-          } else {
-            validatedParams = result.data
-          }
-        }
-
-        if (headersSchema) {
-          const result = headersSchema.safeParse(headers)
-          if (!result.success) {
-            validationIssues.push(
-              ...result.error.issues.map((issue) => ({
-                ...issue,
-                path: ['headers', ...issue.path],
-              }))
-            )
-          } else {
-            validatedHeaders = result.data
-          }
-        }
-
-        if (validationIssues.length > 0) {
-          const validationError = new ZodError(validationIssues)
+        const body = await req.json()
+        const validatedData = schema.parse(body)
+        return handler(req, { ...context, body: validatedData })
+      } catch (error) {
+        if (error instanceof z.ZodError) {
           return NextResponse.json(
             {
-              message: 'Validation failed',
-              errors: validationError.issues,
+              errors: error.issues.map((e) => ({
+                path: e.path.join('.'),
+                message: e.message,
+              })),
             },
             { status: 400 }
           )
         }
-
-        return handler(req, {
-          body: validatedBody as TBody,
-          query: validatedQuery as TQuery,
-          params: validatedParams as TParams,
-          headers: validatedHeaders as THeaders,
-        })
-      } catch (error) {
+        // Handle cases where req.json() fails (e.g., empty body)
         if (error instanceof SyntaxError) {
           return NextResponse.json(
             { message: 'Invalid JSON in request body.' },
