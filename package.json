@@ -103,7 +103,7 @@
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.21",
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.0.3",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.2",
     "@types/web-bluetooth": "^0.0.21",
