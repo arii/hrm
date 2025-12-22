@@ -61,8 +61,8 @@ function verifyDependencies() {
       process.exit(1)
     }
     log('All core dependencies present.', 'success')
-  } catch (err) {
-    log('Could not read package.json', 'error')
+  } catch (_err) {
+    console.error('Error reading package.json:', _err)
     process.exit(1)
   }
 }

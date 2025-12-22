@@ -109,7 +109,7 @@ async function main() {
 async function generateContentWithFallback(
   genAI: GoogleGenerativeAI,
   prompt: string,
-  config?: any
+  config?: unknown
 ) {
   let lastError
 
@@ -123,11 +123,14 @@ async function generateContentWithFallback(
       })
       console.log(`Successfully generated content using ${modelName}.`)
       return result.response.text()
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error
-      const isNotFound = error.message?.includes('404') || error.status === 404
+      const isNotFound =
+        (error as Error).message?.includes('404') ||
+        (error as { status?: number }).status === 404
       const isBadRequest =
-        error.message?.includes('400') || error.status === 400 // Sometimes invalid model is 400
+        (error as Error).message?.includes('400') ||
+        (error as { status?: number }).status === 400 // Sometimes invalid model is 400
 
       if (isNotFound || isBadRequest) {
         console.warn(
@@ -178,7 +181,9 @@ function getReviewContextFromEnv(): ReviewContext {
     prLabels: process.env.PR_LABELS || '',
     filesChanged: parseInt(process.env.FILES_CHANGED || '0'),
     totalLoc: parseInt(process.env.TOTAL_LOC || '0'),
-    reviewDepth: (process.env.REVIEW_DEPTH as any) || 'standard',
+    reviewDepth:
+      (process.env.REVIEW_DEPTH as 'detailed' | 'standard' | 'focused') ||
+      'standard',
     changedAreas: process.env.CHANGED_AREAS || '',
     reviewCount: parseInt(process.env.REVIEW_COUNT || '0'),
     resolvedCount: parseInt(process.env.RESOLVED_COUNT || '0'),
@@ -241,11 +246,11 @@ ${
           const reviews = JSON.parse(context.previousReviews)
           return reviews
             .map(
-              (r: any, i: number) =>
+              (r: { createdAt: string; body: string }, i: number) =>
                 `#### Review ${i + 1} (${r.createdAt}):\n${r.body}\n`
             )
             .join('\n---\n')
-        } catch (e) {
+        } catch (_e) {
           return context.previousReviews // Fallback to raw string if parsing fails
         }
       })()
@@ -502,10 +507,10 @@ async function runReviewPreset(
       } else {
         await writeOutput(text, outputFile)
       }
-    } catch (e) {
+    } catch (_e) {
       console.warn(
         'Warning: Failed to parse JSON response. Falling back if text is not useful JSON.',
-        e
+        _e
       )
       // If text looks like it might be valid JSON but failed (e.g. truncated), we still want fallback
       // If it's just raw text, maybe output it? But safer to standardise output.
@@ -536,7 +541,7 @@ async function writeOutput(
   }
 }
 
-function handleError(error: any) {
+function handleError(error: unknown) {
   let category = 'Infrastructure Issue'
   let userMessage =
     'The review service encountered an unexpected error. This is likely an intermittent problem.'

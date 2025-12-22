@@ -6,8 +6,13 @@
     "**/*.js",
     "**/*.jsx",
     "**/*.mts",
+    "**/*.cjs",
+    "**/*.mjs",
     "playwright.config.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    "scripts/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", "out", "build", "dist"]
 }
