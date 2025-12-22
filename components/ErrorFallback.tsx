@@ -19,14 +19,9 @@ const ErrorFallback = () => {
       <Typography variant="h6" gutterBottom>
         Something went wrong.
       </Typography>
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button variant="contained" onClick={() => window.location.reload()}>
-          Reload Page
-        </Button>
-        <Button variant="outlined" onClick={() => (window.location.href = '/')}>
-          Go Home
-        </Button>
-      </Box>
+      <Button variant="contained" onClick={() => window.location.reload()}>
+        Reload Page
+      </Button>
     </Box>
   )
 }
