@@ -51,9 +51,7 @@ describe('withValidation Middleware', () => {
         body: validBody,
       })
 
-      const validatedHandler = withValidation({ body: bodySchema })(
-        mockHandler
-      )
+      const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
 
       await validatedHandler(req, { params: {} })
 
@@ -70,9 +68,7 @@ describe('withValidation Middleware', () => {
         body: '',
       })
 
-      const validatedHandler = withValidation({ body: bodySchema })(
-        mockHandler
-      )
+      const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
       const response = await validatedHandler(req, { params: {} })
 
       expect(mockHandler).not.toHaveBeenCalled()
@@ -89,9 +85,7 @@ describe('withValidation Middleware', () => {
         body: invalidBody,
       })
 
-      const validatedHandler = withValidation({ body: bodySchema })(
-        mockHandler
-      )
+      const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
       const response = await validatedHandler(req, { params: {} })
 
       expect(mockHandler).not.toHaveBeenCalled()
