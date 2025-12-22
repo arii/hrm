@@ -120,11 +120,11 @@ export function withValidation<
         }
 
         if (validationIssues.length > 0) {
-          const validationError = fromZodError(new ZodError(validationIssues))
+          const validationError = new ZodError(validationIssues)
           return NextResponse.json(
             {
               message: 'Validation failed',
-              errors: validationError.details,
+              errors: validationError.issues,
             },
             { status: 400 }
           )
