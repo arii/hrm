@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z, ZodSchema } from 'zod'
+import { ZodSchema } from 'zod'
 import { fromZodError } from 'zod-validation-error'
 
 // Define a type for the schemas object
