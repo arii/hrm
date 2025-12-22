@@ -52,8 +52,11 @@ export function withValidation<
         }
 
         const query = Object.fromEntries(req.nextUrl.searchParams)
-        const params = context.params
-        const headers = Object.fromEntries(req.headers)
+        const params = context.params || {}
+        const headers: { [key: string]: string } = {}
+        req.headers.forEach((value, key) => {
+          headers[key] = value
+        })
 
         const validationIssues: z.ZodIssue[] = []
         let validatedBody: TBody = body as TBody

@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { POST } from '@/app/api/users/route'
+import * as route from '@/app/api/users/route'
 import { NextRequest } from 'next/server'
 import { createValidUserProfile } from '@/tests/unit/test-data/user-data-factory'
 
@@ -22,7 +22,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await route.POST(request, { params: {} })
       const newUser = await response.json()
 
       // Assert
@@ -48,7 +48,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await route.POST(request, { params: {} })
       const errorData = await response.json()
 
       // Assert
@@ -71,7 +71,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await route.POST(request, { params: {} })
       const errorData = await response.json()
 
       // Assert

@@ -4,7 +4,7 @@
 import { withValidation } from '@/lib/middleware/validation'
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
-import { NextRequest } from 'next/server'
+import { createTestRequest } from '../next-request-helper'
 
 // Mock the NextResponse
 const mockJson = jest.fn()
@@ -59,17 +59,13 @@ describe('withValidation Middleware', () => {
     it('should call the handler with validated data when the request is valid', async () => {
       const validBody = { name: 'John Doe', age: 30 }
       const uuid = 'a1b2c3d4-a1b2-c3d4-a1b2-c3d4a1b2c3d4'
-      const req = new NextRequest(
-        `http://localhost/api/test/${uuid}?search=valid`,
-        {
-          method: 'POST',
-          body: JSON.stringify(validBody),
-          headers: {
-            'x-api-key': '1234567890123456',
-            'content-type': 'application/json',
-          },
-        }
-      )
+      const req = createTestRequest({
+        body: validBody,
+        query: { search: 'valid' },
+        headers: {
+          'x-api-key': '1234567890123456',
+        },
+      })
 
       const validatedHandler = withValidation({
         body: bodySchema,
@@ -94,10 +90,8 @@ describe('withValidation Middleware', () => {
 
   describe('Body Validation Scenarios', () => {
     it('should return a 400 error for a request with an empty body', async () => {
-      const req = new NextRequest('http://localhost/api/test', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: '', // Empty body
+      const req = createTestRequest({
+        body: '',
       })
 
       const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
@@ -105,9 +99,7 @@ describe('withValidation Middleware', () => {
 
       expect(mockHandler).not.toHaveBeenCalled()
       expect(mockJson).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Validation failed',
-        }),
+        { message: 'Invalid JSON in request body.' },
         { status: 400 }
       )
       expect(response.status).toBe(400)
@@ -115,10 +107,8 @@ describe('withValidation Middleware', () => {
 
     it('should return a 400 error for a request with unexpected data types', async () => {
       const invalidBody = { name: 'John Doe', age: 'twenty' } // 'age' is a string, not a number
-      const req = new NextRequest('http://localhost/api/test', {
-        method: 'POST',
-        body: JSON.stringify(invalidBody),
-        headers: { 'content-type': 'application/json' },
+      const req = createTestRequest({
+        body: invalidBody,
       })
 
       const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
@@ -128,14 +118,12 @@ describe('withValidation Middleware', () => {
 
       const responseBody = await response.json()
       expect(responseBody.message).toBe('Validation failed')
-      expect(responseBody.errors).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            path: ['body', 'age'],
-            message: 'Invalid input: expected number, received string',
-          }),
-        ])
-      )
+      expect(responseBody.errors).toEqual([
+        {
+          path: ['body', 'age'],
+          message: 'Expected number, received string',
+        },
+      ])
       expect(response.status).toBe(400)
     })
   })
@@ -143,7 +131,7 @@ describe('withValidation Middleware', () => {
   describe('Query, Params, and Header Validation', () => {
     it('should return a 400 error if query parameters are invalid', async () => {
       // 'search' query param is missing
-      const req = new NextRequest('http://localhost/api/test')
+      const req = createTestRequest({})
       const handler = withValidation({ query: querySchema })(mockHandler)
       const response = await handler(req, { params: {} })
 
@@ -156,7 +144,7 @@ describe('withValidation Middleware', () => {
     })
 
     it('should return a 400 error if URL parameters are invalid', async () => {
-      const req = new NextRequest('http://localhost/api/test/123')
+      const req = createTestRequest({})
       const handler = withValidation({ params: paramsSchema })(mockHandler)
       const response = await handler(req, { params: { id: 'not-a-uuid' } }) // 'id' is not a UUID
 
@@ -169,7 +157,7 @@ describe('withValidation Middleware', () => {
     })
 
     it('should return a 400 error if headers are invalid', async () => {
-      const req = new NextRequest('http://localhost/api/test', {
+      const req = createTestRequest({
         headers: { 'x-api-key': 'short' }, // API key is too short
       })
       const handler = withValidation({ headers: headersSchema })(mockHandler)
