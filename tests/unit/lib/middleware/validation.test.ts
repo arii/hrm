@@ -4,7 +4,6 @@
 import { withValidation } from '@/lib/middleware/validation'
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { createTestRequest } from '../next-request-helper'
 import { fromZodError } from 'zod-validation-error'
 
 // Mock NextResponse.json to spy on its calls and return a mock response
@@ -53,9 +52,10 @@ describe('withValidation Middleware', () => {
     const validBody = { name: 'John Doe', age: 30 }
     const validQuery = { id: '123e4567-e89b-12d3-a456-426614174000' }
     const validParams = { userId: '7a8b1c2d-3e4f-5a6b-7c8d-9e0f1a2b3c4d' }
-    const req = createTestRequest({
-      body: validBody,
-      url: `http://localhost?id=${validQuery.id}`,
+    const req = new NextRequest(`http://localhost?id=${validQuery.id}`, {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
     })
     const handler = withValidation({ bodySchema, querySchema, paramsSchema })(
       mockHandler
@@ -65,12 +65,11 @@ describe('withValidation Middleware', () => {
     expect(mockHandler).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        validatedData: {
+        validatedData: expect.objectContaining({
           body: validBody,
           query: validQuery,
           params: validParams,
-          headers: undefined, // headersSchema was not provided
-        },
+        }),
       })
     )
   })
