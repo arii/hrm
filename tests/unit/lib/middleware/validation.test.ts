@@ -37,6 +37,17 @@ describe('withValidation Middleware', () => {
     name: z.string(),
     age: z.number().min(18),
   })
+  const querySchema = z.object({
+    search: z.string().min(3),
+  })
+  const paramsSchema = z.object({
+    id: z.string().uuid(),
+  })
+  const headersSchema = z
+    .object({
+      'x-api-key': z.string().length(16),
+    })
+    .passthrough() // Allow other headers
 
   beforeEach(() => {
     // Clear all mocks before each test
@@ -47,18 +58,33 @@ describe('withValidation Middleware', () => {
   describe('Successful Validation Scenarios', () => {
     it('should call the handler with validated data when the request is valid', async () => {
       const validBody = { name: 'John Doe', age: 30 }
+      const uuid = 'a1b2c3d4-a1b2-c3d4-a1b2-c3d4a1b2c3d4'
       const req = createTestRequest({
         body: validBody,
+        query: { search: 'valid' },
+        headers: {
+          'x-api-key': '1234567890123456',
+        },
       })
 
-      const validatedHandler = withValidation({ body: bodySchema })(mockHandler)
+      const validatedHandler = withValidation({
+        body: bodySchema,
+        query: querySchema,
+        params: paramsSchema,
+        headers: headersSchema,
+      })(mockHandler)
 
-      await validatedHandler(req, { params: {} })
+      await validatedHandler(req, { params: { id: uuid } })
 
       expect(mockHandler).toHaveBeenCalledTimes(1)
       const [calledReq, calledContext] = mockHandler.mock.calls[0]
       expect(calledReq).toBe(req)
       expect(calledContext.body).toEqual(validBody)
+      expect(calledContext.query).toEqual({ search: 'valid' })
+      expect(calledContext.params).toEqual({ id: uuid })
+      expect(calledContext.headers).toEqual(
+        expect.objectContaining({ 'x-api-key': '1234567890123456' })
+      )
     })
   })
 
@@ -73,7 +99,17 @@ describe('withValidation Middleware', () => {
 
       expect(mockHandler).not.toHaveBeenCalled()
       expect(mockJson).toHaveBeenCalledWith(
-        { message: 'Invalid JSON in request body.' },
+        {
+          errors: [
+            {
+              code: 'invalid_type',
+              expected: 'object',
+              message: 'Invalid input: expected object, received undefined',
+              path: ['body'],
+            },
+          ],
+          message: 'Validation failed',
+        },
         { status: 400 }
       )
       expect(response.status).toBe(400)
@@ -94,10 +130,56 @@ describe('withValidation Middleware', () => {
       expect(responseBody.message).toBe('Validation failed')
       expect(responseBody.errors).toEqual([
         {
+          code: 'invalid_type',
+          expected: 'number',
+          message: 'Invalid input: expected number, received string',
           path: ['body', 'age'],
-          message: 'Expected number, received string',
         },
       ])
+      expect(response.status).toBe(400)
+    })
+  })
+
+  describe('Query, Params, and Header Validation', () => {
+    it('should return a 400 error if query parameters are invalid', async () => {
+      // 'search' query param is missing
+      const req = createTestRequest({})
+      const handler = withValidation({ query: querySchema })(mockHandler)
+      const response = await handler(req, { params: {} })
+
+      expect(mockHandler).not.toHaveBeenCalled()
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Validation failed' }),
+        { status: 400 }
+      )
+      expect(response.status).toBe(400)
+    })
+
+    it('should return a 400 error if URL parameters are invalid', async () => {
+      const req = createTestRequest({})
+      const handler = withValidation({ params: paramsSchema })(mockHandler)
+      const response = await handler(req, { params: { id: 'not-a-uuid' } }) // 'id' is not a UUID
+
+      expect(mockHandler).not.toHaveBeenCalled()
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Validation failed' }),
+        { status: 400 }
+      )
+      expect(response.status).toBe(400)
+    })
+
+    it('should return a 400 error if headers are invalid', async () => {
+      const req = createTestRequest({
+        headers: { 'x-api-key': 'short' }, // API key is too short
+      })
+      const handler = withValidation({ headers: headersSchema })(mockHandler)
+      const response = await handler(req, { params: {} })
+
+      expect(mockHandler).not.toHaveBeenCalled()
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Validation failed' }),
+        { status: 400 }
+      )
       expect(response.status).toBe(400)
     })
   })

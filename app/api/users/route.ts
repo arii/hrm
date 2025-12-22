@@ -22,6 +22,6 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST = withValidation({ schema: CreateUserProfileSchema })(
+export const POST = withValidation({ body: CreateUserProfileSchema })(
   createUser
 )

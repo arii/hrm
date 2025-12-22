@@ -25,7 +25,7 @@ export function createTestRequest({
 
   const request = new NextRequest(url.toString(), {
     method: 'POST',
-    body: body === '' ? undefined : body ? JSON.stringify(body) : null,
+    body: body === '' ? null : body ? JSON.stringify(body) : null,
     headers: requestHeaders,
   })
 

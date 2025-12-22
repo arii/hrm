@@ -6,7 +6,6 @@
 import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { fromZodError } from 'zod-validation-error'
 import { ZodError } from 'zod'
 
 type AppRouterHandler<TBody, TQuery, TParams, THeaders> = (
