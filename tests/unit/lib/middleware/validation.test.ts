@@ -3,7 +3,7 @@
  */
 import { withValidation } from '@/lib/middleware/validation'
 import { z } from 'zod'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createTestRequest } from '../next-request-helper'
 import { fromZodError } from 'zod-validation-error'
 
@@ -88,7 +88,11 @@ describe('withValidation Middleware', () => {
   })
 
   it('should return 400 for invalid JSON syntax', async () => {
-    const req = createTestRequest({ body: '{"bad json"' })
+    // Manually create a request with an invalid JSON body.
+    const req = new NextRequest('http://localhost', {
+      method: 'POST',
+      body: '{"bad json"',
+    })
     const handler = withValidation({ bodySchema })(mockHandler)
     await handler(req, { params: {} })
 
