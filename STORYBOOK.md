@@ -1,22 +1,10 @@
 # Storybook Component Development
 
-**NOTE: Storybook is currently incompatible with the project's Next.js and React setup.**
-
 This document describes the Storybook setup for developing and visualizing MUI components in isolation.
 
 ## Overview
 
 Storybook allows us to develop and test UI components independently from the main application, without needing to run the full server stack or mock WebSocket/Auth dependencies.
-
-## Incompatibility Issues
-
-As of the latest investigation, the Storybook build is failing due to a fundamental incompatibility between `@storybook/nextjs` and the version of Next.js and React used in this project. The primary error is a Webpack build failure:
-
-```
-TypeError: Cannot read properties of undefined (reading 'tap')
-```
-
-This error persists even after downgrading Next.js and React to known stable versions. The root cause appears to be a conflict in the Webpack configuration that is not easily resolvable with the current dependency set.
 
 ## Available Stories
 
@@ -30,7 +18,7 @@ The HrTile story demonstrates different heart rate zones with various configurat
 - **Cardio Zone** (78% - Orange)
 - **Peak Zone** (95% - Red)
 
-## Running Storybook (Currently Broken)
+## Running Storybook
 
 ```bash
 # Start Storybook development server

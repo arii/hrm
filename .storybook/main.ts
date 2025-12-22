@@ -16,5 +16,14 @@ const config: StorybookConfig = {
   docs: {
     autodocs: 'tag',
   },
+  webpackFinal: async (config) => {
+    // This is a workaround for a bug in Storybook's Next.js integration.
+    // The ProgressPlugin is causing a TypeError: Cannot read properties of undefined (reading 'tap')
+    // See: https://github.com/storybookjs/storybook/issues/27068
+    config.plugins = config.plugins?.filter(
+      (plugin) => plugin?.constructor.name !== 'ProgressPlugin'
+    );
+    return config;
+  },
 }
 export default config
