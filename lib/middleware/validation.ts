@@ -72,7 +72,6 @@ export function withValidation<
       // Validate request body
       if (bodySchema) {
         const textBody = await req.text()
-        console.log('Validating body:', textBody);
         if (textBody === '') {
           return NextResponse.json(
             { message: 'Request body cannot be empty.' },
@@ -82,7 +81,6 @@ export function withValidation<
         try {
           const parsedBody = JSON.parse(textBody)
           const validationResult = bodySchema.safeParse(parsedBody)
-          console.log('Body validation result:', JSON.stringify(validationResult));
           if (!validationResult.success) {
             const validationError = fromZodError(validationResult.error)
             return NextResponse.json(
@@ -109,9 +107,7 @@ export function withValidation<
       if (querySchema) {
         const { searchParams } = new URL(req.url)
         const queryAsObject = Object.fromEntries(searchParams.entries())
-        console.log('Validating query:', queryAsObject);
         const validationResult = querySchema.safeParse(queryAsObject)
-        console.log('Query validation result:', JSON.stringify(validationResult));
 
         if (!validationResult.success) {
           const validationError = fromZodError(validationResult.error)
@@ -128,9 +124,7 @@ export function withValidation<
 
       // Validate route parameters
       if (paramsSchema) {
-        console.log('Validating params:', context?.params);
         const validationResult = paramsSchema.safeParse(context?.params ?? {})
-        console.log('Params validation result:', JSON.stringify(validationResult));
         if (!validationResult.success) {
           const validationError = fromZodError(validationResult.error)
           return NextResponse.json(
