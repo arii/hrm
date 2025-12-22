@@ -30,7 +30,7 @@ export interface ValidatedData<
 
 // Minimal RouteContext to ensure params are expected
 interface RouteContext {
-  params: any
+  params: unknown
 }
 
 type Handler<
