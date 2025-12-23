@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { ApiError } from '../lib/errors.js'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -141,11 +142,12 @@ export class SpotifyTokenManager {
             response.status < 500 &&
             response.status !== 429
           ) {
-            throw new Error(
-              `HTTP ${response.status}: ${errorBody} (Non-retriable)`
+            throw new ApiError(
+              response.status,
+              `${errorBody} (Non-retriable)`
             )
           }
-          throw new Error(`HTTP ${response.status}: ${errorBody}`)
+          throw new ApiError(response.status, errorBody)
         }
 
         const data = (await response.json()) as SpotifyTokenResponse
@@ -178,16 +180,23 @@ export class SpotifyTokenManager {
         )
         return true
       } catch (error: unknown) {
-        const err = error as Error
-        if (err.message && err.message.includes('(Non-retriable)')) {
-          console.error('Failed to refresh Spotify token (fatal):', err)
-          return false
-        }
+        if (error instanceof ApiError) {
+          console.error(`API Error ${error.statusCode}: ${error.message}`)
+          if (error.message.includes('(Non-retriable)')) {
+            return false
+          }
+        } else {
+          const err = error as Error
+          if (err.message && err.message.includes('(Non-retriable)')) {
+            console.error('Failed to refresh Spotify token (fatal):', err)
+            return false
+          }
 
-        console.error(
-          `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}):`,
-          err
-        )
+          console.error(
+            `Failed to refresh Spotify token (attempt ${attempt}/${maxRetries}):`,
+            err
+          )
+        }
         if (attempt >= maxRetries) return false
         // Exponential backoff
         await new Promise((res) =>

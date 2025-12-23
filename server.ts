@@ -68,6 +68,43 @@ expressApp.use(express.json())
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
 
+// --- WebSocket Upgrade Handler ---
+const handleUpgrade = (
+  wss: WebSocketServer,
+  wsConnections: Map<string, number>
+) => {
+  return (req: IncomingMessage, socket: Socket, head: Buffer) => {
+    const { pathname } = parse(req.url || '')
+    const ip =
+      (req.headers['x-forwarded-for'] as string)?.split(',').shift()?.trim() ||
+      req.socket.remoteAddress
+
+    if (process.env.TESTING !== 'true' && ip) {
+      const count = wsConnections.get(ip) || 0
+      if (count >= WS_MAX_CONNECTIONS_PER_IP) {
+        socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
+        socket.destroy()
+        return
+      }
+      wsConnections.set(ip, count + 1)
+
+      socket.on('close', () => {
+        const currentCount = wsConnections.get(ip) || 0
+        if (currentCount > 0) {
+          wsConnections.set(ip, currentCount - 1)
+        }
+      })
+    }
+
+    // Only upgrade connections to the specific WebSocket path
+    if (pathname === '/ws') {
+      wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+        wss.emit('connection', ws, req)
+      })
+    }
+  }
+}
+
 // --- Main Application Setup ---
 
 app
@@ -157,6 +194,7 @@ app
 
     // 1. Initialize WebSocket Server
     const wss = new WebSocketServer({ noServer: true })
+    const wsConnections = new Map<string, number>()
 
     // 2. Create a broadcast function wrapper to decouple services from WSS instance
     const broadcastUpdate = (message: ServerMessage) => {
@@ -237,46 +275,8 @@ app
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
-    const wsConnections = new Map<string, number>()
-
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
-      'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
-        const ip =
-          (req.headers['x-forwarded-for'] as string)
-            ?.split(',')
-            .shift()
-            ?.trim() || req.socket.remoteAddress
-
-        if (process.env.TESTING !== 'true' && ip) {
-          const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS_PER_IP) {
-            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
-            socket.destroy()
-            return
-          }
-          wsConnections.set(ip, count + 1)
-
-          socket.on('close', () => {
-            const currentCount = wsConnections.get(ip) || 0
-            if (currentCount > 0) {
-              wsConnections.set(ip, currentCount - 1)
-            }
-          })
-        }
-
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
-          })
-        }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
-      }
-    )
+    server.on('upgrade', handleUpgrade(wss, wsConnections))
 
     // --- Start Server ---
 

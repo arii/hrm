@@ -5,6 +5,7 @@ import {
 } from '../../../services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
+import { ApiError } from '../../../lib/errors'
 
 jest.mock('fs')
 
@@ -139,8 +140,7 @@ describe('SpotifyTokenManager', () => {
     expect(accessToken).toBe('access_token')
     expect(fs.writeFileSync).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to refresh Spotify token (attempt'),
-      expect.any(Error)
+      'API Error 500: Internal Server Error'
     )
   })
 
