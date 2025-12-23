@@ -7,7 +7,10 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { useWebSocket } from '@/context/WebSocketContext'
+import {
+  useWebSocket,
+  WebSocketProvider,
+} from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -23,7 +26,10 @@ jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
 }))
-jest.mock('@/context/WebSocketContext')
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
 jest.mock('next-auth/react')
 jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   __esModule: true,
@@ -35,11 +41,14 @@ const mockedUseSession = useSession as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
 import { SpotifyDevicesProvider } from '@/context/SpotifyDevicesContext'
+
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <ErrorProvider>
-      <SpotifyDevicesProvider>{ui}</SpotifyDevicesProvider>
+      <WebSocketProvider>
+        <SpotifyDevicesProvider>{ui}</SpotifyDevicesProvider>
+      </WebSocketProvider>
     </ErrorProvider>
   )
 }

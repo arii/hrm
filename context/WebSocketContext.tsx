@@ -371,15 +371,11 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      connectRef.current = connect
-      connect()
-    }
+    connectRef.current = connect
+    connect()
 
     return () => {
-      if (typeof window !== 'undefined') {
-        disconnect()
-      }
+      disconnect()
     }
   }, [connect, disconnect])
 
@@ -422,15 +418,6 @@ export const WebSocketProvider = ({
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext)
   if (!context) {
-    if (typeof window === 'undefined') {
-      return {
-        ...INITIAL_STATE,
-        connectionStatus: 'Disconnected',
-        sendData: () => {},
-        connect: () => {},
-        disconnect: () => {},
-      }
-    }
     throw new Error('useWebSocket must be used within a WebSocketProvider')
   }
   return context

@@ -9,9 +9,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider refetchInterval={0} refetchOnWindowFocus={true}>
       <AudioProvider>
-        <SpotifyDevicesProvider>
-          <WebSocketProvider>{children}</WebSocketProvider>
-        </SpotifyDevicesProvider>
+        <WebSocketProvider>
+          <SpotifyDevicesProvider>{children}</SpotifyDevicesProvider>
+        </WebSocketProvider>
       </AudioProvider>
     </SessionProvider>
   )
