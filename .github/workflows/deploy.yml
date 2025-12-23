@@ -26,11 +26,11 @@ jobs:
         with:
           version: 8
 
+      # Caching is disabled for self-hosted runners to improve performance.
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
 
       - name: 📥 Install Dependencies
         run: pnpm install
