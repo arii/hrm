@@ -17,7 +17,8 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
+import { initSocketManager, hrmDataRepository } from './utils/socketManager.js'
+import { DataPruningService } from './lib/services/DataPruningService.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
@@ -175,6 +176,16 @@ app
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, getUnifiedStateSnapshot)
+
+    // 6. Initialize Data Pruning Service
+    const retentionDays = process.env.DATA_RETENTION_PERIOD_DAYS
+      ? parseInt(process.env.DATA_RETENTION_PERIOD_DAYS, 10)
+      : 30
+    const dataPruningService = new DataPruningService(
+      hrmDataRepository,
+      retentionDays
+    )
+    dataPruningService.start()
 
     // --- Express Routing ---
 

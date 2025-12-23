@@ -28,7 +28,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmDataRepository = new HrmDataRepository()
+export const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,

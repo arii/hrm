@@ -26,7 +26,10 @@ describe('HrmDataRepository', () => {
   it('should save and find a client by ID', () => {
     repository.save(client1)
     const found = repository.findById('client1')
-    expect(found).toEqual(client1)
+    expect(found).toMatchObject({
+      ...client1,
+      timestamp: expect.any(Number),
+    })
   })
 
   it('should return undefined for a non-existent client', () => {
@@ -39,8 +42,12 @@ describe('HrmDataRepository', () => {
     repository.save(client2)
     const allClients = repository.findAll()
     expect(allClients).toHaveLength(2)
-    expect(allClients).toContainEqual(client1)
-    expect(allClients).toContainEqual(client2)
+    expect(allClients).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining(client1),
+        expect.objectContaining(client2),
+      ])
+    )
   })
 
   it('should return an empty array when no clients are saved', () => {
@@ -72,6 +79,9 @@ describe('HrmDataRepository', () => {
     const updatedClient = { ...client1, value: 100 }
     repository.save(updatedClient)
     const found = repository.findById('client1')
-    expect(found).toEqual(updatedClient)
+    expect(found).toMatchObject({
+      ...updatedClient,
+      timestamp: expect.any(Number),
+    })
   })
 })

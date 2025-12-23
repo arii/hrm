@@ -29,8 +29,14 @@ export class HrmDataRepository {
    * Saves or updates a client's data.
    * @param data The client data to save.
    */
-  save(data: HrmStreamData): void {
-    this.clientData.set(data.clientId, data)
+  save(data: Partial<HrmStreamData> & { clientId: string }): void {
+    const existingData = this.clientData.get(data.clientId) || {}
+    const dataToSave = {
+      ...existingData,
+      ...data,
+      timestamp: Date.now(),
+    }
+    this.clientData.set(data.clientId, dataToSave as HrmStreamData)
   }
 
   /**
@@ -46,5 +52,21 @@ export class HrmDataRepository {
    */
   clear(): void {
     this.clientData.clear()
+  }
+
+  /**
+   * Prunes data older than the specified threshold.
+   * @param threshold The timestamp threshold.
+   * @returns The number of items pruned.
+   */
+  prune(threshold: number): number {
+    let itemsPruned = 0
+    for (const [clientId, data] of this.clientData.entries()) {
+      if (data.timestamp && data.timestamp < threshold) {
+        this.clientData.delete(clientId)
+        itemsPruned++
+      }
+    }
+    return itemsPruned
   }
 }
