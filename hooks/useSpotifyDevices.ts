@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { SpotifyDevice } from '@/types'
+import { SpotifyDevice } from '@/types/core'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
