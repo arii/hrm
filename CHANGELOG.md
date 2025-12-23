@@ -2,63 +2,56 @@
 
 ## [0.15.0](https://github.com/arii/hrm/compare/v0.14.0...v0.15.0) (2025-12-23)
 
-
 ### Features
 
-* Add AuthButton component for Spotify login/logout ([#2018](https://github.com/arii/hrm/issues/2018)) ([a6629bd](https://github.com/arii/hrm/commit/a6629bd521fb30d89f59fb6374faae0aead1c0e2))
-* Implement Authentication Error Notifications ([#2055](https://github.com/arii/hrm/issues/2055)) ([73acd23](https://github.com/arii/hrm/commit/73acd2366f558efa18888ede424875999e4c0cb1))
-* Implement Spotify Connect Device Picker ([#2014](https://github.com/arii/hrm/issues/2014)) ([a154729](https://github.com/arii/hrm/commit/a154729ec3b74f761927280794d7cf71c7cd7018))
-
+- Add AuthButton component for Spotify login/logout ([#2018](https://github.com/arii/hrm/issues/2018)) ([a6629bd](https://github.com/arii/hrm/commit/a6629bd521fb30d89f59fb6374faae0aead1c0e2))
+- Implement Authentication Error Notifications ([#2055](https://github.com/arii/hrm/issues/2055)) ([73acd23](https://github.com/arii/hrm/commit/73acd2366f558efa18888ede424875999e4c0cb1))
+- Implement Spotify Connect Device Picker ([#2014](https://github.com/arii/hrm/issues/2014)) ([a154729](https://github.com/arii/hrm/commit/a154729ec3b74f761927280794d7cf71c7cd7018))
 
 ### Bug Fixes
 
-* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
-* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
-* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
-* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
-* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
-* **tests:** stabilize visual regression tests ([d2a5675](https://github.com/arii/hrm/commit/d2a5675ef9b9ad678a4a3c874e597a44798bab77))
+- **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+- **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+- **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+- **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+- **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+- **tests:** stabilize visual regression tests ([d2a5675](https://github.com/arii/hrm/commit/d2a5675ef9b9ad678a4a3c874e597a44798bab77))
 
 ## [0.14.0](https://github.com/arii/hrm/compare/v0.13.0...v0.14.0) (2025-12-23)
 
-
 ### Features
 
-* add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
-* add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
-* Implement Robust Test Artifact Management & Exclusion ([#1865](https://github.com/arii/hrm/issues/1865)) ([08e147c](https://github.com/arii/hrm/commit/08e147c2461056fc9fcbf92e4690160357ed68f3))
-
+- add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+- add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+- Implement Robust Test Artifact Management & Exclusion ([#1865](https://github.com/arii/hrm/issues/1865)) ([08e147c](https://github.com/arii/hrm/commit/08e147c2461056fc9fcbf92e4690160357ed68f3))
 
 ### Bug Fixes
 
-* **ci:** correct log file parsing in failure report ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
-* continue to post errors ([#1827](https://github.com/arii/hrm/issues/1827)) ([055c8db](https://github.com/arii/hrm/commit/055c8db1d555c6aefa1d15b625d788a6033f6ac1))
-* continue to post errors ([#1829](https://github.com/arii/hrm/issues/1829)) ([08c183b](https://github.com/arii/hrm/commit/08c183bb30c3cca63fe885352205a9778259e586))
-* correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
-* correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+- **ci:** correct log file parsing in failure report ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+- continue to post errors ([#1827](https://github.com/arii/hrm/issues/1827)) ([055c8db](https://github.com/arii/hrm/commit/055c8db1d555c6aefa1d15b625d788a6033f6ac1))
+- continue to post errors ([#1829](https://github.com/arii/hrm/issues/1829)) ([08c183b](https://github.com/arii/hrm/commit/08c183bb30c3cca63fe885352205a9778259e586))
+- correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+- correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
 
 ## [0.13.0](https://github.com/arii/hrm/compare/v0.12.0...v0.13.0) (2025-12-18)
 
-
 ### Features
 
-* Set Imperial Units as Default for Weight and Height Input ([#1811](https://github.com/arii/hrm/issues/1811)) ([69bbaba](https://github.com/arii/hrm/commit/69bbaba0860f3c417b9cfe01842d6e99ee1ff2a9))
+- Set Imperial Units as Default for Weight and Height Input ([#1811](https://github.com/arii/hrm/issues/1811)) ([69bbaba](https://github.com/arii/hrm/commit/69bbaba0860f3c417b9cfe01842d6e99ee1ff2a9))
 
 ## [0.12.0](https://github.com/arii/hrm/compare/v0.11.0...v0.12.0) (2025-12-18)
 
-
 ### Features
 
-* **deps:** Optimize knip Configuration and Resolve Dependency Hygiene Issues ([#1747](https://github.com/arii/hrm/issues/1747)) ([9a9a288](https://github.com/arii/hrm/commit/9a9a288b95791e129828a6d8e45b0b204458a0ad))
-
+- **deps:** Optimize knip Configuration and Resolve Dependency Hygiene Issues ([#1747](https://github.com/arii/hrm/issues/1747)) ([9a9a288](https://github.com/arii/hrm/commit/9a9a288b95791e129828a6d8e45b0b204458a0ad))
 
 ### Bug Fixes
 
-* Calorie display on /client/connect page ([#1741](https://github.com/arii/hrm/issues/1741)) ([4028f5d](https://github.com/arii/hrm/commit/4028f5d39ed1329c65503f24dcb13afaa2ebd42c))
-* check permissions ([#1770](https://github.com/arii/hrm/issues/1770)) ([7975b1b](https://github.com/arii/hrm/commit/7975b1bc6f087bc5bba184cfd7a4c1acd21d3fe5))
-* pr review error ([6526d32](https://github.com/arii/hrm/commit/6526d321e1470cab34688fd7de8ca8421552bf2d))
-* prevent review loops ([#1751](https://github.com/arii/hrm/issues/1751)) ([67d595e](https://github.com/arii/hrm/commit/67d595ea1483b225ca720ec2adc0312ceb92f977))
-* udpate token ([e7e6abd](https://github.com/arii/hrm/commit/e7e6abdbef48a6036b055469dbf4aa9fd2c05c8d))
+- Calorie display on /client/connect page ([#1741](https://github.com/arii/hrm/issues/1741)) ([4028f5d](https://github.com/arii/hrm/commit/4028f5d39ed1329c65503f24dcb13afaa2ebd42c))
+- check permissions ([#1770](https://github.com/arii/hrm/issues/1770)) ([7975b1b](https://github.com/arii/hrm/commit/7975b1bc6f087bc5bba184cfd7a4c1acd21d3fe5))
+- pr review error ([6526d32](https://github.com/arii/hrm/commit/6526d321e1470cab34688fd7de8ca8421552bf2d))
+- prevent review loops ([#1751](https://github.com/arii/hrm/issues/1751)) ([67d595e](https://github.com/arii/hrm/commit/67d595ea1483b225ca720ec2adc0312ceb92f977))
+- udpate token ([e7e6abd](https://github.com/arii/hrm/commit/e7e6abdbef48a6036b055469dbf4aa9fd2c05c8d))
 
 ## [0.11.0](https://github.com/arii/hrm/compare/v0.10.0...v0.11.0) (2025-12-16)
 

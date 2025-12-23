@@ -29,31 +29,47 @@ describe('API Route: /api/workout', () => {
       expect(data).toHaveProperty('error')
     })
 
-    it('should return 500 if fetching from Google fails', async () => {
-      mockedFetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-      } as Response)
-      const request = new NextRequest(
-        'http://localhost/api/workout?docId=test-doc-id'
-      )
-      const response = await GET(request)
-      const data = await response.json()
+    describe('when errors are expected', () => {
+      let consoleErrorSpy: jest.SpyInstance
 
-      expect(response.status).toBe(500)
-      expect(data).toHaveProperty('error')
-    })
+      beforeAll(() => {
+        // Suppress console.error for these specific tests
+        consoleErrorSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation(() => {})
+      })
 
-    it('should return 500 if an exception occurs during fetch', async () => {
-      mockedFetch.mockRejectedValue(new Error('Network error'))
-      const request = new NextRequest(
-        'http://localhost/api/workout?docId=test-doc-id'
-      )
-      const response = await GET(request)
-      const data = await response.json()
+      afterAll(() => {
+        // Restore console.error
+        consoleErrorSpy.mockRestore()
+      })
 
-      expect(response.status).toBe(500)
-      expect(data).toHaveProperty('error')
+      it('should return 500 if fetching from Google fails', async () => {
+        mockedFetch.mockResolvedValue({
+          ok: false,
+          status: 404,
+        } as Response)
+        const request = new NextRequest(
+          'http://localhost/api/workout?docId=test-doc-id'
+        )
+        const response = await GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(500)
+        expect(data).toHaveProperty('error')
+      })
+
+      it('should return 500 if an exception occurs during fetch', async () => {
+        mockedFetch.mockRejectedValue(new Error('Network error'))
+        const request = new NextRequest(
+          'http://localhost/api/workout?docId=test-doc-id'
+        )
+        const response = await GET(request)
+        const data = await response.json()
+
+        expect(response.status).toBe(500)
+        expect(data).toHaveProperty('error')
+      })
     })
 
     it('should return parsed data on successful fetch', async () => {
