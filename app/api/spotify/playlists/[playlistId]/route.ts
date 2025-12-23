@@ -24,7 +24,7 @@ import { ApiError } from '@/lib/errors'
  */
 async function getPlaylistTracks(
   _req: Request,
-  context: { params: { playlistId: string } }
+  context: any
 ) {
   // 1. Get the server-side session.
   const session = await getServerSession(authOptions)
@@ -61,7 +61,7 @@ async function getPlaylistTracks(
     playlistId,
     undefined, // market
     'items(track(name,artists,album(name,images),duration_ms,uri,explicit,popularity))',
-    limit,
+    limit as any,
     offset
   )
 
