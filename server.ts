@@ -15,16 +15,16 @@ import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
-import { SpotifyPolling } from './services/spotifyPolling.js'
-import TabataTimer from './services/tabataTimer.js'
-import { initSocketManager } from './utils/socketManager.js'
-import { broadcast } from './utils/websocketUtils.js'
-import { serviceContainer } from './lib/serviceContainer.js'
-import { getBaseURL } from './utils/urls.js'
-import { ServerMessage, StateSnapshot } from './types/websocket.js'
-import logger from './utils/logger.js'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from '@/constants/apiEndpoints'
+import { SpotifyPolling } from './services/spotifyPolling'
+import TabataTimer from './services/tabataTimer'
+import { initSocketManager } from './utils/socketManager'
+import { broadcast } from './utils/websocketUtils'
+import { serviceContainer } from './lib/serviceContainer'
+import { getBaseURL } from './utils/urls'
+import { ServerMessage, StateSnapshot } from './types/websocket'
+import logger from './utils/logger'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints'
 import rateLimit from 'express-rate-limit'
 import {
   DEFAULT_PORT,
@@ -33,7 +33,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
   SPOTIFY_API_MAX_REQUESTS,
   WS_MAX_CONNECTIONS_PER_IP,
-} from '@/lib/Constants'
+} from './lib/Constants'
 
 const port: number = process.env.PORT ? +process.env.PORT : DEFAULT_PORT // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers

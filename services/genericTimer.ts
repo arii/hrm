@@ -41,9 +41,7 @@ class GenericTimer {
    */
   constructor({ mode, durationMs = 0, onUpdate }: GenericTimerOptions) {
     if (mode === 'COUNTDOWN' && durationMs <= 0) {
-      throw new ValidationError(
-        'Countdown mode requires a positive durationMs.'
-      )
+      throw new ValidationError('Countdown mode requires a positive durationMs.')
     }
 
     this.state = {
