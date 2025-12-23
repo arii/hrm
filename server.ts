@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+import { HrmDataRepository } from './lib/repositories/HrmDataRepository.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
@@ -157,13 +158,14 @@ app
       broadcast(wss, message, origin)
     }
 
-    // 3. Initialize Persistent Services
+    // 3. Initialize Persistent Services and Repositories
     serviceContainer.register(
       'spotifyService',
       await SpotifyPolling.create(broadcastUpdate)
     )
     const tabataService = new TabataTimer()
     serviceContainer.register('tabataService', tabataService)
+    serviceContainer.register('hrmDataRepository', new HrmDataRepository())
 
     // 4. Subscribe to service events and broadcast updates
     tabataService.on('update', (timerData) => {

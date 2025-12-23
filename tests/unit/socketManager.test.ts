@@ -26,10 +26,13 @@ import {
 import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { serviceContainer } from '../../lib/serviceContainer.js'
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
 jest.mock('../../lib/serviceContainer.js')
+// We will use the actual HrmDataRepository implementation for this test
+// as it is a simple in-memory store.
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -128,17 +131,20 @@ describe('WebSocket Manager', () => {
     const mockedServiceContainer = serviceContainer as jest.Mocked<
       typeof serviceContainer
     >
-    mockedServiceContainer.get.mockImplementation(
-      (key: 'spotifyService' | 'tabataService') => {
-        if (key === 'spotifyService') {
-          return mockServices.spotifyService
-        }
-        if (key === 'tabataService') {
-          return mockServices.tabataService
-        }
-        throw new Error(`Unexpected service key: ${key}`)
+    type ServiceKey = 'spotifyService' | 'tabataService' | 'hrmDataRepository'
+    mockedServiceContainer.get.mockImplementation((key: ServiceKey) => {
+      if (key === 'spotifyService') {
+        return mockServices.spotifyService
       }
-    )
+      if (key === 'tabataService') {
+        return mockServices.tabataService
+      }
+      if (key === 'hrmDataRepository') {
+        // Return a new mock instance for the repository
+        return new HrmDataRepository()
+      }
+      throw new Error(`Unexpected service key: ${key}`)
+    })
 
     initSocketManager(mockWss, getSnapshot)
 
