@@ -142,10 +142,7 @@ export class SpotifyTokenManager {
             response.status < 500 &&
             response.status !== 429
           ) {
-            throw new ApiError(
-              response.status,
-              `${errorBody} (Non-retriable)`
-            )
+            throw new ApiError(response.status, `${errorBody} (Non-retriable)`)
           }
           throw new ApiError(response.status, errorBody)
         }
