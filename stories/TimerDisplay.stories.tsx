@@ -1,34 +1,32 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import TimerDisplay from '@/components/TimerDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { AudioContext } from '@/context/AudioContext'
+import { AudioProvider } from '@/context/AudioContext'
 import {
   mockWebSocketContext,
   mockTimerData,
 } from './mocks/mockWebSocketContext'
-import { mockAudioContext } from './mocks/mockAudioContext'
-import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport'
+import { TimerData } from '@/types/websocket'
 
 const meta: Meta<typeof TimerDisplay> = {
   title: 'Components/TimerDisplay',
   component: TimerDisplay,
   decorators: [
-    (Story, { args }) => (
+    (Story, { args }: { args: { timerData?: TimerData } }) => (
       <WebSocketContext.Provider
         value={{
           ...mockWebSocketContext,
           timerData: args.timerData || mockWebSocketContext.timerData,
         }}
       >
-        <AudioContext.Provider value={mockAudioContext}>
+        <AudioProvider>
           <Story />
-        </AudioContext.Provider>
+        </AudioProvider>
       </WebSocketContext.Provider>
     ),
   ],
   parameters: {
     viewport: {
-      viewports: INITIAL_VIEWPORTS,
       defaultViewport: 'iphone6',
     },
     layout: 'fullscreen',

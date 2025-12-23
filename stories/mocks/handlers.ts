@@ -1,9 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import {
-  API_AUTH_SESSION,
   API_SPOTIFY_ACCESS_TOKEN,
   API_SPOTIFY_DEVICES,
-  API_USERS,
 } from '@/constants/apiEndpoints'
 
 const spotifyDevices = [
@@ -31,7 +29,7 @@ const spotifyDevices = [
 
 export const handlers = [
   // 1. Mock NextAuth Session
-  http.get(API_AUTH_SESSION, () => {
+  http.get('/api/auth/session', () => {
     return HttpResponse.json({
       user: {
         name: 'Storybook Developer',
@@ -43,7 +41,7 @@ export const handlers = [
   }),
 
   // 2. Mock User Profile/Settings
-  http.get(API_USERS, () => {
+  http.get('/api/users', () => {
     return HttpResponse.json({
       id: 'mock-user-id',
       name: 'Storybook Developer',

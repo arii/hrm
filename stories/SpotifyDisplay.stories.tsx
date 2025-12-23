@@ -5,7 +5,6 @@ import { WebSocketContext } from '@/context/WebSocketContext'
 import { mockWebSocketContext } from './mocks/mockWebSocketContext'
 import { mockSession } from './mocks/mockSession'
 import { handlers } from './mocks/handlers'
-import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport'
 
 const meta: Meta<typeof SpotifyDisplay> = {
   title: 'Components/SpotifyDisplay',
@@ -15,7 +14,7 @@ const meta: Meta<typeof SpotifyDisplay> = {
       <SessionProvider session={mockSession}>
         <WebSocketContext.Provider value={mockWebSocketContext}>
           <Story />
-        </WebSocket-Context.Provider>
+        </WebSocketContext.Provider>
       </SessionProvider>
     ),
   ],
@@ -24,7 +23,6 @@ const meta: Meta<typeof SpotifyDisplay> = {
       handlers,
     },
     viewport: {
-      viewports: INITIAL_VIEWPORTS,
       defaultViewport: 'iphone6',
     },
     layout: 'fullscreen',
