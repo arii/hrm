@@ -40,9 +40,9 @@ describe('DataPruningService', () => {
     }
 
     // Manually insert data to control timestamps
-    // @ts-expect-error
+    // @ts-expect-error - Bypassing private access for testing
     hrmDataRepository.clientData.set(oldData.clientId, oldData)
-    // @ts-expect-error
+    // @ts-expect-error - Bypassing private access for testing
     hrmDataRepository.clientData.set(recentData.clientId, recentData)
 
     dataPruningService.start(1000)
