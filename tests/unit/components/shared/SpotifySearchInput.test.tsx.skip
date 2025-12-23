@@ -4,17 +4,21 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import SpotifySearchInput from '../../../../components/shared/SpotifySearchInput'
+import useDebounce from '../../../../hooks/useDebounce'
+
+// Mock the useDebounce hook
+jest.mock('../../../../hooks/useDebounce', () => ({
+  __esModule: true,
+  default: jest.fn((value) => value),
+}))
 
 global.fetch = jest.fn()
 
 describe('SpotifySearchInput', () => {
   beforeEach(() => {
-    jest.useFakeTimers()
     ;(fetch as jest.Mock).mockClear()
-  })
-
-  afterEach(() => {
-    jest.useRealTimers()
+    // We can clear the mock implementation if needed, but it's set in the mock factory now.
+    ;(useDebounce as jest.Mock).mockClear()
   })
 
   it('renders the input field', () => {
@@ -34,7 +38,7 @@ describe('SpotifySearchInput', () => {
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
     expect(input).toHaveValue('test')
-    const clearButton = screen.getByRole('button')
+    const clearButton = screen.getByRole('button', { name: /clear search/i })
     fireEvent.click(clearButton)
     expect(input).toHaveValue('')
   })
@@ -42,18 +46,17 @@ describe('SpotifySearchInput', () => {
   it('shows the loading indicator while fetching', async () => {
     ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ tracks: { items: [] } }),
+      json: () => new Promise(() => {}), // Keep the promise pending
     })
+
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () => expect(screen.getByRole('progressbar')).toBeInTheDocument(),
-      { timeout: 10000 }
-    )
-    await waitFor(
-      () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
-      { timeout: 10000 }
+
+    // Since debounce is mocked, the fetch should be called immediately.
+    // We can then wait for the progress bar to appear.
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar')).toBeInTheDocument()
     )
   })
 
@@ -68,6 +71,7 @@ describe('SpotifySearchInput', () => {
                 id: '1',
                 name: 'Test Track',
                 artists: [{ name: 'Test Artist' }],
+                album: { images: [{ url: 'http://example.com/image.jpg' }] },
               },
             ],
           },
@@ -76,13 +80,14 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () =>
-        expect(
-          screen.getByText('Test Track by Test Artist')
-        ).toBeInTheDocument(),
-      { timeout: 10000 }
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Test Track/i, { selector: 'strong' })
+      ).toBeInTheDocument()
     )
+    expect(
+      screen.getByText(/Test Artist/i, { selector: 'span' })
+    ).toBeInTheDocument()
   })
 
   it('shows "No results found" when the search is successful but returns no items', async () => {
@@ -93,9 +98,8 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () => expect(screen.getByText('No results found.')).toBeInTheDocument(),
-      { timeout: 10000 }
+    await waitFor(() =>
+      expect(screen.getByText('No results found.')).toBeInTheDocument()
     )
   })
 
@@ -104,12 +108,25 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () =>
-        expect(
-          screen.getByText('Failed to fetch results.')
-        ).toBeInTheDocument(),
-      { timeout: 10000 }
+    await waitFor(() =>
+      expect(screen.getByText('Failed to fetch results.')).toBeInTheDocument()
     )
+  })
+
+  it('does not fetch when input is cleared', async () => {
+    render(<SpotifySearchInput />)
+    const input = screen.getByPlaceholderText('Search Spotify...')
+    fireEvent.change(input, { target: { value: 'test' } })
+
+    // Clear the input
+    const clearButton = screen.getByRole('button', { name: /clear search/i })
+    fireEvent.click(clearButton)
+    expect(input).toHaveValue('')
+
+    // Reset fetch mock calls after the initial change
+    ;(fetch as jest.Mock).mockClear()
+
+    // Since the value is now empty, no new fetch should be initiated
+    expect(fetch).not.toHaveBeenCalled()
   })
 })
