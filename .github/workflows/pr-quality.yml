@@ -163,7 +163,8 @@ jobs:
       - name: Run Infra Tests
         run: |
           mkdir -p logs
-          pnpm run test:infra > logs/infra-dev-output.log 2>&1
+          touch logs/infra-dev-output.log
+          pnpm run test:infra >> logs/infra-dev-output.log 2>&1
 
       - name: Run Unit Tests
         run: pnpm run test:unit
