@@ -1,11 +1,17 @@
 /**
- * @fileoverview Shared utility functions.
+ * @file This file contains utility functions for handling time durations.
+ * @module lib/shared/utils/time
  */
 
 /**
  * Formats a duration in seconds into a HH:MM:SS string.
- * @param seconds The duration in seconds.
- * @returns The formatted duration string.
+ *
+ * @param {number} seconds - The duration in seconds.
+ * @returns {string} The formatted duration string (e.g., "01:23:45"). Returns "00:00:00" for invalid inputs.
+ * @example
+ * formatDuration(3661) // "01:01:01"
+ * formatDuration(90)   // "00:01:30"
+ * formatDuration(-10)  // "00:00:00"
  */
 export const formatDuration = (seconds: number): string => {
   if (isNaN(seconds) || seconds < 0) {
