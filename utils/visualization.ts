@@ -9,7 +9,6 @@ import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
-import { HeartRate } from '@/lib/hrm/HeartRate'
 
 // Define types for MUI color props
 type MuiColor =
@@ -95,37 +94,20 @@ export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-  try {
-    // 1. Create Value Objects at the boundary
-    const currentHrVo = new HeartRate(currentHr)
-    const maxHrVo = new HeartRate(maxHr)
+  // 1. Get the core HR data from the domain module
+  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
 
-    // 2. Get the core HR data from the domain module
-    const { zoneName, percentage, bpm } = calculateHrZone(currentHrVo, maxHrVo)
+  // 2. Look up the UI properties from the map
+  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-    // 3. Look up the UI properties from the map
-    const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
-
-    // 4. Combine domain data with UI properties
-    return {
-      zone: zoneName, // The enum member is a string at runtime
-      percentage: percentage,
-      color: zoneUiProps.color,
-      progressColor: zoneUiProps.progressColor,
-      backgroundColor: zoneUiProps.bgColor,
-      bpm: bpm,
-    }
-  } catch (_error) {
-    // Handle cases where HeartRate instantiation fails (e.g., out of range)
-    const zoneUiProps = HR_ZONE_UI_PROPS_MAP[HrZoneName.NoData]
-    return {
-      zone: HrZoneName.NoData,
-      percentage: 0,
-      color: zoneUiProps.color,
-      progressColor: zoneUiProps.progressColor,
-      backgroundColor: zoneUiProps.bgColor,
-      bpm: 0,
-    }
+  // 3. Combine domain data with UI properties
+  return {
+    zone: zoneName, // The enum member is a string at runtime
+    percentage: percentage,
+    color: zoneUiProps.color,
+    progressColor: zoneUiProps.progressColor,
+    backgroundColor: zoneUiProps.bgColor,
+    bpm: bpm,
   }
 }
 
