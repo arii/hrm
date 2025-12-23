@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.14.0](https://github.com/arii/hrm/compare/v0.13.0...v0.14.0) (2025-12-23)
+
+
+### Features
+
+* add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+* add initial test coverage for users and workout APIs ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+* Implement Robust Test Artifact Management & Exclusion ([#1865](https://github.com/arii/hrm/issues/1865)) ([08e147c](https://github.com/arii/hrm/commit/08e147c2461056fc9fcbf92e4690160357ed68f3))
+
+
+### Bug Fixes
+
+* **ci:** correct log file parsing in failure report ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+* continue to post errors ([#1827](https://github.com/arii/hrm/issues/1827)) ([055c8db](https://github.com/arii/hrm/commit/055c8db1d555c6aefa1d15b625d788a6033f6ac1))
+* continue to post errors ([#1829](https://github.com/arii/hrm/issues/1829)) ([08c183b](https://github.com/arii/hrm/commit/08c183bb30c3cca63fe885352205a9778259e586))
+* correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+* correct import path in users API test ([5e1dfe7](https://github.com/arii/hrm/commit/5e1dfe73025646a67daadb010344b421e305f94e))
+
 ## [0.13.0](https://github.com/arii/hrm/compare/v0.12.0...v0.13.0) (2025-12-18)
 
 
