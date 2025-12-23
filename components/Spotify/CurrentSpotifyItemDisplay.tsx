@@ -49,13 +49,14 @@ const CurrentSpotifyItemDisplay = () => {
       aria-atomic="true"
     >
       {spotifyData.albumArtUrl ? (
-        <Image
-          src={spotifyData.albumArtUrl}
-          alt={spotifyData.albumName || 'Album art'}
-          width={64}
-          height={64}
-          style={{ borderRadius: '4px' }}
-        />
+        <Box sx={{ width: 64, height: 64, borderRadius: 1, overflow: 'hidden' }}>
+          <Image
+            src={spotifyData.albumArtUrl}
+            alt={spotifyData.albumName || 'Album art'}
+            width={64}
+            height={64}
+          />
+        </Box>
       ) : (
         <Box
           sx={{
