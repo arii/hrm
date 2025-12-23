@@ -1,10 +1,9 @@
 'use client'
 
-import BottomNavBar from '@/components/BottomNavBar'
+import FooterControls from '@/components/FooterControls'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
 import ErrorFallback from '@/components/ErrorFallback'
-import Footer from '@/components/Footer'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
@@ -29,8 +28,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
           <ErrorDisplay />
         </LoadingProvider>
       </ErrorProvider>
-      <Footer />
-      <BottomNavBar />
+      <FooterControls />
     </ThemeRegistry>
   )
 }
