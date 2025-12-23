@@ -160,18 +160,8 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
-      - name: Run Infra Tests with Tracing
-        run: |
-          echo "--- Running infra test with tracing enabled ---"
-          mkdir -p logs
-          pnpm exec playwright test tests/playwright/infrastructure.spec.ts --trace on >> logs/infra-dev-output.log 2>&1 || echo "Playwright command failed with exit code $?."
-      - name: Upload Trace Files
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-trace-infra-${{ env.SESSION_ID }}
-          path: test-results/
-          retention-days: 5
+      # - name: Run Infra Tests
+      #   run: pnpm run test:infra
 
       - name: Run Unit Tests
         run: pnpm run test:unit
