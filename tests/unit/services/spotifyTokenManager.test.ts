@@ -5,8 +5,6 @@ import {
 } from '../../../services/spotifyTokenManager'
 import fs from 'fs'
 import path from 'path'
-import { ApiError } from '../../../lib/errors'
-
 jest.mock('fs')
 
 describe('SpotifyTokenManager', () => {
