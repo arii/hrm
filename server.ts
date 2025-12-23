@@ -203,14 +203,20 @@ app
       broadcast(wss, message, origin)
     }
 
-    // 3. Initialize Persistent Services with the wrapped broadcaster
+    // 3. Initialize Persistent Services
     serviceContainer.register(
       'spotifyService',
       await SpotifyPolling.create(broadcastUpdate)
     )
-    serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
+    const tabataService = new TabataTimer()
+    serviceContainer.register('tabataService', tabataService)
 
-    // 4. State Snapshot Function
+    // 4. Subscribe to service events and broadcast updates
+    tabataService.on('update', (timerData) => {
+      broadcastUpdate({ type: 'TIMER_UPDATE', payload: timerData })
+    })
+
+    // 5. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
       spotifyData: serviceContainer.get('spotifyService').getState(),

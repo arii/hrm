@@ -1,18 +1,17 @@
 import { ApiError } from '@/lib/errors'
-import fs from 'fs'
 import { NextRequest, NextResponse } from 'next/server'
-import path from 'path'
 import logger from '@/utils/logger'
 
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
  * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ * It returns a 200 OK to acknowledge receipt.
+ *
+ * The actual token processing is handled by middleware in `server.ts`
+ * which intercepts this specific route to update the singleton service directly.
+ * We do not read the request body here to avoid stream consumption issues,
+ * as the middleware may have already consumed it.
  */
-
-const LOG_DIR = path.resolve(process.cwd(), 'logs')
-const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
-
 export async function POST(req: NextRequest) {
   try {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
@@ -21,22 +20,7 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized')
     }
 
-    const payload = await req.json()
-
-    // ensure logs dir
-    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
-
-    // write timestamped record (overwrite with latest)
-    const record = {
-      receivedAt: Date.now(),
-      payload,
-    }
-    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
-
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
+    // Logic is handled by server middleware before reaching here.
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
