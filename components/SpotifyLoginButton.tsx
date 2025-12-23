@@ -18,7 +18,6 @@ const SpotifyLoginButton = () => {
         callbackUrl: '/',
         redirect: true,
       })
-      console.log('[SpotifyLoginButton] signIn() result:', result)
       if (result?.error) {
         throw new Error(result.error)
       }
