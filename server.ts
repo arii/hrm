@@ -10,6 +10,7 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
+import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -215,10 +216,7 @@ app
         // Await the token update and handle potential errors
         if (req.body) {
           try {
-            const validatedPayload = validate(
-              SpotifyTokenPayloadSchema,
-              req.body
-            )
+            const validatedPayload = validate(SpotifyTokenPayloadSchema, req.body)
             // Await the handler to ensure sequential execution and catch errors
             await serviceContainer
               .get('spotifyService')
@@ -248,10 +246,7 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = new URL(
-          req.url || '',
-          `http://${req.headers.host}`
-        )
+        const { pathname } = parse(req.url || '')
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
