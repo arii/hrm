@@ -8,8 +8,9 @@ import { useState, MouseEvent } from 'react'
 const SpotifyDeviceSelectorWrapper = () => {
   const { devices: availableDevices, handleDeviceSelected } =
     useSharedSpotifyDevices()
-  const [deviceMenuAnchor, setDeviceMenuAnchor] =
-    useState<null | HTMLElement>(null)
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
+  )
 
   const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setDeviceMenuAnchor(event.currentTarget)
