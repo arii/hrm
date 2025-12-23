@@ -355,16 +355,19 @@ export class SpotifyPolling {
         }
         break
       case 'PAUSE':
-        // deviceId is optional in the SDK for this method
-        await this.sdk!.player.pausePlayback(deviceId)
+        // SDK types are incorrect, should allow undefined deviceId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.sdk!.player.pausePlayback as any)(deviceId)
         break
       case 'NEXT':
-        // deviceId is optional in the SDK for this method
-        await this.sdk!.player.skipToNext(deviceId)
+        // SDK types are incorrect, should allow undefined deviceId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.sdk!.player.skipToNext as any)(deviceId)
         break
       case 'PREVIOUS':
-        // deviceId is optional in the SDK for this method
-        await this.sdk!.player.skipToPrevious(deviceId)
+        // SDK types are incorrect, should allow undefined deviceId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (this.sdk!.player.skipToPrevious as any)(deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (isValidDeviceId(deviceId)) {
