@@ -7,6 +7,7 @@ import {
   mockTimerData,
 } from './mocks/mockWebSocketContext'
 import { TimerData } from '@/types/websocket'
+import { userEvent, within } from '@storybook/testing-library'
 
 const meta: Meta<typeof TimerDisplay> = {
   title: 'Components/TimerDisplay',
@@ -77,5 +78,17 @@ export const ActiveDesktop: Story = {
     viewport: {
       defaultViewport: 'responsive',
     },
+  },
+}
+
+export const Interaction: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const startButton = await canvas.findByText('Start')
+    await userEvent.click(startButton)
+    const pauseButton = await canvas.findByText('Pause')
+    await userEvent.click(pauseButton)
+    const resetButton = await canvas.findByText('Reset')
+    await userEvent.click(resetButton)
   },
 }

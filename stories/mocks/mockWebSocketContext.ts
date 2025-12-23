@@ -12,6 +12,17 @@ export const mockSpotifyData: SpotifyData = {
   isMuted: false,
 }
 
+export const mockSpotifyDataNoActivePlayback: SpotifyData = {
+  trackName: 'Awaiting Login...',
+  artist: '',
+  albumName: '',
+  albumArtUrl: '',
+  isPlaying: false,
+  devices: [],
+  volume: 70,
+  isMuted: false,
+}
+
 export const mockTimerData: TimerData = {
   currentPhase: 'WORK',
   timeRemaining: 20,

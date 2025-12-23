@@ -2,7 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { SessionProvider } from 'next-auth/react'
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
-import { mockWebSocketContext } from './mocks/mockWebSocketContext'
+import {
+  mockWebSocketContext,
+  mockSpotifyDataNoActivePlayback,
+} from './mocks/mockWebSocketContext'
 import { mockSession } from './mocks/mockSession'
 import { handlers } from './mocks/handlers'
 
@@ -40,4 +43,21 @@ export const PlayingDesktop: Story = {
       defaultViewport: 'responsive',
     },
   },
+}
+
+export const NoActivePlayback: Story = {
+  decorators: [
+    (Story) => (
+      <SessionProvider session={mockSession}>
+        <WebSocketContext.Provider
+          value={{
+            ...mockWebSocketContext,
+            spotifyData: mockSpotifyDataNoActivePlayback,
+          }}
+        >
+          <Story />
+        </WebSocketContext.Provider>
+      </SessionProvider>
+    ),
+  ],
 }

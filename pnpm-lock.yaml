@@ -115,9 +115,6 @@ importers:
       '@storybook/addon-interactions':
         specifier: ^8.6.14
         version: 8.6.14(storybook@8.6.14(prettier@3.7.4))
-      '@storybook/addon-viewport':
-        specifier: ^9.0.8
-        version: 9.0.8
       '@storybook/nextjs':
         specifier: ^8.6.14
         version: 8.6.14(babel-plugin-macros@3.1.0)(esbuild@0.25.12)(next@16.0.10(@babel/core@7.28.5)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(storybook@8.6.14(prettier@3.7.4))(type-fest@5.3.1)(typescript@5.9.3)(webpack-hot-middleware@2.26.1)(webpack@5.104.0(esbuild@0.25.12))
@@ -211,6 +208,9 @@ importers:
       msw-storybook-addon:
         specifier: ^2.0.6
         version: 2.0.6(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3))
+      next-router-mock:
+        specifier: ^1.0.4
+        version: 1.0.4(next@16.0.10(@babel/core@7.28.5)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       pino-pretty:
         specifier: ^13.1.3
         version: 13.1.3
@@ -3519,9 +3519,6 @@ packages:
       }
     peerDependencies:
       storybook: ^8.6.14
-
-  '@storybook/addon-viewport@9.0.8':
-    resolution: {integrity: sha512-HgIFDzNXvMx0zQBM5mhwBoAJlrF9KRlxNCZnJbqrFLCJO4Ps2PMtB0HRGHcg0gm3RLcqyps0DpiF7wll3udb7Q==}
 
   '@storybook/blocks@8.6.14':
     resolution:
@@ -9032,6 +9029,12 @@ packages:
       nodemailer:
         optional: true
 
+  next-router-mock@1.0.4:
+    resolution: {integrity: sha512-EBOd/J2PxgZ9WH732ppfEojZgSTSOkjEz0DgQn+9c/PELKnc9P19PAcmQUi7fSlk3LAKbMGzl5DEOb40x7l8kA==}
+    peerDependencies:
+      next: '>=16.0.7'
+      react: '>=17.0.0'
+
   next@16.0.10:
     resolution:
       {
@@ -14251,8 +14254,6 @@ snapshots:
       memoizerific: 1.11.3
       storybook: 8.6.14(prettier@3.7.4)
 
-  '@storybook/addon-viewport@9.0.8': {}
-
   '@storybook/blocks@8.6.14(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(storybook@8.6.14(prettier@3.7.4))':
     dependencies:
       '@storybook/icons': 1.6.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -18153,6 +18154,11 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       uuid: 8.3.2
+
+  next-router-mock@1.0.4(next@16.0.10(@babel/core@7.28.5)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+    dependencies:
+      next: 16.0.10(@babel/core@7.28.5)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react: 19.2.3
 
   next@16.0.10(@babel/core@7.28.5)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
