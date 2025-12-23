@@ -4,6 +4,7 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import { useSnackbar } from '@/context/SnackbarContext'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -16,6 +17,19 @@ import Typography from '@mui/material/Typography'
 const AuthButton = () => {
   const { data: session, status } = useSession()
   const [open, setOpen] = useState(false)
+  const { openSnackbar } = useSnackbar()
+
+  const handleLogin = async () => {
+    try {
+      const result = await signIn('spotify')
+      if (result?.error) {
+        openSnackbar(`Error: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      console.error('Login failed:', error)
+      openSnackbar('An unexpected error occurred during login.', 'error')
+    }
+  }
 
   const handleLogoutClick = () => {
     setOpen(true)
@@ -78,7 +92,7 @@ const AuthButton = () => {
     <Button
       variant="contained"
       color="primary"
-      onClick={() => signIn('spotify')}
+      onClick={handleLogin}
     >
       Login with Spotify
     </Button>

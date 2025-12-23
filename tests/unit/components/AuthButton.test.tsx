@@ -6,17 +6,25 @@ import '@testing-library/jest-dom'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import AuthButton from '@/components/AuthButton'
 import { useSession, signIn, signOut } from 'next-auth/react'
+import { useSnackbar } from '@/context/SnackbarContext'
 
 // Mock next-auth/react
 jest.mock('next-auth/react')
 
+// Mock SnackbarContext
+jest.mock('@/context/SnackbarContext')
+
 const useSessionMock = useSession as jest.Mock
 const signInMock = signIn as jest.Mock
 const signOutMock = signOut as jest.Mock
+const useSnackbarMock = useSnackbar as jest.Mock
 
 describe('AuthButton', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    useSnackbarMock.mockReturnValue({
+      openSnackbar: jest.fn(),
+    })
   })
   it('renders login button when logged out', () => {
     useSessionMock.mockReturnValue({ data: null, status: 'unauthenticated' })
@@ -81,5 +89,19 @@ describe('AuthButton', () => {
     fireEvent.click(screen.getByText('Logout'))
     fireEvent.click(screen.getByText('Cancel'))
     expect(signOutMock).not.toHaveBeenCalled()
+  })
+
+  it('shows snackbar on signIn error', async () => {
+    const openSnackbarMock = jest.fn()
+    useSnackbarMock.mockReturnValue({ openSnackbar: openSnackbarMock })
+    useSessionMock.mockReturnValue({ data: null, status: 'unauthenticated' })
+    signInMock.mockResolvedValue({ error: 'Test error' })
+
+    render(<AuthButton />)
+    fireEvent.click(screen.getByText('Login with Spotify'))
+
+    await screen.findByText('Login with Spotify') // Wait for async operations to complete
+
+    expect(openSnackbarMock).toHaveBeenCalledWith('Error: Test error', 'error')
   })
 })

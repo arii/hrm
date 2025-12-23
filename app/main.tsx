@@ -11,6 +11,7 @@ import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
+import { SnackbarProvider } from '@/context/SnackbarContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 export default function Main({ children }: { children: React.ReactNode }) {
@@ -18,13 +19,15 @@ export default function Main({ children }: { children: React.ReactNode }) {
     <ThemeRegistry options={{ key: 'mui' }}>
       <ErrorProvider>
         <LoadingProvider>
-          <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
-          </Providers>
+          <SnackbarProvider>
+            <Providers>
+              <UserSettingsProvider>
+                <ErrorBoundary fallback={<ErrorFallback />}>
+                  <TimerSoundProvider>{children}</TimerSoundProvider>
+                </ErrorBoundary>
+              </UserSettingsProvider>
+            </Providers>
+          </SnackbarProvider>
           <LoadingIndicator />
           <ErrorDisplay />
         </LoadingProvider>
