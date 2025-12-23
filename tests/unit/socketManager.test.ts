@@ -337,8 +337,8 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Unknown message type received'
+        { type: 'SOME_GARBAGE' },
+        'No handler registered for this command type'
       )
     })
   })
