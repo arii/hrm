@@ -20,6 +20,7 @@ import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
+import { addHrmDataPoint } from '../services/hrmDataService.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -200,6 +201,21 @@ const handleIncomingMessage = (
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
+
+        // Persist the HRM data point if it's a valid number.
+        if (typeof message.data.value === 'number') {
+          addHrmDataPoint({
+            timestamp: Date.now(),
+            hrm: message.data.value,
+            clientId: clientId,
+          }).catch((err) => {
+            logger.error(
+              { error: err, clientId },
+              'Failed to save HRM data point'
+            )
+          })
+        }
+
         broadcastState()
         break
       }

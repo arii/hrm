@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+import { flushHrmData } from './services/hrmDataService.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
@@ -277,6 +278,16 @@ app
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
+    })
+
+    // Graceful shutdown
+    process.on('SIGINT', async () => {
+      logger.info('SIGINT received, shutting down gracefully')
+      await flushHrmData()
+      server.close(() => {
+        logger.info('Server closed')
+        process.exit(0)
+      })
     })
 
     // Begin listening

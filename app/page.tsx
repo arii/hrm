@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import HrmDashboard from '../components/HrmDashboard'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 
@@ -84,6 +85,10 @@ const Dashboard = () => {
         <ErrorBoundary fallback={<ErrorFallback />}>
           <HrmConnectionPanel />
         </ErrorBoundary>
+
+        <Box sx={{ width: '100%' }}>
+          <HrmDashboard />
+        </Box>
 
         <Box sx={{ width: '100%' }}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
