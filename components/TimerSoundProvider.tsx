@@ -35,6 +35,32 @@ const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
     }
   }, [])
 
+  useEffect(() => {
+    const VOLUME_STEP = 5
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Mute Toggle
+      if (event.key === 'm') {
+        audioManager.toggleMute()
+      }
+
+      // Volume Control
+      if (event.key === 'ArrowUp') {
+        const currentVolume = audioManager.getVolume()
+        audioManager.setVolume(currentVolume + VOLUME_STEP)
+      }
+      if (event.key === 'ArrowDown') {
+        const currentVolume = audioManager.getVolume()
+        audioManager.setVolume(currentVolume - VOLUME_STEP)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   return <>{children}</>
 }
 
