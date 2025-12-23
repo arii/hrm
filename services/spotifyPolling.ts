@@ -38,6 +38,7 @@ export class SpotifyPolling implements SpotifyService {
   }
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
+  private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
@@ -156,25 +157,41 @@ export class SpotifyPolling implements SpotifyService {
 
   // Expose start/stop polling publicly (used by server to control lifecycle)
   public startPolling() {
-    if (this.pollInterval) return
+    if (this.pollInterval) return // Already running
 
-    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+    // Interval for currently playing track
+    const trackIntervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
       : 3000
-    // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
-      intervalMs
+      trackIntervalMs
     )
-    logger.debug({ intervalMs }, 'Spotify polling started')
+
+    // Interval for available devices (less frequent)
+    const deviceIntervalMs =
+      parseInt(process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000', 10)
+    this.devicePollInterval = setInterval(
+      () => this.refreshDevices(),
+      deviceIntervalMs
+    )
+
+    logger.debug(
+      { trackIntervalMs, deviceIntervalMs },
+      'Spotify polling started'
+    )
   }
 
   public stopPolling() {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
-      logger.debug('Spotify polling stopped.')
     }
+    if (this.devicePollInterval) {
+      clearInterval(this.devicePollInterval)
+      this.devicePollInterval = null
+    }
+    logger.debug('Spotify polling stopped.')
   }
 
   public cleanup() {
@@ -268,7 +285,6 @@ export class SpotifyPolling implements SpotifyService {
     }
     try {
       const response = await this.sdk.player.getAvailableDevices()
-      // FIX: Filter and map to ensure type safety (Device -> SpotifyDevice)
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device) => d.id !== null)
         .map((d: Device) => ({
