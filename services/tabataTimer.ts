@@ -7,11 +7,11 @@
  */
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode, TimerPhase } from '../types/core'
-import {
-  TABATA_DEFAULT_REST_DURATION_S,
-  TABATA_DEFAULT_WORK_DURATION_S,
-  TABATA_START_COUNTDOWN_S,
-} from '../lib/Constants.js'
+
+// --- Tabata Constants ---
+const DEFAULT_WORK_DURATION = 20 // seconds
+const DEFAULT_REST_DURATION = 10 // seconds
+const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
@@ -30,7 +30,7 @@ interface DualModeTimerState {
 
 class TabataTimer {
   // Function provided by server.ts to push updates to all clients
-  private readonly broadcastUpdate: (message: ServerMessage) => void
+  private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
@@ -41,8 +41,8 @@ class TabataTimer {
     currentPhase: 'IDLE',
     timeElapsed: 0,
     timeRemaining: 0,
-    workDuration: TABATA_DEFAULT_WORK_DURATION_S,
-    restDuration: TABATA_DEFAULT_REST_DURATION_S,
+    workDuration: DEFAULT_WORK_DURATION,
+    restDuration: DEFAULT_REST_DURATION,
     soundEventId: 0,
   }
 
@@ -143,7 +143,7 @@ class TabataTimer {
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
       this.timerState.currentPhase = 'PREPARE'
-      this.timerState.timeRemaining = TABATA_START_COUNTDOWN_S
+      this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
     // If resuming after PAUSE, restore previous state (no PREPARE)

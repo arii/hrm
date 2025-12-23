@@ -84,13 +84,13 @@ export class SpotifyTokenManager {
       this.currentToken.payload.sub
     )
   }
-  private tokenFile: string
+  private readonly tokenFile: string
   private currentToken: TokenRecord | null = null
   private refreshPromise: Promise<void> | null = null
 
   constructor(
-    private clientId: string,
-    private clientSecret: string,
+    private readonly clientId: string,
+    private readonly clientSecret: string,
     logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
@@ -142,7 +142,10 @@ export class SpotifyTokenManager {
             response.status < 500 &&
             response.status !== 429
           ) {
-            throw new ApiError(response.status, `${errorBody} (Non-retriable)`)
+            throw new ApiError(
+              response.status,
+              `${errorBody} (Non-retriable)`
+            )
           }
           throw new ApiError(response.status, errorBody)
         }

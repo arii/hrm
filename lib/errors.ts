@@ -1,49 +1,43 @@
-// lib/errors.ts
+/**
+ * @fileoverview Custom error classes for the application.
+ */
 
 /**
- * Custom error class for API-related errors.
- *
- * This class allows us to standardize error handling by including an HTTP status code
- * with our errors. The error handling middleware can then use this status code to
- * send the appropriate HTTP response.
+ * Base class for custom application errors.
  */
-export class ApiError extends Error {
-  statusCode: number
-
-  /**
-   * Creates an instance of ApiError.
-   *
-   * @param statusCode The HTTP status code for the error.
-   * @param message The error message.
-   */
-  constructor(statusCode: number, message: string) {
+export class AppError extends Error {
+  constructor(message: string) {
     super(message)
-    this.name = 'ApiError'
+    this.name = this.constructor.name
+  }
+}
+
+/**
+ * Represents an error from an external API.
+ */
+export class ApiError extends AppError {
+  public readonly statusCode: number
+
+  constructor(statusCode: number, message: string) {
+    super(`API Error ${statusCode}: ${message}`)
     this.statusCode = statusCode
   }
 }
 
 /**
- * Custom error class for validation errors.
- *
- * This error should be thrown when user input or other data fails validation checks.
+ * Represents a validation error (e.g., invalid input).
  */
-export class ValidationError extends Error {
+export class ValidationError extends AppError {
   constructor(message: string) {
-    super(message)
-    this.name = 'ValidationError'
+    super(`Validation Error: ${message}`)
   }
 }
 
 /**
- * Custom error class for service-level errors.
- *
- * This error should be thrown when an error occurs within a service,
- * such as when a service is not properly initialized or configured.
+ * Represents an error originating from an internal service.
  */
-export class ServiceError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'ServiceError'
+export class ServiceError extends AppError {
+  constructor(serviceName: string, message: string) {
+    super(`[${serviceName}] ${message}`)
   }
 }
