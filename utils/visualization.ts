@@ -82,7 +82,6 @@ export interface HrZoneProps {
   color: string // Tailwind text color class
   progressColor: string // Hex color for MUI components
   backgroundColor: string // Hex color for background
-  textColor: string
   bpm: number
 }
 
@@ -108,7 +107,6 @@ export const getHrZoneProps = (
     color: zoneUiProps.color,
     progressColor: zoneUiProps.progressColor,
     backgroundColor: zoneUiProps.bgColor,
-    textColor: theme.palette.getContrastText(zoneUiProps.bgColor),
     bpm: bpm,
   }
 }

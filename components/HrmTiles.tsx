@@ -6,7 +6,7 @@ import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import { memo, useMemo } from 'react'
+import { useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -80,8 +80,4 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-// Memoize HrmTiles to prevent re-renders when parent components update.
-// The component relies on the `useWebSocket` hook, which provides `hrmData` and `activeAlerts`.
-// The `useMemo` hook inside the component ensures that the `filteredTiles` are only recalculated
-// when `hrmData` or `activeAlerts` change, further optimizing performance.
-export default memo(HrmTiles)
+export default HrmTiles

@@ -322,11 +322,9 @@ describe('WebSocket Manager', () => {
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
-        {
-          deviceId: undefined,
-          volume: undefined,
-          playlistUri: undefined,
-        }
+        undefined,
+        undefined,
+        undefined
       )
     })
 

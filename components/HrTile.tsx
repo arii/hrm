@@ -38,7 +38,7 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor } = getHrZoneProps(percentMax, 100)
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -56,7 +56,7 @@ const HrTile = ({
         }, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
-          color: textColor,
+          color: '#fff',
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
@@ -106,6 +106,7 @@ const HrTile = ({
                 fontWeight: 900,
                 lineHeight: 0.85,
                 my: 0.5,
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 animation: 'subtle-pulse 2s infinite ease-in-out',
                 animationPlayState:
                   bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
