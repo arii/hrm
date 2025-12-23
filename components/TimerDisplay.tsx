@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
 import VolumeDown from '@mui/icons-material/VolumeDown'
@@ -16,6 +16,7 @@ import IconButton from '@mui/material/IconButton'
 import { useAudioContext } from '@/context/AudioContext'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+const STORAGE_KEY_VOL = 'hrm-preferred-volume'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -28,6 +29,18 @@ const TimerDisplay = () => {
     workDuration = 20,
     restDuration = 10,
   } = timerData
+
+  useEffect(() => {
+    return () => {
+      try {
+        if (volume > 0) {
+          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
+        }
+      } catch (error) {
+        console.warn('Could not persist volume on unmount:', error)
+      }
+    }
+  }, [volume])
 
   // Determine what to display based on mode and phase
   let displayTime: string

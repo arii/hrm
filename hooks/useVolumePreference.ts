@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
+import useDebouncedVolume from './useDebouncedVolume'
 
 const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
 const STORAGE_KEY_MUTE = 'hrm-muted'
@@ -19,6 +20,9 @@ const useVolumePreference = (defaultVolume = 70) => {
   const [volume, setVolumeState] = useState(sanitizedDefault) // Effective volume
   const [muted, setMutedState] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+
+  // Debounce the persistence of the last non-zero volume.
+  useDebouncedVolume(lastVolumeRef.current, isLoaded)
 
   useEffect(() => {
     try {
@@ -49,17 +53,31 @@ const useVolumePreference = (defaultVolume = 70) => {
     (value: number) => {
       const sanitized = clampVolume(value)
       setVolumeState(sanitized)
+
       if (sanitized > 0) {
         lastVolumeRef.current = sanitized
-        setMutedState(false)
-      } else {
+        if (muted) {
+          setMutedState(false)
+          try {
+            window.localStorage.setItem(STORAGE_KEY_MUTE, 'false')
+          } catch (error) {
+            console.warn('Could not persist mute preference:', error)
+          }
+        }
+      } else if (!muted) {
         setMutedState(true)
+        try {
+          window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
+        } catch (error) {
+          console.warn('Could not persist mute preference:', error)
+        }
       }
+
       window.dispatchEvent(
         new CustomEvent('hrm:volumeChange', { detail: sanitized })
       )
     },
-    [setMutedState]
+    [muted]
   )
 
   const toggleMute = useCallback(() => {
@@ -70,7 +88,6 @@ const useVolumePreference = (defaultVolume = 70) => {
       if (isMuting) {
         if (volume > 0) {
           lastVolumeRef.current = volume
-          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
         }
         setVolumeState(0)
       } else {
