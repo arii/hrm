@@ -34,9 +34,14 @@ const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
+import { SpotifyDevicesProvider } from '@/context/SpotifyDevicesContext'
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<ErrorProvider>{ui}</ErrorProvider>)
+  return render(
+    <ErrorProvider>
+      <SpotifyDevicesProvider>{ui}</SpotifyDevicesProvider>
+    </ErrorProvider>
+  )
 }
 
 describe('SpotifyDisplay', () => {
