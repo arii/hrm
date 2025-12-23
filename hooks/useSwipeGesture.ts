@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useRef } from 'react'
 
 interface SwipeInput {
   onSwipeLeft: () => void
@@ -12,30 +12,41 @@ interface SwipeOutput {
 }
 
 const useSwipeGesture = (input: SwipeInput): SwipeOutput => {
-  const [touchStart, setTouchStart] = useState(0)
-  const [touchEnd, setTouchEnd] = useState(0)
+  const touchStartRef = useRef(0)
+  const touchEndRef = useRef(0)
 
   const minSwipeDistance = 50
 
   const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0) // otherwise the swipe is fired even with a single touch
-    setTouchStart(e.targetTouches[0].clientX)
+    // Reset touchEndRef on new touch start
+    touchEndRef.current = e.targetTouches[0].clientX
+    touchStartRef.current = e.targetTouches[0].clientX
   }
 
-  const onTouchMove = (e: React.TouchEvent) =>
-    setTouchEnd(e.targetTouches[0].clientX)
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndRef.current = e.targetTouches[0].clientX
+  }
 
   const onTouchEnd = () => {
+    const touchStart = touchStartRef.current
+    const touchEnd = touchEndRef.current
+
     if (!touchStart || !touchEnd) return
+
     const distance = touchStart - touchEnd
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
+
     if (isLeftSwipe) {
       input.onSwipeLeft()
     }
     if (isRightSwipe) {
       input.onSwipeRight()
     }
+
+    // Reset refs
+    touchStartRef.current = 0
+    touchEndRef.current = 0
   }
 
   return {

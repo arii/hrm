@@ -51,6 +51,12 @@ const Dashboard = () => {
   const [audioInitialized, setAudioInitialized] = useState(false)
   const { initializeAudio } = useAudio()
 
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  }, [])
+
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: () => setOpen(false),
     onSwipeRight: () => setOpen(true),
@@ -79,7 +85,7 @@ const Dashboard = () => {
     <Container
       maxWidth="xl"
       onClick={handleInteraction}
-      {...swipeHandlers}
+      {...(isTouchDevice ? swipeHandlers : {})}
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',

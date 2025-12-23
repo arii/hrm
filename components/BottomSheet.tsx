@@ -5,13 +5,14 @@ import { grey } from '@mui/material/colors'
 import Box from '@mui/material/Box'
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 
-const drawerBleeding = 56
+const bottomSheetBleeding = 56
 
 interface Props {
   open: boolean
   onClose: () => void
   onOpen: () => void
   children: ReactNode
+  height?: string | number
 }
 
 const Root = styled('div')(({ theme }) => ({
@@ -37,6 +38,7 @@ export default function BottomSheet({
   onClose,
   onOpen,
   children,
+  height = '50%',
 }: Props) {
   return (
     <Root>
@@ -45,16 +47,17 @@ export default function BottomSheet({
         open={open}
         onClose={onClose}
         onOpen={onOpen}
-        swipeAreaWidth={drawerBleeding}
+        swipeAreaWidth={bottomSheetBleeding}
         disableSwipeToOpen={false}
         ModalProps={{
           keepMounted: true,
+          'aria-label': 'Secondary Controls',
         }}
         PaperProps={{
           sx: {
-            height: `calc(50% - ${drawerBleeding}px)`,
+            height: `calc(${height} - ${bottomSheetBleeding}px)`,
             overflow: 'visible',
-            top: -drawerBleeding,
+            top: -bottomSheetBleeding,
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
             visibility: 'visible',
