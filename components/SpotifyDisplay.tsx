@@ -93,14 +93,8 @@ const volumeReducer = (
 const SpotifyDisplay = () => {
   const { data: session, status } = useSession()
   const { addError } = useError()
-  const {
-    availableDevices,
-    selectedDeviceId,
-    handleDeviceSelected,
-    deviceMenuAnchor,
-    handleMenuOpen,
-    handleMenuClose,
-  } = useSharedSpotifyDevices()
+  const { devices: availableDevices, selectedDeviceId } =
+    useSharedSpotifyDevices()
 
   // Effect to handle session-level errors, like token refresh failure
   useEffect(() => {
@@ -362,13 +356,7 @@ const SpotifyDisplay = () => {
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
           />
-          <SpotifyDeviceSelectorWrapper
-            availableDevices={availableDevices} // From shared context
-            deviceMenuAnchor={deviceMenuAnchor} // From shared context
-            onDeviceSelect={handleDeviceSelected} // From shared context
-            onMenuOpen={handleMenuOpen} // From shared context
-            onMenuClose={handleMenuClose} // From shared context
-          />
+          <SpotifyDeviceSelectorWrapper />
           <Button
             variant="outlined"
             size="small"

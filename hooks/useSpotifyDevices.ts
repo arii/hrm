@@ -12,7 +12,7 @@ export interface UseSpotifyDevicesReturn {
   isLoading: boolean
   error: Error | null
   refreshDevices: () => void
-  selectDevice: (deviceId: string) => void
+  handleDeviceSelected: (deviceId: string) => void
 }
 
 export const useSpotifyDevices = (): UseSpotifyDevicesReturn => {
@@ -73,7 +73,7 @@ export const useSpotifyDevices = (): UseSpotifyDevicesReturn => {
     }
   }, [devices])
 
-  const selectDevice = (deviceId: string) => {
+  const handleDeviceSelected = (deviceId: string) => {
     setSelectedDeviceId(deviceId)
   }
 
@@ -83,6 +83,6 @@ export const useSpotifyDevices = (): UseSpotifyDevicesReturn => {
     isLoading,
     error,
     refreshDevices: fetchDevices,
-    selectDevice,
+    handleDeviceSelected,
   }
 }

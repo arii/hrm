@@ -3,15 +3,27 @@
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import { useSharedSpotifyDevices } from '@/context/SpotifyDevicesContext'
+import { useState, MouseEvent } from 'react'
 
 const SpotifyDeviceSelectorWrapper = () => {
-  const {
-    availableDevices,
-    deviceMenuAnchor,
-    handleDeviceSelected,
-    handleMenuOpen,
-    handleMenuClose,
-  } = useSharedSpotifyDevices()
+  const { devices: availableDevices, handleDeviceSelected } =
+    useSharedSpotifyDevices()
+  const [deviceMenuAnchor, setDeviceMenuAnchor] =
+    useState<null | HTMLElement>(null)
+
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
+    setDeviceMenuAnchor(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setDeviceMenuAnchor(null)
+  }
+
+  const handleDeviceSelect = (deviceId: string) => {
+    handleDeviceSelected(deviceId)
+    handleMenuClose()
+  }
+
   const deviceMenuOpen = Boolean(deviceMenuAnchor)
 
   return (
@@ -44,7 +56,7 @@ const SpotifyDeviceSelectorWrapper = () => {
           availableDevices.map((device) => (
             <MenuItem
               key={device.id}
-              onClick={() => handleDeviceSelected(device.id)}
+              onClick={() => handleDeviceSelect(device.id)}
               selected={device.is_active}
             >
               {device.name}
