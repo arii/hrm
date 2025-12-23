@@ -11,7 +11,7 @@ import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
 } from './spotifyTokenManager'
-import logger from '@/utils/logger'
+import logger from '../utils/logger'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
@@ -20,7 +20,7 @@ import {
   SPOTIFY_DEFAULT_POLLING_INTERVAL_MS,
   SPOTIFY_FETCH_AFTER_COMMAND_DELAY_MS,
   SPOTIFY_TOKEN_REFRESH_INTERVAL_MS,
-} from '@/lib/Constants'
+} from '../lib/Constants'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK

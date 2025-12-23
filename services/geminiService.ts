@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai'
 import { GithubPullRequest, ReleaseNoteResult } from '../types/gemini'
-import { ServiceError } from '@/lib/errors'
+import { ServiceError } from '../lib/errors'
 
 const getClient = () => {
   const apiKey = process.env.GEMINI_API_KEY // Ensure GEMINI_API_KEY is configured for server-side use

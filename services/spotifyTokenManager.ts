@@ -2,7 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling'
-import { ApiError } from '@/lib/errors'
+import { ApiError } from '../lib/errors'
 
 /**
  * Helper for atomic writes to prevent file corruption.

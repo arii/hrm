@@ -1,6 +1,6 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
-import { ValidationError } from '@/lib/errors'
+import { ValidationError } from '../lib/errors'
 
 export interface WorkoutTableData {
   headers: string[]
