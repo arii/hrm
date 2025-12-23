@@ -10,17 +10,17 @@ import { SpotifyDevice } from '../types/core'
 import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
-} from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
+} from './spotifyTokenManager'
+import logger from '@/utils/logger'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
-} from './spotifyApiErrorHandling.js'
+} from './spotifyApiErrorHandling'
 import {
   SPOTIFY_DEFAULT_POLLING_INTERVAL_MS,
   SPOTIFY_FETCH_AFTER_COMMAND_DELAY_MS,
   SPOTIFY_TOKEN_REFRESH_INTERVAL_MS,
-} from '../lib/Constants.js'
+} from '@/lib/Constants'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK

@@ -5,7 +5,7 @@
  */
 
 import { GenericTimerState, TimerMode } from '../types/genericTimer'
-import { ValidationError } from '../lib/errors.js'
+import { ValidationError } from '@/lib/errors'
 
 /**
  * @callback TimerUpdateCallback

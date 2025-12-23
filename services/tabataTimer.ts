@@ -11,7 +11,7 @@ import {
   TABATA_DEFAULT_REST_DURATION_S,
   TABATA_DEFAULT_WORK_DURATION_S,
   TABATA_START_COUNTDOWN_S,
-} from '../lib/Constants.js'
+} from '@/lib/Constants'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
