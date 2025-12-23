@@ -4,17 +4,8 @@ import { CacheProvider } from '@emotion/react'
 import { useServerInsertedHTML } from 'next/navigation'
 import * as React from 'react'
 
-// --- ADD THESE IMPORTS ---
-import CssBaseline from '@mui/material/CssBaseline'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
-// --- END OF NEW IMPORTS ---
-
 // This implementation is taken directly from the MUI official docs:
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
-
-// --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
-// ------------------------------
 
 type ThemeRegistryProps = {
   options: { key: string }
@@ -66,14 +57,6 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
     )
   })
 
-  // --- WRAP CHILDREN WITH THE PROVIDERS ---
-  return (
-    <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kicks in a consistent baseline style */}
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </CacheProvider>
-  )
+  // The `ThemeProvider` is now handled by `context/ThemeContext.tsx`
+  return <CacheProvider value={cache}>{children}</CacheProvider>
 }

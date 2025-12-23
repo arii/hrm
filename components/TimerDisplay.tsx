@@ -3,6 +3,7 @@
 import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
+import { useTheme } from '@mui/material/styles'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
@@ -18,6 +19,7 @@ import { useAudioContext } from '@/context/AudioContext'
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const TimerDisplay = () => {
+  const theme = useTheme()
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
@@ -37,14 +39,14 @@ const TimerDisplay = () => {
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = theme.palette.warning.main
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = theme.palette.info.main
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -58,19 +60,19 @@ const TimerDisplay = () => {
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = theme.palette.error.main
       phaseLabel = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = theme.palette.success.main
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = theme.palette.info.main
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
+    phaseColor = theme.palette.text.secondary
     phaseLabel = 'READY'
   }
 
@@ -79,12 +81,12 @@ const TimerDisplay = () => {
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
+        backgroundColor: theme.palette.common.black,
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: `2px solid ${theme.palette.grey[900]}`,
         position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
@@ -106,7 +108,7 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: '#fff' }}
+          sx={{ color: theme.palette.common.white }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
@@ -118,10 +120,10 @@ const TimerDisplay = () => {
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? '#10B981'
+                ? theme.palette.success.main
                 : connectionStatus === 'Reconnecting...'
-                  ? '#F59E0B'
-                  : '#EF4444',
+                  ? theme.palette.warning.main
+                  : theme.palette.error.main,
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
@@ -132,7 +134,7 @@ const TimerDisplay = () => {
         <Box
           sx={{
             position: 'absolute',
-            left: 16,
+            left: 4,
             top: '50%',
             transform: 'translateY(-50%) rotate(-90deg)',
             transformOrigin: 'center',
@@ -142,12 +144,12 @@ const TimerDisplay = () => {
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: theme.palette.common.white,
               fontWeight: 700,
               letterSpacing: 2,
               whiteSpace: 'nowrap',
               fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: theme.palette.action.hover,
               px: 1,
               py: 0.5,
               borderRadius: 1,
@@ -163,7 +165,7 @@ const TimerDisplay = () => {
         <Box
           sx={{
             position: 'absolute',
-            right: 16,
+            right: 4,
             top: '50%',
             transform: 'translateY(-50%) rotate(90deg)',
             transformOrigin: 'center',
@@ -173,12 +175,12 @@ const TimerDisplay = () => {
           <Typography
             variant="body2"
             sx={{
-              color: '#fff',
+              color: theme.palette.common.white,
               fontWeight: 700,
               letterSpacing: 1,
               whiteSpace: 'nowrap',
               fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
+              backgroundColor: theme.palette.action.hover,
               px: 1,
               py: 0.5,
               borderRadius: 1,
@@ -249,7 +251,7 @@ const TimerDisplay = () => {
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton onClick={toggleMute} sx={{ color: 'common.white' }}>
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -257,13 +259,13 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'white',
+              color: 'common.white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
+          <VolumeUp sx={{ color: 'common.white' }} />
         </Stack>
       </CardContent>
     </Card>
