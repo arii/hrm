@@ -320,12 +320,11 @@ describe('WebSocket Manager', () => {
         expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
         'socketManager.SPOTIFY_COMMAND'
       )
-      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
-        'PLAY',
-        undefined,
-        undefined,
-        undefined
-      )
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith('PLAY', {
+        deviceId: undefined,
+        volume: undefined,
+        playlistUri: undefined,
+      })
     })
 
     it('should handle unknown message types', () => {

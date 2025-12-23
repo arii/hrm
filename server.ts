@@ -21,7 +21,12 @@ import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
-import { ServerMessage, StateSnapshot } from './types/websocket.js'
+import {
+  Lifecycle,
+  SpotifyTokenHandler,
+  StateProvider,
+} from './types/interfaces.js'
+import { ServerMessage, SpotifyData, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
@@ -167,10 +172,12 @@ app
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
-      spotifyData: serviceContainer.get('spotifyService').getState(),
-      spotifyServiceInitialized: serviceContainer
-        .get('spotifyService')
-        .isReady(),
+      spotifyData: (
+        serviceContainer.get('spotifyService') as StateProvider<SpotifyData>
+      ).getState(),
+      spotifyServiceInitialized: (
+        serviceContainer.get('spotifyService') as Lifecycle
+      ).isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
@@ -215,9 +222,9 @@ app
         if (req.body) {
           try {
             // Await the handler to ensure sequential execution and catch errors
-            await serviceContainer
-              .get('spotifyService')
-              .handleTokenUpdate(req.body)
+            await (
+              serviceContainer.get('spotifyService') as SpotifyTokenHandler
+            ).handleTokenUpdate(req.body)
           } catch (err) {
             logger.error(
               { err },
