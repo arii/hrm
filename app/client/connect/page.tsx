@@ -56,6 +56,7 @@ export default function ConnectPage() {
   } = useWorkoutSession({
     isConnected,
     totalCalories,
+    userId: '123e4567-e89b-12d3-a456-426614174000', // Hardcoded user ID
   })
 
   return (

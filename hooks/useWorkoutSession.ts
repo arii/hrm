@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import type { WorkoutSession } from '@/types/core' // Import the type
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -75,25 +76,22 @@ function sessionReducer(
 
 // --- The Hook Implementation ---
 
-/**
- * Manages the state of a client-side workout session, tracking duration.
- *
- * NOTE: Calorie calculation is no longer performed in this hook.
- * It is now handled server-side and streamed via the WebSocket connection.
- * This hook consumes the final `totalCalories` value to ensure data consistency
- * across the application.
- */
 interface WorkoutSessionOptions {
   isConnected: boolean
   totalCalories?: number
+  userId: string // Add userId as a required prop
 }
 
 export const useWorkoutSession = ({
   isConnected,
   totalCalories = 0,
+  userId, // Destructure userId
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
+  // State to hold the current workout session from the database
+  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(null)
+
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -170,19 +168,66 @@ export const useWorkoutSession = ({
     session.pauseTime = null
     session.totalPaused = 0
     setStartCalories(0)
+    setActiveSession(null) // Reset active session
     prevIsConnected.current = false
     dispatch({ type: 'RESET' })
   }, [])
 
-  const startWorkout = useCallback(() => {
+  const startWorkout = useCallback(async () => {
     // Capture the calorie count at the moment the workout starts.
     setStartCalories(totalCalories)
     dispatch({ type: 'START_WORKOUT' })
-  }, [totalCalories])
 
-  const endWorkout = useCallback(() => {
-    dispatch({ type: 'END_WORKOUT' })
-  }, [])
+    // Create a new workout session in the database
+    try {
+      const response = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          startedAt: new Date().toISOString(),
+          notes: 'New workout session',
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create workout session');
+      }
+      const newSession = await response.json();
+      setActiveSession(newSession);
+    } catch (error) {
+      console.error('Error starting workout session:', error);
+      // Handle error appropriately
+    }
+  }, [totalCalories, userId]);
+
+  const endWorkout = useCallback(async () => {
+    if (!activeSession) return;
+
+    dispatch({ type: 'END_WORKOUT' });
+
+    // Update the workout session in the database
+    try {
+      const response = await fetch(`/api/workouts/${activeSession.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endedAt: new Date().toISOString(),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to end workout session');
+      }
+      const updatedSession = await response.json();
+      setActiveSession(updatedSession);
+    } catch (error) {
+      console.error('Error ending workout session:', error);
+      // Handle error appropriately
+    }
+  }, [activeSession]);
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
@@ -201,5 +246,6 @@ export const useWorkoutSession = ({
     endWorkout,
     workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
+    activeSession, // Expose the active session
   }
 }
