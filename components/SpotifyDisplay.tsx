@@ -18,7 +18,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import logger from '@/utils/logger'
-import SpotifyLoginButton from './SpotifyLoginButton'
+import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types/core'
@@ -320,7 +320,7 @@ const SpotifyDisplay = () => {
           width: '100%',
         }}
       >
-        <SpotifyLoginButton />
+        <AuthButton providerId="spotify" providerName="Spotify" />
       </Box>
     )
   }

@@ -10,21 +10,22 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
-import { useSession } from 'next-auth/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 
-// Mock child components and dependencies
-jest.mock('@/components/SpotifyLoginButton', () => ({
-  __esModule: true,
-  default: () => <button>Login with Spotify</button>,
-}))
+// Mock dependencies
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
   __esModule: true,
   default: () => <div data-testid="current-spotify-item-display" />,
 }))
 jest.mock('@/context/WebSocketContext')
-jest.mock('next-auth/react')
+jest.mock('next-auth/react', () => ({
+  ...jest.requireActual('next-auth/react'), // Keep original functionality
+  useSession: jest.fn(), // Mock useSession specifically
+  signIn: jest.fn(), // Mock signIn specifically
+}))
 jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
   __esModule: true,
   default: jest.fn(),
@@ -32,6 +33,7 @@ jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
 
 const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
+const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
 // Custom renderer to wrap component with required providers
@@ -56,7 +58,7 @@ describe('SpotifyDisplay', () => {
     ) as jest.Mock
   })
 
-  it('should render the login button when not logged in', async () => {
+  it('should render login button and call signIn with correct provider on click', async () => {
     mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' })
     mockedUseWebSocket.mockReturnValue({
       spotifyData: {
@@ -75,62 +77,19 @@ describe('SpotifyDisplay', () => {
 
     renderWithProviders(<SpotifyDisplay />)
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /login with spotify/i })
-      ).toBeInTheDocument()
+    const loginButton = await screen.findByRole('button', {
+      name: /login with spotify/i,
+    })
+    expect(loginButton).toBeInTheDocument()
+
+    // Simulate user click
+    await userEvent.click(loginButton)
+
+    // Assert that signIn was called correctly
+    expect(mockedSignIn).toHaveBeenCalledTimes(1)
+    expect(mockedSignIn).toHaveBeenCalledWith('spotify', {
+      callbackUrl: '/',
+      redirect: true,
     })
   })
-
-  // it('should render "No Active Playback" when logged in but trackName is "Awaiting Login..."', async () => {
-  //   mockedUseSession.mockReturnValue({
-  //     data: { accessToken: 'fake-token' },
-  //     status: 'authenticated',
-  //   })
-  //   mockedUseWebSocket.mockReturnValue({
-  //     spotifyData: {
-  //       trackName: 'Awaiting Login...',
-  //       artist: '',
-  //       albumName: '',
-  //       albumArtUrl: '',
-  //       isPlaying: false,
-  //     },
-  //     connectionStatus: 'Connected',
-  //     spotifyServiceInitialized: true,
-  //   })
-
-  //   renderWithProviders(<SpotifyDisplay />)
-
-  //   await waitFor(() => {
-  //     expect(
-  //       screen.getByTestId('current-spotify-item-display')
-  //     ).toBeInTheDocument()
-  //   })
-  // })
-
-  // it('should render the CurrentSpotifyItemDisplay when a track is playing', async () => {
-  //   mockedUseSession.mockReturnValue({
-  //     data: { accessToken: 'fake-token' },
-  //     status: 'authenticated',
-  //   })
-  //   mockedUseWebSocket.mockReturnValue({
-  //     spotifyData: {
-  //       trackName: 'Test Track',
-  //       artist: 'Test Artist',
-  //       albumName: 'Test Album',
-  //       albumArtUrl: 'http://example.com/art.jpg',
-  //       isPlaying: true,
-  //     },
-  //     connectionStatus: 'Connected',
-  //     spotifyServiceInitialized: true,
-  //   })
-
-  //   renderWithProviders(<SpotifyDisplay />)
-
-  //   await waitFor(() => {
-  //     expect(
-  //       screen.getByTestId('current-spotify-item-display')
-  //     ).toBeInTheDocument()
-  //   })
-  // })
 })
