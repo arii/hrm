@@ -97,16 +97,38 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as any).pollInterval) {
-      clearInterval((spotifyService as any).pollInterval as NodeJS.Timeout)
-      ;(spotifyService as any).pollInterval = null
+    if (
+      (spotifyService as unknown as { pollInterval: NodeJS.Timeout | null })
+        .pollInterval
+    ) {
+      clearInterval(
+        (spotifyService as unknown as { pollInterval: NodeJS.Timeout | null })
+          .pollInterval as NodeJS.Timeout
+      )
+      ;(
+        spotifyService as unknown as { pollInterval: NodeJS.Timeout | null }
+      ).pollInterval = null
     }
 
-    if ((spotifyService as any).tokenRefreshInterval) {
+    if (
+      (
+        spotifyService as unknown as {
+          tokenRefreshInterval: NodeJS.Timeout | null
+        }
+      ).tokenRefreshInterval
+    ) {
       clearInterval(
-        (spotifyService as any).tokenRefreshInterval as NodeJS.Timeout
+        (
+          spotifyService as unknown as {
+            tokenRefreshInterval: NodeJS.Timeout | null
+          }
+        ).tokenRefreshInterval as NodeJS.Timeout
       )
-      ;(spotifyService as any).tokenRefreshInterval = null
+      ;(
+        spotifyService as unknown as {
+          tokenRefreshInterval: NodeJS.Timeout | null
+        }
+      ).tokenRefreshInterval = null
     }
   })
 

@@ -2,7 +2,14 @@
  * Unit tests for TabataTimer service
  * Tests timer state transitions, mode changes, and configuration using EventEmitter
  */
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import {
+  describe,
+  it,
+  expect,
+  jest,
+  beforeEach,
+  afterEach,
+} from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { TimerData, TimerPhase } from '../../types/core'
 
@@ -140,9 +147,9 @@ describe('TabataTimer Service with EventEmitter', () => {
       timer.handleCommand('START')
       emittedStates = []
       jest.advanceTimersByTime(2000) // 3s remaining in PREPARE
-      expect(
-        emittedStates.some((s) => s.soundToPlay === 'COUNTDOWN')
-      ).toBe(true)
+      expect(emittedStates.some((s) => s.soundToPlay === 'COUNTDOWN')).toBe(
+        true
+      )
     })
 
     it('should increment soundEventId with each sound', () => {
