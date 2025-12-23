@@ -202,6 +202,7 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    // We remove global express.json() to prevent interference with Next.js body parsing.
     expressApp.use(async (req: Request, res: Response) => {
       // Intercept token delivery POST and force Spotify poll
       if (
