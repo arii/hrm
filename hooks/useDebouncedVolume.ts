@@ -1,31 +1,39 @@
-// hooks/useDebouncedVolume.ts
 import { useEffect, useRef } from 'react'
-import { useDebounce } from './useDebounce'
-import { STORAGE_key_VOL } from '@/constants/storageKeys'
+import { STORAGE_KEY_VOL } from '@/constants/storageKeys'
+
+const DEBOUNCE_DELAY = 500 // 500ms
 
 /**
- * A hook that debounces the volume value and persists it to localStorage.
- * @param {number} volume - The current volume level (0-100).
- * @param {boolean} isLoaded - A flag to indicate if the initial volume has been loaded from localStorage.
+ * Persists the volume to localStorage after a delay.
+ * @param {number} volume - The volume to persist.
+ * @param {boolean} isLoaded - Only persist after initial state is loaded.
  */
 const useDebouncedVolume = (volume: number, isLoaded: boolean) => {
-  const debouncedVolume = useDebounce(volume, 500) // 500ms debounce delay
-  const isInitialMount = useRef(true)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
+    if (!isLoaded) return
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
     }
 
-    if (isLoaded) {
+    timeoutRef.current = setTimeout(() => {
       try {
-        window.localStorage.setItem(STORAGE_KEY_VOL, String(debouncedVolume))
+        if (volume > 0) {
+          window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
+        }
       } catch (error) {
         console.warn('Could not persist volume preference:', error)
       }
+    }, DEBOUNCE_DELAY)
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
-  }, [debouncedVolume, isLoaded])
+  }, [volume, isLoaded])
 }
 
 export default useDebouncedVolume

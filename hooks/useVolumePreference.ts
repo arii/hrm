@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
 import useDebouncedVolume from './useDebouncedVolume'
-import {
-  STORAGE_KEY_VOL,
-  STORAGE_KEY_MUTE,
-} from '@/constants/storageKeys'
+import { STORAGE_KEY_VOL, STORAGE_KEY_MUTE } from '@/constants/storageKeys'
 
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))

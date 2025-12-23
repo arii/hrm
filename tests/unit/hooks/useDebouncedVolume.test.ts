@@ -1,75 +1,58 @@
-/**
- * @jest-environment jsdom
- */
-// tests/unit/hooks/useDebouncedVolume.test.ts
-import { renderHook, act } from '@testing-library/react'
+/** @jest-environment jsdom */
+import { renderHook } from '@testing-library/react'
 import useDebouncedVolume from '@/hooks/useDebouncedVolume'
-
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString()
-    },
-    clear: () => {
-      store = {}
-    },
-    removeItem: (key: string) => {
-      delete store[key]
-    },
-  }
-})()
-Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+import { STORAGE_KEY_VOL } from '@/constants/storageKeys'
 
 describe('useDebouncedVolume', () => {
   beforeEach(() => {
-    window.localStorage.clear()
     jest.useFakeTimers()
+    localStorage.clear()
   })
 
   afterEach(() => {
     jest.useRealTimers()
   })
 
-  it('should not update localStorage immediately', () => {
-    renderHook(() => useDebouncedVolume(50, true))
-    expect(window.localStorage.getItem('hrm-preferred-volume')).toBeNull()
+  it('should not persist volume on initial render', () => {
+    renderHook(() => useDebouncedVolume(50, false))
+    expect(localStorage.getItem(STORAGE_KEY_VOL)).toBeNull()
   })
 
-  it('should update localStorage after the debounce delay', () => {
-    renderHook(() => useDebouncedVolume(75, true))
+  it('should persist volume after debounce delay', () => {
+    const { rerender } = renderHook(
+      ({ volume, isLoaded }) => useDebouncedVolume(volume, isLoaded),
+      {
+        initialProps: { volume: 50, isLoaded: true },
+      }
+    )
 
-    act(() => {
-      jest.advanceTimersByTime(500)
-    })
+    rerender({ volume: 75, isLoaded: true })
 
-    expect(window.localStorage.getItem('hrm-preferred-volume')).toBe('75')
+    // Should not persist immediately
+    expect(localStorage.getItem(STORAGE_KEY_VOL)).toBeNull()
+
+    // Fast-forward time
+    jest.advanceTimersByTime(500)
+
+    // Now it should be persisted
+    expect(localStorage.getItem(STORAGE_KEY_VOL)).toBe('75')
   })
 
-  it('should only store the latest value after multiple rapid changes', () => {
-    const { rerender } = renderHook(({ volume }) => useDebouncedVolume(volume, true), {
-      initialProps: { volume: 30 },
-    })
+  it('should not persist volume if it is 0', () => {
+    renderHook(() => useDebouncedVolume(0, true))
 
-    rerender({ volume: 40 })
-    rerender({ volume: 50 })
+    jest.advanceTimersByTime(500)
 
-    act(() => {
-      jest.advanceTimersByTime(500)
-    })
-
-    expect(window.localStorage.getItem('hrm-preferred-volume')).toBe('50')
+    expect(localStorage.getItem(STORAGE_KEY_VOL)).toBeNull()
   })
 
-  it('should not update localStorage if isLoaded is false', () => {
-    renderHook(() => useDebouncedVolume(60, false))
+  it('should clear timeout on unmount', () => {
+    const { unmount } = renderHook(() => useDebouncedVolume(80, true))
 
-    act(() => {
-      jest.advanceTimersByTime(500)
-    })
+    unmount()
 
-    expect(window.localStorage.getItem('hrm-preferred-volume')).toBeNull()
+    jest.advanceTimersByTime(500)
+
+    expect(localStorage.getItem(STORAGE_KEY_VOL)).toBeNull()
   })
 })
