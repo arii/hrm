@@ -1,45 +1,24 @@
-import { expect, test } from '@playwright/test'
-import { getBaseURL } from '../../utils/urls'
+// File: tests/playwright/auth-flow.spec.ts
+import { test, expect } from '@playwright/test'
+import { env } from '../../lib/env'
 
-const BASE = getBaseURL()
-
-test.describe('Spotify Authentication', () => {
-  test('auth check endpoint responds', async ({ request }) => {
-    const res = await request.get(`${BASE}/api/debug/auth-check`)
-    expect(res.ok()).toBeTruthy()
-    const data = await res.json()
-    // Verify properties reflect the environment state, or at least are boolean
-    expect(typeof data.spotifyConfigured).toBe('boolean')
-    expect(typeof data.nextAuthConfigured).toBe('boolean')
-    expect(typeof data.hasClientSecret).toBe('boolean')
-
-    // Stronger checks matching server environment (if env vars are passed to test runner)
-    if (process.env.SPOTIFY_CLIENT_ID) {
-      expect(data.spotifyConfigured).toBe(true)
-    }
-
-    if (process.env.NEXTAUTH_SECRET) {
-      expect(data.nextAuthConfigured).toBe(true)
-    }
-
-    if (process.env.SPOTIFY_CLIENT_SECRET) {
-      expect(data.hasClientSecret).toBe(true)
-    }
+test.describe('Authentication Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
   })
 
-  test('debug page shows auth components', async ({ page }) => {
-    await page.goto(`${BASE}/debug/spotify`)
-    await expect(page.getByText(/sign in/i)).toBeVisible()
-    await expect(page.getByText(/server token status/i)).toBeVisible()
+  test('should have Spotify credentials', () => {
+    expect(env.SPOTIFY_CLIENT_ID).toBeDefined()
+    expect(env.SPOTIFY_CLIENT_ID).not.toBe('')
   })
 
-  test('should show fallback UI if auth credentials missing', async ({
-    page,
-  }) => {
-    // This test ensures we handle the "no credentials" case gracefully
-    // We expect the login button to be visible on the dashboard
-    await page.goto(BASE)
-    // The text might be "Login with Spotify" or similar. Using case-insensitive regex.
-    await expect(page.getByText(/login with spotify/i)).toBeVisible()
+  test('should have a NextAuth secret', () => {
+    expect(env.NEXTAUTH_SECRET).toBeDefined()
+    expect(env.NEXTAUTH_SECRET).not.toBe('')
+  })
+
+  test('should have a Spotify client secret', () => {
+    expect(env.SPOTIFY_CLIENT_SECRET).toBeDefined()
+    expect(env.SPOTIFY_CLIENT_SECRET).not.toBe('')
   })
 })

@@ -4,7 +4,8 @@
  * attaches the persistent WebSocket server, and manages service initialization
  * and internal data endpoints (like NextAuth token delivery).
  */
-
+import 'dotenv/config'
+import { env } from './lib/env.js'
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
@@ -27,27 +28,17 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
-  process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
+  env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST // Bind to all interfaces in production
 
-const dev = process.env.NODE_ENV !== 'production'
-
-// === CRITICAL SECURITY CHECK ===
-// Ensure NEXTAUTH_SECRET is present in production to prevent runtime errors
-if (!dev && !process.env.NEXTAUTH_SECRET) {
-  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
-  console.error('This is mandatory for production security. Shutting down.')
-  process.exit(1)
-}
+const dev = env.NODE_ENV !== 'production'
 
 const app = next({ dev, hostname, port })
 
-logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
-logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
+logger.info(`Starting server in ${env.NODE_ENV} mode`)
+logger.info(`Environment: NODE_ENV=${env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
@@ -69,7 +60,7 @@ app
 
     // --- Rate Limiting Setup ---
     // Skip rate limiting for tests to avoid flakes
-    if (process.env.TESTING !== 'true') {
+    if (env.TESTING !== 'true') {
       const spotifyApiLimiter = rateLimit({
         windowMs: 1 * 60 * 1000, // 1 minute
         max: 30,
@@ -243,7 +234,7 @@ app
             .shift()
             ?.trim() || req.socket.remoteAddress
 
-        if (process.env.TESTING !== 'true' && ip) {
+        if (env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
           if (count >= WS_MAX_CONNECTIONS) {
             socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')

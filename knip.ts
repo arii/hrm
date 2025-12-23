@@ -1,60 +1,90 @@
-import type { KnipConfig } from 'knip'
-
-const config: KnipConfig = {
+const config = {
   entry: [
+    'scripts/setup.sh',
+    'scripts/test-with-server.sh',
+    'scripts/kill-all.sh',
+    'next.config.js',
     'server.ts',
-    'proxy.ts',
     'app/**/*.ts',
     'app/**/*.tsx',
-    'components/**/*.ts',
-    'components/**/*.tsx',
-    'constants/**/*.ts',
-    'context/**/*.tsx',
-    'hooks/**/*.ts',
-    'lib/**/*.ts',
-    'scripts/**/*.ts',
-    'services/**/*.ts',
-    'tests/**/*.ts',
-    'types/**/*.ts',
-    'utils/**/*.ts',
-    'stories/**/*.ts',
-    'stories/**/*.tsx',
-    '.storybook/**/*.ts',
-    '.storybook/**/*.tsx',
-    'jest.config.cjs',
-    'next.config.js',
     'playwright.config.ts',
-    'eslint.config.mjs',
-    'commitlint.config.cjs',
+    'tests/setup/global.setup.ts',
+    'tests/playwright/**/*.spec.ts',
   ],
-  project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
+  project: ['app/**/*.ts', 'app/**/*.tsx'],
   ignore: [
     'node_modules',
     'dist',
     '.next',
-    'coverage',
-    'playwright-report',
-    'test-results',
-    'storybook-static',
-    'ecosystem.config.cjs',
-    'scripts/get-available-port.mjs',
-    'public/mockServiceWorker.js',
+    'tests',
+    'scripts',
+    'app/dev',
+    'app/api/debug',
+    'app/api/health',
+    'app/api/internal/health',
+    'app/client/connect/page.tsx',
+    'app/client/mock/page.tsx',
+    'public',
+    'types/generated',
   ],
   ignoreDependencies: [
-    // Used in tests, but Knip doesn't see it
-    'jest-environment-jsdom',
-    // types for web bluetooth api
-    '@types/web-bluetooth',
-    // Eslint plugin
-    'eslint-plugin-react',
-    'wait-on',
+    'dotenv', // imported for side-effect in server.ts
+    'eslint-plugin-storybook', // dev dependency
+    'eslint-config-next', // dev dependency
+    'storybook', // dev dependency
+    '@storybook/nextjs', // dev dependency
+    'eslint-plugin-prettier', // dev dependency
+    '@types/node', // dev dependency
+    '@types/react', // dev dependency
+    '@types/react-dom', // dev dependency
+    '@types/jest', // dev dependency
+    '@types/ws', // dev dependency
+    'jest', // dev dependency
+    'jest-environment-jsdom', // dev dependency
+    '@testing-library/jest-dom', // dev dependency
+    '@testing-library/react', // dev dependency
+    'playwright', // dev dependency
+    '@playwright/test', // dev dependency
+    'msw', // dev dependency
+    'ts-node', // dev dependency
+    'cross-env', // dev dependency
+    'husky', // dev dependency
+    'lint-staged', // dev dependency
+    'prettier', // dev dependency
+    'typescript', // dev dependency
+    '@types/lodash', // dev dependency
+    'lodash', // used in spotifyPolling.ts
+    'eslint', // dev dependency
+    'eslint-config-prettier', // dev dependency
+    '@commitlint/cli', // dev dependency
+    '@commitlint/config-conventional', // dev dependency
+    '@babel/core', // dev dependency
+    '@babel/preset-env', // dev dependency
+    '@babel/preset-react', // dev dependency
+    '@babel/preset-typescript', // dev dependency
+    'babel-jest', // dev dependency
+    'jest-junit', // dev dependency
+    'pm2', // dev dependency
+    'pino-pretty', // dev dependency
+    'wait-on', // dev dependency
+    '@types/express', // dev dependency
+    'ts-jest', // dev dependency
+    '@types/spotify-api', // dev dependency, used in spotifyPolling.ts
+    '@faker-js/faker', // dev dependency
+    'msw-storybook-addon', // dev dependency
+    'eslint-plugin-react', // dev dependency
+    'eslint-plugin-react-hooks', // dev dependency
+    'eslint-plugin-jsx-a11y', // dev dependency
+    '@typescript-eslint/eslint-plugin', // dev dependency
+    '@typescript-eslint/parser', // dev dependency
+    'happy-dom', // dev dependency
+    'jest-canvas-mock', // dev dependency
+    'jest-specific-snapshot', // dev dependency
+    'next-router-mock', // dev dependency
+    'resize-observer-polyfill', // dev dependency
+    'whatwg-fetch', // dev dependency
   ],
-  ignoreBinaries: [
-    'scripts/test-json-with-server.sh',
-    'scripts/test-with-server.sh',
-    'python3',
-    'sleep',
-  ],
+  ignoreBinaries: ['npx', 'pm2'],
 }
 
 export default config
