@@ -10,6 +10,7 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
+import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -23,6 +24,7 @@ import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -225,7 +227,7 @@ app
         }
       }
       return nextRequestHandler(req, res)
-    })
+    }) // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -234,7 +236,7 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const pathname = new URL(req.url || '', 'http://dummybase').pathname
+        const { pathname } = parse(req.url || '')
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
