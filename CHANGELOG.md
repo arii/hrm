@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.16.0](https://github.com/arii/hrm/compare/v0.15.0...v0.16.0) (2025-12-23)
+
+
+### Features
+
+* **storybook:** Implement Stories for SpotifyDisplay and TimerDisplay ([#2065](https://github.com/arii/hrm/issues/2065)) ([8e52782](https://github.com/arii/hrm/commit/8e5278276ca3132b169e81c1ba06f849823f88f6))
+
+
+### Bug Fixes
+
+* **infra:** Correct module import to resolve server startup failure ([b5bedd7](https://github.com/arii/hrm/commit/b5bedd752996ddbdcb44791300394e08c9eb9e6b))
+
 ## [0.15.0](https://github.com/arii/hrm/compare/v0.14.0...v0.15.0) (2025-12-23)
 
 ### Features
