@@ -115,7 +115,7 @@ export const getHrZoneProps = (
       backgroundColor: zoneUiProps.bgColor,
       bpm: bpm,
     }
-  } catch (error) {
+  } catch (_error) {
     // Handle cases where HeartRate instantiation fails (e.g., out of range)
     const zoneUiProps = HR_ZONE_UI_PROPS_MAP[HrZoneName.NoData]
     return {
