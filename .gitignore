@@ -30,6 +30,7 @@ test_output.txt
 /build
 *.tsbuildinfo
 next-env.d.ts
+/storybook-static
 
 # Production & Logs
 *.log
@@ -68,3 +69,5 @@ diff.txt
 !.vscode/settings.json
 !.vscode/tasks.json
 verification/screenshots/
+
+*storybook.log
