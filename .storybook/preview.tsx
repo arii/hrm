@@ -50,7 +50,9 @@ export const withMuiTheme: Decorator = (Story, context) => (
 export const withMockSession: Decorator = (Story, context) => (
   <SessionProvider
     session={context.parameters.session || null}
-    baseUrl="http://localhost:3000/api/auth"
+    baseUrl={
+      context.parameters.nextAuth?.baseUrl || 'http://localhost:3000/api/auth'
+    }
   >
     <Story {...context} />
   </SessionProvider>
