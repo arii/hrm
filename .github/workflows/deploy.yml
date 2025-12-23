@@ -26,6 +26,7 @@ jobs:
         with:
           version: 8
 
+      # Caching is disabled for self-hosted runners to improve performance.
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v6
         with:

@@ -49,6 +49,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Caching is disabled for self-hosted runners to improve performance.
       - uses: actions/setup-node@v6
         with:
           node-version: '20'
