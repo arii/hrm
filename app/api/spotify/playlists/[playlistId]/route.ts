@@ -1,7 +1,12 @@
 // app/api/spotify/playlists/[playlistId]/route.ts
 
 import { authOptions } from '@/lib/auth'
-import { SpotifyApi, type SimplifiedTrack, type Track, SimplifiedAlbum } from '@spotify/web-api-ts-sdk'
+import {
+  SpotifyApi,
+  type SimplifiedTrack,
+  type Track,
+  SimplifiedAlbum,
+} from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
@@ -19,7 +24,7 @@ import { ApiError } from '@/lib/errors'
  */
 async function getPlaylistTracks(
   _req: Request,
-  context: any
+  context: { params: { playlistId: string } }
 ) {
   // 1. Get the server-side session.
   const session = await getServerSession(authOptions)
@@ -56,33 +61,36 @@ async function getPlaylistTracks(
     playlistId,
     undefined, // market
     'items(track(name,artists,album(name,images),duration_ms,uri,explicit,popularity))',
-    limit as any,
+    limit,
     offset
   )
 
-  const totalTracks = tracksResponse.total;
+  const totalTracks = tracksResponse.total
 
   // 7. Map the response to a more streamlined format.
-  const tracks = tracksResponse.items.map(({ track }) => {
-    if (!track) return null; // Handle cases where track is null (e.g., deleted)
+  const tracks = tracksResponse.items
+    .map(({ track }) => {
+      if (!track) return null // Handle cases where track is null (e.g., deleted)
 
-    // Use the Track type from the SDK for better type safety
-    const trackDetails = track as Track | SimplifiedTrack;
+      // Use the Track type from the SDK for better type safety
+      const trackDetails = track as Track | SimplifiedTrack
 
-    if ('album' in trackDetails) {
-      return {
-        name: trackDetails.name,
-        uri: trackDetails.uri,
-        durationMs: trackDetails.duration_ms,
-        explicit: trackDetails.explicit,
-        popularity: (trackDetails as Track).popularity,
-        artists: trackDetails.artists.map((artist) => artist.name).join(', '),
-        albumImageUrl: (trackDetails.album as SimplifiedAlbum)?.images?.[0]?.url || null,
-        albumName: trackDetails.album.name,
-      };
-    }
-    return null
-  }).filter(Boolean); // Remove any null tracks
+      if ('album' in trackDetails) {
+        return {
+          name: trackDetails.name,
+          uri: trackDetails.uri,
+          durationMs: trackDetails.duration_ms,
+          explicit: trackDetails.explicit,
+          popularity: (trackDetails as Track).popularity,
+          artists: trackDetails.artists.map((artist) => artist.name).join(', '),
+          albumImageUrl:
+            (trackDetails.album as SimplifiedAlbum)?.images?.[0]?.url || null,
+          albumName: trackDetails.album.name,
+        }
+      }
+      return null
+    })
+    .filter(Boolean) // Remove any null tracks
 
   return NextResponse.json({ tracks, total: totalTracks, limit, offset })
 }
