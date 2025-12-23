@@ -15,7 +15,7 @@ import { useSession } from 'next-auth/react'
 import React from 'react'
 
 // Mock child components and dependencies
-jest.mock('@/components/SpotifyLoginButton', () => ({
+jest.mock('@/components/AuthButton', () => ({
   __esModule: true,
   default: () => <button>Login with Spotify</button>,
 }))
@@ -81,56 +81,4 @@ describe('SpotifyDisplay', () => {
       ).toBeInTheDocument()
     })
   })
-
-  // it('should render "No Active Playback" when logged in but trackName is "Awaiting Login..."', async () => {
-  //   mockedUseSession.mockReturnValue({
-  //     data: { accessToken: 'fake-token' },
-  //     status: 'authenticated',
-  //   })
-  //   mockedUseWebSocket.mockReturnValue({
-  //     spotifyData: {
-  //       trackName: 'Awaiting Login...',
-  //       artist: '',
-  //       albumName: '',
-  //       albumArtUrl: '',
-  //       isPlaying: false,
-  //     },
-  //     connectionStatus: 'Connected',
-  //     spotifyServiceInitialized: true,
-  //   })
-
-  //   renderWithProviders(<SpotifyDisplay />)
-
-  //   await waitFor(() => {
-  //     expect(
-  //       screen.getByTestId('current-spotify-item-display')
-  //     ).toBeInTheDocument()
-  //   })
-  // })
-
-  // it('should render the CurrentSpotifyItemDisplay when a track is playing', async () => {
-  //   mockedUseSession.mockReturnValue({
-  //     data: { accessToken: 'fake-token' },
-  //     status: 'authenticated',
-  //   })
-  //   mockedUseWebSocket.mockReturnValue({
-  //     spotifyData: {
-  //       trackName: 'Test Track',
-  //       artist: 'Test Artist',
-  //       albumName: 'Test Album',
-  //       albumArtUrl: 'http://example.com/art.jpg',
-  //       isPlaying: true,
-  //     },
-  //     connectionStatus: 'Connected',
-  //     spotifyServiceInitialized: true,
-  //   })
-
-  //   renderWithProviders(<SpotifyDisplay />)
-
-  //   await waitFor(() => {
-  //     expect(
-  //       screen.getByTestId('current-spotify-item-display')
-  //     ).toBeInTheDocument()
-  //   })
-  // })
 })
