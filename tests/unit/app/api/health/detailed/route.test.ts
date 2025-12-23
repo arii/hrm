@@ -1,6 +1,7 @@
 // File: tests/unit/app/api/health/detailed/route.test.ts
 import { GET } from '../../../../../../app/api/health/detailed/route'
 import { env } from '../../../../../../lib/env'
+import { NextRequest } from 'next/server'
 
 describe('GET /api/health/detailed', () => {
   let originalNextAuthUrl: string | undefined
@@ -15,7 +16,8 @@ describe('GET /api/health/detailed', () => {
 
   it('should return a 200 OK response', async () => {
     env.NEXTAUTH_URL = 'http://localhost:3000'
-    const response = await GET()
+    const request = new NextRequest('http://localhost/api/health/detailed')
+    const response = await GET(request)
     expect(response.status).toBe(200)
     const data = await response.json()
     expect(data).toHaveProperty('httpStatus', 'ok')
@@ -26,8 +28,9 @@ describe('GET /api/health/detailed', () => {
 
   it('should handle missing NEXTAUTH_URL', async () => {
     env.NEXTAUTH_URL = undefined
-    const response = await GET()
-    expect(response.status).toBe(200) // The endpoint should still work, but http status will be 'error'
+    const request = new NextRequest('http://localhost/api/health/detailed')
+    const response = await GET(request)
+    expect(response.status).toBe(503)
     const data = await response.json()
     expect(data).toHaveProperty('httpStatus', 'error')
   })

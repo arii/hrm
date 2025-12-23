@@ -10,7 +10,7 @@ import { JWT } from 'next-auth/jwt'
 import {
   ExtendedJWT,
   refreshAccessToken,
-} from './spotify/spotifyAuth.js'
+} from './spotify/spotifyAuth'
 
 // Helper to check if the environment is configured for production
 const isProduction = env.NODE_ENV === 'production'

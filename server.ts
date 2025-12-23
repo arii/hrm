@@ -196,27 +196,6 @@ app
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await serviceContainer
-              .get('spotifyService')
-              .handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
-        }
-      }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 

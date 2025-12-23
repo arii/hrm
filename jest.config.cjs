@@ -41,8 +41,6 @@ const config = {
     'lib/**/*.{ts,tsx}',
     'services/**/*.{ts,tsx}',
     'utils/**/*.{ts,tsx}',
-    '!app/layout.tsx',
-    '!app/page.tsx',
   ],
 };
 

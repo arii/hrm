@@ -185,6 +185,9 @@ importers:
       eslint-plugin-prettier:
         specifier: ^5.5.4
         version: 5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.2(jiti@2.6.1)))(eslint@9.39.2(jiti@2.6.1))(prettier@3.7.4)
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.2(jiti@2.6.1))
       eslint-plugin-storybook:
         specifier: ^10.1.8
         version: 10.1.9(eslint@9.39.2(jiti@2.6.1))(storybook@8.6.14(prettier@3.7.4))(typescript@5.9.3)
