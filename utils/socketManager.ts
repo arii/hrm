@@ -14,13 +14,19 @@ import {
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
-  ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
+import { HrmStreamData } from '../types/core'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
+import { broadcast, initBroadcaster } from './broadcast.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+
+// Extend WebSocket to track client role and connection health
+interface ExtWebSocket extends WebSocket {
+  lastPingTime: number // Changed to non-optional
+  clientType?: 'dashboard' | 'controller'
+  clientId: string
+}
 
 // Define service instances to be managed
 let tabataServiceInstance: TabataTimer
@@ -50,6 +56,7 @@ const initSocketManager = (
   services: Services,
   getSnapshot: () => StateSnapshot
 ) => {
+  initBroadcaster(wss)
   wsServerInstance = wss
   tabataServiceInstance = services.tabataService
   spotifyServiceInstance = services.spotifyService
@@ -118,14 +125,10 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
-  broadcast(
-    wsServerInstance,
-    {
-      type: 'HRM_UPDATE',
-      payload: Array.from(clientData.values()),
-    },
-    'socketManager.broadcastState'
-  )
+  broadcast({
+    type: 'HRM_UPDATE',
+    payload: Array.from(clientData.values()),
+  })
 }
 
 /**
@@ -143,7 +146,7 @@ const handleIncomingMessage = (
     switch (message.type) {
       case 'PING': {
         ws.lastPingTime = Date.now()
-        sendWebSocketMessage(ws, { type: 'PONG' }, 'socketManager.PING')
+        ws.send(JSON.stringify({ type: 'PONG' }))
         break
       }
       case 'REGISTER_CLIENT': {
@@ -164,7 +167,7 @@ const handleIncomingMessage = (
           type: 'INITIAL_STATE',
           payload: payload,
         }
-        sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
+        ws.send(JSON.stringify(initialStateMessage))
         break
       }
       case 'HRM_METADATA_UPDATE': {
@@ -247,11 +250,7 @@ const handleIncomingMessage = (
               type: 'EXECUTE_SPOTIFY',
               payload: commandMsg,
             }
-            sendWebSocketMessage(
-              target,
-              executionMessage,
-              'socketManager.SPOTIFY_COMMAND'
-            )
+            target.send(JSON.stringify(executionMessage))
           }
         })
 
