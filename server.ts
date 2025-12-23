@@ -26,6 +26,7 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { HrmDataService } from './lib/services/HrmDataService.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -285,6 +286,18 @@ app
       logger.info(`> Ready on http://${hostname}:${port}`)
       logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
     })
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      logger.info('Shutting down server...')
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+      const hrmDataService = new HrmDataService()
+      await hrmDataService.close()
+      process.exit(0)
+    }
+
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
   })
   .catch((err: Error) => {
     logger.error({ err }, 'Next.js preparation failed')
