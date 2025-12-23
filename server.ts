@@ -218,18 +218,28 @@ app
         // Await the token update and handle potential errors
         if (req.body) {
           try {
-            const validatedPayload = validate(SpotifyTokenPayloadSchema, req.body)
+            const validatedPayload = validate(
+              SpotifyTokenPayloadSchema,
+              req.body
+            )
             // Await the handler to ensure sequential execution and catch errors
             await serviceContainer
               .get('spotifyService')
               .handleTokenUpdate(validatedPayload)
+
+            // Send a success response and end the request here.
+            return res.status(200).json({ ok: true })
           } catch (err) {
             logger.error(
               { err },
               'Error during synchronous token update handling'
             )
+            // Send an error response and end the request here.
+            return res.status(400).json({ error: 'Invalid token payload' })
           }
         }
+        // Handle cases where body is missing
+        return res.status(400).json({ error: 'Missing token payload' })
       }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
@@ -241,7 +251,7 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
+        const { pathname } = new URL(req.url || '', `http://${req.headers.host}`)
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
