@@ -31,8 +31,27 @@ export async function GET(req: NextRequest) {
     const results = await sdk.search(q, ['track'], 'US', 5)
 
     return NextResponse.json(results)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching Spotify:', error)
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          return NextResponse.json(
+            { error: 'Unauthorized: Invalid access token' },
+            { status: 401 }
+          )
+        case 429:
+          return NextResponse.json(
+            { error: 'Rate limit exceeded' },
+            { status: 429 }
+          )
+        default:
+          return NextResponse.json(
+            { error: 'An unexpected error occurred' },
+            { status: 500 }
+          )
+      }
+    }
     return NextResponse.json(
       { error: 'Error searching Spotify' },
       { status: 500 }
