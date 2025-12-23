@@ -4,11 +4,10 @@ import { CssBaseline } from '@mui/material'
 import { SessionProvider } from 'next-auth/react'
 import { initialize, mswLoader } from 'msw-storybook-addon'
 import React from 'react'
-import { handlers } from '../stories/mocks/handlers'
 import theme from '../lib/theme'
 
 // Initialize MSW
-initialize({}, handlers)
+initialize()
 
 const preview: Preview = {
   parameters: {
@@ -17,10 +16,6 @@ const preview: Preview = {
         color: /(background|color)$/i,
         date: /Date$/i,
       },
-    },
-    // Ensure MSW handles requests by default
-    msw: {
-      handlers: handlers,
     },
   },
   // Register the MSW loader
