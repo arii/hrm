@@ -32,7 +32,7 @@ const AuthButton = () => {
 
   if (status === 'loading') {
     return (
-      <Button variant="contained" disabled>
+      <Button variant="contained" disabled aria-live="polite">
         <CircularProgress size={24} />
       </Button>
     )
@@ -51,10 +51,15 @@ const AuthButton = () => {
         >
           Logout
         </Button>
-        <Dialog open={open} onClose={handleClose}>
-          <DialogTitle>{'Confirm Logout'}</DialogTitle>
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="logout-dialog-title"
+          aria-describedby="logout-dialog-description"
+        >
+          <DialogTitle id="logout-dialog-title">{'Confirm Logout'}</DialogTitle>
           <DialogContent>
-            <DialogContentText>
+            <DialogContentText id="logout-dialog-description">
               Are you sure you want to log out?
             </DialogContentText>
           </DialogContent>

@@ -3,7 +3,7 @@
  */
 // tests/unit/components/AuthButton.test.tsx
 import '@testing-library/jest-dom'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import AuthButton from '@/components/AuthButton'
 import { useSession, signIn, signOut } from 'next-auth/react'
 
@@ -67,7 +67,7 @@ describe('AuthButton', () => {
     render(<AuthButton />)
     fireEvent.click(screen.getByText('Logout'))
     const dialog = screen.getByRole('dialog')
-    const logoutButton = require('@testing-library/react').within(dialog).getByRole('button', { name: /logout/i })
+    const logoutButton = within(dialog).getByRole('button', { name: /logout/i })
     fireEvent.click(logoutButton)
     expect(signOutMock).toHaveBeenCalled()
   })
