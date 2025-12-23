@@ -13,7 +13,6 @@ import { ServerMessage } from '../../types/websocket'
 import { TimerData } from '../../types/core'
 import { TimerEvent, TimerState } from './types'
 import { timerReducer, initialState } from './reducer'
-import { DistributiveOmit } from '../../lib/utility-types' // Helper to Omit from a union
 
 type BroadcastFunction = (message: ServerMessage) => void
 

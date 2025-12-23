@@ -10,6 +10,6 @@
  * type PublicEvent = DistributiveOmit<Event, 'payload'>;
  * // PublicEvent is now { type: 'A' } | { type: 'B' }
  */
-export type DistributiveOmit<T, K extends keyof any> = T extends any
+export type DistributiveOmit<T, K extends keyof unknown> = T extends unknown
   ? Omit<T, K>
   : never

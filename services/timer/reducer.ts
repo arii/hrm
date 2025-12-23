@@ -5,7 +5,6 @@
  * It adheres to the principles of a Redux-style reducer.
  */
 import { TimerEvent, TimerState } from './types'
-import { TimerPhase } from '../../types/core'
 
 const DEFAULT_WORK_DURATION = 20
 const DEFAULT_REST_DURATION = 10
@@ -76,10 +75,7 @@ function queueSound(
   }
 }
 
-export function timerReducer(
-  state: TimerState,
-  event: TimerEvent
-): TimerState {
+export function timerReducer(state: TimerState, event: TimerEvent): TimerState {
   switch (event.type) {
     case 'START_TIMER': {
       if (state.isRunning) return state
@@ -105,11 +101,8 @@ export function timerReducer(
     case 'PAUSE_TIMER': {
       if (!state.isRunning) return state
 
-      let newState = { ...state, isRunning: false, startTime: 0 }
-      if (
-        state.mode === 'STOPWATCH' &&
-        state.currentPhase === 'RUNNING'
-      ) {
+      const newState = { ...state, isRunning: false, startTime: 0 }
+      if (state.mode === 'STOPWATCH' && state.currentPhase === 'RUNNING') {
         newState.pausedElapsedTime = state.timeElapsed
         newState.currentPhase = 'IDLE' // Stopwatch shows as IDLE when paused
       }
@@ -122,29 +115,20 @@ export function timerReducer(
         mode: state.mode,
         workDuration: state.workDuration,
         restDuration: state.restDuration,
-        timeRemaining:
-          state.mode === 'TABATA' ? state.workDuration : 0,
+        timeRemaining: state.mode === 'TABATA' ? state.workDuration : 0,
       }
     }
 
     case 'TICK': {
       if (!state.isRunning) return state
 
-      let newState = { ...state }
+      const newState = { ...state }
 
-      if (
-        state.mode === 'STOPWATCH' &&
-        state.currentPhase === 'RUNNING'
-      ) {
+      if (state.mode === 'STOPWATCH' && state.currentPhase === 'RUNNING') {
         // Stopwatch counts up
-        const currentDelta = Math.floor(
-          (Date.now() - state.startTime) / 1000
-        )
+        const currentDelta = Math.floor((Date.now() - state.startTime) / 1000)
         newState.timeElapsed = state.pausedElapsedTime + currentDelta
-      } else if (
-        state.mode === 'TABATA' ||
-        state.currentPhase === 'PREPARE'
-      ) {
+      } else if (state.mode === 'TABATA' || state.currentPhase === 'PREPARE') {
         // Tabata and Prepare count down
         newState.timeRemaining = Math.max(0, state.timeRemaining - 1)
 
@@ -187,8 +171,7 @@ export function timerReducer(
         ...state,
         mode: event.mode,
         currentPhase: 'IDLE',
-        timeRemaining:
-          event.mode === 'TABATA' ? state.workDuration : 0,
+        timeRemaining: event.mode === 'TABATA' ? state.workDuration : 0,
         timeElapsed: 0,
       }
     }

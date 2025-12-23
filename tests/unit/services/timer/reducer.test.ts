@@ -2,10 +2,7 @@
 /**
  * @jest-environment node
  */
-import {
-  timerReducer,
-  initialState,
-} from '../../../../services/timer/reducer'
+import { timerReducer, initialState } from '../../../../services/timer/reducer'
 import { TimerState } from '../../../../services/timer/types'
 
 describe('timerReducer', () => {
@@ -22,7 +19,10 @@ describe('timerReducer', () => {
   })
 
   it('should handle START_TIMER from IDLE', () => {
-    const newState = timerReducer(state, { type: 'START_TIMER', startTime: 10000 })
+    const newState = timerReducer(state, {
+      type: 'START_TIMER',
+      startTime: 10000,
+    })
     expect(newState.isRunning).toBe(true)
     expect(newState.currentPhase).toBe('PREPARE')
     expect(newState.timeRemaining).toBe(5)
@@ -59,11 +59,11 @@ describe('timerReducer', () => {
     state.startTime = 10000
     state.pausedElapsedTime = 5
 
-    jest.spyOn(Date, 'now').mockReturnValue(12000); // 2 seconds later
+    jest.spyOn(Date, 'now').mockReturnValue(12000) // 2 seconds later
 
-    const newState = timerReducer(state, { type: 'TICK' });
-    expect(newState.timeElapsed).toBe(7); // 5 paused + 2 elapsed
-  });
+    const newState = timerReducer(state, { type: 'TICK' })
+    expect(newState.timeElapsed).toBe(7) // 5 paused + 2 elapsed
+  })
 
   it('should transition from PREPARE to WORK', () => {
     state.isRunning = true
@@ -95,7 +95,10 @@ describe('timerReducer', () => {
   })
 
   it('should handle SET_MODE', () => {
-    const newState = timerReducer(state, { type: 'SET_MODE', mode: 'STOPWATCH' })
+    const newState = timerReducer(state, {
+      type: 'SET_MODE',
+      mode: 'STOPWATCH',
+    })
     expect(newState.mode).toBe('STOPWATCH')
     expect(newState.currentPhase).toBe('IDLE')
   })
