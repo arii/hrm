@@ -18,13 +18,19 @@ const useSwipeGesture = (input: SwipeInput): SwipeOutput => {
   const minSwipeDistance = 50
 
   const onTouchStart = (e: React.TouchEvent) => {
-    // Reset touchEndRef on new touch start
-    touchEndRef.current = e.targetTouches[0].clientX
-    touchStartRef.current = e.targetTouches[0].clientX
+    const touch = e.targetTouches[0]
+    if (touch) {
+      // Reset touchEndRef on new touch start
+      touchEndRef.current = touch.clientX
+      touchStartRef.current = touch.clientX
+    }
   }
 
   const onTouchMove = (e: React.TouchEvent) => {
-    touchEndRef.current = e.targetTouches[0].clientX
+    const touch = e.targetTouches[0]
+    if (touch) {
+      touchEndRef.current = touch.clientX
+    }
   }
 
   const onTouchEnd = () => {

@@ -1,5 +1,5 @@
 'use client'
-import React, { ReactNode } from 'react'
+import { ReactNode } from 'react'
 import { styled } from '@mui/material/styles'
 import { grey } from '@mui/material/colors'
 import Box from '@mui/material/Box'
