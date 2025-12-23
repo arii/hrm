@@ -8,11 +8,17 @@ describe('useSwipeGesture', () => {
   it('should call onSwipeLeft when swiping left', () => {
     const onSwipeLeft = jest.fn()
     const onSwipeRight = jest.fn()
-    const { result } = renderHook(() => useSwipeGesture({ onSwipeLeft, onSwipeRight }))
+    const { result } = renderHook(() =>
+      useSwipeGesture({ onSwipeLeft, onSwipeRight })
+    )
 
     act(() => {
-      result.current.onTouchStart({ targetTouches: [{ clientX: 100 }] } as React.TouchEvent)
-      result.current.onTouchMove({ targetTouches: [{ clientX: 20 }] } as React.TouchEvent)
+      result.current.onTouchStart({
+        targetTouches: [{ clientX: 100 }],
+      } as React.TouchEvent)
+      result.current.onTouchMove({
+        targetTouches: [{ clientX: 20 }],
+      } as React.TouchEvent)
       result.current.onTouchEnd()
     })
 
@@ -23,11 +29,17 @@ describe('useSwipeGesture', () => {
   it('should call onSwipeRight when swiping right', () => {
     const onSwipeLeft = jest.fn()
     const onSwipeRight = jest.fn()
-    const { result } = renderHook(() => useSwipeGesture({ onSwipeLeft, onSwipeRight }))
+    const { result } = renderHook(() =>
+      useSwipeGesture({ onSwipeLeft, onSwipeRight })
+    )
 
     act(() => {
-      result.current.onTouchStart({ targetTouches: [{ clientX: 20 }] } as React.TouchEvent)
-      result.current.onTouchMove({ targetTouches: [{ clientX: 100 }] } as React.TouchEvent)
+      result.current.onTouchStart({
+        targetTouches: [{ clientX: 20 }],
+      } as React.TouchEvent)
+      result.current.onTouchMove({
+        targetTouches: [{ clientX: 100 }],
+      } as React.TouchEvent)
       result.current.onTouchEnd()
     })
 
@@ -38,11 +50,17 @@ describe('useSwipeGesture', () => {
   it('should not call any callback if swipe is not long enough', () => {
     const onSwipeLeft = jest.fn()
     const onSwipeRight = jest.fn()
-    const { result } = renderHook(() => useSwipeGesture({ onSwipeLeft, onSwipeRight }))
+    const { result } = renderHook(() =>
+      useSwipeGesture({ onSwipeLeft, onSwipeRight })
+    )
 
     act(() => {
-      result.current.onTouchStart({ targetTouches: [{ clientX: 100 }] } as React.TouchEvent)
-      result.current.onTouchMove({ targetTouches: [{ clientX: 80 }] } as React.TouchEvent)
+      result.current.onTouchStart({
+        targetTouches: [{ clientX: 100 }],
+      } as React.TouchEvent)
+      result.current.onTouchMove({
+        targetTouches: [{ clientX: 80 }],
+      } as React.TouchEvent)
       result.current.onTouchEnd()
     })
 

@@ -51,11 +51,12 @@ const Dashboard = () => {
   const [audioInitialized, setAudioInitialized] = useState(false)
   const { initializeAudio } = useAudio()
 
-  const [isTouchDevice, setIsTouchDevice] = useState(false)
-
-  useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
-  }, [])
+  const [isTouchDevice] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  })
 
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: () => setOpen(false),
