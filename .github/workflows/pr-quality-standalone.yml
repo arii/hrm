@@ -291,15 +291,15 @@ jobs:
           mkdir -p test-results
 
           # Define checks in a readable, maintainable format.
-          # Each line: <OUTCOME_VAR_NAME> "<Display Name>" <primary_log_file>
+          # Each line: <OUTCOME_VAR_NAME>|<Display Name>|<primary_log_file>
           read -r -d '' CHECKS_DEFINITION <<'EOF'
-          LINT_OUTCOME "Lint" "logs/lint-output.log"
-          BUILD_OUTCOME "Build" "logs/build-output.log"
-          INFRA_TESTS_DEV_OUTCOME "Infrastructure (Dev)" "logs/infra-dev-output.log"
-          INFRA_TESTS_PROD_OUTCOME "Infrastructure (Prod)" "logs/infra-prod-output.log"
-          UNIT_TESTS_OUTCOME "Unit Tests" "logs/unit-output.log"
-          VISUAL_TESTS_OUTCOME "Visual Tests" "logs/visual-output.log"
-          PERF_TESTS_OUTCOME "Performance Tests" "logs/performance-output.log"
+          LINT_OUTCOME|Lint|logs/lint-output.log
+          BUILD_OUTCOME|Build|logs/build-output.log
+          INFRA_TESTS_DEV_OUTCOME|Infrastructure (Dev)|logs/infra-dev-output.log
+          INFRA_TESTS_PROD_OUTCOME|Infrastructure (Prod)|logs/infra-prod-output.log
+          UNIT_TESTS_OUTCOME|Unit Tests|logs/unit-output.log
+          VISUAL_TESTS_OUTCOME|Visual Tests|logs/visual-output.log
+          PERF_TESTS_OUTCOME|Performance Tests|logs/performance-output.log
           EOF
 
           # 2. AGGREGATION: Loop through checks to find failures and collect logs
@@ -321,7 +321,7 @@ jobs:
             fi
           }
 
-          while read -r outcome_var display_name log_file; do
+          while IFS='|' read -r outcome_var display_name log_file; do
             # Use indirect expansion to get the outcome value (e.g., $LINT_OUTCOME)
             if [ "${!outcome_var}" == "failure" ]; then
               # Add to the comma-separated list of failed checks
