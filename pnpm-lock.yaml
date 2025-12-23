@@ -80,9 +80,6 @@ importers:
         specifier: ^4.1.13
         version: 4.2.1
     devDependencies:
-      '@babel/preset-env':
-        specifier: ^7.28.5
-        version: 7.28.5(@babel/core@7.28.5)
       '@commitlint/cli':
         specifier: ^20.2.0
         version: 20.2.0(@types/node@24.10.4)(typescript@5.9.3)
