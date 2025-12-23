@@ -304,6 +304,10 @@ describe('SpotifyPolling Service', () => {
           id: 'track123',
           name: 'Test Track',
           artists: [{ name: 'Test Artist' }],
+          album: {
+            name: 'Test Album',
+            images: [],
+          },
           type: 'track',
         },
         is_playing: true,
