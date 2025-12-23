@@ -9,11 +9,15 @@ import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
+import BottomSheet from '../components/BottomSheet'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
+import useSwipeGesture from '../hooks/useSwipeGesture'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -42,9 +46,19 @@ const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
 
 const Dashboard = () => {
+  const [open, setOpen] = useState(false)
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const { initializeAudio } = useAudio()
+
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: () => setOpen(false),
+    onSwipeRight: () => setOpen(true),
+  })
+
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setOpen(newOpen)
+  }
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -65,6 +79,7 @@ const Dashboard = () => {
     <Container
       maxWidth="xl"
       onClick={handleInteraction}
+      {...swipeHandlers}
       sx={{
         py: { xs: 2, sm: 3 },
         minHeight: '100vh',
@@ -103,6 +118,24 @@ const Dashboard = () => {
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
+
+      <Box sx={{ pt: 2, textAlign: 'center' }}>
+        <Button onClick={toggleDrawer(true)}>Show Controls</Button>
+      </Box>
+      <BottomSheet
+        open={open}
+        onOpen={toggleDrawer(true)}
+        onClose={toggleDrawer(false)}
+      >
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>
+            Secondary Controls
+          </Typography>
+          <Typography>
+            Place additional controls or information here.
+          </Typography>
+        </Box>
+      </BottomSheet>
     </Container>
   )
 }
