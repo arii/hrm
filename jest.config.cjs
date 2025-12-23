@@ -1,47 +1,54 @@
-// File: jest.config.cjs
 /** @type {import('jest').Config} */
 const config = {
-  verbose: true,
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
-  transform: {
-    '^.+\\.(t|j)sx?$': [
-      '@swc/jest',
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests/unit'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  coverageDirectory: 'coverage',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
       {
-        sourceMaps: true,
-        jsc: {
-          parser: {
-            syntax: 'typescript',
-            tsx: true,
-          },
-          transform: {
-            react: {
-              runtime: 'automatic',
-            },
-          },
+        outputDirectory: './test-results', // The directory where the XML file will be saved
+        outputName: 'unit-results.xml', // The name of the JUnit XML file
+        suiteNameTemplate: '{filepath}', // Optional: customize the suite name
+        classNameTemplate: '{classname}', // Optional: customize the class name
+        titleTemplate: '{title}', // Optional: customize the test title
+      },
+    ],
+  ],
+
+  collectCoverageFrom: [
+    'services/**/*.ts',
+    'utils/socketManager.ts',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+  ],
+  transform: {
+    '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: {
+          module: 'ES2022',
+          moduleResolution: 'bundler', // bundler is a better choice for modern apps
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
         },
       },
     ],
   },
+  transformIgnorePatterns: ['/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)'],
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@/(.*)$': '<rootDir>/$1',
   },
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/.next/',
-    '<rootDir>/tests/playwright/',
-    '<rootDir>/tests/unit/knip.test.ts',
-  ],
-  coverageReporters: ['json-summary', 'text', 'lcov'],
-  collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
-    'components/**/*.{ts,tsx}',
-    'hooks/**/*.{ts,tsx}',
-    'lib/**/*.{ts,tsx}',
-    'services/**/*.{ts,tsx}',
-    'utils/**/*.{ts,tsx}',
-  ],
-};
+  testTimeout: 10000,
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+}
 
-module.exports = config;
+module.exports = config
