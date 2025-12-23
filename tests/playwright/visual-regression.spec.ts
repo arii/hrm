@@ -177,24 +177,18 @@ test.describe('Visual Regression Tests', () => {
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
 
-    // Ensure control panel inputs are visible
-    // 1. Get the locator for the input using its test ID
-    const workInput = controlPage.getByTestId('work-duration-input')
-
-    const restInput = controlPage.getByTestId('rest-duration-input')
-
-    // 2. (Recommended) Wait for it to be visible
-    // This ensures the component has rendered before you try to fill it.
-    await expect(workInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    // Use the new DurationStepper component to configure the timer
+    const decreaseWorkButton = controlPage.getByRole('button', {
+      name: /Decrease Work Duration/i,
     })
-    await expect(restInput).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    const decreaseRestButton = controlPage.getByRole('button', {
+      name: /Decrease Rest Duration/i,
     })
 
-    // Configure timer (15 work, 5s rest)
-    await workInput.fill('15')
-    await restInput.fill('5')
+    // Default work is 20, decrease once to 15
+    await decreaseWorkButton.click()
+    // Default rest is 10, decrease once to 5
+    await decreaseRestButton.click()
 
     // Start timer
 

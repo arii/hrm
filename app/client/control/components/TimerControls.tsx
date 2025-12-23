@@ -166,6 +166,7 @@ const TimerControls = () => {
         <Box sx={{ mb: 1.5 }}>
           <Typography
             variant="subtitle1"
+            data-testid="timer-mode-heading"
             sx={{
               color: 'white',
               fontWeight: 'medium',
