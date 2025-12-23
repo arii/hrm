@@ -16,21 +16,21 @@ import { UserSettingsProvider } from '@/context/UserSettingsContext'
 export default function Main({ children }: { children: React.ReactNode }) {
   return (
     <ThemeRegistry options={{ key: 'mui' }}>
-      <ErrorProvider>
-        <LoadingProvider>
-          <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
+      <ErrorBoundary fallback={<ErrorFallback />}>
+        <ErrorProvider>
+          <LoadingProvider>
+            <Providers>
+              <UserSettingsProvider>
                 <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
-          </Providers>
-          <LoadingIndicator />
-          <ErrorDisplay />
-        </LoadingProvider>
-      </ErrorProvider>
-      <Footer />
-      <BottomNavBar />
+              </UserSettingsProvider>
+            </Providers>
+            <LoadingIndicator />
+            <ErrorDisplay />
+          </LoadingProvider>
+        </ErrorProvider>
+        <Footer />
+        <BottomNavBar />
+      </ErrorBoundary>
     </ThemeRegistry>
   )
 }
