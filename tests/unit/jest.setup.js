@@ -1,5 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('@testing-library/jest-dom')
+
+jest.mock('uuid', () => ({
+  v4: () => '00000000-0000-0000-0000-000000000000',
+}))
 // This file provides a mock for the global `localStorage` object.
 // In a Node.js environment (where Jest runs), `localStorage` is not defined.
 // Many components and hooks use `localStorage` to persist user settings.

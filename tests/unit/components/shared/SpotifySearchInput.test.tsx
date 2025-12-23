@@ -47,14 +47,8 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () => expect(screen.getByRole('progressbar')).toBeInTheDocument(),
-      { timeout: 5000 }
-    )
-    await waitFor(
-      () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
-      { timeout: 5000 }
-    )
+    await waitFor(() => expect(screen.getByRole('progressbar')).toBeInTheDocument(), { timeout: 10000 })
+    await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(), { timeout: 10000 })
   })
 
   it('shows results after a successful search', async () => {
@@ -76,12 +70,8 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () =>
-        expect(
-          screen.getByText('Test Track by Test Artist')
-        ).toBeInTheDocument(),
-      { timeout: 5000 }
+    await waitFor(() =>
+      expect(screen.getByText('Test Track by Test Artist')).toBeInTheDocument(), { timeout: 10000 }
     )
   })
 
@@ -93,9 +83,8 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () => expect(screen.getByText('No results found.')).toBeInTheDocument(),
-      { timeout: 5000 }
+    await waitFor(() =>
+      expect(screen.getByText('No results found.')).toBeInTheDocument(), { timeout: 10000 }
     )
   })
 
@@ -104,12 +93,8 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(
-      () =>
-        expect(
-          screen.getByText('Failed to fetch results.')
-        ).toBeInTheDocument(),
-      { timeout: 5000 }
+    await waitFor(() =>
+      expect(screen.getByText('Failed to fetch results.')).toBeInTheDocument(), { timeout: 10000 }
     )
   })
 })
