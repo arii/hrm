@@ -16,19 +16,7 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
-
-// API endpoint constants (mostly managed by SDK now)
-// TOKEN_URL is handled by TokenManager or SDK
-
-type SpotifyCommand =
-  | 'PLAY'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'LOGIN'
-  | 'TRANSFER_PLAYBACK'
-  | 'SET_VOLUME'
-  | 'PAUSE'
-  | 'GET_DEVICES'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -41,7 +29,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements SpotifyService {
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -306,10 +294,13 @@ export class SpotifyPolling {
 
   public handleCommand(
     command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    playlistUri?: string
+    params: {
+      deviceId?: string
+      volume?: number
+      playlistUri?: string
+    }
   ) {
+    const { deviceId, volume, playlistUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
