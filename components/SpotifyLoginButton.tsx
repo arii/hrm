@@ -4,8 +4,10 @@
 import Button from '@mui/material/Button'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { useError } from '@/context/ErrorContext'
 
 const SpotifyLoginButton = () => {
+  const { addError } = useError()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = async () => {
@@ -17,8 +19,12 @@ const SpotifyLoginButton = () => {
         redirect: true,
       })
       console.log('[SpotifyLoginButton] signIn() result:', result)
+      if (result?.error) {
+        throw new Error(result.error)
+      }
     } catch (error) {
       console.error('[SpotifyLoginButton] signIn() error:', error)
+      addError('Authentication failed. Please try again.')
       setIsLoading(false)
     }
   }
