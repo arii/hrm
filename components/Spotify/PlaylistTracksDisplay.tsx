@@ -23,6 +23,13 @@ import { Alert } from '@mui/material'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { Track } from '@/types'
 
+interface PlaylistTracksResponse {
+  tracks: Track[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 interface PlaylistTracksDisplayProps {
   playlistId: string
 }
@@ -54,7 +61,7 @@ const usePlaylistTracks = (playlistId: string, limit = 20) => {
           const errorData = await response.json()
           throw new Error(errorData.error || 'Failed to fetch playlist tracks')
         }
-        const data = await response.json()
+        const data: PlaylistTracksResponse = await response.json()
         setTracks(data.tracks)
         setTotal(data.total)
       } catch (err: any) {
@@ -87,11 +94,13 @@ const PlaylistTracksDisplay: React.FC<PlaylistTracksDisplayProps> = ({
 }) => {
   const { tracks, total, loading, error, offset, limit, nextPage, prevPage } = usePlaylistTracks(playlistId)
   const { spotifyData } = useWebSocket()
+  const [playbackError, setPlaybackError] = useState<string | null>(null)
 
   const isPlaying = spotifyData?.isPlaying ?? false
   const currentTrackUri = spotifyData?.item?.uri
 
   const handlePlay = useCallback(async (trackUri: string) => {
+    setPlaybackError(null)
     try {
       const response = await fetch('/api/spotify/control', {
         method: 'POST',
@@ -109,11 +118,12 @@ const PlaylistTracksDisplay: React.FC<PlaylistTracksDisplayProps> = ({
         throw new Error(errorData.error || 'Failed to play track')
       }
     } catch (err: any) {
-      console.error('Playback error:', err.message)
+      setPlaybackError(err.message)
     }
   }, [playlistId])
 
   const handlePause = useCallback(async () => {
+    setPlaybackError(null)
     try {
       const response = await fetch('/api/spotify/control', {
         method: 'POST',
@@ -127,7 +137,7 @@ const PlaylistTracksDisplay: React.FC<PlaylistTracksDisplayProps> = ({
         throw new Error(errorData.error || 'Failed to pause track')
       }
     } catch (err: any) {
-      console.error('Playback error:', err.message)
+      setPlaybackError(err.message)
     }
   }, [])
 
@@ -162,6 +172,12 @@ const PlaylistTracksDisplay: React.FC<PlaylistTracksDisplayProps> = ({
   }
 
   return (
+    <>
+    {playbackError && (
+      <Alert severity="error" sx={{ margin: 2 }} onClose={() => setPlaybackError(null)}>
+        <Typography>{playbackError}</Typography>
+      </Alert>
+    )}
     <TableContainer component={Paper} elevation={3}>
       <Table stickyHeader>
         <TableHead>
@@ -245,6 +261,7 @@ const PlaylistTracksDisplay: React.FC<PlaylistTracksDisplayProps> = ({
         </TableFooter>
       </Table>
     </TableContainer>
+    </>
   )
 }
 
