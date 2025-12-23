@@ -2,12 +2,13 @@
 import storybook from 'eslint-plugin-storybook'
 
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals'
+import nextPlugin from 'eslint-config-next/core-web-vitals.js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
 
 export default defineConfig([
   // Apply recommended ESLint JavaScript rules
@@ -21,10 +22,13 @@ export default defineConfig([
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
       react,
+      'react-hooks': reactHooks,
     },
     rules: {
       ...react.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
     },
   },
 
@@ -36,7 +40,14 @@ export default defineConfig([
   },
 
   // Next.js specific rules and configurations (includes TypeScript support)
-  ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
+  {
+    plugins: {
+      next: nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.rules,
+    },
+  },
 
   // Apply TypeScript rules without redefining the plugin
   {

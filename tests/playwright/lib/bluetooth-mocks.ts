@@ -8,7 +8,9 @@ export const injectBluetoothMocks = async (page: Page) => {
     let _connectedDevice: MockBluetoothDevice | null = null
 
     // 1. Mock Classes
-    class MockBluetoothRemoteGATTCharacteristic implements MockBluetoothRemoteGATTCharacteristic {
+    class MockBluetoothRemoteGATTCharacteristic
+      implements MockBluetoothRemoteGATTCharacteristic
+    {
       service: MockBluetoothRemoteGATTService
       value: DataView | null = null
       listeners: { [key: string]: MockEventListener[] } = {}
@@ -45,7 +47,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTService implements MockBluetoothRemoteGATTService {
+    class MockBluetoothRemoteGATTService
+      implements MockBluetoothRemoteGATTService
+    {
       device: MockBluetoothDevice
       uuid: string
       characteristic: MockBluetoothRemoteGATTCharacteristic
@@ -61,7 +65,9 @@ export const injectBluetoothMocks = async (page: Page) => {
       }
     }
 
-    class MockBluetoothRemoteGATTServer implements MockBluetoothRemoteGATTServer {
+    class MockBluetoothRemoteGATTServer
+      implements MockBluetoothRemoteGATTServer
+    {
       device: MockBluetoothDevice
       connected = false
 

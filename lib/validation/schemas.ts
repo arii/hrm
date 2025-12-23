@@ -60,7 +60,6 @@ export const UpdateWorkoutSessionSchema = WorkoutSessionSchema.pick({
   notes: true,
 }).partial()
 
-
 // Example: Schema for adding a new heart rate data point
 export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   workoutSessionId: true,

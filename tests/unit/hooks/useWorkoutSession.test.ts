@@ -8,7 +8,7 @@ const MOCK_USER_ID = '123e4567-e89b-12d3-a456-426614174000'
 
 // Mock the global fetch function
 beforeEach(() => {
-  global.fetch = jest.fn((url, options) => {
+  global.fetch = jest.fn((url, _options) => {
     if (url.toString().endsWith('/api/workouts')) {
       return Promise.resolve({
         ok: true,
@@ -35,7 +35,11 @@ beforeEach(() => {
           }),
       })
     }
-    return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ error: 'Not Found' }) })
+    return Promise.resolve({
+      ok: false,
+      status: 404,
+      json: () => Promise.resolve({ error: 'Not Found' }),
+    })
   }) as jest.Mock
 })
 
@@ -46,14 +50,22 @@ afterEach(() => {
 describe('useWorkoutSession calorie logic', () => {
   it('should initialize with zero calories burned', () => {
     const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 0, userId: MOCK_USER_ID })
+      useWorkoutSession({
+        isConnected: false,
+        totalCalories: 0,
+        userId: MOCK_USER_ID,
+      })
     )
     expect(result.current.caloriesBurned).toBe(0)
   })
 
   it('should start with zero calories burned even if totalCalories is non-zero', () => {
     const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 100, userId: MOCK_USER_ID })
+      useWorkoutSession({
+        isConnected: false,
+        totalCalories: 100,
+        userId: MOCK_USER_ID,
+      })
     )
     expect(result.current.caloriesBurned).toBe(0)
   })
@@ -61,7 +73,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should capture the starting calorie count on startWorkout', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: false, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected: false,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { totalCalories: 100 } }
     )
 
@@ -76,7 +92,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should calculate calories burned based on the difference from the start', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected: true,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { totalCalories: 50 } }
     )
 
@@ -94,7 +114,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should not show negative calories if totalCalories decreases', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected: true,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { totalCalories: 100 } }
     )
 
@@ -109,7 +133,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should preserve the last calculated calories when the workout ends', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected: true,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { totalCalories: 200 } }
     )
 
@@ -132,7 +160,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should reset caloriesBurned to zero on resetWorkout', async () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
-        useWorkoutSession({ isConnected: true, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected: true,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { totalCalories: 300 } }
     )
 
@@ -153,7 +185,11 @@ describe('useWorkoutSession calorie logic', () => {
   it('should not be affected by pause and resume', async () => {
     const { result, rerender } = renderHook(
       ({ isConnected, totalCalories }) =>
-        useWorkoutSession({ isConnected, totalCalories, userId: MOCK_USER_ID }),
+        useWorkoutSession({
+          isConnected,
+          totalCalories,
+          userId: MOCK_USER_ID,
+        }),
       { initialProps: { isConnected: true, totalCalories: 100 } }
     )
 
