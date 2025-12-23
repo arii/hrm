@@ -49,7 +49,10 @@ const initialVolumeStateFactory = (
 })
 
 // 4. Reducer Logic for Volume
-const volumeReducer = (state: VolumeState, action: VolumeAction): VolumeState => {
+const volumeReducer = (
+  state: VolumeState,
+  action: VolumeAction
+): VolumeState => {
   switch (action.type) {
     case 'SYNC_WITH_WEBSOCKET': {
       const { volume, isMuted } = action.payload
@@ -169,12 +172,7 @@ const SpotifyDisplay = () => {
       }
       sendData(message)
     },
-    [
-      availableDevices,
-      connectionStatus,
-      selectedDeviceId,
-      sendData,
-    ]
+    [availableDevices, connectionStatus, selectedDeviceId, sendData]
   )
 
   // Handler for the VolumeSlider component's onChange

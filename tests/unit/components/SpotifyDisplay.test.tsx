@@ -7,10 +7,7 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import {
-  useWebSocket,
-  WebSocketProvider,
-} from '@/context/WebSocketContext'
+import { useWebSocket, WebSocketProvider } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -28,7 +25,9 @@ jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
 }))
 jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
-  WebSocketProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }))
 jest.mock('next-auth/react')
 jest.mock('@/hooks/useSpotifyWebPlayback', () => ({
