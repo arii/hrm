@@ -31,10 +31,11 @@ export async function GET(req: NextRequest) {
     const results = await sdk.search(q, ['track'], 'US', 5)
 
     return NextResponse.json(results)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error searching Spotify:', error)
-    if (error.response) {
-      switch (error.response.status) {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = error.response as Response
+      switch (response.status) {
         case 401:
           return NextResponse.json(
             { error: 'Unauthorized: Invalid access token' },
