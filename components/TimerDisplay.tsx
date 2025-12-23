@@ -5,6 +5,7 @@ import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
 import { memo } from 'react'
 import Slider from '@mui/material/Slider'
 import Stack from '@mui/material/Stack'
@@ -20,6 +21,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
+  const theme = useTheme()
   const {
     currentPhase,
     timeRemaining,
@@ -37,14 +39,14 @@ const TimerDisplay = () => {
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
+    phaseColor = theme.palette.warning.main
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
+    phaseColor = theme.palette.info.main
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -58,33 +60,34 @@ const TimerDisplay = () => {
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
+      phaseColor = theme.palette.error.main
       phaseLabel = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
+      phaseColor = theme.palette.success.main
       phaseLabel = 'REST'
     } else {
-      phaseColor = '#3B82F6' // Blue
+      phaseColor = theme.palette.info.main
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
+    phaseColor = theme.palette.text.secondary
     phaseLabel = 'READY'
   }
 
   return (
     <Card
-      elevation={6}
+      elevation={2}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
+        backgroundColor: 'background.paper',
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
+        border: '1px solid',
+        borderColor: 'divider',
         position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
@@ -191,7 +194,7 @@ const TimerDisplay = () => {
 
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          p: { xs: 3, md: 4 },
           textAlign: 'center',
           flex: 1,
           display: 'flex',
@@ -200,22 +203,22 @@ const TimerDisplay = () => {
           justifyContent: 'center',
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Typography
-            data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
-            sx={{
-              mb: 1,
-              color: phaseColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-            }}
-          >
-            {phaseLabel}
-          </Typography>
-        )}
+        {/* Phase Label */}
+        <Typography
+          data-testid="timer-phase"
+          variant="h5"
+          component="div"
+          aria-live="polite"
+          sx={{
+            mb: 1,
+            fontWeight: 'bold',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'text.primary',
+          }}
+        >
+          {phaseLabel}
+        </Typography>
 
         {/* Giant Timer Display */}
         <Typography
@@ -226,12 +229,12 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
+            fontSize: { xs: '4.5rem', sm: '5.5rem', md: '7rem' },
+            fontWeight: 'bold',
+            lineHeight: 1.1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 12px ${phaseColor}40`,
+            transition: 'color 0.3s ease-in-out',
           }}
         >
           {displayTime}
@@ -239,17 +242,21 @@ const TimerDisplay = () => {
 
         {/* Volume Control */}
         <Stack
-          spacing={{ xs: 1, sm: 2 }}
+          spacing={2}
           direction="row"
           sx={{
-            mt: 2,
-            mb: 1,
-            width: { xs: '90%', md: '80%' },
-            maxWidth: 300,
+            mt: 3,
+            width: '100%',
+            maxWidth: 280,
+            color: 'text.secondary',
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
+          <IconButton
+            onClick={toggleMute}
+            sx={{ color: 'text.secondary' }}
+            aria-label={muted ? 'Unmute' : 'Mute'}
+          >
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -257,13 +264,16 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'white',
+              color: 'text.secondary',
               '& .MuiSlider-thumb': {
-                color: phaseColor,
+                backgroundColor: 'primary.main',
+              },
+              '& .MuiSlider-rail': {
+                opacity: 0.28,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'white' }} />
+          <VolumeUp />
         </Stack>
       </CardContent>
     </Card>
