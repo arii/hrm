@@ -1,28 +1,32 @@
 'use client'
+
+import { useMemo } from 'react'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
-import { useServerInsertedHTML } from 'next/navigation'
-import * as React from 'react'
-
-// --- ADD THESE IMPORTS ---
 import CssBaseline from '@mui/material/CssBaseline'
-import { createTheme, ThemeProvider } from '@mui/material/styles'
-// --- END OF NEW IMPORTS ---
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
+import { useServerInsertedHTML } from 'next/navigation'
 
-// This implementation is taken directly from the MUI official docs:
-// https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
-
-// --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
-// ------------------------------
+import { useTheme } from '@/context/ThemeContext'
+import { createAppTheme } from '@/lib/theme'
 
 type ThemeRegistryProps = {
-  options: { key: string }
   children: React.ReactNode
 }
 
-export default function ThemeRegistry(props: ThemeRegistryProps) {
-  const { options, children } = props
+/**
+ * The theme registry component.
+ *
+ * This implementation is taken directly from the MUI official docs:
+ * @see https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
+ */
+export const ThemeRegistry = (props: ThemeRegistryProps) => {
+  const { children } = props
+  const { themeMode } = useTheme()
+
+  const options = { key: 'mui' }
+
+  const theme = useMemo(() => createAppTheme(themeMode), [themeMode])
 
   const [{ cache, flush }] = React.useState(() => {
     // ... (rest of the cache logic remains the same)
@@ -46,15 +50,17 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
   })
 
   useServerInsertedHTML(() => {
-    // ... (rest of the useServerInsertedHTML logic remains the same)
     const names = flush()
+
     if (names.length === 0) {
       return null
     }
+
     let styles = ''
     for (const name of names) {
       styles += cache.inserted[name]
     }
+
     return (
       <style
         key={cache.key}
@@ -66,14 +72,12 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
     )
   })
 
-  // --- WRAP CHILDREN WITH THE PROVIDERS ---
   return (
     <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
-        {/* CssBaseline kicks in a consistent baseline style */}
+      <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}
-      </ThemeProvider>
+      </MuiThemeProvider>
     </CacheProvider>
   )
 }

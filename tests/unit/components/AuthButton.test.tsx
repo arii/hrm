@@ -6,6 +6,7 @@ import '@testing-library/jest-dom'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import AuthButton from '@/components/AuthButton'
 import { useSession, signIn, signOut } from 'next-auth/react'
+import { ThemeProvider } from '@/context/ThemeContext'
 
 // Mock next-auth/react
 jest.mock('next-auth/react')
@@ -20,20 +21,32 @@ describe('AuthButton', () => {
   })
   it('renders login button when logged out', () => {
     useSessionMock.mockReturnValue({ data: null, status: 'unauthenticated' })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     expect(screen.getByText('Login with Spotify')).toBeInTheDocument()
   })
 
   it('calls signIn when login button is clicked', () => {
     useSessionMock.mockReturnValue({ data: null, status: 'unauthenticated' })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     fireEvent.click(screen.getByText('Login with Spotify'))
     expect(signInMock).toHaveBeenCalledWith('spotify')
   })
 
   it('renders loading state', () => {
     useSessionMock.mockReturnValue({ data: null, status: 'loading' })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
@@ -42,7 +55,11 @@ describe('AuthButton', () => {
       data: { user: { name: 'Test User' } },
       status: 'authenticated',
     })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     expect(screen.getByText('Logged in as Test User')).toBeInTheDocument()
     expect(screen.getByText('Logout')).toBeInTheDocument()
   })
@@ -52,10 +69,14 @@ describe('AuthButton', () => {
       data: { user: { name: 'Test User' } },
       status: 'authenticated',
     })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     fireEvent.click(screen.getByText('Logout'))
     expect(
-      screen.getByText('Are you sure you want to log out?')
+      screen.getByText('Are you sure you want to log out?'),
     ).toBeInTheDocument()
   })
 
@@ -64,7 +85,11 @@ describe('AuthButton', () => {
       data: { user: { name: 'Test User' } },
       status: 'authenticated',
     })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     fireEvent.click(screen.getByText('Logout'))
     const dialog = screen.getByRole('dialog')
     const logoutButton = within(dialog).getByRole('button', { name: /logout/i })
@@ -77,7 +102,11 @@ describe('AuthButton', () => {
       data: { user: { name: 'Test User' } },
       status: 'authenticated',
     })
-    render(<AuthButton />)
+    render(
+      <ThemeProvider>
+        <AuthButton />
+      </ThemeProvider>,
+    )
     fireEvent.click(screen.getByText('Logout'))
     fireEvent.click(screen.getByText('Cancel'))
     expect(signOutMock).not.toHaveBeenCalled()

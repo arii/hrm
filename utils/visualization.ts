@@ -6,9 +6,9 @@
 import { TimerData } from '../types/websocket'
 import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
+import { Theme } from '@mui/material/styles'
 
 // Define types for MUI color props
 type MuiColor =
@@ -27,7 +27,9 @@ type HrZoneUi = {
   bgColor: string
 }
 
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+export const getHrZoneUiPropsMap = (
+  theme: Theme,
+): Record<HrZoneName, HrZoneUi> => ({
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -64,17 +66,17 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
   },
-}
+})
 
 // Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
+export const getZoneColors = (theme: Theme) => ({
   grey: '#9E9E9E', // Below zone 1
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
   green: theme.palette.success.main, // Zone 2: Fat Burn
   yellow: theme.palette.warning.main, // Zone 3: Cardio
   red: theme.palette.primary.main, // Zone 4: Peak
   purple: '#9C27B0', // Zone 5: Max
-}
+})
 
 export interface HrZoneProps {
   zone: string
@@ -92,13 +94,14 @@ export interface HrZoneProps {
  */
 export const getHrZoneProps = (
   currentHr: number,
-  maxHr: number
+  maxHr: number,
+  theme: Theme,
 ): HrZoneProps => {
   // 1. Get the core HR data from the domain module
   const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
 
   // 2. Look up the UI properties from the map
-  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
+  const zoneUiProps = getHrZoneUiPropsMap(theme)[zoneName]
 
   // 3. Combine domain data with UI properties
   return {
@@ -122,7 +125,7 @@ interface TimerProps {
  * Returns props (color, text) for the Tabata Timer phase display.
  */
 export const getTimerProps = (
-  currentPhase: TimerData['currentPhase']
+  currentPhase: TimerData['currentPhase'],
 ): TimerProps => {
   switch (currentPhase) {
     case 'PREPARE':
@@ -172,7 +175,7 @@ export const getTimerProps = (
 }
 
 export const transformWorkoutDataToColumns = (
-  data: WorkoutData
+  data: WorkoutData,
 ): WorkoutColumnsProps['columns'] => {
   if (!data) return []
 
