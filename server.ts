@@ -10,7 +10,6 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
-import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -200,28 +199,9 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
-        }
-      }
+    expressApp.use((req: Request, res: Response) => {
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -230,7 +210,7 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
+        const pathname = new URL(req.url || '', 'http://dummybase').pathname
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
