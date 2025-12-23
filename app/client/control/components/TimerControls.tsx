@@ -103,7 +103,9 @@ const TimerControls = () => {
       let deviceId: string | null = spotifyDeviceId
       if (!deviceId && spotifyDevices.length > 0) {
         const activeDevice = spotifyDevices.find((d) => d.is_active)
-        deviceId = activeDevice ? activeDevice.id : spotifyDevices[0]?.id || null
+        deviceId = activeDevice
+          ? activeDevice.id
+          : spotifyDevices[0]?.id || null
         if (deviceId) setSpotifyDeviceId(deviceId)
       }
       const message: SpotifyCommandMessage = {
@@ -186,13 +188,9 @@ const TimerControls = () => {
             {modes.map((mode) => (
               <Button
                 key={mode}
-                onClick={() =>
-                  sendModeCommand(mode as 'TABATA' | 'STOPWATCH')
-                }
+                onClick={() => sendModeCommand(mode as 'TABATA' | 'STOPWATCH')}
                 disabled={controlsDisabled}
-                startIcon={
-                  mode === 'TABATA' ? <FitnessCenter /> : <Timer />
-                }
+                startIcon={mode === 'TABATA' ? <FitnessCenter /> : <Timer />}
                 sx={{
                   color: 'white',
                   zIndex: 1,
