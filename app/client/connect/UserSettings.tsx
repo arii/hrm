@@ -4,6 +4,8 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Switch from '@mui/material/Switch'
+import FormControlLabel from '@mui/material/FormControlLabel'
 
 interface UserSettingsProps {
   userName: string
@@ -22,6 +24,8 @@ interface UserSettingsProps {
   validateAge: (value: string) => void
   validateHeight: (value: string) => void
   validateWeight: (value: string) => void
+  isAutoStartEnabled: boolean
+  setIsAutoStartEnabled: (enabled: boolean) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -41,6 +45,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   validateAge,
   validateHeight,
   validateWeight,
+  isAutoStartEnabled,
+  setIsAutoStartEnabled,
 }) => {
   const [feet, setFeet] = React.useState('')
   const [inches, setInches] = React.useState('')
@@ -165,6 +171,15 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         onBlur={(e) => validateWeight(e.target.value)}
         error={!!weightError}
         helperText={weightError}
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={isAutoStartEnabled}
+            onChange={(e) => setIsAutoStartEnabled(e.target.checked)}
+          />
+        }
+        label="Auto-start Workout"
       />
     </Stack>
   )

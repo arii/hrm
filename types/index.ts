@@ -56,3 +56,7 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
+
+export interface UserSettings {
+  isAutoStartEnabled: boolean
+}

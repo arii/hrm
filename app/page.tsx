@@ -14,6 +14,12 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
+import { useAutoStartWorkout } from '../hooks/useAutoStartWorkout'
+import { useAutoStartNotification } from '../hooks/useAutoStartNotification'
+import Button from '@mui/material/Button'
+import Snackbar from '@mui/material/Snackbar'
+import { useWorkoutSession } from '../hooks/useWorkoutSession'
+import { useUserSettings } from '../hooks/useUserSettings'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -45,6 +51,40 @@ const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
   const { initializeAudio } = useAudio()
+  const { userSettings } = useUserSettings()
+  const { hrmData, totalCalories } = useWebSocket()
+  const [autoStartState, setAutoStartState] = useState<
+    'idle' | 'monitoring' | 'triggered'
+  >('idle')
+
+  const {
+    workoutStatus,
+    startWorkout: manualStartWorkout,
+    endWorkout,
+  } = useWorkoutSession({
+    isConnected: hrmData.isConnected,
+    totalCalories,
+  })
+
+  const { cancelAutoStart, autoStartState: newAutoStartState } =
+    useAutoStartWorkout({
+      isAutoStartEnabled: userSettings.isAutoStartEnabled,
+      hrStatus: hrmData.isConnected ? 'connected' : 'disconnected',
+      percentMax: hrmData.percentMax,
+      workoutStatus,
+      startWorkout: manualStartWorkout,
+    })
+
+  useEffect(() => {
+    setAutoStartState(newAutoStartState)
+  }, [newAutoStartState])
+
+  const { showNotification, countdown, handleCancel } =
+    useAutoStartNotification({
+      autoStartState,
+      startWorkout: manualStartWorkout,
+      cancelAutoStart,
+    })
 
   const handleInteraction = () => {
     if (!audioInitialized) {
@@ -103,6 +143,27 @@ const Dashboard = () => {
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
+
+      {workoutStatus === 'running' && (
+        <Button
+          onClick={endWorkout}
+          variant="contained"
+          color="secondary"
+          sx={{ mt: 2 }}
+        >
+          End Workout
+        </Button>
+      )}
+
+      <Snackbar
+        open={showNotification}
+        message={`Workout detected, auto-starting in ${countdown} seconds...`}
+        action={
+          <Button color="secondary" size="small" onClick={handleCancel}>
+            Cancel
+          </Button>
+        }
+      />
     </Container>
   )
 }
