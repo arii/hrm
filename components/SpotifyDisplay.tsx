@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import { clampVolume } from '@/hooks/useVolumePreference'
+import { useAudio } from '@/context/AudioContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -15,125 +15,22 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import logger from '@/utils/logger'
 import SpotifyLoginButton from './SpotifyLoginButton'
-import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types/core'
 
-// 1. State Shape
-interface SpotifyDisplayState {
-  displayVolume: number
-  isMuted: boolean
-  lastVolume: number // Last non-zero volume
-  selectedDeviceId: string
-  availableDevices: SpotifyDevice[]
-  deviceMenuAnchor: null | HTMLElement
-}
-
-// 2. Actions
-type SpotifyDisplayAction =
-  | { type: 'SET_VOLUME'; payload: number }
-  | { type: 'TOGGLE_MUTE' }
-  | { type: 'SET_DEVICES'; payload: SpotifyDevice[] }
-  | { type: 'SELECT_DEVICE'; payload: string }
-  | { type: 'OPEN_DEVICE_MENU'; payload: HTMLElement }
-  | { type: 'CLOSE_DEVICE_MENU' }
-  | {
-      type: 'SYNC_WITH_WEBSOCKET'
-      payload: { volume?: number; isMuted?: boolean }
-    }
-
-// 3. Initial State Factory
-const initialStateFactory = (
-  volume: number,
-  isMuted: boolean
-): SpotifyDisplayState => ({
-  displayVolume: volume,
-  isMuted: isMuted,
-  lastVolume: volume > 0 ? volume : 70, // Store last non-zero volume
-  selectedDeviceId: '',
-  availableDevices: [],
-  deviceMenuAnchor: null,
-})
-
-// 4. Reducer Logic
-const spotifyDisplayReducer = (
-  state: SpotifyDisplayState,
-  action: SpotifyDisplayAction
-): SpotifyDisplayState => {
-  switch (action.type) {
-    case 'SYNC_WITH_WEBSOCKET': {
-      const { volume, isMuted } = action.payload
-      const newVolume = volume ?? state.displayVolume
-      return {
-        ...state,
-        displayVolume: newVolume,
-        isMuted: isMuted ?? state.isMuted,
-        lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
-      }
-    }
-    case 'SET_VOLUME':
-      return {
-        ...state,
-        displayVolume: action.payload,
-        isMuted: action.payload === 0,
-        lastVolume: action.payload > 0 ? action.payload : state.lastVolume,
-      }
-    case 'TOGGLE_MUTE': {
-      const newMutedState = !state.isMuted
-      if (newMutedState) {
-        // Muting: set volume to 0
-        return {
-          ...state,
-          isMuted: true,
-          displayVolume: 0,
-        }
-      } else {
-        // Unmuting: restore to last known volume
-        return {
-          ...state,
-          isMuted: false,
-          displayVolume: state.lastVolume > 0 ? state.lastVolume : 50, // fallback
-        }
-      }
-    }
-    case 'SET_DEVICES':
-      return { ...state, availableDevices: action.payload }
-    case 'SELECT_DEVICE':
-      return {
-        ...state,
-        selectedDeviceId: action.payload,
-        deviceMenuAnchor: null,
-      }
-    case 'OPEN_DEVICE_MENU':
-      return { ...state, deviceMenuAnchor: action.payload }
-    case 'CLOSE_DEVICE_MENU':
-      return { ...state, deviceMenuAnchor: null }
-    default:
-      return state
-  }
-}
-
 const SpotifyDisplay = () => {
   const { status } = useSession()
-  const { spotifyData, sendData, connectionStatus } = useWebSocket()
+  const { spotifyData, sendData } = useWebSocket()
+  const { volume, setVolume, isMuted } = useAudio()
   const isLoggedIn = status === 'authenticated'
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // 5. Integrate useReducer
-  const [state, dispatch] = useReducer(
-    spotifyDisplayReducer,
-    initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [availableDevices, setAvailableDevices] = useState<SpotifyDevice[]>([])
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
   )
-  const {
-    displayVolume,
-    isMuted,
-    selectedDeviceId,
-    availableDevices,
-    deviceMenuAnchor,
-  } = state
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -152,74 +49,21 @@ const SpotifyDisplay = () => {
 
   // Synchronize local UI state with WebSocket data (the source of truth)
   useEffect(() => {
-    dispatch({
-      type: 'SYNC_WITH_WEBSOCKET',
-      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
-    })
-  }, [spotifyData.volume, spotifyData.isMuted])
-
-  // Centralized command sender for volume changes
-  const sendVolumeCommand = useCallback(
-    (volume: number) => {
-      if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id
-      if (!targetDeviceId) {
-        console.warn(
-          '[SpotifyDisplay] No target device for volume command. Aborting.'
-        )
-        return
-      }
-      const sanitized = clampVolume(volume)
-      const message: SpotifyCommandMessage = {
-        type: 'SPOTIFY_COMMAND',
-        command: 'SET_VOLUME',
-        volume: sanitized,
-        deviceId: targetDeviceId,
-      }
-      sendData(message)
-    },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
-  )
-
-  // Handler for the VolumeSlider component's onChange
-  const handleVolumeChange = (newVolume: number) => {
-    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
-
-    // Debounce sending the command to avoid API flooding
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
+    if (spotifyData.volume !== undefined) {
+      setVolume(spotifyData.volume)
     }
-    debounceTimeoutRef.current = setTimeout(() => {
-      sendVolumeCommand(newVolume)
-    }, 300)
-  }
-
-  // Handler for the VolumeSlider's mute button
-  const handleToggleMute = useCallback(() => {
-    // Calculate the next state to determine the command payload
-    const newMutedState = !isMuted
-    const newVolume = newMutedState
-      ? 0
-      : state.lastVolume > 0
-        ? state.lastVolume
-        : 50
-
-    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
-    sendVolumeCommand(newVolume) // Send command with the new volume
-  }, [isMuted, state.lastVolume, sendVolumeCommand])
+  }, [spotifyData.volume, setVolume])
 
   // Effect to manage the local browser player's volume
   useEffect(() => {
     if (!player || typeof player.setVolume !== 'function') return
-    const scalar = isMuted ? 0 : Math.min(Math.max(displayVolume / 100, 0), 1)
+    const scalar = isMuted ? 0 : Math.min(Math.max(volume / 100, 0), 1)
     player
       .setVolume(scalar)
       .catch((err) =>
         logger.warn({ error: err }, 'Failed to adjust local Spotify volume')
       )
-  }, [player, displayVolume, isMuted])
+  }, [player, volume, isMuted])
 
   // Effect to fetch available devices
   useEffect(() => {
@@ -232,15 +76,15 @@ const SpotifyDisplay = () => {
           }
           const devices = await response.json()
           const deviceArray = Array.isArray(devices) ? devices : []
-          dispatch({ type: 'SET_DEVICES', payload: deviceArray })
+          setAvailableDevices(deviceArray)
         } catch (error) {
           logger.error({ error }, 'Failed to fetch Spotify devices')
         }
       }
       fetchDevices()
     } else {
-      dispatch({ type: 'SET_DEVICES', payload: [] })
-      dispatch({ type: 'SELECT_DEVICE', payload: '' })
+      setAvailableDevices([])
+      setSelectedDeviceId('')
     }
   }, [isLoggedIn, spotifyData.trackName, isReady])
 
@@ -248,20 +92,20 @@ const SpotifyDisplay = () => {
   useEffect(() => {
     if (availableDevices.length === 0) {
       if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
+        setSelectedDeviceId('')
       }
       return
     }
     const activeDevice = availableDevices.find((device) => device.is_active)
     if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
+      setSelectedDeviceId(activeDevice.id)
       return
     }
     if (
       selectedDeviceId &&
       !availableDevices.some((device) => device.id === selectedDeviceId)
     ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
+      setSelectedDeviceId(activeDevice?.id ?? '')
     }
   }, [availableDevices, selectedDeviceId])
 
@@ -283,7 +127,7 @@ const SpotifyDisplay = () => {
   }
 
   const handleDeviceSelect = (deviceId: string) => {
-    dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
+    setSelectedDeviceId(deviceId)
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
   }
 
@@ -417,20 +261,12 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VolumeSlider
-            volume={displayVolume}
-            muted={isMuted}
-            onVolumeChange={handleVolumeChange}
-            onToggleMute={handleToggleMute}
-          />
           <SpotifyDeviceSelectorWrapper
             availableDevices={availableDevices}
             deviceMenuAnchor={deviceMenuAnchor}
             onDeviceSelect={handleDeviceSelect}
-            onMenuOpen={(e) =>
-              dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
-            }
-            onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
+            onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
+            onMenuClose={() => setDeviceMenuAnchor(null)}
           />
           <Button
             variant="outlined"

@@ -36,6 +36,10 @@ export default function VolumeControl() {
           value={isMuted ? 0 : volume}
           onChange={handleSliderChange}
           disabled={isMuted}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={isMuted ? 0 : volume}
+          aria-valuetext={`${isMuted ? 'Muted' : `${volume}%`}`}
         />
       </Stack>
     </Box>

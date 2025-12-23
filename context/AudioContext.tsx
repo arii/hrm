@@ -6,11 +6,13 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   useMemo,
   useCallback,
   ReactNode,
 } from 'react'
 import { AudioManager } from '@/utils/audioManager'
+import { clampVolume } from '@/utils/volume'
 
 interface AudioContextState {
   volume: number
@@ -27,29 +29,36 @@ const AudioContext = createContext<AudioContextState | undefined>(undefined)
 export const AudioProvider = ({ children }: { children: ReactNode }) => {
   const [volume, setVolumeState] = useState(70)
   const [isMuted, setIsMuted] = useState(false)
-  const [audioManager] = useState<AudioManager | null>(
-    () => new AudioManager()
-  )
+  const audioManagerRef = useRef<AudioManager | null>(null)
+  const [audioManager, setAudioManager] = useState<AudioManager | null>(null)
+
+  // Initialize AudioManager only once on the client side
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !audioManagerRef.current) {
+      audioManagerRef.current = new AudioManager()
+      setAudioManager(audioManagerRef.current)
+    }
+  }, [])
 
   // Effect to synchronize React state -> AudioManager instance
   useEffect(() => {
-    audioManager?.setVolume(volume)
-  }, [volume, audioManager])
+    audioManagerRef.current?.setVolume(volume)
+  }, [volume])
 
   useEffect(() => {
-    audioManager?.setMuted(isMuted)
-  }, [isMuted, audioManager])
+    audioManagerRef.current?.setMuted(isMuted)
+  }, [isMuted])
 
   const setVolume = useCallback((newVolume: number) => {
-    setVolumeState(Math.max(0, Math.min(100, newVolume)))
+    setVolumeState(clampVolume(newVolume))
   }, [])
 
   const increaseVolume = useCallback((amount = 10) => {
-    setVolumeState((prev) => Math.min(100, prev + amount))
+    setVolumeState((prev) => clampVolume(prev + amount))
   }, [])
 
   const decreaseVolume = useCallback((amount = 10) => {
-    setVolumeState((prev) => Math.max(0, prev - amount))
+    setVolumeState((prev) => clampVolume(prev - amount))
   }, [])
 
   const toggleMute = useCallback(() => {
