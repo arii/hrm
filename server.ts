@@ -54,8 +54,6 @@ const nextRequestHandler = app.getRequestHandler()
 
 // Create Express app for routing and middleware
 const expressApp = express()
-// Enable JSON body parsing for all routes
-expressApp.use(express.json())
 
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
@@ -211,19 +209,32 @@ app
         req.url &&
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
-        // Await the token update and handle potential errors
-        if (req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await serviceContainer
-              .get('spotifyService')
-              .handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
+        try {
+          // Manually parse the body since global express.json() is removed
+          // to prevent interfering with Next.js request handling.
+          const buffers = []
+          for await (const chunk of req) {
+            buffers.push(chunk)
           }
+          const data = Buffer.concat(buffers).toString()
+
+          if (data) {
+            const body = JSON.parse(data)
+            // Await the handler to ensure sequential execution and catch errors
+            await serviceContainer.get('spotifyService').handleTokenUpdate(body)
+          }
+
+          // Respond directly and terminate, skipping Next.js handler to avoid
+          // "Response body object should not be disturbed or locked" errors.
+          res.status(200).json({ ok: true })
+          return
+        } catch (err) {
+          logger.error(
+            { err },
+            'Error during synchronous token update handling'
+          )
+          res.status(500).json({ error: 'Internal Server Error' })
+          return
         }
       }
       return nextRequestHandler(req, res)

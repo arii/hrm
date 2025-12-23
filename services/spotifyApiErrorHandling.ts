@@ -50,15 +50,20 @@ export async function logSpotifyCommandError(
         (error as { response?: { text?: () => Promise<string> } }).response
       ) {
         try {
+          const response = (
+            error as {
+              response: { text: () => Promise<string>; bodyUsed?: boolean }
+            }
+          ).response
           let text = '[No response text available]'
-          if (
-            typeof (error as { response: { text?: unknown } }).response.text ===
-            'function'
-          ) {
-            text = await (
-              error as { response: { text: () => Promise<string> } }
-            ).response.text()
+
+          // Check bodyUsed if available (native Fetch API)
+          if (response.bodyUsed) {
+            text = '[Response body already consumed]'
+          } else if (typeof response.text === 'function') {
+            text = await response.text()
           }
+
           const parsed = safeParseJSON(text)
           logger.error(
             { command, response: parsed },
@@ -100,7 +105,7 @@ export async function handleSpotifyApiError(
 ): Promise<boolean> {
   const err = error as {
     status?: number
-    response?: { text: () => Promise<string> }
+    response?: { text: () => Promise<string>; bodyUsed?: boolean }
   }
 
   if (err?.status === 429) {
@@ -130,13 +135,25 @@ export async function handleSpotifyApiError(
   }
 
   // For other errors, log the response if available
-  if (err?.response && typeof err.response.text === 'function') {
-    const text = await err.response.text()
-    const parsed = safeParseJSON(text)
-    logger.error(
-      { response: parsed },
-      'Unhandled Spotify API error during polling'
-    )
+  if (err?.response) {
+    try {
+      let text = '[No response text available]'
+      if (err.response.bodyUsed) {
+        text = '[Response body already consumed]'
+      } else if (typeof err.response.text === 'function') {
+        text = await err.response.text()
+      }
+      const parsed = safeParseJSON(text)
+      logger.error(
+        { response: parsed },
+        'Unhandled Spotify API error during polling'
+      )
+    } catch (readError) {
+      logger.error(
+        { err: error, readError },
+        'Error fetching currently playing track and reading response body'
+      )
+    }
   } else {
     logger.error({ err: error }, 'Error fetching currently playing track')
   }
