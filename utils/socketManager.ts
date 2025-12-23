@@ -20,7 +20,6 @@ import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -28,7 +27,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmDataRepository = new HrmDataRepository()
+const clientData = new Map<string, HrmStreamData>()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -59,7 +58,7 @@ const initSocketManager = (
       age: 30,
       calories: 0, // Initialize to 0
     }
-    hrmDataRepository.save(newClient)
+    clientData.set(extWs.clientId, newClient)
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
@@ -71,7 +70,7 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
+      clientData.delete(extWs.clientId)
       clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
@@ -103,7 +102,7 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  hrmDataRepository.clear()
+  clientData.clear()
   clientSessionState.clear()
 }
 
@@ -112,7 +111,7 @@ const broadcastState = () => {
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
+      payload: Array.from(clientData.values()),
     },
     'socketManager.broadcastState'
   )
@@ -148,7 +147,7 @@ const handleIncomingMessage = (
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
+          hrmData: Array.from(clientData.values()),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -158,18 +157,18 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = clientData.get(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmDataRepository.save({ ...existingData, ...updateData })
+          clientData.set(clientId, { ...existingData, ...updateData })
         }
         broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = clientData.get(clientId)
         const sessionState = clientSessionState.get(clientId)
 
         if (existingData && sessionState) {
@@ -195,7 +194,7 @@ const handleIncomingMessage = (
           sessionState.accumulatedCalories = currentAccumulated
 
           // ONLY update the value and calories
-          hrmDataRepository.save({
+          clientData.set(clientId, {
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
