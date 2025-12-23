@@ -16,7 +16,7 @@ jest.mock('@/context/WebSocketContext', () => ({
   useWebSocket: () => ({
     spotifyData: {
       isPlaying: false,
-      item: { uri: '' },
+      trackName: '',
     },
   }),
   WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
@@ -29,6 +29,7 @@ const mockTrack = {
   uri: 'spotify:track:123',
   artists: 'Artist1',
   albumImageUrl: 'http://image.url',
+  albumName: 'Test Album',
   durationMs: 200000,
 }
 
@@ -72,7 +73,8 @@ describe('PlaylistTracksDisplay Component', () => {
     render(<PlaylistTracksDisplay playlistId="12345" />)
     await waitFor(() => {
       expect(screen.getByText('Test Track')).toBeInTheDocument()
-      expect(screen.getAllByText('Artist1')[0]).toBeInTheDocument()
+      expect(screen.getByText('Artist1')).toBeInTheDocument()
+      expect(screen.getByText('Test Album')).toBeInTheDocument()
       expect(screen.getByText('Showing 1-1 of 1')).toBeInTheDocument()
     })
   })
