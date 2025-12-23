@@ -157,7 +157,9 @@ export async function replaceIframeWithStableWorkout(
       state: 'attached',
       timeout: 2000,
     })
-    // Wait for the content to render inside the iframe
+    // Wait for the content to render inside the iframe.
+    // "Sample Workout Plan" is a key piece of text in the static HTML
+    // and serves as a reliable indicator that the content has fully rendered.
     const iframe = page.frameLocator('iframe')
     await iframe.getByText('Sample Workout Plan').waitFor({ timeout: 2000 })
   } catch {
