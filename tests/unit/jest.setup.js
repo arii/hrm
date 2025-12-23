@@ -1,47 +1,36 @@
-/* eslint-disable no-undef */
+// This file provides a mock for the global `localStorage` object.
+// In a Node.js environment (where Jest runs), `localStorage` is not defined.
+// Many components and hooks use `localStorage` to persist user settings.
+// This mock prevents tests from crashing when they access `localStorage`.
 
-// Mock the 'sharp' module for consistent image processing in tests
-jest.mock('sharp', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    resize: jest.fn().mockReturnThis(),
-    toBuffer: jest.fn().mockResolvedValue(Buffer.from('mock-image-data')),
-  })),
-}))
-
-// Mock the IntersectionObserver for testing components that use it
-const mockIntersectionObserver = class IntersectionObserver {
-  constructor(callback) {
-    this.callback = callback
-  }
-
-  observe(target) {
-    this.callback([{ isIntersecting: true, target }])
-  }
-
-  unobserve() {}
-  disconnect() {}
-}
-
-global.IntersectionObserver = mockIntersectionObserver
-
-// Mock the SpotifyApi to avoid actual API calls during tests
-jest.mock('@spotify/web-api-ts-sdk', () => {
-  const mockSDK = {
-    // Mock other methods as needed for different test suites
-  }
+/**
+ * @type {Storage}
+ */
+const localStorageMock = (function () {
+  /** @type {Object<string, string>} */
+  let store = {}
   return {
-    SpotifyApi: {
-      withClientCredentials: jest.fn(() => mockSDK),
+    getItem(key) {
+      return store[key] || null
+    },
+    setItem(key, value) {
+      store[key] = value.toString()
+    },
+    removeItem(key) {
+      delete store[key]
+    },
+    clear() {
+      store = {}
+    },
+    key(index) {
+      return Object.keys(store)[index] || null
+    },
+    get length() {
+      return Object.keys(store).length
     },
   }
-})
+})()
 
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve({}),
-    ok: true,
-    status: 200,
-    headers: new Headers(),
-  })
-)
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+})

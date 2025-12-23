@@ -16,7 +16,6 @@ interface SessionState {
   status: SessionStatus
   duration: number
   calories: number
-  error: string | null // Add error state
 }
 
 type SessionAction =
@@ -27,13 +26,11 @@ type SessionAction =
   | { type: 'START_WORKOUT' }
   | { type: 'END_WORKOUT' }
   | { type: 'UPDATE_CALORIES'; payload: number }
-  | { type: 'SET_ERROR'; payload: string | null } // Add error action
 
 const initialState: SessionState = {
   status: 'idle',
   duration: 0,
   calories: 0,
-  error: null,
 }
 
 function sessionReducer(
@@ -45,11 +42,11 @@ function sessionReducer(
     case 'START_WORKOUT':
       if (state.status === 'paused') {
         // This is a resume. Don't reset duration.
-        return { ...state, status: 'running', error: null }
+        return { ...state, status: 'running' }
       }
       if (state.status === 'idle') {
         // This is a new workout. Reset duration.
-        return { ...state, status: 'running', duration: 0, error: null }
+        return { ...state, status: 'running', duration: 0 }
       }
       return state
     case 'DISCONNECT':
@@ -69,11 +66,6 @@ function sessionReducer(
       return {
         ...state,
         calories: action.payload,
-      }
-    case 'SET_ERROR':
-      return {
-        ...state,
-        error: action.payload,
       }
     case 'RESET':
       return initialState
@@ -98,9 +90,8 @@ export const useWorkoutSession = ({
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
   // State to hold the current workout session from the database
-  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(
-    null
-  )
+  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(null)
+
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -199,25 +190,22 @@ export const useWorkoutSession = ({
           startedAt: new Date().toISOString(),
           notes: 'New workout session',
         }),
-      })
+      });
       if (!response.ok) {
-        throw new Error('Failed to create workout session')
+        throw new Error('Failed to create workout session');
       }
-      const newSession = await response.json()
-      setActiveSession(newSession)
+      const newSession = await response.json();
+      setActiveSession(newSession);
     } catch (error) {
-      console.error('Error starting workout session:', error)
-      dispatch({
-        type: 'SET_ERROR',
-        payload: 'Failed to start workout session.',
-      })
+      console.error('Error starting workout session:', error);
+      // Handle error appropriately
     }
-  }, [totalCalories, userId])
+  }, [totalCalories, userId]);
 
   const endWorkout = useCallback(async () => {
-    if (!activeSession) return
+    if (!activeSession) return;
 
-    dispatch({ type: 'END_WORKOUT' })
+    dispatch({ type: 'END_WORKOUT' });
 
     // Update the workout session in the database
     try {
@@ -229,17 +217,17 @@ export const useWorkoutSession = ({
         body: JSON.stringify({
           endedAt: new Date().toISOString(),
         }),
-      })
+      });
       if (!response.ok) {
-        throw new Error('Failed to end workout session')
+        throw new Error('Failed to end workout session');
       }
-      const updatedSession = await response.json()
-      setActiveSession(updatedSession)
+      const updatedSession = await response.json();
+      setActiveSession(updatedSession);
     } catch (error) {
-      console.error('Error ending workout session:', error)
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to end workout session.' })
+      console.error('Error ending workout session:', error);
+      // Handle error appropriately
     }
-  }, [activeSession])
+  }, [activeSession]);
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
@@ -259,6 +247,5 @@ export const useWorkoutSession = ({
     workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
     activeSession, // Expose the active session
-    error: state.error, // Expose the error state
   }
 }

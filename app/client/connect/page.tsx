@@ -7,7 +7,6 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { getMockedSession } from '@/lib/auth/session'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -46,9 +45,6 @@ export default function ConnectPage() {
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
-  const session = getMockedSession()
-  const userId = session?.user?.id ?? ''
-
   const {
     workoutDuration,
     caloriesBurned,
@@ -60,7 +56,7 @@ export default function ConnectPage() {
   } = useWorkoutSession({
     isConnected,
     totalCalories,
-    userId,
+    userId: '123e4567-e89b-12d3-a456-426614174000', // Hardcoded user ID
   })
 
   return (
