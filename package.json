@@ -73,6 +73,7 @@
     "cheerio": "^1.1.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
+    "framer-motion": "^12.23.26",
     "lodash": "^4.17.21",
     "next": "16.0.10",
     "next-auth": "^4.24.13",

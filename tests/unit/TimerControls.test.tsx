@@ -4,7 +4,7 @@ import TimerControls from '@/app/client/control/components/TimerControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
@@ -59,20 +59,31 @@ describe('TimerControls', () => {
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
-    // Get the actual input elements using data-testid (following MUI testing pattern)
-    const workInput = screen.getByTestId(
-      'work-duration-input'
-    ) as HTMLInputElement
-    const restInput = screen.getByTestId(
-      'rest-duration-input'
-    ) as HTMLInputElement
+    // Find the stepper buttons by their accessible ARIA labels
+    const increaseWorkButton = screen.getByRole('button', {
+      name: /Increase Work Duration/i,
+    })
+    const increaseRestButton = screen.getByRole('button', {
+      name: /Increase Rest Duration/i,
+    })
 
-    // Use fireEvent.change to directly trigger the onChange event with new values
-    // This properly simulates input changes on MUI TextField components
-    fireEvent.change(workInput, { target: { value: '45' } })
-    fireEvent.change(restInput, { target: { value: '15' } })
+    // Initial workTime is 20. Increase by 5, 5 times to reach 45.
+    for (let i = 0; i < 5; i++) {
+      await user.click(increaseWorkButton)
+    }
 
-    // Wait for debounce and React state updates (wrapped in act to avoid warnings)
+    // Initial restTime is 10. Increase by 5 once to reach 15.
+    await user.click(increaseRestButton)
+
+    // Verify the UI displays the new values
+    expect(
+      screen.getByTestId('work duration (s)-duration-display')
+    ).toHaveTextContent('45')
+    expect(
+      screen.getByTestId('rest duration (s)-duration-display')
+    ).toHaveTextContent('15')
+
+    // Wait for debounce and React state updates
     act(() => {
       jest.advanceTimersByTime(600)
     })
