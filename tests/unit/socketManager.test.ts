@@ -111,27 +111,27 @@ describe('WebSocket Manager', () => {
     jest.useFakeTimers()
 
     // Mock HrmDataService with an in-memory map for each test
-    const mockDataStore = new Map<string, HrmData>();
-    (HrmDataService as jest.Mock).mockImplementation(() => {
+    const mockDataStore = new Map<string, HrmData>()
+    ;(HrmDataService as jest.Mock).mockImplementation(() => {
       return {
         save: jest.fn().mockImplementation(async (hrm: HrmData) => {
-          mockDataStore.set(hrm.clientId, hrm);
+          mockDataStore.set(hrm.clientId, hrm)
         }),
         findById: jest.fn().mockImplementation(async (id: string) => {
-          return mockDataStore.get(id);
+          return mockDataStore.get(id)
         }),
         findAll: jest.fn().mockImplementation(async () => {
-          return Array.from(mockDataStore.values());
+          return Array.from(mockDataStore.values())
         }),
         deleteById: jest.fn().mockImplementation(async (id: string) => {
-          mockDataStore.delete(id);
+          mockDataStore.delete(id)
         }),
         clear: jest.fn().mockImplementation(async () => {
-          mockDataStore.clear();
+          mockDataStore.clear()
         }),
         close: jest.fn().mockImplementation(async () => {}),
-      };
-    });
+      }
+    })
 
     mockWss = new (WebSocketServer as jest.Mock)()
     mockServices = {
