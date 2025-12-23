@@ -56,3 +56,12 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
+
+export interface Track {
+  uri: string
+  name: string
+  artists: string
+  albumImageUrl: string | null
+  albumName: string
+  durationMs: number
+}
