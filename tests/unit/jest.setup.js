@@ -1,36 +1,44 @@
-// This file provides a mock for the global `localStorage` object.
-// In a Node.js environment (where Jest runs), `localStorage` is not defined.
-// Many components and hooks use `localStorage` to persist user settings.
-// This mock prevents tests from crashing when they access `localStorage`.
+// tests/unit/jest.setup.js
+require('@testing-library/jest-dom')
+const { TextEncoder, TextDecoder } = require('util')
 
-/**
- * @type {Storage}
- */
-const localStorageMock = (function () {
-  /** @type {Object<string, string>} */
-  let store = {}
+// Polyfill for TextEncoder and TextDecoder
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+
+// Mock the Spotify SDK to prevent it from trying to make real API calls
+// and to control its behavior in tests.
+jest.mock('@spotify/web-api-ts-sdk', () => {
   return {
-    getItem(key) {
-      return store[key] || null
-    },
-    setItem(key, value) {
-      store[key] = value.toString()
-    },
-    removeItem(key) {
-      delete store[key]
-    },
-    clear() {
-      store = {}
-    },
-    key(index) {
-      return Object.keys(store)[index] || null
-    },
-    get length() {
-      return Object.keys(store).length
+    SpotifyApi: {
+      withClientCredentials: jest.fn(() => ({
+        currentUser: {
+          playlists: {
+            playlists: jest.fn().mockResolvedValue({ items: [] }),
+          },
+        },
+        search: jest.fn().mockResolvedValue({ tracks: { items: [] } }),
+      })),
+      withAccessToken: jest.fn(() => ({
+        player: {
+          getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
+          startResumePlayback: jest.fn().mockResolvedValue(null),
+          pausePlayback: jest.fn().mockResolvedValue(null),
+          seekToPosition: jest.fn().mockResolvedValue(null),
+          setVolume: jest.fn().mockResolvedValue(null),
+        },
+      })),
     },
   }
-})()
-
-Object.defineProperty(global, 'localStorage', {
-  value: localStorageMock,
 })
+
+// Mock the logger to suppress console output during tests
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}))
