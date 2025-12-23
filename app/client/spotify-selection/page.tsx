@@ -5,6 +5,7 @@ import Pause from '@mui/icons-material/Pause'
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import SkipNext from '@mui/icons-material/SkipNext'
 import SkipPrevious from '@mui/icons-material/SkipPrevious'
+import SpotifySearchInput from '../../../components/shared/SpotifySearchInput'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -153,6 +154,10 @@ const SpotifySelectionPage = () => {
       <Card sx={{ mt: 2 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
+            Search for a Song
+          </Typography>
+          <SpotifySearchInput />
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
             Select a Playlist
           </Typography>
           <PlaylistSelector
