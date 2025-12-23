@@ -55,3 +55,16 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
     bpm: currentHr,
   }
 }
+
+/**
+ * Estimates maximum heart rate based on age.
+ * @param {number | string} age - The user's age.
+ * @returns {number} The estimated maximum heart rate.
+ */
+export const calculateMaxHr = (age: number | string): number => {
+  const numericAge = typeof age === 'string' ? parseInt(age, 10) : age
+  if (isNaN(numericAge) || numericAge <= 0) {
+    return 200 // Return a default value for invalid age
+  }
+  return 220 - numericAge
+}
