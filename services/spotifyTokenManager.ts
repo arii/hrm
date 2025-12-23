@@ -2,6 +2,7 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
+import { ApiError } from '../lib/errors.js'
 
 /**
  * Helper for atomic writes to prevent file corruption.
@@ -141,11 +142,12 @@ export class SpotifyTokenManager {
             response.status < 500 &&
             response.status !== 429
           ) {
-            throw new Error(
-              `HTTP ${response.status}: ${errorBody} (Non-retriable)`
+            throw new ApiError(
+              response.status,
+              `${errorBody} (Non-retriable)`
             )
           }
-          throw new Error(`HTTP ${response.status}: ${errorBody}`)
+          throw new ApiError(response.status, errorBody)
         }
 
         const data = (await response.json()) as SpotifyTokenResponse

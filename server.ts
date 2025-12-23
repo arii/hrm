@@ -26,8 +26,16 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import {
+  DEFAULT_PORT,
+  GENERAL_API_MAX_REQUESTS,
+  INTERNAL_API_MAX_REQUESTS,
+  RATE_LIMIT_WINDOW_MS,
+  SPOTIFY_API_MAX_REQUESTS,
+  WS_MAX_CONNECTIONS_PER_IP,
+} from './lib/Constants.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : DEFAULT_PORT // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
@@ -71,8 +79,8 @@ app
     // Skip rate limiting for tests to avoid flakes
     if (process.env.TESTING !== 'true') {
       const spotifyApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 30,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        max: SPOTIFY_API_MAX_REQUESTS,
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
@@ -89,8 +97,8 @@ app
       })
 
       const internalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 100,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        max: INTERNAL_API_MAX_REQUESTS,
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
@@ -106,8 +114,8 @@ app
         },
       })
       const generalApiLimiter = rateLimit({
-        windowMs: 1 * 60 * 1000, // 1 minute
-        max: 200, // General limit for all other routes
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        max: GENERAL_API_MAX_REQUESTS,
         standardHeaders: true,
         legacyHeaders: false,
         keyGenerator: (req: Request) => {
@@ -230,7 +238,6 @@ app
     }) // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
-    const WS_MAX_CONNECTIONS = 5
 
     // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
     server.on(
@@ -245,7 +252,7 @@ app
 
         if (process.env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS) {
+          if (count >= WS_MAX_CONNECTIONS_PER_IP) {
             socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
             socket.destroy()
             return

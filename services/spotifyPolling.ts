@@ -16,6 +16,11 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
+import {
+  SPOTIFY_DEFAULT_POLLING_INTERVAL_MS,
+  SPOTIFY_FETCH_AFTER_COMMAND_DELAY_MS,
+  SPOTIFY_TOKEN_REFRESH_INTERVAL_MS,
+} from '../lib/Constants.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
@@ -48,12 +53,12 @@ export class SpotifyPolling {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
-  private tokenManager: SpotifyTokenManager
+  private readonly tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
-  private broadcastUpdate: (message: ServerMessage) => void
+  private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
@@ -88,8 +93,8 @@ export class SpotifyPolling {
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
-      1000 * 60 * 5
-    ) // Check every 5 minutes if we need to re-sync
+      SPOTIFY_TOKEN_REFRESH_INTERVAL_MS
+    )
     return instance
   }
 
@@ -171,7 +176,7 @@ export class SpotifyPolling {
 
     const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
-      : 3000
+      : SPOTIFY_DEFAULT_POLLING_INTERVAL_MS
     // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
@@ -322,7 +327,10 @@ export class SpotifyPolling {
     return (async () => {
       try {
         await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
+        setTimeout(
+          () => this.getCurrentlyPlaying(),
+          SPOTIFY_FETCH_AFTER_COMMAND_DELAY_MS
+        )
       } catch (error) {
         await logSpotifyCommandError(command, error)
       }

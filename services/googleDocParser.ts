@@ -1,5 +1,6 @@
 // services/googleDocParser.ts
 import * as cheerio from 'cheerio'
+import { ValidationError } from '../lib/errors.js'
 
 export interface WorkoutTableData {
   headers: string[]
@@ -15,7 +16,7 @@ export const parseGoogleDocTable = (html: string): WorkoutTableData => {
   const table = $('table').first()
 
   if (!table.length) {
-    throw new Error('No table found in the Google Doc')
+    throw new ValidationError('No table found in the Google Doc')
   }
 
   const parsedRows: string[][] = []
