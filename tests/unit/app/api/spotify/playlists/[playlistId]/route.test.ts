@@ -6,7 +6,6 @@ import { GET } from '@/app/api/spotify/playlists/[playlistId]/route'
 import { getServerSession } from 'next-auth/next'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { NextRequest } from 'next/server'
-import { ApiError } from '@/lib/errors'
 
 // Mock next-auth
 jest.mock('next-auth/next')
@@ -29,9 +28,7 @@ describe('API Route: /api/spotify/playlists/[playlistId]', () => {
 
   it('should return 401 if user is not authenticated', async () => {
     mockGetServerSession.mockResolvedValue(null)
-    const req = new NextRequest(
-      'http://localhost/api/spotify/playlists/12345'
-    )
+    const req = new NextRequest('http://localhost/api/spotify/playlists/12345')
     const context = { params: { playlistId: '12345' } }
 
     const response = await GET(req, context)
@@ -43,7 +40,7 @@ describe('API Route: /api/spotify/playlists/[playlistId]', () => {
   it('should return 400 if playlistId is missing', async () => {
     mockGetServerSession.mockResolvedValue({ accessToken: 'fake-token' })
     const req = new NextRequest('http://localhost/api/spotify/playlists/')
-    // @ts-ignore
+    // @ts-expect-error - Testing invalid input
     const context = { params: {} } // Missing playlistId
 
     const response = await GET(req, context)
@@ -64,7 +61,10 @@ describe('API Route: /api/spotify/playlists/[playlistId]', () => {
             explicit: false,
             popularity: 90,
             artists: [{ name: 'Artist1' }],
-            album: { name: 'Test Album', images: [{ url: 'http://image.url' }] },
+            album: {
+              name: 'Test Album',
+              images: [{ url: 'http://image.url' }],
+            },
           },
         },
       ],
@@ -98,9 +98,7 @@ describe('API Route: /api/spotify/playlists/[playlistId]', () => {
     mockGetServerSession.mockResolvedValue({ accessToken: 'fake-token' })
     mockGetPlaylistItems.mockRejectedValue(new Error('Spotify API Error'))
 
-    const req = new NextRequest(
-      'http://localhost/api/spotify/playlists/12345'
-    )
+    const req = new NextRequest('http://localhost/api/spotify/playlists/12345')
     const context = { params: { playlistId: '12345' } }
 
     const response = await GET(req, context)
