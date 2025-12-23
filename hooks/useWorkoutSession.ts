@@ -16,6 +16,7 @@ interface SessionState {
   status: SessionStatus
   duration: number
   calories: number
+  error: string | null // Add error state
 }
 
 type SessionAction =
@@ -26,11 +27,13 @@ type SessionAction =
   | { type: 'START_WORKOUT' }
   | { type: 'END_WORKOUT' }
   | { type: 'UPDATE_CALORIES'; payload: number }
+  | { type: 'SET_ERROR'; payload: string | null } // Add error action
 
 const initialState: SessionState = {
   status: 'idle',
   duration: 0,
   calories: 0,
+  error: null,
 }
 
 function sessionReducer(
@@ -42,11 +45,11 @@ function sessionReducer(
     case 'START_WORKOUT':
       if (state.status === 'paused') {
         // This is a resume. Don't reset duration.
-        return { ...state, status: 'running' }
+        return { ...state, status: 'running', error: null }
       }
       if (state.status === 'idle') {
         // This is a new workout. Reset duration.
-        return { ...state, status: 'running', duration: 0 }
+        return { ...state, status: 'running', duration: 0, error: null }
       }
       return state
     case 'DISCONNECT':
@@ -66,6 +69,11 @@ function sessionReducer(
       return {
         ...state,
         calories: action.payload,
+      }
+    case 'SET_ERROR':
+      return {
+        ...state,
+        error: action.payload,
       }
     case 'RESET':
       return initialState
@@ -198,7 +206,7 @@ export const useWorkoutSession = ({
       setActiveSession(newSession);
     } catch (error) {
       console.error('Error starting workout session:', error);
-      // Handle error appropriately
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to start workout session.' })
     }
   }, [totalCalories, userId]);
 
@@ -225,7 +233,7 @@ export const useWorkoutSession = ({
       setActiveSession(updatedSession);
     } catch (error) {
       console.error('Error ending workout session:', error);
-      // Handle error appropriately
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to end workout session.' })
     }
   }, [activeSession]);
 
@@ -247,5 +255,6 @@ export const useWorkoutSession = ({
     workoutStatus: state.status,
     hasStarted: state.status !== 'idle',
     activeSession, // Expose the active session
+    error: state.error, // Expose the error state
   }
 }
