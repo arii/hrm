@@ -51,6 +51,7 @@ export class SpotifyPolling {
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
+  private expectedNextPoll: number | null = null
 
   // Internal auth/state values
   private broadcastUpdate: (message: ServerMessage) => void
@@ -165,25 +166,41 @@ export class SpotifyPolling {
 
   // --- Polling Logic ---
 
-  // Expose start/stop polling publicly (used by server to control lifecycle)
   public startPolling() {
     if (this.pollInterval) return
+
+    const now = Date.now()
+    this.expectedNextPoll = now
 
     const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
       : 3000
-    // Poll every `intervalMs` for low-latency updates
-    this.pollInterval = setInterval(
-      () => this.getCurrentlyPlaying(),
-      intervalMs
-    )
+
+    const poll = async () => {
+      if (!this.expectedNextPoll) return // Polling was stopped before starting
+      await this.getCurrentlyPlaying()
+
+      // If polling was stopped while getCurrentlyPlaying was running, exit.
+      if (!this.expectedNextPoll) return
+
+      const now = Date.now()
+      this.expectedNextPoll += intervalMs
+      const delay = Math.max(0, this.expectedNextPoll - now)
+
+      if (this.pollInterval) {
+        this.pollInterval = setTimeout(poll, delay)
+      }
+    }
+
+    this.pollInterval = setTimeout(poll, 0) // Start immediately
     logger.debug({ intervalMs }, 'Spotify polling started')
   }
 
   public stopPolling() {
     if (this.pollInterval) {
-      clearInterval(this.pollInterval)
+      clearTimeout(this.pollInterval)
       this.pollInterval = null
+      this.expectedNextPoll = null
       logger.debug('Spotify polling stopped.')
     }
   }
@@ -303,30 +320,29 @@ export class SpotifyPolling {
     }
   }
 
-  public handleCommand(
+  public async handleCommand(
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
     playlistUri?: string
-  ) {
+  ): Promise<void> {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
-      return Promise.resolve()
-    }
-
-    if (command === 'GET_DEVICES') {
-      this.refreshDevices()
       return
     }
 
-    return (async () => {
-      try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
-        setTimeout(() => this.getCurrentlyPlaying(), 500)
-      } catch (error) {
-        await logSpotifyCommandError(command, error)
-      }
-    })()
+    if (command === 'GET_DEVICES') {
+      await this.refreshDevices()
+      return
+    }
+
+    try {
+      await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+      // After a command, immediately poll for the updated state.
+      await this.getCurrentlyPlaying()
+    } catch (error) {
+      await logSpotifyCommandError(command, error)
+    }
   }
 
   private async executeSpotifyCommand(
