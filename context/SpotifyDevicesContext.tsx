@@ -7,9 +7,9 @@ import {
 } from '@/hooks/useSpotifyDevices'
 
 // 1. Create the Context with a default value
-const SpotifyDevicesContext = createContext<UseSpotifyDevicesReturn | undefined>(
-  undefined
-)
+const SpotifyDevicesContext = createContext<
+  UseSpotifyDevicesReturn | undefined
+>(undefined)
 
 // 2. Create a provider component
 interface SpotifyDevicesProviderProps {
