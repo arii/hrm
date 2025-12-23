@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import SpotifySearchInput from '../../../../components/shared/SpotifySearchInput'
 
 global.fetch = jest.fn()
@@ -47,8 +47,14 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(() => expect(screen.getByRole('progressbar')).toBeInTheDocument(), { timeout: 5000 })
-    await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(), { timeout: 5000 })
+    await waitFor(
+      () => expect(screen.getByRole('progressbar')).toBeInTheDocument(),
+      { timeout: 5000 }
+    )
+    await waitFor(
+      () => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(),
+      { timeout: 5000 }
+    )
   })
 
   it('shows results after a successful search', async () => {
@@ -70,8 +76,12 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(() =>
-      expect(screen.getByText('Test Track by Test Artist')).toBeInTheDocument(), { timeout: 5000 }
+    await waitFor(
+      () =>
+        expect(
+          screen.getByText('Test Track by Test Artist')
+        ).toBeInTheDocument(),
+      { timeout: 5000 }
     )
   })
 
@@ -83,8 +93,9 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(() =>
-      expect(screen.getByText('No results found.')).toBeInTheDocument(), { timeout: 5000 }
+    await waitFor(
+      () => expect(screen.getByText('No results found.')).toBeInTheDocument(),
+      { timeout: 5000 }
     )
   })
 
@@ -93,8 +104,12 @@ describe('SpotifySearchInput', () => {
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    await waitFor(() =>
-      expect(screen.getByText('Failed to fetch results.')).toBeInTheDocument(), { timeout: 5000 }
+    await waitFor(
+      () =>
+        expect(
+          screen.getByText('Failed to fetch results.')
+        ).toBeInTheDocument(),
+      { timeout: 5000 }
     )
   })
 })

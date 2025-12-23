@@ -21,7 +21,9 @@ test.describe('SpotifySearchInput', () => {
     })
 
     await page.getByPlaceholder('Search Spotify...').fill('test')
-    await expect(page.getByText('Test Track by Test Artist')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Test Track by Test Artist')).toBeVisible({
+      timeout: 10000,
+    })
   })
 
   test('should show "No results found"', async ({ page }) => {

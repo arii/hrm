@@ -153,6 +153,16 @@ export default defineConfig([
     },
   },
 
+  // Override for Jest setup file
+  {
+    files: ['tests/unit/jest.setup.js'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+      },
+    },
+  },
+
   // Override for Jest integration test files
   {
     files: ['tests/integration/**/*.{ts,tsx}'],

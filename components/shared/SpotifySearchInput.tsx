@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Input, IconButton, CircularProgress, Typography, Box } from '@mui/material'
+import {
+  Input,
+  IconButton,
+  CircularProgress,
+  Typography,
+  Box,
+} from '@mui/material'
 import { Search, Clear } from '@mui/icons-material'
 import { useDebounce } from '../../hooks'
 

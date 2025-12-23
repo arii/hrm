@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { ComponentStory, ComponentMeta } from '@storybook/react'
 import SpotifySearchInput from '../components/shared/SpotifySearchInput'
@@ -13,7 +12,9 @@ export default {
   decorators: [mswDecorator],
 } as ComponentMeta<typeof SpotifySearchInput>
 
-const Template: ComponentStory<typeof SpotifySearchInput> = () => <SpotifySearchInput />
+const Template: ComponentStory<typeof SpotifySearchInput> = () => (
+  <SpotifySearchInput />
+)
 
 export const Default = Template.bind({})
 Default.parameters = {
@@ -35,8 +36,16 @@ WithResults.parameters = {
           ctx.json({
             tracks: {
               items: [
-                { id: '1', name: 'Test Track 1', artists: [{ name: 'Test Artist 1' }] },
-                { id: '2', name: 'Test Track 2', artists: [{ name: 'Test Artist 2' }] },
+                {
+                  id: '1',
+                  name: 'Test Track 1',
+                  artists: [{ name: 'Test Artist 1' }],
+                },
+                {
+                  id: '2',
+                  name: 'Test Track 2',
+                  artists: [{ name: 'Test Artist 2' }],
+                },
               ],
             },
           })
