@@ -5,8 +5,12 @@ import logger from '@/utils/logger'
 /**
  * Internal endpoint for NextAuth to post refresh tokens.
  * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
- * It logs the reception of the token and returns a 200 OK.
- * The actual token processing is handled by middleware in `server.ts`.
+ * It returns a 200 OK to acknowledge receipt.
+ *
+ * The actual token processing is handled by middleware in `server.ts`
+ * which intercepts this specific route to update the singleton service directly.
+ * We do not read the request body here to avoid stream consumption issues,
+ * as the middleware may have already consumed it.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -16,12 +20,7 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized')
     }
 
-    const payload = await req.json()
-
-    logger.info(
-      { subject: payload.sub ?? payload.provider },
-      'Received token-delivery'
-    )
+    // Logic is handled by server middleware before reaching here.
     return NextResponse.json({ ok: true })
   } catch (err) {
     if (err instanceof ApiError) {
