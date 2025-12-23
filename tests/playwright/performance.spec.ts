@@ -23,6 +23,7 @@ test.describe('Frontend Performance', () => {
     await page.goto('/client/mock')
 
     // Start the mock HRM data stream
+    await page.waitForSelector('button:has-text("START Continuous Stream")')
     await page.getByRole('button', { name: 'START Continuous Stream' }).click()
 
     // Open a new tab for the dashboard

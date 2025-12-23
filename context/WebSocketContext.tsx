@@ -371,11 +371,15 @@ export const WebSocketProvider = ({
   }, [stopHeartbeat])
 
   useEffect(() => {
-    connectRef.current = connect
-    connect()
+    if (typeof window !== 'undefined') {
+      connectRef.current = connect
+      connect()
+    }
 
     return () => {
-      disconnect()
+      if (typeof window !== 'undefined') {
+        disconnect()
+      }
     }
   }, [connect, disconnect])
 

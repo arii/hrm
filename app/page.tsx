@@ -11,17 +11,8 @@ import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadi
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import ErrorFallback from '../components/ErrorFallback'
-const HrmConnectionPanel = dynamic(
-  () => import('../components/HrmConnectionPanel'),
-  {
-    ssr: false,
-    loading: () => <DashboardSectionLoadingSkeleton height={300} />,
-  }
-)
-const TimerDisplay = dynamic(() => import('../components/TimerDisplay'), {
-  ssr: false,
-  loading: () => <DashboardSectionLoadingSkeleton height={300} />,
-})
+import HrmConnectionPanel from '../components/HrmConnectionPanel'
+import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
