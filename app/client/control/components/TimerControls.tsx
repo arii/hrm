@@ -293,6 +293,7 @@ const TimerControls = () => {
           >
             {!timerData.isRunning ? (
               <Button
+                data-testid="start-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('START')}
                 disabled={connectionStatus !== 'Connected'}
