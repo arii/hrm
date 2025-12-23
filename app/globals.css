@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Digital-7';
+  src: url('/assets/digital-7-mono.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -82,6 +90,18 @@ a {
       transform: scale(1);
       opacity: 1;
     }
+  }
+}
+
+@keyframes pulse-shadow {
+  0% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
   }
 }
 

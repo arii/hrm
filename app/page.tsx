@@ -7,6 +7,7 @@
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
 import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid' // Added for layout
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -71,21 +72,19 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
-
-        {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
+      <Grid container spacing={2}>
+        {/* Main Dashboard Content */}
+        <Grid item xs={12} lg={6}>
           <TimerDisplay />
-        </Box>
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <HrmConnectionPanel />
+          </ErrorBoundary>
+        </Grid>
 
-        <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmConnectionPanel />
-        </ErrorBoundary>
-
-        <Box sx={{ width: '100%' }}>
+        {/* Workout Document */}
+        <Grid item xs={12}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
@@ -97,9 +96,9 @@ const Dashboard = () => {
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
           )}
-        </Box>
-      </Box>
+        </Grid>
 
+      </Grid>
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>

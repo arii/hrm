@@ -12,25 +12,35 @@ import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
+import { CssBaseline, Paper } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 
 export default function Main({ children }: { children: React.ReactNode }) {
+  const theme = useTheme()
   return (
     <ThemeRegistry options={{ key: 'mui' }}>
-      <ErrorProvider>
-        <LoadingProvider>
-          <Providers>
-            <UserSettingsProvider>
-              <ErrorBoundary fallback={<ErrorFallback />}>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
-              </ErrorBoundary>
-            </UserSettingsProvider>
-          </Providers>
-          <LoadingIndicator />
-          <ErrorDisplay />
-        </LoadingProvider>
-      </ErrorProvider>
-      <Footer />
-      <BottomNavBar />
+      <CssBaseline />
+      <Paper
+        elevation={0}
+        square
+        sx={{ backgroundColor: theme.palette.background.default }}
+      >
+        <ErrorProvider>
+          <LoadingProvider>
+            <Providers>
+              <UserSettingsProvider>
+                <ErrorBoundary fallback={<ErrorFallback />}>
+                  <TimerSoundProvider>{children}</TimerSoundProvider>
+                </ErrorBoundary>
+              </UserSettingsProvider>
+            </Providers>
+            <LoadingIndicator />
+            <ErrorDisplay />
+          </LoadingProvider>
+        </ErrorProvider>
+        <Footer />
+        <BottomNavBar />
+      </Paper>
     </ThemeRegistry>
   )
 }

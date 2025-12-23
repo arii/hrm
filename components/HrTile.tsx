@@ -65,9 +65,8 @@ const HrTile = ({
           justifyContent: 'center',
           position: 'relative',
           opacity: isConnected ? 1 : 0.6,
-          transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
-          }),
+          transition:
+            'opacity 300ms ease-in-out, background-color 500ms ease-in-out',
         }}
       >
         {/* --- Disconnected Icon --- */}
@@ -102,66 +101,53 @@ const HrTile = ({
               data-testid="live-hr-percent"
               sx={{
                 fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
+                fontSize: { xs: '4rem', sm: '5rem', md: '6rem' },
+                fontWeight: 700,
+                lineHeight: 1,
                 textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                animationPlayState:
-                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
+                animation:
+                  bpm > 0 && !isAlerting && isConnected
+                    ? 'pulse-shadow 2s infinite'
+                    : 'none',
               }}
             >
               {percentMax}%
             </Typography>
+
+            {/* User Name */}
+            {name && !/^(user|new user)$/i.test(name) && (
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  px: 2,
+                }}
+              >
+                {name}
+              </Typography>
+            )}
+            {/* Vitals (BPM & Calories) */}
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-around',
                 alignItems: 'center',
                 mt: 1,
+                width: '100%',
               }}
             >
-              {/* BPM Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {bpm}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                {bpm} <span style={{ opacity: 0.8 }}>BPM</span>
               </Typography>
-
-              {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ fontWeight: 500 }}>
                 {Math.floor(calories)}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  KCAL
-                </Typography>
+                <span style={{ opacity: 0.8 }}>KCAL</span>
               </Typography>
             </Box>
-            {name && !/^(user|new user)$/i.test(name) && (
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                  letterSpacing: '0.05em',
-                  mt: 1,
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-              >
-                {name}
-              </Typography>
-            )}
           </CardContent>
         </Box>
       </StyledCard>

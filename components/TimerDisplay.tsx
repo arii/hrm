@@ -78,6 +78,7 @@ const TimerDisplay = () => {
     <Card
       elevation={6}
       data-testid="timer-display-container"
+      aria-label={`Timer showing ${phaseLabel}, time remaining ${displayTime}`}
       sx={{
         backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
@@ -225,13 +226,13 @@ const TimerDisplay = () => {
           aria-live="polite"
           aria-atomic="true"
           sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
+            fontFamily: 'Digital-7, var(--font-roboto-mono), monospace',
+            fontSize: { xs: '8rem', sm: '10rem', md: '12rem' },
+            fontWeight: 400,
             lineHeight: 1,
             color: phaseColor,
             textShadow: `0 0 20px ${phaseColor}80`,
+            transition: 'color 0.5s ease-in-out',
           }}
         >
           {displayTime}
