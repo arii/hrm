@@ -34,7 +34,6 @@ export {
   setupMinimalVisualRegressionTest,
   setupComprehensiveTest,
   setupCoreTest,
-  seedHrmData,
 } from './lib'
 
 // Export BASE_URL for backward compatibility

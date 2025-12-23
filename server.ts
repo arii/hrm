@@ -17,7 +17,6 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
-import { flushHrmData } from './services/hrmDataService.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
@@ -158,20 +157,14 @@ app
       broadcast(wss, message, origin)
     }
 
-    // 3. Initialize Persistent Services
+    // 3. Initialize Persistent Services with the wrapped broadcaster
     serviceContainer.register(
       'spotifyService',
       await SpotifyPolling.create(broadcastUpdate)
     )
-    const tabataService = new TabataTimer()
-    serviceContainer.register('tabataService', tabataService)
+    serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
-    // 4. Subscribe to service events and broadcast updates
-    tabataService.on('update', (timerData) => {
-      broadcastUpdate({ type: 'TIMER_UPDATE', payload: timerData })
-    })
-
-    // 5. State Snapshot Function
+    // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
       spotifyData: serviceContainer.get('spotifyService').getState(),
@@ -284,16 +277,6 @@ app
     server.on('error', (err: Error) => {
       logger.error({ err }, 'Server error')
       process.exit(1)
-    })
-
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      logger.info('SIGINT received, shutting down gracefully')
-      await flushHrmData()
-      server.close(() => {
-        logger.info('Server closed')
-        process.exit(0)
-      })
     })
 
     // Begin listening

@@ -48,8 +48,6 @@ const config: KnipConfig = {
     // Eslint plugin
     'eslint-plugin-react',
     'wait-on',
-    // Used by recharts, but Knip doesn't see it
-    'd3-scale',
   ],
   ignoreBinaries: [
     'scripts/test-json-with-server.sh',
