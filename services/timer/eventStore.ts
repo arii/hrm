@@ -73,7 +73,8 @@ export class TimerEventStore {
       currentPhase: this.state.currentPhase,
       timeRemaining: this.state.timeRemaining,
       timeElapsed: this.state.timeElapsed,
-      caloriesBurned: 0, // Placeholder
+      // TODO: Implement calorie estimation based on user data and heart rate
+      caloriesBurned: 0,
       mode: this.state.mode,
       workDuration: this.state.workDuration,
       restDuration: this.state.restDuration,

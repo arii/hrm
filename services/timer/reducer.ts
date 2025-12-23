@@ -27,7 +27,7 @@ export const initialState: TimerState = {
 
 function transitionPhase(state: TimerState): TimerState {
   const newState = { ...state }
-  newState.soundToPlay = undefined // Reset sound cue on phase change
+  delete newState.soundToPlay // Reset sound cue on phase change
 
   switch (newState.currentPhase) {
     case 'PREPARE':
