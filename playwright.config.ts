@@ -121,12 +121,12 @@ export default defineConfig({
   ],
 
   // Output configuration
-  outputDir: 'test-results/',
+  outputDir: 'test-results/raw/',
   reporter: [
     ['list'],
-    ['blob'],
+    ['blob', { outputDir: 'test-results/raw' }],
     ['junit', { outputFile: 'test-results/results.xml' }],
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['html', { outputFolder: 'test-results/playwright-report', open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }],
   ],
 })
