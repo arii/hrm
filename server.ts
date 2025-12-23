@@ -10,6 +10,7 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
+import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -18,10 +19,12 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
+import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -155,22 +158,23 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
-    const tabataService = new TabataTimer(broadcastUpdate)
+    serviceContainer.register(
+      'spotifyService',
+      await SpotifyPolling.create(broadcastUpdate)
+    )
+    serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
+      timerData: serviceContainer.get('tabataService').getState(),
+      spotifyData: serviceContainer.get('spotifyService').getState(),
+      spotifyServiceInitialized: serviceContainer
+        .get('spotifyService')
+        .isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(
-      wss,
-      { tabataService, spotifyService },
-      getUnifiedStateSnapshot
-    )
+    initSocketManager(wss, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
 
@@ -183,7 +187,9 @@ app
     expressApp.get(
       '/api/internal/health/services',
       async (_req: Request, res: Response) => {
-        const timerCheck = checkTimerService(tabataService)
+        const timerCheck = checkTimerService(
+          serviceContainer.get('tabataService')
+        )
         const wsCheck = await checkWebSocketService()
 
         const healthy = timerCheck.healthy && wsCheck.healthy
@@ -198,9 +204,30 @@ app
 
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use((req: Request, res: Response) => {
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Await the token update and handle potential errors
+        if (req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await serviceContainer
+              .get('spotifyService')
+              .handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
+          }
+        }
+      }
       return nextRequestHandler(req, res)
-    })
+    }) // --- HTTP/WS Upgrade Handling ---
 
     const wsConnections = new Map<string, number>()
     const WS_MAX_CONNECTIONS = 5
@@ -209,7 +236,7 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const pathname = new URL(req.url || '', 'http://dummybase').pathname
+        const { pathname } = parse(req.url || '')
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
