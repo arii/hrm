@@ -13,12 +13,8 @@ interface TimerSoundProviderProps {
 }
 
 const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
-  const {
-    audioManager,
-    toggleMute,
-    increaseVolume,
-    decreaseVolume,
-  } = useAudio()
+  const { audioManager, toggleMute, increaseVolume, decreaseVolume } =
+    useAudio()
 
   useEffect(() => {
     const handleFirstInteraction = () => {

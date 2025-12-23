@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
-import { useAudio } from '@/context/AudioContext'
+import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
@@ -18,6 +18,7 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import logger from '@/utils/logger'
 import SpotifyLoginButton from './SpotifyLoginButton'
+import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
 import { SpotifyDevice } from '@/types/core'
 
@@ -118,17 +119,17 @@ const spotifyDisplayReducer = (
 const SpotifyDisplay = () => {
   const { status } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
-  const { volume, setVolume, isMuted, toggleMute } = useAudio()
   const isLoggedIn = status === 'authenticated'
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
     spotifyDisplayReducer,
-    initialStateFactory(volume ?? 70, isMuted ?? false)
+    initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
   )
   const {
     displayVolume,
+    isMuted,
     selectedDeviceId,
     availableDevices,
     deviceMenuAnchor,
@@ -170,10 +171,11 @@ const SpotifyDisplay = () => {
         )
         return
       }
+      const sanitized = clampVolume(volume)
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: volume,
+        volume: sanitized,
         deviceId: targetDeviceId,
       }
       sendData(message)
@@ -183,7 +185,7 @@ const SpotifyDisplay = () => {
 
   // Handler for the VolumeSlider component's onChange
   const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume) // Update UI immediately
+    dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
 
     // Debounce sending the command to avoid API flooding
     if (debounceTimeoutRef.current) {
@@ -196,8 +198,17 @@ const SpotifyDisplay = () => {
 
   // Handler for the VolumeSlider's mute button
   const handleToggleMute = useCallback(() => {
-    toggleMute() // Update UI
-  }, [toggleMute])
+    // Calculate the next state to determine the command payload
+    const newMutedState = !isMuted
+    const newVolume = newMutedState
+      ? 0
+      : state.lastVolume > 0
+        ? state.lastVolume
+        : 50
+
+    dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
+    sendVolumeCommand(newVolume) // Send command with the new volume
+  }, [isMuted, state.lastVolume, sendVolumeCommand])
 
   // Effect to manage the local browser player's volume
   useEffect(() => {
@@ -406,6 +417,12 @@ const SpotifyDisplay = () => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <VolumeSlider
+            volume={displayVolume}
+            muted={isMuted}
+            onVolumeChange={handleVolumeChange}
+            onToggleMute={handleToggleMute}
+          />
           <SpotifyDeviceSelectorWrapper
             availableDevices={availableDevices}
             deviceMenuAnchor={deviceMenuAnchor}
