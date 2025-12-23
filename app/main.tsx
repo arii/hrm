@@ -10,17 +10,15 @@ import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
 import { ErrorProvider } from '@/context/ErrorContext'
-import { ThemeProvider } from '@/context/ThemeContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 export default function Main({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <ThemeRegistry options={{ key: 'mui' }}>
-        <ErrorProvider>
-          <LoadingProvider>
-            <Providers>
+    <ThemeRegistry options={{ key: 'mui' }}>
+      <ErrorProvider>
+        <LoadingProvider>
+          <Providers>
             <UserSettingsProvider>
               <ErrorBoundary fallback={<ErrorFallback />}>
                 <TimerSoundProvider>{children}</TimerSoundProvider>
@@ -33,7 +31,6 @@ export default function Main({ children }: { children: React.ReactNode }) {
       </ErrorProvider>
       <Footer />
       <BottomNavBar />
-      </ThemeRegistry>
-    </ThemeProvider>
+    </ThemeRegistry>
   )
 }

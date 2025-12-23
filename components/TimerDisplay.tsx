@@ -3,7 +3,6 @@
 import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
-import { useTheme } from '@mui/material/styles'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
@@ -19,7 +18,6 @@ import { useAudioContext } from '@/context/AudioContext'
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const TimerDisplay = () => {
-  const theme = useTheme()
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
   const {
@@ -39,14 +37,14 @@ const TimerDisplay = () => {
   if (currentPhase === 'PREPARE') {
     // PREPARE: Show countdown seconds only
     displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = theme.palette.warning.main
+    phaseColor = '#F59E0B' // Yellow/Warning
     phaseLabel = 'GET READY'
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = theme.palette.info.main
+    phaseColor = '#2563EB' // Blue/Primary
     phaseLabel = 'RUNNING'
   } else if (
     mode === 'TABATA' &&
@@ -60,19 +58,19 @@ const TimerDisplay = () => {
     displayTime = `${pad(mm)}:${pad(ss)}`
 
     if (currentPhase === 'WORK') {
-      phaseColor = theme.palette.error.main
+      phaseColor = '#EF4444' // Red
       phaseLabel = 'WORK'
     } else if (currentPhase === 'REST') {
-      phaseColor = theme.palette.success.main
+      phaseColor = '#22C55E' // Green
       phaseLabel = 'REST'
     } else {
-      phaseColor = theme.palette.info.main
+      phaseColor = '#3B82F6' // Blue
       phaseLabel = 'COOLDOWN'
     }
   } else {
     // IDLE or default
     displayTime = '00:00'
-    phaseColor = theme.palette.text.secondary
+    phaseColor = '#6B7280' // Gray
     phaseLabel = 'READY'
   }
 
@@ -81,16 +79,13 @@ const TimerDisplay = () => {
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: theme.palette.common.black,
+        backgroundColor: '#000000', // Pure black for high energy
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: `2px solid ${theme.palette.grey[900]}`,
-        position: 'relative', // Keep for zIndex context
-        flexDirection: 'row', // Main axis is horizontal
-        alignItems: 'center', // Center items vertically
-        justifyContent: 'space-between', // Push children to edges
+        border: '2px solid #1a1a1a', // Subtle border for definition
+        position: 'relative',
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
@@ -111,7 +106,7 @@ const TimerDisplay = () => {
       >
         <Typography
           variant="caption"
-          sx={{ color: theme.palette.common.white }}
+          sx={{ color: '#fff' }}
           data-testid="ws-status-indicator"
         >
           {connectionStatus}
@@ -123,65 +118,89 @@ const TimerDisplay = () => {
             borderRadius: '50%',
             backgroundColor:
               connectionStatus === 'Connected'
-                ? theme.palette.success.main
+                ? '#10B981'
                 : connectionStatus === 'Reconnecting...'
-                  ? theme.palette.warning.main
-                  : theme.palette.error.main,
+                  ? '#F59E0B'
+                  : '#EF4444',
             animation:
               connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
           }}
         />
       </Box>
-      {/* Left Column: Mode Indicator */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: 40, // Fixed width for the side columns
-        }}
-      >
-        {currentPhase !== 'IDLE' && (
-          <Box
+      {/* Mode Indicator - Rotated on left side */}
+      {currentPhase !== 'IDLE' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 16,
+            top: '50%',
+            transform: 'translateY(-50%) rotate(-90deg)',
+            transformOrigin: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
             sx={{
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 2,
+              whiteSpace: 'nowrap',
+              fontSize: '0.9rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{
-                color: theme.palette.common.white,
-                fontWeight: 700,
-                letterSpacing: 2,
-                whiteSpace: 'nowrap',
-                fontSize: '0.9rem',
-                backgroundColor: theme.palette.action.hover,
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+          </Typography>
+        </Box>
+      )}
 
-      {/* Center Column: Main Timer Display */}
+      {/* Tabata Durations - Rotated on right side */}
+      {mode === 'TABATA' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 16,
+            top: '50%',
+            transform: 'translateY(-50%) rotate(90deg)',
+            transformOrigin: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            WORK:{workDuration}s REST:{restDuration}s
+          </Typography>
+        </Box>
+      )}
+
       <CardContent
         sx={{
-          p: { xs: 1, sm: 2 }, // Reduced padding
+          p: { xs: 2, md: 3 },
           textAlign: 'center',
-          flex: 1, // Allow this to grow and fill space
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: 0, // Prevents flex item from overflowing
         }}
       >
-        {/* Phase Label */}
+        {/* Phase Label - only show for Tabata phases, not RUNNING */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
@@ -198,7 +217,7 @@ const TimerDisplay = () => {
           </Typography>
         )}
 
-        {/* Giant Timer */}
+        {/* Giant Timer Display */}
         <Typography
           data-testid="timer-countdown"
           component="div"
@@ -207,12 +226,12 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '5rem', sm: '7rem', md: '8rem' }, // Slightly reduced font size
+            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
             fontWeight: 800,
-            letterSpacing: '0.1rem',
+            letterSpacing: '0.12rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 15px ${phaseColor}80`, // Reduced shadow
+            textShadow: `0 0 20px ${phaseColor}80`,
           }}
         >
           {displayTime}
@@ -226,11 +245,11 @@ const TimerDisplay = () => {
             mt: 2,
             mb: 1,
             width: { xs: '90%', md: '80%' },
-            maxWidth: 280, // Reduced max width
+            maxWidth: 300,
           }}
           alignItems="center"
         >
-          <IconButton onClick={toggleMute} sx={{ color: 'common.white' }}>
+          <IconButton onClick={toggleMute} sx={{ color: 'white' }}>
             {muted || volume === 0 ? <VolumeOff /> : <VolumeDown />}
           </IconButton>
           <Slider
@@ -238,51 +257,15 @@ const TimerDisplay = () => {
             value={muted ? 0 : volume}
             onChange={(_, newValue) => setVolume(newValue as number)}
             sx={{
-              color: 'common.white',
+              color: 'white',
               '& .MuiSlider-thumb': {
                 color: phaseColor,
               },
             }}
           />
-          <VolumeUp sx={{ color: 'common.white' }} />
+          <VolumeUp sx={{ color: 'white' }} />
         </Stack>
       </CardContent>
-
-      {/* Right Column: Tabata Durations */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: 40, // Fixed width
-        }}
-      >
-        {mode === 'TABATA' && (
-          <Box
-            sx={{
-              transform: 'rotate(90deg)',
-              transformOrigin: 'center',
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: theme.palette.common.white,
-                fontWeight: 700,
-                letterSpacing: 1,
-                whiteSpace: 'nowrap',
-                fontSize: '0.8rem',
-                backgroundColor: theme.palette.action.hover,
-                px: 1,
-                py: 0.5,
-                borderRadius: 1,
-              }}
-            >
-              WORK:{workDuration}s REST:{restDuration}s
-            </Typography>
-          </Box>
-        )}
-      </Box>
     </Card>
   )
 }

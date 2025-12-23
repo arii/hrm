@@ -291,8 +291,8 @@ const SpotifyDisplay = () => {
     return (
       <Box
         sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
+          backgroundColor: 'grey.900',
+          color: 'common.white',
           px: 3,
           py: 1.5,
           borderRadius: 2,
@@ -326,8 +326,8 @@ const SpotifyDisplay = () => {
           spotifyData.isPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
         sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
+          backgroundColor: 'grey.900',
+          color: 'common.white',
           px: 3,
           py: 1.5,
           borderRadius: 2,
@@ -384,8 +384,8 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={() => sendSpotifyCommand('PREVIOUS')}
             sx={{
-              color: 'text.primary',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Previous track"
           >
@@ -395,9 +395,9 @@ const SpotifyDisplay = () => {
             size="medium"
             onClick={handlePlayPauseToggle}
             sx={{
-              color: 'text.primary',
-              backgroundColor: 'action.selected',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'common.white',
+              backgroundColor: 'grey.700',
+              '&:hover': { backgroundColor: 'grey.600' },
             }}
             aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
           >
@@ -407,8 +407,8 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={() => sendSpotifyCommand('NEXT')}
             sx={{
-              color: 'text.primary',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Next track"
           >
@@ -437,11 +437,11 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={handleLogout}
             sx={{
-              color: 'text.primary',
-              borderColor: 'divider',
+              color: 'common.white',
+              borderColor: 'grey.600',
               '&:hover': {
-                borderColor: 'text.primary',
-                backgroundColor: 'action.hover',
+                borderColor: 'grey.500',
+                backgroundColor: 'grey.800',
               },
               minWidth: 'auto',
               px: 1.5,
