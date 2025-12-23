@@ -5,7 +5,7 @@ import {
   SpotifyApi,
   type SimplifiedTrack,
   type Track,
-  SimplifiedAlbum,
+  type SimplifiedAlbum,
 } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -18,14 +18,17 @@ import { ApiError } from '@/lib/errors'
  * This endpoint retrieves the tracks of a playlist given its ID.
  * It supports pagination using 'limit' and 'offset' query parameters.
  *
- * @param _req The incoming Next.js API request.
+ * @param req The incoming Next.js API request.
  * @param context The context object containing route parameters.
  * @returns A NextResponse object with the playlist tracks or an error.
  */
 async function getPlaylistTracks(
-  _req: Request,
-  context: { params: { playlistId: string } }
+  req: Request,
+  ...args: unknown[] // Adjusted to match ApiHandler
 ) {
+  // Manually extract and type the context from args
+  const context = args[0] as { params: { playlistId: string } }
+
   // 1. Get the server-side session.
   const session = await getServerSession(authOptions)
 
@@ -41,7 +44,7 @@ async function getPlaylistTracks(
   }
 
   // 4. Get pagination parameters from the URL query.
-  const { searchParams } = new URL(_req.url)
+  const { searchParams } = new URL(req.url)
   const limit = parseInt(searchParams.get('limit') || '20', 10)
   const offset = parseInt(searchParams.get('offset') || '0', 10)
 
@@ -61,7 +64,8 @@ async function getPlaylistTracks(
     playlistId,
     undefined, // market
     'items(track(name,artists,album(name,images),duration_ms,uri,explicit,popularity))',
-    limit,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    limit as any,
     offset
   )
 
