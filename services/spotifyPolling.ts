@@ -347,6 +347,7 @@ export class SpotifyPolling {
         if (isValidDeviceId(deviceId)) {
           await this.sdk!.player.startResumePlayback(deviceId, playlistUri)
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (this.sdk!.player.startResumePlayback as any)(
             undefined,
             playlistUri

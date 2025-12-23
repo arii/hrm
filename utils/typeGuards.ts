@@ -5,6 +5,6 @@
  * @param id The value to check.
  * @returns True if the value is a valid device ID, false otherwise.
  */
-export function isValidDeviceId(id: any): id is string {
+export function isValidDeviceId(id: unknown): id is string {
   return typeof id === 'string' && id.length > 0
 }
