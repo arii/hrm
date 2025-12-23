@@ -18,7 +18,7 @@ import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { estimateCaloriesBurned } from '../lib/calorie-service.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
 
 // Define service instances to be managed
