@@ -1,3 +1,5 @@
+import '@testing-library/jest-dom'
+
 // This file provides a mock for the global `localStorage` object.
 // In a Node.js environment (where Jest runs), `localStorage` is not defined.
 // Many components and hooks use `localStorage` to persist user settings.
