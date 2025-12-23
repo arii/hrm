@@ -18,7 +18,10 @@ export async function GET(request: NextRequest) {
 
   if (!validationResult.success) {
     return NextResponse.json(
-      { error: 'Invalid query parameters', details: validationResult.error.flatten() },
+      {
+        error: 'Invalid query parameters',
+        details: validationResult.error.flatten(),
+      },
       { status: 400 }
     )
   }

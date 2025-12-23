@@ -36,7 +36,7 @@ const ensureLogFile = async () => {
   try {
     await fs.mkdir(path.dirname(HRM_DATA_PATH), { recursive: true })
     await fs.access(HRM_DATA_PATH)
-  } catch (error) {
+  } catch {
     // If the file doesn't exist, create it with an empty array.
     await fs.writeFile(HRM_DATA_PATH, JSON.stringify([]))
   }

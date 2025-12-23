@@ -5,15 +5,17 @@ import HrmDashboard from '../../../components/HrmDashboard'
 import { WebSocketProvider } from '../../../context/WebSocketContext'
 import '@testing-library/jest-dom'
 
-jest.mock('../../../components/HrmHistoryChart', () => () => (
-  <div data-testid="hrm-history-chart" />
-))
-jest.mock('../../../components/HrmSummary', () => () => (
-  <div data-testid="hrm-summary" />
-))
-jest.mock('../../../components/HrmZones', () => () => (
-  <div data-testid="hrm-zones" />
-))
+const MockHrmHistoryChart = () => <div data-testid="hrm-history-chart" />
+MockHrmHistoryChart.displayName = 'MockHrmHistoryChart'
+jest.mock('../../../components/HrmHistoryChart', () => MockHrmHistoryChart)
+
+const MockHrmSummary = () => <div data-testid="hrm-summary" />
+MockHrmSummary.displayName = 'MockHrmSummary'
+jest.mock('../../../components/HrmSummary', () => MockHrmSummary)
+
+const MockHrmZones = () => <div data-testid="hrm-zones" />
+MockHrmZones.displayName = 'MockHrmZones'
+jest.mock('../../../components/HrmZones', () => MockHrmZones)
 
 describe('HrmDashboard', () => {
   beforeEach(() => {

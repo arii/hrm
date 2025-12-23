@@ -74,18 +74,33 @@ const HrmDashboard = () => {
 
   return (
     <Box sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           Heart Rate Analytics
         </Typography>
         <ButtonGroup>
-          <Button onClick={() => setTimeRange('hour')} variant={timeRange === 'hour' ? 'contained' : 'outlined'}>
+          <Button
+            onClick={() => setTimeRange('hour')}
+            variant={timeRange === 'hour' ? 'contained' : 'outlined'}
+          >
             Last Hour
           </Button>
-          <Button onClick={() => setTimeRange('day')} variant={timeRange === 'day' ? 'contained' : 'outlined'}>
+          <Button
+            onClick={() => setTimeRange('day')}
+            variant={timeRange === 'day' ? 'contained' : 'outlined'}
+          >
             Last Day
           </Button>
-          <Button onClick={() => setTimeRange('all')} variant={timeRange === 'all' ? 'contained' : 'outlined'}>
+          <Button
+            onClick={() => setTimeRange('all')}
+            variant={timeRange === 'all' ? 'contained' : 'outlined'}
+          >
             All Time
           </Button>
         </ButtonGroup>

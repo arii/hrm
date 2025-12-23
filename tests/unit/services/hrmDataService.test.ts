@@ -21,8 +21,8 @@ beforeEach(async () => {
   jest.spyOn(fs, 'access').mockResolvedValue()
   jest.spyOn(fs, 'mkdir').mockResolvedValue()
 
-  jest.isolateModules(() => {
-    hrmDataService = require('../../../services/hrmDataService')
+  jest.isolateModules(async () => {
+    hrmDataService = await import('../../../services/hrmDataService')
   })
 })
 
@@ -92,7 +92,9 @@ describe('hrmDataService', () => {
       hrm: 120,
       clientId: 'test-client',
     }
-    // @ts-ignore
-    await expect(hrmDataService.addHrmDataPoint(invalidDataPoint)).rejects.toThrow()
+    // @ts-expect-error - Testing invalid data point
+    await expect(
+      hrmDataService.addHrmDataPoint(invalidDataPoint)
+    ).rejects.toThrow()
   })
 })

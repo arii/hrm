@@ -17,7 +17,9 @@ export const calculateSummaryStatistics = (data: HrmDataPoint[]) => {
   const hrmValues = data.map((d) => d.hrm)
   const max = Math.max(...hrmValues)
   const min = Math.min(...hrmValues)
-  const avg = Math.round(hrmValues.reduce((a, b) => a + b, 0) / hrmValues.length)
+  const avg = Math.round(
+    hrmValues.reduce((a, b) => a + b, 0) / hrmValues.length
+  )
 
   return { avg, max, min }
 }

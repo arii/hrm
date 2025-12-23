@@ -9,9 +9,7 @@ jest.mock('../../../../../services/hrmDataService', () => ({
 
 describe('GET /api/hrm', () => {
   it('should return the full history when no "since" parameter is provided', async () => {
-    const mockHistory = [
-      { timestamp: Date.now(), hrm: 120, clientId: 'test' },
-    ]
+    const mockHistory = [{ timestamp: Date.now(), hrm: 120, clientId: 'test' }]
     ;(getHrmDataHistory as jest.Mock).mockResolvedValue(mockHistory)
 
     const req = new NextRequest('http://localhost/api/hrm')
@@ -25,9 +23,7 @@ describe('GET /api/hrm', () => {
 
   it('should return a filtered history when a valid "since" parameter is provided', async () => {
     const since = Date.now() - 3600 * 1000
-    const mockHistory = [
-      { timestamp: Date.now(), hrm: 120, clientId: 'test' },
-    ]
+    const mockHistory = [{ timestamp: Date.now(), hrm: 120, clientId: 'test' }]
     ;(getHrmDataHistory as jest.Mock).mockResolvedValue(mockHistory)
 
     const req = new NextRequest(`http://localhost/api/hrm?since=${since}`)
