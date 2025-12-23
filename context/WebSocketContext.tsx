@@ -93,9 +93,11 @@ export const WebSocketProvider = ({
   // Unified State Object managed by a reducer
   const reducer = (
     state: WebSocketState,
-    message: ServerMessage
+    message: ServerMessage | { type: 'RESET_STATE' }
   ): WebSocketState => {
     switch (message.type) {
+      case 'RESET_STATE':
+        return INITIAL_STATE
       case 'INITIAL_STATE': {
         // When the initial state is loaded, ensure all HRM data is marked as connected.
         const hrmDataWithConnection =
@@ -280,6 +282,9 @@ export const WebSocketProvider = ({
 
       // Stop heartbeat on disconnect
       stopHeartbeat()
+
+      // Reset the state to initial to prevent flashing of stale data on reconnect
+      dispatch({ type: 'RESET_STATE' })
 
       if (shouldReconnect.current) {
         if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
