@@ -136,7 +136,6 @@ describe('WebSocket Manager', () => {
       }),
       close: jest.fn().mockImplementation(async () => {}),
     } as unknown as HrmDataService
-
     ;(HrmDataService as jest.Mock).mockImplementation(() => hrmDataService)
 
     mockWss = new (WebSocketServer as jest.Mock)()
@@ -204,7 +203,11 @@ describe('WebSocket Manager', () => {
 
       // Simulate a PING message from the client
       const message = JSON.stringify({ type: 'PING' })
-      await handleIncomingMessage(mockWs as ExtWebSocket, message, (mockWs as ExtWebSocket).clientId)
+      await handleIncomingMessage(
+        mockWs as ExtWebSocket,
+        message,
+        (mockWs as ExtWebSocket).clientId
+      )
 
       expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
       expect(sendWebSocketMessage).toHaveBeenCalledWith(
@@ -230,7 +233,11 @@ describe('WebSocket Manager', () => {
       // Simulate responsiveness by sending pings
       const interval = setInterval(async () => {
         const message = JSON.stringify({ type: 'PING' })
-        await handleIncomingMessage(mockWs as ExtWebSocket, message, (mockWs as ExtWebSocket).clientId)
+        await handleIncomingMessage(
+          mockWs as ExtWebSocket,
+          message,
+          (mockWs as ExtWebSocket).clientId
+        )
       }, 25000) // Send a ping every 25 seconds
 
       jest.advanceTimersByTime(150000) // Advance well past the timeout
@@ -268,11 +275,8 @@ describe('WebSocket Manager', () => {
         // Check the last broadcasted state
         const mockBroadcast = broadcast as jest.Mock
         expect(mockBroadcast).toHaveBeenCalled()
-        const lastCall =
-          mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-        const finalPayload: HrmData[] = lastCall[1].payload
         const clientData = await hrmDataService.findById(
-          (mockWs as any).clientId
+          (mockWs as ExtWebSocket).clientId
         )
 
         expect(clientData).toBeDefined()
@@ -294,9 +298,9 @@ describe('WebSocket Manager', () => {
         role: 'dashboard',
       })
       await handleIncomingMessage(
-        mockWs as any,
+        mockWs as ExtWebSocket,
         message,
-        (mockWs as any).clientId
+        (mockWs as ExtWebSocket).clientId
       )
       expect(mockWs.clientType).toBe('dashboard')
     })
@@ -305,9 +309,9 @@ describe('WebSocket Manager', () => {
       try {
         const message = JSON.stringify({ type: 'GET_STATE' })
         await handleIncomingMessage(
-          mockWs as any,
+          mockWs as ExtWebSocket,
           message,
-          (mockWs as any).clientId
+          (mockWs as ExtWebSocket).clientId
         )
 
         expect(getSnapshot).toHaveBeenCalled()
@@ -324,9 +328,9 @@ describe('WebSocket Manager', () => {
 
     it('should handle invalid JSON gracefully', async () => {
       await handleIncomingMessage(
-        mockWs as any,
+        mockWs as ExtWebSocket,
         'invalid json',
-        (mockWs as any).clientId
+        (mockWs as ExtWebSocket).clientId
       )
       expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
@@ -337,9 +341,9 @@ describe('WebSocket Manager', () => {
     it('should handle Zod validation errors gracefully', async () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       await handleIncomingMessage(
-        mockWs as any,
+        mockWs as ExtWebSocket,
         message,
-        (mockWs as any).clientId
+        (mockWs as ExtWebSocket).clientId
       )
       expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
@@ -349,7 +353,7 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', async () => {
       try {
-        await handleDisconnect((mockWs as any).clientId)
+        await handleDisconnect((mockWs as ExtWebSocket).clientId)
         expect(broadcast).toHaveBeenCalledWith(
           mockWss,
           {
@@ -376,9 +380,9 @@ describe('WebSocket Manager', () => {
         command: 'PLAY',
       })
       await handleIncomingMessage(
-        mockWs as any,
+        mockWs as ExtWebSocket,
         message,
-        (mockWs as any).clientId
+        (mockWs as ExtWebSocket).clientId
       )
 
       expect(sendWebSocketMessage).toHaveBeenCalled()
@@ -402,9 +406,9 @@ describe('WebSocket Manager', () => {
         .mockReturnValue({ type: 'SOME_GARBAGE' })
 
       await handleIncomingMessage(
-        mockWs as any,
+        mockWs as ExtWebSocket,
         message,
-        (mockWs as any).clientId
+        (mockWs as ExtWebSocket).clientId
       )
 
       expect(logger.warn).toHaveBeenCalledWith(
