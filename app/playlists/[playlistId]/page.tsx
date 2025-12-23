@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { Container, Typography, Box } from '@mui/material'
 import PlaylistTracksDisplay from '@/components/Spotify/PlaylistTracksDisplay'
 import { useParams } from 'next/navigation'
