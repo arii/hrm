@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.15.0](https://github.com/arii/hrm/compare/v0.14.0...v0.15.0) (2025-12-23)
+
+
+### Features
+
+* Add AuthButton component for Spotify login/logout ([#2018](https://github.com/arii/hrm/issues/2018)) ([a6629bd](https://github.com/arii/hrm/commit/a6629bd521fb30d89f59fb6374faae0aead1c0e2))
+* Implement Spotify Connect Device Picker ([#2014](https://github.com/arii/hrm/issues/2014)) ([a154729](https://github.com/arii/hrm/commit/a154729ec3b74f761927280794d7cf71c7cd7018))
+
+
+### Bug Fixes
+
+* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+* **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
+
 ## [0.14.0](https://github.com/arii/hrm/compare/v0.13.0...v0.14.0) (2025-12-23)
 
 
