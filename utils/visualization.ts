@@ -4,11 +4,28 @@
  * This ensures clean separation of business logic from React component rendering.
  */
 import { TimerData } from '../types/websocket'
-import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
+import { WorkoutData, WorkoutItem } from '../types/index'
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
+
+/**
+ * Calculates the contrasting text color (black or white) for a given hex background.
+ * @param hex - The hex color string (e.g., '#RRGGBB').
+ * @returns '#000' (black) or '#fff' (white).
+ */
+const getContrastingTextColor = (hex: string): string => {
+  if (hex.startsWith('#')) {
+    hex = hex.slice(1)
+  }
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  // Formula for luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#000' : '#fff'
+}
 
 // Define types for MUI color props
 type MuiColor =
@@ -20,68 +37,32 @@ type MuiColor =
   | 'success'
 
 // --- Constants ---
-// UI properties for each heart rate zone, mapped for efficient O(1) lookup.
+// UI properties for each heart rate zone.
 type HrZoneUi = {
-  color: string
-  progressColor: string
-  bgColor: string
+  backgroundColor: string
+  textColor: string
 }
+
+const createZoneStyle = (bgColor: string): HrZoneUi => ({
+  backgroundColor: bgColor,
+  textColor: getContrastingTextColor(bgColor),
+})
 
 export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
-  [HrZoneName.WarmUp]: {
-    color: 'text-blue-400',
-    progressColor: theme.palette.secondary.main,
-    bgColor: theme.palette.secondary.main,
-  },
-  [HrZoneName.FatBurn]: {
-    color: 'text-green-500',
-    progressColor: theme.palette.success.main,
-    bgColor: theme.palette.success.main,
-  },
-  [HrZoneName.Cardio]: {
-    color: 'text-yellow-500',
-    progressColor: theme.palette.warning.dark,
-    bgColor: theme.palette.warning.dark,
-  },
-  [HrZoneName.Peak]: {
-    color: 'text-red-500',
-    progressColor: theme.palette.primary.main,
-    bgColor: theme.palette.primary.main,
-  },
-  [HrZoneName.Max]: {
-    color: 'text-purple-600',
-    progressColor: '#9333ea',
-    bgColor: '#9C27B0',
-  },
-  // Add placeholder properties for non-displayable zones
-  [HrZoneName.NoData]: {
-    color: 'text-gray-400',
-    progressColor: '#9ca3af',
-    bgColor: '#9ca3af',
-  },
-  [HrZoneName.Unknown]: {
-    color: 'text-gray-400',
-    progressColor: '#9ca3af',
-    bgColor: '#9ca3af',
-  },
-}
-
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: theme.palette.secondary.main, // Zone 1: Warm-up
-  green: theme.palette.success.main, // Zone 2: Fat Burn
-  yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
+  [HrZoneName.WarmUp]: createZoneStyle(theme.palette.secondary.main),
+  [HrZoneName.FatBurn]: createZoneStyle(theme.palette.success.main),
+  [HrZoneName.Cardio]: createZoneStyle(theme.palette.warning.dark),
+  [HrZoneName.Peak]: createZoneStyle(theme.palette.primary.main),
+  [HrZoneName.Max]: createZoneStyle('#9C27B0'),
+  [HrZoneName.NoData]: createZoneStyle('#9ca3af'),
+  [HrZoneName.Unknown]: createZoneStyle('#9ca3af'),
 }
 
 export interface HrZoneProps {
   zone: string
   percentage: number
-  color: string // Tailwind text color class
-  progressColor: string // Hex color for MUI components
-  backgroundColor: string // Hex color for background
+  backgroundColor: string
+  textColor: string
   bpm: number
 }
 
@@ -94,19 +75,14 @@ export const getHrZoneProps = (
   currentHr: number,
   maxHr: number
 ): HrZoneProps => {
-  // 1. Get the core HR data from the domain module
   const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
-
-  // 2. Look up the UI properties from the map
   const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
 
-  // 3. Combine domain data with UI properties
   return {
-    zone: zoneName, // The enum member is a string at runtime
+    zone: zoneName,
     percentage: percentage,
-    color: zoneUiProps.color,
-    progressColor: zoneUiProps.progressColor,
-    backgroundColor: zoneUiProps.bgColor,
+    backgroundColor: zoneUiProps.backgroundColor,
+    textColor: zoneUiProps.textColor,
     bpm: bpm,
   }
 }

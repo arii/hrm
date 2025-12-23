@@ -33,8 +33,8 @@ describe('TimerDisplay', () => {
         <TimerDisplay />
       </AudioProvider>
     )
-    // In the IDLE state, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    // In the IDLE state, the phase label should show "READY"
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('READY')
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
   })
 
@@ -86,8 +86,8 @@ describe('TimerDisplay', () => {
       </AudioProvider>
     )
 
-    // In stopwatch mode, a phase label is not shown
-    expect(screen.queryByTestId('timer-phase')).not.toBeInTheDocument()
+    // In stopwatch mode, the phase label should show "RUNNING"
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('RUNNING')
     // It should display the elapsed time
     expect(screen.getByTestId('timer-countdown')).toHaveTextContent('02:05')
   })

@@ -80,7 +80,7 @@ export default function ConnectPage() {
       currentHR={currentHR}
       hrZoneProps={{
         percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
+        progressColor: hrZoneProps.backgroundColor,
       }}
       connectionStatus={connectionStatus}
       bluetoothConnected={isConnected}

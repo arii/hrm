@@ -3,9 +3,9 @@
  * Dual-Mode Timer Service: Manages both continuous elapsed time (Stopwatch)
  * and interval-based countdowns (Tabata). Includes a universal 5-second
  * PREPARE countdown that runs before both modes begin.
- * Emits 'update' and 'phaseChange' events.
+ * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
-import { EventEmitter } from 'events'
+import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode, TimerPhase } from '../types/core'
 
 // --- Tabata Constants ---
@@ -28,7 +28,9 @@ interface DualModeTimerState {
   soundEventId: number
 }
 
-class TabataTimer extends EventEmitter {
+class TabataTimer {
+  // Function provided by server.ts to push updates to all clients
+  private broadcastUpdate: (message: ServerMessage) => void
   private timerInterval: NodeJS.Timeout | null = null
   private startTime: number | null = null
   private pausedElapsedTime: number = 0 // Stored elapsed time when paused (in seconds)
@@ -46,15 +48,15 @@ class TabataTimer extends EventEmitter {
 
   private countdownMarker: string | null = null
 
-  constructor() {
-    super()
+  constructor(broadcastUpdate: (message: ServerMessage) => void) {
+    this.broadcastUpdate = broadcastUpdate
   }
 
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
     this.timerState.soundToPlay = sound
     this.timerState.soundEventId += 1
-    // Emit an update event immediately so clients can play sound
-    this.emit('update', this.getState())
+    // Broadcast immediately so clients can play sound
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private resetCountdownMarker() {
@@ -128,7 +130,7 @@ class TabataTimer extends EventEmitter {
       }
     }
 
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private startTimer() {
@@ -141,7 +143,6 @@ class TabataTimer extends EventEmitter {
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
       this.timerState.currentPhase = 'PREPARE'
-      this.emit('phaseChange', this.timerState.currentPhase)
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
@@ -149,7 +150,7 @@ class TabataTimer extends EventEmitter {
     // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
 
     this.timerInterval = setInterval(this.updateTimer, 1000)
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private pauseTimer() {
@@ -168,7 +169,7 @@ class TabataTimer extends EventEmitter {
     this.timerInterval = null
     this.startTime = null
 
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   private stopTimer() {
@@ -189,7 +190,7 @@ class TabataTimer extends EventEmitter {
     this.startTime = null
     this.timerInterval = null
 
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   // --- Configuration ---
@@ -206,14 +207,13 @@ class TabataTimer extends EventEmitter {
       this.timerState.timeRemaining = sanitizedWorkDuration
     }
 
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 
   // --- Universal Transition Logic ---
 
   private transitionPhase() {
     this.resetCountdownMarker()
-    const previousPhase = this.timerState.currentPhase
     switch (this.timerState.currentPhase) {
       case 'PREPARE': // Transition from 5s countdown
         this.queueSound('WORK') // Long beep when starting
@@ -250,10 +250,6 @@ class TabataTimer extends EventEmitter {
         this.stopTimer()
         break
     }
-    // If the phase has changed, emit an event
-    if (this.timerState.currentPhase !== previousPhase) {
-      this.emit('phaseChange', this.timerState.currentPhase)
-    }
   }
 
   // --- Command Handler (Used by socketManager) ---
@@ -284,7 +280,7 @@ class TabataTimer extends EventEmitter {
     this.timerState.timeElapsed = 0
     delete this.timerState.soundToPlay
     this.resetCountdownMarker()
-    this.emit('update', this.getState())
+    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.getState() })
   }
 }
 

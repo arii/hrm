@@ -6,7 +6,7 @@
 'use client'
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
-import Grid from '@mui/material/Grid'
+import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -63,27 +63,35 @@ const Dashboard = () => {
 
   return (
     <Container
-      maxWidth="xl"
+      maxWidth={false}
       onClick={handleInteraction}
       sx={{
         py: { xs: 2, sm: 3 },
+        px: { xs: 2, sm: 3 },
         minHeight: '100vh',
-        backgroundColor: 'background.default',
+        backgroundColor: 'grey.100',
+        '@media (min-width:1200px)': {
+          maxWidth: '1600px',
+        },
       }}
     >
-      <Grid container spacing={{ xs: 2, md: 3 }}>
-        {/* Main Dashboard Content */}
-        <Grid item xs={12} lg={6}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: { xs: 2, md: 3 },
+        }}
+      >
+        {/* Left Column */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, md: 3 },
+            width: { xs: '100%', lg: '67%' },
+          }}
+        >
           <TimerDisplay />
-        </Grid>
-
-        <Grid item xs={12} lg={6}>
-          <ErrorBoundary fallback={<ErrorFallback />}>
-            <HrmConnectionPanel />
-          </ErrorBoundary>
-        </Grid>
-
-        <Grid item xs={12}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
@@ -95,14 +103,25 @@ const Dashboard = () => {
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
           )}
-        </Grid>
+        </Box>
 
-        <Grid item xs={12}>
+        {/* Right Column */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, md: 3 },
+            width: { xs: '100%', lg: '33%' },
+          }}
+        >
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <HrmConnectionPanel />
+          </ErrorBoundary>
           <ErrorBoundary fallback={<ErrorFallback />}>
             <SpotifyDisplay />
           </ErrorBoundary>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   )
 }

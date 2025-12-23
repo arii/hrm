@@ -2,6 +2,8 @@
 'use client'
 import { useMemo } from 'react'
 import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import CardContent from '@mui/material/CardContent'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
@@ -35,30 +37,23 @@ const HrmConnectionPanel = () => {
   }
 
   const tileData = useMemo(() => {
-    // Filter out users with placeholder names or no identity
     return hrmData
-      .filter((user) => {
-        const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-        const hasNoIdentity = user.name == null
-        return !(isPlaceholderName || hasNoIdentity)
-      })
+      .filter((user) => user.name && !/new user/i.test(user.name))
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
           user.maxHr || MAX_HR_DEFAULT
         )
-
         const matchingAlert = activeAlerts.find(
           (alert) =>
             alert.clientId === user.clientId &&
             (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
         )
-
         return {
           ...user,
           ...hrZoneProps,
           isAlerting: !!matchingAlert,
-          alertMessage: matchingAlert?.message,
+          alertMessage: matchingAlert?.message || 'Checking signal...',
         }
       })
   }, [hrmData, activeAlerts])
@@ -67,85 +62,83 @@ const HrmConnectionPanel = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  // If no tiles are available, show connection UI and skeletons
-  // Note: This UI currently assumes a single, primary HRM connection.
-  // Future iterations may need to address a multi-device connection strategy.
-  return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        width: { xs: '100%', lg: 'calc(50% - 16px)' },
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
-      }}
-    >
-      {isLoading || tileData.length === 0 ? (
+  const renderContent = () => {
+    if (isLoading || tileData.length === 0) {
+      return (
         <>
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-              height: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-            <HRMonitorStatusIndicator
-              deviceStatus={deviceStatus}
-              batteryLevel={batteryLevel}
-            />
-            <ConnectHRMonitorButton
-              connect={handleConnect}
-              disconnect={disconnect}
-              isConnected={isConnected}
-              isSupported={isSupported}
-            />
+          <Box sx={{ width: { xs: '100%', sm: '50%' } }}>
+            <Card
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                minHeight: 220,
+              }}
+              elevation={2}
+            >
+              <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                  {CONNECT_HR_MONITOR_TITLE}
+                </Typography>
+                <Box mt={2} mb={3}>
+                  <HRMonitorStatusIndicator
+                    deviceStatus={deviceStatus}
+                    batteryLevel={batteryLevel}
+                  />
+                </Box>
+                <ConnectHRMonitorButton
+                  connect={handleConnect}
+                  disconnect={disconnect}
+                  isConnected={isConnected}
+                  isSupported={isSupported}
+                  deviceStatus={deviceStatus}
+                />
+              </CardContent>
+            </Card>
           </Box>
           <Box
-            data-testid="hr-tile-grid-item"
             sx={{
-              display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
+              width: { xs: '100%', sm: '50%' },
+              display: { xs: 'none', sm: 'block' },
             }}
           >
             <Skeleton
               variant="rectangular"
-              height={220}
-              sx={{ borderRadius: 3 }}
+              sx={{ borderRadius: 2, height: '100%', minHeight: 220 }}
             />
           </Box>
         </>
-      ) : (
-        tileData.map((user) => (
-          <Box
-            key={user.clientId}
-            data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
-          >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={user.percentage}
-              calories={user.calories}
-              isConnected={user.isConnected}
-              isAlerting={user.isAlerting}
-              {...(user.alertMessage && { alertMessage: user.alertMessage })}
-            />
-          </Box>
-        ))
-      )}
+      )
+    }
+
+    return tileData.map((user) => (
+      <Box
+        key={user.clientId}
+        sx={{ width: { xs: '100%', sm: '50%' }, minHeight: 220 }}
+      >
+        <HrTile
+          name={user.name || ''}
+          bpm={user.value}
+          percentMax={user.percentage}
+          calories={user.calories}
+          isConnected={user.isConnected}
+          isAlerting={user.isAlerting}
+          alertMessage={user.alertMessage}
+        />
+      </Box>
+    ))
+  }
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: { xs: 2, md: 3 },
+      }}
+    >
+      {renderContent()}
     </Box>
   )
 }

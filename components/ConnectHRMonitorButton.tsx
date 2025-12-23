@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
 import BluetoothIcon from '@mui/icons-material/Bluetooth'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
+import CircularProgress from '@mui/material/CircularProgress'
 import {
   BLUETOOTH_NOT_SUPPORTED_TEXT,
   CONNECT_HR_MONITOR_BUTTON_TEXT,
@@ -18,6 +19,7 @@ interface ConnectHRMonitorButtonProps {
   disconnect: () => void
   isConnected: boolean
   isSupported: boolean
+  deviceStatus: string
 }
 
 const ConnectHRMonitorButton = ({
@@ -25,7 +27,14 @@ const ConnectHRMonitorButton = ({
   disconnect,
   isConnected,
   isSupported,
+  deviceStatus,
 }: ConnectHRMonitorButtonProps) => {
+  const lowerCaseStatus = deviceStatus.toLowerCase()
+  const isConnecting =
+    lowerCaseStatus.includes('connecting') ||
+    lowerCaseStatus.includes('scanning') ||
+    lowerCaseStatus.includes('checking')
+
   if (!isSupported) {
     return (
       <Tooltip title={UNSUPPORTED_BLUETOOTH_TOOLTIP}>
@@ -34,6 +43,8 @@ const ConnectHRMonitorButton = ({
             variant="contained"
             disabled
             startIcon={<BluetoothDisabledIcon />}
+            fullWidth
+            size="large"
           >
             {BLUETOOTH_NOT_SUPPORTED_TEXT}
           </Button>
@@ -45,11 +56,12 @@ const ConnectHRMonitorButton = ({
   return isConnected ? (
     <Button
       variant="outlined"
-      color="secondary"
+      color="error"
       onClick={disconnect}
       startIcon={<BluetoothDisabledIcon />}
       aria-label="Disconnect Heart Rate Monitor"
-      sx={{ minHeight: '48px' }}
+      fullWidth
+      size="large"
     >
       {DISCONNECT_HR_MONITOR_BUTTON_TEXT}
     </Button>
@@ -58,11 +70,19 @@ const ConnectHRMonitorButton = ({
       variant="contained"
       color="primary"
       onClick={connect}
-      startIcon={<BluetoothIcon />}
+      startIcon={
+        isConnecting ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          <BluetoothIcon />
+        )
+      }
       aria-label="Connect Heart Rate Monitor"
-      sx={{ minHeight: '48px' }}
+      fullWidth
+      size="large"
+      disabled={isConnecting}
     >
-      {CONNECT_HR_MONITOR_BUTTON_TEXT}
+      {isConnecting ? 'Connecting...' : CONNECT_HR_MONITOR_BUTTON_TEXT}
     </Button>
   )
 }
