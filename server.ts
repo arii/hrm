@@ -24,7 +24,7 @@ import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 import {
   DEFAULT_PORT,
@@ -33,7 +33,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
   SPOTIFY_API_MAX_REQUESTS,
   WS_MAX_CONNECTIONS_PER_IP,
-} from './lib/Constants'
+} from './lib/Constants.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : DEFAULT_PORT // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers

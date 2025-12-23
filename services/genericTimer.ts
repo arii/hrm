@@ -5,7 +5,6 @@
  */
 
 import { GenericTimerState, TimerMode } from '../types/genericTimer'
-import { ValidationError } from '../lib/errors'
 
 /**
  * @callback TimerUpdateCallback
@@ -41,7 +40,7 @@ class GenericTimer {
    */
   constructor({ mode, durationMs = 0, onUpdate }: GenericTimerOptions) {
     if (mode === 'COUNTDOWN' && durationMs <= 0) {
-      throw new ValidationError('Countdown mode requires a positive durationMs.')
+      throw new Error('Countdown mode requires a positive durationMs.')
     }
 
     this.state = {
