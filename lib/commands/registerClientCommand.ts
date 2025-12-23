@@ -3,7 +3,7 @@
 import { WebSocket } from 'ws';
 import { CommandHandler } from './command';
 import { ClientCommandMessage, ClientRegistrationMessage, ExtWebSocket } from '../../types/websocket';
-import logger from '../../utils/logger';
+import logger from '../../utils/logger.js';
 
 export class RegisterClientCommand implements CommandHandler {
     execute(ws: WebSocket, message: ClientCommandMessage): void {

@@ -3,9 +3,9 @@
 import { WebSocket, Server as WebSocketServer } from 'ws';
 import { CommandHandler } from './command';
 import { ClientCommandMessage, SpotifyCommandMessage, SpotifyExecutionMessage, ExtWebSocket } from '../../types/websocket';
-import { serviceContainer } from '../../lib/serviceContainer';
-import { sendWebSocketMessage } from '../../utils/websocketUtils';
-import logger from '../../utils/logger';
+import { serviceContainer } from '../../lib/serviceContainer.js';
+import { sendWebSocketMessage } from '../../utils/websocketUtils.js';
+import logger from '../../utils/logger.js';
 
 type SpotifyCommandDependencies = {
     wss: WebSocketServer;

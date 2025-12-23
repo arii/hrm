@@ -4,7 +4,7 @@ import { WebSocket } from 'ws';
 import { CommandHandler } from './command';
 import { ClientCommandMessage, InitialStateSnapshotPayload, ServerMessage, StateSnapshot } from '../../types/websocket';
 import { HrmStreamData } from '../../types/core';
-import { sendWebSocketMessage } from '../../utils/websocketUtils';
+import { sendWebSocketMessage } from '../../utils/websocketUtils.js';
 
 type GetStateDependencies = {
     getUnifiedStateSnapshot: () => StateSnapshot;

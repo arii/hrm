@@ -4,8 +4,8 @@ import { WebSocket } from 'ws';
 import { CommandHandler } from './command';
 import { ClientCommandMessage, HrmInputMessage, ExtWebSocket } from '../../types/websocket';
 import { HrmStreamData } from '../../types/core';
-import { estimateCaloriesBurned } from '../../lib/calorie-estimation';
-import { CALORIE_DEFAULTS } from '../../utils/constants';
+import { estimateCaloriesBurned } from '../../lib/calorie-estimation.js';
+import { CALORIE_DEFAULTS } from '../../utils/constants.js';
 
 // Dependencies that will be injected
 type HrmDependencies = {

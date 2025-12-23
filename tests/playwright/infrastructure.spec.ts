@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
+import fs from 'fs'
+import path from 'path'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**
@@ -63,11 +65,18 @@ test.describe('Infrastructure & Scripts', () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
+    const logPath = path.join(process.cwd(), 'logs', 'infra-dev-output.log')
+    fs.mkdirSync(path.dirname(logPath), { recursive: true })
+    const logStream = fs.createWriteStream(logPath, { flags: 'a' })
+
     const devServer = spawn('npm', ['run', 'dev'], {
       detached: true,
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
     })
+
+    devServer.stdout.pipe(logStream)
+    devServer.stderr.pipe(logStream)
 
     try {
       await waitForPort(PORT)

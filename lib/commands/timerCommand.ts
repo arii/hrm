@@ -3,7 +3,7 @@
 import { WebSocket } from 'ws';
 import { CommandHandler } from './command';
 import { ClientCommandMessage, TimerCommandMessage } from '../../types/websocket';
-import { serviceContainer } from '../../lib/serviceContainer';
+import { serviceContainer } from '../../lib/serviceContainer.js';
 
 export class TimerCommand implements CommandHandler {
     execute(_ws: WebSocket, message: ClientCommandMessage): void {

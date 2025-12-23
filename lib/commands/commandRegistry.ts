@@ -3,7 +3,7 @@
 import { WebSocket } from 'ws';
 import { ClientCommandMessage } from '../../types/websocket';
 import { CommandHandler } from './command';
-import logger from '../../utils/logger';
+import logger from '../../utils/logger.js';
 
 export class CommandRegistry {
     private commands = new Map<string, CommandHandler>();
