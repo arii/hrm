@@ -1,11 +1,16 @@
-import { PrismaClient } from '@prisma/client'
-import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+import { CreateWorkoutSessionSchema } from '@/lib/validation/schemas'
 
-const prisma = new PrismaClient()
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   const body = await request.json()
-  const { userId, startedAt, notes } = body
+  const validation = CreateWorkoutSessionSchema.safeParse(body)
+
+  if (!validation.success) {
+    return NextResponse.json(validation.error.issues, { status: 400 })
+  }
+
+  const { userId, startedAt, notes } = validation.data
   const workoutSession = await prisma.workoutSession.create({
     data: {
       userId,

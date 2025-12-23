@@ -1,14 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-import { NextRequest, NextResponse } from 'next/server'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+import { UpdateWorkoutSessionSchema } from '@/lib/validation/schemas'
 
 export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
+  _request: Request,
+  { params }: { params: { id: string } }
 ) {
+  const { id } = params
   const workoutSession = await prisma.workoutSession.findUnique({
-    where: { id: context.params.id },
+    where: { id },
   })
   if (!workoutSession) {
     return NextResponse.json(
@@ -20,17 +20,24 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  context: { params: { id: string } }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
+  const { id } = params
   const body = await request.json()
-  const { endedAt, notes } = body
+  const validation = UpdateWorkoutSessionSchema.safeParse(body)
+
+  if (!validation.success) {
+    return NextResponse.json(validation.error.issues, { status: 400 })
+  }
+
+  const dataToUpdate = Object.fromEntries(
+    Object.entries(validation.data).filter(([, value]) => value !== undefined)
+  )
+
   const workoutSession = await prisma.workoutSession.update({
-    where: { id: context.params.id },
-    data: {
-      endedAt,
-      notes,
-    },
+    where: { id },
+    data: dataToUpdate,
   })
   return NextResponse.json(workoutSession)
 }
