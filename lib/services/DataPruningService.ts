@@ -1,6 +1,6 @@
 // lib/services/DataPruningService.ts
 import { HrmDataRepository } from '../repositories/HrmDataRepository'
-import logger from '../../utils/logger'
+import logger from '../../utils/logger.js'
 
 export class DataPruningService {
   private readonly hrmDataRepository: HrmDataRepository
