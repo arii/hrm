@@ -4,7 +4,8 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration } from '@/lib/shared/utils/time'
+import { calculateMaxHr } from '@/lib/shared/utils/health'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 
@@ -43,8 +44,7 @@ export default function ConnectPage() {
   const currentHR = currentUserData?.value || 0
   // Derive calories directly from the WebSocket source of truth, defaulting to 0.
   const accumulatedCalories = currentUserData?.calories ?? 0
-
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
+  const maxHr = calculateMaxHr(userAge)
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
