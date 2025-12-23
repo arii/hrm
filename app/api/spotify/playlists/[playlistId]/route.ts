@@ -24,7 +24,7 @@ import { ApiError } from '@/lib/errors'
  */
 async function getPlaylistTracks(
   _req: Request,
-  context: any
+  context: { params: { playlistId: string } }
 ) {
   // 1. Get the server-side session.
   const session = await getServerSession(authOptions)
@@ -34,7 +34,7 @@ async function getPlaylistTracks(
     throw new ApiError(401, 'Not authenticated or token is missing.')
   }
 
-  // 3. Extract playlistId from the route parameters.
+  // 3. Extract playlistId from the route parameters..
   const { playlistId } = context.params
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')
@@ -61,7 +61,7 @@ async function getPlaylistTracks(
     playlistId,
     undefined, // market
     'items(track(name,artists,album(name,images),duration_ms,uri,explicit,popularity))',
-    limit as any,
+    limit,
     offset
   )
 
