@@ -304,6 +304,7 @@ const TimerControls = () => {
               </Button>
             ) : (
               <Button
+                data-testid="stop-timer-button"
                 variant="contained"
                 onClick={() => sendTimerCommand('STOP')}
                 disabled={connectionStatus !== 'Connected'}
