@@ -98,10 +98,18 @@ export class AudioManager {
    * Set volume (0-100)
    */
   setVolume(volumePercent: number) {
-    this.volume = volumePercent / 100
+    const newVolume = Math.max(0, Math.min(1, volumePercent / 100))
+    this.volume = newVolume
     if (this.shortBeep) this.shortBeep.volume = this.volume
     if (this.longBeep) this.longBeep.volume = this.volume
     // console.log(`[AudioManager] Volume set to ${this.volume}`)
+  }
+
+  /**
+   * Get current volume (0-100)
+   */
+  getVolume() {
+    return this.volume * 100
   }
 
   /**
