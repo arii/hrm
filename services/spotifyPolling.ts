@@ -17,19 +17,7 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { isValidDeviceId } from '../utils/typeGuards.js'
-
-// API endpoint constants (mostly managed by SDK now)
-// TOKEN_URL is handled by TokenManager or SDK
-
-type SpotifyCommand =
-  | 'PLAY'
-  | 'NEXT'
-  | 'PREVIOUS'
-  | 'LOGIN'
-  | 'TRANSFER_PLAYBACK'
-  | 'SET_VOLUME'
-  | 'PAUSE'
-  | 'GET_DEVICES'
+import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -42,7 +30,7 @@ export interface SpotifyTokenResponse {
   scope: string
 }
 
-export class SpotifyPolling {
+export class SpotifyPolling implements SpotifyService {
   /**
    * Public method to force a poll and broadcast current track state.
    */
@@ -51,6 +39,7 @@ export class SpotifyPolling {
   }
   private tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
+  private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
@@ -169,25 +158,43 @@ export class SpotifyPolling {
 
   // Expose start/stop polling publicly (used by server to control lifecycle)
   public startPolling() {
-    if (this.pollInterval) return
+    if (this.pollInterval) return // Already running
 
-    const intervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+    // Interval for currently playing track
+    const trackIntervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
       ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
       : 3000
-    // Poll every `intervalMs` for low-latency updates
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
-      intervalMs
+      trackIntervalMs
     )
-    logger.debug({ intervalMs }, 'Spotify polling started')
+
+    // Interval for available devices (less frequent)
+    const deviceIntervalMs = parseInt(
+      process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000',
+      10
+    )
+    this.devicePollInterval = setInterval(
+      () => this.refreshDevices(),
+      deviceIntervalMs
+    )
+
+    logger.debug(
+      { trackIntervalMs, deviceIntervalMs },
+      'Spotify polling started'
+    )
   }
 
   public stopPolling() {
     if (this.pollInterval) {
       clearInterval(this.pollInterval)
       this.pollInterval = null
-      logger.debug('Spotify polling stopped.')
     }
+    if (this.devicePollInterval) {
+      clearInterval(this.devicePollInterval)
+      this.devicePollInterval = null
+    }
+    logger.debug('Spotify polling stopped.')
   }
 
   public cleanup() {
@@ -281,7 +288,6 @@ export class SpotifyPolling {
     }
     try {
       const response = await this.sdk.player.getAvailableDevices()
-      // FIX: Filter and map to ensure type safety (Device -> SpotifyDevice)
       const validDevices: SpotifyDevice[] = (response.devices || [])
         .filter((d: Device) => d.id !== null)
         .map((d: Device) => ({
@@ -307,9 +313,11 @@ export class SpotifyPolling {
 
   public handleCommand(
     command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    playlistUri?: string
+    params: {
+      deviceId?: string
+      volume?: number
+      playlistUri?: string
+    }
   ) {
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
@@ -323,7 +331,7 @@ export class SpotifyPolling {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
+        await this.executeSpotifyCommand(command, params)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         await logSpotifyCommandError(command, error)
@@ -333,12 +341,17 @@ export class SpotifyPolling {
 
   private async executeSpotifyCommand(
     command: SpotifyCommand,
-    deviceId?: string,
-    volume?: number,
-    playlistUri?: string
+    params: {
+      deviceId?: string
+      volume?: number
+      playlistUri?: string
+    }
   ) {
+    const { deviceId, volume, playlistUri } = params
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
+    // TODO: The 'as any' casts in this function are a temporary workaround for an incorrect SDK type definition.
+    // This should be addressed by contributing a fix to the upstream SDK repository.
 
     switch (command) {
       case 'PLAY':
