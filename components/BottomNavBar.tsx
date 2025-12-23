@@ -29,9 +29,12 @@ export default function BottomNavBar() {
       showLabels
       sx={{
         width: '100%',
-        // The parent FooterControls now handles positioning
-        // zIndex: 1000,
-        // boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        boxShadow: '0px -2px 4px rgba(0, 0, 0, 0.1)',
       }}
     >
       <BottomNavigationAction
