@@ -111,32 +111,33 @@ describe('WebSocket Manager', () => {
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
+  let hrmDataService: HrmDataService
 
   beforeEach(async () => {
     jest.useFakeTimers()
 
     // Mock HrmDataService with an in-memory map for each test
     const mockDataStore = new Map<string, HrmData>()
-    ;(HrmDataService as jest.Mock).mockImplementation(() => {
-      return {
-        save: jest.fn().mockImplementation(async (hrm: HrmData) => {
-          mockDataStore.set(hrm.clientId, hrm)
-        }),
-        findById: jest.fn().mockImplementation(async (id: string) => {
-          return mockDataStore.get(id)
-        }),
-        findAll: jest.fn().mockImplementation(async () => {
-          return Array.from(mockDataStore.values())
-        }),
-        deleteById: jest.fn().mockImplementation(async (id: string) => {
-          mockDataStore.delete(id)
-        }),
-        clear: jest.fn().mockImplementation(async () => {
-          mockDataStore.clear()
-        }),
-        close: jest.fn().mockImplementation(async () => {}),
-      }
-    })
+    hrmDataService = {
+      save: jest.fn().mockImplementation(async (hrm: HrmData) => {
+        mockDataStore.set(hrm.clientId, hrm)
+      }),
+      findById: jest.fn().mockImplementation(async (id: string) => {
+        return mockDataStore.get(id)
+      }),
+      findAll: jest.fn().mockImplementation(async () => {
+        return Array.from(mockDataStore.values())
+      }),
+      deleteById: jest.fn().mockImplementation(async (id: string) => {
+        mockDataStore.delete(id)
+      }),
+      clear: jest.fn().mockImplementation(async () => {
+        mockDataStore.clear()
+      }),
+      close: jest.fn().mockImplementation(async () => {}),
+    } as unknown as HrmDataService
+
+    ;(HrmDataService as jest.Mock).mockImplementation(() => hrmDataService)
 
     mockWss = new (WebSocketServer as jest.Mock)()
     mockServices = {
@@ -169,7 +170,7 @@ describe('WebSocket Manager', () => {
       }
     )
 
-    initSocketManager(mockWss, getSnapshot)
+    initSocketManager(mockWss, getSnapshot, hrmDataService)
 
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
@@ -203,7 +204,7 @@ describe('WebSocket Manager', () => {
 
       // Simulate a PING message from the client
       const message = JSON.stringify({ type: 'PING' })
-      await handleIncomingMessage(mockWs, message, (mockWs as any).clientId)
+      await handleIncomingMessage(mockWs as ExtWebSocket, message, (mockWs as ExtWebSocket).clientId)
 
       expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
       expect(sendWebSocketMessage).toHaveBeenCalledWith(
@@ -229,7 +230,7 @@ describe('WebSocket Manager', () => {
       // Simulate responsiveness by sending pings
       const interval = setInterval(async () => {
         const message = JSON.stringify({ type: 'PING' })
-        await handleIncomingMessage(mockWs, message, (mockWs as any).clientId)
+        await handleIncomingMessage(mockWs as ExtWebSocket, message, (mockWs as ExtWebSocket).clientId)
       }, 25000) // Send a ping every 25 seconds
 
       jest.advanceTimersByTime(150000) // Advance well past the timeout
@@ -248,9 +249,9 @@ describe('WebSocket Manager', () => {
             data: { value: hr, age: 30 },
           })
           await handleIncomingMessage(
-            mockWs as any,
+            mockWs as ExtWebSocket,
             message,
-            (mockWs as any).clientId
+            (mockWs as ExtWebSocket).clientId
           )
         }
 
@@ -270,8 +271,9 @@ describe('WebSocket Manager', () => {
         const lastCall =
           mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
         const finalPayload: HrmData[] = lastCall[1].payload
-        const hrmDataService = new HrmDataService();
-        const clientData = await hrmDataService.findById((mockWs as any).clientId);
+        const clientData = await hrmDataService.findById(
+          (mockWs as any).clientId
+        )
 
         expect(clientData).toBeDefined()
         expect(clientData!.calories).toBeGreaterThan(0.1)

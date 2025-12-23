@@ -40,6 +40,7 @@ yarn-error.log*
 nohup.out
 logs/spotify_tokens.json
 logs/*
+hrm_data.sqlite
 
 # Misc / System / Editor
 /.eslintcache

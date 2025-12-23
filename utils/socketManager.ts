@@ -28,7 +28,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmDataService = new HrmDataService()
+let hrmDataService: HrmDataService
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -40,8 +40,10 @@ const clientSessionState = new Map<
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  getSnapshot: () => StateSnapshot
+  getSnapshot: () => StateSnapshot,
+  hrmDataServiceInstance: HrmDataService
 ) => {
+  hrmDataService = hrmDataServiceInstance
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
 

@@ -175,7 +175,9 @@ app
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, getUnifiedStateSnapshot)
+    const hrmDataService = new HrmDataService()
+    await hrmDataService.init()
+    initSocketManager(wss, getUnifiedStateSnapshot, hrmDataService)
 
     // --- Express Routing ---
 
@@ -291,7 +293,6 @@ app
     const shutdown = async () => {
       logger.info('Shutting down server...')
       await new Promise<void>((resolve) => server.close(() => resolve()))
-      const hrmDataService = new HrmDataService()
       await hrmDataService.close()
       process.exit(0)
     }

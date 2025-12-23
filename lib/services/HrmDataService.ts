@@ -1,27 +1,27 @@
 // lib/services/HrmDataService.ts
-import sqlite3 from 'sqlite3';
-import { HrmStreamData } from '../../types/core';
+import sqlite3 from 'sqlite3'
+import { HrmStreamData } from '../../types/core'
 
-const DB_FILE = 'hrm_data.sqlite';
+const DB_FILE = 'hrm_data.sqlite'
 
 export class HrmDataService {
-  private db: sqlite3.Database | null = null;
-  private dbFile: string;
+  private db: sqlite3.Database | null = null
+  private dbFile: string
 
   constructor(dbFile: string = DB_FILE) {
-    this.dbFile = dbFile;
+    this.dbFile = dbFile
   }
 
   async init(): Promise<void> {
     if (this.db) {
-      return;
+      return
     }
 
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(this.dbFile, (err) => {
         if (err) {
-          console.error('Error opening database', err);
-          reject(err);
+          console.error('Error opening database', err)
+          reject(err)
         } else {
           const sql = `
             CREATE TABLE IF NOT EXISTS hrm_data (
@@ -33,18 +33,18 @@ export class HrmDataService {
               name TEXT,
               restingHr INTEGER
             )
-          `;
+          `
           this.db!.run(sql, (err) => {
             if (err) {
-              console.error('Error creating table', err);
-              reject(err);
+              console.error('Error creating table', err)
+              reject(err)
             } else {
-              resolve();
+              resolve()
             }
-          });
+          })
         }
-      });
-    });
+      })
+    })
   }
 
   async save(data: HrmStreamData): Promise<void> {
