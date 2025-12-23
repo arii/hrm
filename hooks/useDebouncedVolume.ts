@@ -1,8 +1,7 @@
 // hooks/useDebouncedVolume.ts
 import { useEffect } from 'react'
 import { useDebounce } from './useDebounce'
-
-const STORAGE_KEY_VOL = 'hrm-preferred-volume'
+import { STORAGE_KEY_VOL } from '@/constants/storageKeys'
 
 /**
  * A hook that debounces the volume value and persists it to localStorage.

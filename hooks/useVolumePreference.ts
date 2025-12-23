@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
 import useDebouncedVolume from './useDebouncedVolume'
-
-const STORAGE_KEY_VOL = 'hrm-preferred-volume' // Stores the user's last chosen volume
-const STORAGE_KEY_MUTE = 'hrm-muted'
+import {
+  STORAGE_KEY_VOL,
+  STORAGE_KEY_MUTE,
+} from '@/constants/storageKeys'
 
 export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))

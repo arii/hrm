@@ -14,9 +14,9 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 
 import { useAudioContext } from '@/context/AudioContext'
+import { STORAGE_KEY_VOL } from '@/constants/storageKeys'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const STORAGE_KEY_VOL = 'hrm-preferred-volume'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -31,14 +31,23 @@ const TimerDisplay = () => {
   } = timerData
 
   useEffect(() => {
-    return () => {
+    const handleBeforeUnload = () => {
       try {
         if (volume > 0) {
           window.localStorage.setItem(STORAGE_KEY_VOL, String(volume))
         }
       } catch (error) {
-        console.warn('Could not persist volume on unmount:', error)
+        // This may fail in some browsers during unload, so we'll just log it.
+        console.warn('Could not persist volume on page unload:', error)
       }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Also, perform the save on component unmount for single-page navigation
+      handleBeforeUnload()
     }
   }, [volume])
 
