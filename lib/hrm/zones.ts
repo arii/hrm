@@ -4,6 +4,7 @@
  * This module is independent of any specific UI framework or theme.
  */
 
+import { HeartRate } from './HeartRate'
 import { HrZoneName } from '../shared/hr-zones'
 
 // --- Constants ---
@@ -24,12 +25,15 @@ export interface HrZone {
 
 /**
  * Calculates the current heart rate zone, and percentage of max HR.
- * @param {number} currentHr - The current heart rate in beats per minute.
- * @param {number} maxHr - The user's maximum heart rate.
+ * @param {HeartRate} currentHr - The current heart rate value object.
+ * @param {HeartRate} maxHr - The user's maximum heart rate value object.
  * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
  */
-export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
+export const calculateHrZone = (
+  currentHr: HeartRate,
+  maxHr: HeartRate
+): HrZone => {
+  if (currentHr.getValue() <= 0 || maxHr.getValue() <= 0) {
     return {
       zoneName: HrZoneName.NoData,
       percentage: 0,
@@ -37,7 +41,7 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
     }
   }
 
-  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
+  const percentageOfMax = currentHr.percentageOf(maxHr)
   let calculatedZone = HR_ZONE_DEFINITIONS[0]!
 
   // Iterate backwards to find the correct zone
@@ -52,6 +56,6 @@ export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
   return {
     zoneName: calculatedZone.name,
     percentage: percentageOfMax,
-    bpm: currentHr,
+    bpm: currentHr.getValue(),
   }
 }
