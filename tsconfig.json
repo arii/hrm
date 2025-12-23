@@ -41,6 +41,7 @@
   ],
   "exclude": [
     "node_modules",
+    "tests/unit",
     "tests/playwright",
     "playwright.config.ts",
     ".stories",

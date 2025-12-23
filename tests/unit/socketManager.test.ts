@@ -21,9 +21,8 @@ import {
   HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
-  ExtWebSocket,
 } from '../../types/websocket'
-import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
+import { broadcast } from '../../utils/broadcast'
 import logger from '@/utils/logger'
 
 // Mock dependencies
@@ -36,8 +35,8 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 // Mock broadcaster to prevent side-effects between tests
-jest.mock('../../utils/websocketUtils.js', () => ({
-  sendWebSocketMessage: jest.fn(),
+jest.mock('../../utils/broadcast', () => ({
+  initBroadcaster: jest.fn(),
   broadcast: jest.fn(),
 }))
 
@@ -130,7 +129,7 @@ describe('WebSocket Manager', () => {
 
     it('should set lastPingTime on new connection', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
+      const mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs) // Manually trigger connection event
 
@@ -140,7 +139,7 @@ describe('WebSocket Manager', () => {
 
     it('should update lastPingTime on PING message and respond with PONG', () => {
       initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
+      const mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
 
@@ -152,11 +151,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        mockWs,
-        { type: 'PONG' },
-        'socketManager.PING'
-      )
+      expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify({ type: 'PONG' }))
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {
@@ -252,7 +247,7 @@ describe('WebSocket Manager', () => {
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+      const finalPayload: HrmData[] = lastCall[0].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -320,8 +315,8 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
 
       expect(getSnapshot).toHaveBeenCalled()
-      expect(sendWebSocketMessage).toHaveBeenCalled()
-      const sentData = (sendWebSocketMessage as jest.Mock).mock.calls[0][1]
+      expect(mockWs.send).toHaveBeenCalled()
+      const sentData = JSON.parse((mockWs.send as jest.Mock).mock.calls[0][0])
       expect(sentData.type).toBe('INITIAL_STATE')
       expect(sentData.payload).toHaveProperty('timer')
       expect(sentData.payload).toHaveProperty('spotify')
@@ -347,14 +342,10 @@ describe('WebSocket Manager', () => {
 
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
-      )
+      expect(broadcast).toHaveBeenCalledWith({
+        type: 'HRM_UPDATE',
+        payload: [],
+      })
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
@@ -371,12 +362,8 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      expect(sendWebSocketMessage).toHaveBeenCalled()
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        'socketManager.SPOTIFY_COMMAND'
-      )
+      expect(dashboardWs.send).toHaveBeenCalled()
+      expect(controllerWs.send).not.toHaveBeenCalled()
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
         undefined,

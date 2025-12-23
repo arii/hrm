@@ -43,7 +43,8 @@ export default function ConnectPage() {
   const currentHR = currentUserData?.value || 0
   // Derive calories directly from the WebSocket source of truth, defaulting to 0.
   const accumulatedCalories = currentUserData?.calories ?? 0
-  const maxHr = calculateMaxHr(userAge)
+
+  const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
