@@ -5,7 +5,7 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { signIn } from 'next-auth/react'
 import SpotifyLoginButton from '@/components/SpotifyLoginButton'
-import { ErrorProvider, useError } from '@/context/ErrorContext'
+import { ErrorProvider } from '@/context/ErrorContext'
 
 jest.mock('next-auth/react', () => ({
   signIn: jest.fn(),
