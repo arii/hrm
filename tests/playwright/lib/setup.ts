@@ -157,6 +157,9 @@ export async function replaceIframeWithStableWorkout(
       state: 'attached',
       timeout: 2000,
     })
+    // Wait for the content to render inside the iframe
+    const iframe = page.frameLocator('iframe')
+    await iframe.getByText('Sample Workout Plan').waitFor({ timeout: 2000 })
   } catch {
     console.warn(
       'Warning: Iframe with data:text/html src not found. Iframe may be missing.'
