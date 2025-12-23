@@ -15,7 +15,8 @@ import type {
 
 /**
  * Extends the base WebSocket type from the 'ws' library to include
- * application-specific properties for tracking client state.
+ * application-specific properties for tracking client state, such as a
+ * unique identifier and the last ping time for watchdog monitoring.
  */
 export interface ExtWebSocket extends WebSocket {
   clientId: string
