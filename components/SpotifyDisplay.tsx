@@ -6,7 +6,6 @@ import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
 import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import PauseIcon from '@mui/icons-material/Pause'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SkipNextIcon from '@mui/icons-material/SkipNext'
@@ -19,27 +18,19 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import logger from '@/utils/logger'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
-import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
-import { SpotifyDevice } from '@/types/core'
+import SpotifyConnectDevicePicker from './Spotify/SpotifyConnectDevicePicker'
 
 // 1. State Shape
 interface SpotifyDisplayState {
   displayVolume: number
   isMuted: boolean
   lastVolume: number // Last non-zero volume
-  selectedDeviceId: string
-  availableDevices: SpotifyDevice[]
-  deviceMenuAnchor: null | HTMLElement
 }
 
 // 2. Actions
 type SpotifyDisplayAction =
   | { type: 'SET_VOLUME'; payload: number }
   | { type: 'TOGGLE_MUTE' }
-  | { type: 'SET_DEVICES'; payload: SpotifyDevice[] }
-  | { type: 'SELECT_DEVICE'; payload: string }
-  | { type: 'OPEN_DEVICE_MENU'; payload: HTMLElement }
-  | { type: 'CLOSE_DEVICE_MENU' }
   | {
       type: 'SYNC_WITH_WEBSOCKET'
       payload: { volume?: number; isMuted?: boolean }
@@ -53,9 +44,6 @@ const initialStateFactory = (
   displayVolume: volume,
   isMuted: isMuted,
   lastVolume: volume > 0 ? volume : 70, // Store last non-zero volume
-  selectedDeviceId: '',
-  availableDevices: [],
-  deviceMenuAnchor: null,
 })
 
 // 4. Reducer Logic
@@ -99,18 +87,6 @@ const spotifyDisplayReducer = (
         }
       }
     }
-    case 'SET_DEVICES':
-      return { ...state, availableDevices: action.payload }
-    case 'SELECT_DEVICE':
-      return {
-        ...state,
-        selectedDeviceId: action.payload,
-        deviceMenuAnchor: null,
-      }
-    case 'OPEN_DEVICE_MENU':
-      return { ...state, deviceMenuAnchor: action.payload }
-    case 'CLOSE_DEVICE_MENU':
-      return { ...state, deviceMenuAnchor: null }
     default:
       return state
   }
@@ -127,13 +103,7 @@ const SpotifyDisplay = () => {
     spotifyDisplayReducer,
     initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
   )
-  const {
-    displayVolume,
-    isMuted,
-    selectedDeviceId,
-    availableDevices,
-    deviceMenuAnchor,
-  } = state
+  const { displayVolume, isMuted } = state
 
   const handleLogout = async () => {
     await signOut({ redirect: false })
@@ -162,9 +132,8 @@ const SpotifyDisplay = () => {
   const sendVolumeCommand = useCallback(
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
-      const targetDeviceId =
-        selectedDeviceId ||
-        availableDevices.find((device) => device.is_active)?.id
+
+      const targetDeviceId = spotifyData.devices.find((d) => d.is_active)?.id
       if (!targetDeviceId) {
         console.warn(
           '[SpotifyDisplay] No target device for volume command. Aborting.'
@@ -180,7 +149,7 @@ const SpotifyDisplay = () => {
       }
       sendData(message)
     },
-    [availableDevices, connectionStatus, selectedDeviceId, sendData]
+    [connectionStatus, sendData, spotifyData.devices]
   )
 
   // Handler for the VolumeSlider component's onChange
@@ -203,8 +172,8 @@ const SpotifyDisplay = () => {
     const newVolume = newMutedState
       ? 0
       : state.lastVolume > 0
-        ? state.lastVolume
-        : 50
+      ? state.lastVolume
+      : 50
 
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
@@ -220,50 +189,6 @@ const SpotifyDisplay = () => {
         logger.warn({ error: err }, 'Failed to adjust local Spotify volume')
       )
   }, [player, displayVolume, isMuted])
-
-  // Effect to fetch available devices
-  useEffect(() => {
-    if (isLoggedIn && spotifyData.trackName) {
-      const fetchDevices = async () => {
-        try {
-          const response = await fetch(API_SPOTIFY_DEVICES)
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
-          const devices = await response.json()
-          const deviceArray = Array.isArray(devices) ? devices : []
-          dispatch({ type: 'SET_DEVICES', payload: deviceArray })
-        } catch (error) {
-          logger.error({ error }, 'Failed to fetch Spotify devices')
-        }
-      }
-      fetchDevices()
-    } else {
-      dispatch({ type: 'SET_DEVICES', payload: [] })
-      dispatch({ type: 'SELECT_DEVICE', payload: '' })
-    }
-  }, [isLoggedIn, spotifyData.trackName, isReady])
-
-  // Effect to auto-select the active device
-  useEffect(() => {
-    if (availableDevices.length === 0) {
-      if (selectedDeviceId !== '') {
-        dispatch({ type: 'SELECT_DEVICE', payload: '' })
-      }
-      return
-    }
-    const activeDevice = availableDevices.find((device) => device.is_active)
-    if (!selectedDeviceId && activeDevice) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice.id })
-      return
-    }
-    if (
-      selectedDeviceId &&
-      !availableDevices.some((device) => device.id === selectedDeviceId)
-    ) {
-      dispatch({ type: 'SELECT_DEVICE', payload: activeDevice?.id ?? '' })
-    }
-  }, [availableDevices, selectedDeviceId])
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK',
@@ -283,7 +208,6 @@ const SpotifyDisplay = () => {
   }
 
   const handleDeviceSelect = (deviceId: string) => {
-    dispatch({ type: 'SELECT_DEVICE', payload: deviceId })
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
   }
 
@@ -423,15 +347,7 @@ const SpotifyDisplay = () => {
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
           />
-          <SpotifyDeviceSelectorWrapper
-            availableDevices={availableDevices}
-            deviceMenuAnchor={deviceMenuAnchor}
-            onDeviceSelect={handleDeviceSelect}
-            onMenuOpen={(e) =>
-              dispatch({ type: 'OPEN_DEVICE_MENU', payload: e.currentTarget })
-            }
-            onMenuClose={() => dispatch({ type: 'CLOSE_DEVICE_MENU' })}
-          />
+          <SpotifyConnectDevicePicker onDeviceSelect={handleDeviceSelect} />
           <Button
             variant="outlined"
             size="small"
