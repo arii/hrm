@@ -1,9 +1,11 @@
 // theme/designTokens.ts
 
+import { PaletteMode } from '@mui/material';
+
 export const designTokens = {
   light: {
     palette: {
-      mode: 'light',
+      mode: 'light' as PaletteMode,
       primary: {
         main: '#1976d2',
       },
@@ -26,7 +28,7 @@ export const designTokens = {
   },
   dark: {
     palette: {
-      mode: 'dark',
+      mode: 'dark' as PaletteMode,
       primary: {
         main: '#90caf9',
       },
