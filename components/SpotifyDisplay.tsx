@@ -183,8 +183,8 @@ const SpotifyDisplay = () => {
     const newVolume = newMutedState
       ? 0
       : state.lastVolume > 0
-      ? state.lastVolume
-      : 50
+        ? state.lastVolume
+        : 50
 
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume

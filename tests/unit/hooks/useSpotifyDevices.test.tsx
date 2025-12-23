@@ -1,7 +1,6 @@
 /** @jest-environment jsdom */
 import { renderHook, act } from '@testing-library/react'
 import useSpotifyDevices from '@/hooks/useSpotifyDevices'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import { SpotifyDevice } from '@/types/core'
 
 const mockDevices: SpotifyDevice[] = [
@@ -28,13 +27,13 @@ describe('useSpotifyDevices', () => {
       ok: true,
       json: async () => mockDevices,
     })
-    const { result, waitForNextUpdate } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices())
 
     expect(result.current.loading).toBe(true)
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
 
     expect(result.current.loading).toBe(false)
     expect(result.current.devices).toEqual(mockDevices)
@@ -43,13 +42,13 @@ describe('useSpotifyDevices', () => {
 
   it('should handle fetch error', async () => {
     ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'))
-    const { result, waitForNextUpdate } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices())
 
     expect(result.current.loading).toBe(true)
 
     await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      });
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
 
     expect(result.current.loading).toBe(false)
     expect(result.current.devices).toEqual([])
@@ -61,11 +60,11 @@ describe('useSpotifyDevices', () => {
       ok: true,
       json: async () => [],
     })
-    const { result, waitForNextUpdate } = renderHook(() => useSpotifyDevices())
+    const { result } = renderHook(() => useSpotifyDevices())
 
     await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      });
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
 
     expect(result.current.devices).toEqual([])
     ;(fetch as jest.Mock).mockResolvedValueOnce({

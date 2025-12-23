@@ -27,7 +27,9 @@ describe('SpotifyConnectDevicePicker', () => {
         onDeviceSelect={jest.fn()}
       />
     )
-    const button = screen.getByRole('button', { name: /select playback device/i })
+    const button = screen.getByRole('button', {
+      name: /select playback device/i,
+    })
     expect(button).toBeInTheDocument()
     fireEvent.click(button)
     expect(screen.getByRole('menu')).toBeInTheDocument()
