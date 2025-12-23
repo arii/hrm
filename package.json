@@ -113,6 +113,7 @@
     "@types/ws": "^8.18.1",
     "babel-jest": "^30.2.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "clinic": "^13.0.0",
     "cross-env": "^10.1.0",
     "eslint": "9.39.2",
     "eslint-config-next": "16.0.10",
