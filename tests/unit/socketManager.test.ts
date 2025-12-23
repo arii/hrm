@@ -26,6 +26,7 @@ import {
 import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { serviceContainer } from '../../lib/serviceContainer.js'
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -106,10 +107,12 @@ describe('WebSocket Manager', () => {
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
+  let hrmDataRepository: HrmDataRepository
 
   beforeEach(() => {
     jest.useFakeTimers()
     mockWss = new (WebSocketServer as jest.Mock)()
+    hrmDataRepository = new HrmDataRepository()
     mockServices = {
       tabataService: {
         handleCommand: jest.fn(),
@@ -140,7 +143,7 @@ describe('WebSocket Manager', () => {
       }
     )
 
-    initSocketManager(mockWss, getSnapshot)
+    initSocketManager(mockWss, getSnapshot, hrmDataRepository)
 
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)

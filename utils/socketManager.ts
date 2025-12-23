@@ -27,8 +27,8 @@ import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
+let hrmDataRepository: HrmDataRepository
 
-export const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -40,10 +40,12 @@ const clientSessionState = new Map<
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  getSnapshot: () => StateSnapshot
+  getSnapshot: () => StateSnapshot,
+  repository: HrmDataRepository
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
+  hrmDataRepository = repository
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
@@ -103,7 +105,9 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  hrmDataRepository.clear()
+  if (hrmDataRepository) {
+    hrmDataRepository.clear()
+  }
   clientSessionState.clear()
 }
 

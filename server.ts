@@ -174,13 +174,18 @@ app
         .isReady(),
     })
 
-    // 5. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(wss, getUnifiedStateSnapshot)
+    // 5. Create HrmDataRepository instance
+    const hrmDataRepository = new HrmDataRepository()
 
-    // 6. Initialize Data Pruning Service
-    const retentionDays = process.env.DATA_RETENTION_PERIOD_DAYS
-      ? parseInt(process.env.DATA_RETENTION_PERIOD_DAYS, 10)
-      : 30
+    // 6. Initialize WebSocket Manager (to handle commands and connections)
+    initSocketManager(wss, getUnifiedStateSnapshot, hrmDataRepository)
+
+    // 7. Initialize Data Pruning Service
+    const retentionDaysStr = process.env.DATA_RETENTION_PERIOD_DAYS
+    const retentionDays =
+      retentionDaysStr && !isNaN(parseInt(retentionDaysStr, 10))
+        ? parseInt(retentionDaysStr, 10)
+        : 30
     const dataPruningService = new DataPruningService(
       hrmDataRepository,
       retentionDays
