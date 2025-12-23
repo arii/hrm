@@ -64,20 +64,31 @@ test.describe('Infrastructure & Scripts', () => {
 
     const PORT = 3005
     const devServer = spawn('npm', ['run', 'dev'], {
-      detached: true,
+      detached: true, // Use detached to create a process group
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
     })
 
+    // Capture stdout and stderr to log them on failure
+    let stdout = ''
+    let stderr = ''
+    devServer.stdout.on('data', (data) => (stdout += data.toString()))
+    devServer.stderr.on('data', (data) => (stderr += data.toString()))
+
     try {
       await waitForPort(PORT)
+    } catch (error) {
+      // If waitForPort fails, log the server output and re-throw
+      console.error('DEV SERVER STDOUT:\n', stdout)
+      console.error('DEV SERVER STDERR:\n', stderr)
+      throw error // Re-throw the original error to fail the test
     } finally {
-      // Cleanup: Kill the process group, wrapping in a try/catch in case
-      // the process already exited (e.g., due to a startup failure).
+      // Cleanup: Kill the entire process group.
+      // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
       try {
         if (devServer.pid) process.kill(-devServer.pid)
       } catch (_e) {
-        // Ignore errors, likely "ESRCH" (process already gone).
+        // Ignore errors, likely "ESRCH" if the process already terminated.
       }
     }
   })
@@ -103,8 +114,17 @@ test.describe('Infrastructure & Scripts', () => {
       env,
     })
 
+    let stdout = ''
+    let stderr = ''
+    prodServer.stdout.on('data', (data) => (stdout += data.toString()))
+    prodServer.stderr.on('data', (data) => (stderr += data.toString()))
+
     try {
       await waitForPort(PORT)
+    } catch (error) {
+      console.error('PROD SERVER STDOUT:\n', stdout)
+      console.error('PROD SERVER STDERR:\n', stderr)
+      throw error
     } finally {
       try {
         if (prodServer.pid) process.kill(-prodServer.pid)
