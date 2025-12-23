@@ -40,7 +40,7 @@ const REQUIRED_DEPS = [
 
 const REQUIRED_FILES = [
   '.storybook/main.ts',
-  '.storybook/preview.ts',
+  '.storybook/preview.tsx',
   'components/HrTile.tsx',
   'components/HrTile.stories.tsx', // The critical missing piece from the review
 ]
