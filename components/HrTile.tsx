@@ -2,6 +2,7 @@
 'use client'
 import { HrTileProps } from '@/types'
 import Box from '@mui/material/Box'
+import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import CircularProgress from '@mui/material/CircularProgress'
 import Tooltip from '@mui/material/Tooltip'
@@ -38,7 +39,7 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor, zoneName } = getHrZoneProps(percentMax, 100)
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -46,124 +47,143 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
+  const ariaLabel = `Heart rate for ${name}: ${
+    isConnected
+      ? `${bpm} BPM, ${percentMax}% of max, Zone: ${zoneName}`
+      : 'Disconnected'
+  }`
+
   return (
     <Tooltip title={tooltipTitle} arrow>
       <StyledCard
         data-testid="hr-tile-card"
-        role="region"
-        aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum`}
         sx={{
           backgroundColor: backgroundColor,
           color: '#fff',
           textAlign: 'center',
-          minHeight: 180,
+          minHeight: 220,
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           position: 'relative',
-          opacity: isConnected ? 1 : 0.6,
-          transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
-          }),
+          opacity: isConnected ? 1 : 0.65,
+          transition: theme.transitions.create(
+            ['opacity', 'background-color'],
+            {
+              duration: theme.transitions.duration.short,
+            }
+          ),
+          '&:hover': {
+            transform: 'scale(1.02)',
+            boxShadow: theme.shadows[8],
+          },
         }}
       >
-        {/* --- Disconnected Icon --- */}
-        {!isConnected && (
-          <WifiOffIcon
-            sx={{
-              position: 'absolute',
-              top: theme.spacing(1),
-              right: theme.spacing(1),
-              fontSize: '1.5rem',
-              color: theme.palette.warning.main,
-            }}
-          />
-        )}
-
-        {/* --- Alerting Overlay --- */}
-        {isAlerting && (
-          <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
-            <CircularProgress size={30} sx={{ color: 'white' }} />
-            <Typography
-              variant="caption"
-              sx={{ mt: 1, color: 'white', textAlign: 'center' }}
-            >
-              {alertMessage}
-            </Typography>
-          </Box>
-        )}
-
-        <Box aria-live="polite" aria-atomic="true">
-          <CardContent sx={{ p: 0 }}>
-            <Typography
-              data-testid="live-hr-percent"
+        <CardActionArea
+          aria-label={ariaLabel}
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          {/* --- Disconnected Icon --- */}
+          {!isConnected && (
+            <WifiOffIcon
               sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                animationPlayState:
-                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
+                position: 'absolute',
+                top: theme.spacing(1.5),
+                right: theme.spacing(1.5),
+                fontSize: '2rem',
+                color: 'rgba(255, 255, 255, 0.7)',
               }}
-            >
-              {percentMax}%
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'center',
-                mt: 1,
-              }}
-            >
-              {/* BPM Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {bpm}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
-              </Typography>
+            />
+          )}
 
-              {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(calories)}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  KCAL
-                </Typography>
+          {/* --- Alerting Overlay --- */}
+          {isAlerting && (
+            <Box sx={overlayStyles} data-testid="hr-tile-alert-overlay">
+              <CircularProgress size={30} sx={{ color: 'white' }} />
+              <Typography
+                variant="caption"
+                sx={{ mt: 1, color: 'white', textAlign: 'center' }}
+              >
+                {alertMessage}
               </Typography>
             </Box>
-            {name && !/^(user|new user)$/i.test(name) && (
+          )}
+
+          <Box
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{ width: '100%', p: 2 }}
+          >
+            <CardContent sx={{ p: '0 !important' }}>
               <Typography
-                variant="subtitle1"
+                data-testid="live-hr-percent"
+                sx={{
+                  fontFamily:
+                    'var(--font-roboto-mono), "Courier New", monospace',
+                  fontSize: { xs: '3rem', sm: '3.5rem', md: '4rem' },
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  textShadow: '0 2px 4px rgba(0,0,0,0.25)',
+                  animation: 'subtle-pulse 2s infinite ease-in-out',
+                  animationPlayState:
+                    bpm > 0 && !isAlerting && isConnected
+                      ? 'running'
+                      : 'paused',
+                }}
+              >
+                {percentMax}%
+              </Typography>
+              <Typography
+                variant="h5"
+                component="div"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-                  letterSpacing: '0.05em',
-                  mt: 1,
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
+                  px: 1,
                 }}
               >
                 {name}
               </Typography>
-            )}
-          </CardContent>
-        </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-around',
+                  alignItems: 'baseline',
+                  mt: 1,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {bpm}{' '}
+                  <Typography
+                    variant="caption"
+                    component="span"
+                    sx={{ opacity: 0.8 }}
+                  >
+                    BPM
+                  </Typography>
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {Math.floor(calories)}{' '}
+                  <Typography
+                    variant="caption"
+                    component="span"
+                    sx={{ opacity: 0.8 }}
+                  >
+                    KCAL
+                  </Typography>
+                </Typography>
+              </Box>
+            </CardContent>
+          </Box>
+        </CardActionArea>
       </StyledCard>
     </Tooltip>
   )

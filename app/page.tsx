@@ -6,6 +6,7 @@
 'use client'
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
+import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
@@ -71,38 +72,38 @@ const Dashboard = () => {
         backgroundColor: 'background.default',
       }}
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        {/* --------------------- TOP ROW: TIMER + HR TILES --------------------- */}
-
-        {/* 1. TABATA TIMER - Componentized */}
-        <Box
-          sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
-        >
+      <Grid container spacing={{ xs: 2, md: 3 }}>
+        {/* Main Dashboard Content */}
+        <Grid item xs={12} lg={6}>
           <TimerDisplay />
-        </Box>
+        </Grid>
 
-        <ErrorBoundary fallback={<ErrorFallback />}>
-          <HrmConnectionPanel />
-        </ErrorBoundary>
+        <Grid item xs={12} lg={6}>
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <HrmConnectionPanel />
+          </ErrorBoundary>
+        </Grid>
 
-        <Box sx={{ width: '100%' }}>
+        <Grid item xs={12}>
           {process.env.NEXT_PUBLIC_USE_NATIVE_TABLE ? (
             <WorkoutTableViewer docId={DOC_ID} />
           ) : (
             <GoogleDocViewer
               title="Today's Training Regimen"
               embedUrl={DOC_URL}
-              height={500}
+              height={350}
               isShrunk={docIsManuallyShrunk}
               onToggleShrink={() => setDocIsManuallyShrunk((prev) => !prev)}
             />
           )}
-        </Box>
-      </Box>
+        </Grid>
 
-      <ErrorBoundary fallback={<ErrorFallback />}>
-        <SpotifyDisplay />
-      </ErrorBoundary>
+        <Grid item xs={12}>
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <SpotifyDisplay />
+          </ErrorBoundary>
+        </Grid>
+      </Grid>
     </Container>
   )
 }
