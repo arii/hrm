@@ -49,6 +49,8 @@ const INITIAL_STATE: WebSocketState = {
   spotifyData: {
     trackName: 'Awaiting Login...',
     artist: '',
+    albumName: '',
+    albumArtUrl: '',
     isPlaying: false,
     devices: [],
     volume: 70,
