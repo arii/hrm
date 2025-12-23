@@ -20,7 +20,7 @@ interface HrmHistoryChartProps {
 const HrmHistoryChart = ({ data }: HrmHistoryChartProps) => {
 
   return (
-    <Box sx={{ height: 400 }}>
+    <Box sx={{ height: 400 }} data-testid="hrm-history-chart">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}

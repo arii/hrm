@@ -117,6 +117,8 @@ export {
   startMockHrStreaming,
 } from './setup'
 
+export { seedHrmData } from './hrm'
+
 // ============================================================================
 // Re-export Playwright test utilities for convenience
 // ============================================================================

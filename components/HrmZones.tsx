@@ -54,7 +54,7 @@ const HrmZones = ({ data }: HrmZonesProps) => {
   }, [data, userSettings.maxHr])
 
   return (
-    <Paper elevation={3} sx={{ p: 2, mt: 2, height: 300 }}>
+    <Paper elevation={3} sx={{ p: 2, mt: 2, height: 300 }} data-testid="hrm-zones-chart">
       <Typography variant="h6" gutterBottom>
         Time in Zones (minutes)
       </Typography>

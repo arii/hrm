@@ -79,8 +79,7 @@ export const addHrmDataPoint = async (dataPoint: HrmDataPoint) => {
   // Validate the data point against the schema.
   const validationResult = HrmDataPointSchema.safeParse(dataPoint)
   if (!validationResult.success) {
-    console.error('Invalid HRM data point:', validationResult.error)
-    return
+    throw new Error(`Invalid HRM data point: ${validationResult.error.message}`)
   }
 
   pendingWrites.push(dataPoint)
