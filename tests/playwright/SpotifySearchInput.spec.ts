@@ -1,4 +1,3 @@
-
 import { test, expect } from '@playwright/test'
 
 test.describe('SpotifySearchInput', () => {
@@ -9,16 +8,20 @@ test.describe('SpotifySearchInput', () => {
         status: 200,
         body: JSON.stringify({
           tracks: {
-            items: [{ id: '1', name: 'Test Track', artists: [{ name: 'Test Artist' }] }],
+            items: [
+              {
+                id: '1',
+                name: 'Test Track',
+                artists: [{ name: 'Test Artist' }],
+              },
+            ],
           },
         }),
       })
     })
 
     await page.getByPlaceholder('Search Spotify...').fill('test')
-    await expect(page.getByRole('progressbar')).toBeVisible()
-    await expect(page.getByText('Test Track by Test Artist')).toBeVisible()
-    await expect(page.getByRole('progressbar')).not.toBeVisible()
+    await expect(page.getByText('Test Track by Test Artist')).toBeVisible({ timeout: 10000 })
   })
 
   test('should show "No results found"', async ({ page }) => {

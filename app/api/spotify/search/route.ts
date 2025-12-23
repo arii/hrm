@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getToken } from 'next-auth/jwt'
@@ -12,7 +11,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const q = searchParams.get('q')
   if (!q) {
-    return NextResponse.json({ error: 'Query parameter "q" is required' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Query parameter "q" is required' },
+      { status: 400 }
+    )
   }
 
   try {
@@ -24,13 +26,16 @@ export async function GET(req: NextRequest) {
         expires_in: token.expiresIn as number,
         refresh_token: token.refreshToken as string,
       }
-    );
+    )
 
-    const results = await sdk.search(q, ["track"], 'US', 5);
+    const results = await sdk.search(q, ['track'], 'US', 5)
 
     return NextResponse.json(results)
   } catch (error) {
     console.error('Error searching Spotify:', error)
-    return NextResponse.json({ error: 'Error searching Spotify' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Error searching Spotify' },
+      { status: 500 }
+    )
   }
 }

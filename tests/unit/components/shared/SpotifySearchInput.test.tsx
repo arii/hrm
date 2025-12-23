@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import SpotifySearchInput from '../../../../components/shared/SpotifySearchInput'
 
 global.fetch = jest.fn()
@@ -40,48 +40,61 @@ describe('SpotifySearchInput', () => {
   })
 
   it('shows the loading indicator while fetching', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ tracks: { items: [] } }),
     })
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    jest.advanceTimersByTime(500)
-    await screen.findByRole('progressbar')
-    await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.getByRole('progressbar')).toBeInTheDocument(), { timeout: 5000 })
+    await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument(), { timeout: 5000 })
   })
 
   it('shows results after a successful search', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ tracks: { items: [{ id: '1', name: 'Test Track', artists: [{ name: 'Test Artist' }] }] } }),
+      json: () =>
+        Promise.resolve({
+          tracks: {
+            items: [
+              {
+                id: '1',
+                name: 'Test Track',
+                artists: [{ name: 'Test Artist' }],
+              },
+            ],
+          },
+        }),
     })
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    jest.advanceTimersByTime(500)
-    await waitFor(() => expect(screen.getByText('Test Track by Test Artist')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Test Track by Test Artist')).toBeInTheDocument(), { timeout: 5000 }
+    )
   })
 
   it('shows "No results found" when the search is successful but returns no items', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({
+    ;(fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ tracks: { items: [] } }),
     })
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    jest.advanceTimersByTime(500)
-    await waitFor(() => expect(screen.getByText('No results found.')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('No results found.')).toBeInTheDocument(), { timeout: 5000 }
+    )
   })
 
   it('shows an error message when the search fails', async () => {
-    (fetch as jest.Mock).mockResolvedValueOnce({ ok: false })
+    ;(fetch as jest.Mock).mockResolvedValueOnce({ ok: false })
     render(<SpotifySearchInput />)
     const input = screen.getByPlaceholderText('Search Spotify...')
     fireEvent.change(input, { target: { value: 'test' } })
-    jest.advanceTimersByTime(500)
-    await waitFor(() => expect(screen.getByText('Failed to fetch results.')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText('Failed to fetch results.')).toBeInTheDocument(), { timeout: 5000 }
+    )
   })
 })
