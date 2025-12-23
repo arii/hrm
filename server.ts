@@ -216,10 +216,7 @@ app
         // Await the token update and handle potential errors
         if (req.body) {
           try {
-            const validatedPayload = validate(
-              SpotifyTokenPayloadSchema,
-              req.body
-            )
+            const validatedPayload = validate(SpotifyTokenPayloadSchema, req.body)
             // Await the handler to ensure sequential execution and catch errors
             await serviceContainer
               .get('spotifyService')
