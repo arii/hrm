@@ -20,7 +20,7 @@ import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { HrmDataService } from '../lib/services/HrmDataService.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -28,7 +28,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 
-const hrmDataRepository = new HrmDataRepository()
+const hrmDataService = new HrmDataService()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -45,7 +45,7 @@ const initSocketManager = (
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
 
-  wss.on('connection', (ws: WebSocket) => {
+  wss.on('connection', async (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
     extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     extWs.lastPingTime = Date.now() // Initialize on connect
@@ -59,7 +59,7 @@ const initSocketManager = (
       age: 30,
       calories: 0, // Initialize to 0
     }
-    hrmDataRepository.save(newClient)
+    await hrmDataService.save(newClient)
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
@@ -69,12 +69,7 @@ const initSocketManager = (
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
     })
 
-    extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
-      broadcastState()
-    })
+    extWs.on('close', () => handleDisconnect(extWs.clientId))
   })
 
   // Server-side watchdog to clean up stale connections.
@@ -102,17 +97,18 @@ const initSocketManager = (
 /**
  * Resets the socket manager state. Use this for testing purposes only.
  */
-export const resetSocketManager = () => {
-  hrmDataRepository.clear()
+export const resetSocketManager = async () => {
+  await hrmDataService.clear()
   clientSessionState.clear()
 }
 
-const broadcastState = () => {
+const broadcastState = async () => {
+  const payload = await hrmDataService.findAll()
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
+      payload: payload || [],
     },
     'socketManager.broadcastState'
   )
@@ -121,7 +117,7 @@ const broadcastState = () => {
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
+const handleIncomingMessage = async (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -148,7 +144,7 @@ const handleIncomingMessage = (
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
+          hrmData: await hrmDataService.findAll(),
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -158,18 +154,18 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = await hrmDataService.findById(clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
           )
-          hrmDataRepository.save({ ...existingData, ...updateData })
+          await hrmDataService.save({ ...existingData, ...updateData })
         }
-        broadcastState()
+        await broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = await hrmDataService.findById(clientId)
         const sessionState = clientSessionState.get(clientId)
 
         if (existingData && sessionState) {
@@ -195,13 +191,13 @@ const handleIncomingMessage = (
           sessionState.accumulatedCalories = currentAccumulated
 
           // ONLY update the value and calories
-          hrmDataRepository.save({
+          await hrmDataService.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }
-        broadcastState()
+        await broadcastState()
         break
       }
 
@@ -276,4 +272,11 @@ const handleIncomingMessage = (
   }
 }
 
-export { initSocketManager }
+const handleDisconnect = async (clientId: string) => {
+  logger.info({ clientId }, 'WebSocket client disconnected')
+  await hrmDataService.deleteById(clientId)
+  clientSessionState.delete(clientId)
+  await broadcastState()
+}
+
+export { initSocketManager, handleIncomingMessage, handleDisconnect }
