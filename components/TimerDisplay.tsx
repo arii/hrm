@@ -87,7 +87,10 @@ const TimerDisplay = () => {
         display: 'flex',
         borderRadius: 2,
         border: `2px solid ${theme.palette.grey[900]}`,
-        position: 'relative',
+        position: 'relative', // Keep for zIndex context
+        flexDirection: 'row', // Main axis is horizontal
+        alignItems: 'center', // Center items vertically
+        justifyContent: 'space-between', // Push children to edges
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
@@ -129,80 +132,56 @@ const TimerDisplay = () => {
           }}
         />
       </Box>
-      {/* Mode Indicator - Rotated on left side */}
-      {currentPhase !== 'IDLE' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 4,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
+      {/* Left Column: Mode Indicator */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: 40, // Fixed width for the side columns
+        }}
+      >
+        {currentPhase !== 'IDLE' && (
+          <Box
             sx={{
-              color: theme.palette.common.white,
-              fontWeight: 700,
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
-              backgroundColor: theme.palette.action.hover,
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
+              transform: 'rotate(-90deg)',
+              transformOrigin: 'center',
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
-        </Box>
-      )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.common.white,
+                fontWeight: 700,
+                letterSpacing: 2,
+                whiteSpace: 'nowrap',
+                fontSize: '0.9rem',
+                backgroundColor: theme.palette.action.hover,
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 4,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: theme.palette.common.white,
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: theme.palette.action.hover,
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
-        </Box>
-      )}
-
+      {/* Center Column: Main Timer Display */}
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          p: { xs: 1, sm: 2 }, // Reduced padding
           textAlign: 'center',
-          flex: 1,
+          flex: 1, // Allow this to grow and fill space
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          minWidth: 0, // Prevents flex item from overflowing
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
+        {/* Phase Label */}
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
@@ -219,7 +198,7 @@ const TimerDisplay = () => {
           </Typography>
         )}
 
-        {/* Giant Timer Display */}
+        {/* Giant Timer */}
         <Typography
           data-testid="timer-countdown"
           component="div"
@@ -228,12 +207,12 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontSize: { xs: '5rem', sm: '7rem', md: '8rem' }, // Slightly reduced font size
             fontWeight: 800,
-            letterSpacing: '0.12rem',
+            letterSpacing: '0.1rem',
             lineHeight: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            textShadow: `0 0 15px ${phaseColor}80`, // Reduced shadow
           }}
         >
           {displayTime}
@@ -247,7 +226,7 @@ const TimerDisplay = () => {
             mt: 2,
             mb: 1,
             width: { xs: '90%', md: '80%' },
-            maxWidth: 300,
+            maxWidth: 280, // Reduced max width
           }}
           alignItems="center"
         >
@@ -268,6 +247,42 @@ const TimerDisplay = () => {
           <VolumeUp sx={{ color: 'common.white' }} />
         </Stack>
       </CardContent>
+
+      {/* Right Column: Tabata Durations */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: 40, // Fixed width
+        }}
+      >
+        {mode === 'TABATA' && (
+          <Box
+            sx={{
+              transform: 'rotate(90deg)',
+              transformOrigin: 'center',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: theme.palette.common.white,
+                fontWeight: 700,
+                letterSpacing: 1,
+                whiteSpace: 'nowrap',
+                fontSize: '0.8rem',
+                backgroundColor: theme.palette.action.hover,
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              WORK:{workDuration}s REST:{restDuration}s
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Card>
   )
 }

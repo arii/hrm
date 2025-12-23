@@ -8,7 +8,6 @@ import FavoriteIcon from '@mui/icons-material/Favorite'
 import SettingsIcon from '@mui/icons-material/Settings'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
-import IconButton from '@mui/material/IconButton'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -79,14 +78,17 @@ export default function BottomNavBar() {
           },
         }}
       />
-      <IconButton
-        sx={{ ml: 1 }}
-        onClick={toggleTheme}
-        color="inherit"
+      <BottomNavigationAction
+        label={mode === 'light' ? 'Dark' : 'Light'}
         aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-      >
-        {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-      </IconButton>
+        icon={mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+        onClick={toggleTheme}
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
     </BottomNavigation>
   )
 }
