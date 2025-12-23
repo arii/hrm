@@ -1,0 +1,14 @@
+{
+  "entry": [
+    "scripts/profile-server.sh",
+    "next.config.js"
+  ],
+  "project": [
+    "**/*.{js,ts,tsx}"
+  ],
+  "ignore": [
+    "autocannon",
+    "clinic",
+    "react-refresh"
+  ]
+}
