@@ -1,7 +1,11 @@
 // app/api/spotify/playlists/[playlistId]/route.ts
 
 import { authOptions } from '@/lib/auth'
-import { SpotifyApi, type SimplifiedTrack, type Track } from '@spotify/web-api-ts-sdk'
+import {
+  SpotifyApi,
+  type SimplifiedTrack,
+  type Track,
+} from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
@@ -60,26 +64,28 @@ async function getPlaylistTracks(
     offset
   )
 
-  const totalTracks = tracksResponse.total;
+  const totalTracks = tracksResponse.total
 
   // 7. Map the response to a more streamlined format.
-  const tracks = tracksResponse.items.map(({ track }) => {
-    if (!track) return null; // Handle cases where track is null (e.g., deleted)
+  const tracks = tracksResponse.items
+    .map(({ track }) => {
+      if (!track || !('album' in track)) return null // Handle cases where track is null (e.g., deleted)
 
-    // Use the Track type from the SDK for better type safety
-    const trackDetails = track as Track | SimplifiedTrack;
+      // Use the Track type from the SDK for better type safety
+      const trackDetails = track as Track | SimplifiedTrack
 
-    return {
-      name: trackDetails.name,
-      uri: trackDetails.uri,
-      durationMs: trackDetails.duration_ms,
-      explicit: trackDetails.explicit,
-      popularity: (trackDetails as Track).popularity,
-      artists: trackDetails.artists.map((artist) => artist.name).join(', '),
-      albumImageUrl: (trackDetails.album as any)?.images?.[0]?.url || null,
-      albumName: trackDetails.album.name,
-    };
-  }).filter(Boolean); // Remove any null tracks
+      return {
+        name: trackDetails.name,
+        uri: trackDetails.uri,
+        durationMs: trackDetails.duration_ms,
+        explicit: trackDetails.explicit,
+        popularity: (trackDetails as Track).popularity,
+        artists: trackDetails.artists.map((artist) => artist.name).join(', '),
+        albumImageUrl: trackDetails.album.images?.[0]?.url || null,
+        albumName: trackDetails.album.name,
+      }
+    })
+    .filter(Boolean) // Remove any null tracks
 
   return NextResponse.json({ tracks, total: totalTracks, limit, offset })
 }

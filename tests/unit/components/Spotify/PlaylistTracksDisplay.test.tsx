@@ -39,7 +39,7 @@ describe('PlaylistTracksDisplay Component', () => {
   })
 
   it('should display a loading spinner initially', async () => {
-    ;(fetch as jest.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
+    ;(fetch as jest.Mock).mockImplementation(() => new Promise(() => {})) // Never resolves
     render(<PlaylistTracksDisplay playlistId="12345" />)
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
     // No need to await anything, the test finishes while the promise is pending
@@ -93,7 +93,10 @@ describe('PlaylistTracksDisplay Component', () => {
     fireEvent.click(playButton)
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/spotify/control', expect.any(Object))
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/spotify/control',
+        expect.any(Object)
+      )
       const fetchOptions = (fetch as jest.Mock).mock.calls[1][1]
       const body = JSON.parse(fetchOptions.body)
       expect(body.command).toBe('PLAY')

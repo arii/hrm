@@ -12,7 +12,7 @@ The module exposes a single primary function for all calorie estimations.
 
 This function implements a widely recognized formula for calorie expenditure that relies on heart rate, age, and weight. It is the recommended function for all new calorie estimations within the application.
 
--   **Returns:** `number` - The estimated number of calories burned. The function will always return a non-negative value.
+- **Returns:** `number` - The estimated number of calories burned. The function will always return a non-negative value.
 
 ## Input Parameters
 
@@ -20,10 +20,10 @@ The `estimateCaloriesBurned` function accepts a single object, `CalorieEstimatio
 
 ```typescript
 export interface CalorieEstimationParams {
-  heartRate: number; // The user's average heart rate during the activity.
-  age: number; // The user's age in years.
-  weightKg: number; // The user's weight in kilograms.
-  durationMinutes: number; // The duration of the activity in minutes.
+  heartRate: number // The user's average heart rate during the activity.
+  age: number // The user's age in years.
+  weightKg: number // The user's weight in kilograms.
+  durationMinutes: number // The duration of the activity in minutes.
 }
 ```
 
@@ -45,18 +45,18 @@ To use the module, import the `estimateCaloriesBurned` function and the `Calorie
 import {
   estimateCaloriesBurned,
   CalorieEstimationParams,
-} from 'lib/calorie-estimation';
+} from 'lib/calorie-estimation'
 
 // User and workout data
 const userData = {
   age: 35,
   weightKg: 75,
-};
+}
 
 const workoutData = {
   averageHeartRate: 150,
   durationMinutes: 30,
-};
+}
 
 // Prepare the parameters for the estimation function
 const calorieParams: CalorieEstimationParams = {
@@ -64,12 +64,12 @@ const calorieParams: CalorieEstimationParams = {
   age: userData.age,
   weightKg: userData.weightKg,
   durationMinutes: workoutData.durationMinutes,
-};
+}
 
 // Estimate the calories burned
-const caloriesBurned = estimateCaloriesBurned(calorieParams);
+const caloriesBurned = estimateCaloriesBurned(calorieParams)
 
-console.log(`Estimated calories burned: ${caloriesBurned.toFixed(2)} kcal`);
+console.log(`Estimated calories burned: ${caloriesBurned.toFixed(2)} kcal`)
 // Example output: Estimated calories burned: 441.00 kcal
 ```
 
@@ -89,7 +89,7 @@ The constant `4.184` is used to convert the result from kilojoules (kJ) to kiloc
 
 ### Limitations
 
--   **Gender-Neutral:** The formula is gender-neutral, which simplifies its application but may be slightly less accurate than gender-specific formulas.
--   **METs Abstraction:** This formula does not directly use Metabolic Equivalents (METs), which are another common method for calorie estimation. It relies on heart rate as a primary indicator of intensity.
--   **Individual Variation:** Calorie expenditure can vary significantly between individuals due to factors not included in the formula, such as body composition, fitness level, and genetics.
--   **Accuracy:** While based on a scientifically validated formula, the estimation should be considered an approximation. The accuracy is highly dependent on the quality of the input data, especially the average heart rate.
+- **Gender-Neutral:** The formula is gender-neutral, which simplifies its application but may be slightly less accurate than gender-specific formulas.
+- **METs Abstraction:** This formula does not directly use Metabolic Equivalents (METs), which are another common method for calorie estimation. It relies on heart rate as a primary indicator of intensity.
+- **Individual Variation:** Calorie expenditure can vary significantly between individuals due to factors not included in the formula, such as body composition, fitness level, and genetics.
+- **Accuracy:** While based on a scientifically validated formula, the estimation should be considered an approximation. The accuracy is highly dependent on the quality of the input data, especially the average heart rate.
