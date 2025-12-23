@@ -18,7 +18,7 @@
     "pm2:logs": "pm2 logs hrm-server",
     "pm2:stop": "pm2 stop hrm-server",
     "pm2:restart": "pm2 restart hrm-server",
-    "pm2:delete": "pm2 delete hrm-server",
+    "pm2:delete": "pm2 stop hrm-server && pm2 delete hrm-server",
     "lint": "eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --cache",
     "lint:fix": "eslint app/ components/ constants/ context/ hooks/ lib/ services/ tests/ types/ utils/ server.ts proxy.ts --fix --cache",
     "format": "prettier --write .",
