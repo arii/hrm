@@ -91,7 +91,7 @@
     "@playwright/test": "^1.57.0",
     "@storybook/addon-a11y": "^10.1.4",
     "@storybook/addon-actions": "^8.6.14",
-    "@storybook/addon-docs": "^10.1.4",
+    "@storybook/addon-docs": "^10.1.10",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-interactions": "^8.6.14",
     "@storybook/nextjs": "^8.6.14",
