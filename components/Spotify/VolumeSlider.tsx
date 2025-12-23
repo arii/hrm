@@ -27,8 +27,8 @@ const VolumeSlider: React.FC<VolumeSliderProps> = ({
     >
       <IconButton
         onClick={onToggleMute}
-        size="small"
         aria-label={muted ? 'Unmute volume' : 'Mute volume'}
+        sx={{ width: 48, height: 48 }}
       >
         {muted || volume === 0 ? <VolumeOff /> : <VolumeUp />}
       </IconButton>

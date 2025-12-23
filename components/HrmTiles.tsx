@@ -6,7 +6,7 @@ import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -80,4 +80,4 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
-export default HrmTiles
+export default memo(HrmTiles)
