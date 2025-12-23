@@ -153,6 +153,24 @@ export default defineConfig([
     },
   },
 
+  // Override for the Jest setup file, which uses CommonJS syntax
+  {
+    files: ['tests/unit/jest.setup.js'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly',
+        global: 'readonly',
+      },
+    },
+    rules: {
+      // Allow `require()` statements in this CommonJS file.
+      '@typescript-eslint/no-require-imports': 'off',
+      // Since this isn't a TS file, we can relax the `no-undef` rule,
+      // as the globals will handle `jest`.
+      'no-undef': 'off',
+    },
+  },
+
   // Override for Jest integration test files
   {
     files: ['tests/integration/**/*.{ts,tsx}'],
