@@ -21,7 +21,6 @@ import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { CommandHandler } from '../types/interfaces.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -246,17 +245,17 @@ const handleIncomingMessage = (
           }
         })
 
-        const spotifyService = serviceContainer.get(
-          'spotifyService'
-        ) as CommandHandler<
-          string,
-          { deviceId?: string; volume?: number; playlistUri?: string }
-        >
-        spotifyService.handleCommand(commandMsg.command, {
-          deviceId: commandMsg.deviceId,
-          volume: commandMsg.volume,
-          playlistUri: commandMsg.playlistUri,
-        })
+        const spotifyService = serviceContainer.get('spotifyService')
+        const params: {
+          deviceId?: string
+          volume?: number
+          playlistUri?: string
+        } = {}
+        if (commandMsg.deviceId) params.deviceId = commandMsg.deviceId
+        if (commandMsg.volume !== undefined) params.volume = commandMsg.volume
+        if (commandMsg.playlistUri) params.playlistUri = commandMsg.playlistUri
+
+        spotifyService.handleCommand(commandMsg.command, params)
         break
       }
       default: {
