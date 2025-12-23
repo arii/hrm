@@ -1,37 +1,98 @@
-// File: tests/unit/app/api/health/detailed/route.test.ts
+/**
+ * @jest-environment node
+ */
 import { GET } from '../../../../../../app/api/health/detailed/route'
-import { env } from '../../../../../../lib/env'
-import { NextRequest } from 'next/server'
+import * as healthCheck from '../../../../../../lib/healthCheck'
 
-describe('GET /api/health/detailed', () => {
-  let originalNextAuthUrl: string | undefined
+// Mock the healthCheck module
+jest.mock('../../../../../../lib/healthCheck')
+
+global.fetch = jest.fn()
+
+describe('/api/health/detailed', () => {
+  const mockedHealthCheck = healthCheck as jest.Mocked<typeof healthCheck>
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_URL = 'http://localhost:3000'
+  })
+
+  afterAll(() => {
+    delete process.env.NEXTAUTH_URL
+  })
 
   beforeEach(() => {
-    originalNextAuthUrl = env.NEXTAUTH_URL
+    jest.resetAllMocks()
   })
 
-  afterEach(() => {
-    env.NEXTAUTH_URL = originalNextAuthUrl
-  })
+  it('should return a healthy response when all checks pass', async () => {
+    // Arrange
+    mockedHealthCheck.checkMemoryUsage.mockReturnValue({
+      healthy: true,
+      details: {},
+    })
+    mockedHealthCheck.checkSpotifyAPI.mockResolvedValue({
+      healthy: true,
+      details: {},
+    })
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ healthy: true, details: {} }),
+    })
 
-  it('should return a 200 OK response', async () => {
-    env.NEXTAUTH_URL = 'http://localhost:3000'
-    const request = new NextRequest('http://localhost/api/health/detailed')
-    const response = await GET(request)
+    // Act
+    const response = await GET()
+
+    // Assert
+    const body = await response.json()
     expect(response.status).toBe(200)
-    const data = await response.json()
-    expect(data).toHaveProperty('httpStatus', 'ok')
-    expect(data).toHaveProperty('webSocketStatus', 'ok')
-    expect(data).toHaveProperty('spotifyStatus', 'ok')
-    expect(data).toHaveProperty('timerStatus', 'ok')
+    expect(body.status).toBe('healthy')
   })
 
-  it('should handle missing NEXTAUTH_URL', async () => {
-    env.NEXTAUTH_URL = undefined
-    const request = new NextRequest('http://localhost/api/health/detailed')
-    const response = await GET(request)
+  it('should return a degraded response when one check fails', async () => {
+    // Arrange
+    mockedHealthCheck.checkMemoryUsage.mockReturnValue({
+      healthy: true,
+      details: {},
+    })
+    mockedHealthCheck.checkSpotifyAPI.mockResolvedValue({
+      healthy: false, // Spotify check fails
+      details: {},
+    })
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ healthy: true, details: {} }),
+    })
+
+    // Act
+    const response = await GET()
+
+    // Assert
+    const body = await response.json()
     expect(response.status).toBe(503)
-    const data = await response.json()
-    expect(data).toHaveProperty('httpStatus', 'error')
+    expect(body.status).toBe('degraded')
+  })
+
+  it('should return an unhealthy response when multiple checks fail', async () => {
+    // Arrange
+    mockedHealthCheck.checkMemoryUsage.mockReturnValue({
+      healthy: true,
+      details: {},
+    })
+    mockedHealthCheck.checkSpotifyAPI.mockResolvedValue({
+      healthy: false, // Spotify check fails
+      details: {},
+    })
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ healthy: false, details: {} }), // Internal services fail
+    })
+
+    // Act
+    const response = await GET()
+
+    // Assert
+    const body = await response.json()
+    expect(response.status).toBe(503)
+    expect(body.status).toBe('unhealthy')
   })
 })

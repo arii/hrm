@@ -4,8 +4,7 @@
  * attaches the persistent WebSocket server, and manages service initialization
  * and internal data endpoints (like NextAuth token delivery).
  */
-import 'dotenv/config'
-import { env } from './lib/env.js'
+
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
@@ -27,18 +26,20 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { env } from './lib/env.js'
 
-const port: number = env.PORT
-// Allow overriding bind address via the HOST env var for flexibility in CI/containers
+const port: number = process.env.PORT ? +process.env.PORT : 3000
 const hostname =
-  env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST // Bind to all interfaces in production
+  env.NODE_ENV === 'production'
+    ? '0.0.0.0'
+    : process.env.HOST || '127.0.0.1'
 
 const dev = env.NODE_ENV !== 'production'
 
 const app = next({ dev, hostname, port })
 
-logger.info(`Starting server in ${env.NODE_ENV} mode`)
-logger.info(`Environment: NODE_ENV=${env.NODE_ENV}`)
+logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
+logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
@@ -60,7 +61,7 @@ app
 
     // --- Rate Limiting Setup ---
     // Skip rate limiting for tests to avoid flakes
-    if (env.TESTING !== 'true') {
+    if (process.env.TESTING !== 'true') {
       const spotifyApiLimiter = rateLimit({
         windowMs: 1 * 60 * 1000, // 1 minute
         max: 30,
@@ -196,6 +197,27 @@ app
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is handled by Next.js API route at /api/internal/token-delivery
     expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Await the token update and handle potential errors
+        if (req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await serviceContainer
+              .get('spotifyService')
+              .handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
+          }
+        }
+      }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
@@ -213,7 +235,7 @@ app
             .shift()
             ?.trim() || req.socket.remoteAddress
 
-        if (env.TESTING !== 'true' && ip) {
+        if (process.env.TESTING !== 'true' && ip) {
           const count = wsConnections.get(ip) || 0
           if (count >= WS_MAX_CONNECTIONS) {
             socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')

@@ -328,20 +328,7 @@ This workspace is pre-configured for a seamless development experience with VS C
 
 ## Environment Variables
 
-This project uses a centralized and strict validation system for environment variables to enhance security and stability. All required variables are validated at application startup.
-
-**Configuration File**: Create a `.env.local` file in the root directory by copying the example:
-```bash
-cp .env.example .env.local
-```
-
-**Validation at Startup**:
-- The application will **fail to start** if any required environment variables are missing or have incorrect types.
-- A clear error message will be logged to the console, indicating which variable is problematic.
-- This "fail-fast" approach prevents runtime errors and ensures a correctly configured environment.
-
-### Required Variables
-Fill in the following variables in your `.env.local` file:
+Create a `.env.local` file in the root directory for secrets:
 
 ```env
 # Spotify OAuth credentials (from developer.spotify.com/dashboard)
@@ -349,7 +336,6 @@ SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 
 # NextAuth.js configuration
-# Generate a secure secret with: openssl rand -base64 32
 NEXTAUTH_URL=http://127.0.0.1:3000
 NEXTAUTH_SECRET=your_random_secret_here
 ```

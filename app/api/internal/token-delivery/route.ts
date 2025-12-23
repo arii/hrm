@@ -1,19 +1,51 @@
-// File: app/api/internal/token-delivery/route.ts
-import { NextResponse } from 'next/server'
-import { serviceContainer } from '../../../../lib/serviceContainer'
-import { SpotifyPolling } from '../../../../services/spotifyPolling'
+import { ApiError } from '@/lib/errors'
+import fs from 'fs'
+import { NextRequest, NextResponse } from 'next/server'
+import path from 'path'
+import logger from '@/utils/logger'
 
-export async function POST(request: Request) {
+/**
+ * Internal endpoint for NextAuth to post refresh tokens.
+ * This endpoint is protected by an optional INTERNAL_TOKEN_DELIVERY_SECRET header.
+ * It persists the latest token payload to ./logs/spotify_tokens.json for the server to read.
+ */
+
+const LOG_DIR = path.resolve(process.cwd(), 'logs')
+const OUT_FILE = path.join(LOG_DIR, 'spotify_tokens.json')
+
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const spotifyService = serviceContainer.get<SpotifyPolling>('spotifyService')
-    await spotifyService.handleTokenUpdate(body)
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error handling token delivery:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
-      { status: 500 }
+    const secretHeader = req.headers.get('x-internal-token-secret') || ''
+    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
+    if (expected && secretHeader !== expected) {
+      throw new ApiError(401, 'Unauthorized')
+    }
+
+    const payload = await req.json()
+
+    // ensure logs dir
+    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
+
+    // write timestamped record (overwrite with latest)
+    const record = {
+      receivedAt: Date.now(),
+      payload,
+    }
+    fs.writeFileSync(OUT_FILE, JSON.stringify(record, null, 2), 'utf8')
+
+    logger.info(
+      { subject: payload.sub ?? payload.provider },
+      'Received token-delivery'
     )
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.statusCode }
+      )
+    }
+    logger.error('token-delivery error:', err)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 }

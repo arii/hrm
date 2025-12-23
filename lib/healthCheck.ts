@@ -1,123 +1,126 @@
-// File: lib/healthCheck.ts (Service Health Check Utilities)
-/**
- * Utility functions for checking the health of various application services.
- */
-
+// lib/healthCheck.ts
+import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
-import { env } from './env'
 
-// --- Type Definitions ---
-export interface HealthCheckResult {
-  healthy: boolean
-  message: string
-  details?: Record<string, unknown>
-}
+// Individual health check functions
+export function checkMemoryUsage() {
+  const memUsage = process.memoryUsage()
+  const memUsageMB = memUsage.heapUsed / 1024 / 1024
+  const memLimitMB = 512 // Adjust based on deployment
 
-// --- Service-Specific Checks ---
-
-/**
- * Checks the current memory usage of the Node.js process.
- * @returns A HealthCheckResult object with memory usage details.
- */
-export const checkMemoryUsage = (): HealthCheckResult => {
-  const used = process.memoryUsage()
-  const usedMB = Math.round((used.heapUsed / 1024 / 1024) * 100) / 100
-  const healthy = usedMB < 500 // Example threshold: 500MB
   return {
-    healthy,
-    message: `Memory usage: ${usedMB} MB`,
+    healthy: memUsageMB < memLimitMB,
     details: {
-      usedMB,
-      heapTotalMB: Math.round((used.heapTotal / 1024 / 1024) * 100) / 100,
-      rssMB: Math.round((used.rss / 1024 / 1024) * 100) / 100,
+      usedMB: Math.round(memUsageMB),
+      limitMB: memLimitMB,
+      percentage: Math.round((memUsageMB / memLimitMB) * 100),
     },
   }
 }
 
-/**
- * Checks the health of the TabataTimer service.
- * @param timerService The instance of the TabataTimer service.
- * @returns A HealthCheckResult object.
- */
-export const checkTimerService = (
-  timerService: TabataTimer
-): HealthCheckResult => {
-  if (timerService && typeof timerService.getState === 'function') {
+export async function checkWebSocketService(): Promise<{
+  healthy: boolean
+  details: Record<string, unknown>
+}> {
+  try {
+    const wsUrl = process.env.WS_URL || 'ws://localhost:3000' // Corrected default URL
+    // Check if WebSocket server is accepting connections
+    const wsHealth = await new Promise((resolve) => {
+      const testWs = new WebSocket(wsUrl)
+
+      const timeout = setTimeout(() => {
+        testWs.close()
+        resolve(false)
+      }, 5000)
+
+      testWs.onopen = () => {
+        clearTimeout(timeout)
+        testWs.close()
+        resolve(true)
+      }
+
+      testWs.onerror = () => {
+        clearTimeout(timeout)
+        resolve(false)
+      }
+    })
+
+    return {
+      healthy: Boolean(wsHealth),
+      details: {
+        service: 'websocket',
+        url: wsUrl,
+      },
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      details: {
+        service: 'websocket',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }
+  }
+}
+
+export async function checkSpotifyAPI(): Promise<{
+  healthy: boolean
+  details: Record<string, unknown>
+}> {
+  try {
+    // Test Spotify API connectivity (no auth required)
+    const response = await fetch(
+      'https://api.spotify.com/v1/browse/categories?limit=1',
+      {
+        headers: {
+          'User-Agent': 'HRM-App/1.0',
+        },
+      }
+    )
+
+    const healthy = response.status === 401 // 401 is expected without auth
+
+    return {
+      healthy,
+      details: {
+        service: 'spotify-api',
+        status: response.status,
+        reachable: response.status !== undefined,
+      },
+    }
+  } catch (error) {
+    return {
+      healthy: false,
+      details: {
+        service: 'spotify-api',
+        error: error instanceof Error ? error.message : 'Network unreachable',
+      },
+    }
+  }
+}
+
+export function checkTimerService(tabataTimer: TabataTimer): {
+  healthy: boolean
+  details: Record<string, unknown>
+} {
+  try {
+    const timerCheck =
+      typeof tabataTimer !== 'undefined' && tabataTimer.getState
+
     return {
       healthy: true,
-      message: 'Timer service is running.',
-      details: { instance: 'active' },
-    }
-  }
-  return {
-    healthy: false,
-    message: 'Timer service is not initialized.',
-    details: { instance: 'inactive' },
-  }
-}
-
-/**
- * Checks the health of the WebSocket service by attempting to connect to it.
- * @returns A promise that resolves to a HealthCheckResult object.
- */
-export const checkWebSocketService = async (): Promise<HealthCheckResult> => {
-  try {
-    const wsUrl = env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3000' // Corrected default URL
-    const ws = new (await import('ws')).default(wsUrl)
-    return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        resolve({
-          healthy: false,
-          message: 'WebSocket connection timed out.',
-        })
-        ws.close()
-      }, 5000) // 5-second timeout
-
-      ws.on('open', () => {
-        clearTimeout(timeout)
-        ws.close()
-        resolve({ healthy: true, message: 'WebSocket connection successful.' })
-      })
-      ws.on('error', (error) => {
-        clearTimeout(timeout)
-        resolve({
-          healthy: false,
-          message: `WebSocket connection failed: ${error.message}`,
-        })
-      })
-    })
-  } catch (error) {
-    return {
-      healthy: false,
-      message: `WebSocket connection failed: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
-    }
-  }
-}
-
-/**
- * Checks the health of the Spotify API by making a test request.
- * @returns A promise that resolves to a HealthCheckResult object.
- */
-export const checkSpotifyAPI = async (): Promise<HealthCheckResult> => {
-  try {
-    // This is a placeholder for a real Spotify API check
-    const response = await fetch('https://api.spotify.com/v1/search?q=test&type=track', {
-      headers: {
-        Authorization: `Bearer ${env.SPOTIFY_CLIENT_ID}`, // Just an example, this will fail
+      details: {
+        service: 'timer',
+        instance: timerCheck ? 'active' : 'standby',
       },
-    });
-    if (response.status === 401) {
-      return { healthy: true, message: 'Spotify API is reachable (auth failed as expected).' };
     }
-    return { healthy: true, message: 'Spotify API is reachable.' };
   } catch (error) {
     return {
       healthy: false,
-      message: `Spotify API is unreachable: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
-    };
+      details: {
+        service: 'timer',
+        error: error instanceof Error ? error.message : 'Timer service error',
+      },
+    }
   }
 }

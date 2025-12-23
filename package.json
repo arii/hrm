@@ -71,7 +71,6 @@
     "@mui/material": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "cheerio": "^1.1.2",
-    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "lodash": "^4.17.21",
@@ -82,7 +81,7 @@
     "react-dom": "19.2.3",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.2.1"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
@@ -100,7 +99,6 @@
     "@storybook/nextjs": "^8.6.14",
     "@storybook/react": "^8.6.14",
     "@storybook/test": "^8.6.14",
-    "@swc/jest": "^0.2.39",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -115,11 +113,11 @@
     "babel-jest": "^30.2.0",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
+    "dotenv": "^17.2.3",
     "eslint": "9.39.2",
     "eslint-config-next": "16.0.10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-storybook": "^10.1.8",
     "husky": "^9.1.7",
     "jest": "^30.2.0",

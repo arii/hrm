@@ -1,37 +1,61 @@
-const config = {
+import type { KnipConfig } from 'knip'
+
+const config: KnipConfig = {
   entry: [
-    'scripts/setup.sh',
-    'scripts/test-with-server.sh',
-    'scripts/kill-all.sh',
-    'next.config.js',
     'server.ts',
+    'proxy.ts',
     'app/**/*.ts',
     'app/**/*.tsx',
+    'components/**/*.ts',
+    'components/**/*.tsx',
+    'constants/**/*.ts',
+    'context/**/*.tsx',
+    'hooks/**/*.ts',
+    'lib/**/*.ts',
+    'scripts/**/*.ts',
+    'services/**/*.ts',
+    'tests/**/*.ts',
+    'types/**/*.ts',
+    'utils/**/*.ts',
+    'stories/**/*.ts',
+    'stories/**/*.tsx',
+    '.storybook/**/*.ts',
+    '.storybook/**/*.tsx',
+    'jest.config.cjs',
+    'next.config.js',
     'playwright.config.ts',
-    'tests/setup/global.setup.ts',
-    'tests/playwright/**/*.spec.ts',
+    'eslint.config.mjs',
+    'commitlint.config.cjs',
   ],
-  project: ['app/**/*.ts', 'app/**/*.tsx'],
+  project: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs', '**/*.mjs'],
   ignore: [
     'node_modules',
     'dist',
     '.next',
-    'tests',
-    'scripts',
-    'app/dev',
-    'app/api/debug',
-    'app/api/health',
-    'app/api/internal/health',
-    'app/client/connect/page.tsx',
-    'app/client/mock/page.tsx',
-    'public',
-    'types/generated',
+    'coverage',
+    'playwright-report',
+    'test-results',
+    'storybook-static',
+    'ecosystem.config.cjs',
+    'scripts/get-available-port.mjs',
+    'public/mockServiceWorker.js',
   ],
   ignoreDependencies: [
-    'dotenv', // imported for side-effect in server.ts
-    'lodash', // used in spotifyPolling.ts
+    // Used in tests, but Knip doesn't see it
+    'jest-environment-jsdom',
+    // types for web bluetooth api
+    '@types/web-bluetooth',
+    // Eslint plugin
+    'eslint-plugin-react',
+    'wait-on',
+    'dotenv',
   ],
-  ignoreBinaries: ['npx', 'pm2'],
+  ignoreBinaries: [
+    'scripts/test-json-with-server.sh',
+    'scripts/test-with-server.sh',
+    'python3',
+    'sleep',
+  ],
 }
 
 export default config

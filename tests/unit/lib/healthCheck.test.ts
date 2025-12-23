@@ -1,20 +1,28 @@
-// File: tests/unit/lib/healthCheck.test.ts
+/**
+ * @jest-environment node
+ */
 import {
   checkMemoryUsage,
-  checkTimerService,
-  checkWebSocketService,
   checkSpotifyAPI,
+  checkWebSocketService,
+  checkTimerService,
 } from '../../../lib/healthCheck'
-import TabataTimer from '../../../services/tabataTimer'
 import { WebSocket } from 'ws'
+import TabataTimer from '../../../services/tabataTimer'
 
+// Mock the 'ws' module
 jest.mock('ws')
-const MockedWebSocket = WebSocket as jest.MockedClass<typeof WebSocket>
+
+// Mock global fetch
+global.fetch = jest.fn()
 
 describe('Health Check Logic', () => {
+  const MockedWebSocket = WebSocket as jest.Mock
+
   beforeEach(() => {
     jest.clearAllMocks()
-    global.fetch = jest.fn()
+    ;(global.fetch as jest.Mock).mockClear()
+    MockedWebSocket.mockClear()
   })
 
   describe('checkMemoryUsage', () => {
@@ -28,7 +36,7 @@ describe('Health Check Logic', () => {
   describe('checkSpotifyAPI', () => {
     it('should return healthy when Spotify API is reachable', async () => {
       ;(global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
+        ok: false,
         status: 401,
       })
       const result = await checkSpotifyAPI()
@@ -43,43 +51,33 @@ describe('Health Check Logic', () => {
   })
 
   describe('checkWebSocketService', () => {
-    it(
-      'should return healthy when WebSocket connection is successful',
-      async () => {
-        MockedWebSocket.mockImplementation(function (this: WebSocket) {
-          this.close = jest.fn()
-          setTimeout(() => this.onopen && this.onopen(), 50)
-          return this
-        } as any)
-        const result = await checkWebSocketService()
-        expect(result.healthy).toBe(true)
-      },
-      30000
-    )
+    it('should return healthy when WebSocket connection is successful', async () => {
+      MockedWebSocket.mockImplementation(function (this: WebSocket) {
+        this.close = jest.fn()
+        setTimeout(() => this.onopen && this.onopen(), 50)
+        return this
+      })
+      const result = await checkWebSocketService()
+      expect(result.healthy).toBe(true)
+    })
 
-    it(
-      'should return unhealthy when WebSocket connection fails',
-      async () => {
-        MockedWebSocket.mockImplementation(function (this: WebSocket) {
-          this.close = jest.fn()
-          setTimeout(
-            () => this.onerror && this.onerror(new Error('Connection failed')),
-            50
-          )
-          return this
-        } as any)
-        const result = await checkWebSocketService()
-        expect(result.healthy).toBe(false)
-      },
-      30000
-    )
+    it('should return unhealthy when WebSocket connection fails', async () => {
+      MockedWebSocket.mockImplementation(function (this: WebSocket) {
+        this.close = jest.fn()
+        setTimeout(
+          () => this.onerror && this.onerror(new Error('Connection failed')),
+          50
+        )
+        return this
+      })
+      const result = await checkWebSocketService()
+      expect(result.healthy).toBe(false)
+    })
   })
 
   describe('checkTimerService', () => {
     it('should return healthy when timer service is active', () => {
-      const mockTimer = {
-        getState: jest.fn(),
-      } as unknown as TabataTimer
+      const mockTimer = { getState: () => ({}) } as TabataTimer
       const result = checkTimerService(mockTimer)
       expect(result.healthy).toBe(true)
       expect(result.details.instance).toBe('active')
