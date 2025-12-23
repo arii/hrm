@@ -14,11 +14,12 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import logger from '@/utils/logger'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyConnectDevicePicker from './Spotify/SpotifyConnectDevicePicker'
+import useSpotifyDevices from '@/hooks/useSpotifyDevices'
 
 // 1. State Shape
 interface SpotifyDisplayState {
@@ -97,6 +98,15 @@ const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [optimisticDeviceId, setOptimisticDeviceId] = useState<string | null>(
+    null
+  )
+  const {
+    devices,
+    loading: devicesLoading,
+    error: devicesError,
+    refreshDevices,
+  } = useSpotifyDevices()
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
@@ -133,7 +143,8 @@ const SpotifyDisplay = () => {
     (volume: number) => {
       if (connectionStatus !== 'Connected') return
 
-      const targetDeviceId = spotifyData.devices.find((d) => d.is_active)?.id
+      const targetDeviceId =
+        optimisticDeviceId || devices.find((d) => d.is_active)?.id
       if (!targetDeviceId) {
         console.warn(
           '[SpotifyDisplay] No target device for volume command. Aborting.'
@@ -149,7 +160,7 @@ const SpotifyDisplay = () => {
       }
       sendData(message)
     },
-    [connectionStatus, sendData, spotifyData.devices]
+    [connectionStatus, sendData, devices, optimisticDeviceId]
   )
 
   // Handler for the VolumeSlider component's onChange
@@ -208,6 +219,7 @@ const SpotifyDisplay = () => {
   }
 
   const handleDeviceSelect = (deviceId: string) => {
+    setOptimisticDeviceId(deviceId)
     sendSpotifyCommand('TRANSFER_PLAYBACK', deviceId)
   }
 
@@ -312,6 +324,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Previous track"
+            disabled={!devices.length || !!devicesError}
           >
             <SkipPreviousIcon />
           </IconButton>
@@ -324,6 +337,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.600' },
             }}
             aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
+            disabled={!devices.length || !!devicesError}
           >
             {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
@@ -335,6 +349,7 @@ const SpotifyDisplay = () => {
               '&:hover': { backgroundColor: 'grey.800' },
             }}
             aria-label="Next track"
+            disabled={!devices.length || !!devicesError}
           >
             <SkipNextIcon />
           </IconButton>
@@ -347,7 +362,13 @@ const SpotifyDisplay = () => {
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
           />
-          <SpotifyConnectDevicePicker onDeviceSelect={handleDeviceSelect} />
+          <SpotifyConnectDevicePicker
+            devices={devices}
+            loading={devicesLoading}
+            error={devicesError}
+            refreshDevices={refreshDevices}
+            onDeviceSelect={handleDeviceSelect}
+          />
           <Button
             variant="outlined"
             size="small"

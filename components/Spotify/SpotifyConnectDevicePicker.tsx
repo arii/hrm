@@ -1,24 +1,26 @@
 'use client'
 
-import { IconButton, Menu, MenuItem, CircularProgress } from '@mui/material'
+import { IconButton, Menu, MenuItem, CircularProgress, Box } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import { MouseEvent, useState, useEffect } from 'react'
 import { SpotifyDevice } from '@/types/core'
-import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
-import logger from '@/utils/logger'
 
 interface SpotifyConnectDevicePickerProps {
+  devices: SpotifyDevice[]
+  loading: boolean
+  error: string | null
+  refreshDevices: () => void
   onDeviceSelect: (deviceId: string) => void
 }
 
 const SpotifyConnectDevicePicker = ({
+  devices,
+  loading,
+  error,
+  refreshDevices,
   onDeviceSelect,
 }: SpotifyConnectDevicePickerProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [devices, setDevices] = useState<SpotifyDevice[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   const open = Boolean(anchorEl)
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
@@ -35,30 +37,10 @@ const SpotifyConnectDevicePicker = ({
   }
 
   useEffect(() => {
-    const fetchDevices = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await fetch(API_SPOTIFY_DEVICES)
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
-        setDevices(Array.isArray(data) ? data : [])
-      } catch (e) {
-        const errorMessage =
-          e instanceof Error ? e.message : 'An unknown error occurred'
-        setError(errorMessage)
-        logger.error({ error: e }, 'Failed to fetch Spotify devices')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (open) {
-      fetchDevices()
+      refreshDevices()
     }
-  }, [open])
+  }, [open, refreshDevices])
 
   return (
     <>
@@ -95,9 +77,16 @@ const SpotifyConnectDevicePicker = ({
         }}
       >
         {loading ? (
-          <MenuItem disabled>
-            <CircularProgress size={20} />
-          </MenuItem>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              p: 2,
+            }}
+          >
+            <CircularProgress />
+          </Box>
         ) : error ? (
           <MenuItem disabled>Error loading devices</MenuItem>
         ) : devices.length > 0 ? (
