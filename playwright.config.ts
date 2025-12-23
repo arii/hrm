@@ -121,9 +121,11 @@ export default defineConfig({
   ],
 
   // Output configuration
+  // Direct raw output to a subdirectory to prevent conflicts with the HTML reporter.
   outputDir: 'test-results/raw/',
   reporter: [
     ['list'],
+    // The blob reporter is required for merging sharded test results.
     ['blob', { outputDir: 'test-results/raw' }],
     ['junit', { outputFile: 'test-results/results.xml' }],
     ['html', { outputFolder: 'test-results/playwright-report', open: 'never' }],
