@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "prebuild": "pnpm run clean",
-    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm --experimental-specifier-resolution=node server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "pnpm run build:server && next build",
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
