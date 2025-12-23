@@ -14,8 +14,6 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
-import Paper from '@mui/material/Paper'
-import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import logger from '@/utils/logger'
@@ -291,42 +289,63 @@ const SpotifyDisplay = () => {
 
   if (!isLoggedIn) {
     return (
-      <Paper
-        elevation={2}
+      <Box
         sx={{
-          p: 2,
+          backgroundColor: 'grey.900',
+          color: 'common.white',
+          px: 3,
+          py: 1.5,
+          borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'fixed',
+          bottom: 56,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          boxShadow: 3,
+          width: '100%',
         }}
       >
         <SpotifyLoginButton />
-      </Paper>
+      </Box>
     )
   }
 
-  const isWaiting = spotifyData.trackName === 'Awaiting Login...'
-  const displayTrackName = isWaiting
-    ? 'No Active Playback'
-    : spotifyData.trackName
-  const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
+  if (isLoggedIn) {
+    const isWaiting = spotifyData.trackName === 'Awaiting Login...'
+    const displayTrackName = isWaiting
+      ? 'No Active Playback'
+      : spotifyData.trackName
+    const displayArtist = isWaiting ? '' : `— ${spotifyData.artist}`
 
-  return (
-    <Paper
-      elevation={2}
-      aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
-        spotifyData.isPlaying ? 'Playing' : 'Paused'
-      }${isReady ? ', Browser player ready' : ''}`}
-      sx={{ p: { xs: 2, sm: 3 } }}
-    >
-      <Grid container spacing={2} alignItems="center" justifyContent="center">
-        {/* Track Info */}
-        <Grid item xs={12} md={4}>
-          <Typography variant="subtitle1" fontWeight="bold" noWrap>
-            {displayTrackName}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>
-            {displayArtist}
+    return (
+      <Box
+        aria-label={`Now playing: ${displayTrackName} ${displayArtist}, Status: ${
+          spotifyData.isPlaying ? 'Playing' : 'Paused'
+        }${isReady ? ', Browser player ready' : ''}`}
+        sx={{
+          backgroundColor: 'grey.900',
+          color: 'common.white',
+          px: 3,
+          py: 1.5,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'fixed',
+          bottom: 56,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          boxShadow: 3,
+          width: '100%',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {displayTrackName} {displayArtist}
           </Typography>
           {spotifyAuthenticated && !isReady && (
             <Typography
@@ -338,8 +357,6 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
-                mt: 1,
-                display: 'inline-block',
               }}
             >
               🔄 Connecting Player...
@@ -355,75 +372,56 @@ const SpotifyDisplay = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
-                mt: 1,
-                display: 'inline-block',
               }}
             >
               🎵 Browser Player Active
             </Typography>
           )}
-        </Grid>
+        </Box>
 
-        {/* Playback Controls */}
-        <Grid
-          item
-          xs={12}
-          md={4}
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 1,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton
+            size="small"
             onClick={() => sendSpotifyCommand('PREVIOUS')}
+            sx={{
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
+            }}
             aria-label="Previous track"
           >
             <SkipPreviousIcon />
           </IconButton>
           <IconButton
-            size="large"
+            size="medium"
             onClick={handlePlayPauseToggle}
-            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
             sx={{
-              backgroundColor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { backgroundColor: 'primary.dark' },
+              color: 'common.white',
+              backgroundColor: 'grey.700',
+              '&:hover': { backgroundColor: 'grey.600' },
             }}
+            aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
           >
-            {spotifyData.isPlaying ? (
-              <PauseIcon fontSize="large" />
-            ) : (
-              <PlayArrowIcon fontSize="large" />
-            )}
+            {spotifyData.isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
           </IconButton>
           <IconButton
+            size="small"
             onClick={() => sendSpotifyCommand('NEXT')}
+            sx={{
+              color: 'common.white',
+              '&:hover': { backgroundColor: 'grey.800' },
+            }}
             aria-label="Next track"
           >
             <SkipNextIcon />
           </IconButton>
-        </Grid>
+        </Box>
 
-        {/* Volume, Device, and Logout */}
-        <Grid
-          item
-          xs={12}
-          md={4}
-          sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: { xs: 1, sm: 2 },
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <VolumeSlider
             volume={displayVolume}
             muted={isMuted}
             onVolumeChange={handleVolumeChange}
             onToggleMute={handleToggleMute}
-            sx={{ display: { xs: 'none', sm: 'flex' } }} // Hide on extra small screens
           />
           <SpotifyDeviceSelectorWrapper
             availableDevices={availableDevices}
@@ -438,14 +436,24 @@ const SpotifyDisplay = () => {
             variant="outlined"
             size="small"
             onClick={handleLogout}
-            sx={{ minWidth: 'auto', px: 1.5 }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'grey.600',
+              '&:hover': {
+                borderColor: 'grey.500',
+                backgroundColor: 'grey.800',
+              },
+              minWidth: 'auto',
+              px: 1.5,
+              fontSize: '0.75rem',
+            }}
           >
             Logout
           </Button>
-        </Grid>
-      </Grid>
-    </Paper>
-  )
+        </Box>
+      </Box>
+    )
+  }
 
   return null
 }
