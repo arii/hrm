@@ -25,9 +25,11 @@ import {
 } from '../../types/websocket'
 import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { serviceContainer } from '../../lib/serviceContainer.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
+jest.mock('../../lib/serviceContainer.js')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -97,39 +99,62 @@ class MockWebSocket extends EventEmitter {
 }
 
 describe('WebSocket Manager', () => {
-  describe('Heartbeat and Watchdog', () => {
-    let mockWss: WebSocketServer
-    let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
+  let mockWss: WebSocketServer
+  let mockServices: {
+    tabataService: TabataTimer
+    spotifyService: SpotifyPolling
+  }
+  let getSnapshot: () => StateSnapshot
+  let mockWs: MockWebSocket
+
+  beforeEach(() => {
+    jest.useFakeTimers()
+    mockWss = new (WebSocketServer as jest.Mock)()
+    mockServices = {
+      tabataService: {
+        handleCommand: jest.fn(),
+        setMode: jest.fn(),
+        setConfig: jest.fn(),
+      } as unknown as TabataTimer,
+      spotifyService: {
+        handleCommand: jest.fn(),
+      } as unknown as SpotifyPolling,
     }
-    let getSnapshot: () => StateSnapshot
+    getSnapshot = jest.fn().mockReturnValue({
+      timer: {},
+      spotify: {},
+    })
 
-    beforeEach(() => {
-      jest.useFakeTimers()
-      mockWss = new (WebSocketServer as jest.Mock)()
-      mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
+    const mockedServiceContainer =
+      serviceContainer as jest.Mocked<typeof serviceContainer>
+    mockedServiceContainer.get.mockImplementation(
+      (key: 'spotifyService' | 'tabataService') => {
+        if (key === 'spotifyService') {
+          return mockServices.spotifyService
+        }
+        if (key === 'tabataService') {
+          return mockServices.tabataService
+        }
+        throw new Error(`Unexpected service key: ${key}`)
       }
-      getSnapshot = jest.fn()
-    })
+    )
 
-    afterEach(() => {
-      jest.useRealTimers()
-      jest.clearAllMocks()
-      ;(mockWss.clients as Set<MockWebSocket>).clear()
-      // Reset module-level state to ensure test isolation
-      resetSocketManager()
-    })
+    initSocketManager(mockWss, getSnapshot)
 
+    mockWs = new MockWebSocket()
+    ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+    mockWss.emit('connection', mockWs)
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+    jest.clearAllMocks()
+    ;(mockWss.clients as Set<MockWebSocket>).clear()
+    resetSocketManager()
+  })
+
+  describe('Heartbeat and Watchdog', () => {
     it('should set lastPingTime on new connection', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket() as unknown as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs) // Manually trigger connection event
@@ -139,7 +164,6 @@ describe('WebSocket Manager', () => {
     })
 
     it('should update lastPingTime on PING message and respond with PONG', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket() as unknown as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
@@ -160,11 +184,6 @@ describe('WebSocket Manager', () => {
     })
 
     it('should terminate a client if no ping is received within the timeout', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
       // Do NOT simulate a ping. Advance time past the client inactivity timeout (120s)
       // and the watchdog interval (30s) to ensure the check that terminates runs.
       jest.advanceTimersByTime(150000)
@@ -173,7 +192,6 @@ describe('WebSocket Manager', () => {
     })
 
     it('should NOT terminate a client that is responsive', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
       const mockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
@@ -192,42 +210,7 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    let mockWss: WebSocketServer
-    let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
-    }
-    let getSnapshot: () => StateSnapshot
-
-    beforeEach(() => {
-      jest.useFakeTimers()
-      mockWss = new (WebSocketServer as jest.Mock)()
-      mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
-      }
-      getSnapshot = jest.fn()
-    })
-
-    afterEach(() => {
-      jest.useRealTimers()
-      jest.clearAllMocks()
-      ;(mockWss.clients as Set<MockWebSocket>).clear()
-      // Reset module-level state to ensure test isolation
-      resetSocketManager()
-    })
-
     it('should accumulate calories correctly with small frequent updates', () => {
-      initSocketManager(mockWss, mockServices, getSnapshot)
-      const mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
@@ -265,47 +248,6 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Message Handling', () => {
-    let mockWss: WebSocketServer
-    let mockServices: {
-      tabataService: TabataTimer
-      spotifyService: SpotifyPolling
-    }
-    let getSnapshot: () => StateSnapshot
-    let mockWs: MockWebSocket
-
-    beforeEach(() => {
-      mockWss = new (WebSocketServer as jest.Mock)()
-      mockServices = {
-        tabataService: {
-          handleCommand: jest.fn(),
-          setMode: jest.fn(),
-          setConfig: jest.fn(),
-        } as unknown as TabataTimer,
-        spotifyService: {
-          handleCommand: jest.fn(),
-        } as unknown as SpotifyPolling,
-      }
-      getSnapshot = jest.fn().mockReturnValue({
-        timer: {
-          /* mock timer state */
-        },
-        spotify: {
-          /* mock spotify state */
-        },
-      })
-      initSocketManager(mockWss, mockServices, getSnapshot)
-
-      mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-    })
-
-    afterEach(() => {
-      jest.clearAllMocks()
-      ;(mockWss.clients as Set<MockWebSocket>).clear()
-      resetSocketManager()
-    })
-
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
         type: 'REGISTER_CLIENT',

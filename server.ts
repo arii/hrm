@@ -19,6 +19,7 @@ import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
+import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
@@ -157,22 +158,21 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
-    const tabataService = new TabataTimer(broadcastUpdate)
+    serviceContainer.register(
+      'spotifyService',
+      await SpotifyPolling.create(broadcastUpdate)
+    )
+    serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
-      timerData: tabataService.getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
+      timerData: serviceContainer.get('tabataService').getState(),
+      spotifyData: serviceContainer.get('spotifyService').getState(),
+      spotifyServiceInitialized: serviceContainer.get('spotifyService').isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
-    initSocketManager(
-      wss,
-      { tabataService, spotifyService },
-      getUnifiedStateSnapshot
-    )
+    initSocketManager(wss, getUnifiedStateSnapshot)
 
     // --- Express Routing ---
 
@@ -185,7 +185,9 @@ app
     expressApp.get(
       '/api/internal/health/services',
       async (_req: Request, res: Response) => {
-        const timerCheck = checkTimerService(tabataService)
+        const timerCheck = checkTimerService(
+          serviceContainer.get('tabataService')
+        )
         const wsCheck = await checkWebSocketService()
 
         const healthy = timerCheck.healthy && wsCheck.healthy
@@ -208,10 +210,10 @@ app
         req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
       ) {
         // Await the token update and handle potential errors
-        if (spotifyService && req.body) {
+        if (req.body) {
           try {
             // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
+            await serviceContainer.get('spotifyService').handleTokenUpdate(req.body)
           } catch (err) {
             logger.error(
               { err },
