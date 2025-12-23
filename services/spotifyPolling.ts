@@ -16,6 +16,7 @@ import {
   handleSpotifyApiError,
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
+import { isValidDeviceId } from '../utils/typeGuards.js'
 
 // API endpoint constants (mostly managed by SDK now)
 // TOKEN_URL is handled by TokenManager or SDK
@@ -341,37 +342,36 @@ export class SpotifyPolling {
 
     switch (command) {
       case 'PLAY':
-        if (playlistUri) {
-          // If deviceId is undefined, SDK targets active device
-          // Type assertion needed because SDK types incorrectly require string
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string,
-            playlistUri
-          )
+        // SDK types for startResumePlayback are incorrect; they should allow undefined for device_id.
+        // We use the type guard and a targeted `as any` to work around this safely.
+        if (isValidDeviceId(deviceId)) {
+          await this.sdk!.player.startResumePlayback(deviceId, playlistUri)
         } else {
-          await this.sdk!.player.startResumePlayback(
-            (deviceId || undefined) as unknown as string
+          await (this.sdk!.player.startResumePlayback as any)(
+            undefined,
+            playlistUri
           )
         }
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(
-          (deviceId || undefined) as unknown as string
-        )
+        // deviceId is optional in the SDK for this method
+        await this.sdk!.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(
-          (deviceId || undefined) as unknown as string
-        )
+        // deviceId is optional in the SDK for this method
+        await this.sdk!.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(
-          (deviceId || undefined) as unknown as string
-        )
+        // deviceId is optional in the SDK for this method
+        await this.sdk!.player.skipToPrevious(deviceId)
         break
       case 'TRANSFER_PLAYBACK':
-        if (deviceId) {
+        if (isValidDeviceId(deviceId)) {
           await this.sdk!.player.transferPlayback([deviceId], true)
+        } else {
+          logger.warn(
+            'TRANSFER_PLAYBACK command ignored: Invalid or missing deviceId.'
+          )
         }
         break
       case 'SET_VOLUME':

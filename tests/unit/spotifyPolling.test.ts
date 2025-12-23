@@ -136,7 +136,8 @@ describe('SpotifyPolling Service', () => {
     it('should handle PLAY command', async () => {
       await spotifyService.handleCommand('PLAY', 'test_device_id') // Assuming a deviceId is passed
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
-        'test_device_id'
+        'test_device_id',
+        undefined
       )
     })
 
@@ -158,7 +159,10 @@ describe('SpotifyPolling Service', () => {
     it('should include device ID when provided', async () => {
       const deviceId = 'test_device_123'
       await spotifyService.handleCommand('PLAY', deviceId)
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        deviceId,
+        undefined
+      )
     })
   })
 
