@@ -283,7 +283,9 @@ export const WebSocketProvider = ({
       // Stop heartbeat on disconnect
       stopHeartbeat()
 
-      // Reset the state to initial to prevent flashing of stale data on reconnect
+      // To prevent the UI from flashing stale data from a previous session on
+      // reconnect, we dispatch a RESET_STATE action. This clears all
+      // session-specific data and ensures the UI starts clean.
       dispatch({ type: 'RESET_STATE' })
 
       if (shouldReconnect.current) {
