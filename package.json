@@ -50,6 +50,8 @@
     "release:minor": "pnpm version minor -m \"release: minor %s\"",
     "release:major": "pnpm version major -m \"release: major %s\"",
     "test:infra": "playwright test tests/playwright/infrastructure.spec.ts",
+    "test:infra:dev": "playwright test tests/playwright/infrastructure.spec.ts --grep \"npm run dev should start and listen\"",
+    "test:infra:prod": "playwright test tests/playwright/infrastructure.spec.ts --grep \"start-production.sh should start successfully\"",
     "verify": "node scripts/verify-and-publish.cjs",
     "commit:verified": "pnpm run verify",
     "knip": "knip",
