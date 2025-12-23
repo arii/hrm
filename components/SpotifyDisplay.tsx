@@ -116,6 +116,7 @@ const SpotifyDisplay = () => {
     devices: availableDevices,
     selectedDeviceId,
     selectDevice: selectSpotifyDevice,
+    error: devicesError,
   } = useSharedSpotifyDevices()
 
   // Local state for volume and UI
@@ -322,6 +323,21 @@ const SpotifyDisplay = () => {
               }}
             >
               🎵 Browser Player Active
+            </Typography>
+          )}
+          {devicesError && (
+            <Typography
+              variant="caption"
+              sx={{
+                opacity: 0.8,
+                backgroundColor: 'error.main',
+                color: 'common.white',
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+              }}
+            >
+              ⚠️ Devices failed to load
             </Typography>
           )}
         </Box>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { SpotifyDevice } from '@/types'
 import { API_SPOTIFY_DEVICES } from '@/constants/apiEndpoints'
 import logger from '@/utils/logger'
@@ -21,6 +21,7 @@ export const useSpotifyDevices = (): UseSpotifyDevicesReturn => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
   const { spotifyData } = useWebSocket()
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const fetchDevices = useCallback(async () => {
     setIsLoading(true)
@@ -45,10 +46,21 @@ export const useSpotifyDevices = (): UseSpotifyDevicesReturn => {
 
   useEffect(() => {
     if (spotifyData.trackName) {
-      fetchDevices()
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        fetchDevices()
+      }, 300)
     } else {
       setDevices([])
       setSelectedDeviceId(null)
+    }
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
     }
   }, [spotifyData.trackName, fetchDevices])
 
