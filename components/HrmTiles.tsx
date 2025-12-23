@@ -80,4 +80,8 @@ const HrmTiles = () => {
   return <>{filteredTiles}</>
 }
 
+// Memoize HrmTiles to prevent re-renders when parent components update.
+// The component relies on the `useWebSocket` hook, which provides `hrmData` and `activeAlerts`.
+// The `useMemo` hook inside the component ensures that the `filteredTiles` are only recalculated
+// when `hrmData` or `activeAlerts` change, further optimizing performance.
 export default memo(HrmTiles)

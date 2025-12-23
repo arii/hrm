@@ -258,8 +258,8 @@ const theme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          minWidth: 48, // Accessible touch target
-          minHeight: 48,
+          width: 48, // Accessible touch target
+          height: 48,
         },
       },
     },

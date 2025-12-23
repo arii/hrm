@@ -57,7 +57,6 @@ const HrTile = ({
         sx={{
           backgroundColor: backgroundColor,
           color: textColor,
-          textShadow: '0 1px 3px rgba(0,0,0,0.2)',
           textAlign: 'center',
           minHeight: 180,
           height: '100%',
@@ -107,7 +106,6 @@ const HrTile = ({
                 fontWeight: 900,
                 lineHeight: 0.85,
                 my: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 animation: 'subtle-pulse 2s infinite ease-in-out',
                 animationPlayState:
                   bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
