@@ -27,7 +27,7 @@
     "test:unit": "cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
-    "test:visual": "scripts/test-with-server.sh playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
+    "test:visual": "pnpm run build && scripts/test-with-server.sh playwright test tests/playwright/visual-regression.spec.ts tests/playwright/remote-capabilities.spec.ts tests/playwright/simple-smoke.spec.ts  tests/playwright/debug.spec.ts",
     "test:all": "pnpm run test:visual && pnpm run test:unit",
     "test:backend:port": "PORT=3003 scripts/test-with-server.sh playwright test",
     "test:websocket:port": "PORT=3004 scripts/test-with-server.sh playwright test",

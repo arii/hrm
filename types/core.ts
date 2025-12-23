@@ -75,7 +75,7 @@ export interface HeartRateDataPoint {
 export interface HrmStreamData {
   clientId: string
   value: number
-  maxHr: number
+  maxHr?: number
   name?: string
   age?: number
   calories: number

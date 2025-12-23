@@ -2,12 +2,12 @@
 
 import { WebSocket } from 'ws';
 import { CommandHandler } from './command';
-import { ClientCommandMessage, SetModeMessage } from '../../types/websocket';
+import { ClientCommandMessage, TimerModeCommandMessage } from '../../types/websocket';
 import { serviceContainer } from '../../lib/serviceContainer.js';
 
 export class SetModeCommand implements CommandHandler {
     execute(_ws: WebSocket, message: ClientCommandMessage): void {
-        const setModeMessage = message as SetModeMessage;
-        serviceContainer.get('tabataService').setMode(setModeMessage.mode);
+        const timerModeMessage = message as TimerModeCommandMessage;
+        serviceContainer.get('tabataService').setMode(timerModeMessage.mode);
     }
 }

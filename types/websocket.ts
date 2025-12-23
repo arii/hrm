@@ -151,16 +151,7 @@ export interface PingMessage {
   type: 'PING'
 }
 
-export type ClientCommandMessage =
-  | HrmInputMessage
-  | HrmMetadataUpdateMessage
-  | TimerCommandMessage
-  | TimerModeCommandMessage
-  | SpotifyCommandMessage
-  | TimerConfigMessage
-  | GetStateMessage
-  | ClientRegistrationMessage
-  | PingMessage
+export type ClientCommandMessage = z.infer<typeof ClientCommandMessageSchema>
 
 import { z } from 'zod'
 
