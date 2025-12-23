@@ -11,7 +11,10 @@ export async function GET(
     where: { id: context.params.id },
   })
   if (!workoutSession) {
-    return NextResponse.json({ error: 'Workout session not found' }, { status: 404 })
+    return NextResponse.json(
+      { error: 'Workout session not found' },
+      { status: 404 }
+    )
   }
   return NextResponse.json(workoutSession)
 }

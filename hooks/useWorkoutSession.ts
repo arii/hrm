@@ -90,8 +90,9 @@ export const useWorkoutSession = ({
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
   // State to hold the current workout session from the database
-  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(null)
-
+  const [activeSession, setActiveSession] = useState<WorkoutSession | null>(
+    null
+  )
 
   const sessionDataRef = useRef({
     startTime: null as number | null,
@@ -190,22 +191,22 @@ export const useWorkoutSession = ({
           startedAt: new Date().toISOString(),
           notes: 'New workout session',
         }),
-      });
+      })
       if (!response.ok) {
-        throw new Error('Failed to create workout session');
+        throw new Error('Failed to create workout session')
       }
-      const newSession = await response.json();
-      setActiveSession(newSession);
+      const newSession = await response.json()
+      setActiveSession(newSession)
     } catch (error) {
-      console.error('Error starting workout session:', error);
+      console.error('Error starting workout session:', error)
       // Handle error appropriately
     }
-  }, [totalCalories, userId]);
+  }, [totalCalories, userId])
 
   const endWorkout = useCallback(async () => {
-    if (!activeSession) return;
+    if (!activeSession) return
 
-    dispatch({ type: 'END_WORKOUT' });
+    dispatch({ type: 'END_WORKOUT' })
 
     // Update the workout session in the database
     try {
@@ -217,17 +218,17 @@ export const useWorkoutSession = ({
         body: JSON.stringify({
           endedAt: new Date().toISOString(),
         }),
-      });
+      })
       if (!response.ok) {
-        throw new Error('Failed to end workout session');
+        throw new Error('Failed to end workout session')
       }
-      const updatedSession = await response.json();
-      setActiveSession(updatedSession);
+      const updatedSession = await response.json()
+      setActiveSession(updatedSession)
     } catch (error) {
-      console.error('Error ending workout session:', error);
+      console.error('Error ending workout session:', error)
       // Handle error appropriately
     }
-  }, [activeSession]);
+  }, [activeSession])
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
