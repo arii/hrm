@@ -10,14 +10,14 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
-import TabataTimer from '../../services/tabataTimer'
+import TabataTimer, { PhaseChangeEvent } from '../../services/tabataTimer'
 import { TimerData, TimerPhase } from '../../types/core'
 
 describe('TabataTimer Service with EventEmitter', () => {
   let timer: TabataTimer
   let emittedStates: TimerData[]
   let lastEmittedState: TimerData | null
-  let phaseChanges: TimerPhase[]
+  let phaseChanges: PhaseChangeEvent[]
 
   beforeEach(() => {
     jest.useFakeTimers()
@@ -30,8 +30,8 @@ describe('TabataTimer Service with EventEmitter', () => {
       emittedStates.push(state)
       lastEmittedState = state
     })
-    timer.on('phaseChange', (phase: TimerPhase) => {
-      phaseChanges.push(phase)
+    timer.on('phaseChange', (event: PhaseChangeEvent) => {
+      phaseChanges.push(event)
     })
   })
 
@@ -74,7 +74,11 @@ describe('TabataTimer Service with EventEmitter', () => {
       jest.advanceTimersByTime(5000) // PREPARE -> WORK
       jest.advanceTimersByTime(20000) // WORK -> REST
 
-      expect(phaseChanges).toEqual(['PREPARE', 'WORK', 'REST'])
+      expect(phaseChanges.map((e) => e.newPhase)).toEqual([
+        'PREPARE',
+        'WORK',
+        'REST',
+      ])
     })
   })
 

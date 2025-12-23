@@ -15,12 +15,16 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { WorkoutSession, TimerEvent, HrmDataPoint } from '../types/workout.js'
+import { CALORIE_DEFAULTS } from './constants.js'
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
+import { WorkoutSessionRepository } from '../lib/repositories/WorkoutSessionRepository.js'
+import { PhaseChangeEvent } from '../services/tabataTimer.js'
+import { randomUUID } from 'crypto'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -29,6 +33,9 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const hrmDataRepository = new HrmDataRepository()
+const workoutSessionRepository = new WorkoutSessionRepository()
+let activeWorkoutSession: WorkoutSession | null = null
+
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -44,6 +51,19 @@ const initSocketManager = (
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
+
+  // Subscribe to timer phase changes for workout session recording
+  const tabataService = serviceContainer.get('tabataService')
+  tabataService.on('phaseChange', (event: PhaseChangeEvent) => {
+    if (activeWorkoutSession && event.previousPhase !== 'IDLE') {
+      const timerEvent: TimerEvent = {
+        timestamp: Date.now(),
+        phase: event.previousPhase,
+        duration: event.duration,
+      }
+      activeWorkoutSession.timerEvents.push(timerEvent)
+    }
+  })
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
@@ -121,7 +141,7 @@ const broadcastState = () => {
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
+const handleIncomingMessage = async (
   ws: ExtWebSocket,
   messageString: string,
   clientId: string
@@ -200,14 +220,49 @@ const handleIncomingMessage = (
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
+
+          // If a workout is active, record the HRM data point
+          if (activeWorkoutSession && currentHr > 0) {
+            const hrmPoint: HrmDataPoint = {
+              timestamp: now,
+              value: currentHr,
+            }
+            activeWorkoutSession.hrmDataPoints.push(hrmPoint)
+          }
         }
         broadcastState()
         break
       }
 
-      case 'TIMER_COMMAND':
-        serviceContainer.get('tabataService').handleCommand(message.command)
+      case 'TIMER_COMMAND': {
+        const tabataService = serviceContainer.get('tabataService')
+        const currentState = tabataService.getState()
+
+        if (message.command === 'START' && !currentState.isRunning) {
+          activeWorkoutSession = {
+            id: randomUUID(),
+            startTime: Date.now(),
+            endTime: 0, // Will be set on STOP
+            timerEvents: [],
+            hrmDataPoints: [],
+          }
+          logger.info(
+            { sessionId: activeWorkoutSession.id },
+            'Workout session started'
+          )
+        } else if (message.command === 'STOP' && activeWorkoutSession) {
+          activeWorkoutSession.endTime = Date.now()
+          await workoutSessionRepository.save(activeWorkoutSession)
+          logger.info(
+            { sessionId: activeWorkoutSession.id },
+            'Workout session saved'
+          )
+          activeWorkoutSession = null
+        }
+
+        tabataService.handleCommand(message.command)
         break
+      }
 
       case 'SET_MODE':
         serviceContainer.get('tabataService').setMode(message.mode)

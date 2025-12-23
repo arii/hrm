@@ -115,6 +115,8 @@ describe('WebSocket Manager', () => {
         handleCommand: jest.fn(),
         setMode: jest.fn(),
         setConfig: jest.fn(),
+        on: jest.fn(),
+        getState: jest.fn().mockReturnValue({ isRunning: false }),
       } as unknown as TabataTimer,
       spotifyService: {
         handleCommand: jest.fn(),

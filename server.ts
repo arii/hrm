@@ -44,7 +44,7 @@ if (!dev && !process.env.NEXTAUTH_SECRET) {
   process.exit(1)
 }
 
-const app = next({ dev, hostname, port })
+const app = next({ dev })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
 logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)

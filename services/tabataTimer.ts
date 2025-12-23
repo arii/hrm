@@ -8,6 +8,12 @@
 import { EventEmitter } from 'events'
 import { TimerData, TimerMode, TimerPhase } from '../types/core'
 
+export interface PhaseChangeEvent {
+  newPhase: TimerPhase
+  previousPhase: TimerPhase
+  duration: number
+}
+
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds
 const DEFAULT_REST_DURATION = 10 // seconds
@@ -140,8 +146,14 @@ class TabataTimer extends EventEmitter {
     // --- UNIVERSAL PREPARE LOGIC ---
     // If starting from IDLE, always begin with the PREPARE countdown.
     if (this.timerState.currentPhase === 'IDLE') {
+      const previousPhase = this.timerState.currentPhase
       this.timerState.currentPhase = 'PREPARE'
-      this.emit('phaseChange', this.timerState.currentPhase)
+      const eventData: PhaseChangeEvent = {
+        newPhase: 'PREPARE',
+        previousPhase: previousPhase, // IDLE
+        duration: 0, // IDLE has no duration
+      }
+      this.emit('phaseChange', eventData)
       this.timerState.timeRemaining = START_COUNTDOWN_DURATION
       this.resetCountdownMarker()
     }
@@ -214,8 +226,11 @@ class TabataTimer extends EventEmitter {
   private transitionPhase() {
     this.resetCountdownMarker()
     const previousPhase = this.timerState.currentPhase
+    let phaseDuration = 0
+
     switch (this.timerState.currentPhase) {
       case 'PREPARE': // Transition from 5s countdown
+        phaseDuration = START_COUNTDOWN_DURATION
         this.queueSound('WORK') // Long beep when starting
         if (this.timerState.mode === 'STOPWATCH') {
           // Start Stopwatch counting up
@@ -231,6 +246,7 @@ class TabataTimer extends EventEmitter {
         break
 
       case 'WORK':
+        phaseDuration = this.timerState.workDuration
         // Infinite loop: WORK -> REST
         this.queueSound('REST')
         this.timerState.currentPhase = 'REST'
@@ -238,6 +254,7 @@ class TabataTimer extends EventEmitter {
         break
 
       case 'REST':
+        phaseDuration = this.timerState.restDuration
         // Infinite loop: REST -> WORK
         this.queueSound('WORK')
         this.timerState.currentPhase = 'WORK'
@@ -252,7 +269,12 @@ class TabataTimer extends EventEmitter {
     }
     // If the phase has changed, emit an event
     if (this.timerState.currentPhase !== previousPhase) {
-      this.emit('phaseChange', this.timerState.currentPhase)
+      const eventData: PhaseChangeEvent = {
+        newPhase: this.timerState.currentPhase,
+        previousPhase,
+        duration: phaseDuration,
+      }
+      this.emit('phaseChange', eventData)
     }
   }
 
