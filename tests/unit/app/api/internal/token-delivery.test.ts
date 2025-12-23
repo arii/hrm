@@ -13,13 +13,9 @@ jest.mock('@/utils/logger', () => ({
 }))
 
 describe('POST /api/internal/token-delivery', () => {
-  const mockJson = jest.fn()
-  const mockStatus = jest.fn().mockReturnThis()
-
   beforeEach(() => {
     jest.clearAllMocks()
     process.env.INTERNAL_TOKEN_DELIVERY_SECRET = 'test-secret'
-    mockJson.mockClear()
   })
 
   afterEach(() => {
@@ -31,7 +27,6 @@ describe('POST /api/internal/token-delivery', () => {
       headers: new Headers({
         'x-internal-token-secret': 'wrong-secret',
       }),
-      json: () => Promise.resolve({ sub: 'user123' }),
     } as unknown as NextRequest
 
     const response = await POST(req)
@@ -44,7 +39,6 @@ describe('POST /api/internal/token-delivery', () => {
   it('should return 401 Unauthorized if the secret is missing and one is expected', async () => {
     const req = {
       headers: new Headers(),
-      json: () => Promise.resolve({ sub: 'user123' }),
     } as unknown as NextRequest
 
     const response = await POST(req)
@@ -54,13 +48,11 @@ describe('POST /api/internal/token-delivery', () => {
     expect(body.error).toBe('Unauthorized')
   })
 
-  it('should return 200 OK and log the payload if the secret is correct', async () => {
-    const payload = { sub: 'user123', provider: 'spotify' }
+  it('should return 200 OK and log the request if the secret is correct', async () => {
     const req = {
       headers: new Headers({
         'x-internal-token-secret': 'test-secret',
       }),
-      json: () => Promise.resolve(payload),
     } as unknown as NextRequest
 
     const response = await POST(req)
@@ -68,18 +60,13 @@ describe('POST /api/internal/token-delivery', () => {
 
     expect(response.status).toBe(200)
     expect(body.ok).toBe(true)
-    expect(logger.info).toHaveBeenCalledWith(
-      { subject: 'user123' },
-      'Received token-delivery'
-    )
+    expect(logger.info).toHaveBeenCalledWith('Received token-delivery request.')
   })
 
   it('should return 200 OK if no secret is expected in the environment', async () => {
     delete process.env.INTERNAL_TOKEN_DELIVERY_SECRET
-    const payload = { provider: 'strava' }
     const req = {
       headers: new Headers(),
-      json: () => Promise.resolve(payload),
     } as unknown as NextRequest
 
     const response = await POST(req)
@@ -87,19 +74,17 @@ describe('POST /api/internal/token-delivery', () => {
 
     expect(response.status).toBe(200)
     expect(body.ok).toBe(true)
-    expect(logger.info).toHaveBeenCalledWith(
-      { subject: 'strava' },
-      'Received token-delivery'
-    )
+    expect(logger.info).toHaveBeenCalledWith('Received token-delivery request.')
   })
 
   it('should handle generic errors and return a 500 status', async () => {
     const error = new Error('Something went wrong')
     const req = {
-      headers: new Headers({
-        'x-internal-token-secret': 'test-secret',
-      }),
-      json: () => Promise.reject(error),
+      headers: {
+        get: jest.fn().mockImplementation(() => {
+          throw error
+        }),
+      },
     } as unknown as NextRequest
 
     const response = await POST(req)
