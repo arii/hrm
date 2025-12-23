@@ -129,6 +129,22 @@ jobs:
         # CHANGE: Removed --with-deps (System deps are already on your server)
         run: pnpm exec playwright install chromium
 
+      - name: Run Fast Infrastructure Tests (Pre-Build)
+        id: infra_tests_fast
+        run: |
+          set -o pipefail
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-fast-results.xml pnpm run test:infra:fast --reporter=junit 2>&1 | tee logs/infra-fast-output.log
+        continue-on-error: true
+
+      - name: Publish Fast Infra Test Results
+        uses: dorny/test-reporter@v1
+        if: always() && steps.infra_tests_fast.outcome != 'skipped'
+        with:
+          name: Infrastructure (Fast)
+          path: test-results/infra-fast-results.xml
+          reporter: java-junit
+          fail-on-error: true
+
       - name: Lint Code
         id: lint
         run: |
@@ -141,24 +157,23 @@ jobs:
           set -o pipefail
           pnpm run build 2>&1 | tee logs/build-output.log
 
-      - name: Run Infrastructure Tests and Generate JUnit Report
-        id: infra_tests
-        # Run tests and output the report file to a specific path, capture output
+      - name: Run Slow Infrastructure Tests (Post-Build)
+        id: infra_tests_slow
+        # This test validates the production build artifact can start
+        if: always() && steps.build.outcome == 'success'
         run: |
           set -o pipefail
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-results.xml pnpm run test:infra --reporter=junit 2>&1 | tee logs/infra-output.log
-        # continue-on-error allows subsequent steps to run for failure reporting
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/infra-slow-results.xml pnpm run test:infra:slow --reporter=junit 2>&1 | tee logs/infra-slow-output.log
         continue-on-error: true
 
-      - name: Publish Infra Test Results to GitHub Checks
-        # This action reads the generated XML and displays it in the Checks/Summary tab
+      - name: Publish Slow Infra Test Results
         uses: dorny/test-reporter@v1
-        if: always() && steps.infra_tests.outcome != 'skipped' # Ensures the report is published even if tests failed, but not if skipped
+        if: always() && steps.infra_tests_slow.outcome != 'skipped'
         with:
-          name: Infrastructure Tests Report # The name of the check run
-          path: test-results/infra-results.xml # Path to the generated XML file
+          name: Infrastructure (Slow)
+          path: test-results/infra-slow-results.xml
           reporter: java-junit
-          fail-on-error: true # Fails the overall workflow job if any tests failed
+          fail-on-error: true
 
       - name: Run Unit Tests
         id: unit_tests
@@ -253,7 +268,8 @@ jobs:
           # Pass all test outcomes to the script as env vars for easier access
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           BUILD_OUTCOME: ${{ steps.build.outcome }}
-          INFRA_TESTS_OUTCOME: ${{ steps.infra_tests.outcome }}
+          INFRA_TESTS_FAST_OUTCOME: ${{ steps.infra_tests_fast.outcome }}
+          INFRA_TESTS_SLOW_OUTCOME: ${{ steps.infra_tests_slow.outcome }}
           UNIT_TESTS_OUTCOME: ${{ steps.unit_tests.outcome }}
           VISUAL_TESTS_OUTCOME: ${{ steps.visual_tests.outcome }}
           PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
@@ -279,7 +295,8 @@ jobs:
           read -r -d '' CHECKS_DEFINITION <<'EOF'
           LINT_OUTCOME "Lint" "logs/lint-output.log"
           BUILD_OUTCOME "Build" "logs/build-output.log"
-          INFRA_TESTS_OUTCOME "Infrastructure Tests" "logs/infra-output.log"
+          INFRA_TESTS_FAST_OUTCOME "Infrastructure (Fast)" "logs/infra-fast-output.log"
+          INFRA_TESTS_SLOW_OUTCOME "Infrastructure (Slow)" "logs/infra-slow-output.log"
           UNIT_TESTS_OUTCOME "Unit Tests" "logs/unit-output.log"
           VISUAL_TESTS_OUTCOME "Visual Tests" "logs/visual-output.log"
           PERF_TESTS_OUTCOME "Performance Tests" "logs/performance-output.log"
@@ -372,7 +389,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_fast.outcome == 'failure' || steps.infra_tests_slow.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
