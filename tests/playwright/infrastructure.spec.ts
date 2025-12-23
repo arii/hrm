@@ -2,8 +2,6 @@ import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
 import { WAIT_TIMEOUTS } from './lib/waits'
-import fs from 'fs'
-import path from 'path'
 
 /**
  * HELPER: Waits for a port to be actively listening.
@@ -85,14 +83,6 @@ test.describe('Infrastructure & Scripts', () => {
       console.error('DEV SERVER STDERR:\n', stderr)
       throw error // Re-throw the original error to fail the test
     } finally {
-      // Ensure logs are written for CI debugging
-      const logDir = 'logs'
-      const logFile = path.join(logDir, 'infra-dev-output.log')
-      if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir)
-      }
-      fs.writeFileSync(logFile, `STDOUT:\n${stdout}\n\nSTDERR:\n${stderr}`)
-
       // Cleanup: Kill the entire process group.
       // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
       try {
