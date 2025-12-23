@@ -4,12 +4,12 @@ import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
-import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
+import { Grid, Skeleton, useTheme } from '@mui/material'
 import { useMemo } from 'react'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
+  const theme = useTheme()
 
   const filteredTiles = useMemo(() => {
     return hrmData
@@ -22,19 +22,23 @@ const HrmTiles = () => {
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          theme,
         )
 
         // Find the alert specific to this HR Monitor's clientId
         const matchingAlert = activeAlerts.find(
           (alert) =>
             alert.clientId === user.clientId &&
-            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+            (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE'),
         )
 
         return (
           <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            item
+            xs={12}
+            sm={6}
+            lg={3}
             key={user.clientId}
             data-testid="hr-tile-grid-item"
           >
@@ -50,7 +54,7 @@ const HrmTiles = () => {
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, theme])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
@@ -59,14 +63,14 @@ const HrmTiles = () => {
   if (isLoading || filteredTiles.length === 0) {
     return (
       <>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
+        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
             height={220}
             sx={{ borderRadius: 3 }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
+        <Grid item xs={12} sm={6} lg={3} data-testid="hr-tile-grid-item">
           <Skeleton
             variant="rectangular"
             height={220}
