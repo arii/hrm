@@ -132,12 +132,7 @@ const SpotifyDisplay = () => {
     spotifyDisplayReducer,
     initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
   )
-  const {
-    displayVolume,
-    isMuted,
-    selectedDeviceId,
-    deviceMenuAnchor,
-  } = state
+  const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
   const handleLogout = async () => {
     await signOut({ redirect: false })

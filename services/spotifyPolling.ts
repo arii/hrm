@@ -169,8 +169,10 @@ export class SpotifyPolling implements SpotifyService {
     )
 
     // Interval for available devices (less frequent)
-    const deviceIntervalMs =
-      parseInt(process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000', 10)
+    const deviceIntervalMs = parseInt(
+      process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000',
+      10
+    )
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
       deviceIntervalMs
