@@ -252,6 +252,20 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('TRANSFER_PLAYBACK', deviceId)
       expect(mockPlayer.transferPlayback).toHaveBeenCalledWith([deviceId], true)
     })
+
+    it('should not transfer playback with an invalid device ID and should log a warning', async () => {
+      await spotifyService.handleCommand('TRANSFER_PLAYBACK', '') // Empty string is invalid
+      expect(mockPlayer.transferPlayback).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledWith(
+        'TRANSFER_PLAYBACK command ignored: Invalid or missing deviceId.'
+      )
+
+      await spotifyService.handleCommand('TRANSFER_PLAYBACK', undefined) // undefined is invalid
+      expect(mockPlayer.transferPlayback).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledWith(
+        'TRANSFER_PLAYBACK command ignored: Invalid or missing deviceId.'
+      )
+    })
   })
 
   describe('Token Management', () => {
