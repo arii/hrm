@@ -351,7 +351,9 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
       tabataTimer.handleCommand('STOP')
-      await spotifyService.handleCommand('PAUSE', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('PAUSE', {
+        deviceId: 'test_device_id',
+      })
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(false)

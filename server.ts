@@ -21,12 +21,7 @@ import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
-import {
-  Lifecycle,
-  SpotifyTokenHandler,
-  StateProvider,
-} from './types/interfaces.js'
-import { ServerMessage, SpotifyData, StateSnapshot } from './types/websocket.js'
+import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
@@ -163,21 +158,15 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    serviceContainer.register(
-      'spotifyService',
-      await SpotifyPolling.create(broadcastUpdate)
-    )
+    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+    serviceContainer.register('spotifyService', spotifyService)
     serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
-      spotifyData: (
-        serviceContainer.get('spotifyService') as StateProvider<SpotifyData>
-      ).getState(),
-      spotifyServiceInitialized: (
-        serviceContainer.get('spotifyService') as Lifecycle
-      ).isReady(),
+      spotifyData: spotifyService.getState(),
+      spotifyServiceInitialized: spotifyService.isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
@@ -222,9 +211,7 @@ app
         if (req.body) {
           try {
             // Await the handler to ensure sequential execution and catch errors
-            await (
-              serviceContainer.get('spotifyService') as SpotifyTokenHandler
-            ).handleTokenUpdate(req.body)
+            await spotifyService.handleTokenUpdate(req.body)
           } catch (err) {
             logger.error(
               { err },
