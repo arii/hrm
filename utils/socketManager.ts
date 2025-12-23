@@ -4,8 +4,6 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
-import { SpotifyPolling } from '../services/spotifyPolling.js'
-import TabataTimer from '../services/tabataTimer.js'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -21,10 +19,9 @@ import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { serviceContainer } from '../lib/serviceContainer.js'
 
 // Define service instances to be managed
-let tabataServiceInstance: TabataTimer
-let spotifyServiceInstance: SpotifyPolling
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
@@ -37,22 +34,14 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
-interface Services {
-  tabataService: TabataTimer
-  spotifyService: SpotifyPolling
-}
-
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  services: Services,
   getSnapshot: () => StateSnapshot
 ) => {
   wsServerInstance = wss
-  tabataServiceInstance = services.tabataService
-  spotifyServiceInstance = services.spotifyService
   getUnifiedStateSnapshot = getSnapshot
 
   wss.on('connection', (ws: WebSocket) => {
@@ -216,15 +205,15 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND':
-        tabataServiceInstance?.handleCommand(message.command)
+        serviceContainer.get('tabataService').handleCommand(message.command)
         break
 
       case 'SET_MODE':
-        tabataServiceInstance?.setMode(message.mode)
+        serviceContainer.get('tabataService').setMode(message.mode)
         break
 
       case 'TIMER_CONFIG':
-        tabataServiceInstance?.setConfig({
+        serviceContainer.get('tabataService').setConfig({
           workDuration: message.workDuration,
           restDuration: message.restDuration,
         })
@@ -255,12 +244,14 @@ const handleIncomingMessage = (
           }
         })
 
-        spotifyServiceInstance?.handleCommand(
-          commandMsg.command,
-          commandMsg.deviceId,
-          commandMsg.volume,
-          commandMsg.playlistUri
-        )
+        serviceContainer
+          .get('spotifyService')
+          .handleCommand(
+            commandMsg.command,
+            commandMsg.deviceId,
+            commandMsg.volume,
+            commandMsg.playlistUri
+          )
         break
       }
       default: {
