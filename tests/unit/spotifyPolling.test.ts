@@ -134,62 +134,58 @@ describe('SpotifyPolling Service', () => {
 
   describe('Command Handling', () => {
     it('should handle PLAY command', async () => {
-      await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('PLAY', 'test_device_id') // Assuming a deviceId is passed
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         'test_device_id'
       )
     })
 
     it('should handle PAUSE command', async () => {
-      await spotifyService.handleCommand('PAUSE', {
-        deviceId: 'test_device_id',
-      })
+      await spotifyService.handleCommand('PAUSE', 'test_device_id')
       expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test_device_id')
     })
 
     it('should handle NEXT command', async () => {
-      await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('NEXT', 'test_device_id')
       expect(mockPlayer.skipToNext).toHaveBeenCalledWith('test_device_id')
     })
 
     it('should handle PREVIOUS command', async () => {
-      await spotifyService.handleCommand('PREVIOUS', {
-        deviceId: 'test_device_id',
-      })
+      await spotifyService.handleCommand('PREVIOUS', 'test_device_id')
       expect(mockPlayer.skipToPrevious).toHaveBeenCalledWith('test_device_id')
     })
 
     it('should include device ID when provided', async () => {
       const deviceId = 'test_device_123'
-      await spotifyService.handleCommand('PLAY', { deviceId })
+      await spotifyService.handleCommand('PLAY', deviceId)
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
     })
   })
 
   describe('Volume Control', () => {
     it('should set volume with SET_VOLUME command', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 75)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(75, undefined)
     })
 
     it('should clamp volume to 0-100 range', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 150 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 150)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(100, undefined)
     })
 
     it('should clamp negative volume to 0', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: -10 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, -10)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(0, undefined)
     })
 
     it('should round volume to nearest integer', async () => {
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 75.7 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 75.7)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(76, undefined)
     })
 
     it('should return true on successful volume change', async () => {
       mockPlayer.setPlaybackVolume.mockImplementation(() => Promise.resolve())
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
     })
 
@@ -197,7 +193,7 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.setPlaybackVolume.mockImplementation(() =>
         Promise.reject(new Error('API Error'))
       )
-      await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
+      await spotifyService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
       expect(logger.error).toHaveBeenCalled()
     })
@@ -243,13 +239,13 @@ describe('SpotifyPolling Service', () => {
 
     it('should transfer playback to device', async () => {
       const deviceId = 'device123'
-      await spotifyService.handleCommand('TRANSFER_PLAYBACK', { deviceId })
+      await spotifyService.handleCommand('TRANSFER_PLAYBACK', deviceId)
       expect(mockPlayer.transferPlayback).toHaveBeenCalledWith([deviceId], true)
     })
 
     it('should handle TRANSFER_PLAYBACK command', async () => {
       const deviceId = 'device123'
-      await spotifyService.handleCommand('TRANSFER_PLAYBACK', { deviceId })
+      await spotifyService.handleCommand('TRANSFER_PLAYBACK', deviceId)
       expect(mockPlayer.transferPlayback).toHaveBeenCalledWith([deviceId], true)
     })
   })
@@ -295,7 +291,7 @@ describe('SpotifyPolling Service', () => {
       )
 
       const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('PLAY', {})
+      await newService.handleCommand('PLAY')
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
     })
@@ -352,15 +348,13 @@ describe('SpotifyPolling Service', () => {
   describe('Integration with Timer', () => {
     it('should support NEXT command when timer starts', async () => {
       // Simulate timer start triggering NEXT
-      await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
+      await spotifyService.handleCommand('NEXT', 'test_device_id')
       expect(mockPlayer.skipToNext).toHaveBeenCalledWith('test_device_id')
     })
 
     it('should support PAUSE command when timer stops', async () => {
       // Simulate timer stop triggering PAUSE
-      await spotifyService.handleCommand('PAUSE', {
-        deviceId: 'test_device_id',
-      })
+      await spotifyService.handleCommand('PAUSE', 'test_device_id')
       expect(mockPlayer.pausePlayback).toHaveBeenCalledWith('test_device_id')
     })
 
@@ -368,11 +362,9 @@ describe('SpotifyPolling Service', () => {
       jest.clearAllMocks()
 
       // Simulate rapid commands that might happen during workout
-      await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
-      await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
-      await spotifyService.handleCommand('PAUSE', {
-        deviceId: 'test_device_id',
-      })
+      await spotifyService.handleCommand('PLAY', 'test_device_id')
+      await spotifyService.handleCommand('NEXT', 'test_device_id')
+      await spotifyService.handleCommand('PAUSE', 'test_device_id')
 
       // Should have made 3 calls to the player methods
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledTimes(1)
@@ -388,7 +380,7 @@ describe('SpotifyPolling Service', () => {
       )
       // Should not throw
       await expect(
-        spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
+        spotifyService.handleCommand('PLAY', 'test_device_id')
       ).resolves.not.toThrow()
 
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
@@ -431,7 +423,7 @@ describe('SpotifyPolling Service', () => {
       })
 
       const newService = await SpotifyPolling.create(broadcastMock)
-      await newService.handleCommand('SET_VOLUME', { volume: 50 })
+      await newService.handleCommand('SET_VOLUME', undefined, 50)
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 
       // Restore original SpotifyPolling.create
@@ -447,7 +439,7 @@ describe('SpotifyPolling Service', () => {
       }
       mockPlayer.startResumePlayback.mockRejectedValue(errorResponse)
 
-      await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
         { command: 'PLAY', response: 'Invalid JSON' },
@@ -464,7 +456,7 @@ describe('SpotifyPolling Service', () => {
       }
       mockPlayer.startResumePlayback.mockRejectedValue(badError)
 
-      await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.error).toHaveBeenCalledWith(
         { command: 'PLAY', err: expect.any(Error) },
@@ -477,7 +469,7 @@ describe('SpotifyPolling Service', () => {
         new SyntaxError('Unexpected token')
       )
 
-      await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+      await spotifyService.handleCommand('PLAY', 'device_id')
 
       expect(logger.warn).toHaveBeenCalledWith(
         { command: 'PLAY' },

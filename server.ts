@@ -16,6 +16,7 @@ import { WebSocketServer } from 'ws'
 
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
+import { SpotifyTokenPayload } from './services/spotifyTokenManager.js'
 import TabataTimer from './services/tabataTimer.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
@@ -156,15 +157,19 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
-    serviceContainer.register('spotifyService', spotifyService)
+    serviceContainer.register(
+      'spotifyService',
+      await SpotifyPolling.create(broadcastUpdate)
+    )
     serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
-      spotifyData: spotifyService.getState(),
-      spotifyServiceInitialized: spotifyService.isReady(),
+      spotifyData: serviceContainer.get('spotifyService').getState(),
+      spotifyServiceInitialized: serviceContainer
+        .get('spotifyService')
+        .isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
@@ -209,21 +214,31 @@ app
         try {
           // Manually parse the body since global express.json() is removed
           // to prevent interfering with Next.js request handling.
-          const buffers = []
-          for await (const chunk of req) {
-            buffers.push(chunk)
-          }
-          const data = Buffer.concat(buffers).toString()
+          // Using event emitters for better compatibility with different Node environments/loaders
+          const body = await new Promise((resolve, reject) => {
+            let data = ''
+            req.on('data', (chunk) => {
+              data += chunk
+            })
+            req.on('end', () => {
+              if (!data) {
+                resolve(null)
+                return
+              }
+              try {
+                resolve(JSON.parse(data))
+              } catch (e) {
+                reject(e)
+              }
+            })
+            req.on('error', reject)
+          })
 
-          if (data) {
-            const body = JSON.parse(data)
+          if (body) {
             // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
+            await serviceContainer
+              .get('spotifyService')
+              .handleTokenUpdate(body as SpotifyTokenPayload)
           }
 
           // Respond directly and terminate, skipping Next.js handler to avoid
