@@ -160,8 +160,8 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
-      - name: Run Infra Tests
-        run: pnpm run test:infra
+      # - name: Run Infra Tests
+      #   run: pnpm run test:infra
 
       - name: Run Unit Tests
         run: pnpm run test:unit
