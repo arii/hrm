@@ -10,7 +10,6 @@ import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
 import next from 'next'
 import path from 'path'
-import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type
 import { WebSocketServer } from 'ws'
 
@@ -251,7 +250,10 @@ app
     server.on(
       'upgrade',
       (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = new URL(req.url || '', `http://${req.headers.host}`)
+        const { pathname } = new URL(
+          req.url || '',
+          `http://${req.headers.host}`
+        )
         const ip =
           (req.headers['x-forwarded-for'] as string)
             ?.split(',')
