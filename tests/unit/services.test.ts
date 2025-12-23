@@ -32,7 +32,6 @@ describe('Services Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
   let broadcastedMessages: ServerMessage[]
-  let broadcastFn: (message: ServerMessage) => void
   let mockSdk: {
     player: {
       getCurrentlyPlayingTrack: jest.Mock
@@ -52,7 +51,7 @@ describe('Services Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (message: ServerMessage) => {
+    const broadcastFn = (message: ServerMessage) => {
       broadcastedMessages.push(message)
     }
 
@@ -86,7 +85,12 @@ describe('Services Integration', () => {
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-    tabataTimer = new TabataTimer(broadcastFn)
+    tabataTimer = new TabataTimer()
+    // Subscribe to the timer's 'update' event to simulate broadcasting
+    tabataTimer.on('update', (timerData) => {
+      broadcastFn({ type: 'TIMER_UPDATE', payload: timerData })
+    })
+
     // Initialize service (which will trigger async token load)
     spotifyService = await SpotifyPolling.create(broadcastFn)
   })
@@ -95,6 +99,7 @@ describe('Services Integration', () => {
     jest.useRealTimers()
     spotifyService.stopPolling()
     spotifyService.cleanup()
+    tabataTimer.removeAllListeners()
   })
 
   describe('Dashboard Updates with Timer Changes', () => {
@@ -251,17 +256,16 @@ describe('Services Integration', () => {
     })
 
     it('should support Spotify volume commands', async () => {
-      // The service now manages SDK internally, no need to set accessToken manually if mocks are set up
-
-      spotifyService.handleCommand('SET_VOLUME', undefined, 75)
-
-      // Verify mock called
-      expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()
+      spotifyService.handleCommand('SET_VOLUME', 'test_device_id', 75)
+      expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalledWith(
+        75,
+        'test_device_id'
+      )
     })
   })
 
   describe('Service Integration', () => {
-    it('should maintain separate timer and Spotify state', async () => {
+    it('should maintain separate timer and Spotify state', () => {
       tabataTimer.setMode('STOPWATCH')
       tabataTimer.handleCommand('START')
 
@@ -275,10 +279,7 @@ describe('Services Integration', () => {
     })
 
     it('should allow timer and Spotify commands independently', async () => {
-      // Timer command
       tabataTimer.handleCommand('START')
-
-      // Spotify command
       await spotifyService.handleCommand('PLAY', 'test_device_id')
 
       const timerState = tabataTimer.getState()
@@ -301,11 +302,7 @@ describe('Services Integration', () => {
   describe('Complete Workflow Integration', () => {
     it('should handle complete workout workflow', () => {
       broadcastedMessages = []
-
-      // Configure timer
       tabataTimer.setConfig({ workDuration: 30, restDuration: 10 })
-
-      // Start timer
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(5000) // PREPARE
       jest.advanceTimersByTime(30000) // WORK
@@ -321,7 +318,6 @@ describe('Services Integration', () => {
     })
 
     it('should maintain state consistency across multiple operations', () => {
-      // Multiple operations
       tabataTimer.setMode('STOPWATCH')
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
@@ -329,15 +325,12 @@ describe('Services Integration', () => {
       tabataTimer.setMode('TABATA')
 
       const state = tabataTimer.getState()
-
-      // Should end in consistent state
       expect(state.mode).toBe('TABATA')
       expect(state.isRunning).toBe(false)
       expect(state.currentPhase).toBe('IDLE')
     })
 
     it('should support timer start with Spotify skip command', async () => {
-      // Simulate timer start triggering Spotify next
       tabataTimer.handleCommand('START')
       await spotifyService.handleCommand('NEXT', 'test_device_id')
 
@@ -347,7 +340,6 @@ describe('Services Integration', () => {
     })
 
     it('should support timer stop with Spotify pause command', async () => {
-      // Start then stop timer with Spotify pause
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
       tabataTimer.handleCommand('STOP')

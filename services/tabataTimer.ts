@@ -17,10 +17,48 @@ type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
 class TabataTimer {
   private eventStore: TimerEventStore
+ * Dual-Mode Timer Service: Manages both continuous elapsed time (Stopwatch)
+ * and interval-based countdowns (Tabata). Includes a universal 5-second
+ * PREPARE countdown that runs before both modes begin.
+ * Emits 'update' and 'phaseChange' events.
+ */
+import { EventEmitter } from 'events'
+import { TimerData, TimerMode, TimerPhase } from '../types/core'
+
+// --- Tabata Constants ---
+const DEFAULT_WORK_DURATION = 20 // seconds
+const DEFAULT_REST_DURATION = 10 // seconds
+const START_COUNTDOWN_DURATION = 5 // seconds (5-second countdown before WORK or RUNNING)
+
+type TimerCommand = 'START' | 'PAUSE' | 'STOP'
+
+// Internal state structure
+interface DualModeTimerState {
+  mode: TimerMode
+  isRunning: boolean
+  currentPhase: TimerPhase
+  timeElapsed: number // For Stopwatch mode
+  timeRemaining: number // For Tabata mode
+  workDuration: number // Configurable work duration
+  restDuration: number // Configurable rest duration
+  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundEventId: number
+}
+
+class TabataTimer extends EventEmitter {
   private timerInterval: NodeJS.Timeout | null = null
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.eventStore = new TimerEventStore(broadcastUpdate)
+  constructor() {
+    super()
+  }
+
+  private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN') {
+    this.timerState.soundToPlay = sound
+    this.timerState.soundEventId += 1
+    // Emit an update event immediately so clients can play sound
+    this.emit('update', this.getState())
   }
 
   // --- QUERIES ---
@@ -97,6 +135,48 @@ class TabataTimer {
   public setMode(mode: TimerMode): void {
     this.stopTickInterval() // Ensure timer is stopped before mode change
     this.eventStore.dispatch({ type: 'SET_MODE', mode })
+
+    this.emit('update', this.getState())
+  }
+
+  private startTimer() {
+    if (this.timerState.isRunning) return
+
+    this.timerState.isRunning = true
+    this.startTime = Date.now()
+
+    // --- UNIVERSAL PREPARE LOGIC ---
+    // If starting from IDLE, always begin with the PREPARE countdown.
+    if (this.timerState.currentPhase === 'IDLE') {
+      this.timerState.currentPhase = 'PREPARE'
+      this.emit('phaseChange', this.timerState.currentPhase)
+      this.timerState.timeRemaining = START_COUNTDOWN_DURATION
+      this.resetCountdownMarker()
+    }
+    // If resuming after PAUSE, restore previous state (no PREPARE)
+    // Note: For Stopwatch, pausedElapsedTime is used to resume count up.
+
+    this.timerInterval = setInterval(this.updateTimer, 1000)
+    this.emit('update', this.getState())
+  }
+
+  private pauseTimer() {
+    if (!this.timerState.isRunning || !this.startTime) return
+
+    if (
+      this.timerState.mode === 'STOPWATCH' &&
+      this.timerState.currentPhase === 'RUNNING'
+    ) {
+      this.pausedElapsedTime = this.timerState.timeElapsed // Save elapsed time
+      this.timerState.currentPhase = 'IDLE' // Stopwatch sets to IDLE when paused
+    }
+
+    this.timerState.isRunning = false
+    if (this.timerInterval) clearInterval(this.timerInterval)
+    this.timerInterval = null
+    this.startTime = null
+
+    this.emit('update', this.getState())
   }
 
   // --- INTERNAL LOGIC ---
@@ -108,6 +188,7 @@ class TabataTimer {
     // Dispatch the start event. The reducer will handle the state transition.
     this.eventStore.dispatch({ type: 'START_TIMER', startTime: Date.now() })
     this.startTickInterval()
+    this.emit('update', this.getState())
   }
 
   /**
@@ -129,6 +210,54 @@ class TabataTimer {
   private startTickInterval(): void {
     if (!this.timerInterval) {
       this.timerInterval = setInterval(this.tick, 1000)
+
+    this.emit('update', this.getState())
+  }
+
+  // --- Universal Transition Logic ---
+
+  private transitionPhase() {
+    this.resetCountdownMarker()
+    const previousPhase = this.timerState.currentPhase
+    switch (this.timerState.currentPhase) {
+      case 'PREPARE': // Transition from 5s countdown
+        this.queueSound('WORK') // Long beep when starting
+        if (this.timerState.mode === 'STOPWATCH') {
+          // Start Stopwatch counting up
+          this.timerState.currentPhase = 'RUNNING'
+          this.timerState.timeElapsed = 0
+          this.pausedElapsedTime = 0
+          this.startTime = Date.now() // Reset start time for accurate count up
+        } else {
+          // Start Tabata WORK phase
+          this.timerState.currentPhase = 'WORK'
+          this.timerState.timeRemaining = this.timerState.workDuration
+        }
+        break
+
+      case 'WORK':
+        // Infinite loop: WORK -> REST
+        this.queueSound('REST')
+        this.timerState.currentPhase = 'REST'
+        this.timerState.timeRemaining = this.timerState.restDuration
+        break
+
+      case 'REST':
+        // Infinite loop: REST -> WORK
+        this.queueSound('WORK')
+        this.timerState.currentPhase = 'WORK'
+        this.timerState.timeRemaining = this.timerState.workDuration
+        break
+
+      case 'IDLE':
+      case 'COOLDOWN':
+      case 'RUNNING':
+        this.stopTimer()
+        break
+    }
+    // If the phase has changed, emit an event
+    if (this.timerState.currentPhase !== previousPhase) {
+      this.emit('phaseChange', this.timerState.currentPhase)
     }
   }
 
@@ -140,6 +269,19 @@ class TabataTimer {
       clearInterval(this.timerInterval)
       this.timerInterval = null
     }
+  }
+
+  // --- Mode Switching ---
+  public setMode(mode: TimerMode) {
+    if (this.timerState.isRunning) this.stopTimer()
+    this.timerState.mode = mode
+    this.timerState.currentPhase = 'IDLE'
+    this.timerState.timeRemaining =
+      mode === 'TABATA' ? this.timerState.workDuration : 0
+    this.timerState.timeElapsed = 0
+    delete this.timerState.soundToPlay
+    this.resetCountdownMarker()
+    this.emit('update', this.getState())
   }
 }
 
