@@ -1,7 +1,10 @@
 /**
  * @jest-environment node
  */
-import { handleSpotifyApiError, logSpotifyCommandError } from '../../../services/spotifyApiErrorHandling'
+import {
+  handleSpotifyApiError,
+  logSpotifyCommandError,
+} from '../../../services/spotifyApiErrorHandling'
 import logger from '../../../utils/logger'
 
 // Mock logger
@@ -30,8 +33,8 @@ describe('spotifyApiErrorHandling', () => {
       expect(mockResponse.text).not.toHaveBeenCalled()
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-            command: 'TEST_COMMAND',
-             response: '[Response body already consumed]'
+          command: 'TEST_COMMAND',
+          response: '[Response body already consumed]',
         }),
         'Error executing Spotify command'
       )
@@ -51,8 +54,8 @@ describe('spotifyApiErrorHandling', () => {
       expect(mockResponse.text).toHaveBeenCalled()
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-            command: 'TEST_COMMAND',
-            response: { error: 'message' }
+          command: 'TEST_COMMAND',
+          response: { error: 'message' },
         }),
         'Error executing Spotify command'
       )
@@ -60,22 +63,22 @@ describe('spotifyApiErrorHandling', () => {
   })
 
   describe('handleSpotifyApiError', () => {
-     it('should handle response with bodyUsed=true and not attempt to read text', async () => {
+    it('should handle response with bodyUsed=true and not attempt to read text', async () => {
       const mockResponse = {
         bodyUsed: true,
         text: jest.fn(),
       }
       const error = {
         response: mockResponse,
-        status: 500
+        status: 500,
       }
 
       await handleSpotifyApiError(error, jest.fn())
 
       expect(mockResponse.text).not.toHaveBeenCalled()
-       expect(logger.error).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
-             response: '[Response body already consumed]'
+          response: '[Response body already consumed]',
         }),
         'Unhandled Spotify API error during polling'
       )
