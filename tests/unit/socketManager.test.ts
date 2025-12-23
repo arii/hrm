@@ -262,6 +262,35 @@ describe('WebSocket Manager', () => {
       // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
       expect(clientData!.calories).toBeGreaterThan(1)
     })
+
+    it('should broadcast calories as a high-precision float', () => {
+      initSocketManager(mockWss, mockServices, getSnapshot)
+      const mockWs = new MockWebSocket()
+      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
+      mockWss.emit('connection', mockWs)
+
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // Simulate a single update after a short duration
+      jest.advanceTimersByTime(1000) // 1 second
+      sendHrmInput(160)
+
+      const mockBroadcast = broadcast as jest.Mock
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const calories = finalPayload[0].calories
+
+      // Check if the value is a float (i.e., has a decimal part)
+      expect(calories).not.toBe(Math.floor(calories))
+      expect(calories).toBeGreaterThan(0)
+    })
   })
 
   describe('Message Handling', () => {

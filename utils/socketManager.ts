@@ -208,7 +208,7 @@ const handleIncomingMessage = (
           clientData.set(clientId, {
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
+            calories: currentAccumulated,
           })
         }
         broadcastState()
