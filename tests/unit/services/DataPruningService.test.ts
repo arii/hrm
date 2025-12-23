@@ -40,9 +40,9 @@ describe('DataPruningService', () => {
     }
 
     // Manually insert data to control timestamps
-    // @ts-ignore
+    // @ts-expect-error
     hrmDataRepository.clientData.set(oldData.clientId, oldData)
-    // @ts-ignore
+    // @ts-expect-error
     hrmDataRepository.clientData.set(recentData.clientId, recentData)
 
     dataPruningService.start(1000)
