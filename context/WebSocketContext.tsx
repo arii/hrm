@@ -416,18 +416,17 @@ export const WebSocketProvider = ({
 }
 
 export const useWebSocket = () => {
-  if (typeof window === 'undefined') {
-    return {
-      ...INITIAL_STATE,
-      connectionStatus: 'Disconnected',
-      sendData: () => {},
-      connect: () => {},
-      disconnect: () => {},
-    }
-  }
-
   const context = useContext(WebSocketContext)
   if (!context) {
+    if (typeof window === 'undefined') {
+      return {
+        ...INITIAL_STATE,
+        connectionStatus: 'Disconnected',
+        sendData: () => {},
+        connect: () => {},
+        disconnect: () => {},
+      }
+    }
     throw new Error('useWebSocket must be used within a WebSocketProvider')
   }
   return context
