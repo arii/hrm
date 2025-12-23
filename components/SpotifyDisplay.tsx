@@ -1,5 +1,6 @@
 'use client'
 // File: app/components/dashboard/SpotifyDisplay.tsx
+import { useError } from '@/context/ErrorContext'
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
@@ -117,7 +118,18 @@ const spotifyDisplayReducer = (
 }
 
 const SpotifyDisplay = () => {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
+  const { addError } = useError()
+
+  // Effect to handle session-level errors, like token refresh failure
+  useEffect(() => {
+    if (session?.error === 'RefreshAccessTokenError') {
+      addError('Spotify session expired. Please log in again.', 'persistent')
+      // Sign out to clear the invalid session
+      signOut()
+    }
+  }, [session, addError])
+
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
