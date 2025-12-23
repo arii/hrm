@@ -14,6 +14,7 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
+import useVolumePreference from '@/hooks/useVolumePreference'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -44,6 +45,7 @@ const DOC_ID =
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
   const [audioInitialized, setAudioInitialized] = useState(false)
+  useVolumePreference()
   const { initializeAudio } = useAudio()
 
   const handleInteraction = () => {

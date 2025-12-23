@@ -240,6 +240,7 @@ jobs:
           name: test-results-${{ env.SESSION_ID }}
           path: |
             coverage/
+            playwright-report/
             test-results/
             logs/
             reports/performance/

@@ -41,6 +41,7 @@ const useVolumePreference = (defaultVolume = 70) => {
   useEffect(() => {
     if (isLoaded) {
       audioManager.setMuted(muted)
+      // We still set volume for non-Spotify sounds that respect volume but not the mute toggle
       audioManager.setVolume(volume)
     }
   }, [volume, muted, isLoaded])
@@ -49,15 +50,22 @@ const useVolumePreference = (defaultVolume = 70) => {
     (value: number) => {
       const sanitized = clampVolume(value)
       setVolumeState(sanitized)
-      if (sanitized > 0) {
-        lastVolumeRef.current = sanitized
-        setMutedState(false)
-      } else {
-        setMutedState(true)
+      try {
+        if (sanitized > 0) {
+          lastVolumeRef.current = sanitized
+          setMutedState(false)
+          window.localStorage.setItem(STORAGE_KEY_VOL, String(sanitized))
+          window.localStorage.setItem(STORAGE_KEY_MUTE, 'false')
+        } else {
+          setMutedState(true)
+          window.localStorage.setItem(STORAGE_KEY_MUTE, 'true')
+        }
+        window.dispatchEvent(
+          new CustomEvent('hrm:volumeChange', { detail: sanitized })
+        )
+      } catch (error) {
+        console.warn('Could not persist volume preference:', error)
       }
-      window.dispatchEvent(
-        new CustomEvent('hrm:volumeChange', { detail: sanitized })
-      )
     },
     [setMutedState]
   )
