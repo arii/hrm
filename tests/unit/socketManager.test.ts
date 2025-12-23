@@ -125,8 +125,9 @@ describe('WebSocket Manager', () => {
       spotify: {},
     })
 
-    const mockedServiceContainer =
-      serviceContainer as jest.Mocked<typeof serviceContainer>
+    const mockedServiceContainer = serviceContainer as jest.Mocked<
+      typeof serviceContainer
+    >
     mockedServiceContainer.get.mockImplementation(
       (key: 'spotifyService' | 'tabataService') => {
         if (key === 'spotifyService') {

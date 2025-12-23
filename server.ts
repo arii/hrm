@@ -168,7 +168,9 @@ app
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
       spotifyData: serviceContainer.get('spotifyService').getState(),
-      spotifyServiceInitialized: serviceContainer.get('spotifyService').isReady(),
+      spotifyServiceInitialized: serviceContainer
+        .get('spotifyService')
+        .isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
@@ -213,7 +215,9 @@ app
         if (req.body) {
           try {
             // Await the handler to ensure sequential execution and catch errors
-            await serviceContainer.get('spotifyService').handleTokenUpdate(req.body)
+            await serviceContainer
+              .get('spotifyService')
+              .handleTokenUpdate(req.body)
           } catch (err) {
             logger.error(
               { err },
