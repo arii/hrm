@@ -214,7 +214,7 @@ const TimerDisplay = () => {
             fontWeight: 'bold',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'text.primary',
+            color: theme.palette.text.primary,
           }}
         >
           {phaseLabel}

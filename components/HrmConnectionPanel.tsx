@@ -1,7 +1,6 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo } from 'react'
-import Grid from '@mui/material/Grid'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
@@ -72,50 +71,69 @@ const HrmConnectionPanel = () => {
   // Note: This UI currently assumes a single, primary HRM connection.
   // Future iterations may need to address a multi-device connection strategy.
   return (
-    <Grid container spacing={{ xs: 2, md: 3 }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        width: { xs: '100%', lg: 'calc(50% - 16px)' },
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+      }}
+    >
       {isLoading || tileData.length === 0 ? (
         <>
-          <Grid item xs={12} sm={6}>
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-                p: { xs: 2, sm: 3 },
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 2,
-                height: '100%',
-                minHeight: 220,
-                justifyContent: 'center',
-              }}
-            >
-              <Typography variant="h6" component="h2">
-                {CONNECT_HR_MONITOR_TITLE}
-              </Typography>
-              <HRMonitorStatusIndicator
-                deviceStatus={deviceStatus}
-                batteryLevel={batteryLevel}
-              />
-              <ConnectHRMonitorButton
-                connect={handleConnect}
-                disconnect={disconnect}
-                isConnected={isConnected}
-                isSupported={isSupported}
-              />
-            </Box>
-          </Grid>
-          <Grid item sm={6} sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 2,
+              height: '100%',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
+            <HRMonitorStatusIndicator
+              deviceStatus={deviceStatus}
+              batteryLevel={batteryLevel}
+            />
+            <ConnectHRMonitorButton
+              connect={handleConnect}
+              disconnect={disconnect}
+              isConnected={isConnected}
+              isSupported={isSupported}
+            />
+          </Box>
+          <Box
+            data-testid="hr-tile-grid-item"
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              width: { sm: 'calc(50% - 12px)' },
+            }}
+          >
             <Skeleton
               variant="rectangular"
-              sx={{ borderRadius: 2, height: '100%', minHeight: 220 }}
+              height={220}
+              sx={{ borderRadius: 3 }}
             />
-          </Grid>
+          </Box>
         </>
       ) : (
         tileData.map((user) => (
-          <Grid item key={user.clientId} xs={12} sm={6}>
+          <Box
+            key={user.clientId}
+            data-testid="hr-tile-grid-item"
+            sx={{
+              width: {
+                xs: '100%',
+                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+              },
+            }}
+          >
             <HrTile
               name={user.name || ''}
               bpm={user.value}
@@ -125,10 +143,10 @@ const HrmConnectionPanel = () => {
               isAlerting={user.isAlerting}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}
             />
-          </Grid>
+          </Box>
         ))
       )}
-    </Grid>
+    </Box>
   )
 }
 export default HrmConnectionPanel

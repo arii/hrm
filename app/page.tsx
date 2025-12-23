@@ -7,7 +7,6 @@
 import Container from '@mui/material/Container'
 import dynamic from 'next/dynamic'
 import Grid from '@mui/material/Grid'
-import Box from '@mui/material/Box'
 import DashboardSectionLoadingSkeleton from '../components/DashboardSectionLoadingSkeleton'
 import { useEffect, useState } from 'react'
 import ErrorBoundary from '../components/ErrorBoundary'
