@@ -15,6 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import logger from '@/utils/logger'
 import SpotifyLoginButton from './SpotifyLoginButton'
@@ -117,6 +118,7 @@ const spotifyDisplayReducer = (
 }
 
 const SpotifyDisplay = () => {
+  const theme = useTheme()
   const { status } = useSession()
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
@@ -291,8 +293,8 @@ const SpotifyDisplay = () => {
     return (
       <Box
         sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
           px: 3,
           py: 1.5,
           borderRadius: 2,
@@ -326,8 +328,8 @@ const SpotifyDisplay = () => {
           spotifyData.isPlaying ? 'Playing' : 'Paused'
         }${isReady ? ', Browser player ready' : ''}`}
         sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary,
           px: 3,
           py: 1.5,
           borderRadius: 2,
@@ -353,7 +355,7 @@ const SpotifyDisplay = () => {
               sx={{
                 opacity: 0.8,
                 backgroundColor: 'info.main',
-                color: 'common.white',
+                color: theme.palette.info.contrastText,
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
@@ -368,7 +370,7 @@ const SpotifyDisplay = () => {
               sx={{
                 opacity: 0.8,
                 backgroundColor: 'success.main',
-                color: 'common.white',
+                color: theme.palette.success.contrastText,
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,
@@ -384,8 +386,8 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={() => sendSpotifyCommand('PREVIOUS')}
             sx={{
-              color: 'text.primary',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'inherit',
+              '&:hover': { backgroundColor: theme.palette.action.hover },
             }}
             aria-label="Previous track"
           >
@@ -395,9 +397,9 @@ const SpotifyDisplay = () => {
             size="medium"
             onClick={handlePlayPauseToggle}
             sx={{
-              color: 'text.primary',
-              backgroundColor: 'action.selected',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'inherit',
+              backgroundColor: theme.palette.grey[700],
+              '&:hover': { backgroundColor: theme.palette.grey[600] },
             }}
             aria-label={spotifyData.isPlaying ? 'Pause' : 'Play'}
           >
@@ -407,8 +409,8 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={() => sendSpotifyCommand('NEXT')}
             sx={{
-              color: 'text.primary',
-              '&:hover': { backgroundColor: 'action.hover' },
+              color: 'inherit',
+              '&:hover': { backgroundColor: theme.palette.action.hover },
             }}
             aria-label="Next track"
           >
@@ -437,11 +439,11 @@ const SpotifyDisplay = () => {
             size="small"
             onClick={handleLogout}
             sx={{
-              color: 'text.primary',
-              borderColor: 'divider',
+              color: 'inherit',
+              borderColor: theme.palette.divider,
               '&:hover': {
-                borderColor: 'text.primary',
-                backgroundColor: 'action.hover',
+                borderColor: theme.palette.divider,
+                backgroundColor: theme.palette.action.hover,
               },
               minWidth: 'auto',
               px: 1.5,

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import Main from './main'
+import ThemeProvider from '@/theme/theme'
+import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -37,7 +39,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <Main>{children}</Main>
+        <ThemeProvider>
+          <ThemeRegistry options={{ key: 'mui' }}>
+            <Main>{children}</Main>
+          </ThemeRegistry>
+        </ThemeProvider>
       </body>
     </html>
   )

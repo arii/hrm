@@ -1,6 +1,5 @@
 // theme/designTokens.ts
-
-import { PaletteMode } from '@mui/material';
+import { PaletteMode } from '@mui/material'
 
 export const designTokens = {
   light: {
@@ -24,7 +23,7 @@ export const designTokens = {
         fontWeight: 500,
       },
     },
-    spacing: 8,
+    spacing: 8, // Base spacing unit
   },
   dark: {
     palette: {
@@ -47,6 +46,6 @@ export const designTokens = {
         fontWeight: 500,
       },
     },
-    spacing: 8,
+    spacing: 8, // Base spacing unit
   },
-};
+}

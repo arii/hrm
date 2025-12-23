@@ -3,8 +3,8 @@ module.exports = {
   apps: [
     {
       name: 'hrm-server',
-      script: './start-production.sh',
-      interpreter: 'bash',
+      script: 'node',
+      args: 'dist/server.mjs',
       instances: 1,
       autorestart: true,
       watch: false,

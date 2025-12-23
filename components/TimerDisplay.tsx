@@ -138,7 +138,7 @@ const TimerDisplay = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          width: 40, // Fixed width for the side columns
+          width: theme.spacing(5), // Fixed width for the side columns
         }}
       >
         {currentPhase !== 'IDLE' && (
@@ -254,7 +254,7 @@ const TimerDisplay = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          width: 40, // Fixed width
+          width: theme.spacing(5), // Fixed width
         }}
       >
         {mode === 'TABATA' && (

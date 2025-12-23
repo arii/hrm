@@ -219,3 +219,22 @@ export async function navigateToProtectedRoute(
   // Wait for page to stabilize
   await page.waitForLoadState('networkidle', { timeout })
 }
+
+/**
+ * Mocks a login by setting a dummy session cookie.
+ * @param context - The browser context to set the cookie on.
+ */
+export async function mockLogin(context: BrowserContext) {
+  await context.addCookies([
+    {
+      name: 'next-auth.session-token',
+      value: 'dummy-session-token',
+      domain: '127.0.0.1',
+      path: '/',
+      expires: -1,
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ])
+}
