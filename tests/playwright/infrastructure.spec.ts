@@ -83,6 +83,10 @@ test.describe('Infrastructure & Scripts', () => {
       console.error('DEV SERVER STDERR:\n', stderr)
       throw error // Re-throw the original error to fail the test
     } finally {
+      // Ensure logs are written for CI debugging
+      const fs = await import('fs')
+      fs.writeFileSync('logs/infra-dev-output.log', `STDOUT:\n${stdout}\n\nSTDERR:\n${stderr}`)
+
       // Cleanup: Kill the entire process group.
       // The `-` before devServer.pid is crucial; it kills the group, not just the parent process.
       try {
