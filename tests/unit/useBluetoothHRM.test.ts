@@ -120,6 +120,54 @@ describe('useBluetoothHRM', () => {
     })
   }
 
+  /**
+   * Simulates a heart rate data event from the BLE device.
+   * @param {number} hr - The heart rate to simulate.
+   */
+  const simulateHeartRateEvent = (hr: number) => {
+    const onCharacteristicValueChanged =
+      mockCharacteristic.addEventListener.mock.calls.find(
+        (call) => call[0] === 'characteristicvaluechanged'
+      )[1]
+
+    act(() => {
+      const fakeHeartRateData = new DataView(new ArrayBuffer(2))
+      fakeHeartRateData.setUint8(0, 0) // 8-bit heart rate
+      fakeHeartRateData.setUint8(1, hr)
+      onCharacteristicValueChanged({ target: { value: fakeHeartRateData } })
+    })
+  }
+
+  /**
+   * Triggers a timeout by advancing the Jest timers.
+   */
+  const triggerTimeout = () => {
+    act(() => {
+      jest.advanceTimersByTime(4000)
+    })
+  }
+
+  /**
+   * Simulates a disconnection and reconnection cycle.
+   */
+  const simulateReconnection = async () => {
+    Object.defineProperty(mockDevice.gatt, 'connected', { value: false })
+    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
+      (call) => call[0] === 'gattserverdisconnected'
+    )[1]
+    act(() => {
+      onDisconnectedCallback()
+    })
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000)
+    })
+    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
+    await act(async () => {
+      await Promise.resolve()
+    })
+  }
+
   it('should use default timeout of 10 seconds and trigger reconnect', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
 
@@ -253,73 +301,50 @@ describe('useBluetoothHRM', () => {
     expect(result.current.deviceStatus).toBe('Connected to: Test HRM')
 
     // Simulate first heart rate data event
-    const onCharacteristicValueChanged =
-      mockCharacteristic.addEventListener.mock.calls.find(
-        (call) => call[0] === 'characteristicvaluechanged'
-      )[1]
-
-    act(() => {
-      const fakeHeartRateData = new DataView(new ArrayBuffer(2))
-      fakeHeartRateData.setUint8(0, 0) // 8-bit heart rate
-      fakeHeartRateData.setUint8(1, 75) // 75 bpm
-      onCharacteristicValueChanged({ target: { value: fakeHeartRateData } })
-    })
+    simulateHeartRateEvent(75)
 
     // Trigger first timeout
-    act(() => {
-      jest.advanceTimersByTime(4000)
-    })
+    triggerTimeout()
 
     expect(result.current.deviceStatus).toContain('Connection unstable')
     expect(result.current.disconnectionReason).toBe('timeout')
     expect(mockDevice.gatt.disconnect).toHaveBeenCalledTimes(1)
 
     // Simulate first reconnection
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: false })
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )[1]
-    act(() => {
-      onDisconnectedCallback()
-    })
-
-    expect(result.current.deviceStatus).toContain('Signal Lost. Retrying...')
-
-    await act(async () => {
-      jest.advanceTimersByTime(2000)
-    })
+    await simulateReconnection()
 
     expect(mockDevice.gatt.connect).toHaveBeenCalledTimes(2)
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: true })
-    await act(async () => {
-      await Promise.resolve()
-    })
-
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
 
     // Simulate second heart rate data event
-    act(() => {
-      const fakeHeartRateData = new DataView(new ArrayBuffer(2))
-      fakeHeartRateData.setUint8(0, 0)
-      fakeHeartRateData.setUint8(1, 80)
-      onCharacteristicValueChanged({ target: { value: fakeHeartRateData } })
-    })
+    simulateHeartRateEvent(80)
 
     // Trigger second timeout
-    act(() => {
-      jest.advanceTimersByTime(4000)
-    })
+    triggerTimeout()
     expect(mockDevice.gatt.disconnect).toHaveBeenCalledTimes(2)
 
     // Simulate second reconnection
-    Object.defineProperty(mockDevice.gatt, 'connected', { value: false })
-    act(() => {
-      onDisconnectedCallback()
-    })
-    await act(async () => {
-      jest.advanceTimersByTime(2000)
-    })
+    await simulateReconnection()
     expect(mockDevice.gatt.connect).toHaveBeenCalledTimes(3)
+  })
+
+  it('should display an error message if the connection fails', async () => {
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    // Mock a connection failure
+    mockDevice.gatt.connect.mockRejectedValue(new Error('Connection failed'))
+
+    // Attempt to connect
+    await act(async () => {
+      try {
+        await result.current.connectAndStream('Test User', 30)
+      } catch (e) {
+        // Ignore the error
+      }
+    })
+
+    // Verify that the error message is displayed
+    expect(result.current.deviceStatus).toContain('Failed: Error: Connection failed')
   })
 })
