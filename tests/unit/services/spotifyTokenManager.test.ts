@@ -193,8 +193,10 @@ describe('SpotifyTokenManager', () => {
 
     expect(userId).toBeNull()
     expect(console.warn).toHaveBeenCalledWith(
-      'Failed to load Spotify tokens:',
-      expect.any(SyntaxError)
+      'Failed to load or validate Spotify tokens:',
+      expect.any(SyntaxError),
+      'Raw data:',
+      'invalid json'
     )
   })
 
@@ -253,5 +255,30 @@ describe('SpotifyTokenManager', () => {
     expect(console.log).toHaveBeenCalledWith(
       'Spotify access token expired, but no refresh token available. Cannot refresh.'
     )
+  })
+
+  it('should log an error and not write to file when updateToken receives malformed data', () => {
+    const malformedPayload = {
+      provider: 'spotify',
+      sub: 'test_user',
+      access_token: 'access_token',
+      refresh_token: 'refresh_token',
+      expires_in: 'not_a_number', // Malformed data
+      scope: 'test_scope',
+      obtainedAt: Date.now(),
+    } as any
+
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    const tokenManager = new SpotifyTokenManager(clientId, clientSecret, logDir)
+    tokenManager.updateToken(malformedPayload)
+
+    expect(console.error).toHaveBeenCalledWith(
+      'Failed to update token due to validation error or invalid format:',
+      expect.any(Error),
+      'Invalid payload:',
+      malformedPayload
+    )
+    expect(fs.writeFileSync).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,7 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
+import { SpotifyTokenPayloadSchema } from '../lib/validation/schemas.js'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 /**
@@ -72,16 +73,26 @@ export class SpotifyTokenManager {
    * @param {SpotifyTokenPayload} payload - The new token payload.
    */
   public updateToken(payload: SpotifyTokenPayload): void {
-    this.currentToken = {
-      receivedAt: Date.now(),
-      payload: payload,
+    try {
+      const validatedPayload = SpotifyTokenPayloadSchema.parse(payload)
+      this.currentToken = {
+        receivedAt: Date.now(),
+        payload: validatedPayload,
+      }
+      // Persist for future runs
+      writeTokenFileSafe(this.tokenFile, this.currentToken)
+      console.log(
+        'Updated in-memory and persisted Spotify tokens for:',
+        this.currentToken.payload.sub
+      )
+    } catch (err) {
+      console.error(
+        'Failed to update token due to validation error or invalid format:',
+        err,
+        'Invalid payload:',
+        payload
+      )
     }
-    // Persist for future runs
-    writeTokenFileSafe(this.tokenFile, this.currentToken)
-    console.log(
-      'Updated in-memory and persisted Spotify tokens for:',
-      this.currentToken.payload.sub
-    )
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
@@ -100,11 +111,30 @@ export class SpotifyTokenManager {
     try {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
-        console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
+        const jsonData = JSON.parse(data)
+
+        // Validate the payload using the Zod schema
+        const validatedPayload = SpotifyTokenPayloadSchema.parse(jsonData.payload)
+
+        this.currentToken = {
+          receivedAt: jsonData.receivedAt,
+          payload: validatedPayload,
+        }
+        console.log(
+          'Loaded and validated Spotify tokens for:',
+          this.currentToken.payload.sub
+        )
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      console.warn(
+        'Failed to load or validate Spotify tokens:',
+        err,
+        'Raw data:',
+        fs.existsSync(this.tokenFile)
+          ? fs.readFileSync(this.tokenFile, 'utf8')
+          : 'File not found'
+      )
+      this.currentToken = null // Ensure corrupt token isn't used
     }
   }
 
