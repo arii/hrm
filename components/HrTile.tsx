@@ -9,8 +9,25 @@ import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
 import { memo } from 'react'
-import StyledCard from './shared/StyledCard'
+import { motion } from 'framer-motion'
 import { useTheme } from '@mui/material/styles'
+import { Heart, TrendingUp } from 'lucide-react'
+
+// Helper to convert hex to RGBA
+const hexToRgba = (hex: string, alpha: number) => {
+  if (!/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+    return `rgba(0, 0, 0, ${alpha})` // Return a default color for invalid hex
+  }
+  let c = hex.substring(1).split('')
+  if (c.length === 3) {
+    c = [c[0], c[0], c[1], c[1], c[2], c[2]]
+  }
+  const i = parseInt(c.join(''), 16)
+  const r = (i >> 16) & 255
+  const g = (i >> 8) & 255
+  const b = i & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -48,14 +65,26 @@ const HrTile = ({
 
   return (
     <Tooltip title={tooltipTitle} arrow>
-      <StyledCard
-        data-testid="hr-tile-card"
-        role="region"
-        aria-label={`Heart rate monitor for ${name}: ${
-          isConnected ? `${bpm} beats per minute` : 'Disconnected'
-        }, ${percentMax}% of maximum`}
-        sx={{
-          backgroundColor: backgroundColor,
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.02, y: -5 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          borderRadius: '16px', // Slightly larger radius for a softer look
+          padding: theme.spacing(2),
+          boxShadow: `0 8px 32px 0 ${hexToRgba(theme.palette.common.black, 0.37)}`,
+          border: `1px solid ${hexToRgba(theme.palette.common.white, 0.18)}`,
+          background: `
+            radial-gradient(
+              circle at 50% 50%,
+              ${hexToRgba(backgroundColor, 0.5)},
+              ${hexToRgba(backgroundColor, 0.1)} 70%
+            ),
+            ${hexToRgba(theme.palette.grey[900], 0.2)}
+          `,
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)', // For Safari support
           color: textColor,
           textAlign: 'center',
           minHeight: 180,
@@ -65,14 +94,12 @@ const HrTile = ({
           justifyContent: 'center',
           position: 'relative',
           opacity: isConnected ? 1 : 0.6,
-          transition: theme.transitions.create('opacity', {
-            duration: theme.transitions.duration.short, // Approx 300ms
-          }),
         }}
       >
         {/* --- Disconnected Icon --- */}
         {!isConnected && (
           <WifiOffIcon
+            data-testid="WifiOffIcon"
             sx={{
               position: 'absolute',
               top: theme.spacing(1),
@@ -101,17 +128,31 @@ const HrTile = ({
             <Typography
               data-testid="live-hr-percent"
               sx={{
-                fontFamily: 'var(--font-roboto-mono), "Courier New", monospace',
-                fontSize: { xs: '5rem', sm: '6rem', md: '7rem' },
-                fontWeight: 900,
-                lineHeight: 0.85,
-                my: 0.5,
-                animation: 'subtle-pulse 2s infinite ease-in-out',
-                animationPlayState:
-                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
+                fontFamily: '"Bebas Neue", "Roboto", sans-serif',
+                fontSize: { xs: '6rem', sm: '7rem', md: '8rem' },
+                fontWeight: 700,
+                lineHeight: 1,
+                my: 0,
+                color: 'transparent',
+                background: `linear-gradient(45deg, ${backgroundColor}, ${hexToRgba(
+                  textColor,
+                  0.6
+                )})`,
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                textShadow: `0 2px 5px ${hexToRgba(
+                  theme.palette.common.black,
+                  0.5
+                )}`,
               }}
             >
-              {percentMax}%
+              {percentMax}
+              <Typography
+                component="span"
+                sx={{ fontSize: '0.5em', verticalAlign: 'top' }}
+              >
+                %
+              </Typography>
             </Typography>
             <Box
               sx={{
@@ -122,24 +163,56 @@ const HrTile = ({
               }}
             >
               {/* BPM Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <motion.div
+                  animate={
+                    bpm > 0
+                      ? {
+                          scale: [1, 1.15, 1],
+                          transition: {
+                            duration: 60 / bpm,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          },
+                        }
+                      : { scale: 1 }
+                  }
+                  style={{ display: 'inline-block', marginRight: '8px' }}
+                >
+                  <Heart size={20} fill={textColor} stroke="none" />
+                </motion.div>
                 {bpm}{' '}
                 <Typography
                   variant="caption"
                   component="span"
-                  sx={{ opacity: 0.8 }}
+                  sx={{ opacity: 0.8, ml: 0.5 }}
                 >
                   BPM
                 </Typography>
               </Typography>
 
               {/* Calorie Display */}
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <TrendingUp size={20} style={{ marginRight: '8px' }} />
                 {Math.floor(calories)}{' '}
                 <Typography
                   variant="caption"
                   component="span"
-                  sx={{ opacity: 0.8 }}
+                  sx={{ opacity: 0.8, ml: 0.5 }}
                 >
                   KCAL
                 </Typography>
@@ -147,15 +220,23 @@ const HrTile = ({
             </Box>
             {name && !/^(user|new user)$/i.test(name) && (
               <Typography
-                variant="subtitle1"
+                variant="caption"
                 sx={{
+                  position: 'absolute',
+                  top: theme.spacing(1),
+                  left: theme.spacing(2),
                   fontWeight: 700,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
                   letterSpacing: '0.05em',
-                  mt: 1,
+                  backgroundColor: hexToRgba(
+                    theme.palette.common.black,
+                    0.4
+                  ),
+                  padding: theme.spacing(0.5, 1.5),
+                  borderRadius: '12px',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
+                  maxWidth: 'calc(100% - 60px)', // Prevent overlap with icons
                 }}
               >
                 {name}
@@ -163,7 +244,7 @@ const HrTile = ({
             )}
           </CardContent>
         </Box>
-      </StyledCard>
+      </motion.div>
     </Tooltip>
   )
 }
