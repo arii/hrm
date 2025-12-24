@@ -4,7 +4,7 @@
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
 
-import { z } from '../zod.js'
+import { z } from '@/lib/zod'
 
 // =================================================================
 // Data Model Schemas
@@ -50,7 +50,7 @@ export const CreateUserProfileSchema = UserProfileSchema.pick({
 // Example: Schema for creating a new workout session
 export const CreateWorkoutSessionSchema = WorkoutSessionSchema.pick({
   userId: true,
-  startedAt: true,
+  startedAt: true,,
   notes: true,
 })
 
