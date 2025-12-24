@@ -17,7 +17,7 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -59,7 +59,7 @@ export class SpotifyPolling implements SpotifyService {
     isMuted: false,
   }
 
-  private sdk: SpotifyApi | null = null
+  private sdk: SafeSpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
