@@ -50,6 +50,7 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'wrong-secret',
         },
+        body: JSON.stringify({ refresh_token: 'test' }),
       }
     )
 
