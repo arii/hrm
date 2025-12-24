@@ -8,6 +8,9 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
+import { SpotifyDevice } from '@/types/core'
 
 const PlaylistTracksDisplay = dynamic(
   () => import('../../../../components/Playlist/PlaylistTracksDisplay'),
@@ -15,6 +18,11 @@ const PlaylistTracksDisplay = dynamic(
     ssr: false,
     loading: () => <CircularProgress />,
   }
+)
+
+const SpotifyDeviceSelectorWrapper = dynamic(
+  () => import('../../../../components/SpotifyDeviceSelectorWrapper'),
+  { ssr: false }
 )
 
 interface PlaylistDetails {
@@ -29,9 +37,13 @@ interface PlaylistDetails {
 const PlaylistPage = () => {
   const params = useParams()
   const playlistId = params.playlistId as string
+  const { spotifyData, sendData } = useWebSocket()
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
+  )
 
   useEffect(() => {
     if (!playlistId) return
@@ -41,7 +53,8 @@ const PlaylistPage = () => {
         setLoading(true)
         const response = await fetch(`/api/spotify/playlists/${playlistId}`)
         if (!response.ok) {
-          throw new Error('Failed to fetch playlist details')
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Failed to fetch playlist details')
         }
         const data = await response.json()
         setPlaylist(data)
@@ -54,6 +67,16 @@ const PlaylistPage = () => {
 
     fetchPlaylistDetails()
   }, [playlistId])
+
+  const handleDeviceSelect = (deviceId: string) => {
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'TRANSFER_PLAYBACK',
+      deviceId,
+    }
+    sendData(message)
+    setDeviceMenuAnchor(null)
+  }
 
   if (loading) {
     return (
@@ -108,6 +131,13 @@ const PlaylistPage = () => {
             <Typography variant="body2" color="text.secondary">
               Created by {playlist.owner} - {playlist.trackCount} tracks
             </Typography>
+            <SpotifyDeviceSelectorWrapper
+              availableDevices={spotifyData.devices || []}
+              deviceMenuAnchor={deviceMenuAnchor}
+              onDeviceSelect={handleDeviceSelect}
+              onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
+              onMenuClose={() => setDeviceMenuAnchor(null)}
+            />
           </Box>
         </Box>
       </Box>

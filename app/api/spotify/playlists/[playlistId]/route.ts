@@ -2,12 +2,10 @@
 /**
  * API Route: Fetches details for a single Spotify playlist.
  */
-import { authOptions } from '@/lib/auth'
-import { SpotifyApi } from '@spotify/web-api-ts-sdk'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
+import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
 /**
  * GET handler for fetching single playlist details.
@@ -25,21 +23,7 @@ async function getPlaylistDetails(
     throw new ApiError(400, 'Playlist ID is required.')
   }
 
-  const session = await getServerSession(authOptions)
-  if (!session || !session.accessToken) {
-    throw new ApiError(401, 'Not authenticated or token is missing.')
-  }
-
-  const spotify = SpotifyApi.withAccessToken(
-    process.env.SPOTIFY_CLIENT_ID || '',
-    {
-      access_token: session.accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600,
-      refresh_token: '',
-    }
-  )
-
+  const spotify = await getAuthenticatedSpotifyApi()
   const playlist = await spotify.playlists.getPlaylist(playlistId)
 
   if (!playlist) {

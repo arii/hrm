@@ -49,7 +49,8 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
         `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
       )
       if (!response.ok) {
-        throw new Error('Failed to fetch tracks')
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch tracks')
       }
       const data = await response.json()
       setTracks(data.tracks)
