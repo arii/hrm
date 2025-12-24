@@ -4,7 +4,7 @@
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
 
-import { z } from '@/lib/zod'
+import { z } from '../zod'
 
 // =================================================================
 // Data Model Schemas
