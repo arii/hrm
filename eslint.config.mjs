@@ -197,6 +197,21 @@ export default defineConfig([
   // This turns off any ESLint style rules that conflict with Prettier.
   prettierConfig,
 
+  // Add a rule to allow extension-less imports for .ts and .tsx files
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'import/extensions': [
+        'error',
+        'ignorePackages',
+        {
+          ts: 'never',
+          tsx: 'never',
+        },
+      ],
+    },
+  },
+
   // Add the Prettier plugin configuration
   {
     plugins: {
