@@ -351,37 +351,24 @@ export class SpotifyPolling implements SpotifyService {
     const { deviceId, volume, playlistUri } = params
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
-    // TODO: The 'as any' casts in this function are a temporary workaround for an incorrect SDK type definition.
-    // This should be addressed by contributing a fix to the upstream SDK repository.
-
     switch (command) {
       case 'PLAY':
-        // SDK types for startResumePlayback are incorrect; they should allow undefined for device_id.
-        // We use the type guard and a targeted `as any` to work around this safely.
-        if (isValidDeviceId(deviceId)) {
-          await this.sdk!.player.startResumePlayback(deviceId, playlistUri)
-        } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (this.sdk!.player.startResumePlayback as any)(
-            undefined,
-            playlistUri
-          )
-        }
+        await this.sdk!.player.startResumePlayback(
+          deviceId,
+          playlistUri,
+          undefined,
+          undefined,
+          undefined
+        )
         break
       case 'PAUSE':
-        // SDK types are incorrect, should allow undefined deviceId
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.sdk!.player.pausePlayback as any)(deviceId)
+        await this.sdk!.player.pausePlayback(deviceId)
         break
       case 'NEXT':
-        // SDK types are incorrect, should allow undefined deviceId
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.sdk!.player.skipToNext as any)(deviceId)
+        await this.sdk!.player.skipToNext(deviceId)
         break
       case 'PREVIOUS':
-        // SDK types are incorrect, should allow undefined deviceId
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.sdk!.player.skipToPrevious as any)(deviceId)
+        await this.sdk!.player.skipToPrevious(deviceId)
         break
       case 'TRANSFER_PLAYBACK':
         if (isValidDeviceId(deviceId)) {

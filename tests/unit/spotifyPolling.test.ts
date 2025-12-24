@@ -137,6 +137,9 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         'test_device_id',
+        undefined,
+        undefined,
+        undefined,
         undefined
       )
     })
@@ -165,9 +168,22 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { deviceId })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
         deviceId,
+        undefined,
+        undefined,
+        undefined,
         undefined
       )
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
+    })
+
+    it('should handle PLAY command without device ID', async () => {
+      await spotifyService.handleCommand('PLAY', {})
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      )
     })
   })
 
