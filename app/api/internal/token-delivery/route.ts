@@ -24,8 +24,11 @@ export async function POST(req: NextRequest) {
 
     // 2. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
-    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
-    if (expected && secretHeader !== expected) {
+    const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
+    if (!expected) {
+      throw new ApiError(500, 'INTERNAL_TOKEN_DELIVERY_SECRET is not set.')
+    }
+    if (secretHeader !== expected) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }
 
