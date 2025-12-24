@@ -60,3 +60,13 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   timestamp: true,
   heartRate: true,
 })
+
+export const SpotifyTokenPayloadSchema = z.object({
+  provider: z.string(),
+  sub: z.string(),
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_in: z.number(),
+  scope: z.string(),
+  obtainedAt: z.number(),
+})
