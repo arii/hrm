@@ -282,21 +282,20 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               let calories = 0
               if (gender === 'male') {
                 calories =
-                  ((-55.0969 +
+                  (-55.0969 +
                     0.6309 * heartRate +
                     0.1988 * weightKg +
                     0.2017 * age) /
-                    4.184) *
-                  dtMinutes
+                  4.184
               } else {
                 calories =
-                  ((-20.4022 +
+                  (-20.4022 +
                     0.4472 * heartRate -
                     0.1263 * weightKg +
                     0.074 * age) /
-                    4.184) *
-                  dtMinutes
+                  4.184
               }
+              calories *= dtMinutes
 
               if (calories > 0) {
                 accumulatedCalories += calories

@@ -39,7 +39,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   validateAge,
   validateWeight,
 }) => {
-
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField

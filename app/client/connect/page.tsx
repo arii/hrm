@@ -71,7 +71,9 @@ export default function ConnectPage() {
       hrHistory={hrHistory}
       hrZoneDurations={hrZoneDurations}
       userName={userName || ''}
-      setUserName={(name) => setUserSettings({ ...userSettings, userName: name })}
+      setUserName={(name) =>
+        setUserSettings({ ...userSettings, userName: name })
+      }
       userAge={userAge ? String(userAge) : ''}
       setUserAge={(age) =>
         setUserSettings({ ...userSettings, userAge: Number(age) })
@@ -81,7 +83,9 @@ export default function ConnectPage() {
         setUserSettings({ ...userSettings, userWeightKg: Number(weight) })
       }
       userGender={userGender}
-      setUserGender={(gender) => setUserSettings({ ...userSettings, userGender: gender })}
+      setUserGender={(gender) =>
+        setUserSettings({ ...userSettings, userGender: gender })
+      }
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}

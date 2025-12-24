@@ -9,16 +9,12 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import {
-  initSocketManager,
-  hrmDataRepository,
-} from '../../utils/socketManager'
+import { initSocketManager, hrmDataRepository } from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,

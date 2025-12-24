@@ -162,10 +162,6 @@ export default function ConnectView({
             validateWeight={(val) =>
               setWeightError(validate(val, 30, 200, 'weight'))
             }
-            userHeight="" // No longer used, pass empty
-            setUserHeight={() => {}} // No longer used, pass empty fn
-            heightError={null} // No longer used
-            validateHeight={() => {}} // No longer used
           />
         ) : (
           <Box
