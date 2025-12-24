@@ -71,6 +71,7 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
+    "@types/recharts": "^2.0.1",
     "cheerio": "^1.1.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
@@ -81,6 +82,7 @@
     "pino": "^10.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.6.0",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
     "zod": "^4.1.13"

@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
@@ -14,11 +13,15 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
+import UserSettings from './UserSettings'
+import HrHistoryChart from './HrHistoryChart'
+import HrZoneTable from './HrZoneTable'
+import { HrDataPoint, HrZoneData } from '@/hooks/useBluetoothHRM'
 import { useState } from 'react'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
-    return null
+    return `Please enter a ${name}`
   }
   const num = Number(value)
   if (isNaN(num) || num < min || num > max) {
@@ -30,14 +33,17 @@ const validate = (value: string, min: number, max: number, name: string) => {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  totalCalories: number
+  hrHistory: HrDataPoint[]
+  hrZoneDurations: HrZoneData
   userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: string
-  setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  userGender: 'male' | 'female' | null
+  setUserGender: (gender: 'male' | 'female' | null) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -59,14 +65,17 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
+  totalCalories,
+  hrHistory,
+  hrZoneDurations,
   userName,
   setUserName,
   userAge,
   setUserAge,
-  userHeight,
-  setUserHeight,
   userWeight,
   setUserWeight,
+  userGender,
+  setUserGender,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -86,8 +95,8 @@ export default function ConnectView({
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
-  const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+  const [unit, setUnit] = useState<'metric' | 'imperial'>('metric')
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -136,69 +145,28 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              label="Your Name"
-              placeholder="e.g., Jane Doe"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Your Age"
-              placeholder="e.g., 30"
-              type="number"
-              value={userAge}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserAge(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                setAgeError(validate(e.target.value, 1, 120, 'age'))
-              }}
-              error={!!ageError}
-              helperText={ageError}
-              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
-            />
-            <TextField
-              fullWidth
-              label="Your Height (cm)"
-              placeholder="e.g., 175"
-              type="number"
-              value={userHeight}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserHeight(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                setHeightError(validate(e.target.value, 100, 250, 'height'))
-              }}
-              error={!!heightError}
-              helperText={heightError}
-              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
-            />
-            <TextField
-              fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
-              type="number"
-              value={userWeight}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserWeight(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
-              }}
-              error={!!weightError}
-              helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
-            />
-          </Stack>
+          <UserSettings
+            userName={userName}
+            setUserName={setUserName}
+            userAge={userAge}
+            setUserAge={setUserAge}
+            userWeight={userWeight}
+            setUserWeight={setUserWeight}
+            userGender={userGender}
+            setUserGender={setUserGender}
+            unit={unit}
+            setUnit={setUnit}
+            ageError={ageError}
+            weightError={weightError}
+            validateAge={(val) => setAgeError(validate(val, 1, 120, 'age'))}
+            validateWeight={(val) =>
+              setWeightError(validate(val, 30, 200, 'weight'))
+            }
+            userHeight="" // No longer used, pass empty
+            setUserHeight={() => {}} // No longer used, pass empty fn
+            heightError={null} // No longer used
+            validateHeight={() => {}} // No longer used
+          />
         ) : (
           <Box
             sx={{
@@ -242,6 +210,8 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
+                !userWeight.trim() ||
+                !userGender ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -313,9 +283,17 @@ export default function ConnectView({
               name={userName}
               bpm={currentHR}
               percentMax={hrZoneProps.percentage}
+              calories={totalCalories}
               isAlerting={false}
             />
           </Box>
+        )}
+
+        {hasStarted && (
+          <>
+            <HrHistoryChart data={hrHistory} />
+            <HrZoneTable zoneDurations={hrZoneDurations} />
+          </>
         )}
 
         <Stack

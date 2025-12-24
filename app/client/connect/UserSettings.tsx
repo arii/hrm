@@ -4,6 +4,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import FormLabel from '@mui/material/FormLabel'
 
 interface UserSettingsProps {
   userName: string
@@ -14,6 +15,8 @@ interface UserSettingsProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  userGender: 'male' | 'female' | null
+  setUserGender: (gender: 'male' | 'female' | null) => void
   unit: 'metric' | 'imperial'
   setUnit: (unit: 'metric' | 'imperial') => void
   ageError: string | null
@@ -33,6 +36,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserHeight,
   userWeight,
   setUserWeight,
+  userGender,
+  setUserGender,
   unit,
   setUnit,
   ageError,
@@ -82,6 +87,26 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
+      <Stack spacing={1}>
+        <FormLabel component="legend">Biological Sex</FormLabel>
+        <ToggleButtonGroup
+          value={userGender}
+          exclusive
+          onChange={(_, newGender) => {
+            if (newGender) {
+              setUserGender(newGender)
+            }
+          }}
+          aria-label="Biological sex for calorie estimation"
+        >
+          <ToggleButton value="male" aria-label="male">
+            Male
+          </ToggleButton>
+          <ToggleButton value="female" aria-label="female">
+            Female
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
       <ToggleButtonGroup
         value={unit}
         exclusive

@@ -1,18 +1,16 @@
 'use client'
 
-import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useUserSettings } from '@/context/UserSettingsContext'
 
 export default function ConnectPage() {
-  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
-  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
-  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
+  const [userSettings, setUserSettings] = useUserSettings()
+  const { userName, userAge, userWeightKg, userGender } = userSettings
 
   const {
     connectAndStream,
@@ -23,6 +21,9 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
+    totalCalories: clientTotalCalories,
+    hrHistory,
+    hrZoneDurations,
   } = useBluetoothHRM()
 
   const { connectionStatus, hrmData } = useWebSocket()
@@ -35,14 +36,18 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    connectAndStream(
+      userName || '',
+      userAge || 0,
+      userWeightKg || 0,
+      userGender || 'male'
+    )
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
+  const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
@@ -62,14 +67,21 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={caloriesBurned}
-      userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
-      userHeight={userHeight}
-      setUserHeight={setUserHeight}
-      userWeight={userWeight}
-      setUserWeight={setUserWeight}
+      totalCalories={clientTotalCalories}
+      hrHistory={hrHistory}
+      hrZoneDurations={hrZoneDurations}
+      userName={userName || ''}
+      setUserName={(name) => setUserSettings({ ...userSettings, userName: name })}
+      userAge={userAge ? String(userAge) : ''}
+      setUserAge={(age) =>
+        setUserSettings({ ...userSettings, userAge: Number(age) })
+      }
+      userWeight={userWeightKg ? String(userWeightKg) : ''}
+      setUserWeight={(weight) =>
+        setUserSettings({ ...userSettings, userWeightKg: Number(weight) })
+      }
+      userGender={userGender}
+      setUserGender={(gender) => setUserSettings({ ...userSettings, userGender: gender })}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}

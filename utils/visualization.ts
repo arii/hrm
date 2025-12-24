@@ -8,7 +8,12 @@ import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
 import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
-import { HrZoneName } from '../lib/shared/hr-zones'
+import {
+  HrZoneName,
+  HR_ZONE_DEFINITIONS as CoreHrZoneDefinitions,
+} from '../lib/shared/hr-zones'
+
+export const HR_ZONE_DEFINITIONS = CoreHrZoneDefinitions
 
 // Define types for MUI color props
 type MuiColor =
