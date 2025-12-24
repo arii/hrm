@@ -92,9 +92,13 @@ export class ConnectionMonitor {
    * @param wss The WebSocketServer instance to monitor.
    * @param watchdogInterval The interval (in ms) to check for stale connections. Defaults to 30 seconds.
    */
-  constructor(wss: WebSocketServer, watchdogInterval = 30000) {
+  constructor(wss: WebSocketServer, watchdogInterval?: number) {
     this.wss = wss
-    this.watchdogInterval = watchdogInterval
+    this.watchdogInterval =
+      watchdogInterval ||
+      (process.env.WEBSOCKET_WATCHDOG_INTERVAL
+        ? parseInt(process.env.WEBSOCKET_WATCHDOG_INTERVAL, 10)
+        : 30000)
   }
 
   /**
@@ -112,8 +116,11 @@ export class ConnectionMonitor {
 
         if (!extWs.isAlive) {
           logger.warn(
-            { clientId: extWs.clientId },
-            'Terminating stale WebSocket connection due to inactivity.'
+            {
+              clientId: extWs.clientId,
+              inactivityDuration: this.watchdogInterval,
+            },
+            `Terminating stale WebSocket connection due to ${this.watchdogInterval}ms of inactivity.`
           )
           return extWs.terminate()
         }

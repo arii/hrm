@@ -4,6 +4,7 @@
 
 ### Features
 
+- Centralize WebSocket heartbeat and cleanup logic ([#2086](https://github.com/arii/hrm/issues/2086)) ([f3e3e3e](https://github.com/arii/hrm/commit/f3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3))
 - Add AuthButton component for Spotify login/logout ([#2018](https://github.com/arii/hrm/issues/2018)) ([a6629bd](https://github.com/arii/hrm/commit/a6629bd521fb30d89f59fb6374faae0aead1c0e2))
 - Implement Authentication Error Notifications ([#2055](https://github.com/arii/hrm/issues/2055)) ([73acd23](https://github.com/arii/hrm/commit/73acd2366f558efa18888ede424875999e4c0cb1))
 - Implement Spotify Connect Device Picker ([#2014](https://github.com/arii/hrm/issues/2014)) ([a154729](https://github.com/arii/hrm/commit/a154729ec3b74f761927280794d7cf71c7cd7018))
@@ -16,6 +17,10 @@
 - **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
 - **lint:** Address linting errors ([122ccc6](https://github.com/arii/hrm/commit/122ccc618138f83389294a818251ddc52ffd636a))
 - **tests:** stabilize visual regression tests ([d2a5675](https://github.com/arii/hrm/commit/d2a5675ef9b9ad678a4a3c874e597a44798bab77))
+
+### Changed
+
+- **WebSocket:** The server-sent `PONG` message has been removed in favor of the native WebSocket ping/pong mechanism. This may affect clients that rely on the application-level `PONG` message.
 
 ## [0.14.0](https://github.com/arii/hrm/compare/v0.13.0...v0.14.0) (2025-12-23)
 
@@ -208,7 +213,7 @@
 - Add user preferences persistence ([b14ea33](https://github.com/arii/hrm/commit/b14ea3349fa42b62a47a45a6f9e34aa989f5233c))
 - Add visual feedback to selected Spotify items ([16e9814](https://github.com/arii/hrm/commit/16e9814bb12d5d8d6b494aa275712cdffe4b267a))
 - apply high-impact UI enhancements ([633e23f](https://github.com/arii/hrm/commit/633e23feb0389fd94593ac2f47c6023e1685affd))
-- Automate CI verification and proof submission ([589fc17](https://github.com/arii/hrm/commit/589fc176b7e03f262261c5365a6b709fab250f26))
+- Automate CI verification and proof submission ([589fc17](https://github.com/arii/hrm/commit/589fc176b7e03f262261c5365a6b709fab250f27))
 - comprehensive test infrastructure improvements and screenshot regeneration ([8824f38](https://github.com/arii/hrm/commit/8824f384c00ba73ec080dc46f91f21d11514c5ec))
 - Configure NextAuth SpotifyProvider for PKCE compliance ([10a3ddb](https://github.com/arii/hrm/commit/10a3ddbbbef621ac338c559ebc13070020cc979b))
 - Create Docker Compose for Development ([d22c876](https://github.com/arii/hrm/commit/d22c876387ca34d5302f1fde72dbeb1fca1b4ac8))
