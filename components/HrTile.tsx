@@ -70,7 +70,7 @@ const HrTile = ({
       minHeight: 180,
       height: '100%',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as any,
       justifyContent: 'center',
       position: 'relative' as any,
       opacity: isConnected ? 1 : 0.6,
