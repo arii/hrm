@@ -167,6 +167,7 @@ describe('SpotifyPolling Service', () => {
         deviceId,
         undefined
       )
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
     })
   })
 

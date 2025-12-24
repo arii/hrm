@@ -150,12 +150,14 @@ jobs:
         run: |
           set -o pipefail
           pnpm run lint 2>&1 | tee logs/lint-output.log
+        continue-on-error: true
 
       - name: Verify Build
         id: build
         run: |
           set -o pipefail
           pnpm run build 2>&1 | tee logs/build-output.log
+        continue-on-error: true
 
       - name: Run Production Server Test (Post-Build)
         id: infra_tests_prod
@@ -275,7 +277,7 @@ jobs:
           PERF_TESTS_OUTCOME: ${{ steps.perf_tests.outcome }}
         run: |
           set +e  # Disable exit on error to continue reporting even if commands fail
-          
+
           # 1. SETUP: Find PR number and define checks
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then

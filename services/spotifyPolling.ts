@@ -319,6 +319,7 @@ export class SpotifyPolling implements SpotifyService {
       playlistUri?: string
     }
   ) {
+    const { deviceId, volume, playlistUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()

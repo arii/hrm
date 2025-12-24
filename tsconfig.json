@@ -24,6 +24,7 @@
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
@@ -42,8 +43,6 @@
   "exclude": [
     "node_modules",
     "tests/playwright",
-    "playwright.config.ts",
-    ".stories",
-    "**/*.stories.tsx"
+    "playwright.config.ts"
   ]
 }
