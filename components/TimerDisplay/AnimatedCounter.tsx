@@ -13,6 +13,7 @@ const AnimatedCounter = ({
 }) => {
   return (
     <Typography
+      data-testid="timer-countdown"
       component="div"
       role="timer"
       aria-live="polite"

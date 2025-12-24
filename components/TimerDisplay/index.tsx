@@ -18,29 +18,22 @@ import PhaseBackground from './PhaseBackground'
 import AnimatedCounter from './AnimatedCounter'
 import ProgressRing from './ProgressRing'
 import { TimerState } from '@/types/timer'
+import { PhaseProps } from '@/types/timer'
+import { PREPARE_DURATION } from '@/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const getPhaseProps = (
-  phase: TimerState['currentPhase'],
-  mode: TimerState['mode']
-) => {
-  switch (phase) {
-    case 'PREPARE':
-      return {
-        color: '#f59e0b',
-        label: 'GET READY',
-      }
-    case 'WORK':
-      return { color: '#ef4444', label: 'WORK' }
-    case 'REST':
-      return { color: '#22c55e', label: 'REST' }
-    case 'RUNNING':
-      return { color: '#3b82f6', label: 'RUNNING' }
-    case 'IDLE':
-    default:
-      return { color: '#6b7280', label: 'IDLE' }
-  }
+const phaseProps: PhaseProps = {
+  PREPARE: { color: '#f59e0b', label: 'GET READY' },
+  WORK: { color: '#ef4444', label: 'WORK' },
+  REST: { color: '#22c55e', label: 'REST' },
+  RUNNING: { color: '#3b82f6', label: 'RUNNING' },
+  IDLE: { color: '#6b7280', label: 'IDLE' },
+  COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
+}
+
+const getPhaseProps = (phase: TimerState['currentPhase']) => {
+  return phaseProps[phase]
 }
 
 const TimerDisplay = () => {
@@ -55,17 +48,14 @@ const TimerDisplay = () => {
     restDuration = 1,
   } = timerData
 
-  const { color: phaseColor, label: phaseLabel } = getPhaseProps(
-    currentPhase,
-    mode
-  )
+  const { color: phaseColor, label: phaseLabel } = getPhaseProps(currentPhase)
 
   let displayTime: string
   let progressPercentage: number = 0
 
   if (currentPhase === 'PREPARE') {
     displayTime = String(timeRemaining)
-    progressPercentage = (timeRemaining / 10) * 100
+    progressPercentage = (timeRemaining / PREPARE_DURATION) * 100
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
@@ -124,6 +114,7 @@ const TimerDisplay = () => {
             backgroundColor:
               connectionStatus === 'Connected'
                 ? '#10B981'
+                // eslint-disable-next-line sonarjs/no-duplicate-string
                 : connectionStatus === 'Reconnecting...'
                   ? '#F59E0B'
                   : '#EF4444',
