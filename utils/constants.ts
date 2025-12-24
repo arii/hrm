@@ -55,8 +55,7 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
   { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
 ]
 
-// eslint-disable-next-line import/extensions
-import { lbsToKg } from './units'
+import { lbsToKg } from './units.js'
 
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)
