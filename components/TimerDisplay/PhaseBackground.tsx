@@ -1,14 +1,12 @@
 // File: components/TimerDisplay/PhaseBackground.tsx
 'use client'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Box, useTheme } from '@mui/material'
-import { TimerState } from '@/types/timer'
+import { TimerData } from '@/types/core'
 import { keyframes } from '@emotion/react'
 
-const particles = Array.from({ length: 20 })
-
-const getPhaseGradient = (phase: TimerState['currentPhase']) => {
+const getPhaseGradient = (phase: TimerData['currentPhase']) => {
   switch (phase) {
     case 'PREPARE':
       return 'linear-gradient(135deg, #fde047 0%, #f59e0b 100%)' // Yellow
@@ -29,8 +27,17 @@ const move = keyframes`
   100% { transform: translate(-50%, -50%) scale(1.1); }
 `
 
-const PhaseBackground = ({ phase }: { phase: TimerState['currentPhase'] }) => {
+const PhaseBackground = ({ phase }: { phase: TimerData['currentPhase'] }) => {
   const theme = useTheme()
+  const [particles] = useState(() =>
+    Array.from({ length: 20 }).map(() => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      width: `${Math.random() * 200 + 100}px`,
+      height: `${Math.random() * 200 + 100}px`,
+      animationDuration: `${Math.random() * 10 + 5}s`,
+    }))
+  )
 
   return (
     <AnimatePresence>
@@ -51,22 +58,20 @@ const PhaseBackground = ({ phase }: { phase: TimerState['currentPhase'] }) => {
           zIndex: 0,
         }}
       >
-        {particles.map((_, i) => (
+        {particles.map((style, i) => (
           <Box
             key={i}
             sx={{
               position: 'absolute',
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              width: `${Math.random() * 200 + 100}px`,
-              height: `${Math.random() * 200 + 100}px`,
+              top: style.top,
+              left: style.left,
+              width: style.width,
+              height: style.height,
               background: `radial-gradient(circle, ${
                 theme.palette.background.default
               }20 0%, transparent 70%)`,
               borderRadius: '50%',
-              animation: `${move} ${
-                Math.random() * 10 + 5
-              }s alternate infinite`,
+              animation: `${move} ${style.animationDuration} alternate infinite`,
               opacity: 0.5,
             }}
           />

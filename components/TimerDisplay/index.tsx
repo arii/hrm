@@ -17,11 +17,17 @@ import { useAudioContext } from '@/context/AudioContext'
 import PhaseBackground from './PhaseBackground'
 import AnimatedCounter from './AnimatedCounter'
 import ProgressRing from './ProgressRing'
-import { TimerState } from '@/types/timer'
-import { PhaseProps } from '@/types/timer'
+import { TimerData, TimerPhase } from '@/types/core'
 import { PREPARE_DURATION } from '@/constants/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+type PhaseProps = {
+  [key in TimerPhase]: {
+    color: string
+    label: string
+  }
+}
 
 const phaseProps: PhaseProps = {
   PREPARE: { color: '#f59e0b', label: 'GET READY' },
@@ -32,7 +38,7 @@ const phaseProps: PhaseProps = {
   COOLDOWN: { color: '#6b7280', label: 'COOLDOWN' },
 }
 
-const getPhaseProps = (phase: TimerState['currentPhase']) => {
+const getPhaseProps = (phase: TimerData['currentPhase']) => {
   return phaseProps[phase]
 }
 
@@ -114,7 +120,6 @@ const TimerDisplay = () => {
             backgroundColor:
               connectionStatus === 'Connected'
                 ? '#10B981'
-                // eslint-disable-next-line sonarjs/no-duplicate-string
                 : connectionStatus === 'Reconnecting...'
                   ? '#F59E0B'
                   : '#EF4444',
@@ -216,10 +221,7 @@ const TimerDisplay = () => {
           {phaseLabel}
         </Typography>
 
-        <AnimatedCounter
-          displayTime={displayTime}
-          phaseColor={phaseColor}
-        />
+        <AnimatedCounter displayTime={displayTime} phaseColor={phaseColor} />
 
         {/* Volume Control */}
         <Stack

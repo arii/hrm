@@ -23,9 +23,14 @@ const mockWebSocketContext = {
   },
 }
 
-const renderWithProviders = (ui, { webSocketProviderProps, ...renderOptions }) => {
+const renderWithProviders = (
+  ui,
+  { webSocketProviderProps, ...renderOptions }
+) => {
   return render(
-    <WebSocketContext.Provider value={{ ...mockWebSocketContext, ...webSocketProviderProps }}>
+    <WebSocketContext.Provider
+      value={{ ...mockWebSocketContext, ...webSocketProviderProps }}
+    >
       {ui}
     </WebSocketContext.Provider>,
     renderOptions
@@ -57,7 +62,9 @@ describe('TimerDisplay', () => {
       currentPhase: 'PREPARE',
       timeRemaining: 5,
     }
-    renderWithProviders(<TimerDisplay />, { webSocketProviderProps: { timerData } })
+    renderWithProviders(<TimerDisplay />, {
+      webSocketProviderProps: { timerData },
+    })
     expect(screen.getByText('GET READY')).toBeInTheDocument()
     expect(screen.getByText('5')).toBeInTheDocument()
   })
@@ -68,7 +75,9 @@ describe('TimerDisplay', () => {
       timeRemaining: 15,
       mode: 'TABATA',
     }
-    renderWithProviders(<TimerDisplay />, { webSocketProviderProps: { timerData } })
+    renderWithProviders(<TimerDisplay />, {
+      webSocketProviderProps: { timerData },
+    })
     expect(screen.getByText('WORK')).toBeInTheDocument()
     expect(screen.getByText('00:15')).toBeInTheDocument()
   })
@@ -79,7 +88,9 @@ describe('TimerDisplay', () => {
       timeRemaining: 8,
       mode: 'TABATA',
     }
-    renderWithProviders(<TimerDisplay />, { webSocketProviderProps: { timerData } })
+    renderWithProviders(<TimerDisplay />, {
+      webSocketProviderProps: { timerData },
+    })
     expect(screen.getByText('REST')).toBeInTheDocument()
     expect(screen.getByText('00:08')).toBeInTheDocument()
   })
@@ -90,13 +101,17 @@ describe('TimerDisplay', () => {
       timeElapsed: 125,
       mode: 'STOPWATCH',
     }
-    renderWithProviders(<TimerDisplay />, { webSocketProviderProps: { timerData } })
+    renderWithProviders(<TimerDisplay />, {
+      webSocketProviderProps: { timerData },
+    })
     expect(screen.getByText('RUNNING')).toBeInTheDocument()
     expect(screen.getByText('02:05')).toBeInTheDocument()
   })
 
   it('displays the connection status', () => {
-    renderWithProviders(<TimerDisplay />, { webSocketProviderProps: { connectionStatus: 'Reconnecting...' } })
+    renderWithProviders(<TimerDisplay />, {
+      webSocketProviderProps: { connectionStatus: 'Reconnecting...' },
+    })
     expect(screen.getByText('Reconnecting...')).toBeInTheDocument()
   })
 })
