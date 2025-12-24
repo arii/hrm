@@ -36,7 +36,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Directly and reliably update the service with the new token
-    await spotifyService.handleTokenUpdate(tokenData)
+    await spotifyService.handleTokenUpdate({
+      ...tokenData,
+      provider: 'spotify',
+      sub: '',
+      scope: '',
+      obtainedAt: Date.now(),
+    })
     logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
