@@ -1,5 +1,7 @@
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
 import BottomNavBar from '@/components/BottomNavBar'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import ErrorDisplay from '@/components/ErrorDisplay'
@@ -9,11 +11,13 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
+import { pageVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
 
 export default function Main({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   return (
     <ThemeRegistry options={{ key: 'mui' }}>
       <ErrorBoundary fallback={<ErrorFallback />}>
@@ -21,7 +25,19 @@ export default function Main({ children }: { children: React.ReactNode }) {
           <LoadingProvider>
             <Providers>
               <UserSettingsProvider>
-                <TimerSoundProvider>{children}</TimerSoundProvider>
+                <TimerSoundProvider>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={pathname}
+                      variants={pageVariants}
+                      initial="initial"
+                      animate="in"
+                      exit="out"
+                    >
+                      {children}
+                    </motion.div>
+                  </AnimatePresence>
+                </TimerSoundProvider>
               </UserSettingsProvider>
             </Providers>
             <LoadingIndicator />
