@@ -7,12 +7,13 @@ import HrTile from '@/components/HrTile'
 import { HrTileProps } from '@/types'
 
 // Mock Framer Motion
+const mockMotionDiv = jest.fn(
+  ({ children, whileHover, ...props }) => <div {...props}>{children}</div>
+)
 jest.mock('framer-motion', () => ({
   ...jest.requireActual('framer-motion'),
   motion: {
-    div: jest.fn(
-      ({ children, whileHover, ...props }) => <div {...props}>{children}</div>
-    ),
+    div: mockMotionDiv,
   },
 }))
 
@@ -74,5 +75,11 @@ describe('HrTile Component', () => {
     renderComponent({ isAlerting: true, alertMessage })
     expect(screen.getByTestId('hr-tile-alert-overlay')).toBeInTheDocument()
     expect(screen.getByText(alertMessage)).toBeInTheDocument()
+  })
+
+  it('disables animations when areAnimationsEnabled is false', () => {
+    renderComponent({ areAnimationsEnabled: false })
+    const motionDivProps = mockMotionDiv.mock.calls[0][0]
+    expect(motionDivProps.whileHover).toEqual({})
   })
 })

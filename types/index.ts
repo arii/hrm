@@ -12,6 +12,8 @@ export interface HrTileProps {
   isAlerting?: boolean
   // NEW: Message to display in the overlay when alerting
   alertMessage?: string
+  // NEW: Accessibility feature to disable animations
+  areAnimationsEnabled?: boolean
 }
 
 import { TimerMode, TimerPhase } from './core'

@@ -8,26 +8,11 @@ import Tooltip from '@mui/material/Tooltip'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { getHrZoneProps } from '@/utils/visualization'
 import Typography from '@mui/material/Typography'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTheme } from '@mui/material/styles'
 import { Heart, TrendingUp } from 'lucide-react'
-
-// Helper to convert hex to RGBA
-const hexToRgba = (hex: string, alpha: number) => {
-  if (!/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-    return `rgba(0, 0, 0, ${alpha})` // Return a default color for invalid hex
-  }
-  let c = hex.substring(1).split('')
-  if (c.length === 3) {
-    c = [c[0], c[0], c[1], c[1], c[2], c[2]]
-  }
-  const i = parseInt(c.join(''), 16)
-  const r = (i >> 16) & 255
-  const g = (i >> 8) & 255
-  const b = i & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
+import { hexToRgba } from '@/utils/color'
 
 // Define the style for the centered overlay
 const overlayStyles = {
@@ -53,6 +38,7 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  areAnimationsEnabled = true, // Default to enabled
 }: HrTileProps) => {
   const theme = useTheme()
   const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
@@ -63,38 +49,43 @@ const HrTile = ({
       ? 'Disconnected - Showing last known value'
       : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
+  const cardStyle = useMemo(
+    () => ({
+      borderRadius: '16px',
+      padding: theme.spacing(2),
+      boxShadow: `0 8px 32px 0 ${hexToRgba(theme.palette.common.black, 0.37)}`,
+      border: `1px solid ${hexToRgba(theme.palette.common.white, 0.18)}`,
+      background: `
+        radial-gradient(
+          circle at 50% 50%,
+          ${hexToRgba(backgroundColor, 0.5)},
+          ${hexToRgba(backgroundColor, 0.1)} 70%
+        ),
+        ${hexToRgba(theme.palette.grey[900], 0.2)}
+      `,
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      color: textColor,
+      textAlign: 'center',
+      minHeight: 180,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      position: 'relative',
+      opacity: isConnected ? 1 : 0.6,
+    }),
+    [backgroundColor, textColor, isConnected, theme]
+  )
+
   return (
     <Tooltip title={tooltipTitle} arrow>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ scale: 1.02, y: -5 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          borderRadius: '16px', // Slightly larger radius for a softer look
-          padding: theme.spacing(2),
-          boxShadow: `0 8px 32px 0 ${hexToRgba(theme.palette.common.black, 0.37)}`,
-          border: `1px solid ${hexToRgba(theme.palette.common.white, 0.18)}`,
-          background: `
-            radial-gradient(
-              circle at 50% 50%,
-              ${hexToRgba(backgroundColor, 0.5)},
-              ${hexToRgba(backgroundColor, 0.1)} 70%
-            ),
-            ${hexToRgba(theme.palette.grey[900], 0.2)}
-          `,
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)', // For Safari support
-          color: textColor,
-          textAlign: 'center',
-          minHeight: 180,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          position: 'relative',
-          opacity: isConnected ? 1 : 0.6,
-        }}
+        initial={areAnimationsEnabled ? { opacity: 0, y: 20 } : false}
+        animate={areAnimationsEnabled ? { opacity: 1, y: 0 } : false}
+        whileHover={areAnimationsEnabled ? { scale: 1.02, y: -5 } : {}}
+        transition={areAnimationsEnabled ? { duration: 0.3 } : { duration: 0 }}
+        style={cardStyle}
       >
         {/* --- Disconnected Icon --- */}
         {!isConnected && (
@@ -173,7 +164,7 @@ const HrTile = ({
               >
                 <motion.div
                   animate={
-                    bpm > 0
+                    areAnimationsEnabled && bpm > 0
                       ? {
                           scale: [1, 1.15, 1],
                           transition: {
