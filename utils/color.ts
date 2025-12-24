@@ -5,7 +5,12 @@ export const hexToRgba = (hex: string, alpha: number) => {
   }
   let c = hex.substring(1).split('')
   if (c.length === 3) {
-    c = [c[0], c[0], c[1], c[1], c[2], c[2]]
+    const c0 = c[0]
+    const c1 = c[1]
+    const c2 = c[2]
+    if (c0 && c1 && c2) {
+      c = [c0, c0, c1, c1, c2, c2]
+    }
   }
   const i = parseInt(c.join(''), 16)
   const r = (i >> 16) & 255

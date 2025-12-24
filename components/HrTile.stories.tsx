@@ -13,9 +13,10 @@ const meta = {
     isConnected: { control: 'boolean' },
     isAlerting: { control: 'boolean' },
     alertMessage: { control: 'text' },
+    areAnimationsEnabled: { control: 'boolean' },
   },
   decorators: [
-    Story => (
+    (Story) => (
       <Box
         sx={{
           background:

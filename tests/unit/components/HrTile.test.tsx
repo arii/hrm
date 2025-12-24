@@ -1,14 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import { render, screen } from '@testing-library/react'
-import '@testing-library/jest-dom'
-import HrTile from '@/components/HrTile'
-import { HrTileProps } from '@/types'
-
-// Mock Framer Motion
 const mockMotionDiv = jest.fn(
-  ({ children, whileHover, ...props }) => <div {...props}>{children}</div>
+  ({ children, whileHover: _whileHover, ...props }) => (
+    <div {...props}>{children}</div>
+  )
 )
 jest.mock('framer-motion', () => ({
   ...jest.requireActual('framer-motion'),
@@ -17,13 +13,25 @@ jest.mock('framer-motion', () => ({
   },
 }))
 
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import HrTile from '@/components/HrTile'
+import { HrTileProps } from '@/types'
+
 // Mock lucide-react icons
 jest.mock('lucide-react', () => ({
-  Heart: (props: any) => <svg data-testid="heart-icon" {...props} />,
-  TrendingUp: (props: any) => <svg data-testid="trending-up-icon" {...props} />,
+  Heart: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="heart-icon" {...props} />
+  ),
+  TrendingUp: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="trending-up-icon" {...props} />
+  ),
 }))
 
 describe('HrTile Component', () => {
+  beforeEach(() => {
+    mockMotionDiv.mockClear()
+  })
   const defaultProps: HrTileProps = {
     name: 'John Doe',
     bpm: 150,

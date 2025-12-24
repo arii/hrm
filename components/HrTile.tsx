@@ -81,8 +81,8 @@ const HrTile = ({
   return (
     <Tooltip title={tooltipTitle} arrow>
       <motion.div
-        initial={areAnimationsEnabled ? { opacity: 0, y: 20 } : false}
-        animate={areAnimationsEnabled ? { opacity: 1, y: 0 } : false}
+        initial={areAnimationsEnabled ? { opacity: 0, y: 20 } : undefined}
+        animate={areAnimationsEnabled ? { opacity: 1, y: 0 } : undefined}
         whileHover={areAnimationsEnabled ? { scale: 1.02, y: -5 } : {}}
         transition={areAnimationsEnabled ? { duration: 0.3 } : { duration: 0 }}
         style={cardStyle}
@@ -218,10 +218,7 @@ const HrTile = ({
                   left: theme.spacing(2),
                   fontWeight: 700,
                   letterSpacing: '0.05em',
-                  backgroundColor: hexToRgba(
-                    theme.palette.common.black,
-                    0.4
-                  ),
+                  backgroundColor: hexToRgba(theme.palette.common.black, 0.4),
                   padding: theme.spacing(0.5, 1.5),
                   borderRadius: '12px',
                   textOverflow: 'ellipsis',
