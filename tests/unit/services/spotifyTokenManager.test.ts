@@ -193,7 +193,7 @@ describe('SpotifyTokenManager', () => {
 
     expect(userId).toBeNull()
     expect(console.warn).toHaveBeenCalledWith(
-      'Failed to load Spotify tokens:',
+      'Failed to load or validate Spotify tokens:',
       expect.any(SyntaxError)
     )
   })
