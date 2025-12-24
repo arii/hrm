@@ -1,6 +1,7 @@
 # Privacy Policy for HRM Dashboard
 
 **Last Updated:** December 24, 2025
+**Version:** 1.0
 
 This Privacy Policy describes how the HRM Dashboard ("Application") collects, uses, and discloses your information in connection with the Strava API.
 
@@ -24,4 +25,4 @@ Our Application collects the following data:
 * **Deletion:** You may disconnect the Application from your Strava account at any time via the Strava Settings page. Upon disconnection, you may manually delete your local `tokens.json` file to remove all stored credentials.
 
 ## 5. Contact
-For privacy concerns, please open an issue on our GitHub repository: [Insert GitHub Issues Link]
+For privacy concerns, please open an issue on our GitHub repository: [https://github.com/arii/hrm/issues](https://github.com/arii/hrm/issues)
