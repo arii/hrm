@@ -10,6 +10,7 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
+import { jest } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'

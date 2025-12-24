@@ -1,5 +1,6 @@
 /** @jest-environment jsdom */
 
+import { jest } from '@jest/globals'
 import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
