@@ -3,6 +3,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { UnitSystem } from '../utils/units'
+import { DEFAULT_USER_NAME, DEFAULT_USER_AGE } from '../utils/constants'
 
 interface UserSettingsContextType {
   unitSystem: UnitSystem
@@ -11,6 +12,8 @@ interface UserSettingsContextType {
   setUserName: (userName: string) => void
   userAge: number
   setUserAge: (userAge: number) => void
+  userWeight: number
+  setUserWeight: (userWeight: number) => void
 }
 
 const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
@@ -20,15 +23,18 @@ const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
 export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
     if (typeof window !== 'undefined') {
-      const storedUnitSystem = localStorage.getItem('unitSystem') as UnitSystem | null
+      const storedUnitSystem = localStorage.getItem(
+        'unitSystem'
+      ) as UnitSystem | null
       if (storedUnitSystem) {
         return storedUnitSystem
       }
     }
     return 'imperial'
   })
-  const [userName, setUserName] = useState<string>('New User')
-  const [userAge, setUserAge] = useState<number>(30)
+  const [userName, setUserName] = useState<string>(DEFAULT_USER_NAME)
+  const [userAge, setUserAge] = useState<number>(DEFAULT_USER_AGE)
+  const [userWeight, setUserWeight] = useState<number>(165)
 
   const handleSetUnitSystem = (newUnitSystem: UnitSystem) => {
     setUnitSystem(newUnitSystem)
@@ -44,6 +50,8 @@ export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
         setUserName,
         userAge,
         setUserAge,
+        userWeight,
+        setUserWeight,
       }}
     >
       {children}

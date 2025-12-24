@@ -16,6 +16,10 @@ export const BLUETOOTH_NOT_SUPPORTED_TEXT = 'Bluetooth Not Supported'
 export const CONNECT_HR_MONITOR_BUTTON_TEXT = 'Connect HR Monitor'
 export const DISCONNECT_HR_MONITOR_BUTTON_TEXT = 'Disconnect HR Monitor'
 
+// --- User Settings Defaults ---
+export const DEFAULT_USER_NAME = 'New User'
+export const DEFAULT_USER_AGE = 30
+
 // --- Heart Rate Calculation Constants ---
 export const MAX_HR_ESTIMATION_BASE = 220 // Fox formula constant
 
@@ -51,6 +55,7 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
   { name: 'Zone 1', minPercent: 50, maxPercent: 60, color: '#9E9E9E' },
 ]
 
+// eslint-disable-next-line import/extensions
 import { lbsToKg } from './units'
 
 // --- Calorie Calculation Constants ---

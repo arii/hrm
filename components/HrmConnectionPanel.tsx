@@ -31,8 +31,7 @@ const HrmConnectionPanel = () => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
-    // TODO: Get user weight from a form
-    const userWeight = 165
+    const userWeight = userSettings.userWeight || 165
     connectAndStream(userName, userAge, userWeight)
   }
 
