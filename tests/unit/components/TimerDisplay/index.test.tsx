@@ -53,8 +53,8 @@ describe('TimerDisplay', () => {
 
   it('renders in IDLE state', () => {
     renderWithProviders(<TimerDisplay />, {})
-    expect(screen.getByText('IDLE')).toBeInTheDocument()
-    expect(screen.getByText('00:00')).toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('IDLE')
+    expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:00')
   })
 
   it('renders in PREPARE state', () => {
@@ -65,8 +65,8 @@ describe('TimerDisplay', () => {
     renderWithProviders(<TimerDisplay />, {
       webSocketProviderProps: { timerData },
     })
-    expect(screen.getByText('GET READY')).toBeInTheDocument()
-    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('GET READY')
+    expect(screen.getByTestId('timer-countdown')).toHaveTextContent('5')
   })
 
   it('renders in WORK state', () => {
@@ -78,8 +78,8 @@ describe('TimerDisplay', () => {
     renderWithProviders(<TimerDisplay />, {
       webSocketProviderProps: { timerData },
     })
-    expect(screen.getByText('WORK')).toBeInTheDocument()
-    expect(screen.getByText('00:15')).toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('WORK')
+    expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:15')
   })
 
   it('renders in REST state', () => {
@@ -91,8 +91,8 @@ describe('TimerDisplay', () => {
     renderWithProviders(<TimerDisplay />, {
       webSocketProviderProps: { timerData },
     })
-    expect(screen.getByText('REST')).toBeInTheDocument()
-    expect(screen.getByText('00:08')).toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('REST')
+    expect(screen.getByTestId('timer-countdown')).toHaveTextContent('00:08')
   })
 
   it('renders in RUNNING state for STOPWATCH mode', () => {
@@ -104,8 +104,8 @@ describe('TimerDisplay', () => {
     renderWithProviders(<TimerDisplay />, {
       webSocketProviderProps: { timerData },
     })
-    expect(screen.getByText('RUNNING')).toBeInTheDocument()
-    expect(screen.getByText('02:05')).toBeInTheDocument()
+    expect(screen.getByTestId('timer-phase')).toHaveTextContent('RUNNING')
+    expect(screen.getByTestId('timer-countdown')).toHaveTextContent('02:05')
   })
 
   it('displays the connection status', () => {
