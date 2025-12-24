@@ -37,4 +37,18 @@ describe('envSchema', () => {
     };
     expect(() => envSchema.parse(incorrectEnv)).toThrow();
   });
+
+  it('should throw an error if a required variable is missing', () => {
+    const incorrectEnv = {
+      // SPOTIFY_CLIENT_ID is missing
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
+
+  it('should throw an error if a variable has the wrong type', () => {
+    const incorrectEnv = {
+      PORT: 'not-a-number',
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
 });

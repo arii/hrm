@@ -21,4 +21,16 @@ export const envSchema = z.object({
   INCLUDE_MOBILE: z.string().transform(val => val === 'true').default('false'),
 });
 
+try {
+  envSchema.parse(process.env);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    const { fieldErrors } = error.flatten();
+    const message = Object.entries(fieldErrors)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
+    throw new Error(`Missing or invalid environment variables:\n${message}`);
+  }
+}
+
 export const env = envSchema.parse(process.env);
