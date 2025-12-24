@@ -109,7 +109,8 @@ describe('WebSocket Manager', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
-    mockWss = new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
+    mockWss =
+      new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
     // Create fully typed mocks for the services.
     const mockTabataTimer: jest.Mocked<TabataTimer> = {

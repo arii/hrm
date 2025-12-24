@@ -10,12 +10,6 @@
 
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
-type SdkPlayerMethods =
-  | 'startResumePlayback'
-  | 'pausePlayback'
-  | 'skipToNext'
-  | 'skipToPrevious'
-
 /**
  * Creates a proxy for the Spotify SDK's player object that safely handles optional
  * device IDs. It intercepts calls to specified player methods and modifies
@@ -39,9 +33,15 @@ function createSafePlayerProxy(sdk: SpotifyApi): SpotifyApi['player'] {
 
       if (
         typeof originalMethod === 'function' &&
-        ['startResumePlayback', 'pausePlayback', 'skipToNext', 'skipToPrevious'].includes(prop as string)
+        [
+          'startResumePlayback',
+          'pausePlayback',
+          'skipToNext',
+          'skipToPrevious',
+        ].includes(prop as string)
       ) {
-        return function (...args: any[]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return function (this: any, ...args: any[]) {
           const [deviceId, ...restArgs] = args
 
           // If deviceId is null, undefined, or an empty string, call without it.

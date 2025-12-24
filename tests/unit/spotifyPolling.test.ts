@@ -101,13 +101,19 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((spotifyService as any).pollInterval) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       clearInterval((spotifyService as any).pollInterval)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(spotifyService as any).pollInterval = null
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((spotifyService as any).tokenRefreshInterval) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       clearInterval((spotifyService as any).tokenRefreshInterval)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(spotifyService as any).tokenRefreshInterval = null
     }
   })
