@@ -61,12 +61,22 @@ describe('PlaylistTracksDisplay', () => {
         </WebSocketContext.Provider>
       )
     })
-    expect(await screen.findByText('This playlist is empty.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('This playlist is empty.')
+    ).toBeInTheDocument()
   })
 
   it('should render tracks and handle pagination', async () => {
     const mockTracks = {
-      tracks: [{ id: 't1', name: 'Track 1', artists: 'Artist 1', duration: 180000, uri: 'spotify:track:t1' }],
+      tracks: [
+        {
+          id: 't1',
+          name: 'Track 1',
+          artists: 'Artist 1',
+          duration: 180000,
+          uri: 'spotify:track:t1',
+        },
+      ],
       total: 25,
       limit: 20,
       offset: 0,
@@ -91,6 +101,8 @@ describe('PlaylistTracksDisplay', () => {
     // Test pagination
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
-    expect(fetch).toHaveBeenCalledWith('/api/spotify/playlists/123/tracks?limit=20&offset=20')
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/spotify/playlists/123/tracks?limit=20&offset=20'
+    )
   })
 })

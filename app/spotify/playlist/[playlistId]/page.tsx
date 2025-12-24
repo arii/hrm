@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
-import { SpotifyDevice } from '@/types/core'
+import Image from 'next/image'
 
 const PlaylistTracksDisplay = dynamic(
   () => import('../../../../components/Playlist/PlaylistTracksDisplay'),
@@ -54,12 +54,16 @@ const PlaylistPage = () => {
         const response = await fetch(`/api/spotify/playlists/${playlistId}`)
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to fetch playlist details')
+          throw new Error(
+            errorData.message || 'Failed to fetch playlist details'
+          )
         }
         const data = await response.json()
         setPlaylist(data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred')
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred'
+        )
       } finally {
         setLoading(false)
       }
@@ -113,7 +117,7 @@ const PlaylistPage = () => {
       <Box sx={{ my: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           {playlist.imageUrl && (
-            <img
+            <Image
               src={playlist.imageUrl}
               alt={playlist.name}
               width={150}

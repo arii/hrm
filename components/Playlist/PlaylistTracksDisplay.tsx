@@ -19,6 +19,7 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import { formatDuration } from '@/utils/formatters'
+import Image from 'next/image'
 
 interface Track {
   id: string
@@ -42,25 +43,30 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
   const [total, setTotal] = useState(0)
   const limit = 20
 
-  const fetchTracks = useCallback(async (currentOffset: number) => {
-    try {
-      setLoading(true)
-      const response = await fetch(
-        `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
-      )
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to fetch tracks')
+  const fetchTracks = useCallback(
+    async (currentOffset: number) => {
+      try {
+        setLoading(true)
+        const response = await fetch(
+          `/api/spotify/playlists/${playlistId}/tracks?limit=${limit}&offset=${currentOffset}`
+        )
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Failed to fetch tracks')
+        }
+        const data = await response.json()
+        setTracks(data.tracks)
+        setTotal(data.total)
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'An unknown error occurred'
+        )
+      } finally {
+        setLoading(false)
       }
-      const data = await response.json()
-      setTracks(data.tracks)
-      setTotal(data.total)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }, [playlistId])
+    },
+    [playlistId]
+  )
 
   useEffect(() => {
     fetchTracks(offset)
@@ -70,7 +76,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
-      uris: [trackUri],
+      playlistUri: trackUri,
     }
     sendData(message)
   }
@@ -133,7 +139,8 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
           </TableHead>
           <TableBody>
             {tracks.map((track) => {
-              const isPlaying = spotifyData.isPlaying && spotifyData.trackUri === track.uri
+              const isPlaying =
+                spotifyData.isPlaying && spotifyData.trackId === track.id
               return (
                 <TableRow
                   key={track.id}
@@ -143,7 +150,9 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                 >
                   <TableCell>
                     <IconButton
-                      onClick={() => (isPlaying ? handlePause() : handlePlayTrack(track.uri))}
+                      onClick={() =>
+                        isPlaying ? handlePause() : handlePlayTrack(track.uri)
+                      }
                     >
                       {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                     </IconButton>
@@ -151,7 +160,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       {track.albumArt && (
-                        <img
+                        <Image
                           src={track.albumArt}
                           alt={track.name}
                           width={40}
@@ -163,9 +172,7 @@ const PlaylistTracksDisplay = ({ playlistId }: PlaylistTracksDisplayProps) => {
                     </Box>
                   </TableCell>
                   <TableCell>{track.artists}</TableCell>
-                  <TableCell>
-                    {formatDuration(track.duration)}
-                  </TableCell>
+                  <TableCell>{formatDuration(track.duration)}</TableCell>
                 </TableRow>
               )
             })}

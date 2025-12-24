@@ -1,8 +1,6 @@
 // app/client/spotify-selection/page.tsx
 'use client'
 
-import Pause from '@mui/icons-material/Pause'
-import PlayArrow from '@mui/icons-material/PlayArrow'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -10,7 +8,6 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -23,21 +20,17 @@ const PlaylistSelector = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-  const [selectedPlaylistUri, setSelectedPlaylistUri] = useState<string | null>(
-    null
-  )
 
-  const handlePlaylistSelected = (uri: string) => {
-    setSelectedPlaylistUri(uri)
+  const handlePlaylistSelected = (_uri: string) => {
+    //
   }
 
   const handlePlaylistPlay = (uri: string) => {
     sendData({
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
-      contextUri: uri,
+      playlistUri: uri,
     })
-    setSelectedPlaylistUri(uri)
   }
 
   return (
