@@ -1,4 +1,4 @@
-// File: components/TimerDisplay.tsx
+// File: components/TimerDisplay/index.tsx
 'use client'
 import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
@@ -14,8 +14,34 @@ import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
 
 import { useAudioContext } from '@/context/AudioContext'
+import PhaseBackground from './PhaseBackground'
+import AnimatedCounter from './AnimatedCounter'
+import ProgressRing from './ProgressRing'
+import { TimerState } from '@/types/timer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+const getPhaseProps = (
+  phase: TimerState['currentPhase'],
+  mode: TimerState['mode']
+) => {
+  switch (phase) {
+    case 'PREPARE':
+      return {
+        color: '#f59e0b',
+        label: 'GET READY',
+      }
+    case 'WORK':
+      return { color: '#ef4444', label: 'WORK' }
+    case 'REST':
+      return { color: '#22c55e', label: 'REST' }
+    case 'RUNNING':
+      return { color: '#3b82f6', label: 'RUNNING' }
+    case 'IDLE':
+    default:
+      return { color: '#6b7280', label: 'IDLE' }
+  }
+}
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -25,53 +51,35 @@ const TimerDisplay = () => {
     timeRemaining,
     timeElapsed,
     mode,
-    workDuration = 20,
-    restDuration = 10,
+    workDuration = 1,
+    restDuration = 1,
   } = timerData
 
-  // Determine what to display based on mode and phase
+  const { color: phaseColor, label: phaseLabel } = getPhaseProps(
+    currentPhase,
+    mode
+  )
+
   let displayTime: string
-  let phaseColor: string
-  let phaseLabel: string
+  let progressPercentage: number = 0
 
   if (currentPhase === 'PREPARE') {
-    // PREPARE: Show countdown seconds only
-    displayTime = String(timeRemaining).padStart(2, '0')
-    phaseColor = '#F59E0B' // Yellow/Warning
-    phaseLabel = 'GET READY'
+    displayTime = String(timeRemaining)
+    progressPercentage = (timeRemaining / 10) * 100
   } else if (mode === 'STOPWATCH' && currentPhase === 'RUNNING') {
-    // STOPWATCH: Show elapsed time MM:SS
     const mm = Math.floor(timeElapsed / 60)
     const ss = timeElapsed % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-    phaseColor = '#2563EB' // Blue/Primary
-    phaseLabel = 'RUNNING'
-  } else if (
-    mode === 'TABATA' &&
-    (currentPhase === 'WORK' ||
-      currentPhase === 'REST' ||
-      currentPhase === 'COOLDOWN')
-  ) {
-    // TABATA: Show remaining time MM:SS
+    progressPercentage = (ss / 60) * 100
+  } else if (mode === 'TABATA') {
     const mm = Math.floor(timeRemaining / 60)
     const ss = timeRemaining % 60
     displayTime = `${pad(mm)}:${pad(ss)}`
-
-    if (currentPhase === 'WORK') {
-      phaseColor = '#EF4444' // Red
-      phaseLabel = 'WORK'
-    } else if (currentPhase === 'REST') {
-      phaseColor = '#22C55E' // Green
-      phaseLabel = 'REST'
-    } else {
-      phaseColor = '#3B82F6' // Blue
-      phaseLabel = 'COOLDOWN'
-    }
+    const duration = currentPhase === 'WORK' ? workDuration : restDuration
+    progressPercentage =
+      duration > 0 ? ((duration - timeRemaining) / duration) * 100 : 0
   } else {
-    // IDLE or default
     displayTime = '00:00'
-    phaseColor = '#6B7280' // Gray
-    phaseLabel = 'READY'
   }
 
   return (
@@ -79,19 +87,16 @@ const TimerDisplay = () => {
       elevation={6}
       data-testid="timer-display-container"
       sx={{
-        backgroundColor: '#000000', // Pure black for high energy
-        color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
         borderRadius: 2,
-        border: '2px solid #1a1a1a', // Subtle border for definition
         position: 'relative',
-        animation:
-          currentPhase === 'WORK' || currentPhase === 'REST'
-            ? 'pulse-opacity 1.5s infinite'
-            : 'none',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
+      <PhaseBackground phase={currentPhase} />
+
       {/* Status Indicator */}
       <Box
         sx={{
@@ -198,44 +203,32 @@ const TimerDisplay = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'relative',
+          zIndex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(10px)',
         }}
       >
-        {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
-          <Typography
-            data-testid="timer-phase"
-            variant="h6"
-            aria-live="polite"
-            sx={{
-              mb: 1,
-              color: phaseColor,
-              fontWeight: 700,
-              letterSpacing: 2,
-            }}
-          >
-            {phaseLabel}
-          </Typography>
-        )}
-
-        {/* Giant Timer Display */}
+        <ProgressRing percentage={progressPercentage} phaseColor={phaseColor} />
         <Typography
-          data-testid="timer-countdown"
-          component="div"
-          role="timer"
+          data-testid="timer-phase"
+          variant="h6"
           aria-live="polite"
-          aria-atomic="true"
           sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-            fontWeight: 800,
-            letterSpacing: '0.12rem',
-            lineHeight: 1,
+            mb: 1,
             color: phaseColor,
-            textShadow: `0 0 20px ${phaseColor}80`,
+            fontWeight: 700,
+            letterSpacing: 2,
+            textShadow: '0 0 10px rgba(0,0,0,0.5)',
           }}
         >
-          {displayTime}
+          {phaseLabel}
         </Typography>
+
+        <AnimatedCounter
+          displayTime={displayTime}
+          phaseColor={phaseColor}
+        />
 
         {/* Volume Control */}
         <Stack
