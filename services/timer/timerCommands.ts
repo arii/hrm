@@ -5,8 +5,8 @@ import { TimerMode } from '../../types/core'
 import {
   DualModeTimerState,
   START_COUNTDOWN_DURATION,
-} from './timerState'
-import TimerQueries from './timerQueries'
+} from './timerState.js'
+import TimerQueries from './timerQueries.js'
 
 /**
  * Handles state-mutating operations for the timer.

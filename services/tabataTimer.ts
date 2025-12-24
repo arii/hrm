@@ -9,12 +9,12 @@
 
 import { ServerMessage } from '../types/websocket'
 import { TimerData, TimerMode } from '../types/core'
-import TimerQueries from './timer/timerQueries'
-import TimerCommands from './timer/timerCommands'
+import TimerQueries from './timer/timerQueries.js'
+import TimerCommands from './timer/timerCommands.js'
 import {
   createInitialTimerState,
   DualModeTimerState,
-} from './timer/timerState'
+} from './timer/timerState.js'
 
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 

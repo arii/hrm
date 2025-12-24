@@ -1,7 +1,7 @@
 // File: services/timer/timerQueries.ts
 
 import { TimerData } from '../../types/core'
-import { DualModeTimerState } from './timerState'
+import { DualModeTimerState } from './timerState.js'
 
 /**
  * Handles read-only operations for the timer.
