@@ -7,9 +7,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  env: {
-    TESTING: process.env.TESTING,
-  },
   async redirects() {
     return [
       {
