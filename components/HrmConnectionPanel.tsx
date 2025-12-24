@@ -16,7 +16,7 @@ import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
-  const [userSettings] = useUserSettings()
+  const userSettings = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -31,7 +31,9 @@ const HrmConnectionPanel = () => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    // TODO: Get user weight from a form
+    const userWeight = 165
+    connectAndStream(userName, userAge, userWeight)
   }
 
   const tileData = useMemo(() => {

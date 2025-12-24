@@ -99,7 +99,7 @@ export interface HrmInputMessage {
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
   'clientId' | 'value' | 'calories'
->
+> & { weight?: number }
 
 export interface HrmMetadataUpdateMessage {
   type: 'HRM_METADATA_UPDATE'
@@ -151,6 +151,11 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface SetUnitSystemMessage {
+  type: 'SET_UNIT_SYSTEM'
+  unitSystem: 'metric' | 'imperial'
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -161,6 +166,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | SetUnitSystemMessage
 
 import { z } from 'zod'
 
@@ -179,6 +185,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
@@ -231,6 +238,11 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const SetUnitSystemMessageSchema = z.object({
+  type: z.literal('SET_UNIT_SYSTEM'),
+  unitSystem: z.union([z.literal('metric'), z.literal('imperial')]),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -240,5 +252,6 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
+  SetUnitSystemMessageSchema,
 ])

@@ -79,6 +79,7 @@ export interface HrmStreamData {
   name?: string
   age?: number
   calories: number
+  weight?: number
 }
 
 /**

@@ -1,29 +1,51 @@
-// context/UserSettingsContext.tsx
+// File: context/UserSettingsContext.tsx
 'use client'
-import React, { createContext, useContext } from 'react'
-import {
-  useUserPreferences,
-  UserPreferences,
-} from '../hooks/useUserPreferences'
 
-type UserSettingsContextType = readonly [
-  UserPreferences,
-  (
-    value: UserPreferences | ((val: UserPreferences) => UserPreferences)
-  ) => void,
-]
+import { createContext, useContext, useState, ReactNode } from 'react'
+import { UnitSystem } from '../utils/units'
 
-export const UserSettingsContext = createContext<
-  UserSettingsContextType | undefined
->(undefined)
+interface UserSettingsContextType {
+  unitSystem: UnitSystem
+  setUnitSystem: (unitSystem: UnitSystem) => void
+  userName: string
+  setUserName: (userName: string) => void
+  userAge: number
+  setUserAge: (userAge: number) => void
+}
 
-export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const userPreferences = useUserPreferences()
+const UserSettingsContext = createContext<UserSettingsContextType | undefined>(
+  undefined
+)
+
+export const UserSettingsProvider = ({ children }: { children: ReactNode }) => {
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(() => {
+    if (typeof window !== 'undefined') {
+      const storedUnitSystem = localStorage.getItem('unitSystem') as UnitSystem | null
+      if (storedUnitSystem) {
+        return storedUnitSystem
+      }
+    }
+    return 'imperial'
+  })
+  const [userName, setUserName] = useState<string>('New User')
+  const [userAge, setUserAge] = useState<number>(30)
+
+  const handleSetUnitSystem = (newUnitSystem: UnitSystem) => {
+    setUnitSystem(newUnitSystem)
+    localStorage.setItem('unitSystem', newUnitSystem)
+  }
 
   return (
-    <UserSettingsContext.Provider value={userPreferences}>
+    <UserSettingsContext.Provider
+      value={{
+        unitSystem,
+        setUnitSystem: handleSetUnitSystem,
+        userName,
+        setUserName,
+        userAge,
+        setUserAge,
+      }}
+    >
       {children}
     </UserSettingsContext.Provider>
   )

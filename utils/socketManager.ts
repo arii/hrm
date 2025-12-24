@@ -15,7 +15,8 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { CALORIE_DEFAULTS } from './constants.js'
+import { lbsToKg } from './units.js'
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
@@ -29,10 +30,12 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const hrmDataRepository = new HrmDataRepository()
+import { UnitSystem } from '../utils/units'
+
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; accumulatedCalories: number }
+  { lastUpdate: number; accumulatedCalories: number; unitSystem: UnitSystem }
 >()
 
 /**
@@ -63,6 +66,7 @@ const initSocketManager = (
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
+      unitSystem: 'imperial',
     })
 
     extWs.on('message', (message) => {
@@ -182,10 +186,15 @@ const handleIncomingMessage = (
           const currentAge = existingData.age ?? 30
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+            const weightKg =
+              sessionState.unitSystem === 'metric'
+                ? existingData.weight || CALORIE_DEFAULTS.WEIGHT_KG
+                : lbsToKg(existingData.weight || 165)
+
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              weightKg: weightKg,
               durationMinutes: dtMinutes,
             })
             currentAccumulated += caloriesBurned
@@ -220,6 +229,13 @@ const handleIncomingMessage = (
         })
         break
 
+      case 'SET_UNIT_SYSTEM': {
+        const session = clientSessionState.get(clientId)
+        if (session) {
+          session.unitSystem = message.unitSystem
+        }
+        break
+      }
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
         logger.info(
