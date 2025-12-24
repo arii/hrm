@@ -58,26 +58,12 @@ const expressApp = express()
 // Enable JSON body parsing for all routes
 expressApp.use(express.json())
 
-// Export the app for testing purposes
-let serverInstance: Server | null = null
-if (process.env.NODE_ENV === 'test') {
-  serverInstance = createServer(expressApp)
-}
-
-export const appForTest = serverInstance ? expressApp : null
-
 // Trust the reverse proxy (nginx) for X-Forwarded-* headers
 expressApp.set('trust proxy', true)
 
-// --- Main Application Setup ---
-
-app
-  .prepare()
-  .then(async () => {
-    const server = createServer(expressApp)
-
-    // --- Rate Limiting Setup ---
-    // Skip rate limiting for tests to avoid flakes
+export async function setup(appInstance: express.Express) {
+  // --- Rate Limiting Setup ---
+  // Skip rate limiting for tests to avoid flakes
     if (process.env.TESTING !== 'true') {
       const spotifyApiLimiter = rateLimit({
         windowMs: 1 * 60 * 1000, // 1 minute
@@ -134,9 +120,9 @@ app
       })
 
       // Apply the rate limiters to specific routes
-      expressApp.use('/api/spotify/', spotifyApiLimiter)
-      expressApp.use('/api/internal/', internalApiLimiter)
-      expressApp.use('/api/', generalApiLimiter)
+      appInstance.use('/api/spotify/', spotifyApiLimiter)
+      appInstance.use('/api/internal/', internalApiLimiter)
+      appInstance.use('/api/', generalApiLimiter)
     }
 
     // --- Static Asset Serving (Production Only) ---
@@ -146,7 +132,7 @@ app
       const staticPath = path.join(process.cwd(), '.next/static')
       logger.info(`Serving static files from: ${staticPath}`)
 
-      expressApp.use(
+      appInstance.use(
         '/_next/static',
         express.static(staticPath, {
           // All files in _next/static have content hashes, so they can be cached indefinitely.
@@ -184,12 +170,12 @@ app
     // --- Express Routing ---
 
     // Health Check Endpoints
-    expressApp.get('/api/health', (_req: Request, res: Response) => {
+    appInstance.get('/api/health', (_req: Request, res: Response) => {
       res.status(200).json({ status: 'ok' })
     })
 
     // Internal endpoint for stateful service checks
-    expressApp.get(
+    appInstance.get(
       '/api/internal/health/services',
       async (_req: Request, res: Response) => {
         const timerCheck = checkTimerService(
@@ -210,18 +196,22 @@ app
     // Intercept token delivery POST for immediate, stateful updates.
     // This bypasses the standard Next.js handler for this specific route
     // to ensure the singleton spotifyService instance is updated synchronously.
-    expressApp.post(API_INTERNAL_TOKEN_DELIVERY, async (req, res) => {
+    appInstance.post(API_INTERNAL_TOKEN_DELIVERY, async (req, res) => {
       const validationResult = SpotifyTokenPayloadSchema.safeParse(req.body)
 
       if (!validationResult.success) {
         // If validation fails, send a 400 Bad Request with error details
+        const errorDetails = validationResult.error.flatten()
         logger.warn(
-          { error: validationResult.error.flatten() },
+          {
+            error: errorDetails,
+            body: req.body, // Log the problematic body
+          },
           'Invalid token payload received.'
         )
         return res.status(400).json({
           message: 'Invalid token payload.',
-          errors: validationResult.error.flatten(),
+          errors: errorDetails,
         })
       }
 
@@ -242,68 +232,76 @@ app
     })
 
     // Handle all other Next.js routing (pages, API routes, etc.)
-    expressApp.use(async (req: Request, res: Response) => {
+    appInstance.use(async (req: Request, res: Response) => {
       return nextRequestHandler(req, res)
-    }) // --- HTTP/WS Upgrade Handling ---
+    })
 
-    const wsConnections = new Map<string, number>()
-    const WS_MAX_CONNECTIONS = 5
+    return wss
+}
 
-    // Attach the WebSocket server to the HTTP server instance using the 'upgrade' event
-    server.on(
-      'upgrade',
-      (req: IncomingMessage, socket: Socket, head: Buffer) => {
-        const { pathname } = parse(req.url || '')
-        const ip =
-          (req.headers['x-forwarded-for'] as string)
-            ?.split(',')
-            .shift()
-            ?.trim() || req.socket.remoteAddress
 
-        if (process.env.TESTING !== 'true' && ip) {
-          const count = wsConnections.get(ip) || 0
-          if (count >= WS_MAX_CONNECTIONS) {
-            socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
-            socket.destroy()
-            return
-          }
-          wsConnections.set(ip, count + 1)
+// --- Main Application Setup ---
+if (!process.env.JEST_WORKER_ID) {
+  app
+    .prepare()
+    .then(async () => {
+      const wss = await setup(expressApp)
+      const server = createServer(expressApp)
 
-          socket.on('close', () => {
-            const currentCount = wsConnections.get(ip) || 0
-            if (currentCount > 0) {
-              wsConnections.set(ip, currentCount - 1)
+      // --- HTTP/WS Upgrade Handling ---
+      const wsConnections = new Map<string, number>()
+      const WS_MAX_CONNECTIONS = 5
+
+      server.on(
+        'upgrade',
+        (req: IncomingMessage, socket: Socket, head: Buffer) => {
+          const { pathname } = parse(req.url || '')
+          const ip =
+            (req.headers['x-forwarded-for'] as string)
+              ?.split(',')
+              .shift()
+              ?.trim() || req.socket.remoteAddress
+
+          if (process.env.TESTING !== 'true' && ip) {
+            const count = wsConnections.get(ip) || 0
+            if (count >= WS_MAX_CONNECTIONS) {
+              socket.write('HTTP/1.1 429 Too Many Requests\r\n\r\n')
+              socket.destroy()
+              return
             }
-          })
+            wsConnections.set(ip, count + 1)
+
+            socket.on('close', () => {
+              const currentCount = wsConnections.get(ip) || 0
+              if (currentCount > 0) {
+                wsConnections.set(ip, currentCount - 1)
+              }
+            })
+          }
+
+          if (pathname === '/ws') {
+            wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+              wss.emit('connection', ws, req)
+            })
+          }
         }
+      )
 
-        // Only upgrade connections to the specific WebSocket path
-        if (pathname === '/ws') {
-          wss.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            wss.emit('connection', ws, req)
-          })
-        }
-        // If not our WebSocket path, simply return and let other upgrade handlers (e.g., Next.js's) take over.
-        // DO NOT re-emit "upgrade" as it can lead to infinite recursion.
-      }
-    )
+      // --- Start Server ---
+      server.on('error', (err: Error) => {
+        logger.error({ err }, 'Server error')
+        process.exit(1)
+      })
 
-    // --- Start Server ---
-
-    // Handle server errors (e.g., port already in use)
-    server.on('error', (err: Error) => {
-      logger.error({ err }, 'Server error')
+      server.listen(port, hostname, () => {
+        logger.info(`> Ready on http://${hostname}:${port}`)
+        logger.info(
+          `> WebSocket Server listening on ws://${hostname}:${port}/ws`
+        )
+      })
+    })
+    .catch((err: Error) => {
+      logger.error({ err }, 'Next.js preparation failed')
       process.exit(1)
     })
-
-    // Begin listening
-    server.listen(port, hostname, () => {
-      // This callback only runs on successful listening
-      logger.info(`> Ready on http://${hostname}:${port}`)
-      logger.info(`> WebSocket Server listening on ws://${hostname}:${port}/ws`)
-    })
-  })
-  .catch((err: Error) => {
-    logger.error({ err }, 'Next.js preparation failed')
-    process.exit(1)
-  })
+}
