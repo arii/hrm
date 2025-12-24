@@ -160,19 +160,15 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    serviceContainer.register(
-      'spotifyService',
-      await SpotifyPolling.create(broadcastUpdate)
-    )
+    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+    serviceContainer.register('spotifyService', spotifyService)
     serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
       timerData: serviceContainer.get('tabataService').getState(),
-      spotifyData: serviceContainer.get('spotifyService').getState(),
-      spotifyServiceInitialized: serviceContainer
-        .get('spotifyService')
-        .isReady(),
+      spotifyData: spotifyService.getState(),
+      spotifyServiceInitialized: spotifyService.isReady(),
     })
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
@@ -227,6 +223,7 @@ app
 
             // Send a success response and end the request here.
             return res.status(200).json({ ok: true })
+            await spotifyService.handleTokenUpdate(req.body)
           } catch (err) {
             logger.error(
               { err },
