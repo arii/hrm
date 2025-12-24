@@ -30,10 +30,7 @@ import { env } from './lib/env.js'
 
 const port: number = env.PORT
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
-const hostname =
-  env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : env.HOST // Bind to all interfaces in production
+const hostname = env.NODE_ENV === 'production' ? '0.0.0.0' : env.HOST // Bind to all interfaces in production
 
 const dev = env.NODE_ENV !== 'production'
 
