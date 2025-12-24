@@ -60,13 +60,15 @@ function createSafePlayerProxy(
           const [deviceId, ...restArgs] = args
 
           if (!deviceId) {
-            return (
-              originalMethod as (...args: unknown[]) => unknown
-            ).apply(target, restArgs)
+            return (originalMethod as (...args: unknown[]) => unknown).apply(
+              target,
+              restArgs
+            )
           }
-          return (
-            originalMethod as (...args: unknown[]) => unknown
-          ).apply(target, args)
+          return (originalMethod as (...args: unknown[]) => unknown).apply(
+            target,
+            args
+          )
         }
       }
 
