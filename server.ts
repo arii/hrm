@@ -26,6 +26,8 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
+import { SpotifyTokenPayloadSchema } from './lib/validation/schemas'
+import { withValidation } from './lib/middleware/validation'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
@@ -198,28 +200,36 @@ app
       }
     )
 
-    // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
-    expressApp.use(async (req: Request, res: Response) => {
-      // Intercept token delivery POST and force Spotify poll
-      if (
-        req.method === 'POST' &&
-        req.url &&
-        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
-      ) {
-        // Await the token update and handle potential errors
-        if (req.body) {
-          try {
-            // Await the handler to ensure sequential execution and catch errors
-            await spotifyService.handleTokenUpdate(req.body)
-          } catch (err) {
-            logger.error(
-              { err },
-              'Error during synchronous token update handling'
-            )
-          }
+    // Intercept token delivery POST for immediate, stateful updates.
+    // This bypasses the standard Next.js handler for this specific route
+    // to ensure the singleton spotifyService instance is updated synchronously.
+    expressApp.post(
+      API_INTERNAL_TOKEN_DELIVERY,
+      withValidation(SpotifyTokenPayloadSchema),
+      async (req, res) => {
+        // If validation succeeds, process the token update
+        try {
+          await spotifyService.handleTokenUpdate(req.body)
+          logger.info(
+            'Successfully updated Spotify token via internal endpoint.'
+          )
+          return res
+            .status(200)
+            .json({ message: 'Token updated successfully.' })
+        } catch (err) {
+          logger.error(
+            { err },
+            'Error during synchronous token update handling after validation.'
+          )
+          return res
+            .status(500)
+            .json({ message: 'Internal server error while updating token.' })
         }
       }
+    )
+
+    // Handle all other Next.js routing (pages, API routes, etc.)
+    expressApp.use(async (req: Request, res: Response) => {
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 
