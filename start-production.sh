@@ -40,4 +40,4 @@ echo "🚀 Starting HRM Production Server..."
 
 # Exec ensures the node process replaces the shell
 # allowing signals (SIGINT/SIGTERM) to reach the app
-exec node dist/server.mjs
+exec node .next/standalone/server.js

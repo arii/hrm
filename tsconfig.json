@@ -40,9 +40,5 @@
     "**/*.mts",
     ".next/dev/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "tests/playwright",
-    "playwright.config.ts"
-  ]
+  "exclude": ["node_modules", "tests/playwright", "playwright.config.ts"]
 }

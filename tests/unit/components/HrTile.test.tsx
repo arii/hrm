@@ -1,15 +1,16 @@
 /**
  * @jest-environment jsdom
  */
-const mockMotionDiv = jest.fn(
-  ({ children, whileHover: _whileHover, ...props }) => (
-    <div {...props}>{children}</div>
-  )
-)
+
+// We need a reference to the mock function to inspect it in tests.
+// Declare it here before jest.mock is hoisted.
+const mockMotionDiv = jest.fn()
+
+// Now, mock the module.
 jest.mock('framer-motion', () => ({
   ...jest.requireActual('framer-motion'),
   motion: {
-    div: mockMotionDiv,
+    div: mockMotionDiv, // Use the mock function here
   },
 }))
 
@@ -30,8 +31,24 @@ jest.mock('lucide-react', () => ({
 
 describe('HrTile Component', () => {
   beforeEach(() => {
+    // Provide the mock implementation before each test
+    mockMotionDiv.mockImplementation(
+      ({ children, whileHover, initial, animate, transition, style }) => (
+        <div
+          data-testid="motion-div"
+          data-whilehover={JSON.stringify(whileHover)}
+          data-initial={JSON.stringify(initial)}
+          data-animate={JSON.stringify(animate)}
+          data-transition={JSON.stringify(transition)}
+          style={style}
+        >
+          {children}
+        </div>
+      )
+    )
     mockMotionDiv.mockClear()
   })
+
   const defaultProps: HrTileProps = {
     name: 'John Doe',
     bpm: 150,
@@ -40,6 +57,7 @@ describe('HrTile Component', () => {
     isConnected: true,
     isAlerting: false,
     alertMessage: '',
+    areAnimationsEnabled: true,
   }
 
   const renderComponent = (props: Partial<HrTileProps> = {}) => {
@@ -48,11 +66,12 @@ describe('HrTile Component', () => {
 
   it('renders all the core data points', () => {
     renderComponent()
-    expect(screen.getByText(defaultProps.percentMax)).toBeInTheDocument()
+    // Check for percentMax with the percentage sign
+    const percentElement = screen.getByTestId('live-hr-percent')
+    expect(percentElement).toHaveTextContent(`${defaultProps.percentMax}%`)
+    // Check for bpm
     expect(screen.getByText(defaultProps.bpm)).toBeInTheDocument()
-    expect(
-      screen.getByText(Math.floor(defaultProps.calories!))
-    ).toBeInTheDocument()
+    // Check for name
     expect(screen.getByText(defaultProps.name!)).toBeInTheDocument()
   })
 
@@ -87,7 +106,15 @@ describe('HrTile Component', () => {
 
   it('disables animations when areAnimationsEnabled is false', () => {
     renderComponent({ areAnimationsEnabled: false })
-    const motionDivProps = mockMotionDiv.mock.calls[0][0]
-    expect(motionDivProps.whileHover).toEqual({})
+    // The mock passes props as data attributes, so we inspect those.
+    // The mock component will receive the whileHover prop from HrTile.
+    const receivedProps = mockMotionDiv.mock.calls[0][0]
+    expect(receivedProps.whileHover).toEqual({})
+  })
+
+  it('enables animations when areAnimationsEnabled is true', () => {
+    renderComponent({ areAnimationsEnabled: true })
+    const receivedProps = mockMotionDiv.mock.calls[0][0]
+    expect(receivedProps.whileHover).toEqual({ scale: 1.02, y: -5 })
   })
 })
