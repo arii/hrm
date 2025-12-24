@@ -8,7 +8,7 @@
     "prebuild": "pnpm run clean",
     "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.test --loader ts-node/esm server.ts | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
-    "build": "pnpm run build:server && next build",
+    "build": "cross-env $(cat .env.test | xargs) pnpm run build:server && next build",
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
