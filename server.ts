@@ -26,8 +26,8 @@ import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
-import { SpotifyTokenPayloadSchema } from './lib/validation/schemas'
-import { withValidation } from './lib/middleware/validation'
+import { SpotifyTokenPayloadSchema } from './lib/validation/schemas.js'
+import { withValidation } from './lib/middleware/validation.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers

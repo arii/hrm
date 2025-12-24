@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { AnyZodObject } from 'zod'
-import logger from '../../utils/logger'
+import logger from '../../utils/logger.js'
 
 /**
  * A higher-order function that creates an Express middleware for validating

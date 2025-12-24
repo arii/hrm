@@ -4,7 +4,7 @@
  * @see /docs/decisions/0002-api-validation-with-zod.md
  */
 
-import { z } from '../zod'
+import { z } from '../zod.js'
 
 // =================================================================
 // Data Model Schemas
@@ -61,12 +61,14 @@ export const CreateHeartRateDataPointSchema = HeartRateDataPointSchema.pick({
   heartRate: true,
 })
 
+/**
+ * Schema for the Spotify token payload delivered from the client.
+ * This is used to validate the data received in the `token-delivery` endpoint.
+ */
 export const SpotifyTokenPayloadSchema = z.object({
-  provider: z.string(),
-  sub: z.string(),
-  access_token: z.string(),
-  refresh_token: z.string(),
-  expires_in: z.number(),
+  access_token: z.string().min(1),
+  expires_in: z.number().positive(),
+  refresh_token: z.string().min(1),
   scope: z.string(),
-  obtainedAt: z.number(),
+  token_type: z.literal('Bearer'),
 })
