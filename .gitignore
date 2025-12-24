@@ -58,6 +58,7 @@ diff.txt
 
 # Environment
 .env*
+!.env.test
 .vercel
 
 # IDE
