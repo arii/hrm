@@ -16,11 +16,11 @@ import type {
 /**
  * Extends the base WebSocket type from the 'ws' library to include
  * application-specific properties for tracking client state, such as a
- * unique identifier and the last ping time for watchdog monitoring.
+ * unique identifier and a flag for tracking liveness.
  */
 export interface ExtWebSocket extends WebSocket {
   clientId: string
-  lastPingTime: number
+  isAlive: boolean
   clientType?: 'dashboard' | 'controller'
 }
 

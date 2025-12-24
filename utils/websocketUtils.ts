@@ -77,3 +77,65 @@ export const broadcast = (
     }
   })
 }
+const noop = () => {
+  /* no-op */
+}
+/**
+ * Manages and cleans up stale WebSocket connections.
+ */
+export class ConnectionMonitor {
+  private wss: WebSocketServer
+  private intervalId: NodeJS.Timeout | null = null
+  private readonly watchdogInterval: number
+
+  /**
+   * @param wss The WebSocketServer instance to monitor.
+   * @param watchdogInterval The interval (in ms) to check for stale connections. Defaults to 30 seconds.
+   */
+  constructor(wss: WebSocketServer, watchdogInterval = 30000) {
+    this.wss = wss
+    this.watchdogInterval = watchdogInterval
+  }
+
+  /**
+   * Starts the connection monitoring process.
+   */
+  public start(): void {
+    if (this.intervalId) {
+      logger.warn('ConnectionMonitor is already running.')
+      return
+    }
+
+    this.intervalId = setInterval(() => {
+      this.wss.clients.forEach((ws) => {
+        const extWs = ws as ExtWebSocket
+
+        if (!extWs.isAlive) {
+          logger.warn(
+            { clientId: extWs.clientId },
+            'Terminating stale WebSocket connection due to inactivity.'
+          )
+          return extWs.terminate()
+        }
+
+        extWs.isAlive = false
+        extWs.ping(noop)
+      })
+    }, this.watchdogInterval)
+
+    logger.info(
+      `ConnectionMonitor started with watchdog interval ${this.watchdogInterval}ms.`
+    )
+  }
+
+  /**
+   * Stops the connection monitoring process.
+   */
+  public stop(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId)
+      this.intervalId = null
+      logger.info('ConnectionMonitor stopped.')
+    }
+  }
+}

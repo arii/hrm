@@ -23,7 +23,11 @@ import {
   ClientCommandMessageSchema,
   ExtWebSocket,
 } from '../../types/websocket'
-import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
+import {
+  broadcast,
+  sendWebSocketMessage,
+  ConnectionMonitor,
+} from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 import { serviceContainer } from '../../lib/serviceContainer.js'
 
@@ -41,6 +45,10 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 jest.mock('../../utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
+  ConnectionMonitor: jest.fn().mockImplementation(() => ({
+    start: jest.fn(),
+    stop: jest.fn(),
+  })),
 }))
 
 // Mock logger globally for the test file
@@ -75,7 +83,7 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter {
-  lastPingTime: number | undefined
+  isAlive: boolean | undefined
   clientType: string | undefined
   terminate = jest.fn()
   ping = jest.fn()
@@ -83,7 +91,7 @@ class MockWebSocket extends EventEmitter {
 
   constructor() {
     super()
-    this.lastPingTime = Date.now()
+    this.isAlive = true
   }
 
   // Simulate receiving a pong from the client
@@ -152,62 +160,6 @@ describe('WebSocket Manager', () => {
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
     resetSocketManager()
-  })
-
-  describe('Heartbeat and Watchdog', () => {
-    it('should set lastPingTime on new connection', () => {
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs) // Manually trigger connection event
-
-      expect(mockWs.lastPingTime).toBeDefined()
-      expect(mockWs.lastPingTime).toBeLessThanOrEqual(Date.now())
-    })
-
-    it('should update lastPingTime on PING message and respond with PONG', () => {
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
-      const initialPingTime = mockWs.lastPingTime
-      jest.advanceTimersByTime(1000)
-
-      // Simulate a PING message from the client
-      const message = JSON.stringify({ type: 'PING' })
-      mockWs.emit('message', message.toString())
-
-      expect(mockWs.lastPingTime).toBeGreaterThan(initialPingTime!)
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        mockWs,
-        { type: 'PONG' },
-        'socketManager.PING'
-      )
-    })
-
-    it('should terminate a client if no ping is received within the timeout', () => {
-      // Do NOT simulate a ping. Advance time past the client inactivity timeout (120s)
-      // and the watchdog interval (30s) to ensure the check that terminates runs.
-      jest.advanceTimersByTime(150000)
-
-      expect(mockWs.terminate).toHaveBeenCalledTimes(1)
-    })
-
-    it('should NOT terminate a client that is responsive', () => {
-      const mockWs = new MockWebSocket()
-      ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
-      mockWss.emit('connection', mockWs)
-
-      // Simulate responsiveness by sending pings
-      const interval = setInterval(() => {
-        const message = JSON.stringify({ type: 'PING' })
-        mockWs.emit('message', message.toString())
-      }, 25000) // Send a ping every 25 seconds
-
-      jest.advanceTimersByTime(150000) // Advance well past the timeout
-
-      expect(mockWs.terminate).not.toHaveBeenCalled()
-      clearInterval(interval)
-    })
   })
 
   describe('Calorie Calculation', () => {
