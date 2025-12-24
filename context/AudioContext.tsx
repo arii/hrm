@@ -3,7 +3,7 @@
 import { createContext, useContext } from 'react'
 import useVolumePreference from '@/hooks/useVolumePreference'
 
-interface AudioContextType {
+export interface AudioContextType {
   volume: number
   setVolume: (volume: number) => void
   muted: boolean

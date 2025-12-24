@@ -253,7 +253,7 @@ describe('Services Integration', () => {
     it('should support Spotify volume commands', async () => {
       // The service now manages SDK internally, no need to set accessToken manually if mocks are set up
 
-      spotifyService.handleCommand('SET_VOLUME', undefined, 75)
+      spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
 
       // Verify mock called
       expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()
@@ -279,7 +279,7 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
 
       // Spotify command
-      await spotifyService.handleCommand('PLAY', 'test_device_id')
+      await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
@@ -339,7 +339,7 @@ describe('Services Integration', () => {
     it('should support timer start with Spotify skip command', async () => {
       // Simulate timer start triggering Spotify next
       tabataTimer.handleCommand('START')
-      await spotifyService.handleCommand('NEXT', 'test_device_id')
+      await spotifyService.handleCommand('NEXT', { deviceId: 'test_device_id' })
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
@@ -351,7 +351,9 @@ describe('Services Integration', () => {
       tabataTimer.handleCommand('START')
       jest.advanceTimersByTime(2000)
       tabataTimer.handleCommand('STOP')
-      await spotifyService.handleCommand('PAUSE', 'test_device_id')
+      await spotifyService.handleCommand('PAUSE', {
+        deviceId: 'test_device_id',
+      })
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(false)

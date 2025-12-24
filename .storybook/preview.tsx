@@ -6,6 +6,8 @@ import { initialize, mswLoader } from 'msw-storybook-addon'
 import React from 'react'
 import { handlers } from '../stories/mocks/handlers'
 import theme from '../lib/theme'
+import { RouterContext } from 'next/dist/shared/lib/router-context.shared-runtime' // next 13
+import * as NextRouter from 'next/router'
 
 // Initialize MSW
 initialize({}, handlers)
@@ -21,6 +23,10 @@ const preview: Preview = {
     // Ensure MSW handles requests by default
     msw: {
       handlers: handlers,
+    },
+    nextRouter: {
+      Provider: RouterContext.Provider,
+      ...NextRouter,
     },
   },
   // Register the MSW loader

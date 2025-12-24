@@ -243,14 +243,17 @@ const handleIncomingMessage = async (
           }
         })
 
-        serviceContainer
-          .get('spotifyService')
-          .handleCommand(
-            commandMsg.command,
-            commandMsg.deviceId,
-            commandMsg.volume,
-            commandMsg.playlistUri
-          )
+        const spotifyService = serviceContainer.get('spotifyService')
+        const params: {
+          deviceId?: string
+          volume?: number
+          playlistUri?: string
+        } = {}
+        if (commandMsg.deviceId) params.deviceId = commandMsg.deviceId
+        if (commandMsg.volume !== undefined) params.volume = commandMsg.volume
+        if (commandMsg.playlistUri) params.playlistUri = commandMsg.playlistUri
+
+        spotifyService.handleCommand(commandMsg.command, params)
         break
       }
       default: {
