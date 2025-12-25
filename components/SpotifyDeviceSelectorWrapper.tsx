@@ -3,11 +3,11 @@
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
 import { useState, MouseEvent } from 'react'
-import { useSharedSpotifyDevices } from '@/context/SpotifyDevicesContext'
+import { useSpotifyDevicesContext } from '@/context/SpotifyDevicesContext'
 
 const SpotifyDeviceSelectorWrapper = () => {
   const { devices, handleDeviceSelected, selectedDeviceId } =
-    useSharedSpotifyDevices()
+    useSpotifyDevicesContext()
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)

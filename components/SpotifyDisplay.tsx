@@ -20,7 +20,7 @@ import logger from '@/utils/logger'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
-import { useSharedSpotifyDevices } from '@/context/SpotifyDevicesContext'
+import { useSpotifyDevicesContext } from '@/context/SpotifyDevicesContext'
 
 // 1. State Shape
 interface VolumeState {
@@ -97,7 +97,7 @@ const volumeReducer = (
 const SpotifyDisplay = () => {
   const { data: session, status } = useSession()
   const { addError } = useError()
-  const { selectedDeviceId, devices } = useSharedSpotifyDevices()
+  const { selectedDeviceId, devices, error } = useSpotifyDevicesContext()
 
   // Effect to handle session-level errors, like token refresh failure
   useEffect(() => {

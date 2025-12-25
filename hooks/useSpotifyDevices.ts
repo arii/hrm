@@ -21,7 +21,7 @@ export const useSpotifyDevices = () => {
   const [debouncedTrackName] = useDebounce(spotifyData.trackName, 500)
 
   const fetchDevices = useCallback(async () => {
-    if (status !== 'authenticated') {
+    if (status !== 'authenticated' || !spotifyData.accessToken) {
       return
     }
     setIsLoading(true)
@@ -41,9 +41,7 @@ export const useSpotifyDevices = () => {
         setSelectedDeviceId(activeDevice.id)
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'An unknown error occurred'
-      setError(errorMessage)
+      setError(err instanceof Error ? err.message : 'An unknown error occurred')
       logger.error({ err }, 'Error fetching spotify devices')
     } finally {
       setIsLoading(false)

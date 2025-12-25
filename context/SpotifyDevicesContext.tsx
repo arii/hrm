@@ -18,11 +18,11 @@ export const SpotifyDevicesProvider = ({ children }: { children: ReactNode }) =>
   )
 }
 
-export const useSharedSpotifyDevices = () => {
+export const useSpotifyDevicesContext = () => {
   const context = useContext(SpotifyDevicesContext)
   if (context === undefined) {
     throw new Error(
-      'useSharedSpotifyDevices must be used within a SpotifyDevicesProvider'
+      'useSpotifyDevicesContext must be used within a SpotifyDevicesProvider'
     )
   }
   return context
