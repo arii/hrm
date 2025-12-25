@@ -13,8 +13,10 @@ import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
+import { useTheme } from '@mui/material/styles'
 
 const HrmConnectionPanel = () => {
+  const theme = useTheme();
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -45,7 +47,8 @@ const HrmConnectionPanel = () => {
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          theme
         )
 
         const matchingAlert = activeAlerts.find(
@@ -61,7 +64,7 @@ const HrmConnectionPanel = () => {
           alertMessage: matchingAlert?.message,
         }
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, theme])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||
