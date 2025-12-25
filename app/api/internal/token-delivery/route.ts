@@ -1,6 +1,8 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
 import logger from '@/utils/logger'
+import { serviceContainer } from '@/lib/serviceContainer'
+import { AccessToken } from '@spotify/web-api-ts-sdk'
 
 /**
  * @route POST /api/internal/token-delivery
@@ -14,7 +16,13 @@ import logger from '@/utils/logger'
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate the request from our internal callback
+    // 1. Parse the token from the request body
+    const tokenData = (await req.json()) as AccessToken
+    if (!tokenData || !tokenData.refresh_token) {
+      throw new ApiError(400, 'Bad Request: Missing token data.')
+    }
+
+    // 2. Authenticate the request from our internal callback
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
     if (!expected) {
@@ -24,13 +32,25 @@ export async function POST(req: NextRequest) {
       throw new ApiError(401, 'Unauthorized: Missing or invalid secret.')
     }
 
-    logger.info(
-      'Internal token delivery endpoint authorized successfully. Acknowledging request.'
-    )
+    // 3. Get the singleton instance of the Spotify service
+    const spotifyService = serviceContainer.get('spotifyService')
+    if (!spotifyService || !spotifyService.isReady()) {
+      throw new ApiError(503, 'Spotify service is not available.')
+    }
+
+    // 4. Directly and reliably update the service with the new token
+    await spotifyService.handleTokenUpdate({
+      ...tokenData,
+      provider: 'spotify',
+      sub: '',
+      scope: '',
+      obtainedAt: Date.now(),
+    })
+    logger.info('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
       ok: true,
-      message: 'Token delivery ack.',
+      message: 'Token delivered successfully.',
     })
   } catch (err) {
     if (err instanceof ApiError) {

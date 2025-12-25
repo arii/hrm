@@ -60,7 +60,7 @@ describe('POST /api/internal/token-delivery', () => {
     expect(body).toEqual({ error: 'Unauthorized: Missing or invalid secret.' })
   })
 
-  it('should return 200 OK if secret header is correct', async () => {
+  it('should return 200 OK if secret header is correct and token is processed', async () => {
     mockSpotifyService.isReady.mockReturnValue(true)
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
@@ -69,33 +69,29 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'test-secret',
         },
-        body: JSON.stringify({ refresh_token: 'test' }),
+        body: JSON.stringify({ refresh_token: 'test-token' }),
       }
     )
-
-    // The route handler does NOT read the body anymore, so we don't need to provide one
-    // or worry about stream consumption in this unit test.
 
     const response = await POST(req)
     expect(response.status).toBe(200)
     const body = await response.json()
-    expect(body).toEqual({ ok: true, message: 'Token delivery ack.' })
+    expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
+    expect(mockSpotifyService.handleTokenUpdate).toHaveBeenCalled()
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
-    // Force an error by mocking ApiError or something else if possible.
-    // However, since the logic is very simple, it's hard to make it fail unexpectedly
-    // without mocking globals or the request object throwing.
-    // Let's mock headers.get to throw.
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {
         method: 'POST',
+        headers: {
+          'x-internal-token-secret': 'test-secret',
+        },
+        body: JSON.stringify({ refresh_token: 'test-token' }),
       }
     )
-    jest.spyOn(req.headers, 'get').mockImplementationOnce(() => {
-      throw new Error('Unexpected failure')
-    })
+    jest.spyOn(req, 'json').mockRejectedValueOnce(new Error('Unexpected failure'))
 
     const response = await POST(req)
     expect(response.status).toBe(500)
