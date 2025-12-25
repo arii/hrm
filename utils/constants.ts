@@ -55,6 +55,7 @@ export const HEART_RATE_ZONES: HeartRateZoneConfig[] = [
 export const DEFAULT_USER_NAME = 'New User'
 export const DEFAULT_USER_AGE = 30
 export const DEFAULT_UNIT_SYSTEM = 'imperial'
+export const DEFAULT_UNIT_SYSTEM = 'imperial'
 
 // --- Calorie Calculation Constants ---
 // Based on standard metabolic formulas (e.g., Keytel)

@@ -16,6 +16,8 @@ export interface UserPreferences {
 
 import { DEFAULT_UNIT_SYSTEM } from '@/utils/constants'
 
+import { DEFAULT_UNIT_SYSTEM } from '@/utils/constants'
+
 export const useUserPreferences = () => {
   const [prefs, setPrefs] = useLocalStorage<UserPreferences>('user-prefs', {
     theme: 'dark',
