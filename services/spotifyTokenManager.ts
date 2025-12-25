@@ -1,6 +1,8 @@
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
+import { z } from 'zod'
+import { SpotifyTokenPayloadSchema } from '../lib/validation/schemas.js'
 import { SpotifyTokenResponse } from './spotifyPolling.js'
 
 /**
@@ -23,15 +25,7 @@ const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
   }
 }
 
-export interface SpotifyTokenPayload {
-  provider: string
-  sub: string
-  access_token: string
-  refresh_token: string
-  expires_in: number
-  scope: string
-  obtainedAt: number
-}
+export type SpotifyTokenPayload = z.infer<typeof SpotifyTokenPayloadSchema>
 
 export interface TokenRecord {
   receivedAt: number
@@ -71,17 +65,25 @@ export class SpotifyTokenManager {
    * Updates the in-memory token and persists it to disk.
    * @param {SpotifyTokenPayload} payload - The new token payload.
    */
-  public updateToken(payload: SpotifyTokenPayload): void {
-    this.currentToken = {
-      receivedAt: Date.now(),
-      payload: payload,
+  public updateToken(payload: unknown): void {
+    try {
+      const validatedPayload = SpotifyTokenPayloadSchema.parse(payload)
+      this.currentToken = {
+        receivedAt: Date.now(),
+        payload: validatedPayload,
+      }
+      // Persist for future runs
+      writeTokenFileSafe(this.tokenFile, this.currentToken)
+      console.log(
+        'Updated in-memory and persisted Spotify tokens for:',
+        this.currentToken.payload.sub
+      )
+    } catch (error) {
+      console.error(
+        'Failed to update Spotify token due to validation error:',
+        error
+      )
     }
-    // Persist for future runs
-    writeTokenFileSafe(this.tokenFile, this.currentToken)
-    console.log(
-      'Updated in-memory and persisted Spotify tokens for:',
-      this.currentToken.payload.sub
-    )
   }
   private tokenFile: string
   private currentToken: TokenRecord | null = null
@@ -93,18 +95,27 @@ export class SpotifyTokenManager {
     logDir: string = path.resolve(process.cwd(), 'logs')
   ) {
     this.tokenFile = path.join(logDir, 'spotify_tokens.json')
-    this.loadTokens()
+    this.loadToken()
   }
 
-  private loadTokens() {
+  private loadToken() {
     try {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
-        this.currentToken = JSON.parse(data) as TokenRecord
+        const jsonData = JSON.parse(data)
+
+        // Validate the payload property of the loaded data
+        const validatedPayload = SpotifyTokenPayloadSchema.parse(jsonData.payload)
+
+        this.currentToken = {
+          ...jsonData,
+          payload: validatedPayload,
+        }
         console.log('Loaded Spotify tokens for:', this.currentToken.payload.sub)
       }
     } catch (err) {
-      console.warn('Failed to load Spotify tokens:', err)
+      console.warn('Failed to load or validate Spotify tokens:', err)
+      this.currentToken = null // Ensure token is null if loading fails
     }
   }
 
@@ -199,8 +210,6 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
-    // Always reload the token file before returning the access token
-    this.loadTokens()
     if (!this.currentToken) return null
 
     // Check if token needs refresh

@@ -22,6 +22,8 @@ import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
+import { SpotifyTokenPayloadSchema } from './lib/validation/schemas.js'
+import { validate } from './lib/validation/utils.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
@@ -200,6 +202,23 @@ app
     // Handle all Next.js routing (pages, API routes, etc.)
     // Token delivery is now handled reliably by the Next.js API route at /api/internal/token-delivery.
     // The legacy interception logic has been removed.
+    expressApp.post(
+      '/api/internal/token-delivery',
+      (req: Request, res: Response) => {
+        if (!req.body) {
+          return res.status(400).json({ error: 'Missing token payload' })
+        }
+        try {
+          const validatedPayload = validate(SpotifyTokenPayloadSchema, req.body)
+          spotifyService.updateToken(validatedPayload)
+          return res.status(200).json({ ok: true })
+        } catch (error) {
+          logger.error({ err: error }, 'Invalid token payload')
+          return res.status(400).json({ error: 'Invalid token payload' })
+        }
+      }
+    )
+
     expressApp.use((req: Request, res: Response) => {
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
