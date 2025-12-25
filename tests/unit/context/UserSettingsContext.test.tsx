@@ -4,7 +4,10 @@
 // File: tests/unit/context/UserSettingsContext.test.tsx
 import React from 'react'
 import { render, act } from '@testing-library/react'
-import { UserSettingsProvider, useUserSettings } from '@/context/UserSettingsContext'
+import {
+  UserSettingsProvider,
+  useUserSettings,
+} from '@/context/UserSettingsContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 // Mock WebSocket context
@@ -78,31 +81,47 @@ describe('UserSettingsContext', () => {
     expect(settings.weightInKg).toBe(80)
   })
 
-  it.skip('updates values when setter functions are called', () => {
-    let settings: any
+  it('updates values when setter functions are called', () => {
     const TestComponentWithSetters = () => {
-      settings = useUserSettings()
-      return null
+      const settings = useUserSettings()
+      return (
+        <div>
+          <button onClick={() => settings.setUnitSystem('IMPERIAL')}>
+            Update Unit System
+          </button>
+          <button
+            onClick={() => {
+              settings.setUserName('Jane Doe')
+              settings.setUserAge(40)
+              settings.setUserWeight(176) // 176 lbs
+            }}
+          >
+            Update User Info
+          </button>
+        </div>
+      )
     }
 
-    render(
+    const { getByText } = render(
       <UserSettingsProvider>
         <TestComponentWithSetters />
       </UserSettingsProvider>
     )
 
     act(() => {
-      settings.setUserName('New Name')
-      settings.setUserAge(40)
-      settings.setUnitSystem('IMPERIAL')
-      settings.setUserWeight(176)
+      getByText('Update Unit System').click()
     })
 
-    expect(localStorage.getItem('userName')).toBe('New Name')
+    act(() => {
+      getByText('Update User Info').click()
+    })
+
+    // Verify localStorage is updated
+    expect(localStorage.getItem('userName')).toBe('Jane Doe')
     expect(localStorage.getItem('userAge')).toBe('40')
     expect(localStorage.getItem('unitSystem')).toBe('IMPERIAL')
-    expect(parseFloat(localStorage.getItem('userWeightKg') || '0')).toBeCloseTo(
-      79.83
-    )
+    expect(
+      parseFloat(localStorage.getItem('userWeightKg') || '0')
+    ).toBeCloseTo(79.83)
   })
 })

@@ -5,7 +5,6 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
   useCallback,
 } from 'react'
@@ -77,30 +76,23 @@ const setLocalStorageItem = (key: string, value: string): void => {
  */
 export const UserSettingsProvider = ({
   children,
-}: UserSettingsProviderProps): JSX.Element => {
-  const [isMounted, setIsMounted] = useState(false)
-  const [unitSystem, setUnitSystemState] = useState<UnitSystem>('METRIC')
-  const [userName, setUserNameState] = useState<string>(DEFAULT_USER_NAME)
-  const [userAge, setUserAgeState] = useState<number>(DEFAULT_USER_AGE)
-  // Internal state for weight is always stored in kg for consistency.
-  const [weightInKg, setWeightInKg] = useState<number>(DEFAULT_USER_WEIGHT_KG)
-
-  useEffect(() => {
-    setIsMounted(true)
+}: UserSettingsProviderProps): React.ReactElement => {
+  const [unitSystem, setUnitSystemState] = useState<UnitSystem>(() => {
     const storedUnitSystem = getLocalStorageItem('unitSystem') as UnitSystem
-    if (storedUnitSystem && ['METRIC', 'IMPERIAL'].includes(storedUnitSystem)) {
-      setUnitSystemState(storedUnitSystem)
-    }
-
-    const storedUserName = getLocalStorageItem('userName')
-    if (storedUserName) setUserNameState(storedUserName)
-
-    const storedUserAge = getLocalStorageItem('userAge')
-    if (storedUserAge) setUserAgeState(Number(storedUserAge))
-
-    const storedWeightInKg = getLocalStorageItem('userWeightKg')
-    if (storedWeightInKg) setWeightInKg(Number(storedWeightInKg))
-  }, [])
+    return storedUnitSystem && ['METRIC', 'IMPERIAL'].includes(storedUnitSystem)
+      ? storedUnitSystem
+      : 'METRIC'
+  })
+  const [userName, setUserNameState] = useState<string>(
+    () => getLocalStorageItem('userName') || DEFAULT_USER_NAME
+  )
+  const [userAge, setUserAgeState] = useState<number>(
+    () => Number(getLocalStorageItem('userAge')) || DEFAULT_USER_AGE
+  )
+  // Internal state for weight is always stored in kg for consistency.
+  const [weightInKg, setWeightInKg] = useState<number>(
+    () => Number(getLocalStorageItem('userWeightKg')) || DEFAULT_USER_WEIGHT_KG
+  )
 
   const setUnitSystem = useCallback((system: UnitSystem) => {
     setLocalStorageItem('unitSystem', system)
@@ -135,19 +127,13 @@ export const UserSettingsProvider = ({
   const userWeight =
     unitSystem === 'IMPERIAL' ? kgToLbs(weightInKg) : weightInKg
 
-  // Prevent rendering children until state has been hydrated from localStorage
-  if (!isMounted) {
-    return null
-  }
-
   const value = {
     unitSystem,
     setUnitSystem,
     userName,
     setUserName,
     userAge,
-
-  setUserAge,
+    setUserAge,
     userWeight,
     setUserWeight,
     weightInKg,

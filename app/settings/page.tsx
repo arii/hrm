@@ -11,7 +11,6 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Grid,
   Box,
 } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
@@ -24,7 +23,7 @@ import { UnitSystem } from '@/types/core'
  *
  * @returns {JSX.Element} The rendered settings page.
  */
-export default function SettingsPage(): JSX.Element {
+export default function SettingsPage(): React.JSX.Element {
   const {
     unitSystem,
     setUnitSystem,
@@ -36,9 +35,7 @@ export default function SettingsPage(): JSX.Element {
     setUserWeight,
   } = useUserSettings()
 
-  const handleUnitSystemChange = (
-    event: React.ChangeEvent<{ value: unknown }>
-  ) => {
+  const handleUnitSystemChange = (event: any) => {
     setUnitSystem(event.target.value as UnitSystem)
   }
 
@@ -71,9 +68,9 @@ export default function SettingsPage(): JSX.Element {
           Settings
         </Typography>
         <Paper elevation={3} sx={{ p: 4 }}>
-          <Grid container spacing={4}>
+          <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {/* User Profile Section */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ flex: 1, minWidth: '300px' }}>
               <Typography variant="h6" gutterBottom>
                 User Profile
               </Typography>
@@ -95,10 +92,10 @@ export default function SettingsPage(): JSX.Element {
                   variant="outlined"
                 />
               </Box>
-            </Grid>
+            </Box>
 
             {/* Preferences Section */}
-            <Grid item xs={12} md={6}>
+            <Box sx={{ flex: 1, minWidth: '300px' }}>
               <Typography variant="h6" gutterBottom>
                 Preferences
               </Typography>
@@ -122,11 +119,10 @@ export default function SettingsPage(): JSX.Element {
                   value={userWeight}
                   onChange={handleUserWeightChange}
                   variant="outlined"
-                  key={unitSystem} // Re-mount when unit system changes
                 />
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Paper>
       </Box>
     </Container>

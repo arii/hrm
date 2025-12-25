@@ -12,6 +12,10 @@ import {
   HrmMetadataUpdateData,
 } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
+import {
+  DEFAULT_USER_AGE,
+  DEFAULT_USER_WEIGHT_KG,
+} from '@/constants/index'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { useUserSettings } from '@/context/UserSettingsContext'
@@ -281,8 +285,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       setDeviceStatus('Signal Lost. Retrying...')
       const deviceToReconnect = deviceRef.current
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (connectToGattRef.current)
+        if (connectToGattRef.current && userDetailsRef.current) {
           connectToGattRef.current(deviceToReconnect)
+        }
       }, 2000)
     } else {
       logger.info('Device disconnected manually.')
@@ -346,8 +351,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-              age: age,
-              weight: weight,
+              age: age || DEFAULT_USER_AGE,
+              weight: weight || DEFAULT_USER_WEIGHT_KG,
             }
 
             const metadata: HrmMetadataUpdateMessage = {
@@ -413,7 +418,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight,
+        weight: userWeight || DEFAULT_USER_WEIGHT_KG,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

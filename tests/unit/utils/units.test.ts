@@ -1,10 +1,5 @@
 // File: tests/unit/utils/units.test.ts
-import {
-  kgToLbs,
-  lbsToKg,
-  formatWeight,
-} from '../../../utils/units'
-import { UnitSystem } from '../../../types/core'
+import { kgToLbs, lbsToKg, formatWeight } from '../../../utils/units'
 
 describe('utils/units', () => {
   describe('kgToLbs', () => {

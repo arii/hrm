@@ -14,9 +14,8 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData, UnitSystem } from '../types/core.js'
+import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { lbsToKg } from './units.js'
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'

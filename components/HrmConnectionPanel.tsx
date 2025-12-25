@@ -16,8 +16,11 @@ import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
-  const { userName: settingsUserName, userAge: settingsUserAge, weightInKg } =
-    useUserSettings()
+  const {
+    userName: settingsUserName,
+    userAge: settingsUserAge,
+    weightInKg,
+  } = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,

@@ -96,8 +96,6 @@ export interface HrmInputMessage {
   data: HrmInputData
 }
 
-import { UnitSystem } from './core'
-
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
   'clientId' | 'value' | 'calories'
