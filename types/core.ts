@@ -79,6 +79,7 @@ export interface HrmStreamData {
   name?: string
   age?: number
   calories: number
+  weight?: number
 }
 
 /**
@@ -112,6 +113,11 @@ export interface TimerData {
   soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
   soundEventId: number
 }
+
+/**
+ * Defines the unit system for displaying measurements.
+ */
+export type UnitSystem = 'METRIC' | 'IMPERIAL'
 
 // =================================================================================================
 // Spotify Integration

@@ -14,6 +14,7 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useUserSettings } from '@/context/UserSettingsContext'
 import { cancellablePromise } from '@/utils/promise'
 
 const HR_SERVICE_UUID = 'heart_rate'
@@ -132,6 +133,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const { dataLivenessTimeoutMs = 10000 } = props
   const { sendData, connectionStatus } = useWebSocket()
+  const { weightInKg } = useUserSettings()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -145,7 +147,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<{
+    name: string
+    age: number
+    weight?: number
+  } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -155,6 +161,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   useEffect(() => {
     statusRef.current = deviceStatus
   }, [deviceStatus])
+
+  useEffect(() => {
+    if (userDetailsRef.current) {
+      userDetailsRef.current.weight = weightInKg
+    }
+  }, [weightInKg])
 
   // Cleanup
   useEffect(() => {
@@ -328,15 +340,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age } = userDetailsRef.current || {}
+            const { name, age, weight } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-            }
-            if (typeof age === 'number') {
-              metadataData.age = age
+              age: age,
+              weight: weight,
             }
 
             const metadata: HrmMetadataUpdateMessage = {
@@ -390,7 +401,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeight?: number
+    ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -398,6 +413,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
+        weight: userWeight,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

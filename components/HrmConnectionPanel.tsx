@@ -16,7 +16,8 @@ import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
-  const [userSettings] = useUserSettings()
+  const { userName: settingsUserName, userAge: settingsUserAge, weightInKg } =
+    useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
     connectAndStream,
@@ -28,10 +29,10 @@ const HrmConnectionPanel = () => {
   } = useBluetoothHRM()
 
   const handleConnect = () => {
-    const userName =
-      session?.user?.name || userSettings.userName || 'Unknown User'
-    const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    const userName = session?.user?.name || settingsUserName || 'Unknown User'
+    const userAge = settingsUserAge || 30
+    // The hook expects weight in KG.
+    connectAndStream(userName, userAge, weightInKg)
   }
 
   const tileData = useMemo(() => {

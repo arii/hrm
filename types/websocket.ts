@@ -96,10 +96,12 @@ export interface HrmInputMessage {
   data: HrmInputData
 }
 
+import { UnitSystem } from './core'
+
 export type HrmMetadataUpdateData = Omit<
   Partial<HrmData>,
   'clientId' | 'value' | 'calories'
->
+> & { weight?: number }
 
 export interface HrmMetadataUpdateMessage {
   type: 'HRM_METADATA_UPDATE'
@@ -179,6 +181,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
@@ -240,5 +243,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
 ])

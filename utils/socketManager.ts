@@ -14,8 +14,9 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
+import { HrmStreamData, UnitSystem } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { lbsToKg } from './units.js'
 import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
@@ -32,7 +33,10 @@ const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
-  { lastUpdate: number; accumulatedCalories: number }
+  {
+    lastUpdate: number
+    accumulatedCalories: number
+  }
 >()
 
 /**
@@ -180,12 +184,13 @@ const handleIncomingMessage = (
           let currentAccumulated = sessionState.accumulatedCalories
           const currentHr = message.data.value ?? existingData.value
           const currentAge = existingData.age ?? 30
+          const weightKg = existingData.weight ?? CALORIE_DEFAULTS.WEIGHT_KG
 
           if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+              weightKg: weightKg,
               durationMinutes: dtMinutes,
             })
             currentAccumulated += caloriesBurned
