@@ -106,6 +106,17 @@ export interface HrmMetadataUpdateMessage {
   data: HrmMetadataUpdateData
 }
 
+export interface HrmStatsUpdateData {
+  totalCalories: number
+  hrZoneDurations: Record<number, number>
+  hrHistory: { timestamp: number; hr: number }[]
+}
+
+export interface HrmStatsUpdateMessage {
+  type: 'HRM_STATS_UPDATE'
+  data: HrmStatsUpdateData
+}
+
 export interface TimerCommandMessage {
   type: 'TIMER_COMMAND'
   command: 'START' | 'PAUSE' | 'STOP'
@@ -125,9 +136,9 @@ export interface TimerConfigMessage {
 export interface SpotifyCommandMessage {
   type: 'SPOTIFY_COMMAND'
   command: SpotifyCommand
-  deviceId?: string
-  volume?: number
-  playlistUri?: string
+  deviceId?: string | undefined
+  volume?: number | undefined
+  playlistUri?: string | undefined
 }
 
 export interface GetStateMessage {
@@ -154,6 +165,7 @@ export interface PingMessage {
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
+  | HrmStatsUpdateMessage
   | TimerCommandMessage
   | TimerModeCommandMessage
   | SpotifyCommandMessage
@@ -184,6 +196,17 @@ export const HrmMetadataUpdateDataSchema = z.object({
 export const HrmMetadataUpdateMessageSchema = z.object({
   type: z.literal('HRM_METADATA_UPDATE'),
   data: HrmMetadataUpdateDataSchema,
+})
+
+export const HrmStatsUpdateDataSchema = z.object({
+  totalCalories: z.number(),
+  hrZoneDurations: z.record(z.string(), z.number()),
+  hrHistory: z.array(z.object({ timestamp: z.number(), hr: z.number() })),
+})
+
+export const HrmStatsUpdateMessageSchema = z.object({
+  type: z.literal('HRM_STATS_UPDATE'),
+  data: HrmStatsUpdateDataSchema,
 })
 
 export const TimerCommandMessageSchema = z.object({
@@ -234,11 +257,12 @@ export const PingMessageSchema = z.object({
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
+  HrmStatsUpdateMessageSchema,
   TimerCommandMessageSchema,
   TimerModeCommandMessageSchema,
   SpotifyCommandMessageSchema,
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
 ])

@@ -13,6 +13,8 @@ import { getHrZoneProps } from '@/utils/visualization'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
+import { calculateHrZone } from '@/lib/hrm/zones'
+import Grid from '@mui/material/Grid'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -31,7 +33,8 @@ const HrmConnectionPanel = () => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    const userWeight = userSettings.userWeight || 80
+    connectAndStream(userName, userAge, userWeight, 'male')
   }
 
   const tileData = useMemo(() => {
@@ -43,9 +46,11 @@ const HrmConnectionPanel = () => {
         return !(isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
+        const zone = calculateHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          zone
         )
 
         const matchingAlert = activeAlerts.find(
@@ -71,48 +76,42 @@ const HrmConnectionPanel = () => {
   // Note: This UI currently assumes a single, primary HRM connection.
   // Future iterations may need to address a multi-device connection strategy.
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        width: { xs: '100%', lg: 'calc(50% - 16px)' },
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
-      }}
-    >
+    <Grid container spacing={2} sx={{ flexGrow: 1 }}>
       {isLoading || tileData.length === 0 ? (
         <>
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              p: 2,
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 2,
-              height: '100%',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-            <HRMonitorStatusIndicator
-              deviceStatus={deviceStatus}
-              batteryLevel={batteryLevel}
-            />
-            <ConnectHRMonitorButton
-              connect={handleConnect}
-              disconnect={disconnect}
-              isConnected={isConnected}
-              isSupported={isSupported}
-            />
-          </Box>
-          <Box
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                p: 2,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 2,
+                height: '100%',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
+              <HRMonitorStatusIndicator
+                deviceStatus={deviceStatus}
+                batteryLevel={batteryLevel}
+              />
+              <ConnectHRMonitorButton
+                connect={handleConnect}
+                disconnect={disconnect}
+                isConnected={isConnected}
+                isSupported={isSupported}
+              />
+            </Box>
+          </Grid>
+          <Grid
+            size={{ xs: 12, md: 6 }}
             data-testid="hr-tile-grid-item"
             sx={{
               display: { xs: 'none', md: 'block' },
-              width: { sm: 'calc(50% - 12px)' },
             }}
           >
             <Skeleton
@@ -120,19 +119,14 @@ const HrmConnectionPanel = () => {
               height={220}
               sx={{ borderRadius: 3 }}
             />
-          </Box>
+          </Grid>
         </>
       ) : (
         tileData.map((user) => (
-          <Box
+          <Grid
             key={user.clientId}
+            size={{ xs: 12, sm: 6 }}
             data-testid="hr-tile-grid-item"
-            sx={{
-              width: {
-                xs: '100%',
-                sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
-              },
-            }}
           >
             <HrTile
               name={user.name || ''}
@@ -143,10 +137,10 @@ const HrmConnectionPanel = () => {
               isAlerting={user.isAlerting}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}
             />
-          </Box>
+          </Grid>
         ))
       )}
-    </Box>
+    </Grid>
   )
 }
 export default HrmConnectionPanel

@@ -8,13 +8,15 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   HrmInputData,
-  HrmMetadataUpdateMessage,
   HrmMetadataUpdateData,
+  HrmStatsUpdateData,
 } from '../types/websocket'
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
+import { calculateHrZone } from '@/lib/hrm/zones'
+import { calculateCaloriesBurned } from '@/lib/hrm/calories'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -140,12 +142,26 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const [isSupported] = useState(
     () => typeof navigator !== 'undefined' && !!navigator.bluetooth
   )
+  const [totalCalories, setTotalCalories] = useState(0)
+  const totalCaloriesRef = useRef(totalCalories)
+
+  useEffect(() => {
+    totalCaloriesRef.current = totalCalories
+  }, [totalCalories])
 
   const statusRef = useRef(deviceStatus)
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<{
+    name: string
+    age: number
+    weight: number
+    gender: 'male' | 'female'
+  } | null>(null)
+  const hrHistoryRef = useRef<{ timestamp: number; hr: number }[]>([])
+  const hrZoneDurationsRef = useRef<Map<number, number>>(new Map())
+  const lastHrEventTimeRef = useRef<number | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -208,6 +224,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     setSavedDevice(null)
     setBatteryLevel(null)
     deviceRef.current = null
+
+    // Reset stats
+    setTotalCalories(0)
+    hrHistoryRef.current = []
+    hrZoneDurationsRef.current = new Map()
+    lastHrEventTimeRef.current = null
   }, [])
 
   /**
@@ -326,33 +348,61 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const e = event as Event
             const target = e.target as BluetoothRemoteGATTCharacteristic
             const heartRate = parseHeartRate(target.value!)
-            lastDataTime.current = Date.now()
+            const now = Date.now()
+            lastDataTime.current = now
 
-            const { name, age } = userDetailsRef.current || {}
+            // --- Stats Calculation ---
+            const { name, age, weight, gender } = userDetailsRef.current || {
+              age: 0,
+              weight: 0,
+              gender: 'male',
+            }
             const calculatedMaxHr = calculateMaxHr(age)
+            const currentZone = calculateHrZone(heartRate, calculatedMaxHr)
 
+            if (lastHrEventTimeRef.current && weight && gender) {
+              const deltaSeconds = (now - lastHrEventTimeRef.current) / 1000
+
+              // Update Zone Durations
+              const currentDuration =
+                hrZoneDurationsRef.current.get(currentZone) || 0
+              hrZoneDurationsRef.current.set(
+                currentZone,
+                currentDuration + deltaSeconds
+              )
+
+              // Calculate and update calories
+              const incrementalCalories = calculateCaloriesBurned({
+                heartRate,
+                age,
+                weight,
+                gender,
+                durationSeconds: deltaSeconds,
+              })
+              setTotalCalories((prev) => prev + incrementalCalories)
+            }
+            lastHrEventTimeRef.current = now
+            hrHistoryRef.current.push({ timestamp: now, hr: heartRate })
+            // --- End Stats Calculation ---
+
+            // --- WebSocket Updates ---
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+              age,
             }
-            if (typeof age === 'number') {
-              metadataData.age = age
-            }
+            sendData({ type: 'HRM_METADATA_UPDATE', data: metadataData })
 
-            const metadata: HrmMetadataUpdateMessage = {
-              type: 'HRM_METADATA_UPDATE',
-              data: metadataData,
-            }
-            sendData(metadata)
+            const hrmInputData: HrmInputData = { value: heartRate }
+            sendData({ type: 'HRM_INPUT', data: hrmInputData })
 
-            const data: HrmInputData = {
-              value: heartRate,
+            const statsData: HrmStatsUpdateData = {
+              totalCalories: totalCaloriesRef.current,
+              hrZoneDurations: Object.fromEntries(hrZoneDurationsRef.current),
+              hrHistory: hrHistoryRef.current,
             }
-
-            sendData({
-              type: 'HRM_INPUT',
-              data,
-            })
+            sendData({ type: 'HRM_STATS_UPDATE', data: statsData })
+            // --- End WebSocket Updates ---
           }
         )
 
@@ -390,14 +440,27 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeight?: number,
+      userGender?: 'male' | 'female'
+    ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
 
+      // Reset stats for new session
+      setTotalCalories(0)
+      hrHistoryRef.current = []
+      hrZoneDurationsRef.current = new Map()
+      lastHrEventTimeRef.current = null
+
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
+        weight: userWeight || 0,
+        gender: userGender || 'male',
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

@@ -15,22 +15,6 @@ jest.mock('@/utils/logger', () => ({
   },
 }))
 
-// Mock Service Container
-const mockSpotifyService = {
-  isReady: jest.fn(),
-  handleTokenUpdate: jest.fn(),
-}
-jest.mock('@/lib/serviceContainer', () => ({
-  serviceContainer: {
-    get: jest.fn((serviceName: 'spotifyService') => {
-      if (serviceName === 'spotifyService') {
-        return mockSpotifyService
-      }
-      return null
-    }),
-  },
-}))
-
 describe('POST /api/internal/token-delivery', () => {
   const originalSecret = process.env.INTERNAL_TOKEN_DELIVERY_SECRET
 
@@ -50,7 +34,7 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'wrong-secret',
         },
-        body: JSON.stringify({ refresh_token: 'test' }),
+        body: JSON.stringify({}), // Body is not read, but good to have
       }
     )
 
@@ -61,7 +45,6 @@ describe('POST /api/internal/token-delivery', () => {
   })
 
   it('should return 200 OK if secret header is correct', async () => {
-    mockSpotifyService.isReady.mockReturnValue(true)
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {
@@ -69,24 +52,17 @@ describe('POST /api/internal/token-delivery', () => {
         headers: {
           'x-internal-token-secret': 'test-secret',
         },
-        body: JSON.stringify({ refresh_token: 'test' }),
+        body: JSON.stringify({}), // Body is not read
       }
     )
-
-    // The route handler does NOT read the body anymore, so we don't need to provide one
-    // or worry about stream consumption in this unit test.
 
     const response = await POST(req)
     expect(response.status).toBe(200)
     const body = await response.json()
-    expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
+    expect(body).toEqual({ ok: true, message: 'Token delivery acknowledged.' })
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
-    // Force an error by mocking ApiError or something else if possible.
-    // However, since the logic is very simple, it's hard to make it fail unexpectedly
-    // without mocking globals or the request object throwing.
-    // Let's mock headers.get to throw.
     const req = new NextRequest(
       'http://localhost/api/internal/token-delivery',
       {

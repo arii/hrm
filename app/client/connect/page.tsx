@@ -7,6 +7,7 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { calculateHrZone } from '@/lib/hrm/zones'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -36,14 +37,16 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    const weight = userWeight ? parseInt(userWeight, 10) : 0
+    connectAndStream(userName, age, weight, 'male')
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
+  const zone = calculateHrZone(currentHR, maxHr)
+  const hrZoneProps = getHrZoneProps(currentHR, maxHr, zone)
 
   const {
     workoutDuration,
