@@ -15,7 +15,14 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-import { TimerMode, TimerPhase } from './core'
+export type TimerPhase =
+  | 'IDLE'
+  | 'PREPARE'
+  | 'RUNNING'
+  | 'WORK'
+  | 'REST'
+  | 'COOLDOWN'
+export type TimerMode = 'TABATA' | 'STOPWATCH'
 
 export interface HeartRateZonesProps {
   maxHr: number
