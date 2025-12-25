@@ -145,7 +145,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<
+    { name: string; age: number; weight?: number } | null
+  >(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -328,12 +330,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age } = userDetailsRef.current || {}
+            const { name, age, weight } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+              weight: weight,
             }
             if (typeof age === 'number') {
               metadataData.age = age
@@ -390,7 +393,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeight?: number
+    ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -398,6 +405,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
+        weight: userWeight,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

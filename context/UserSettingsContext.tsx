@@ -1,10 +1,12 @@
 // context/UserSettingsContext.tsx
 'use client'
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useEffect } from 'react'
 import {
   useUserPreferences,
   UserPreferences,
 } from '../hooks/useUserPreferences'
+import { useWebSocket } from './WebSocketContext'
+import { SetUnitSystemMessage } from '@/types/websocket'
 
 type UserSettingsContextType = readonly [
   UserPreferences,
@@ -21,6 +23,18 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const userPreferences = useUserPreferences()
+  const { sendData, connectionStatus } = useWebSocket()
+  const [prefs] = userPreferences
+
+  useEffect(() => {
+    if (connectionStatus === 'Connected') {
+      const message: SetUnitSystemMessage = {
+        type: 'SET_UNIT_SYSTEM',
+        unitSystem: prefs.unitSystem,
+      }
+      sendData(message)
+    }
+  }, [prefs.unitSystem, connectionStatus, sendData])
 
   return (
     <UserSettingsContext.Provider value={userPreferences}>
