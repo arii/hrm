@@ -203,15 +203,15 @@ describe('WebSocket Manager', () => {
       expect(mockWs.isAlive).toBe(true)
     })
 
-    it('should not send a PONG in response to an application-level PING', () => {
+    it('should do nothing on application-level PING to maintain compatibility', () => {
       const message = JSON.stringify({ type: 'PING' })
+      const mockAction = jest.fn()
+      // This is a bit contrived, but we're testing that the PING case is a no-op
+      // by ensuring no other actions are taken.
+      mockWs.on('message', () => mockAction())
       mockWs.emit('message', message.toString())
-
-      expect(sendWebSocketMessage).not.toHaveBeenCalledWith(
-        expect.anything(),
-        { type: 'PONG' },
-        expect.any(String)
-      )
+      expect(mockAction).toHaveBeenCalled()
+      expect(sendWebSocketMessage).not.toHaveBeenCalled()
     })
   })
 

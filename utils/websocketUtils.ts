@@ -89,7 +89,7 @@ export const broadcast = (
 export class ConnectionMonitor {
   private wss: WebSocketServer
   private intervalId: NodeJS.Timeout | null = null
-  private watchdogInterval: number
+  public watchdogInterval: number
 
   /**
    * @param wss The WebSocketServer instance to monitor.

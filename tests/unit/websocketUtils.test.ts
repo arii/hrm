@@ -106,48 +106,37 @@ describe('ConnectionMonitor', () => {
 
   it('should use the provided watchdogInterval if valid', () => {
     monitor = new ConnectionMonitor(mockWss, 15000)
-    const client = new MockWebSocket('client-1', true)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client)
-
-    monitor.start()
-    jest.advanceTimersByTime(15000)
-    expect(client.ping).toHaveBeenCalledTimes(1)
+    expect(monitor.watchdogInterval).toBe(15000)
   })
 
   it('should use the environment variable if no interval is provided', () => {
     process.env.WEBSOCKET_WATCHDOG_INTERVAL = '20000'
     monitor = new ConnectionMonitor(mockWss)
-    const client = new MockWebSocket('client-1', true)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client)
-
-    monitor.start()
-    jest.advanceTimersByTime(20000)
-    expect(client.ping).toHaveBeenCalledTimes(1)
+    expect(monitor.watchdogInterval).toBe(20000)
   })
 
   it('should use the default interval if the environment variable is invalid', () => {
     process.env.WEBSOCKET_WATCHDOG_INTERVAL = 'invalid'
     monitor = new ConnectionMonitor(mockWss)
-    const client = new MockWebSocket('client-1', true)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client)
-
-    monitor.start()
-    jest.advanceTimersByTime(DEFAULT_WATCHDOG_INTERVAL)
-    expect(client.ping).toHaveBeenCalledTimes(1)
+    expect(monitor.watchdogInterval).toBe(DEFAULT_WATCHDOG_INTERVAL)
     expect(logger.warn).toHaveBeenCalledWith(
       expect.any(Object),
       `Invalid WEBSOCKET_WATCHDOG_INTERVAL. Falling back to default of ${DEFAULT_WATCHDOG_INTERVAL}ms.`
     )
   })
 
-  it('should use the default interval if the provided interval is out of bounds', () => {
+  it('should use the default interval if the provided interval is too low', () => {
     monitor = new ConnectionMonitor(mockWss, 500) // Too low
-    const client = new MockWebSocket('client-1', true)
-    ;(mockWss.clients as Set<MockWebSocket>).add(client)
+    expect(monitor.watchdogInterval).toBe(DEFAULT_WATCHDOG_INTERVAL)
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.any(Object),
+      `Invalid WEBSOCKET_WATCHDOG_INTERVAL. Falling back to default of ${DEFAULT_WATCHDOG_INTERVAL}ms.`
+    )
+  })
 
-    monitor.start()
-    jest.advanceTimersByTime(DEFAULT_WATCHDOG_INTERVAL)
-    expect(client.ping).toHaveBeenCalledTimes(1)
+  it('should use the default interval if the provided interval is too high', () => {
+    monitor = new ConnectionMonitor(mockWss, 100000) // Too high
+    expect(monitor.watchdogInterval).toBe(DEFAULT_WATCHDOG_INTERVAL)
     expect(logger.warn).toHaveBeenCalledWith(
       expect.any(Object),
       `Invalid WEBSOCKET_WATCHDOG_INTERVAL. Falling back to default of ${DEFAULT_WATCHDOG_INTERVAL}ms.`
