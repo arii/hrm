@@ -312,7 +312,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               return newHistory
             })
 
-            const calculatedMaxHr = calculateMaxHr(age)
+            const calculatedMaxHr = calculateMaxHr(age || 0)
             const currentZone =
               age &&
               HR_ZONE_DEFINITIONS.find(
