@@ -386,7 +386,12 @@ export class SpotifyPolling implements SpotifyService {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.sdk!.player.setPlaybackVolume(clampedVolume, deviceId)
+          // The SDK expects a number, but the mock/type might be incorrect.
+          // Let's ensure it's a number, not a string, for the actual API call.
+          await this.sdk!.player.setPlaybackVolume(
+            clampedVolume,
+            deviceId as string | undefined
+          )
         }
         break
       case 'LOGIN':
