@@ -3,6 +3,11 @@
 ## [0.16.0](https://github.com/arii/hrm/compare/v0.15.0...v0.16.0) (2025-12-24)
 
 
+### Refactor
+
+* **websocket:** The server will no longer send a `PONG` message in response to a client's `PING` message. The connection is now monitored using the native WebSocket ping/pong mechanism.
+
+
 ### Features
 
 * Setup Framer Motion Infrastructure and Page Transitions ([#2098](https://github.com/arii/hrm/issues/2098)) ([b0d6f3d](https://github.com/arii/hrm/commit/b0d6f3d8e92dfd8ccd704edd91964846d054c94d))
