@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
 import Image from 'next/image'
 
 const PlaylistTracksDisplay = dynamic(
@@ -36,10 +37,13 @@ interface PlaylistDetails {
 const PlaylistPage = () => {
   const params = useParams()
   const playlistId = params.playlistId as string
-  useWebSocket()
+  const { spotifyData, sendData } = useWebSocket()
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
+  )
 
   useEffect(() => {
     if (!playlistId) return
@@ -67,6 +71,16 @@ const PlaylistPage = () => {
 
     fetchPlaylistDetails()
   }, [playlistId])
+
+  const handleDeviceSelect = (deviceId: string) => {
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'TRANSFER_PLAYBACK',
+      deviceId,
+    }
+    sendData(message)
+    setDeviceMenuAnchor(null)
+  }
 
   if (loading) {
     return (
@@ -121,7 +135,13 @@ const PlaylistPage = () => {
             <Typography variant="body2" color="text.secondary">
               Created by {playlist.owner} - {playlist.trackCount} tracks
             </Typography>
-            <SpotifyDeviceSelectorWrapper />
+            <SpotifyDeviceSelectorWrapper
+              availableDevices={spotifyData.devices || []}
+              deviceMenuAnchor={deviceMenuAnchor}
+              onDeviceSelect={handleDeviceSelect}
+              onMenuOpen={(e) => setDeviceMenuAnchor(e.currentTarget)}
+              onMenuClose={() => setDeviceMenuAnchor(null)}
+            />
           </Box>
         </Box>
       </Box>

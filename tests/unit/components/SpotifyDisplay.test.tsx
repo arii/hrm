@@ -8,10 +8,6 @@ jest.mock('uuid', () => ({
 
 import SpotifyDisplay from '@/components/SpotifyDisplay'
 import { ErrorProvider } from '@/context/ErrorContext'
-import {
-  SpotifyDevicesProvider,
-  useSharedSpotifyDevices,
-} from '@/context/SpotifyDevicesContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
@@ -21,9 +17,9 @@ import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
 
 // Mock dependencies
-jest.mock('@/context/SpotifyDevicesContext', () => ({
-  ...jest.requireActual('@/context/SpotifyDevicesContext'),
-  useSharedSpotifyDevices: jest.fn(),
+jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
+  __esModule: true,
+  default: () => <div data-testid="current-spotify-item-display" />,
 }))
 jest.mock('@/context/WebSocketContext')
 jest.mock('next-auth/react', () => ({
@@ -40,15 +36,10 @@ const mockedUseWebSocket = useWebSocket as jest.Mock
 const mockedUseSession = useSession as jest.Mock
 const mockedSignIn = signIn as jest.Mock
 const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
-const mockedUseSharedSpotifyDevices = useSharedSpotifyDevices as jest.Mock
 
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <ErrorProvider>
-      <SpotifyDevicesProvider>{ui}</SpotifyDevicesProvider>
-    </ErrorProvider>
-  )
+  return render(<ErrorProvider>{ui}</ErrorProvider>)
 }
 
 describe('SpotifyDisplay', () => {
@@ -60,18 +51,10 @@ describe('SpotifyDisplay', () => {
       player: null,
       isAuthenticated: true,
     })
-    mockedUseSharedSpotifyDevices.mockReturnValue({
-      devices: [],
-      selectedDeviceId: null,
-      isLoading: false,
-      error: null,
-      refreshDevices: jest.fn(),
-      handleDeviceSelected: jest.fn(),
-    })
     global.fetch = jest.fn(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ devices: [] }),
+        json: () => Promise.resolve([]),
       })
     ) as jest.Mock
   })
