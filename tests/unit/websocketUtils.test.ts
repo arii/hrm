@@ -41,11 +41,8 @@ class MockWebSocket extends EventEmitter implements Partial<ExtWebSocket> {
   clientId = `test-client-${Math.random()}`
   terminate = jest.fn()
   ping = jest.fn()
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   pong = (): void => {}
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   send = (): void => {}
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   close = (): void => {}
   readyState = 1
   CONNECTING = 0
@@ -66,7 +63,8 @@ describe('ConnectionMonitor', () => {
     jest.useFakeTimers()
     setIntervalSpy = jest.spyOn(global, 'setInterval')
     clearIntervalSpy = jest.spyOn(global, 'clearInterval')
-    mockWss = new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
+    mockWss =
+      new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
     // Note: ConnectionMonitor is instantiated in each test to allow for env var manipulation
   })
 
