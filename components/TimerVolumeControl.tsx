@@ -7,7 +7,15 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 
-export const TimerVolumeControl = ({ textColor, thumbColor }) => {
+interface TimerVolumeControlProps {
+  textColor: string
+  thumbColor: string
+}
+
+export const TimerVolumeControl = ({
+  textColor,
+  thumbColor,
+}: TimerVolumeControlProps) => {
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
 
   return (
