@@ -1,4 +1,4 @@
-export type UnitSystem = 'metric' | 'imperial';
+export type UnitSystem = 'metric' | 'imperial'
 
 /**
  * Converts kilograms to pounds.

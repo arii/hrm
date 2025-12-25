@@ -4,7 +4,10 @@
 // tests/unit/context/UserSettingsContext.test.tsx
 import React from 'react'
 import { render, screen, act } from '@testing-library/react'
-import { UserSettingsProvider, useUserSettings } from '@/context/UserSettingsContext'
+import {
+  UserSettingsProvider,
+  useUserSettings,
+} from '@/context/UserSettingsContext'
 import { useUserPreferences } from '@/hooks/useUserPreferences'
 import { WebSocketProvider } from '@/context/WebSocketContext'
 
@@ -26,10 +29,16 @@ const MockConsumerComponent = () => {
     <div>
       <p data-testid="unit-system">{settings.unitSystem}</p>
       <p data-testid="user-weight">{settings.userWeight}</p>
-      <button onClick={() => setSettings(prev => ({ ...prev, unitSystem: 'metric' }))}>
+      <button
+        onClick={() =>
+          setSettings((prev) => ({ ...prev, unitSystem: 'metric' }))
+        }
+      >
         Set Metric
       </button>
-      <button onClick={() => setSettings(prev => ({ ...prev, userWeight: 200 }))}>
+      <button
+        onClick={() => setSettings((prev) => ({ ...prev, userWeight: 200 }))}
+      >
         Set Weight
       </button>
     </div>

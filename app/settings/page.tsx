@@ -1,7 +1,7 @@
 // app/settings/page.tsx
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Container,
   Typography,
@@ -10,11 +10,12 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Button,
   Box,
-} from '@mui/material'
+  SelectChangeEvent,
+} from '@mui/orial'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import { DEFAULT_USER_AGE, DEFAULT_USER_NAME } from '@/utils/constants'
+import { DEFAULT_USER_NAME, CALORIE_DEFAULTS } from '@/utils/constants'
+import { kgToLbs } from '@/utils/units'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -35,10 +36,6 @@ const SettingsPage = () => {
     }
   }
 
-import { SelectChangeEvent } from '@mui/material'
-import { CALORIE_DEFAULTS } from '@/utils/constants'
-import { kgToLbs } from '@/utils/units'
-
   const handleUnitSystemChange = (event: SelectChangeEvent) => {
     const newUnitSystem = event.target.value as 'metric' | 'imperial'
     setUserSettings((prev) => ({
@@ -47,11 +44,14 @@ import { kgToLbs } from '@/utils/units'
     }))
   }
 
-  const defaultWeightLbs = Math.round(kgToLbs(CALORIE_DEFAULTS.WEIGHT_KG) ?? 0)
-  const defaultWeight =
-    userSettings.unitSystem === 'imperial'
+  const defaultWeight = useMemo(() => {
+    const defaultWeightLbs = Math.round(
+      kgToLbs(CALORIE_DEFAULTS.WEIGHT_KG) ?? 0
+    )
+    return userSettings.unitSystem === 'imperial'
       ? defaultWeightLbs
       : CALORIE_DEFAULTS.WEIGHT_KG
+  }, [userSettings.unitSystem])
 
   return (
     <Container maxWidth="sm">
