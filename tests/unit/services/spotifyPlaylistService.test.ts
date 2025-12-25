@@ -1,4 +1,5 @@
 // File: tests/unit/services/spotifyPlaylistService.test.ts
+import { jest } from '@jest/globals'
 import {
   getPresetPlaylists,
   getUserPlaylists,

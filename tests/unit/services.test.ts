@@ -10,6 +10,7 @@ import {
   beforeEach,
   afterEach,
 } from '@jest/globals'
+import { jest } from '@jest/globals'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { ServerMessage } from '../../types/websocket'
@@ -33,18 +34,7 @@ describe('Services Integration', () => {
   let spotifyService: SpotifyPolling
   let broadcastedMessages: ServerMessage[]
   let broadcastFn: (message: ServerMessage) => void
-  let mockSdk: {
-    player: {
-      getCurrentlyPlayingTrack: jest.Mock
-      startResumePlayback: jest.Mock
-      pausePlayback: jest.Mock
-      skipToNext: jest.Mock
-      skipToPrevious: jest.Mock
-      transferPlayback: jest.Mock
-      setPlaybackVolume: jest.Mock
-      getAvailableDevices: jest.Mock
-    }
-  }
+  let mockPlayerFns: jest.Mocked<SpotifyApi['player']>
 
   beforeEach(async () => {
     jest.useFakeTimers()
@@ -69,19 +59,32 @@ describe('Services Integration', () => {
       cleanup: jest.fn(),
     }))
 
-    // Mock SDK instance
-    mockSdk = {
-      player: {
-        getCurrentlyPlayingTrack: jest.fn().mockResolvedValue(null),
-        startResumePlayback: jest.fn().mockResolvedValue(undefined),
-        pausePlayback: jest.fn().mockResolvedValue(undefined),
-        skipToNext: jest.fn().mockResolvedValue(undefined),
-        skipToPrevious: jest.fn().mockResolvedValue(undefined),
-        transferPlayback: jest.fn().mockResolvedValue(undefined),
-        setPlaybackVolume: jest.fn().mockResolvedValue(undefined),
-        getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
-      },
+    // Reset mocks before each test
+    jest.clearAllMocks()
+    broadcastedMessages = []
+
+    // A store for our mock functions
+    mockPlayerFns = {
+      getCurrentlyPlayingTrack: jest.fn().mockResolvedValue(null),
+      startResumePlayback: jest.fn(),
+      pausePlayback: jest.fn(),
+      skipToNext: jest.fn(),
+      skipToPrevious: jest.fn(),
+      transferPlayback: jest.fn(),
+      setPlaybackVolume: jest.fn(),
+      getAvailableDevices: jest.fn().mockResolvedValue({ devices: [] }),
+      addItemToPlaybackQueue: jest.fn(),
+      getPlaybackState: jest.fn(),
+      getRecentlyPlayedTracks: jest.fn(),
+      seekToPosition: jest.fn(),
+      setRepeatMode: jest.fn(),
+      togglePlaybackShuffle: jest.fn(),
     }
+
+    // This object will be mutated by `createSafeSpotifyApi`
+    const mockSdk = {
+      player: { ...mockPlayerFns },
+    } as unknown as SpotifyApi
 
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
@@ -256,7 +259,7 @@ describe('Services Integration', () => {
       spotifyService.handleCommand('SET_VOLUME', { volume: 75 })
 
       // Verify mock called
-      expect(mockSdk.player.setPlaybackVolume).toHaveBeenCalled()
+      expect(mockPlayerFns.setPlaybackVolume).toHaveBeenCalled()
     })
   })
 
@@ -283,7 +286,7 @@ describe('Services Integration', () => {
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
-      expect(mockSdk.player.startResumePlayback).toHaveBeenCalled()
+      expect(mockPlayerFns.startResumePlayback).toHaveBeenCalled()
     })
 
     it('should broadcast updates from both services', () => {
@@ -343,7 +346,7 @@ describe('Services Integration', () => {
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(true)
-      expect(mockSdk.player.skipToNext).toHaveBeenCalled()
+      expect(mockPlayerFns.skipToNext).toHaveBeenCalled()
     })
 
     it('should support timer stop with Spotify pause command', async () => {
@@ -357,7 +360,7 @@ describe('Services Integration', () => {
 
       const timerState = tabataTimer.getState()
       expect(timerState.isRunning).toBe(false)
-      expect(mockSdk.player.pausePlayback).toHaveBeenCalled()
+      expect(mockPlayerFns.pausePlayback).toHaveBeenCalled()
     })
   })
 })
