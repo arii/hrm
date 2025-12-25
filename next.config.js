@@ -57,6 +57,12 @@ const nextConfig = {
     ]
   },
   serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream', 'ws'],
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      ".js": [".ts", ".js"],
+    };
+    return config;
+  },
 }
 
 export default withBundleAnalyzer(nextConfig)

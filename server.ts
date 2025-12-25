@@ -8,7 +8,7 @@
 import express, { Request, Response } from 'express'
 import { createServer, IncomingMessage } from 'http'
 import { Socket } from 'net'
-import next from 'next'
+import next from 'next/dist/server/next.js'
 import path from 'path'
 import { parse } from 'url'
 import type { WebSocket } from 'ws' // Import WebSocket as a type

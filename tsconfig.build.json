@@ -3,10 +3,14 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "./dist",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "traceResolution": false
+    "traceResolution": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [
     "server.ts",

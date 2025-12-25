@@ -6,9 +6,9 @@
   "scripts": {
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "prebuild": "pnpm run clean",
-    "dev": "pnpm run build:server && cross-env NODE_ENV=development node --env-file=.env.local dist/server.mjs | pnpm exec pino-pretty",
+    "dev": "pnpm run build:server && cross-env NODE_ENV=development node --experimental-specifier-resolution=node --env-file=.env.local dist/server.mjs | pnpm exec pino-pretty",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
-    "build": "pnpm run build:server && next build",
+    "build": "pnpm run build:server && next build --webpack",
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
     "start": "pm2 start ecosystem.config.cjs --env production",
