@@ -11,7 +11,7 @@ import LoadingIndicator from '@/components/LoadingIndicator'
 import Providers from '@/components/Providers'
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry'
 import TimerSoundProvider from '@/components/TimerSoundProvider'
-import { pageVariants } from '@/components/animation/variants'
+import { pageTransitionVariants } from '@/components/animation/variants'
 import { ErrorProvider } from '@/context/ErrorContext'
 import { LoadingProvider } from '@/context/LoadingContext'
 import { UserSettingsProvider } from '@/context/UserSettingsContext'
@@ -29,7 +29,7 @@ export default function Main({ children }: { children: React.ReactNode }) {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={pathname}
-                      variants={pageVariants}
+                      variants={pageTransitionVariants}
                       initial="initial"
                       animate="in"
                       exit="out"

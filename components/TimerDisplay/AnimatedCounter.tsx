@@ -1,60 +1,65 @@
-// File: components/TimerDisplay/AnimatedCounter.tsx
-'use client'
-import { memo } from 'react'
+// components/TimerDisplay/AnimatedCounter.tsx
+import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Typography } from '@mui/material'
 
+const counterVariants = {
+  enter: (direction: 'up' | 'down') => ({
+    y: direction === 'up' ? 50 : -50,
+    opacity: 0,
+  }),
+  center: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      y: { type: 'spring', stiffness: 300, damping: 30 },
+      opacity: { duration: 0.2 },
+    },
+  },
+  exit: (direction: 'up' | 'down') => ({
+    y: direction === 'up' ? -50 : 50,
+    opacity: 0,
+    transition: {
+      y: { type: 'spring', stiffness: 300, damping: 30 },
+      opacity: { duration: 0.2 },
+    },
+  }),
+}
+
 const AnimatedCounter = ({
-  displayTime,
-  phaseColor,
+  time,
+  direction,
 }: {
-  displayTime: string
-  phaseColor: string
+  time: number
+  direction: 'up' | 'down'
 }) => {
   return (
-    <Typography
-      data-testid="timer-countdown"
-      component="div"
-      role="timer"
-      aria-live="polite"
-      aria-atomic="true"
-      sx={{
-        fontFamily: 'var(--font-roboto-mono), monospace',
-        fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
-        fontWeight: 800,
-        letterSpacing: '0.12rem',
-        lineHeight: 1,
-        color: phaseColor,
-        textShadow: `0 0 20px ${phaseColor}80`,
-        position: 'relative',
-        width: '100%',
-        minHeight: { xs: '6rem', sm: '8rem', md: '10rem' }, // Prevents layout shift
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={displayTime}
-          initial={{ y: 50, opacity: 0, scale: 0.7 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -50, opacity: 0, scale: 0.7 }}
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 30,
-            duration: 0.5,
-          }}
-          style={{
+    <div style={{ position: 'relative', height: '1.2em' }}>
+      <AnimatePresence initial={false} custom={direction}>
+        <Typography
+          component={motion.div}
+          key={time}
+          variants={counterVariants}
+          custom={direction}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          sx={{
+            fontFamily: '"Roboto Mono", monospace',
+            fontSize: '10rem',
+            fontWeight: 700,
+            color: 'white',
+            textShadow: '0 0 20px rgba(0,0,0,0.1)',
             position: 'absolute',
+            width: '100%',
+            textAlign: 'center',
           }}
         >
-          {displayTime}
-        </motion.div>
+          {time}
+        </Typography>
       </AnimatePresence>
-    </Typography>
+    </div>
   )
 }
 
-export default memo(AnimatedCounter)
+export default AnimatedCounter
