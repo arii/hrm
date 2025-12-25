@@ -1,0 +1,39 @@
+name: Auto Fix Linting
+
+on:
+  pull_request:
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+
+jobs:
+  fix-lint:
+    runs-on: self-hosted
+    permissions:
+      contents: write # Required to push changes back to the PR
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Intelligent Fixes
+        # Uses your existing scripts from package.json
+        run: |
+          npm run format
+          npm run lint:fix
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-fix linting and formatting issues"
+          file_pattern: "**/*.ts **/*.tsx **/*.json"
