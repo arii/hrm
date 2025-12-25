@@ -72,6 +72,9 @@ importers:
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
+      use-debounce:
+        specifier: ^10.0.6
+        version: 10.0.6(react@19.2.3)
       uuid:
         specifier: ^13.0.0
         version: 13.0.0
@@ -11659,6 +11662,12 @@ packages:
       }
     engines: { node: '>= 0.4' }
 
+  use-debounce@10.0.6:
+    resolution: {integrity: sha512-C5OtPyhAZgVoteO9heXMTdW7v/IbFI+8bSVKYCJrSmiWWCLsbUxiBSp4t9v0hNBTGY97bT72ydDIDyGSFWfwXg==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      react: '*'
+
   util-deprecate@1.0.2:
     resolution:
       {
@@ -20031,6 +20040,10 @@ snapshots:
     dependencies:
       punycode: 1.4.1
       qs: 6.14.0
+
+  use-debounce@10.0.6(react@19.2.3):
+    dependencies:
+      react: 19.2.3
 
   util-deprecate@1.0.2: {}
 

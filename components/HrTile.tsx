@@ -28,6 +28,14 @@ const overlayStyles = {
   borderRadius: 'inherit', // Match card border radius from StyledCard
 }
 
+const getZoneFromPercent = (percent: number): number => {
+    if (percent < 60) return 1
+    if (percent < 70) return 2
+    if (percent < 80) return 3
+    if (percent < 90) return 4
+    return 5
+}
+
 const HrTile = ({
   name,
   bpm,
@@ -38,7 +46,8 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const zone = getZoneFromPercent(percentMax)
+  const { backgroundColor, textColor } = getHrZoneProps(percentMax, zone, bpm)
 
   const tooltipTitle = isAlerting
     ? alertMessage

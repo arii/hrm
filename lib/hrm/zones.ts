@@ -1,57 +1,28 @@
-// File: lib/hrm/zones.ts
 /**
- * Domain-specific logic for heart rate (HR) calculations and zone management.
- * This module is independent of any specific UI framework or theme.
+ * @file Heart rate zone calculations.
  */
 
-import { HrZoneName } from '../shared/hr-zones'
-
-// --- Constants ---
-// Heart Rate Zone Boundaries (as percentage of Max HR)
-export const HR_ZONE_DEFINITIONS = [
-  { name: HrZoneName.WarmUp, min: 0.5 },
-  { name: HrZoneName.FatBurn, min: 0.6 },
-  { name: HrZoneName.Cardio, min: 0.7 },
-  { name: HrZoneName.Peak, min: 0.85 },
-  { name: HrZoneName.Max, min: 0.95 },
-]
-
-export interface HrZone {
-  zoneName: HrZoneName
-  percentage: number
-  bpm: number
-}
-
 /**
- * Calculates the current heart rate zone, and percentage of max HR.
- * @param {number} currentHr - The current heart rate in beats per minute.
- * @param {number} maxHr - The user's maximum heart rate.
- * @returns {HrZone} An object containing the zone name, percentage of max HR, and current BPM.
+ * Calculates the heart rate zone based on the current heart rate and maximum heart rate.
+ *
+ * @param {number} hr The current heart rate.
+ * @param {number} maxHr The maximum heart rate.
+ * @returns {number} The heart rate zone (1-5).
  */
-export const calculateHrZone = (currentHr: number, maxHr: number): HrZone => {
-  if (!maxHr || !currentHr || currentHr <= 0) {
-    return {
-      zoneName: HrZoneName.NoData,
-      percentage: 0,
-      bpm: 0,
-    }
+export const calculateHrZone = (hr: number, maxHr: number): number => {
+  if (maxHr <= 0) {
+    return 1 // Return lowest zone if maxHr is invalid to prevent division by zero
   }
-
-  const percentageOfMax = Math.min(100, Math.round((currentHr / maxHr) * 100))
-  let calculatedZone = HR_ZONE_DEFINITIONS[0]!
-
-  // Iterate backwards to find the correct zone
-  for (let i = HR_ZONE_DEFINITIONS.length - 1; i >= 0; i--) {
-    const hrZone = HR_ZONE_DEFINITIONS[i]
-    if (hrZone && percentageOfMax / 100 >= hrZone.min) {
-      calculatedZone = hrZone
-      break
-    }
-  }
-
-  return {
-    zoneName: calculatedZone.name,
-    percentage: percentageOfMax,
-    bpm: currentHr,
+  const percentage = (hr / maxHr) * 100
+  if (percentage < 60) {
+    return 1
+  } else if (percentage < 70) {
+    return 2
+  } else if (percentage < 80) {
+    return 3
+  } else if (percentage < 90) {
+    return 4
+  } else {
+    return 5
   }
 }

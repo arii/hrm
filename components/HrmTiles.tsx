@@ -7,6 +7,7 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
+import { calculateHrZone } from '@/lib/hrm/zones'
 
 const HrmTiles = () => {
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -20,9 +21,11 @@ const HrmTiles = () => {
         return !(isZero || isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
+        const zone = calculateHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          zone
         )
 
         // Find the alert specific to this HR Monitor's clientId
