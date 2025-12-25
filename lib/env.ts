@@ -25,6 +25,7 @@ try {
   envSchema.parse(process.env);
 } catch (error) {
   if (error instanceof z.ZodError) {
+    console.error('Zod validation error:', error.flatten())
     const { fieldErrors } = error.flatten();
     const message = Object.entries(fieldErrors)
       .map(([key, value]) => `${key}: ${value}`)
