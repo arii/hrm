@@ -16,7 +16,7 @@ export class AppError extends Error {
 /**
  * Represents an error originating from the Spotify API.
  */
-export class SpotifyApiError extends AppError {
+export class SpotifyAppError extends AppError {
   public statusCode: number
 
   constructor(message: string, statusCode = 500) {

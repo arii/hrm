@@ -5,7 +5,6 @@
  */
 import { TimerData } from '../types/websocket.js'
 import { WorkoutData, WorkoutItem } from '../types/index.js' // Corrected import
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns.js'
 import theme from '../lib/theme.js'
 import { calculateHrZone } from '../lib/hrm/zones.js'
 import { HrZoneName } from '../lib/shared/hr-zones.js'
@@ -173,9 +172,15 @@ export const getTimerProps = (
   }
 }
 
+// Define a standalone type for the column structure
+type WorkoutColumn = {
+  title: string
+  items: { title: string }[]
+}
+
 export const transformWorkoutDataToColumns = (
   data: WorkoutData
-): WorkoutColumnsProps['columns'] => {
+): WorkoutColumn[] => {
   if (!data) return []
 
   return data.map((category: WorkoutItem) => ({
