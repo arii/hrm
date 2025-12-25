@@ -6,7 +6,6 @@ import { jest } from '@jest/globals'
 import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import theme from '@/lib/theme'
 
 // Mock the getHrZoneProps function to control the test cases
 jest.mock('@/utils/visualization', () => ({
