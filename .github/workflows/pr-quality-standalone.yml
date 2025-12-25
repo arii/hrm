@@ -264,7 +264,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: failure()
+        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           # Pass all test outcomes to the script as env vars for easier access
