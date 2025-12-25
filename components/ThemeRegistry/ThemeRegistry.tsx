@@ -3,9 +3,20 @@ import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import { useServerInsertedHTML } from 'next/navigation'
 import * as React from 'react'
+import {
+  createTheme,
+  ThemeProvider as MuiThemeProvider,
+} from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { designTokens } from '@/theme/designTokens'
 
 // This implementation is taken directly from the MUI official docs:
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
+
+// Create a context for the color mode
+export const ColorModeContext = React.createContext({
+  toggleColorMode: () => {},
+})
 
 type ThemeRegistryProps = {
   options: { key: string }
@@ -14,6 +25,18 @@ type ThemeRegistryProps = {
 
 export default function ThemeRegistry(props: ThemeRegistryProps) {
   const { options, children } = props
+  const [mode, setMode] = React.useState<'light' | 'dark'>('dark')
+
+  const colorMode = React.useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
+      },
+    }),
+    []
+  )
+
+  const theme = React.useMemo(() => createTheme(designTokens[mode]), [mode])
 
   const [{ cache, flush }] = React.useState(() => {
     // ... (rest of the cache logic remains the same)
@@ -57,6 +80,14 @@ export default function ThemeRegistry(props: ThemeRegistryProps) {
     )
   })
 
-  // The `ThemeProvider` is now handled by `context/ThemeContext.tsx`
-  return <CacheProvider value={cache}>{children}</CacheProvider>
+  return (
+    <CacheProvider value={cache}>
+      <ColorModeContext.Provider value={colorMode}>
+        <MuiThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </MuiThemeProvider>
+      </ColorModeContext.Provider>
+    </CacheProvider>
+  )
 }

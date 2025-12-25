@@ -15,7 +15,7 @@ import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useContext } from 'react'
-import { ColorModeContext } from '@/theme/theme'
+import { ColorModeContext } from '@/components/ThemeRegistry/ThemeRegistry'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: <DashboardIcon />, href: '/' },

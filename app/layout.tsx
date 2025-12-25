@@ -39,11 +39,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <ThemeProvider>
-          <ThemeRegistry options={{ key: 'mui' }}>
-            <Main>{children}</Main>
-          </ThemeRegistry>
-        </ThemeProvider>
+        <ThemeRegistry options={{ key: 'mui' }}>
+          <Main>{children}</Main>
+        </ThemeRegistry>
       </body>
     </html>
   )
