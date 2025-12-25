@@ -6,9 +6,9 @@
 import { TimerData } from '../types/websocket'
 import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
 import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
-import theme from '../lib/theme'
 import { calculateHrZone } from '../lib/hrm/zones'
 import { HrZoneName } from '../lib/shared/hr-zones'
+import { Theme } from '@mui/material/styles'
 
 // Define types for MUI color props
 type MuiColor =
@@ -27,7 +27,9 @@ type HrZoneUi = {
   bgColor: string
 }
 
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+export const getHrZoneUiPropsMap = (
+  theme: Theme
+): Record<HrZoneName, HrZoneUi> => ({
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -53,7 +55,6 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     progressColor: '#9333ea',
     bgColor: '#9C27B0',
   },
-  // Add placeholder properties for non-displayable zones
   [HrZoneName.NoData]: {
     color: 'text-gray-400',
     progressColor: '#9ca3af',
@@ -64,17 +65,16 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
   },
-}
+})
 
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
+export const getZoneColors = (theme: Theme) => ({
   grey: '#9E9E9E', // Below zone 1
   blue: theme.palette.secondary.main, // Zone 1: Warm-up
   green: theme.palette.success.main, // Zone 2: Fat Burn
   yellow: theme.palette.warning.main, // Zone 3: Cardio
   red: theme.palette.primary.main, // Zone 4: Peak
   purple: '#9C27B0', // Zone 5: Max
-}
+})
 
 export interface HrZoneProps {
   zone: string
@@ -88,22 +88,18 @@ export interface HrZoneProps {
 
 /**
  * Calculates the current zone, percentage of max HR, and returns MUI-ready props.
- * This function now composes the core business logic from `lib/hrm` with
- * presentation-specific properties defined in this file.
  */
 export const getHrZoneProps = (
   currentHr: number,
-  maxHr: number
+  maxHr: number,
+  theme: Theme
 ): HrZoneProps => {
-  // 1. Get the core HR data from the domain module
   const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
+  const hrZoneUiPropsMap = getHrZoneUiPropsMap(theme)
+  const zoneUiProps = hrZoneUiPropsMap[zoneName]
 
-  // 2. Look up the UI properties from the map
-  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
-
-  // 3. Combine domain data with UI properties
   return {
-    zone: zoneName, // The enum member is a string at runtime
+    zone: zoneName,
     percentage: percentage,
     color: zoneUiProps.color,
     progressColor: zoneUiProps.progressColor,
@@ -130,35 +126,35 @@ export const getTimerProps = (
     case 'PREPARE':
       return {
         text: 'GET READY',
-        color: 'warning', // MUI color for yellow/warning
+        color: 'warning',
         backgroundColor: 'bg-yellow-500/10',
         progressColor: '#f59e0b',
       }
     case 'WORK':
       return {
         text: 'WORK',
-        color: 'error', // MUI color for red
+        color: 'error',
         backgroundColor: 'bg-red-500/10',
         progressColor: '#ef4444',
       }
     case 'REST':
       return {
         text: 'REST',
-        color: 'success', // MUI color for green
+        color: 'success',
         backgroundColor: 'bg-green-500/10',
         progressColor: '#22c55e',
       }
     case 'RUNNING':
       return {
         text: 'RUNNING',
-        color: 'primary', // MUI color for blue/primary
+        color: 'primary',
         backgroundColor: 'bg-blue-500/10',
         progressColor: '#2563eb',
       }
     case 'COOLDOWN':
       return {
         text: 'COOLDOWN',
-        color: 'info', // MUI color for blue/info
+        color: 'info',
         backgroundColor: 'bg-blue-500/10',
         progressColor: '#3b82f6',
       }
@@ -166,7 +162,7 @@ export const getTimerProps = (
     default:
       return {
         text: 'READY',
-        color: 'secondary', // MUI color for gray/secondary
+        color: 'secondary',
         backgroundColor: 'bg-gray-200',
         progressColor: '#6b7280',
       }

@@ -7,8 +7,10 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useTheme } from '@mui/material/styles'
 
 export default function ConnectPage() {
+  const theme = useTheme()
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
@@ -43,7 +45,7 @@ export default function ConnectPage() {
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
+  const hrZoneProps = getHrZoneProps(currentHR, maxHr, theme)
 
   const {
     workoutDuration,

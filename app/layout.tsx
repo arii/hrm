@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import Main from './main'
+import AppWrapper from './AppWrapper'
 import './globals.css'
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -27,7 +28,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preload the primary display font to prevent FOUT. */}
         <link
           rel="preload"
           href="/assets/digital-7-mono.ttf"
@@ -37,7 +37,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <Main>{children}</Main>
+        <AppWrapper>{children}</AppWrapper>
       </body>
     </html>
   )
