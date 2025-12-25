@@ -22,7 +22,7 @@ export interface DualModeTimerState {
   timeRemaining: number
   workDuration: number
   restDuration: number
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN' | undefined
   soundEventId: number
 
   // Internal state for timer logic

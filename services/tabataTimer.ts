@@ -64,7 +64,10 @@ class TabataTimer {
    * Configures the durations for the TABATA mode.
    * @param {object} config The new configuration.
    */
-  public setConfig(config: { workDuration: number; restDuration: number }): void {
+  public setConfig(config: {
+    workDuration: number
+    restDuration: number
+  }): void {
     this.commands.setConfig(config)
   }
 

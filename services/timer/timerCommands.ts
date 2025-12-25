@@ -47,7 +47,10 @@ export class TimerCommands {
     }
 
     this.state._timerInterval = setInterval(this.updateTimer, 1000)
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
@@ -56,7 +59,10 @@ export class TimerCommands {
   public pause(): void {
     if (!this.state.isRunning || !this.state._startTime) return
 
-    if (this.state.mode === 'STOPWATCH' && this.state.currentPhase === 'RUNNING') {
+    if (
+      this.state.mode === 'STOPWATCH' &&
+      this.state.currentPhase === 'RUNNING'
+    ) {
       this.state._pausedElapsedTime = this.state.timeElapsed
     }
 
@@ -65,7 +71,10 @@ export class TimerCommands {
     this.state._timerInterval = null
     this.state._startTime = null
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
@@ -77,7 +86,8 @@ export class TimerCommands {
     this.state.isRunning = false
     this.state.currentPhase = 'IDLE'
     this.state.timeElapsed = 0
-    this.state.timeRemaining = this.state.mode === 'TABATA' ? this.state.workDuration : 0
+    this.state.timeRemaining =
+      this.state.mode === 'TABATA' ? this.state.workDuration : 0
     this.state.soundToPlay = undefined
 
     this.resetCountdownMarker()
@@ -85,7 +95,10 @@ export class TimerCommands {
     this.state._startTime = null
     this.state._timerInterval = null
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
@@ -101,14 +114,20 @@ export class TimerCommands {
     this.state.timeElapsed = 0
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
    * Configures the durations for the TABATA mode.
    * @param {object} config The new configuration.
    */
-  public setConfig(config: { workDuration: number; restDuration: number }): void {
+  public setConfig(config: {
+    workDuration: number
+    restDuration: number
+  }): void {
     const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
     const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
 
@@ -119,7 +138,10 @@ export class TimerCommands {
       this.state.timeRemaining = sanitizedWorkDuration
     }
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   // --- Internal Logic Methods ---
@@ -130,8 +152,13 @@ export class TimerCommands {
   private updateTimer = (): void => {
     if (!this.state.isRunning || !this.state._startTime) return
 
-    if (this.state.mode === 'STOPWATCH' && this.state.currentPhase === 'RUNNING') {
-      const currentDelta = Math.floor((Date.now() - this.state._startTime) / 1000)
+    if (
+      this.state.mode === 'STOPWATCH' &&
+      this.state.currentPhase === 'RUNNING'
+    ) {
+      const currentDelta = Math.floor(
+        (Date.now() - this.state._startTime) / 1000
+      )
       this.state.timeElapsed = this.state._pausedElapsedTime + currentDelta
     }
 
@@ -146,7 +173,10 @@ export class TimerCommands {
       }
     }
 
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
@@ -193,7 +223,10 @@ export class TimerCommands {
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN'): void {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
-    this.broadcastUpdate({ type: 'TIMER_UPDATE', payload: this.queries.getState() })
+    this.broadcastUpdate({
+      type: 'TIMER_UPDATE',
+      payload: this.queries.getState(),
+    })
   }
 
   /**
@@ -209,7 +242,12 @@ export class TimerCommands {
   private handleCountdownCue(): void {
     const phase = this.state.currentPhase
     const remaining = this.state.timeRemaining
-    if (phase === 'IDLE' || phase === 'RUNNING' || phase === 'COOLDOWN' || remaining <= 0) {
+    if (
+      phase === 'IDLE' ||
+      phase === 'RUNNING' ||
+      phase === 'COOLDOWN' ||
+      remaining <= 0
+    ) {
       return
     }
 

@@ -5,7 +5,6 @@
 
 import { jest } from '@jest/globals'
 import TabataTimer from '../../../services/tabataTimer'
-import { TimerData } from '../../../types/core'
 
 // Mock the broadcast function
 const broadcastUpdate = jest.fn()
@@ -170,25 +169,31 @@ describe('TabataTimer (Refactored)', () => {
 
   // --- Sound Tests ---
   it('should queue sounds at appropriate times', () => {
-      timer.setConfig({ workDuration: 3, restDuration: 3})
-      timer.handleCommand('START')
+    timer.setConfig({ workDuration: 3, restDuration: 3 })
+    timer.handleCommand('START')
 
-      // Countdown sounds
-      jest.advanceTimersByTime(2000) // 3s left in PREPARE
-      expect(broadcastUpdate).toHaveBeenCalledWith(expect.objectContaining({
-          payload: expect.objectContaining({ soundToPlay: 'COUNTDOWN' })
-      }))
+    // Countdown sounds
+    jest.advanceTimersByTime(2000) // 3s left in PREPARE
+    expect(broadcastUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ soundToPlay: 'COUNTDOWN' }),
+      })
+    )
 
-      jest.advanceTimersByTime(3000) // End of PREPARE
-      expect(broadcastUpdate).toHaveBeenCalledWith(expect.objectContaining({
-          payload: expect.objectContaining({ soundToPlay: 'WORK' })
-      }))
+    jest.advanceTimersByTime(3000) // End of PREPARE
+    expect(broadcastUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ soundToPlay: 'WORK' }),
+      })
+    )
 
-      jest.advanceTimersByTime(3000) // End of WORK
-      expect(broadcastUpdate).toHaveBeenCalledWith(expect.objectContaining({
-          payload: expect.objectContaining({ soundToPlay: 'REST' })
-      }))
-  });
+    jest.advanceTimersByTime(3000) // End of WORK
+    expect(broadcastUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ soundToPlay: 'REST' }),
+      })
+    )
+  })
 
   // Test dispose method
   it('should clear the interval on dispose', () => {
