@@ -7,6 +7,7 @@ import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
 import logger from '@/utils/logger'
+import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger
 jest.mock('@/utils/logger', () => ({
@@ -36,19 +37,22 @@ jest.mock('../../services/spotifyTokenManager', () => {
   }
 })
 
-const mockPlayer: { [key: string]: jest.Mock } = {
-  getCurrentlyPlayingTrack: jest
-    .fn()
-    .mockImplementation(() => Promise.resolve(null)),
-  startResumePlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  pausePlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  skipToNext: jest.fn().mockImplementation(() => Promise.resolve()),
-  skipToPrevious: jest.fn().mockImplementation(() => Promise.resolve()),
-  transferPlayback: jest.fn().mockImplementation(() => Promise.resolve()),
-  setPlaybackVolume: jest.fn().mockImplementation(() => Promise.resolve()),
-  getAvailableDevices: jest
-    .fn()
-    .mockImplementation(() => Promise.resolve({ devices: [] })),
+// Create a fully typed mock for the player. This ensures our mock conforms to the SDK's interface.
+const mockPlayer: jest.Mocked<SpotifyApi['player']> = {
+  addItemToPlaybackQueue: jest.fn(),
+  getAvailableDevices: jest.fn(),
+  getCurrentlyPlayingTrack: jest.fn(),
+  getPlaybackState: jest.fn(),
+  getRecentlyPlayedTracks: jest.fn(),
+  pausePlayback: jest.fn(),
+  seekToPosition: jest.fn(),
+  setPlaybackVolume: jest.fn(),
+  setRepeatMode: jest.fn(),
+  skipToNext: jest.fn(),
+  skipToPrevious: jest.fn(),
+  startResumePlayback: jest.fn(),
+  togglePlaybackShuffle: jest.fn(),
+  transferPlayback: jest.fn(),
 }
 
 jest.mock('@spotify/web-api-ts-sdk', () => ({
@@ -97,18 +101,20 @@ describe('SpotifyPolling Service', () => {
     spotifyService = await SpotifyPolling.create(broadcastMock)
     // Stop polling after service creation to avoid side effects in tests
 
-    if ((spotifyService as unknown)['pollInterval']) {
-      clearInterval(
-        (spotifyService as unknown)['pollInterval'] as NodeJS.Timeout
-      )
-      ;(spotifyService as unknown)['pollInterval'] = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((spotifyService as any).pollInterval) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clearInterval((spotifyService as any).pollInterval)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(spotifyService as any).pollInterval = null
     }
 
-    if ((spotifyService as unknown)['tokenRefreshInterval']) {
-      clearInterval(
-        (spotifyService as unknown)['tokenRefreshInterval'] as NodeJS.Timeout
-      )
-      ;(spotifyService as unknown)['tokenRefreshInterval'] = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((spotifyService as any).tokenRefreshInterval) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clearInterval((spotifyService as any).tokenRefreshInterval)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(spotifyService as any).tokenRefreshInterval = null
     }
   })
 
@@ -287,12 +293,10 @@ describe('SpotifyPolling Service', () => {
 
     it('should not execute commands without access token', async () => {
       // Override the mock to return null token for this test to ensure SDK is not initialized
-      ;(SpotifyTokenManager as unknown as jest.Mock).mockImplementationOnce(
-        () => ({
-          getValidAccessToken: jest.fn().mockResolvedValue(null),
-          getSdkAccessToken: jest.fn().mockReturnValue(null),
-        })
-      )
+      ;(SpotifyTokenManager as jest.Mock).mockImplementationOnce(() => ({
+        getValidAccessToken: jest.fn().mockResolvedValue(null),
+        getSdkAccessToken: jest.fn().mockReturnValue(null),
+      }))
 
       const newService = await SpotifyPolling.create(broadcastMock)
       await newService.handleCommand('PLAY', {})
