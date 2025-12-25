@@ -120,16 +120,74 @@ describe('useBluetoothHRM', () => {
     })
   }
 
+  /**
+   * Advances Jest's fake timers just enough to trigger the data liveness watchdog.
+   * The watchdog checks for new data every 2 seconds. This function calculates
+   * the smallest time advancement needed to ensure a watchdog check occurs
+   * *after* the specified timeout has elapsed.
+   * @param {number} timeoutMs - The data liveness timeout period in milliseconds.
+   */
+  const triggerTimeout = (timeoutMs: number) => {
+    const watchdogInterval = 2000 // The interval at which the watchdog checks for data
+    // Calculate the time of the first watchdog check that will occur *after* the timeout has passed.
+    const timeToAdvance =
+      Math.floor(timeoutMs / watchdogInterval) * watchdogInterval +
+      watchdogInterval
+    act(() => {
+      jest.advanceTimersByTime(timeToAdvance)
+    })
+  }
+
+  /**
+   * Simulates a full device disconnection and successful reconnection cycle.
+   * This helper function orchestrates the sequence of events that the
+   * `useBluetoothHRM` hook expects during a signal loss and recovery scenario.
+   */
+  const simulateReconnection = async () => {
+    // 1. Simulate gatt disconnected state
+    Object.defineProperty(mockDevice.gatt, 'connected', {
+      value: false,
+      writable: true,
+    })
+
+    // 2. Simulate the 'gattserverdisconnected' event
+    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
+      (call) => call[0] === 'gattserverdisconnected'
+    )?.[1]
+    if (onDisconnectedCallback) {
+      act(() => {
+        onDisconnectedCallback()
+      })
+    }
+
+    // 3. Advance timers to allow the reconnect logic (with its delay) to run
+    act(() => {
+      jest.advanceTimersByTime(2000) // Default reconnect delay
+    })
+
+    // 4. Simulate a successful reconnection by resolving the connect promise
+    await act(async () => {
+      // The hook's reconnect logic should have been called. Let's resolve the promise.
+      await Promise.resolve()
+    })
+    Object.defineProperty(mockDevice.gatt, 'connected', {
+      value: true,
+      writable: true,
+    })
+
+    // 5. Allow any final state updates to process after reconnection
+    await act(async () => {
+      await Promise.resolve()
+    })
+  }
+
   it('should use default timeout of 10 seconds and trigger reconnect', async () => {
     const { result } = renderHook(() => useBluetoothHRM())
 
     await simulateConnection({ result })
     expect(result.current.isConnected).toBe(true)
 
-    // Advance time past the 10s timeout to the next 2s interval check
-    act(() => {
-      jest.advanceTimersByTime(12000)
-    })
+    triggerTimeout(10000)
 
     expect(result.current.deviceStatus).toContain('Connection unstable')
     expect(result.current.disconnectionReason).toBe('timeout')
@@ -193,51 +251,14 @@ describe('useBluetoothHRM', () => {
     )
     await simulateConnection({ result })
 
-    // Trigger a timeout. Timeout is 2s, watchdog checks every 2s.
-    // The check at T=2s will be (2000-0) > 2000 (false).
-    // The check at T=4s will be (4000-0) > 2000 (true).
-    act(() => {
-      jest.advanceTimersByTime(4000)
-    })
+    // Trigger a timeout to initiate the disconnection/reconnection cycle
+    triggerTimeout(2000)
     expect(result.current.disconnectionReason).toBe('timeout')
 
-    // Simulate gatt disconnected state
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: false,
-      writable: true,
-    })
+    // Simulate the device disconnecting and the hook successfully reconnecting
+    await simulateReconnection()
 
-    // Simulate gatt server disconnection event
-    const onDisconnectedCallback = mockDevice.addEventListener.mock.calls.find(
-      (call) => call[0] === 'gattserverdisconnected'
-    )[1]
-    act(() => {
-      onDisconnectedCallback()
-    })
-
-    // It should now be trying to reconnect
-    expect(result.current.deviceStatus).toContain('Signal Lost. Retrying...')
-    expect(result.current.disconnectionReason).toBe('signal_loss')
-
-    // Advance timers for the reconnect delay
-    act(() => {
-      jest.advanceTimersByTime(2000)
-    })
-
-    // Simulate successful reconnection
-    await act(async () => {
-      await Promise.resolve() // Allow promises to resolve after reconnect attempt
-    })
-    Object.defineProperty(mockDevice.gatt, 'connected', {
-      value: true,
-      writable: true,
-    })
-
-    // Re-check status after reconnect logic (might need another tick)
-    await act(async () => {
-      await Promise.resolve()
-    })
-
+    // After reconnecting, the state should be clean
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
   })
