@@ -79,7 +79,7 @@ describe('POST /api/internal/token-delivery', () => {
     const response = await POST(req)
     expect(response.status).toBe(200)
     const body = await response.json()
-    expect(body).toEqual({ ok: true, message: 'Token delivered successfully.' })
+    expect(body).toEqual({ ok: true, message: 'Token delivery ack.' })
   })
 
   it('should return 500 if an unexpected error occurs', async () => {
