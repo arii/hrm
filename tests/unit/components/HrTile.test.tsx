@@ -23,6 +23,12 @@ const mockTheme = {
     primary: { main: '#1976d2' },
     getContrastText: () => '#fff',
   },
+  transitions: {
+    create: () => 'none',
+    duration: {
+      short: 250,
+    },
+  },
 }
 
 describe('HrTile', () => {
