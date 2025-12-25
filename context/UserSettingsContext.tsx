@@ -1,10 +1,13 @@
 // context/UserSettingsContext.tsx
 'use client'
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useEffect } from 'react'
+import { useDebounce } from '@/hooks/useDebounce'
 import {
   useUserPreferences,
   UserPreferences,
 } from '../hooks/useUserPreferences'
+import { useWebSocket } from './WebSocketContext'
+import { SetUnitSystemMessage } from '@/types/websocket'
 
 type UserSettingsContextType = readonly [
   UserPreferences,
@@ -21,6 +24,19 @@ export const UserSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const userPreferences = useUserPreferences()
+  const { sendData, connectionStatus } = useWebSocket()
+  const [prefs] = userPreferences
+  const debouncedUnitSystem = useDebounce(prefs.unitSystem, 500)
+
+  useEffect(() => {
+    if (connectionStatus === 'Connected') {
+      const message: SetUnitSystemMessage = {
+        type: 'SET_UNIT_SYSTEM',
+        unitSystem: debouncedUnitSystem,
+      }
+      sendData(message)
+    }
+  }, [debouncedUnitSystem, connectionStatus, sendData])
 
   return (
     <UserSettingsContext.Provider value={userPreferences}>

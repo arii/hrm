@@ -27,6 +27,8 @@ const validate = (value: string, min: number, max: number, name: string) => {
   return null
 }
 
+import { UnitSystem } from '@/utils/units'
+
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
@@ -38,6 +40,7 @@ interface ConnectViewProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  unitSystem: UnitSystem
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -67,6 +70,7 @@ export default function ConnectView({
   setUserHeight,
   userWeight,
   setUserWeight,
+  unitSystem,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -182,8 +186,8 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
+              label={`Your Weight (${unitSystem === 'imperial' ? 'lbs' : 'kg'})`}
+              placeholder={unitSystem === 'imperial' ? 'e.g., 165' : 'e.g., 75'}
               type="number"
               value={userWeight}
               onChange={(e) => {
@@ -192,11 +196,24 @@ export default function ConnectView({
                 }
               }}
               onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
+                const min = unitSystem === 'imperial' ? 66 : 30
+                const max = unitSystem === 'imperial' ? 440 : 200
+                setWeightError(
+                  validate(
+                    e.target.value,
+                    min,
+                    max,
+                    `weight in ${unitSystem === 'imperial' ? 'lbs' : 'kg'}`
+                  )
+                )
               }}
               error={!!weightError}
               helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
+              inputProps={{
+                min: unitSystem === 'imperial' ? 66 : 30,
+                max: unitSystem === 'imperial' ? 440 : 200,
+                'aria-invalid': !!weightError,
+              }}
             />
           </Stack>
         ) : (

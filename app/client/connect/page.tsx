@@ -1,18 +1,17 @@
 'use client'
 
-import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useUserSettings } from '@/context/UserSettingsContext'
+import { DEFAULT_USER_AGE, DEFAULT_USER_NAME } from '@/utils/constants'
 
 export default function ConnectPage() {
-  const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
-  const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
-  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
+  const [userSettings, setUserSettings] = useUserSettings()
+  const { userName, userAge, userWeight } = userSettings
 
   const {
     connectAndStream,
@@ -35,14 +34,17 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    connectAndStream(
+      userName ?? DEFAULT_USER_NAME,
+      userAge ?? DEFAULT_USER_AGE,
+      userWeight ?? undefined
+    )
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
+  const maxHr = userAge ? 220 - userAge : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
@@ -62,14 +64,29 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={caloriesBurned}
-      userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
-      userHeight={userHeight}
-      setUserHeight={setUserHeight}
-      userWeight={userWeight}
-      setUserWeight={setUserWeight}
+      userName={userName ?? DEFAULT_USER_NAME}
+      setUserName={(name) =>
+        setUserSettings((prev) => ({ ...prev, userName: name }))
+      }
+      userAge={(userAge ?? '').toString()}
+      setUserAge={(age) => {
+        const numAge = age === '' ? null : parseInt(age, 10)
+        setUserSettings((prev) => ({
+          ...prev,
+          userAge: isNaN(numAge as number) ? null : numAge,
+        }))
+      }}
+      userHeight={''} // Placeholder, not part of this task
+      setUserHeight={() => {}} // Placeholder, not part of this task
+      userWeight={(userWeight ?? '').toString()}
+      setUserWeight={(weight) => {
+        const numWeight = weight === '' ? null : parseInt(weight, 10)
+        setUserSettings((prev) => ({
+          ...prev,
+          userWeight: isNaN(numWeight as number) ? null : numWeight,
+        }))
+      }}
+      unitSystem={userSettings.unitSystem}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}

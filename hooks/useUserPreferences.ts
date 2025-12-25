@@ -1,4 +1,5 @@
 // hooks/useUserPreferences.ts
+import { UnitSystem } from '@/utils/units'
 import useLocalStorage from './useLocalStorage'
 
 export interface UserPreferences {
@@ -9,7 +10,11 @@ export interface UserPreferences {
   favoritePlaylist: string | null
   userName: string | null
   userAge: number | null
+  unitSystem: UnitSystem
+  userWeight: number | null
 }
+
+import { DEFAULT_UNIT_SYSTEM } from '@/utils/constants'
 
 export const useUserPreferences = () => {
   const [prefs, setPrefs] = useLocalStorage<UserPreferences>('user-prefs', {
@@ -20,6 +25,8 @@ export const useUserPreferences = () => {
     favoritePlaylist: null,
     userName: null,
     userAge: null,
+    unitSystem: DEFAULT_UNIT_SYSTEM,
+    userWeight: 165,
   })
 
   return [prefs, setPrefs] as const
