@@ -1,14 +1,14 @@
-'use client';
-import { useAudioContext } from '@/context/AudioContext';
-import Stack from '@mui/material/Stack';
-import IconButton from '@mui/material/IconButton';
-import Slider from '@mui/material/Slider';
-import VolumeDown from '@mui/icons-material/VolumeDown';
-import VolumeUp from '@mui/icons-material/VolumeUp';
-import VolumeOff from '@mui/icons-material/VolumeOff';
+'use client'
+import { useAudioContext } from '@/context/AudioContext'
+import Stack from '@mui/material/Stack'
+import IconButton from '@mui/material/IconButton'
+import Slider from '@mui/material/Slider'
+import VolumeDown from '@mui/icons-material/VolumeDown'
+import VolumeUp from '@mui/icons-material/VolumeUp'
+import VolumeOff from '@mui/icons-material/VolumeOff'
 
 export const TimerVolumeControl = ({ textColor, thumbColor }) => {
-  const { volume, setVolume, muted, toggleMute } = useAudioContext();
+  const { volume, setVolume, muted, toggleMute } = useAudioContext()
 
   return (
     <Stack
@@ -39,5 +39,5 @@ export const TimerVolumeControl = ({ textColor, thumbColor }) => {
       />
       <VolumeUp />
     </Stack>
-  );
-};
+  )
+}

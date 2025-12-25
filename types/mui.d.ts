@@ -1,16 +1,16 @@
-import '@mui/material/styles';
+import '@mui/material/styles'
 
 declare module '@mui/material/styles' {
   interface Palette {
-    overlay: string;
+    overlay: string
   }
   interface PaletteOptions {
-    overlay?: string;
+    overlay?: string
   }
   interface TypeBackground {
-    overlay?: string;
+    overlay?: string
   }
   interface ZIndex {
-    loadingIndicator: number;
+    loadingIndicator: number
   }
 }

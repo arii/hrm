@@ -1,15 +1,15 @@
 // File: components/TimerDisplay.tsx
-'use client';
-import { useWebSocket } from '@/context/WebSocketContext';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
-import { memo } from 'react';
-import { TimerConnectionStatus } from './TimerConnectionStatus';
-import { TimerVolumeControl } from './TimerVolumeControl';
+'use client'
+import { useWebSocket } from '@/context/WebSocketContext'
+import Box from '@mui/material/Box'
+import Card from '@mui/material/Card'
+import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
+import { memo } from 'react'
+import { TimerConnectionStatus } from './TimerConnectionStatus'
+import { TimerVolumeControl } from './TimerVolumeControl'
 
-const pad = (n: number) => String(n).padStart(2, '0');
+const pad = (n: number) => String(n).padStart(2, '0')
 
 const getPhaseStyle = (phase, mode, theme) => {
   switch (phase) {
@@ -17,61 +17,61 @@ const getPhaseStyle = (phase, mode, theme) => {
       return {
         color: theme.palette.warning.main,
         label: 'GET READY',
-      };
+      }
     case 'WORK':
       return {
         color: theme.palette.error.main,
         label: 'WORK',
-      };
+      }
     case 'REST':
       return {
         color: theme.palette.success.main,
         label: 'REST',
-      };
+      }
     case 'COOLDOWN':
       return {
         color: theme.palette.info.main,
         label: 'COOLDOWN',
-      };
+      }
     case 'RUNNING':
       if (mode === 'STOPWATCH') {
         return {
           color: theme.palette.info.main,
           label: 'RUNNING',
-        };
+        }
       }
       return {
         color: theme.palette.grey[500],
         label: 'READY',
-      };
+      }
     default:
       return {
         color: theme.palette.grey[500],
         label: 'READY',
-      };
+      }
   }
-};
+}
 
 const formatDisplayTime = (phase, mode, timeRemaining, timeElapsed) => {
   if (phase === 'PREPARE') {
-    return String(timeRemaining).padStart(2, '0');
+    return String(timeRemaining).padStart(2, '0')
   }
   if (mode === 'STOPWATCH' && phase === 'RUNNING') {
-    const mm = Math.floor(timeElapsed / 60);
-    const ss = timeElapsed % 60;
-    return `${pad(mm)}:${pad(ss)}`;
+    const mm = Math.floor(timeElapsed / 60)
+    const ss = timeElapsed % 60
+    return `${pad(mm)}:${pad(ss)}`
   }
   if (mode === 'TABATA') {
-    const mm = Math.floor(timeRemaining / 60);
-    const ss = timeRemaining % 60;
-    return `${pad(mm)}:${pad(ss)}`;
+    const mm = Math.floor(timeRemaining / 60)
+    const ss = timeRemaining % 60
+    return `${pad(mm)}:${pad(ss)}`
   }
-  return '00:00';
-};
+  return '00:00'
+}
 
 const TimerDisplay = () => {
-  const theme = useTheme();
-  const { timerData } = useWebSocket();
+  const theme = useTheme()
+  const { timerData } = useWebSocket()
   const {
     currentPhase,
     timeRemaining,
@@ -79,11 +79,16 @@ const TimerDisplay = () => {
     mode,
     workDuration = 20,
     restDuration = 10,
-  } = timerData;
+  } = timerData
 
-  const { color, label } = getPhaseStyle(currentPhase, mode, theme);
-  const displayTime = formatDisplayTime(currentPhase, mode, timeRemaining, timeElapsed);
-  const contrastTextColor = theme.palette.getContrastText(color);
+  const { color, label } = getPhaseStyle(currentPhase, mode, theme)
+  const displayTime = formatDisplayTime(
+    currentPhase,
+    mode,
+    timeRemaining,
+    timeElapsed
+  )
+  const contrastTextColor = theme.palette.getContrastText(color)
 
   return (
     <Card
@@ -127,7 +132,14 @@ const TimerDisplay = () => {
       </Box>
 
       {/* Center Column: Timer and Controls */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
           <Typography
             data-testid="timer-phase"
@@ -158,7 +170,10 @@ const TimerDisplay = () => {
         >
           {displayTime}
         </Typography>
-        <TimerVolumeControl textColor={contrastTextColor} thumbColor={contrastTextColor} />
+        <TimerVolumeControl
+          textColor={contrastTextColor}
+          thumbColor={contrastTextColor}
+        />
       </Box>
 
       {/* Right Column: Tabata Durations */}
@@ -179,7 +194,7 @@ const TimerDisplay = () => {
         )}
       </Box>
     </Card>
-  );
-};
+  )
+}
 
-export default memo(TimerDisplay);
+export default memo(TimerDisplay)

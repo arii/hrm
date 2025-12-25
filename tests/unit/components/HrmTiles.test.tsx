@@ -5,6 +5,7 @@ import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
+import { useTheme } from '@mui/material/styles'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
@@ -17,12 +18,26 @@ jest.mock('@/components/HrTile', () => ({
     </div>
   ),
 }))
+jest.mock('@mui/material/styles', () => ({
+  ...jest.requireActual('@mui/material/styles'),
+  useTheme: jest.fn(),
+}))
 
 const mockedUseWebSocket = useWebSocket as jest.Mock
+const mockedUseTheme = useTheme as jest.Mock
 
 describe('HrmTiles', () => {
   beforeEach(() => {
     jest.resetAllMocks()
+    mockedUseTheme.mockReturnValue({
+      palette: {
+        secondary: { main: '#dc004e' },
+        success: { main: '#388e3c' },
+        warning: { dark: '#f57c00' },
+        primary: { main: '#1976d2' },
+        getContrastText: () => '#fff',
+      },
+    })
   })
 
   it('should render HRM data correctly for a user', () => {

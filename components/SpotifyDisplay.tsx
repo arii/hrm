@@ -14,11 +14,11 @@ import { SpotifyCommandMessage } from '@/types/websocket';
 import AuthButton from './AuthButton';
 import VolumeSlider from './Spotify/VolumeSlider';
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const SpotifyDisplay = () => {
   const theme = useTheme();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { spotifyData, sendData } = useWebSocket();
   const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -29,7 +29,7 @@ const SpotifyDisplay = () => {
 
   const sendSpotifyCommand = (
     command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK' | 'SET_VOLUME',
-    payload?: any
+    payload?: Record<string, unknown>
   ) => {
     const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',

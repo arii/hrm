@@ -1,5 +1,5 @@
-import { PaletteMode } from '@mui/material';
-import { red } from '@mui/material/colors';
+import { PaletteMode } from '@mui/material'
+import { red } from '@mui/material/colors'
 
 export const getDesignTokens = (mode: PaletteMode) => ({
   palette: {
@@ -38,16 +38,16 @@ export const getDesignTokens = (mode: PaletteMode) => ({
           },
         }),
     warning: {
-        main: '#f57c00',
+      main: '#f57c00',
     },
     info: {
-        main: '#0288d1',
+      main: '#0288d1',
     },
     success: {
-        main: '#388e3c',
+      main: '#388e3c',
     },
   },
   zIndex: {
     loadingIndicator: 1500,
-  }
-});
+  },
+})

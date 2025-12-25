@@ -8,7 +8,7 @@ import type { EmotionCache, Options as EmotionCacheOptions } from '@emotion/cach
 export type NextAppDirEmotionCacheProviderProps = {
   options: Omit<EmotionCacheOptions, 'insertionPoint'>;
   CacheProvider?: (props: {
-    value: Emotion-Cache;
+    value: EmotionCache;
     children: React.ReactNode;
   }) => React.JSX.Element | null;
   children: React.ReactNode;

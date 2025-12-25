@@ -16,7 +16,7 @@ import HrTile from '@/components/HrTile'
 import { useTheme } from '@mui/material/styles'
 
 const HrmConnectionPanel = () => {
-  const theme = useTheme();
+  const theme = useTheme()
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()

@@ -3,12 +3,12 @@
  * Utility functions to map numerical and state data to MUI aesthetic properties.
  * This ensures clean separation of business logic from React component rendering.
  */
-import { TimerData } from '../types/websocket';
-import { WorkoutData, WorkoutItem } from '../types/index'; // Corrected import
-import { WorkoutColumnsProps } from '@/components/WorkoutColumns';
-import { calculateHrZone } from '../lib/hrm/zones';
-import { HrZoneName } from '../lib/shared/hr-zones';
-import { Theme } from '@mui/material/styles';
+import { TimerData } from '../types/websocket'
+import { WorkoutData, WorkoutItem } from '../types/index' // Corrected import
+import { WorkoutColumnsProps } from '@/components/WorkoutColumns'
+import { calculateHrZone } from '../lib/hrm/zones'
+import { HrZoneName } from '../lib/shared/hr-zones'
+import { Theme } from '@mui/material/styles'
 
 // Define types for MUI color props
 type MuiColor =
@@ -17,17 +17,19 @@ type MuiColor =
   | 'error'
   | 'warning'
   | 'info'
-  | 'success';
+  | 'success'
 
 // --- Constants ---
 // UI properties for each heart rate zone, mapped for efficient O(1) lookup.
 type HrZoneUi = {
-  color: string;
-  progressColor: string;
-  bgColor: string;
-};
+  color: string
+  progressColor: string
+  bgColor: string
+}
 
-export const getHrZoneUiPropsMap = (theme: Theme): Record<HrZoneName, HrZoneUi> => ({
+export const getHrZoneUiPropsMap = (
+  theme: Theme
+): Record<HrZoneName, HrZoneUi> => ({
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -63,7 +65,7 @@ export const getHrZoneUiPropsMap = (theme: Theme): Record<HrZoneName, HrZoneUi> 
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
   },
-});
+})
 
 export const getZoneColors = (theme: Theme) => ({
   grey: '#9E9E9E', // Below zone 1
@@ -72,16 +74,16 @@ export const getZoneColors = (theme: Theme) => ({
   yellow: theme.palette.warning.main, // Zone 3: Cardio
   red: theme.palette.primary.main, // Zone 4: Peak
   purple: '#9C27B0', // Zone 5: Max
-});
+})
 
 export interface HrZoneProps {
-  zone: string;
-  percentage: number;
-  color: string; // Tailwind text color class
-  progressColor: string; // Hex color for MUI components
-  backgroundColor: string; // Hex color for background
-  textColor: string;
-  bpm: number;
+  zone: string
+  percentage: number
+  color: string // Tailwind text color class
+  progressColor: string // Hex color for MUI components
+  backgroundColor: string // Hex color for background
+  textColor: string
+  bpm: number
 }
 
 /**
@@ -92,9 +94,9 @@ export const getHrZoneProps = (
   maxHr: number,
   theme: Theme
 ): HrZoneProps => {
-  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr);
-  const hrZoneUiPropsMap = getHrZoneUiPropsMap(theme);
-  const zoneUiProps = hrZoneUiPropsMap[zoneName];
+  const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
+  const hrZoneUiPropsMap = getHrZoneUiPropsMap(theme)
+  const zoneUiProps = hrZoneUiPropsMap[zoneName]
 
   return {
     zone: zoneName,
@@ -104,14 +106,14 @@ export const getHrZoneProps = (
     backgroundColor: zoneUiProps.bgColor,
     textColor: theme.palette.getContrastText(zoneUiProps.bgColor),
     bpm: bpm,
-  };
-};
+  }
+}
 
 interface TimerProps {
-  text: string;
-  color: MuiColor;
-  backgroundColor: string; // Tailwind bg class
-  progressColor: string; // Hex color
+  text: string
+  color: MuiColor
+  backgroundColor: string // Tailwind bg class
+  progressColor: string // Hex color
 }
 
 /**
@@ -127,35 +129,35 @@ export const getTimerProps = (
         color: 'warning',
         backgroundColor: 'bg-yellow-500/10',
         progressColor: '#f59e0b',
-      };
+      }
     case 'WORK':
       return {
         text: 'WORK',
         color: 'error',
         backgroundColor: 'bg-red-500/10',
         progressColor: '#ef4444',
-      };
+      }
     case 'REST':
       return {
         text: 'REST',
         color: 'success',
         backgroundColor: 'bg-green-500/10',
         progressColor: '#22c55e',
-      };
+      }
     case 'RUNNING':
       return {
         text: 'RUNNING',
         color: 'primary',
         backgroundColor: 'bg-blue-500/10',
         progressColor: '#2563eb',
-      };
+      }
     case 'COOLDOWN':
       return {
         text: 'COOLDOWN',
         color: 'info',
         backgroundColor: 'bg-blue-500/10',
         progressColor: '#3b82f6',
-      };
+      }
     case 'IDLE':
     default:
       return {
@@ -163,19 +165,19 @@ export const getTimerProps = (
         color: 'secondary',
         backgroundColor: 'bg-gray-200',
         progressColor: '#6b7280',
-      };
+      }
   }
-};
+}
 
 export const transformWorkoutDataToColumns = (
   data: WorkoutData
 ): WorkoutColumnsProps['columns'] => {
-  if (!data) return [];
+  if (!data) return []
 
   return data.map((category: WorkoutItem) => ({
     title: category.category,
     items: category.exercises.map((ex: string) => ({
       title: ex,
     })),
-  }));
-};
+  }))
+}

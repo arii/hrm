@@ -8,7 +8,7 @@ import ErrorFallback from '../components/ErrorFallback';
 import Footer from '../components/Footer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import Providers from '../components/Providers';
-import ThemeRegistry from '../components/ThemeRegistry/ThemeRegistry';
+import ThemeRegistry from './components/ThemeRegistry/ThemeRegistry';
 import TimerSoundProvider from '../components/TimerSoundProvider';
 import { pageVariants } from '../components/animation/variants';
 import { ErrorProvider } from '../context/ErrorContext';

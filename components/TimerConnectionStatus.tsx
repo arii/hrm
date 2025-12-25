@@ -1,10 +1,10 @@
-'use client';
-import { useWebSocket } from '@/context/WebSocketContext';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+'use client'
+import { useWebSocket } from '@/context/WebSocketContext'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 export const TimerConnectionStatus = () => {
-  const { connectionStatus } = useWebSocket();
+  const { connectionStatus } = useWebSocket()
 
   return (
     <Box
@@ -34,12 +34,12 @@ export const TimerConnectionStatus = () => {
             connectionStatus === 'Connected'
               ? 'success.main'
               : connectionStatus === 'Reconnecting...'
-              ? 'warning.main'
-              : 'error.main',
+                ? 'warning.main'
+                : 'error.main',
           animation:
             connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
         }}
       />
     </Box>
-  );
-};
+  )
+}
