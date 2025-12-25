@@ -1,12 +1,12 @@
 {
   "name": "hrm",
-  "version": "0.16.0",
+  "version": "0.15.0",
   "private": true,
   "type": "module",
   "scripts": {
     "clean": "rm -rf .next dist coverage test-results playwright-report *.log *.backup nohup.out diff.txt",
     "prebuild": "pnpm run clean",
-    "dev": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true node --env-file=.env.local --loader ts-node/esm server.ts | pnpm exec pino-pretty",
+    "dev": "./scripts/dev-wrapper.sh",
     "seed": "ts-node --esm scripts/seed-dev-data.ts",
     "build": "scripts/build-with-env.sh",
     "build:server": "pnpm exec tsc -p tsconfig.build.json && cp dist/server.js dist/server.mjs",
@@ -116,7 +116,6 @@
     "babel-jest": "^30.2.0",
     "babel-plugin-react-compiler": "1.0.0",
     "cross-env": "^10.1.0",
-    "dotenv": "^17.2.3",
     "eslint": "9.39.2",
     "eslint-config-next": "16.0.10",
     "eslint-config-prettier": "^10.1.8",

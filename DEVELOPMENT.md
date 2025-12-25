@@ -62,13 +62,3 @@ When creating new internal modules or utilities (e.g., a new file in `lib/` or `
   - **Dependency Check**: The pipeline uses `knip` to identify unused dependencies. You can see the configuration in the [`knip.ts`](./knip.ts) file. Adding new internal modules should not introduce unused dependency warnings.
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
-
-## Architectural Patterns
-
-### Type-Safe API Wrappers
-
-When integrating with third-party libraries that may have incorrect or incomplete TypeScript definitions, we use a type-safe wrapper pattern to ensure our application remains robust. A prime example of this is the `safeSpotifyApi.ts` module.
-
-**Problem**: The `@spotify/web-api-ts-sdk` library does not correctly type the `deviceId` parameter as optional for several of its player methods. This can lead to runtime errors and requires unsafe type assertions in the application code.
-
-**Solution**: The `safeSpotifyApi.ts` module provides a `createSafeSpotifyApi` function that wraps the Spotify SDK instance in a `Proxy`. This proxy intercepts calls to the player methods and dynamically handles the `deviceId` parameter, ensuring that `undefined` values are not passed to the SDK. This encapsulates the workaround in a single, reusable module, eliminating the need for scattered type assertions and improving the overall type safety of the codebase.

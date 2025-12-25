@@ -4,7 +4,6 @@
  * @author Jules
  */
 
-import { jest } from '@jest/globals'
 import GenericTimer from '../../../services/genericTimer'
 import { GenericTimerState } from '../../../types/genericTimer'
 
