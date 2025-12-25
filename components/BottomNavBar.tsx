@@ -84,6 +84,7 @@ export default function BottomNavBar() {
         sx={{ ml: 1 }}
         onClick={colorMode.toggleColorMode}
         color="inherit"
+        data-testid="theme-toggle-button"
       >
         {theme.palette.mode === 'dark' ? (
           <Brightness7Icon />
