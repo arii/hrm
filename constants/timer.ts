@@ -1,2 +1,3 @@
 // constants/timer.ts
-export const PREPARE_DURATION = 10
+
+export const PREPARE_DURATION = 5

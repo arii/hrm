@@ -84,7 +84,8 @@ export default defineConfig([
     '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
     '.github/copilot-instructions.md', // Exclude copilot instructions
     'ecosystem.config.cjs', // Exclude PM2 config file
-    'tests/unit/jest.setup.js', // Exclude the Jest setup file from linting
+    '**/*.setup.js', // Exclude Jest setup files from linting
+    '**/jest.config.*.cjs', // Exclude Jest config files from linting
   ]),
 
   // Configuration for TypeScript files

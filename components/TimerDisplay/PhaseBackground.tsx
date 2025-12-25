@@ -1,84 +1,82 @@
-// File: components/TimerDisplay/PhaseBackground.tsx
-'use client'
-import { memo, useState } from 'react'
+// components/TimerDisplay/PhaseBackground.tsx
+import React, { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Box, useTheme } from '@mui/material'
-import { TimerData } from '@/types/core'
-import { keyframes } from '@emotion/react'
+import { Box, SxProps, Theme } from '@mui/material'
 
-const getPhaseGradient = (phase: TimerData['currentPhase']) => {
-  switch (phase) {
-    case 'PREPARE':
-      return 'linear-gradient(135deg, #fde047 0%, #f59e0b 100%)' // Yellow
-    case 'WORK':
-      return 'linear-gradient(135deg, #f87171 0%, #dc2626 100%)' // Red
-    case 'REST':
-      return 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)' // Green
-    case 'RUNNING':
-      return 'linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%)' // Blue
-    case 'IDLE':
-    default:
-      return 'linear-gradient(135deg, #4b5563 0%, #1f2937 100%)' // Gray
-  }
+const particleBaseStyle: SxProps<Theme> = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  width: '100px',
+  height: '100px',
+  borderRadius: '50%',
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  filter: 'blur(20px)',
 }
 
-const move = keyframes`
-  0% { transform: translate(-50%, -50%) scale(1); }
-  100% { transform: translate(-50%, -50%) scale(1.1); }
-`
+const particleVariants = {
+  initial: { opacity: 0, scale: 0, x: 0, y: 0 },
+  animate: (i: number) => ({
+    opacity: [0, 0.3, 0],
+    scale: [0, 1.5, 0],
+    x: `${Math.random() * 200 - 100}vw`,
+    y: `${Math.random() * 200 - 100}vh`,
+    transition: {
+      duration: Math.random() * 5 + 5,
+      repeat: Infinity,
+      repeatType: 'loop',
+      delay: i * 0.3,
+    },
+  }),
+}
 
-const PhaseBackground = ({ phase }: { phase: TimerData['currentPhase'] }) => {
-  const theme = useTheme()
-  const [particles] = useState(() =>
-    Array.from({ length: 20 }).map(() => ({
-      top: `${Math.random() * 100}%`,
-      left: `${Math.random() * 100}%`,
-      width: `${Math.random() * 200 + 100}px`,
-      height: `${Math.random() * 200 + 100}px`,
-      animationDuration: `${Math.random() * 10 + 5}s`,
-    }))
-  )
+const MemoizedParticle = React.memo(({ index }: { index: number }) => (
+  <Box
+    component={motion.div}
+    variants={particleVariants}
+    initial="initial"
+    animate="animate"
+    custom={index}
+    sx={particleBaseStyle}
+  />
+))
+MemoizedParticle.displayName = 'MemoizedParticle'
+
+
+const gradients = {
+  prepare: 'linear-gradient(135deg, #FFC371 0%, #FF5F6D 100%)',
+  work: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)',
+  rest: 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+}
+
+const PhaseBackground = ({ phase }: { phase: 'prepare' | 'work' | 'rest' }) => {
+  const particles = useMemo(() => Array.from({ length: 20 }), [])
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Box
+        component={motion.div}
         key={phase}
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1.5, ease: 'easeInOut' }}
-        style={{
+        animate={{ opacity: 1, transition: { duration: 1 } }}
+        exit={{ opacity: 0, transition: { duration: 1 } }}
+        sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
           overflow: 'hidden',
-          background: getPhaseGradient(phase),
-          zIndex: 0,
+          background: gradients[phase],
+          zIndex: -1,
         }}
       >
-        {particles.map((style, i) => (
-          <Box
-            key={i}
-            sx={{
-              position: 'absolute',
-              top: style.top,
-              left: style.left,
-              width: style.width,
-              height: style.height,
-              background: `radial-gradient(circle, ${
-                theme.palette.background.default
-              }20 0%, transparent 70%)`,
-              borderRadius: '50%',
-              animation: `${move} ${style.animationDuration} alternate infinite`,
-              opacity: 0.5,
-            }}
-          />
+        {particles.map((_, i) => (
+          <MemoizedParticle key={i} index={i} />
         ))}
-      </motion.div>
+      </Box>
     </AnimatePresence>
   )
 }
 
-export default memo(PhaseBackground)
+export default React.memo(PhaseBackground)

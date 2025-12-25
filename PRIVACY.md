@@ -1,28 +1,12 @@
-# Privacy Policy for HRM Dashboard
+# Privacy Policy
 
-**Last Updated:** December 24, 2025
-**Version:** 1.0
+This document outlines how the application handles data, particularly concerning the Strava integration.
 
-This Privacy Policy describes how the HRM Dashboard ("Application") collects, uses, and discloses your information in connection with the Strava API.
+## Strava Data Usage
 
-## 1. Data Collection
-Our Application collects the following data:
-* **Health Data:** Real-time heart rate data collected locally via your Bluetooth-enabled devices.
-* **Strava Profile Information:** We access your Strava profile solely to authenticate your identity for uploading activities.
-* **Activity Data:** We strictly upload activity data (time, heart rate, calories) *to* Strava. We do not fetch or analyze your historical Strava activities.
+- **Data Retrieval**: When you connect your Strava account, the application requests access to your public profile information and activity data.
+- **Data Storage**: Strava authentication tokens are stored securely on the server to maintain the connection. **No activity data (e.g., GPS coordinates, heart rate streams, power data) is ever stored on our servers.**
+- **Data Display**: Your Strava activity data is fetched and displayed **only within your local browser session**. It is used for real-time visualization during a workout and is discarded once the page is closed or refreshed.
+- **Third-Party Sharing**: We do not share your Strava data with any third parties.
 
-## 2. How We Use Your Data
-* **Real-Time Display:** Heart rate data is displayed live on your local dashboard. This data is generated locally by your sensors, not fetched from Strava.
-* **Upload Service:** We use the Strava API exclusively to upload your completed workout sessions to your personal Strava profile.
-* **No AI Training:** We explicitly affirm that **no data obtained from the Strava API is used for Artificial Intelligence (AI), Machine Learning (ML), or similar algorithmic training purposes.** Any AI features in our ecosystem operate solely on locally generated data or project metadata, never on Strava-sourced user data.
-
-## 3. Data Sharing and Disclosure
-* **Single-User Focus:** Data fetched from Strava (if any) is displayed ONLY to the authenticated user. We do not display Strava-sourced data on public walls, leaderboards, or group views.
-* **Third Parties:** We do not sell, license, or share your Strava data with any third parties.
-
-## 4. Data Retention and Deletion
-* **Retention:** Strava authentication tokens are stored locally to maintain your session.
-* **Deletion:** You may disconnect the Application from your Strava account at any time via the Strava Settings page. Upon disconnection, you may manually delete your local `tokens.json` file to remove all stored credentials.
-
-## 5. Contact
-For privacy concerns, please open an issue on our GitHub repository: [https://github.com/arii/hrm/issues](https://github.com/arii/hrm/issues)
+Our goal is to provide a rich, real-time experience without compromising your privacy. All Strava data is handled ephemerally and is strictly for in-the-moment display.
