@@ -286,19 +286,19 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
                     0.6309 * heartRate +
                     0.1988 * weightKg +
                     0.2017 * age) /
-                  4.184;
+                  4.184
               } else {
                 calories =
                   (-20.4022 +
                     0.4472 * heartRate -
                     0.1263 * weightKg +
                     0.074 * age) /
-                  4.184;
+                  4.184
               }
-              calories *= dtMinutes;
+              calories *= dtMinutes
 
               if (calories > 0) {
-                accumulatedCalories += calories;
+                accumulatedCalories += calories
                 setTotalCalories(accumulatedCalories)
               }
             }
@@ -312,12 +312,14 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               return newHistory
             })
 
-            const calculatedMaxHr = calculateMaxHr(age || 0)
-            const currentZone = HR_ZONE_DEFINITIONS.find(
-              (zone) =>
-                heartRate >= calculatedMaxHr * zone.range[0] &&
-                heartRate <= calculatedMaxHr * zone.range[1]
-            )
+            const calculatedMaxHr = calculateMaxHr(age)
+            const currentZone =
+              age &&
+              HR_ZONE_DEFINITIONS.find(
+                (zone) =>
+                  heartRate >= calculatedMaxHr * zone.range[0] &&
+                  heartRate <= calculatedMaxHr * zone.range[1]
+              )
             if (currentZone) {
               setHrZoneDurations((prev) => ({
                 ...prev,
