@@ -15,7 +15,10 @@ export const withErrorHandler = (
           { status: error.statusCode }
         )
       }
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      )
     }
   }
 }

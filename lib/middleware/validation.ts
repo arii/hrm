@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-export const withValidation = <T extends z.ZodType<any, any>>(
+export const withValidation = <T extends z.ZodType<unknown, unknown>>(
   schema: T,
   handler: (req: NextRequest, data: z.infer<T>) => Promise<NextResponse>
 ) => {

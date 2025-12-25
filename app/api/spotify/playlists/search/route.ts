@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
 
     // 2. Check if the session and token exist.
     if (!session || !session.accessToken) {
-      throw new ApiError(401, 'Not authenticated or token is missing.')
+      return NextResponse.json(
+        { error: 'Not authenticated or token is missing.' },
+        { status: 401 }
+      )
     }
 
     // 3. Get search query from URL parameters

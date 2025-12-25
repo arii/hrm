@@ -1,8 +1,7 @@
 // File: app/settings/page.tsx
-'use client';
+'use client'
 
-import React from 'react';
-import { useUserSettings } from '../../context/UserSettingsContext';
+import { useUserSettings } from '../../context/UserSettingsContext'
 import {
   Container,
   Typography,
@@ -13,8 +12,8 @@ import {
   InputLabel,
   Box,
   Paper,
-} from '@mui/material';
-import { UnitSystem } from '../../utils/units';
+} from '@mui/material'
+import { UnitSystem } from '../../utils/units'
 
 const SettingsPage = () => {
   const {
@@ -26,7 +25,7 @@ const SettingsPage = () => {
     setUserAge,
     userWeight,
     setUserWeight,
-  } = useUserSettings();
+  } = useUserSettings()
 
   return (
     <Container maxWidth="sm">
@@ -77,7 +76,7 @@ const SettingsPage = () => {
         </Box>
       </Paper>
     </Container>
-  );
-};
+  )
+}
 
-export default SettingsPage;
+export default SettingsPage
