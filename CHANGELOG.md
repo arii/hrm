@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/arii/hrm/compare/v0.16.0...v0.16.1) (2025-12-25)
+
+
+### Features
+
+* Spotify Playlist Tracks Display ([#2112](https://github.com/arii/hrm/issues/2112)) ([cf854e9](https://github.com/arii/hrm/commit/cf854e96f0107e0a6dc799187c01d0613e5f1193))
+
 ## [0.16.0](https://github.com/arii/hrm/compare/v0.15.0...v0.16.0) (2025-12-24)
 
 
