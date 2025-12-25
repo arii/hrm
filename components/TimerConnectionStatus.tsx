@@ -2,20 +2,31 @@
 import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { useTheme } from '@mui/material/styles'
 
 export const TimerConnectionStatus = () => {
   const { connectionStatus } = useWebSocket()
+  const theme = useTheme()
+
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case 'Connected':
+        return theme.palette.success.main
+      case 'Reconnecting...':
+        return theme.palette.warning.main
+      default:
+        return theme.palette.error.main
+    }
+  }
 
   return (
     <Box
       sx={{
-        position: 'absolute',
-        top: 16,
-        right: 16,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'flex-end',
         gap: 1,
-        zIndex: 2,
+        padding: 2,
       }}
     >
       <Typography
@@ -30,12 +41,7 @@ export const TimerConnectionStatus = () => {
           width: 12,
           height: 12,
           borderRadius: '50%',
-          backgroundColor:
-            connectionStatus === 'Connected'
-              ? 'success.main'
-              : connectionStatus === 'Reconnecting...'
-                ? 'warning.main'
-                : 'error.main',
+          backgroundColor: getStatusColor(),
           animation:
             connectionStatus === 'Connected' ? 'pulse 2s infinite' : 'none',
         }}

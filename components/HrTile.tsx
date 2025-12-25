@@ -36,9 +36,10 @@ const HrTile = ({
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
+  maxHr,
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor, textColor } = getHrZoneProps(bpm, maxHr, theme)
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -177,7 +178,8 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
-    prevProps.alertMessage === nextProps.alertMessage
+    prevProps.alertMessage === nextProps.alertMessage &&
+    prevProps.maxHr === nextProps.maxHr
   )
 }
 

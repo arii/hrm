@@ -7,8 +7,10 @@ import { getHrZoneProps } from '@/utils/visualization'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
+import { useTheme } from '@mui/material/styles'
 
 const HrmTiles = () => {
+  const theme = useTheme()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
@@ -22,7 +24,8 @@ const HrmTiles = () => {
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          theme
         )
 
         // Find the alert specific to this HR Monitor's clientId
@@ -44,13 +47,14 @@ const HrmTiles = () => {
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
               isAlerting={!!matchingAlert}
+              maxHr={user.maxHr || MAX_HR_DEFAULT}
               // Conditionally add alertMessage to avoid passing `undefined`
               {...(matchingAlert && { alertMessage: matchingAlert.message })}
             />
           </Grid>
         )
       })
-  }, [hrmData, activeAlerts])
+  }, [hrmData, activeAlerts, theme])
 
   const isLoading =
     connectionStatus === 'Connecting...' ||

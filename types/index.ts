@@ -7,6 +7,7 @@ export interface HrTileProps {
   percentMax: number // 0-100
   calories?: number
   isConnected?: boolean
+  maxHr: number
 
   // NEW: Flag to trigger the visual diagnostic state
   isAlerting?: boolean
@@ -14,7 +15,14 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-import { TimerMode, TimerPhase } from './core'
+export type TimerPhase =
+  | 'IDLE'
+  | 'PREPARE'
+  | 'RUNNING'
+  | 'WORK'
+  | 'REST'
+  | 'COOLDOWN'
+export type TimerMode = 'TABATA' | 'STOPWATCH'
 
 export interface HeartRateZonesProps {
   maxHr: number

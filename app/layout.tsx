@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import AppWrapper from './AppWrapper'
+import Providers from './Providers'
 import './globals.css'
 
 const inter = Inter({
@@ -37,7 +37,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <AppWrapper>{children}</AppWrapper>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

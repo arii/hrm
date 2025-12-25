@@ -4,14 +4,15 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import Typography from '@mui/material/Typography'
-import { useTheme } from '@mui/material/styles'
+import { useTheme, Theme } from '@mui/material/styles'
 import { memo } from 'react'
 import { TimerConnectionStatus } from './TimerConnectionStatus'
 import { TimerVolumeControl } from './TimerVolumeControl'
+import { TimerPhase, TimerMode } from '@/types/index'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const getPhaseStyle = (phase, mode, theme) => {
+const getPhaseStyle = (phase: TimerPhase, mode: TimerMode, theme: Theme) => {
   switch (phase) {
     case 'PREPARE':
       return {
@@ -52,7 +53,12 @@ const getPhaseStyle = (phase, mode, theme) => {
   }
 }
 
-const formatDisplayTime = (phase, mode, timeRemaining, timeElapsed) => {
+const formatDisplayTime = (
+  phase: TimerPhase,
+  mode: TimerMode,
+  timeRemaining: number,
+  timeElapsed: number
+) => {
   if (phase === 'PREPARE') {
     return String(timeRemaining).padStart(2, '0')
   }

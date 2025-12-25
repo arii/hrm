@@ -1,62 +1,168 @@
-'use client';
-import { useTheme } from '@mui/material/styles';
-import PauseIcon from '@mui/icons-material/Pause';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import { useSession, signOut } from 'next-auth/react';
-import { useWebSocket } from '@/context/WebSocketContext';
-import { SpotifyCommandMessage } from '@/types/websocket';
-import AuthButton from './AuthButton';
-import VolumeSlider from './Spotify/VolumeSlider';
-import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper';
-import { useState } from 'react';
+'use client'
+import { useTheme } from '@mui/material/styles'
+import PauseIcon from '@mui/icons-material/Pause'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import SkipNextIcon from '@mui/icons-material/SkipNext'
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Typography from '@mui/material/Typography'
+import { useSession, signOut } from 'next-auth/react'
+import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
+import AuthButton from './AuthButton'
+import VolumeSlider from './Spotify/VolumeSlider'
+import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
+import { useState, useReducer, useEffect, useCallback, useRef } from 'react'
+
+interface SpotifyDisplayState {
+  displayVolume: number
+  isMuted: boolean
+  lastVolume: number
+}
+
+type SpotifyDisplayAction =
+  | { type: 'SET_VOLUME'; payload: number }
+  | { type: 'TOGGLE_MUTE' }
+  | {
+      type: 'SYNC_WITH_WEBSOCKET'
+      payload: { volume?: number; isMuted?: boolean }
+    }
+
+const initialStateFactory = (
+  volume: number,
+  isMuted: boolean
+): SpotifyDisplayState => ({
+  displayVolume: volume,
+  isMuted: isMuted,
+  lastVolume: volume > 0 ? volume : 70,
+})
+
+const spotifyDisplayReducer = (
+  state: SpotifyDisplayState,
+  action: SpotifyDisplayAction
+): SpotifyDisplayState => {
+  switch (action.type) {
+    case 'SYNC_WITH_WEBSOCKET': {
+      const { volume, isMuted } = action.payload
+      const newVolume = volume ?? state.displayVolume
+      return {
+        ...state,
+        displayVolume: newVolume,
+        isMuted: isMuted ?? state.isMuted,
+        lastVolume: newVolume > 0 ? newVolume : state.lastVolume,
+      }
+    }
+    case 'SET_VOLUME':
+      return {
+        ...state,
+        displayVolume: action.payload,
+        isMuted: action.payload === 0,
+        lastVolume: action.payload > 0 ? action.payload : state.lastVolume,
+      }
+    case 'TOGGLE_MUTE': {
+      const newMutedState = !state.isMuted
+      if (newMutedState) {
+        return {
+          ...state,
+          isMuted: true,
+          displayVolume: 0,
+        }
+      } else {
+        return {
+          ...state,
+          isMuted: false,
+          displayVolume: state.lastVolume > 0 ? state.lastVolume : 50,
+        }
+      }
+    }
+    default:
+      return state
+  }
+}
 
 const SpotifyDisplay = () => {
-  const theme = useTheme();
-  const { status } = useSession();
-  const { spotifyData, sendData } = useWebSocket();
-  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(null);
+  const theme = useTheme()
+  const { status } = useSession()
+  const { spotifyData, sendData } = useWebSocket()
+  const [deviceMenuAnchor, setDeviceMenuAnchor] = useState<null | HTMLElement>(
+    null
+  )
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const [state, dispatch] = useReducer(
+    spotifyDisplayReducer,
+    initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
+  )
+
+  const { displayVolume, isMuted } = state
+
+  useEffect(() => {
+    dispatch({
+      type: 'SYNC_WITH_WEBSOCKET',
+      payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
+    })
+  }, [spotifyData.volume, spotifyData.isMuted])
 
   const handleLogout = async () => {
-    await signOut({ redirect: false });
-    window.location.reload();
-  };
+    await signOut({ redirect: false })
+    window.location.reload()
+  }
 
-  const sendSpotifyCommand = (
-    command: 'PLAY' | 'PAUSE' | 'NEXT' | 'PREVIOUS' | 'TRANSFER_PLAYBACK' | 'SET_VOLUME',
-    payload?: Record<string, unknown>
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...payload,
-    };
-    sendData(message);
-  };
+  const sendSpotifyCommand = useCallback(
+    (
+      command:
+        | 'PLAY'
+        | 'PAUSE'
+        | 'NEXT'
+        | 'PREVIOUS'
+        | 'TRANSFER_PLAYBACK'
+        | 'SET_VOLUME',
+      payload?: Record<string, unknown>
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...payload,
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
 
   const handlePlayPauseToggle = () => {
-    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY';
-    sendSpotifyCommand(command);
-  };
+    const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
+    sendSpotifyCommand(command)
+  }
 
   const handleDeviceSelect = (deviceId: string) => {
-    sendSpotifyCommand('TRANSFER_PLAYBACK', { deviceId });
-    setDeviceMenuAnchor(null);
-  };
+    sendSpotifyCommand('TRANSFER_PLAYBACK', { deviceId })
+    setDeviceMenuAnchor(null)
+  }
+
+  const sendVolumeCommand = useCallback(
+    (volume: number) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        sendSpotifyCommand('SET_VOLUME', { volume })
+      }, 300)
+    },
+    [sendSpotifyCommand]
+  )
 
   const handleVolumeChange = (newVolume: number) => {
-    sendSpotifyCommand('SET_VOLUME', { volume: newVolume });
-  };
+    dispatch({ type: 'SET_VOLUME', payload: newVolume })
+    sendVolumeCommand(newVolume)
+  }
 
   const handleToggleMute = () => {
-    const newVolume = spotifyData.isMuted ? (spotifyData.lastVolume || 50) : 0;
-    sendSpotifyCommand('SET_VOLUME', { volume: newVolume });
-  };
+    dispatch({ type: 'TOGGLE_MUTE' })
+    const newVolume = isMuted ? state.lastVolume : 0
+    sendVolumeCommand(newVolume)
+  }
 
   if (status !== 'authenticated') {
     return (
@@ -81,12 +187,13 @@ const SpotifyDisplay = () => {
       >
         <AuthButton providerId="spotify" providerName="Spotify" />
       </Box>
-    );
+    )
   }
 
-  const { trackName, artist, isPlaying, devices, volume, isMuted } = spotifyData;
-  const displayTrackName = trackName === 'Awaiting Login...' ? 'No Active Playback' : trackName;
-  const displayArtist = trackName === 'Awaiting Login...' ? '' : `— ${artist}`;
+  const { trackName, artist, isPlaying, devices } = spotifyData
+  const displayTrackName =
+    trackName === 'Awaiting Login...' ? 'No Active Playback' : trackName
+  const displayArtist = trackName === 'Awaiting Login...' ? '' : `— ${artist}`
 
   return (
     <Box
@@ -144,8 +251,8 @@ const SpotifyDisplay = () => {
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
         <VolumeSlider
-          volume={volume || 0}
-          muted={isMuted || false}
+          volume={displayVolume}
+          muted={isMuted}
           onVolumeChange={handleVolumeChange}
           onToggleMute={handleToggleMute}
         />
@@ -171,7 +278,7 @@ const SpotifyDisplay = () => {
         </Button>
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default SpotifyDisplay;
+export default SpotifyDisplay
