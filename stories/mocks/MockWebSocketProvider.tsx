@@ -39,6 +39,7 @@ const DEFAULT_STATE: MockAppState = {
     soundEventId: 0,
   },
   spotifyData: {
+    trackId: null,
     trackName: 'Storybook Simulation',
     artist: 'Mock Artist',
     albumName: 'Mock Album',

@@ -49,6 +49,7 @@ export class SpotifyPolling implements SpotifyService {
   private lastPlaybackState: boolean | null = null
 
   private state: SpotifyData = {
+    trackId: null,
     trackName: 'Awaiting Login...',
     artist: '',
     albumName: '',
@@ -220,6 +221,7 @@ export class SpotifyPolling implements SpotifyService {
           this.lastPlaybackState = false
           this.state = {
             ...this.state,
+            trackId: null,
             trackName: 'Nothing is currently playing.',
             artist: '',
             albumName: '',
@@ -246,6 +248,7 @@ export class SpotifyPolling implements SpotifyService {
         this.lastPlaybackState = isPlaying
 
         const trackName = item.name
+        const trackId = item.id
         let artistName = ''
         let albumName = ''
         let albumArtUrl = ''
@@ -264,6 +267,7 @@ export class SpotifyPolling implements SpotifyService {
 
         this.state = {
           ...this.state,
+          trackId,
           trackName,
           artist: artistName,
           albumName,
