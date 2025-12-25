@@ -1,6 +1,6 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
-import TabataTimer from '../services/tabataTimer.js'
+import TabataTimer from '../services/tabataTimer'
 
 // Individual health check functions
 export function checkMemoryUsage() {

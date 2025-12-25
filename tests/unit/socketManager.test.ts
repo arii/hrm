@@ -23,13 +23,13 @@ import {
   ClientCommandMessageSchema,
   ExtWebSocket,
 } from '../../types/websocket'
-import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils.js'
+import { broadcast, sendWebSocketMessage } from '../../utils/websocketUtils'
 import logger from '@/utils/logger'
-import { serviceContainer } from '../../lib/serviceContainer.js'
+import { serviceContainer } from '../../lib/serviceContainer'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
-jest.mock('../../lib/serviceContainer.js')
+jest.mock('../../lib/serviceContainer')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),

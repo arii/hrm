@@ -1,9 +1,9 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
-import SpotifyProvider from 'next-auth/providers/spotify.js'
-import logger from '@/utils/logger.js'
-import { getAPIURL } from '../utils/urls.js'
+import SpotifyProvider from 'next-auth/providers/spotify'
+import logger from '@/utils/logger'
+import { getAPIURL } from '../utils/urls'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
