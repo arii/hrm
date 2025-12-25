@@ -9,7 +9,10 @@
     "traceResolution": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/lib/*": ["lib/*"],
+      "@/services/*": ["services/*"],
+      "@/types/*": ["types/*"],
+      "@/utils/*": ["utils/*"]
     }
   },
   "include": [
