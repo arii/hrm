@@ -15,6 +15,7 @@ import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
+import Link from 'next/link'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -39,58 +40,60 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
     divider
     sx={{ display: 'flex', justifyContent: 'space-between' }}
   >
-    <ListItemButton
-      selected={selected}
-      onClick={onClick}
-      sx={{
-        flexGrow: 1,
-        '&:hover': {
-          backgroundColor: 'action.hover',
-        },
-      }}
-    >
-      {playlist.imageUrl ? (
-        <Box
-          component="img"
-          src={playlist.imageUrl}
-          alt={playlist.name}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 1,
-            mr: 1.5,
-            objectFit: 'cover',
-          }}
+    <Link href={`/spotify/playlist/${playlist.id}`} passHref legacyBehavior>
+      <ListItemButton
+        selected={selected}
+        onClick={onClick}
+        sx={{
+          flexGrow: 1,
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      >
+        {playlist.imageUrl ? (
+          <Box
+            component="img"
+            src={playlist.imageUrl}
+            alt={playlist.name}
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 1,
+              mr: 1.5,
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
+        )}
+        <ListItemText
+          primary={playlist.name}
+          secondary={
+            playlist.trackCount !== undefined
+              ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
+              : playlist.owner
+                ? playlist.owner
+                : undefined
+          }
         />
-      ) : (
-        <MusicNote sx={{ mr: 1.5, color: 'text.secondary', fontSize: 24 }} />
-      )}
-      <ListItemText
-        primary={playlist.name}
-        secondary={
-          playlist.trackCount !== undefined
-            ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
-            : playlist.owner
-              ? playlist.owner
-              : undefined
-        }
-      />
-      {playlist.isPreset && (
-        <Chip
-          label="Preset"
-          size="small"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-      {playlist.isSearchResult && !playlist.isPreset && (
-        <Chip
-          label="Spotify"
-          size="small"
-          color="success"
-          sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
-        />
-      )}
-    </ListItemButton>
+        {playlist.isPreset && (
+          <Chip
+            label="Preset"
+            size="small"
+            sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+          />
+        )}
+        {playlist.isSearchResult && !playlist.isPreset && (
+          <Chip
+            label="Spotify"
+            size="small"
+            color="success"
+            sx={{ height: 20, fontSize: '0.7rem', ml: 1 }}
+          />
+        )}
+      </ListItemButton>
+    </Link>
     <Box sx={{ pl: 1 }}>
       <IconButton
         edge="end"

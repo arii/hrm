@@ -57,7 +57,7 @@ jest.mock('../../utils/logger', () => ({
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
-    const wss = new EventEmitter() as unknown as WebSocketServer
+    const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
     wss.clients = new Set<MockWebSocket>()
     const originalOn = wss.on.bind(wss)
     const originalEmit = wss.emit.bind(wss)
@@ -99,27 +99,52 @@ class MockWebSocket extends EventEmitter {
 }
 
 describe('WebSocket Manager', () => {
-  let mockWss: WebSocketServer
+  let mockWss: jest.Mocked<WebSocketServer>
   let mockServices: {
-    tabataService: TabataTimer
-    spotifyService: SpotifyPolling
+    tabataService: jest.Mocked<TabataTimer>
+    spotifyService: jest.Mocked<SpotifyPolling>
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
 
   beforeEach(() => {
     jest.useFakeTimers()
-    mockWss = new (WebSocketServer as jest.Mock)()
-    mockServices = {
-      tabataService: {
-        handleCommand: jest.fn(),
-        setMode: jest.fn(),
-        setConfig: jest.fn(),
-      } as unknown as TabataTimer,
-      spotifyService: {
-        handleCommand: jest.fn(),
-      } as unknown as SpotifyPolling,
+    mockWss =
+      new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
+
+    // Create fully typed mocks for the services.
+    const mockTabataTimer: jest.Mocked<TabataTimer> = {
+      handleCommand: jest.fn(),
+      setMode: jest.fn(),
+      setConfig: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      start: jest.fn(),
+      stop: jest.fn(),
+      pause: jest.fn(),
+      resume: jest.fn(),
+      getState: jest.fn(),
+      getSnapshot: jest.fn(),
+      cleanup: jest.fn(),
     }
+
+    const mockSpotifyPolling: jest.Mocked<SpotifyPolling> = {
+      handleCommand: jest.fn(),
+      forcePollAndBroadcast: jest.fn(),
+      getState: jest.fn(),
+      isReady: jest.fn(),
+      handleTokenUpdate: jest.fn(),
+      startPolling: jest.fn(),
+      stopPolling: jest.fn(),
+      cleanup: jest.fn(),
+      refreshDevices: jest.fn(),
+    }
+
+    mockServices = {
+      tabataService: mockTabataTimer,
+      spotifyService: mockSpotifyPolling,
+    }
+
     getSnapshot = jest.fn().mockReturnValue({
       timer: {},
       spotify: {},
@@ -156,7 +181,7 @@ describe('WebSocket Manager', () => {
 
   describe('Heartbeat and Watchdog', () => {
     it('should set lastPingTime on new connection', () => {
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
+      const mockWs = new MockWebSocket() as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs) // Manually trigger connection event
 
@@ -165,7 +190,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should update lastPingTime on PING message and respond with PONG', () => {
-      const mockWs = new MockWebSocket() as unknown as ExtWebSocket
+      const mockWs = new MockWebSocket() as ExtWebSocket
       ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
       mockWss.emit('connection', mockWs)
 

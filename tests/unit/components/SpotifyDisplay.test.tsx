@@ -1,5 +1,6 @@
 /** @jest-environment jsdom */
 
+import { jest } from '@jest/globals'
 // Mock the uuid module at the top level BEFORE any other imports
 jest.mock('uuid', () => ({
   v4: () => 'mock-uuid-1234',

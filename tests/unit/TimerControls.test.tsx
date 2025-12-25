@@ -1,5 +1,6 @@
 /** @jest-environment jsdom */
 
+import { jest } from '@jest/globals'
 import TimerControls from '@/app/client/control/components/TimerControls'
 import { useWebSocket } from '@/context/WebSocketContext'
 import type { TimerData } from '@/types/websocket'
@@ -46,14 +47,25 @@ describe('TimerControls', () => {
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
     const sendData = jest.fn()
 
-    mockedUseWebSocket.mockReturnValue({
+    const mockUseWebSocket: UseWebSocketReturn = {
       hrmData: [],
       timerData: { ...baseTimerData },
-      spotifyData: { trackName: '', artist: '', isPlaying: false },
+      spotifyData: {
+        trackName: '',
+        artist: '',
+        isPlaying: false,
+        albumArtUrl: '',
+        albumName: '',
+        devices: [],
+        isMuted: false,
+        volume: 0,
+      },
       spotifyServiceInitialized: true,
       connectionStatus: 'Connected',
       sendData,
-    } as unknown as UseWebSocketReturn)
+      isOwner: true,
+    }
+    mockedUseWebSocket.mockReturnValue(mockUseWebSocket)
 
     render(<TimerControls />)
 

@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/HrTile.test.tsx
+import { jest } from '@jest/globals'
 import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'

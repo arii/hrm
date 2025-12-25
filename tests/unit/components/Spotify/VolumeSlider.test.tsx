@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import { jest } from '@jest/globals'
 import { render, screen, fireEvent } from '@testing-library/react'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
 import '@testing-library/jest-dom'
