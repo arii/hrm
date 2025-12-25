@@ -189,7 +189,7 @@ const SpotifySelectionPage = () => {
             onPlaylistSelected={handlePlaylistPlay}
             onPlaylistPlay={handlePlaylistPlay}
           />
-        </CardContent>.
+        </CardContent>
       </Card>
     </Container>
   )
