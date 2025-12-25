@@ -5,8 +5,11 @@
  */
 import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
-import { DualModeTimerState, START_COUNTDOWN_DURATION } from './timerState'
-import { TimerQueries } from './timerQueries'
+import {
+  DualModeTimerState,
+  START_COUNTDOWN_DURATION,
+} from './timerState.js'
+import { TimerQueries } from './timerQueries.js'
 
 export class TimerCommands {
   private state: DualModeTimerState

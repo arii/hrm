@@ -4,7 +4,7 @@
  * state into the public `TimerData` format.
  */
 import { TimerData } from '../../types/core'
-import { DualModeTimerState } from './timerState'
+import { DualModeTimerState } from './timerState.js'
 
 export class TimerQueries {
   private state: DualModeTimerState
