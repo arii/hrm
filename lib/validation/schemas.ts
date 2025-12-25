@@ -70,3 +70,8 @@ export const SpotifyTokenPayloadSchema = z.object({
   scope: z.string(),
   obtainedAt: z.number(),
 })
+
+export const TokenRecordSchema = z.object({
+  receivedAt: z.number(),
+  payload: SpotifyTokenPayloadSchema,
+})

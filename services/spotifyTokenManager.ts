@@ -2,7 +2,10 @@ import { AccessToken } from '@spotify/web-api-ts-sdk'
 import fs from 'fs'
 import * as path from 'path'
 import { z } from 'zod'
-import { SpotifyTokenPayloadSchema } from '../lib/validation/schemas'
+import {
+  SpotifyTokenPayloadSchema,
+  TokenRecordSchema,
+} from '../lib/validation/schemas'
 import { SpotifyTokenResponse } from './spotifyPolling'
 
 /**
@@ -27,10 +30,7 @@ const writeTokenFileSafe = (filePath: string, data: TokenRecord) => {
 
 export type SpotifyTokenPayload = z.infer<typeof SpotifyTokenPayloadSchema>
 
-export interface TokenRecord {
-  receivedAt: number
-  payload: SpotifyTokenPayload
-}
+export type TokenRecord = z.infer<typeof TokenRecordSchema>
 
 export class SpotifyTokenManager {
   /**
@@ -103,16 +103,7 @@ export class SpotifyTokenManager {
       if (fs.existsSync(this.tokenFile)) {
         const data = fs.readFileSync(this.tokenFile, 'utf8')
         const jsonData = JSON.parse(data)
-
-        // Validate the payload property of the loaded data
-        const validatedPayload = SpotifyTokenPayloadSchema.parse(
-          jsonData.payload
-        )
-
-        this.currentToken = {
-          ...jsonData,
-          payload: validatedPayload,
-        }
+        this.currentToken = TokenRecordSchema.parse(jsonData)
         if (this.currentToken) {
           console.log(
             'Loaded Spotify tokens for:',

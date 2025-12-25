@@ -205,6 +205,13 @@ app
     expressApp.post(
       '/api/internal/token-delivery',
       (req: Request, res: Response) => {
+        const secret = req.headers['x-internal-secret']
+        if (
+          !secret ||
+          secret !== process.env.INTERNAL_TOKEN_DELIVERY_SECRET
+        ) {
+          return res.status(401).json({ error: 'Unauthorized' })
+        }
         if (!req.body) {
           return res.status(400).json({ error: 'Missing token payload' })
         }

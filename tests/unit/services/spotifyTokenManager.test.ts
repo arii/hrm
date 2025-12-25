@@ -12,6 +12,7 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   unlinkSync: jest.fn(),
+  renameSync: jest.fn(),
 }))
 
 describe('SpotifyTokenManager', () => {
@@ -259,5 +260,61 @@ describe('SpotifyTokenManager', () => {
     expect(console.log).toHaveBeenCalledWith(
       'Spotify access token expired, but no refresh token available. Cannot refresh.'
     )
+  })
+
+  describe('Token Validation on Load', () => {
+    it('should return null if token file is missing a required field', () => {
+      const corruptToken = {
+        receivedAt: Date.now(),
+        // payload is missing
+      }
+      ;(fs.existsSync as jest.Mock).mockReturnValue(true)
+      ;(fs.readFileSync as jest.Mock).mockReturnValue(
+        JSON.stringify(corruptToken)
+      )
+      jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const tokenManager = new SpotifyTokenManager(
+        clientId,
+        clientSecret,
+        logDir
+      )
+      expect(tokenManager.getUserId()).toBeNull()
+      expect(console.warn).toHaveBeenCalledWith(
+        'Failed to load or validate Spotify tokens:',
+        expect.any(Error)
+      )
+    })
+
+    it('should return null if token payload has invalid data types', () => {
+      const corruptToken = {
+        receivedAt: 'not-a-number', // Invalid type
+        payload: {
+          provider: 'spotify',
+          sub: 'test_user',
+          access_token: 'access_token',
+          refresh_token: 'refresh_token',
+          expires_in: '3600', // Should be a number
+          scope: 'test_scope',
+          obtainedAt: Date.now(),
+        },
+      }
+      ;(fs.existsSync as jest.Mock).mockReturnValue(true)
+      ;(fs.readFileSync as jest.Mock).mockReturnValue(
+        JSON.stringify(corruptToken)
+      )
+      jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const tokenManager = new SpotifyTokenManager(
+        clientId,
+        clientSecret,
+        logDir
+      )
+      expect(tokenManager.getUserId()).toBeNull()
+      expect(console.warn).toHaveBeenCalledWith(
+        'Failed to load or validate Spotify tokens:',
+        expect.any(Error)
+      )
+    })
   })
 })
