@@ -17,17 +17,13 @@ const mockTheme = createTheme({
   },
 })
 
-const AllTheProviders: FC<{children: React.ReactNode}> = ({ children }) => {
-  return (
-    <ThemeProvider theme={mockTheme}>
-      {children}
-    </ThemeProvider>
-  )
+const AllTheProviders: FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <ThemeProvider theme={mockTheme}>{children}</ThemeProvider>
 }
 
 const customRender = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>,
+  options?: Omit<RenderOptions, 'wrapper'>
 ) => render(ui, { wrapper: AllTheProviders, ...options })
 
 export * from '@testing-library/react'
