@@ -4,6 +4,7 @@ import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
+import react from 'eslint-plugin-react' // Explicitly import the React plugin
 
 export default defineConfig([
   // 1. GLOBAL IGNORES
@@ -34,10 +35,22 @@ export default defineConfig([
   js.configs.recommended,
   ...tseslint.configs.recommended,
 
-  // 3. Next.js Configuration
+  // 3. Next.js Configuration (includes React/React Hooks rules)
   ...nextPlugin,
 
-  // 4. Custom Rules: General Variables
+  // 4. Explicit React Configuration for Clarity
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    plugins: {
+      react,
+    },
+    rules: {
+      ...react.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off', // Not needed with Next.js App Router
+    },
+  },
+
+  // 5. Custom Rules: General Variables & Formatting
   {
     rules: {
       '@typescript-eslint/no-unused-vars': [
@@ -48,10 +61,21 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      // This rule is not purely stylistic and helps prevent VCS noise.
+      '@typescript-eslint/comma-dangle': [
+        'error',
+        {
+          arrays: 'always-multiline',
+          objects: 'always-multiline',
+          imports: 'always-multiline',
+          exports: 'always-multiline',
+          functions: 'always-multiline',
+        },
+      ],
     },
   },
 
-  // 5. TypeScript Specific Settings
+  // 6. TypeScript Specific Settings
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -65,7 +89,7 @@ export default defineConfig([
     },
   },
 
-  // 6. Test Overrides
+  // 7. Test Overrides
   {
     files: ['tests/playwright/**/*.ts'],
     languageOptions: {
@@ -75,7 +99,7 @@ export default defineConfig([
       },
     },
     rules: {
-      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/rules-of-hooks': 'off', // Playwright's use() fixture is not a hook
     },
   },
   {
@@ -113,7 +137,7 @@ export default defineConfig([
     },
   },
 
-  // 7. Services Override (Specific Ignores)
+  // 8. Services Override (Specific Ignores)
   {
     files: ['services/**/*.ts'],
     rules: {
@@ -128,7 +152,9 @@ export default defineConfig([
     },
   },
 
-  // 8. Prettier Config (Must be last to override conflicting rules)
+  // 9. Prettier Config (Must be last to override conflicting rules)
+  // This disables ESLint's stylistic rules in favor of Prettier.
+  // Code formatting is enforced via a pre-commit hook using lint-staged.
   prettierConfig,
   {
     plugins: {
