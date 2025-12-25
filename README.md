@@ -54,10 +54,9 @@ A real-time heart rate monitoring dashboard built with Next.js, Material-UI, Web
 
 **Data Usage Disclaimer:**
 This application is a **local data generator**.
-
-- **Live Dashboard:** The heart rate tiles and group displays shown in screenshots utilize **direct Bluetooth sensor data**. They do **not** display data fetched from Strava, complying with Strava API Brand Guidelines regarding user privacy.
-- **AI Features:** Any AI/LLM integration (e.g., Gemini) analyzes strictly **local project metadata** or **locally recorded Bluetooth logs**. No data fetched from the Strava API is ever sent to AI models.
-- **Strava Integration:** The Strava API is used strictly for **uploading** completed activities (Write-Only).
+* **Live Dashboard:** The heart rate tiles and group displays shown in screenshots utilize **direct Bluetooth sensor data**. They do **not** display data fetched from Strava, complying with Strava API Brand Guidelines regarding user privacy.
+* **AI Features:** Any AI/LLM integration (e.g., Gemini) analyzes strictly **local project metadata** or **locally recorded Bluetooth logs**. No data fetched from the Strava API is ever sent to AI models.
+* **Strava Integration:** The Strava API is used strictly for **uploading** completed activities (Write-Only).
 
 ## Quick Start
 

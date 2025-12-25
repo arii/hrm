@@ -148,7 +148,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef<{
     name: string
     age: number
-    weight?: number
+    weight?: number;
   } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -409,7 +409,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight ?? undefined,
+        weight: userWeight,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

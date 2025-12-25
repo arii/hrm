@@ -2,19 +2,21 @@
 
 ## [0.16.0](https://github.com/arii/hrm/compare/v0.15.0...v0.16.0) (2025-12-24)
 
+
 ### Features
 
-- Setup Framer Motion Infrastructure and Page Transitions ([#2098](https://github.com/arii/hrm/issues/2098)) ([b0d6f3d](https://github.com/arii/hrm/commit/b0d6f3d8e92dfd8ccd704edd91964846d054c94d))
-- **storybook:** Implement Stories for SpotifyDisplay and TimerDisplay ([#2065](https://github.com/arii/hrm/issues/2065)) ([8e52782](https://github.com/arii/hrm/commit/8e5278276ca3132b169e81c1ba06f849823f88f6))
+* Setup Framer Motion Infrastructure and Page Transitions ([#2098](https://github.com/arii/hrm/issues/2098)) ([b0d6f3d](https://github.com/arii/hrm/commit/b0d6f3d8e92dfd8ccd704edd91964846d054c94d))
+* **storybook:** Implement Stories for SpotifyDisplay and TimerDisplay ([#2065](https://github.com/arii/hrm/issues/2065)) ([8e52782](https://github.com/arii/hrm/commit/8e5278276ca3132b169e81c1ba06f849823f88f6))
+
 
 ### Bug Fixes
 
-- **build:** resolve module path for validation schemas ([#2095](https://github.com/arii/hrm/issues/2095)) ([365adbf](https://github.com/arii/hrm/commit/365adbf5b74aa45151b2dda0eef37fec1033470f))
-- **infra:** Correct module import to resolve server startup failure ([b5bedd7](https://github.com/arii/hrm/commit/b5bedd752996ddbdcb44791300394e08c9eb9e6b))
-- **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
-- **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
-- **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
-- **tests:** Update visual regression test snapshots ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
+* **build:** resolve module path for validation schemas ([#2095](https://github.com/arii/hrm/issues/2095)) ([365adbf](https://github.com/arii/hrm/commit/365adbf5b74aa45151b2dda0eef37fec1033470f))
+* **infra:** Correct module import to resolve server startup failure ([b5bedd7](https://github.com/arii/hrm/commit/b5bedd752996ddbdcb44791300394e08c9eb9e6b))
+* **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
+* **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
+* **tests:** update visual regression and unit tests to match new UI ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
+* **tests:** Update visual regression test snapshots ([da83882](https://github.com/arii/hrm/commit/da83882458e3315e1142ba001b47654c83fdec50))
 
 ## [0.15.0](https://github.com/arii/hrm/compare/v0.14.0...v0.15.0) (2025-12-23)
 
