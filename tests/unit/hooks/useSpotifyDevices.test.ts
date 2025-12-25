@@ -32,13 +32,21 @@ describe('useSpotifyDevices', () => {
   })
 
   it('should not fetch devices if not authenticated', () => {
-    mockedUseSession.mockReturnValue({ status: 'unauthenticated', data: null, update: jest.fn() })
+    mockedUseSession.mockReturnValue({
+      status: 'unauthenticated',
+      data: null,
+      update: jest.fn(),
+    })
     renderHook(() => useSpotifyDevices(), { wrapper })
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('should fetch devices when authenticated', async () => {
-    mockedUseSession.mockReturnValue({ status: 'authenticated', data: { user: {} }, update: jest.fn() })
+    mockedUseSession.mockReturnValue({
+      status: 'authenticated',
+      data: { user: {} },
+      update: jest.fn(),
+    })
     const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     await waitFor(() => {
@@ -49,21 +57,31 @@ describe('useSpotifyDevices', () => {
   })
 
   it('should handle fetch error', async () => {
-    mockedUseSession.mockReturnValue({ status: 'authenticated', data: { user: {} }, update: jest.fn() })
-    global.fetch = jest.fn(() => Promise.reject(new Error('API Error'))) as jest.Mock
+    mockedUseSession.mockReturnValue({
+      status: 'authenticated',
+      data: { user: {} },
+      update: jest.fn(),
+    })
+    global.fetch = jest.fn(() =>
+      Promise.reject(new Error('API Error'))
+    ) as jest.Mock
     const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
 
     await waitFor(() => {
-        expect(result.current.error).toBe('API Error')
+      expect(result.current.error).toBe('API Error')
     })
   })
 
   it('should send TRANSFER_PLAYBACK command on device selection', () => {
-    mockedUseSession.mockReturnValue({ status: 'authenticated', data: { user: {} }, update: jest.fn() })
+    mockedUseSession.mockReturnValue({
+      status: 'authenticated',
+      data: { user: {} },
+      update: jest.fn(),
+    })
     const sendData = jest.fn()
     mockedUseWebSocket.mockReturnValue({
-        spotifyData: { trackName: 'test track', accessToken: 'mock-token' },
-        sendData,
+      spotifyData: { trackName: 'test track', accessToken: 'mock-token' },
+      sendData,
     })
     const { result } = renderHook(() => useSpotifyDevices(), { wrapper })
     act(() => {

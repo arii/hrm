@@ -5,11 +5,15 @@ import { useSpotifyDevices } from '@/hooks/useSpotifyDevices'
 
 type SpotifyDevicesContextType = ReturnType<typeof useSpotifyDevices>
 
-const SpotifyDevicesContext = createContext<SpotifyDevicesContextType | undefined>(
-  undefined
-)
+const SpotifyDevicesContext = createContext<
+  SpotifyDevicesContextType | undefined
+>(undefined)
 
-export const SpotifyDevicesProvider = ({ children }: { children: ReactNode }) => {
+export const SpotifyDevicesProvider = ({
+  children,
+}: {
+  children: ReactNode
+}) => {
   const value = useSpotifyDevices()
   return (
     <SpotifyDevicesContext.Provider value={value}>

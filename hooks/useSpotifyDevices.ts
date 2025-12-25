@@ -21,7 +21,7 @@ export const useSpotifyDevices = () => {
   const [debouncedTrackName] = useDebounce(spotifyData.trackName, 500)
 
   const fetchDevices = useCallback(async () => {
-    if (status !== 'authenticated' || !spotifyData.accessToken) {
+    if (status !== 'authenticated') {
       return
     }
     setIsLoading(true)
@@ -46,7 +46,7 @@ export const useSpotifyDevices = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [status])
+  }, [status, spotifyData.trackName])
 
   useEffect(() => {
     fetchDevices()
