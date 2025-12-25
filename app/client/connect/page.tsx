@@ -91,6 +91,7 @@ export default function ConnectPage() {
       workoutStatus={workoutStatus}
       onStartWorkout={startWorkout}
       onEndWorkout={endWorkout}
+      maxHr={maxHr}
     />
   )
 }
