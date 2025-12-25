@@ -338,12 +338,14 @@ describe('useBluetoothHRM', () => {
     await act(async () => {
       try {
         await result.current.connectAndStream('Test User', 30)
-      } catch (e) {
+      } catch (_e) {
         // Ignore the error
       }
     })
 
     // Verify that the error message is displayed
-    expect(result.current.deviceStatus).toContain('Failed: Error: Connection failed')
+    expect(result.current.deviceStatus).toContain(
+      'Failed: Error: Connection failed'
+    )
   })
 })
