@@ -30,7 +30,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 
 const hrmDataRepository = new HrmDataRepository()
-import { UnitSystem } from '../utils/units'
+import { UnitSystem } from '../utils/units.js'
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<

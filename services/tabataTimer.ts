@@ -5,8 +5,8 @@
  * PREPARE countdown that runs before both modes begin.
  * Pushes updates to the WebSocket manager via the injected broadcast function.
  */
-import { ServerMessage } from '../types/websocket'
-import { TimerData, TimerMode, TimerPhase } from '../types/core'
+import { ServerMessage } from '../types/websocket.js'
+import { TimerData, TimerMode, TimerPhase } from '../types/core.js'
 
 // --- Tabata Constants ---
 const DEFAULT_WORK_DURATION = 20 // seconds

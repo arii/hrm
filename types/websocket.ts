@@ -9,7 +9,7 @@ import type {
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
-} from './core'
+} from './core.js'
 
 // --- WebSocket Connection & Augmentation ---
 
