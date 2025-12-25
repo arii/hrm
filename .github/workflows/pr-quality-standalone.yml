@@ -376,6 +376,7 @@ jobs:
 
       - name: Clean Workspace (Preserve Cache)
         if: always()
+        continue-on-error: true
         run: |
           # Delete everything EXCEPT .next and node_modules
           find . -maxdepth 1 -mindepth 1 \
