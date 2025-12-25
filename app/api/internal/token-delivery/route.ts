@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const secretHeader = req.headers.get('x-internal-token-secret') || ''
     const expected = process.env.INTERNAL_TOKEN_DELIVERY_SECRET || ''
     if (expected && secretHeader !== expected) {
-      throw new ApiError(401, 'Unauthorized')
+      throw new ApiError('Unauthorized', 401)
     }
 
     // Logic is handled by server middleware before reaching here.

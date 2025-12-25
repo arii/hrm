@@ -386,10 +386,7 @@ export class SpotifyPolling implements SpotifyService {
       case 'SET_VOLUME':
         if (volume !== undefined) {
           const clampedVolume = Math.max(0, Math.min(100, Math.round(volume)))
-          await this.sdk!.player.setPlaybackVolume(
-            clampedVolume.toString(),
-            deviceId
-          )
+          await this.sdk!.player.setPlaybackVolume(clampedVolume as any, deviceId)
         }
         break
       case 'LOGIN':

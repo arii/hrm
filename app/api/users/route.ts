@@ -2,7 +2,7 @@
 import { withValidation } from '@/lib/middleware/validation'
 import { CreateUserProfileSchema } from '@/lib/validation/schemas'
 import { UserProfile } from '@/types/core'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -17,8 +17,8 @@ import { v4 as uuidv4 } from 'uuid'
  * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
 async function createUser(
-  _req: Request,
-  { body }: { body: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> }
+  _req: NextRequest,
+  body: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<NextResponse> {
   // In a real application, you would save the user to a database.
   // For this example, we'll just return the created user.
@@ -32,6 +32,4 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST = withValidation({ schema: CreateUserProfileSchema })(
-  createUser
-)
+export const POST = withValidation(CreateUserProfileSchema, createUser)
