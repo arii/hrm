@@ -77,3 +77,72 @@ export const broadcast = (
     }
   })
 }
+
+/**
+ * Monitors WebSocket connections, terminates stale ones, and performs periodic heartbeats.
+ */
+export class ConnectionMonitor {
+  private wss: WebSocketServer
+  private watchdogInterval: number
+  private intervalId: NodeJS.Timeout | null = null
+
+  /**
+   * @param wss The WebSocketServer instance to monitor.
+   * @param watchdogInterval The interval in milliseconds to check for stale connections.
+   */
+  constructor(
+    wss: WebSocketServer,
+    watchdogInterval: number = parseInt(
+      process.env.WEBSOCKET_WATCHDOG_INTERVAL || '30000',
+      10
+    )
+  ) {
+    this.wss = wss
+    this.watchdogInterval = watchdogInterval
+  }
+
+  /**
+   * Starts the connection monitoring process.
+   */
+  start(): void {
+    if (this.intervalId) {
+      logger.warn('ConnectionMonitor is already running.')
+      return
+    }
+
+    this.intervalId = setInterval(() => {
+      this.wss.clients.forEach((ws) => {
+        const extWs = ws as ExtWebSocket
+
+        if (extWs.isAlive === false) {
+          logger.warn(
+            { clientId: extWs.clientId },
+            'Terminating stale WebSocket connection due to missed heartbeat.'
+          )
+          return extWs.terminate()
+        }
+
+        extWs.isAlive = false
+        extWs.ping(() => {
+          /* no-op */
+        })
+      })
+    }, this.watchdogInterval)
+
+    logger.info(
+      { interval: this.watchdogInterval },
+      'ConnectionMonitor started.'
+    )
+  }
+
+  /**
+   * Stops the connection monitoring process.
+   */
+  stop(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId)
+      this.intervalId = null
+      logger.info('ConnectionMonitor stopped.')
+    }
+  }
+}

@@ -20,7 +20,7 @@ import type {
  */
 export interface ExtWebSocket extends WebSocket {
   clientId: string
-  lastPingTime: number
+  isAlive: boolean
   clientType?: 'dashboard' | 'controller'
 }
 
