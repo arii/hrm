@@ -110,23 +110,26 @@ const SpotifyDisplay = () => {
     window.location.reload()
   }
 
-  const sendSpotifyCommand = (
-    command:
-      | 'PLAY'
-      | 'PAUSE'
-      | 'NEXT'
-      | 'PREVIOUS'
-      | 'TRANSFER_PLAYBACK'
-      | 'SET_VOLUME',
-    payload?: Record<string, unknown>
-  ) => {
-    const message: SpotifyCommandMessage = {
-      type: 'SPOTIFY_COMMAND',
-      command,
-      ...payload,
-    }
-    sendData(message)
-  }
+  const sendSpotifyCommand = useCallback(
+    (
+      command:
+        | 'PLAY'
+        | 'PAUSE'
+        | 'NEXT'
+        | 'PREVIOUS'
+        | 'TRANSFER_PLAYBACK'
+        | 'SET_VOLUME',
+      payload?: Record<string, unknown>
+    ) => {
+      const message: SpotifyCommandMessage = {
+        type: 'SPOTIFY_COMMAND',
+        command,
+        ...payload,
+      }
+      sendData(message)
+    },
+    [sendData]
+  )
 
   const handlePlayPauseToggle = () => {
     const command = spotifyData.isPlaying ? 'PAUSE' : 'PLAY'
@@ -147,7 +150,7 @@ const SpotifyDisplay = () => {
         sendSpotifyCommand('SET_VOLUME', { volume })
       }, 300)
     },
-    [sendData]
+    [sendSpotifyCommand]
   )
 
   const handleVolumeChange = (newVolume: number) => {
