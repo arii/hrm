@@ -8,7 +8,7 @@ on:
 
 jobs:
   fix-lint:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: write # Required to push changes back to the PR
     steps:
