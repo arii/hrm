@@ -208,6 +208,7 @@ export class SpotifyTokenManager {
   }
 
   async getValidAccessToken(): Promise<string | null> {
+    this.loadToken()
     if (!this.currentToken) return null
 
     // Check if token needs refresh
