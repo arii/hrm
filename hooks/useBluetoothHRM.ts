@@ -409,7 +409,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight,
+        weight: userWeight ?? undefined,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
