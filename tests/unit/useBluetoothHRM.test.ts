@@ -120,7 +120,13 @@ describe('useBluetoothHRM', () => {
     })
   }
 
-  /** Helper to advance timers just enough to trigger a data liveness timeout */
+  /**
+   * Advances Jest's fake timers just enough to trigger the data liveness watchdog.
+   * The watchdog checks for new data every 2 seconds. This function calculates
+   * the smallest time advancement needed to ensure a watchdog check occurs
+   * *after* the specified timeout has elapsed.
+   * @param {number} timeoutMs - The data liveness timeout period in milliseconds.
+   */
   const triggerTimeout = (timeoutMs: number) => {
     const watchdogInterval = 2000 // The interval at which the watchdog checks for data
     // Calculate the time of the first watchdog check that will occur *after* the timeout has passed.
@@ -132,7 +138,11 @@ describe('useBluetoothHRM', () => {
     })
   }
 
-  /** Helper to simulate a full disconnection and reconnection cycle */
+  /**
+   * Simulates a full device disconnection and successful reconnection cycle.
+   * This helper function orchestrates the sequence of events that the
+   * `useBluetoothHRM` hook expects during a signal loss and recovery scenario.
+   */
   const simulateReconnection = async () => {
     // 1. Simulate gatt disconnected state
     Object.defineProperty(mockDevice.gatt, 'connected', {
