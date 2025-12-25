@@ -24,6 +24,7 @@ import { getBaseURL } from './utils/urls.js'
 import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import { API_INTERNAL_TOKEN_DELIVERY } from './constants/apiEndpoints.js'
 import rateLimit from 'express-rate-limit'
 
 const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
@@ -198,9 +199,27 @@ app
     )
 
     // Handle all Next.js routing (pages, API routes, etc.)
-    // Token delivery is now handled reliably by the Next.js API route at /api/internal/token-delivery.
-    // The legacy interception logic has been removed.
-    expressApp.use((req: Request, res: Response) => {
+    // Token delivery is handled by Next.js API route at /api/internal/token-delivery
+    expressApp.use(async (req: Request, res: Response) => {
+      // Intercept token delivery POST and force Spotify poll
+      if (
+        req.method === 'POST' &&
+        req.url &&
+        req.url.includes(API_INTERNAL_TOKEN_DELIVERY)
+      ) {
+        // Await the token update and handle potential errors
+        if (req.body) {
+          try {
+            // Await the handler to ensure sequential execution and catch errors
+            await spotifyService.handleTokenUpdate(req.body)
+          } catch (err) {
+            logger.error(
+              { err },
+              'Error during synchronous token update handling'
+            )
+          }
+        }
+      }
       return nextRequestHandler(req, res)
     }) // --- HTTP/WS Upgrade Handling ---
 

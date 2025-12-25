@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import { jest } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import LoadingIndicator from '@/components/LoadingIndicator'

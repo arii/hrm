@@ -17,7 +17,6 @@ import {
   logSpotifyCommandError,
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
-import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -49,7 +48,6 @@ export class SpotifyPolling implements SpotifyService {
   private lastPlaybackState: boolean | null = null
 
   private state: SpotifyData = {
-    trackId: null,
     trackName: 'Awaiting Login...',
     artist: '',
     albumName: '',
@@ -60,7 +58,7 @@ export class SpotifyPolling implements SpotifyService {
     isMuted: false,
   }
 
-  private sdk: SafeSpotifyApi | null = null
+  private sdk: SpotifyApi | null = null
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
@@ -103,12 +101,10 @@ export class SpotifyPolling implements SpotifyService {
     // We handle refreshing manually via SpotifyTokenManager.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
-    const sdk = SpotifyApi.withAccessToken(
+    this.sdk = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID || '',
       tokenWithoutRefresh as AccessToken
     )
-    // Wrap the SDK with our safe API to handle optional deviceIds correctly.
-    this.sdk = createSafeSpotifyApi(sdk)
   }
 
   private async checkAndRefreshSdkToken() {
@@ -221,7 +217,6 @@ export class SpotifyPolling implements SpotifyService {
           this.lastPlaybackState = false
           this.state = {
             ...this.state,
-            trackId: null,
             trackName: 'Nothing is currently playing.',
             artist: '',
             albumName: '',
@@ -248,7 +243,6 @@ export class SpotifyPolling implements SpotifyService {
         this.lastPlaybackState = isPlaying
 
         const trackName = item.name
-        const trackId = item.id
         let artistName = ''
         let albumName = ''
         let albumArtUrl = ''
@@ -267,7 +261,6 @@ export class SpotifyPolling implements SpotifyService {
 
         this.state = {
           ...this.state,
-          trackId,
           trackName,
           artist: artistName,
           albumName,
@@ -295,10 +288,9 @@ export class SpotifyPolling implements SpotifyService {
     try {
       const response = await this.sdk.player.getAvailableDevices()
       const validDevices: SpotifyDevice[] = (response.devices || [])
-        .filter((d: Device): d is Device & { id: string } => d.id !== null)
-        .map((d) => ({
-          // Non-null assertion is safe here due to the type guard in the filter.
-          id: d.id,
+        .filter((d: Device) => d.id !== null)
+        .map((d: Device) => ({
+          id: d.id as string,
           is_active: d.is_active,
           is_private_session: d.is_private_session,
           is_restricted: d.is_restricted,
@@ -359,20 +351,32 @@ export class SpotifyPolling implements SpotifyService {
     switch (command) {
       case 'PLAY':
         if (playlistUri) {
-          // The safe API wrapper handles the undefined deviceId correctly.
-          await this.sdk!.player.startResumePlayback(deviceId, playlistUri)
+          // If deviceId is undefined, SDK targets active device
+          // Type assertion needed because SDK types incorrectly require string
+          await this.sdk!.player.startResumePlayback(
+            (deviceId || undefined) as unknown as string,
+            playlistUri
+          )
         } else {
-          await this.sdk!.player.startResumePlayback(deviceId)
+          await this.sdk!.player.startResumePlayback(
+            (deviceId || undefined) as unknown as string
+          )
         }
         break
       case 'PAUSE':
-        await this.sdk!.player.pausePlayback(deviceId)
+        await this.sdk!.player.pausePlayback(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'NEXT':
-        await this.sdk!.player.skipToNext(deviceId)
+        await this.sdk!.player.skipToNext(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'PREVIOUS':
-        await this.sdk!.player.skipToPrevious(deviceId)
+        await this.sdk!.player.skipToPrevious(
+          (deviceId || undefined) as unknown as string
+        )
         break
       case 'TRANSFER_PLAYBACK':
         if (deviceId) {

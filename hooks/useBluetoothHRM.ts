@@ -273,8 +273,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const now = Date.now()
             lastDataTime.current = now
 
-            const { name, age, weightKg, gender } =
-              userDetailsRef.current || {}
+            const { name, age, weightKg, gender } = userDetailsRef.current || {}
 
             const dt = now - lastHrTime
             if (dt > 0 && age && weightKg && gender) {

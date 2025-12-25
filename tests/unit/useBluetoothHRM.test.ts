@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import { jest } from '@jest/globals'
 import { renderHook, act } from '@testing-library/react'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -240,5 +239,28 @@ describe('useBluetoothHRM', () => {
 
     expect(result.current.isConnected).toBe(true)
     expect(result.current.disconnectionReason).toBe(null)
+  })
+
+  it('should calculate calories correctly', async () => {
+    const { result } = renderHook(() => useBluetoothHRM())
+
+    await act(async () => {
+      result.current.connectAndStream('Test User', 30, 70, 'male')
+      await Promise.resolve()
+    })
+
+    const characteristicCallback =
+      mockCharacteristic.addEventListener.mock.calls[0][1]
+
+    const dataView = new DataView(new ArrayBuffer(2))
+    dataView.setUint8(0, 0) // 8-bit heart rate
+    dataView.setUint8(1, 150) // HR = 150
+
+    act(() => {
+      jest.advanceTimersByTime(1000)
+      characteristicCallback({ target: { value: dataView } })
+    })
+
+    expect(result.current.totalCalories).toBeGreaterThan(0)
   })
 })

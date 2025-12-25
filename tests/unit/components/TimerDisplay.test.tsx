@@ -1,6 +1,5 @@
 /** @jest-environment jsdom */
 
-import { jest } from '@jest/globals'
 import TimerDisplay from '@/components/TimerDisplay'
 import { AudioProvider } from '@/context/AudioContext'
 import { useWebSocket } from '@/context/WebSocketContext'

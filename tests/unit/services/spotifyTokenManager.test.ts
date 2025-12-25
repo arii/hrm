@@ -1,5 +1,4 @@
 // File: tests/unit/services/spotifyTokenManager.test.ts
-import { jest } from '@jest/globals'
 import {
   SpotifyTokenManager,
   TokenRecord,
@@ -7,12 +6,7 @@ import {
 import fs from 'fs'
 import path from 'path'
 
-jest.mock('fs', () => ({
-  existsSync: jest.fn(),
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
-}))
+jest.mock('fs')
 
 describe('SpotifyTokenManager', () => {
   const logDir = '/tmp/logs'
