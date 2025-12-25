@@ -2,31 +2,34 @@
 
 import { IconButton, Menu, MenuItem } from '@mui/material'
 import SpeakerIcon from '@mui/icons-material/Speaker'
-import { MouseEvent } from 'react'
-import { SpotifyDevice } from '@/types/core'
+import { useState, MouseEvent } from 'react'
+import { useSharedSpotifyDevices } from '@/context/SpotifyDevicesContext'
 
-interface SpotifyDeviceSelectorWrapperProps {
-  availableDevices: SpotifyDevice[]
-  deviceMenuAnchor: HTMLElement | null
-  onDeviceSelect: (deviceId: string) => void
-  onMenuOpen: (event: MouseEvent<HTMLElement>) => void
-  onMenuClose: () => void
-}
+const SpotifyDeviceSelectorWrapper = () => {
+  const { devices, handleDeviceSelected, selectedDeviceId } =
+    useSharedSpotifyDevices()
 
-const SpotifyDeviceSelectorWrapper = ({
-  availableDevices,
-  deviceMenuAnchor,
-  onDeviceSelect,
-  onMenuOpen,
-  onMenuClose,
-}: SpotifyDeviceSelectorWrapperProps) => {
-  const deviceMenuOpen = Boolean(deviceMenuAnchor)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleSelect = (deviceId: string) => {
+    handleDeviceSelected(deviceId)
+    handleClose()
+  }
 
   return (
     <>
       <IconButton
         size="small"
-        onClick={onMenuOpen}
+        onClick={handleClick}
         sx={{
           color: 'common.white',
           '&:hover': { backgroundColor: 'grey.800' },
@@ -36,9 +39,9 @@ const SpotifyDeviceSelectorWrapper = ({
         <SpeakerIcon fontSize="small" />
       </IconButton>
       <Menu
-        anchorEl={deviceMenuAnchor}
-        open={deviceMenuOpen}
-        onClose={onMenuClose}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
         anchorOrigin={{
           vertical: 'top',
           horizontal: 'right',
@@ -48,14 +51,14 @@ const SpotifyDeviceSelectorWrapper = ({
           horizontal: 'right',
         }}
       >
-        {availableDevices.length > 0 ? (
-          availableDevices.map((device) => (
+        {devices.length > 0 ? (
+          devices.map((device) => (
             <MenuItem
               key={device.id}
-              onClick={() => onDeviceSelect(device.id)}
-              selected={device.is_active}
+              onClick={() => handleSelect(device.id)}
+              selected={device.id === selectedDeviceId}
             >
-              {device.name} {device.is_active && '✓'}
+              {device.name}
             </MenuItem>
           ))
         ) : (
