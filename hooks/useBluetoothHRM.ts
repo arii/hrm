@@ -338,10 +338,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-              weight: weight,
             }
             if (typeof age === 'number') {
               metadataData.age = age
+            }
+            if (typeof weight === 'number') {
+              metadataData.weight = weight
             }
 
             const metadata: HrmMetadataUpdateMessage = {
