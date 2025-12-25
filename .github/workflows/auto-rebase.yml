@@ -9,7 +9,7 @@ on:
 
 jobs:
   rebase:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
       - name: Rebase PRs
         uses: peter-evans/rebase@v3
         with:
-          token: ${{ secrets.PAT_TOKEN }} # Use a PAT to ensure CI workflows trigger after rebase
+          token: ${{ secrets.PAT_TOKEN }} # A PAT with 'repo' scope is required to allow the action to push to protected branches and trigger CI.
           base: main
           # "Intelligent" behavior: Exclude branches with specific labels (e.g., if you are in the middle of a complex refactor)
           exclude-labels: |
