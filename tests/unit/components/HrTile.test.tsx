@@ -38,7 +38,9 @@ describe('HrTile', () => {
   it('renders the correct background and text color for the Peak zone', () => {
     render(<HrTile name="Test" bpm={180} percentMax={95} maxHr={190} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${mockTheme.palette.primary.main}`)
+    expect(card).toHaveStyle(
+      `background-color: ${mockTheme.palette.primary.main}`
+    )
     expect(card).toHaveStyle(
       `color: ${mockTheme.palette.getContrastText(mockTheme.palette.primary.main)}`
     )
@@ -47,7 +49,9 @@ describe('HrTile', () => {
   it('renders the correct background and text color for the Cardio zone', () => {
     render(<HrTile name="Test" bpm={160} percentMax={85} maxHr={190} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${mockTheme.palette.warning.dark}`)
+    expect(card).toHaveStyle(
+      `background-color: ${mockTheme.palette.warning.dark}`
+    )
     expect(card).toHaveStyle(
       `color: ${mockTheme.palette.getContrastText(mockTheme.palette.warning.dark)}`
     )
@@ -56,7 +60,9 @@ describe('HrTile', () => {
   it('renders the correct background and text color for the Fat Burn zone', () => {
     render(<HrTile name="Test" bpm={140} percentMax={75} maxHr={190} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${mockTheme.palette.success.main}`)
+    expect(card).toHaveStyle(
+      `background-color: ${mockTheme.palette.success.main}`
+    )
     expect(card).toHaveStyle(
       `color: ${mockTheme.palette.getContrastText(mockTheme.palette.success.main)}`
     )
@@ -65,7 +71,9 @@ describe('HrTile', () => {
   it('renders the correct background and text color for the Warm-up zone', () => {
     render(<HrTile name="Test" bpm={120} percentMax={65} maxHr={190} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${mockTheme.palette.secondary.main}`)
+    expect(card).toHaveStyle(
+      `background-color: ${mockTheme.palette.secondary.main}`
+    )
     expect(card).toHaveStyle(
       `color: ${mockTheme.palette.getContrastText(mockTheme.palette.secondary.main)}`
     )

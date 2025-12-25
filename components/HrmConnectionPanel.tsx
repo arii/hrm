@@ -144,6 +144,7 @@ const HrmConnectionPanel = () => {
               calories={user.calories}
               isConnected={user.isConnected}
               isAlerting={user.isAlerting}
+              maxHr={user.maxHr || MAX_HR_DEFAULT}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}
             />
           </Box>
