@@ -2,7 +2,6 @@ import { WebSocketContextType, HrmData } from '@/context/WebSocketContext'
 import { SpotifyData, TimerData } from '@/types/websocket'
 
 export const mockSpotifyData: SpotifyData = {
-  trackId: 'test-track-id',
   trackName: 'Test Track',
   artist: 'Test Artist',
   albumName: 'Test Album',
@@ -15,7 +14,6 @@ export const mockSpotifyData: SpotifyData = {
 }
 
 export const mockSpotifyDataNoActivePlayback: SpotifyData = {
-  trackId: null,
   trackName: 'Awaiting Login...',
   artist: '',
   albumName: '',

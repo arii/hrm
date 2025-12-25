@@ -46,7 +46,8 @@ const config = {
   ],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^next-auth/providers/spotify$':
+      '<rootDir>/node_modules/next-auth/providers/spotify.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,

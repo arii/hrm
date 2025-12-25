@@ -143,7 +143,7 @@ jobs:
           name: Infrastructure (Dev)
           path: test-results/infra-dev-results.xml
           reporter: java-junit
-        continue-on-error: true
+          fail-on-error: true
 
       - name: Lint Code
         id: lint
@@ -175,7 +175,7 @@ jobs:
           name: Infrastructure (Prod)
           path: test-results/infra-prod-results.xml
           reporter: java-junit
-        continue-on-error: true
+          fail-on-error: true
 
       - name: Run Unit Tests
         id: unit_tests
@@ -192,7 +192,7 @@ jobs:
           name: Unit Tests Report # The name of the check run
           path: test-results/unit-results.xml # Path to the generated XML file
           reporter: java-junit
-        continue-on-error: true # Don't fail on reporter issues; rely on test step outcome
+          fail-on-error: true # Fails the overall workflow job if any tests failed
 
       - name: Start Application for Performance Test
         if: always() && steps.build.outcome == 'success'
@@ -215,7 +215,7 @@ jobs:
           name: Performance Tests Report
           path: test-results/perf-results.xml
           reporter: java-junit
-        continue-on-error: true
+          fail-on-error: true
 
       - name: Upload Performance Metrics
         if: always()
@@ -243,7 +243,7 @@ jobs:
           name: Visual Tests Report
           path: test-results/results.xml
           reporter: java-junit
-        continue-on-error: true
+          fail-on-error: true
 
       - name: Merge Playwright Reports
         if: always() && steps.visual_tests.outcome != 'skipped'
@@ -264,7 +264,7 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: failure()
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           # Pass all test outcomes to the script as env vars for easier access
@@ -376,7 +376,6 @@ jobs:
 
       - name: Clean Workspace (Preserve Cache)
         if: always()
-        continue-on-error: true
         run: |
           # Delete everything EXCEPT .next and node_modules
           find . -maxdepth 1 -mindepth 1 \

@@ -135,7 +135,6 @@ export interface SpotifyDevice {
  * Represents the current playback state of Spotify.
  */
 export interface SpotifyPlaybackState {
-  trackId: string | null
   trackName: string
   artist: string
   albumName: string
