@@ -15,7 +15,7 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
-import { HR_ZONE_DEFINITIONS } from '@/utils/visualization'
+import { calculateHrZone } from '../lib/hrm/zones'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -312,19 +312,15 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
               return newHistory
             })
 
-            const calculatedMaxHr = calculateMaxHr(age || 0)
-            const currentZone =
-              age &&
-              HR_ZONE_DEFINITIONS.find(
-                (zone) =>
-                  heartRate >= calculatedMaxHr * zone.range[0] &&
-                  heartRate <= calculatedMaxHr * zone.range[1]
-              )
-            if (currentZone) {
-              setHrZoneDurations((prev) => ({
-                ...prev,
-                [currentZone.name]: (prev[currentZone.name] || 0) + dt,
-              }))
+            const calculatedMaxHr = calculateMaxHr(age)
+            if (typeof age === 'number' && age > 0 && calculatedMaxHr) {
+              const { zoneName } = calculateHrZone(heartRate, calculatedMaxHr)
+              if (zoneName) {
+                setHrZoneDurations((prev) => ({
+                  ...prev,
+                  [zoneName]: (prev[zoneName] || 0) + dt,
+                }))
+              }
             }
 
             const metadataData: HrmMetadataUpdateData = {
