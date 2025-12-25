@@ -12,7 +12,7 @@ import {
   InputLabel,
   Box,
   SelectChangeEvent,
-} from '@mui/orial'
+} from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import { DEFAULT_USER_NAME, CALORIE_DEFAULTS } from '@/utils/constants'
 import { kgToLbs } from '@/utils/units'
