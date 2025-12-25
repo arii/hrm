@@ -25,6 +25,9 @@ export class SpotifyAppError extends AppError {
   }
 }
 
+// Alias for backward compatibility with incorrect import
+export { SpotifyAppError as ApiError }
+
 /**
  * Represents an error when a resource is not found.
  */
