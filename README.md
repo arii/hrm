@@ -348,12 +348,6 @@ NEXTAUTH_URL=http://127.0.0.1:3000
 NEXTAUTH_SECRET=your_random_secret_here
 ```
 
-### Environment Variable Validation
-
-This project uses Zod to validate environment variables at startup. The schema is defined in `lib/env.ts`. If any required environment variables are missing or invalid, the application will fail to start and print an error message indicating which variables are problematic.
-
-This ensures that the application is always running with a valid configuration and prevents runtime errors due to missing or malformed environment variables.
-
 ### Spotify Setup
 
 1. Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).

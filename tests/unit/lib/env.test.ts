@@ -1,4 +1,6 @@
-import { envSchema } from '../../../lib/env'
+
+import { envSchema } from '../../../lib/env';
+
 
 describe('envSchema', () => {
   it('should validate a correct environment', () => {
@@ -18,35 +20,35 @@ describe('envSchema', () => {
       GOOGLE_DOC_WORKOUT_URL: 'https://docs.google.com/document/d/123/edit',
       NEXT_PUBLIC_USE_NATIVE_TABLE: 'true',
       TESTING: 'true',
-    }
-    expect(() => envSchema.parse(correctEnv)).not.toThrow()
-  })
+    };
+    expect(() => envSchema.parse(correctEnv)).not.toThrow();
+  });
 
   it('should throw an error if NEXTAUTH_SECRET is missing', () => {
     const incorrectEnv = {
       // NEXTAUTH_SECRET is missing
-    }
-    expect(() => envSchema.parse(incorrectEnv)).toThrow()
-  })
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
 
   it('should throw an error if NEXTAUTH_URL is not a valid URL', () => {
     const incorrectEnv = {
       NEXTAUTH_URL: 'not-a-url',
-    }
-    expect(() => envSchema.parse(incorrectEnv)).toThrow()
-  })
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
 
   it('should throw an error if a required variable is missing', () => {
     const incorrectEnv = {
       // SPOTIFY_CLIENT_ID is missing
-    }
-    expect(() => envSchema.parse(incorrectEnv)).toThrow()
-  })
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
 
   it('should throw an error if a variable has the wrong type', () => {
     const incorrectEnv = {
       PORT: 'not-a-number',
-    }
-    expect(() => envSchema.parse(incorrectEnv)).toThrow()
-  })
-})
+    };
+    expect(() => envSchema.parse(incorrectEnv)).toThrow();
+  });
+});
