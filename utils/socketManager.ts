@@ -16,7 +16,11 @@ import {
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import { broadcast, sendWebSocketMessage } from './websocketUtils.js'
+import {
+  broadcast,
+  sendWebSocketMessage,
+  ConnectionMonitor,
+} from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
@@ -27,6 +31,7 @@ import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
+let connectionMonitor: ConnectionMonitor
 
 const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
@@ -44,11 +49,17 @@ const initSocketManager = (
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
+  connectionMonitor = new ConnectionMonitor(wss)
+  connectionMonitor.start()
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
+    extWs.isAlive = true
+    extWs.on('pong', () => {
+      extWs.isAlive = true
+    })
+
     extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    extWs.lastPingTime = Date.now() // Initialize on connect
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
@@ -77,25 +88,8 @@ const initSocketManager = (
     })
   })
 
-  // Server-side watchdog to clean up stale connections.
-  const WATCHDOG_INTERVAL = 30000 // 30 seconds
-  const CLIENT_INACTIVITY_TIMEOUT = 120000 // 2 minutes
-
-  const interval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      const extWs = ws as ExtWebSocket
-      if (Date.now() - extWs.lastPingTime > CLIENT_INACTIVITY_TIMEOUT) {
-        logger.warn(
-          { clientId: extWs.clientId },
-          'Terminating stale WebSocket connection'
-        )
-        ws.terminate()
-      }
-    })
-  }, WATCHDOG_INTERVAL)
-
   wss.on('close', () => {
-    clearInterval(interval)
+    connectionMonitor.stop()
   })
 }
 
@@ -132,8 +126,9 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'PING': {
-        ws.lastPingTime = Date.now()
-        sendWebSocketMessage(ws, { type: 'PONG' }, 'socketManager.PING')
+        // This is now a no-op. The server relies on native WebSocket ping/pong
+        // frames for heartbeat. The case is retained for backward
+        // compatibility with older clients that might still send this message.
         break
       }
       case 'REGISTER_CLIENT': {
