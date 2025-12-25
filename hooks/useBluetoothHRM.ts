@@ -400,7 +400,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     async (
       userName?: string,
       userAge?: number,
-      userWeight?: number
+      userWeight?: number | null
     ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
@@ -409,7 +409,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight,
+        weight: userWeight ?? undefined,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
