@@ -3,7 +3,7 @@ name: Auto Rebase
 on:
   push:
     branches:
-      - main
+      - leader
   # Allows manual triggering from the Actions tab
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
         uses: peter-evans/rebase@v3
         with:
           token: ${{ secrets.PAT_TOKEN }} # A PAT with 'repo' scope is required to allow the action to push to protected branches and trigger CI.
-          base: main
+          base: leader
           # "Intelligent" behavior: Exclude branches with specific labels (e.g., if you are in the middle of a complex refactor)
           exclude-labels: |
             no-rebase
