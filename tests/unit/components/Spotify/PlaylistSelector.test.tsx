@@ -15,19 +15,19 @@ const mockPlaylists = {
 
 describe('PlaylistSelector', () => {
   beforeEach(() => {
-    global.fetch = jest.fn(() =>
+    global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockPlaylists),
       })
-    ) as jest.Mock
+    ) as vi.Mock
   })
 
   it('should fetch and display playlists on render', async () => {
     render(
       <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
-        onPlaylistPlay={jest.fn()}
+        onPlaylistSelected={vi.fn()}
+        onPlaylistPlay={vi.fn()}
       />
     )
 
@@ -40,11 +40,11 @@ describe('PlaylistSelector', () => {
   })
 
   it('should call onPlaylistSelected with the correct URI when a playlist is selected from the list', async () => {
-    const onPlaylistSelected = jest.fn()
+    const onPlaylistSelected = vi.fn()
     render(
       <PlaylistSelector
         onPlaylistSelected={onPlaylistSelected}
-        onPlaylistPlay={jest.fn()}
+        onPlaylistPlay={vi.fn()}
       />
     )
     const user = userEvent.setup()
@@ -57,10 +57,10 @@ describe('PlaylistSelector', () => {
   })
 
   it('should call onPlaylistPlay with the correct URI when the play button is clicked', async () => {
-    const onPlaylistPlay = jest.fn()
+    const onPlaylistPlay = vi.fn()
     render(
       <PlaylistSelector
-        onPlaylistSelected={jest.fn()}
+        onPlaylistSelected={vi.fn()}
         onPlaylistPlay={onPlaylistPlay}
       />
     )

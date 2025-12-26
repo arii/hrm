@@ -5,12 +5,12 @@ import { GET } from '../../../../../../app/api/health/detailed/route'
 import * as healthCheck from '../../../../../../lib/healthCheck'
 
 // Mock the healthCheck module
-jest.mock('../../../../../../lib/healthCheck')
+vi.mock('../../../../../../lib/healthCheck')
 
-global.fetch = jest.fn()
+global.fetch = vi.fn()
 
 describe('/api/health/detailed', () => {
-  const mockedHealthCheck = healthCheck as jest.Mocked<typeof healthCheck>
+  const mockedHealthCheck = healthCheck as vi.Mocked<typeof healthCheck>
 
   beforeAll(() => {
     process.env.NEXTAUTH_URL = 'http://localhost:3000'
@@ -21,7 +21,7 @@ describe('/api/health/detailed', () => {
   })
 
   beforeEach(() => {
-    jest.resetAllMocks()
+    vi.resetAllMocks()
   })
 
   it('should return a healthy response when all checks pass', async () => {
@@ -34,7 +34,7 @@ describe('/api/health/detailed', () => {
       healthy: true,
       details: {},
     })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    ;(global.fetch as vi.Mock).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ healthy: true, details: {} }),
     })
@@ -58,7 +58,7 @@ describe('/api/health/detailed', () => {
       healthy: false, // Spotify check fails
       details: {},
     })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    ;(global.fetch as vi.Mock).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ healthy: true, details: {} }),
     })
@@ -82,7 +82,7 @@ describe('/api/health/detailed', () => {
       healthy: false, // Spotify check fails
       details: {},
     })
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    ;(global.fetch as vi.Mock).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ healthy: false, details: {} }), // Internal services fail
     })

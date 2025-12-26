@@ -9,14 +9,14 @@ import { WebSocketContextType, SpotifyData } from '@/types/websocket'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 
 // Mock the uuid module
-jest.mock('uuid', () => ({
+vi.mock('uuid', () => ({
   v4: () => 'mock-uuid-1234',
 }))
 
 // Mock the useSpotifyWebPlayback hook
-jest.mock('@/hooks/useSpotifyWebPlayback')
+vi.mock('@/hooks/useSpotifyWebPlayback')
 
-const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
+const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as vi.Mock
 
 // Mock the WebSocketContext
 const mockWebSocketContext = (
@@ -25,7 +25,7 @@ const mockWebSocketContext = (
 ): WebSocketContextType => ({
   spotifyData: spotifyData as SpotifyData,
   connectionStatus,
-  sendData: jest.fn(),
+  sendData: vi.fn(),
   timerData: {
     isRunning: false,
     phase: 'IDLE',

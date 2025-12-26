@@ -10,25 +10,25 @@ import useVolumePreference from '@/hooks/useVolumePreference'
 import '@testing-library/jest-dom'
 
 // Mock the router
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(),
 }))
 
 // Mock the WebSocket context
-jest.mock('@/context/WebSocketContext', () => ({
-  useWebSocket: jest.fn(),
+vi.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: vi.fn(),
 }))
 
 // Mock the volume preference hook
-jest.mock('@/hooks/useVolumePreference')
+vi.mock('@/hooks/useVolumePreference')
 
 describe('components/SpotifyControls', () => {
-  let mockSendData: jest.Mock
+  let mockSendData: vi.Mock
 
   beforeEach(() => {
-    mockSendData = jest.fn()
-    ;(useRouter as jest.Mock).mockReturnValue(mockRouter)
-    ;(useWebSocket as jest.Mock).mockReturnValue({
+    mockSendData = vi.fn()
+    ;(useRouter as vi.Mock).mockReturnValue(mockRouter)
+    ;(useWebSocket as vi.Mock).mockReturnValue({
       connectionStatus: 'Connected',
       spotifyData: {
         trackName: 'Test Track',
@@ -40,16 +40,16 @@ describe('components/SpotifyControls', () => {
       },
       sendData: mockSendData,
     })
-    ;(useVolumePreference as jest.Mock).mockReturnValue({
+    ;(useVolumePreference as vi.Mock).mockReturnValue({
       volume: 50,
       muted: false,
-      setVolume: jest.fn(),
-      toggleMute: jest.fn(),
+      setVolume: vi.fn(),
+      toggleMute: vi.fn(),
     })
   })
 
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('renders Spotify controls with track info', () => {

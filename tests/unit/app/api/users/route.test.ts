@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server'
 import { createValidUserProfile } from '@/tests/unit/test-data/user-data-factory'
 
 // Mock the 'uuid' module
-jest.mock('uuid', () => ({
+vi.mock('uuid', () => ({
   v4: () => 'mock-uuid-v4',
 }))
 
@@ -22,7 +22,7 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await POST(request)
       const newUser = await response.json()
 
       // Assert
@@ -48,14 +48,14 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await POST(request)
       const errorData = await response.json()
 
       // Assert
       expect(response.status).toBe(400)
-      expect(errorData).toHaveProperty('details')
-      expect(Array.isArray(errorData.details)).toBe(true)
-      expect(errorData.details.length).toBeGreaterThan(0)
+      expect(errorData).toHaveProperty('errors')
+      expect(Array.isArray(errorData.errors)).toBe(true)
+      expect(errorData.errors.length).toBeGreaterThan(0)
     })
 
     it('should return 400 for data that does not meet schema constraints', async () => {
@@ -71,15 +71,15 @@ describe('API Route: /api/users', () => {
       })
 
       // Act
-      const response = await POST(request, { params: {} })
+      const response = await POST(request)
       const errorData = await response.json()
 
       // Assert
       expect(response.status).toBe(400)
-      expect(errorData).toHaveProperty('details')
-      expect(Array.isArray(errorData.details)).toBe(true)
+      expect(errorData).toHaveProperty('errors')
+      expect(Array.isArray(errorData.errors)).toBe(true)
       // Expecting errors for both username and email
-      expect(errorData.details.length).toBe(2)
+      expect(errorData.errors.length).toBe(2)
     })
   })
 })

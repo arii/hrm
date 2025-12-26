@@ -1,28 +1,28 @@
 /**
  * @jest-environment node
  */
-import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
+import { describe, expect, it, vi, beforeAll, afterAll } from 'vitest'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 
 // Mock logger
-jest.mock('@/utils/logger', () => ({
+vi.mock('@/utils/logger', () => ({
   __esModule: true,
   default: {
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
   },
 }))
 
 // Mock Service Container
 const mockSpotifyService = {
-  isReady: jest.fn(),
-  handleTokenUpdate: jest.fn(),
+  isReady: vi.fn(),
+  handleTokenUpdate: vi.fn(),
 }
-jest.mock('@/lib/serviceContainer', () => ({
+vi.mock('@/lib/serviceContainer', () => ({
   serviceContainer: {
-    get: jest.fn((serviceName: 'spotifyService') => {
+    get: vi.fn((serviceName: 'spotifyService') => {
       if (serviceName === 'spotifyService') {
         return mockSpotifyService
       }
@@ -93,7 +93,7 @@ describe('POST /api/internal/token-delivery', () => {
         method: 'POST',
       }
     )
-    jest.spyOn(req.headers, 'get').mockImplementationOnce(() => {
+    vi.spyOn(req.headers, 'get').mockImplementationOnce(() => {
       throw new Error('Unexpected failure')
     })
 

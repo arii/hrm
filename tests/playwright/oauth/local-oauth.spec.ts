@@ -16,7 +16,9 @@ const CHROME_PROFILE = process.env.CHROME_PROFILE_PATH
 const EXPECTED_USER = process.env.SPOTIFY_EXPECTED_USER_ID
 
 // Skip in CI environments to prevent rate limiting and auth failures
-test.skip(!!process.env.CI, 'Skipping OAuth local test in CI environment')
+if (process.env.CI) {
+  test.skip(true, 'Skipping OAuth local test in CI environment');
+}
 
 test.describe('Spotify OAuth Integration (Local)', () => {
   let context: BrowserContext

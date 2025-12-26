@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
 import Main from './main'
+import { WebSocketProvider } from '../context/WebSocketContext'
 import './globals.css'
 const inter = Inter({
   subsets: ['latin'],
@@ -37,7 +38,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <Main>{children}</Main>
+        <WebSocketProvider>
+          <Main>{children}</Main>
+        </WebSocketProvider>
       </body>
     </html>
   )

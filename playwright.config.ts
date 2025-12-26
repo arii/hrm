@@ -37,7 +37,7 @@ export default defineConfig({
 
   // Start dev server automatically for local development
   webServer: {
-    command: 'cross-env TESTING=true NEXTAUTH_SECRET=a-super-secret-for-testing pnpm run dev',
+    command: 'pnpm run dev',
     url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',

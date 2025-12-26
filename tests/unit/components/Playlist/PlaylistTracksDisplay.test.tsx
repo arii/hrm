@@ -8,22 +8,22 @@ import { WebSocketContext } from '@/context/WebSocketContext'
 import { formatDuration } from '@/utils/formatters'
 
 // Mock fetch
-global.fetch = jest.fn()
+global.fetch = vi.fn()
 
 describe('PlaylistTracksDisplay', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   const mockContextValue = {
     spotifyData: { isPlaying: false, trackUri: '' },
-    sendData: jest.fn(),
+    sendData: vi.fn(),
     connectionStatus: 'Connected',
     timerData: {},
     hrmData: {},
     lastMessage: null,
-    connect: jest.fn(),
-    disconnect: jest.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
   }
 
   it('should render loading state initially', () => {
@@ -36,7 +36,7 @@ describe('PlaylistTracksDisplay', () => {
   })
 
   it('should render error state', async () => {
-    ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'))
+    ;(fetch as vi.Mock).mockRejectedValueOnce(new Error('Failed to fetch'))
     await act(async () => {
       render(
         <WebSocketContext.Provider value={mockContextValue}>
@@ -50,7 +50,7 @@ describe('PlaylistTracksDisplay', () => {
   })
 
   it('should render empty state', async () => {
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
+    ;(fetch as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ tracks: [], total: 0 }),
     })
@@ -81,7 +81,7 @@ describe('PlaylistTracksDisplay', () => {
       limit: 20,
       offset: 0,
     }
-    ;(fetch as jest.Mock).mockResolvedValueOnce({
+    ;(fetch as vi.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockTracks,
     })

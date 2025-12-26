@@ -8,11 +8,11 @@ import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 // Mock child components that have complex internal logic
-jest.mock('@/app/client/control/components/TimerControls', () => ({
+vi.mock('@/app/client/control/components/TimerControls', () => ({
   __esModule: true,
   default: () => <div data-testid="mock-timer-controls">Timer Controls</div>,
 }))
-jest.mock('@/app/client/control/components/SpotifyControls', () => ({
+vi.mock('@/app/client/control/components/SpotifyControls', () => ({
   __esModule: true,
   default: () => (
     <div data-testid="mock-spotify-controls">Spotify Controls</div>

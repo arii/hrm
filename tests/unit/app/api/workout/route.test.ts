@@ -6,17 +6,17 @@ import { parseGoogleDocTable } from '@/services/googleDocParser'
 import { NextRequest } from 'next/server'
 
 // Mock dependencies
-jest.mock('@/services/googleDocParser')
+vi.mock('@/services/googleDocParser')
 
 // Mock global fetch
-global.fetch = jest.fn()
+global.fetch = vi.fn()
 
-const mockedParseGoogleDocTable = parseGoogleDocTable as jest.Mock
-const mockedFetch = global.fetch as jest.Mock
+const mockedParseGoogleDocTable = parseGoogleDocTable as vi.Mock
+const mockedFetch = global.fetch as vi.Mock
 
 describe('API Route: /api/workout', () => {
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('GET', () => {
@@ -30,11 +30,11 @@ describe('API Route: /api/workout', () => {
     })
 
     describe('when errors are expected', () => {
-      let consoleErrorSpy: jest.SpyInstance
+      let consoleErrorSpy: vi.SpyInstance
 
       beforeAll(() => {
         // Suppress console.error for these specific tests
-        consoleErrorSpy = jest
+        consoleErrorSpy = vi
           .spyOn(console, 'error')
           .mockImplementation(() => {})
       })

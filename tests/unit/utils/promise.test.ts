@@ -5,11 +5,11 @@ import { cancellablePromise } from '@/utils/promise'
 
 describe('cancellablePromise', () => {
   beforeEach(() => {
-    jest.useFakeTimers()
+    vi.useFakeTimers()
   })
 
   afterEach(() => {
-    jest.useRealTimers()
+    vi.useRealTimers()
   })
 
   it('should resolve with the original promise', async () => {
@@ -37,7 +37,7 @@ describe('cancellablePromise', () => {
       timeoutMs: 1000,
       errorMessage: 'timeout',
     })
-    jest.advanceTimersByTime(1000)
+    vi.advanceTimersByTime(1000)
     await expect(cancellable).rejects.toThrow('timeout')
   })
 
@@ -61,7 +61,7 @@ describe('cancellablePromise', () => {
       timeoutMs: 1000,
       errorMessage: 'timeout',
     })
-    jest.advanceTimersByTime(500)
+    vi.advanceTimersByTime(500)
     await expect(cancellable).resolves.toBe('success')
   })
 })
