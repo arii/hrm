@@ -1,4 +1,8 @@
-import express, { type Request, type Response, type NextFunction } from 'express'
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express'
 import 'express-async-errors'
 import request from 'supertest'
 
@@ -6,12 +10,10 @@ describe('Async Error Handling', () => {
   it('should catch errors in async route handlers', async () => {
     const app = express()
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.get('/error', async (_req, _res) => {
       throw new Error('test error')
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       res.status(500).send({ error: err.message })
     })

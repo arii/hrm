@@ -136,13 +136,11 @@ app.prepare().then(async () => {
   expressApp.use((req, res) => handle(req, res))
 
   // 5. Global Error Handler (must be the last middleware)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   expressApp.use(
     (
       err: Error,
       _req: express.Request,
       res: express.Response,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _next: express.NextFunction
     ) => {
       logger.error(err, 'An unhandled error occurred in an Express route')
