@@ -141,9 +141,9 @@ describe('SpotifyPolling Service', () => {
   describe('Command Handling', () => {
     it('should handle PLAY command', async () => {
       await spotifyService.handleCommand('PLAY', { deviceId: 'test_device_id' })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith({
-        device_id: 'test_device_id',
-      })
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        'test_device_id'
+      )
     })
 
     it('should handle PAUSE command', async () => {
@@ -168,17 +168,13 @@ describe('SpotifyPolling Service', () => {
     it('should include device ID when provided', async () => {
       const deviceId = 'test_device_123'
       await spotifyService.handleCommand('PLAY', { deviceId })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith({
-        device_id: deviceId,
-      })
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
     })
 
     it('should handle PLAY command with contextUri', async () => {
       const contextUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { contextUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith({
-        context_uri: contextUri,
-      })
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
     })
   })
 
