@@ -140,6 +140,9 @@ importers:
       '@testing-library/user-event':
         specifier: ^14.6.1
         version: 14.6.1(@testing-library/dom@9.3.4)
+      '@types/commander':
+        specifier: ^2.12.5
+        version: 2.12.5
       '@types/express':
         specifier: ^5.0.5
         version: 5.0.6
@@ -2588,6 +2591,10 @@ packages:
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
+
+  '@types/commander@2.12.5':
+    resolution: {integrity: sha512-YXGZ/rz+s57VbzcvEV9fUoXeJlBt5HaKu5iUheiIWNsJs23bz6AnRuRiZBRVBLYyPnixNvVnuzM5pSaxr8Yp/g==}
+    deprecated: This is a stub types definition. commander provides its own type definitions, so you do not need this installed.
 
   '@types/connect@3.4.38':
     resolution: {integrity: sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==}
@@ -9898,6 +9905,10 @@ snapshots:
     dependencies:
       '@types/connect': 3.4.38
       '@types/node': 24.10.4
+
+  '@types/commander@2.12.5':
+    dependencies:
+      commander: 14.0.2
 
   '@types/connect@3.4.38':
     dependencies:
