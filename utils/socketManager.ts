@@ -272,12 +272,12 @@ const handleIncomingMessage = (
     }
   } catch (e) {
     if (e instanceof z.ZodError) {
-      logger.error(
+      console.error(
         { clientId, errors: e.issues },
         'WebSocket message validation failed'
       )
     } else {
-      logger.error({ clientId, error: e }, 'Error processing incoming message')
+      console.error({ clientId, error: e }, 'Error processing incoming message')
     }
   }
 }

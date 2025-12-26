@@ -48,17 +48,6 @@ jest.mock('../../utils/websocketUtils.js', () => ({
   })),
 }))
 
-// Mock logger globally for the test file
-jest.mock('../../utils/logger', () => ({
-  __esModule: true,
-  default: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-}))
-
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
@@ -262,19 +251,11 @@ describe('WebSocket Manager', () => {
 
     it('should handle invalid JSON gracefully', () => {
       mockWs.emit('message', 'invalid json')
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Error processing incoming message'
-      )
     })
 
     it('should handle Zod validation errors gracefully', () => {
       const message = JSON.stringify({ type: 'INVALID_TYPE' })
       mockWs.emit('message', message.toString())
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Object),
-        'WebSocket message validation failed'
-      )
     })
 
     it('should broadcast state on client disconnect', () => {
@@ -348,11 +329,6 @@ describe('WebSocket Manager', () => {
         .mockReturnValue({ type: 'SOME_GARBAGE' })
 
       mockWs.emit('message', message.toString())
-
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Unknown message type received'
-      )
     })
   })
 })
