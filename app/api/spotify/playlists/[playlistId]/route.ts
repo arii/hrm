@@ -9,14 +9,15 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
 /**
  * GET handler for fetching single playlist details.
- * @param _req The incoming NextRequest.
- * @param params The route parameters, containing the playlistId.
+ * @param _req The incoming Request.
+ * @param args The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
 async function getPlaylistDetails(
   _req: Request,
-  { params }: { params: Promise<{ playlistId: string }> }
+  ...args: { params: Promise<{ playlistId: string }> }[]
 ) {
+  const { params } = args[0]
   const { playlistId } = await params
 
   if (!playlistId) {
