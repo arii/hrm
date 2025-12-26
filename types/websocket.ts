@@ -127,7 +127,8 @@ export interface SpotifyCommandMessage {
   command: SpotifyCommand
   deviceId?: string
   volume?: number
-  playlistUri?: string
+  playlistUri?: string // Added to support your incoming message
+  contextUri?: string // Generic support for albums/artists
 }
 
 export interface GetStateMessage {
@@ -161,3 +162,85 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+
+import { z } from 'zod'
+
+// --- Zod Schemas for Client Input Command Interfaces ---
+
+export const HrmInputDataSchema = z.object({
+  value: z.number().nullable(),
+})
+
+export const HrmInputMessageSchema = z.object({
+  type: z.literal('HRM_INPUT'),
+  data: HrmInputDataSchema,
+})
+
+export const HrmMetadataUpdateDataSchema = z.object({
+  maxHr: z.number().optional(),
+  name: z.string().optional(),
+  age: z.number().optional(),
+})
+
+export const HrmMetadataUpdateMessageSchema = z.object({
+  type: z.literal('HRM_METADATA_UPDATE'),
+  data: HrmMetadataUpdateDataSchema,
+})
+
+export const TimerCommandMessageSchema = z.object({
+  type: z.literal('TIMER_COMMAND'),
+  command: z.union([z.literal('START'), z.literal('PAUSE'), z.literal('STOP')]),
+})
+
+export const TimerModeCommandMessageSchema = z.object({
+  type: z.literal('SET_MODE'),
+  mode: z.union([z.literal('STOPWATCH'), z.literal('TABATA')]),
+})
+
+export const TimerConfigMessageSchema = z.object({
+  type: z.literal('TIMER_CONFIG'),
+  workDuration: z.number(),
+  restDuration: z.number(),
+})
+
+export const SpotifyCommandMessageSchema = z.object({
+  type: z.literal('SPOTIFY_COMMAND'),
+  command: z.union([
+    z.literal('PLAY'),
+    z.literal('PAUSE'),
+    z.literal('NEXT'),
+    z.literal('PREVIOUS'),
+    z.literal('TRANSFER_PLAYBACK'),
+    z.literal('SET_VOLUME'),
+    z.literal('GET_DEVICES'), // <--- ADDED
+  ]),
+  deviceId: z.string().optional(),
+  volume: z.number().min(0).max(100).optional(),
+  playlistUri: z.string().optional(),
+  contextUri: z.string().optional(),
+})
+
+export const GetStateMessageSchema = z.object({
+  type: z.literal('GET_STATE'),
+})
+
+export const ClientRegistrationMessageSchema = z.object({
+  type: z.literal('REGISTER_CLIENT'),
+  role: z.union([z.literal('dashboard'), z.literal('controller')]),
+})
+
+export const PingMessageSchema = z.object({
+  type: z.literal('PING'),
+})
+
+export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
+  HrmInputMessageSchema,
+  HrmMetadataUpdateMessageSchema,
+  TimerCommandMessageSchema,
+  TimerModeCommandMessageSchema,
+  SpotifyCommandMessageSchema,
+  TimerConfigMessageSchema,
+  GetStateMessageSchema,
+  ClientRegistrationMessageSchema,
+  PingMessageSchema, // Add PING schema to the union
+])

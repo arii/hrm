@@ -241,16 +241,22 @@ const handleIncomingMessage = (
         })
 
         const spotifyService = serviceContainer.get('spotifyService')
-        const params: {
+        const spotifyCommandParams: {
           deviceId?: string
           volume?: number
           playlistUri?: string
+          contextUri?: string
         } = {}
-        if (commandMsg.deviceId) params.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined) params.volume = commandMsg.volume
-        if (commandMsg.playlistUri) params.playlistUri = commandMsg.playlistUri
+        if (commandMsg.deviceId)
+          spotifyCommandParams.deviceId = commandMsg.deviceId
+        if (commandMsg.volume !== undefined)
+          spotifyCommandParams.volume = commandMsg.volume
+        if (commandMsg.playlistUri)
+          spotifyCommandParams.playlistUri = commandMsg.playlistUri
+        if (commandMsg.contextUri)
+          spotifyCommandParams.contextUri = commandMsg.contextUri
 
-        spotifyService.handleCommand(commandMsg.command, params)
+        spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
       }
       default: {
