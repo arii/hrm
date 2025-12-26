@@ -1,0 +1,99 @@
+name: Gemini Orchestrator
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task description'
+        required: true
+      context_files:
+        description: 'Comma-separated list of context files'
+        required: false
+        default: 'README.md'
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened]
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gemini-tasks:
+    runs-on: self-hosted
+    outputs:
+      run_review: ${{ steps.rereview_gate.outputs.run_review }}
+    steps:
+      - name: 'Setup Environment'
+        uses: ./.github/actions/setup-env
+        with:
+          fetch-depth: 0 # Required for diff analysis in re-review gate
+
+      - name: 'Re-review Gate'
+        id: rereview_gate
+        if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.sha }}
+          COMMIT_MESSAGE=$(git log --format=%B -n 1 ${{ github.event.pull_request.head.sha }})
+          if [[ "$COMMIT_MESSAGE" == "docs:"* || "$COMMIT_MESSAGE" == "chore:"* ]]; then
+            echo "run_review=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          NON_TRIVIAL_CHANGES=false
+          for file in $CHANGED_FILES; do
+            if [[ ! "$file" =~ \.md$ && ! "$file" == "docs/"* ]]; then
+              NON_TRIVIAL_CHANGES=true
+              break
+            fi
+          done
+          if [ "$NON_TRIVIAL_CHANGES" = true ]; then
+            echo "run_review=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_review=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 'Gemini Review'
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || steps.rereview_gate.outputs.run_review == 'true')
+        uses: ./.github/workflows/reusable-gemini-review.yml
+        secrets:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
+
+      - name: 'Gemini Triage'
+        if: github.event_name == 'schedule' || github.event_name == 'issues'
+        uses: ./.github/workflows/reusable-gemini-tasks.yml
+        secrets:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ARI_PAT: ${{ secrets.ARI_PAT }}
+
+      - name: 'Gemini Dispatch'
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CONTEXT_INPUT: ${{ inputs.context_files }}
+          TASK_INPUT: ${{ inputs.task }}
+        run: |
+          echo "$TASK_INPUT" > task_input.txt
+          npx tsx scripts/gemini-client.ts \
+            --task-file "task_input.txt" \
+            --context "$CONTEXT_INPUT" \
+            --output "dispatch_result.md"
+
+      - name: 'Gemini Invoke'
+        if: github.event_name == 'issue_comment'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          echo "$COMMENT_BODY" > comment_body.txt
+          npx tsx scripts/gemini-client.ts \
+            --task-file "comment_body.txt" \
+            --preset invoke \
+            --output "invoke_result.md"

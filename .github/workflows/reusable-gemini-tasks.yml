@@ -1,0 +1,33 @@
+name: Reusable Gemini Tasks
+
+on:
+  workflow_call:
+    secrets:
+      GEMINI_API_key:
+        required: true
+      ARI_PAT:
+        required: true
+
+jobs:
+  triage:
+    runs-on: self-hosted
+    steps:
+      - name: 'Setup Environment'
+        uses: ./.github/actions/setup-env
+
+      - name: 'Gather Issue Context'
+        id: context
+        run: |
+          # Get all open issues, filter out pull requests, and format for the AI
+          gh issue list --state open --limit 100 --json number,title,body,labels,author,commentsCount | jq -c '.[]' > open_issues.json
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+
+      - name: 'Run Gemini Triage'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          npx tsx scripts/gemini-client.ts \
+            --preset triage \
+            --context-file "open_issues.json" \
+            --output "triage_result.md"

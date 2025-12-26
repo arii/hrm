@@ -1,0 +1,54 @@
+name: 'Setup Environment'
+description: 'Checks out code, sets up Node.js, pnpm, and installs dependencies with caching.'
+
+inputs:
+  fetch-depth:
+    description: 'Number of commits to fetch. 0 for full history.'
+    required: false
+    default: '1'
+  ref:
+    description: 'The branch, tag or SHA to checkout.'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+        clean: false # Preserves previous run artifacts for speed
+
+    - name: Sanitize Workspace (Preserve Cache)
+      shell: bash
+      run: |
+        # Ensure a clean state at the start, preventing pollution from crashed previous runs
+        # while preserving the heavy artifacts we want to cache.
+        git reset --hard HEAD
+        git clean -fdx --exclude .next --exclude node_modules --exclude .eslintcache --exclude .cache
+
+    - name: Define Dynamic Cache Path
+      shell: bash
+      run: echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright" >> $GITHUB_ENV
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Configure Persistent Store
+      shell: bash
+      run: |
+        mkdir -p ~/.local/share/pnpm/store
+        pnpm config set store-dir ~/.local/share/pnpm/store
+        pnpm config set side-effects-cache true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20.x'
+        cache: 'pnpm'
+
+    - name: Install Dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
