@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.18.0](https://github.com/arii/hrm/compare/v0.17.0...v0.18.0) (2025-12-26)
+
+
+### Features
+
+* add debounced spotify search ([#2247](https://github.com/arii/hrm/issues/2247)) ([a95549f](https://github.com/arii/hrm/commit/a95549facb54477f6d84f336b95cfb5bc956170d))
+* **api:** Correctly parse dynamic route params in playlist API ([10a39e2](https://github.com/arii/hrm/commit/10a39e2f3d3e56b962c8ecdae78515f4409cb179))
+* **audio:** Implement persistent volume controls ([#2202](https://github.com/arii/hrm/issues/2202)) ([a2ac8d9](https://github.com/arii/hrm/commit/a2ac8d945d3a75105c2e56db9667d73875f90c3e))
+* Centralize and Validate Environment Variables with Zod ([#2192](https://github.com/arii/hrm/issues/2192)) ([96063b6](https://github.com/arii/hrm/commit/96063b63aa9c9cb7693961e388153b30621344ac))
+* Finalize `withValidation` Middleware (Headers, Errors, Docs & Tests) ([7fa5641](https://github.com/arii/hrm/commit/7fa5641c3b1049171a98b70c53cd138824fdabac))
+* Standardize Network Layer with Retry Logic ([#2242](https://github.com/arii/hrm/issues/2242)) ([ebaa124](https://github.com/arii/hrm/commit/ebaa1248ecaa6ad2ee62cac273a387d72eb7acae))
+
+
+### Bug Fixes
+
+* **ci:** upgrade pnpm/action-setup to v4 ([11613d2](https://github.com/arii/hrm/commit/11613d2fa81c2dd66b69043e1eabf957ee8712b2))
+* **deploy:** Ensure script permissions and correct startup path ([#2229](https://github.com/arii/hrm/issues/2229)) ([4e30ffc](https://github.com/arii/hrm/commit/4e30ffc1d89b5f822ec8388ed1e77de5df3aa8a2))
+* Increase WebSocket pong timeout to prevent premature reconnections ([#2216](https://github.com/arii/hrm/issues/2216)) ([9ed7f68](https://github.com/arii/hrm/commit/9ed7f684368f0dd30ccd95cc31566b74a9adcd77))
+* Prevent Automatic Volume Setting on Page Load ([#2226](https://github.com/arii/hrm/issues/2226)) ([b715db1](https://github.com/arii/hrm/commit/b715db1e171a1fa7ceb06ec0cb73dbf7d955f1cf))
+* Prevent Timer Display Overlap with Flexbox Layout ([#2241](https://github.com/arii/hrm/issues/2241)) ([c2b0721](https://github.com/arii/hrm/commit/c2b0721d1a5ab95380b470408210f8404758909e))
+* **spotify:** Change log level for expected 204 responses ([732caf5](https://github.com/arii/hrm/commit/732caf569d61beefdd262949edde53a448c30e52))
+* Timer Display Layout Overlap ([#2225](https://github.com/arii/hrm/issues/2225)) ([4838cd0](https://github.com/arii/hrm/commit/4838cd056cee67a1e8b085adc80dbfe216978f6a))
+
 ## [0.17.0](https://github.com/arii/hrm/compare/v0.16.0...v0.17.0) (2025-12-26)
 
 

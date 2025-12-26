@@ -17,6 +17,7 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { useSpotifyDevice } from '@/app/client/context/SpotifyContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
+import SpotifySearchInput from '@/components/SpotifySearchInput'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
@@ -28,6 +29,17 @@ const SpotifyControls = () => {
   const { selectedDeviceId, setSelectedDeviceId } = useSpotifyDevice()
   const lastSentVolumeRef = useRef<string | null>(null)
   const prevActiveIdRef = useRef<string | undefined>(undefined)
+
+  const handleTrackSelect = (uri: string) => {
+    const targetDeviceId = resolveTargetDeviceId()
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'PLAY',
+      uri: uri,
+      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+    }
+    sendData(message)
+  }
 
   const handleBrowseClick = () => {
     router.push('/client/spotify-selection')
@@ -200,6 +212,10 @@ const SpotifyControls = () => {
         >
           <MusicNote sx={{ mr: 1 }} /> Spotify
         </Typography>
+
+        <Box sx={{ mb: 2 }}>
+          <SpotifySearchInput onTrackSelect={handleTrackSelect} />
+        </Box>
 
         {hasSpotifyData ? (
           <>
