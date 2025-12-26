@@ -2,8 +2,10 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
+import { closeDb, initDb } from './lib/db.js'
 import { env } from './lib/env.js' // New import
 import { AppServices, createServices } from './lib/services.js' // New import
+import { cleanupOldSessions } from './services/hrmDataService.js'
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
@@ -22,6 +24,26 @@ const handle = app.getRequestHandler()
 const expressApp = express()
 
 app.prepare().then(async () => {
+  // Initialize the database connection and schema
+  initDb()
+
+  // --- Scheduled Tasks ---
+  const startScheduledTasks = () => {
+    // Run once on startup
+    cleanupOldSessions()
+
+    // Schedule periodic cleanup
+    const cleanupIntervalHours = env.WORKOUT_DATA_CLEANUP_INTERVAL_HOURS
+    if (cleanupIntervalHours > 0) {
+      setInterval(
+        cleanupOldSessions,
+        cleanupIntervalHours * 60 * 60 * 1000
+      )
+    }
+  }
+
+  startScheduledTasks()
+
   const server = createServer(expressApp)
 
   expressApp.use(express.json())
@@ -165,4 +187,17 @@ app.prepare().then(async () => {
   server.listen(env.PORT, () => {
     logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
   })
+
+  // --- Graceful Shutdown ---
+  const gracefulShutdown = (signal: string) => {
+    logger.info(`Received ${signal}. Shutting down gracefully...`)
+    closeDb()
+    server.close(() => {
+      logger.info('HTTP server closed.')
+      process.exit(0)
+    })
+  }
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
 })

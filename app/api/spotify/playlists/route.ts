@@ -16,7 +16,7 @@ import { ApiError } from '@/lib/errors'
  * It returns both preset playlists (HIIT, Rock, Pop) and the user's personal playlists.
  * Uses the official Spotify Web API TypeScript SDK for type safety and automatic pagination.
  *
- * @param _req The incoming Next.js API request (unused).
+ * @param _req The incoming Request object (unused).
  * @returns A NextResponse object with preset and user playlists or an error.
  */
 async function getPlaylists(_req: Request) {
