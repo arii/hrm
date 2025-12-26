@@ -10,15 +10,15 @@ test.describe('WebSocket Stability', () => {
       timeout: 10000,
     })
 
-    // Check the connection status indicator
+    // Check that the connection status indicator is not visible
     const connectionStatus = page.locator('[data-testid="connection-status"]')
-    await expect(connectionStatus).toHaveText('Connected', { timeout: 10000 })
+    await expect(connectionStatus).not.toBeVisible()
 
     // The server's ConnectionMonitor has a 30-second interval. We'll wait for
     // 35 seconds to ensure at least one native ping/pong cycle has completed.
     await page.waitForTimeout(35000)
 
-    // Verify that the connection is still stable
-    await expect(connectionStatus).toHaveText('Connected')
+    // Verify that the connection is still stable and the indicator is not visible
+    await expect(connectionStatus).not.toBeVisible()
   })
 })

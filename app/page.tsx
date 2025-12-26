@@ -44,6 +44,9 @@ const DOC_ID =
 
 const ConnectionStatus = () => {
   const { connectionStatus } = useWebSocket()
+  if (connectionStatus === 'Connected') {
+    return null
+  }
   return (
     <Box
       data-testid="connection-status"
