@@ -45,8 +45,9 @@ const GoogleDocViewer = ({
     return () => clearTimeout(timeout)
   }, [])
 
-  // Injects a script to prevent a ReferenceError from the embedded Google Doc.
-  // The script initializes `DOCS_timing` on the window object.
+  // Workaround for a ReferenceError in the embedded Google Docs script.
+  // This script initializes `window.DOCS_timing` to prevent an error from
+  // Google's own scripts, and is not related to HRM application functionality.
   useEffect(() => {
     const script = document.createElement('script')
     script.innerHTML = `
