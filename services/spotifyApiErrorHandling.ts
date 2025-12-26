@@ -37,7 +37,7 @@ export async function logSpotifyCommandError(
     }
 
     if (error instanceof SyntaxError) {
-      logger.warn(
+      logger.info(
         { command },
         'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
       )
