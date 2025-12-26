@@ -1,8 +1,7 @@
-name: Gemini Smart Triage
-
+name: Gemini Triage
 on:
   issues:
-    types: [opened, reopened, edited]
+    types: [opened, reopened]
 
 permissions:
   contents: read
@@ -13,139 +12,50 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      # Caching is disabled for self-hosted runners to improve performance.
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
+      - run: pnpm install --frozen-lockfile
 
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Triage Context
-        id: context
-        run: |
-          # Aggregate project documentation for the prompt
-          echo "## Project Documentation" > context.txt
-          if [ -f "README.md" ]; then cat README.md >> context.txt; fi
-          if [ -f "CONTRIBUTING.md" ]; then cat CONTRIBUTING.md >> context.txt; fi
-          if [ -f "docs/agents/AGENT_TRIAGE.md" ]; then cat docs/agents/AGENT_TRIAGE.md >> context.txt; fi
-
-      - name: Construct Analysis Prompt
+      - name: Create Task Input
         env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          # Create a structured prompt demanding JSON output
-          cat <<EOF > task_input.txt
-          You are a Senior Technical Project Manager. Analyze the following GitHub Issue.
+          echo "Perform triage on the following issue." > task_input.txt
+          echo "Title: $ISSUE_TITLE" >> task_input.txt
+          echo "Body:" >> task_input.txt
+          echo "$ISSUE_BODY" >> task_input.txt
 
-          ### Project Context
-          $(cat context.txt | head -c 4000) # Limit context to 4k chars
-
-          ### Issue To Analyze
-          **Title:** $ISSUE_TITLE
-          **Body:**
-          $ISSUE_BODY
-
-          ### Instructions
-          1. Determine the type (Bug, Feature, Question, etc.).
-          2. Assess the clarity and quality of the issue.
-          3. Generate a refined, professional title and description if the original is vague. The original content should be preserved.
-
-          ### Output Format
-          You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
-          {
-            "labels": ["bug", "enhancement", "documentation", "needs-info", "invalid"],
-            "priority": "High" | "Medium" | "Low",
-            "summary": "A 1-sentence summary of the issue",
-            "analysis": "A brief analysis of what is needed to fix this.",
-            "suggested_title": "A clearer title (if original is poor)",
-            "suggested_body": "A professionally formatted issue body.",
-            "completeness_score": 0-10
-          }
-          EOF
-
-      - name: Run Gemini Agent
+      - name: Run Gemini Triage
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TRIAGE_CONTEXT_FILES: ${{ vars.TRIAGE_CONTEXT_FILES || 'CONTRIBUTING.md,docs/agents/AGENT_TRIAGE.md' }}
         run: |
-          # Run the client and save output to a file
           npx tsx scripts/gemini-client.ts \
             --task-file "task_input.txt" \
-            --output "triage_result.json"
+            --context "$TRIAGE_CONTEXT_FILES" \
+            --output "triage_result.md"
 
-      - name: Apply Triage Actions
+      - name: Comment on Issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.ARI_PAT || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.ARI_PAT }}
           script: |
             const fs = require('fs');
-
             try {
-              let rawData = fs.readFileSync('triage_result.json', 'utf8');
-              // Sanitize: Remove markdown code blocks if Gemini added them
-              rawData = rawData.replace(/```json/g, '').replace(/```/g, '').trim();
-
-              const result = JSON.parse(rawData);
-              console.log('Parsed Triage Result:', result);
-
-              // 1. Apply Labels
-              if (result.labels && result.labels.length > 0) {
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  labels: result.labels
-                });
-              }
-
-              // 2. Construct Comment Body
-              const commentBody = `
-              ### 🤖 Gemini Smart Triage
-
-              **Summary:** ${result.summary}
-              **Priority:** ${result.priority} | **Score:** ${result.completeness_score}/10
-
-              **Analysis:**
-              ${result.analysis}
-
-              ${result.suggested_title && result.suggested_title !== context.payload.issue.title
-                ? `> **Suggestion:** Consider renaming this issue to: *"${result.suggested_title}"*`
-                : ''}
-              `;
-
+              const body = fs.readFileSync('triage_result.md', 'utf8');
               await github.rest.issues.createComment({
+                issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: commentBody.trim()
+                body: body
               });
-
-              // 3. Auto-update Title and Body if suggestions exist
-              if (result.suggested_title || result.suggested_body) {
-                const newTitle = result.suggested_title || context.payload.issue.title;
-
-                let newBody = context.payload.issue.body;
-                if (result.suggested_body) {
-                  const originalBody = context.payload.issue.body;
-                  let suggestedBody = result.suggested_body;
-                  if (suggestedBody.length > 60000) {
-                    suggestedBody = suggestedBody.substring(0, 60000) + '\n... (truncated)';
-                  }
-                  newBody = '<details>\n<summary>Original Issue Body</summary>\n\n' + originalBody + '\n</details>\n\n' + suggestedBody;
-                }
-
-                await github.rest.issues.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  title: newTitle,
-                  body: newBody
-                });
-              }
-
-            } catch (error) {
-              console.error('Error processing triage result:', error);
-              core.setFailed('Failed to apply triage actions: ' + error.message);
+            } catch (e) {
+              console.error('Failed to post comment:', e);
+              core.setFailed('No triage result found or error posting comment');
             }

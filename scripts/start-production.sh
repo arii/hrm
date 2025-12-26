@@ -1,6 +1,9 @@
 #!/bin/bash
 # Used by PM2 or Docker entrypoints
-# Assumes the script is run from the project root.
+
+# Set working directory to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
 export NODE_ENV=production
 
@@ -12,5 +15,5 @@ if [ -f .env.production ]; then
 fi
 
 # Explicitly run the compiled server entry point
-# This expects a 'dist' directory with the compiled server.
+# Ensure your build:server script outputs to dist/server.mjs or dist/server.js
 exec node dist/server.js
