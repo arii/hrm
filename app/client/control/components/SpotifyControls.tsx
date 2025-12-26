@@ -11,9 +11,10 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyDevice } from '@/app/client/context/SpotifyContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
@@ -24,8 +25,8 @@ const SpotifyControls = () => {
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { selectedDeviceId, setSelectedDeviceId } = useSpotifyDevice()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleBrowseClick = () => {

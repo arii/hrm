@@ -4,6 +4,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { SpotifyProvider } from '@/app/client/context/SpotifyContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
 import useVolumePreference from '@/hooks/useVolumePreference'
@@ -24,6 +25,14 @@ jest.mock('@/hooks/useVolumePreference')
 
 describe('components/SpotifyControls', () => {
   let mockSendData: jest.Mock
+
+  const renderWithProvider = () => {
+    return render(
+      <SpotifyProvider>
+        <SpotifyControls />
+      </SpotifyProvider>
+    )
+  }
 
   beforeEach(() => {
     mockSendData = jest.fn()
@@ -53,14 +62,14 @@ describe('components/SpotifyControls', () => {
   })
 
   it('renders Spotify controls with track info', () => {
-    render(<SpotifyControls />)
+    renderWithProvider()
     expect(screen.getByText('Test Track')).toBeInTheDocument()
     expect(screen.getByText('Test Artist')).toBeInTheDocument()
     expect(screen.getByLabelText('Pause')).toBeInTheDocument()
   })
 
   it('sends a GET_DEVICES command on mount if connected', () => {
-    render(<SpotifyControls />)
+    renderWithProvider()
     expect(mockSendData).toHaveBeenCalledWith({
       type: 'SPOTIFY_COMMAND',
       command: 'GET_DEVICES',
@@ -68,7 +77,7 @@ describe('components/SpotifyControls', () => {
   })
 
   it('handles playback commands', () => {
-    render(<SpotifyControls />)
+    renderWithProvider()
     fireEvent.click(screen.getByLabelText('Pause'))
     expect(mockSendData).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -79,7 +88,7 @@ describe('components/SpotifyControls', () => {
   })
 
   it('should render the mute button with the correct aria-label', () => {
-    render(<SpotifyControls />)
+    renderWithProvider()
     const muteButton = screen.getByLabelText(/mute volume/i)
     expect(muteButton).toBeInTheDocument()
   })
