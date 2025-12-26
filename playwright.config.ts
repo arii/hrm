@@ -31,7 +31,9 @@ if (!hasNextAuthSecret) {
 }
 const baseURL = getBaseURL();
 export default defineConfig({
-  webServer: {
+  webServer: process.env.NO_WEBSERVER
+  ? undefined
+  : {
     command: 'pnpm run dev',
     url: baseURL,
     reuseExistingServer: !process.env.CI,

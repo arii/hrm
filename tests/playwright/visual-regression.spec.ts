@@ -16,6 +16,7 @@ import {
   BASE_URL,
   getDynamicContentMasks,
   getHrMasks,
+  getSpotifyMasks,
   getTimerMasks,
   replaceIframeWithStableWorkout,
   waitForFontsLoaded,
@@ -96,6 +97,7 @@ test.describe('Visual Regression Tests', () => {
       if (await resetButton.isVisible()) {
         await resetButton.click()
       }
+      await controlPage.reload()
     } catch (error) {
       // Timer not running or failed to stop, log and continue
       console.warn('Timer check/stop encountered an issue (ignoring):', error)
@@ -151,6 +153,7 @@ test.describe('Visual Regression Tests', () => {
       mask: [
         // Use precise data-testid selectors for dynamic content masking
         ...getDynamicContentMasks(dashboardPage),
+        ...getSpotifyMasks(dashboardPage),
       ],
     })
   })
