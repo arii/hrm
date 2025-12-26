@@ -6,7 +6,7 @@ import { TimerMode, TimerPhase } from '../../types/core'
 import {
   DEFAULT_WORK_DURATION,
   DEFAULT_REST_DURATION,
-} from '../../constants/index'
+} from '../../constants/index.js'
 
 // --- Constants ---
 export const START_COUNTDOWN_DURATION = 5 // seconds

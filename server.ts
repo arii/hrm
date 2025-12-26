@@ -164,8 +164,9 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
+    let spotifyService: SpotifyPolling
     try {
-      const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+      spotifyService = await SpotifyPolling.create(broadcastUpdate)
       serviceContainer.register('spotifyService', spotifyService)
       serviceContainer.register(
         'tabataService',

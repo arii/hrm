@@ -223,15 +223,14 @@ export class SpotifyPolling implements SpotifyService {
         // Nothing playing, 204, or private session
         if (this.lastPlaybackState !== false) {
           this.lastPlaybackState = false
-          this.state = {
-            ...this.state,
+          Object.assign(this.state, {
             trackId: null,
             trackName: 'Nothing is currently playing.',
             artist: '',
             albumName: '',
             albumArtUrl: '',
             isPlaying: false,
-          }
+          });
           this.broadcastUpdate({
             type: 'SPOTIFY_UPDATE',
             payload: this.getState(),
@@ -269,15 +268,14 @@ export class SpotifyPolling implements SpotifyService {
           albumArtUrl = episode.show.images?.[0]?.url ?? ''
         }
 
-        this.state = {
-          ...this.state,
+        Object.assign(this.state, {
           trackId,
           trackName,
           artist: artistName,
           albumName,
           albumArtUrl,
           isPlaying,
-        }
+        });
 
         this.broadcastUpdate({
           type: 'SPOTIFY_UPDATE',

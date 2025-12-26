@@ -11,7 +11,7 @@ import { TimerQueries } from './timerQueries.js'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL_MS,
-} from '../../constants/index'
+} from '../../constants/index.js'
 
 export class TimerCommands {
   private readonly state: DualModeTimerState
