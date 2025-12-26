@@ -27,4 +27,15 @@ else
   pnpm install
 fi
 
+# 5. Verify Git Hooks (Husky)
+echo "🪝 Verifying git hooks..."
+
+if grep -q '"husky"' package.json; then
+    echo "🐶 Husky configuration detected."
+    pnpm prepare
+    echo "✅ Husky hooks installed."
+else
+    echo "⚠️ Husky not found in package.json."
+fi
+
 echo "Setup complete."

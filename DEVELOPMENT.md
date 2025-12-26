@@ -57,9 +57,6 @@ When a change requires adding, updating, or removing an external package from `n
 When creating new internal modules or utilities (e.g., a new file in `lib/` or `utils/`) that **only** use built-in Node.js APIs or dependencies already listed in `package.json`, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
 
 - **No Lockfile Changes**: The PR should not include modifications to `package.json` or `pnpm-lock.yaml`.
-- **Running Local Checks**: The CI pipeline runs several checks to maintain code quality. We encourage running these locally before pushing your changes:
-  - **Linting**: Run `pnpm run lint` to catch common code quality issues.
-  - **Dependency Check**: The pipeline uses `knip` to identify unused dependencies. You can see the configuration in the [`knip.ts`](./knip.ts) file. Adding new internal modules should not introduce unused dependency warnings.
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
 
