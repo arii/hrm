@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/experimental-ct-react';
+import { defineConfig } from '@playwright/experimental-ct-react'
 
 export default defineConfig({
   testDir: './tests/unit/components',
@@ -19,4 +19,4 @@ export default defineConfig({
       },
     },
   ],
-});
+})

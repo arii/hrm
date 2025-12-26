@@ -9,9 +9,16 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      // PM2 by default inherits the environment of the shell it's launched from.
-      // By not defining `env` or `env_production`, we ensure that all variables
-      // from the parent process (including those set in `test-with-server.sh`) are passed through.
+      // Pass PORT from the environment, otherwise it will be undefined
+      // and the application can decide on a default.
+      env: {
+        NODE_ENV: 'production',
+        PORT: process.env.PORT,
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: process.env.PORT,
+      },
     },
   ],
 }

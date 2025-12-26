@@ -6,11 +6,11 @@ This guide provides a comprehensive overview of the testing commands, structure,
 
 These are the most frequently used commands for testing and code quality checks.
 
-| Command                      | Description                                                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Command                       | Description                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `pnpm run test:visual`        | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes. |
 | `pnpm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                    |
-| `pnpm run test:unit`          | Executes the Vitest unit test suite for testing individual components and business logic.                      |
+| `pnpm run test:unit`          | Executes the Vitest unit test suite for testing individual components and business logic.                    |
 | `pnpm run lint`               | Runs ESLint to check for code quality and style issues.                                                      |
 | `pnpm run format`             | Formats the entire codebase using Prettier to ensure consistent styling.                                     |
 
