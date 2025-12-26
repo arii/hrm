@@ -45,24 +45,6 @@ const GoogleDocViewer = ({
     return () => clearTimeout(timeout)
   }, [])
 
-  // Workaround for a ReferenceError in the embedded Google Docs script.
-  // This script initializes `window.DOCS_timing` to prevent an error from
-  // Google's own scripts, and is not related to HRM application functionality.
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.innerHTML = `
-      window.DOCS_timing = window.DOCS_timing || {};
-    `
-    document.head.appendChild(script)
-
-    return () => {
-      // Clean up the script when the component unmounts
-      if (document.head.contains(script)) {
-        document.head.removeChild(script)
-      }
-    }
-  }, [])
-
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
       <CardContent sx={{ p: 1 }}>
