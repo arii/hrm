@@ -1,12 +1,9 @@
 // lib/middleware/errorHandler.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { ApiError } from '@/lib/errors'
 import logger from '@/utils/logger'
 
-// This type is compatible with the Next.js App Router route handlers.
-// The second argument is a context object containing params, etc.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ApiHandler = (req: NextRequest, context: any) => Promise<NextResponse>
+type ApiHandler = (req: Request, ...args: unknown[]) => Promise<NextResponse>
 
 /**
  * Wraps an API route handler to provide centralized error handling.
@@ -17,10 +14,10 @@ type ApiHandler = (req: NextRequest, context: any) => Promise<NextResponse>
  * @param handler The API route handler to wrap.
  * @returns A new handler with error handling.
  */
-export function withErrorHandler(handler: ApiHandler) {
-  return async (req: NextRequest, context: unknown) => {
+export function withErrorHandler(handler: ApiHandler): ApiHandler {
+  return async (req: Request, ...args: unknown[]) => {
     try {
-      return await handler(req, context)
+      return await handler(req, ...args)
     } catch (error) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)
