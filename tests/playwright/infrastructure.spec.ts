@@ -74,7 +74,12 @@ test.describe('Infrastructure & Scripts', () => {
     const devServer = spawn('pnpm', ['run', 'dev'], {
       detached: true, // Use detached to create a process group
       stdio: 'pipe',
-      env: { ...process.env, PORT: String(PORT) },
+      env: {
+        ...process.env,
+        PORT: String(PORT),
+        SPOTIFY_CLIENT_ID: 'test',
+        SPOTIFY_CLIENT_SECRET: 'test',
+      },
     })
 
     // Capture stdout and stderr to log them on failure
@@ -114,6 +119,8 @@ test.describe('Infrastructure & Scripts', () => {
       PORT: String(PORT),
       NEXTAUTH_SECRET: 'test-secret-mock',
       NEXTAUTH_URL: `http://localhost:${PORT}`,
+      SPOTIFY_CLIENT_ID: 'test',
+      SPOTIFY_CLIENT_SECRET: 'test',
     }
 
     const prodServer = spawn('./scripts/start-production.sh', [], {

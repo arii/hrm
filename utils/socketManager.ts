@@ -263,7 +263,7 @@ const handleIncomingMessage = (
       }
       default: {
         const unknownMessage = message as { type: unknown }
-        logger.warn(
+        console.warn(
           { clientId, type: unknownMessage.type },
           'Unknown message type received'
         )
