@@ -4,10 +4,11 @@
  */
 import { TimerMode, TimerPhase } from '../../types/core'
 
-// --- Constants ---
-export const DEFAULT_WORK_DURATION = 20 // seconds
-export const DEFAULT_REST_DURATION = 10 // seconds
-export const START_COUNTDOWN_DURATION = 5 // seconds
+import {
+  DEFAULT_WORK_DURATION,
+  DEFAULT_REST_DURATION,
+  START_COUNTDOWN_DURATION,
+} from '../../utils/constants'
 
 /**
  * Encapsulates the complete state of the timer, including both publicly

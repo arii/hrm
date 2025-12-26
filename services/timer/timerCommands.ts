@@ -5,13 +5,15 @@
  */
 import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
-import { DualModeTimerState, START_COUNTDOWN_DURATION } from './timerState.js'
+import { START_COUNTDOWN_DURATION, TIMER_INTERVAL } from '../../utils/constants'
+import { DualModeTimerState } from './timerState.js'
+import { ConfigurationError } from '../../types/errors'
 import { TimerQueries } from './timerQueries.js'
 
 export class TimerCommands {
-  private state: DualModeTimerState
-  private broadcastUpdate: (message: ServerMessage) => void
-  private queries: TimerQueries
+  private readonly state: DualModeTimerState
+  private readonly broadcastUpdate: (message: ServerMessage) => void
+  private readonly queries: TimerQueries
 
   /**
    * @param {DualModeTimerState} state The timer state object to mutate.
@@ -46,7 +48,7 @@ export class TimerCommands {
       this.resetCountdownMarker()
     }
 
-    this.state._timerInterval = setInterval(this.updateTimer, 1000)
+    this.state._timerInterval = setInterval(this.updateTimer, TIMER_INTERVAL)
     this.broadcastUpdate({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
@@ -128,14 +130,16 @@ export class TimerCommands {
     workDuration: number
     restDuration: number
   }): void {
-    const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
-    const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
-
-    this.state.workDuration = sanitizedWorkDuration
-    this.state.restDuration = sanitizedRestDuration
+    if (config.workDuration < 1 || config.restDuration < 0) {
+      throw new ConfigurationError(
+        'Work duration must be positive and rest duration must not be negative.'
+      )
+    }
+    this.state.workDuration = Math.floor(config.workDuration)
+    this.state.restDuration = Math.floor(config.restDuration)
 
     if (!this.state.isRunning && this.state.mode === 'TABATA') {
-      this.state.timeRemaining = sanitizedWorkDuration
+      this.state.timeRemaining = this.state.workDuration
     }
 
     this.broadcastUpdate({
