@@ -502,7 +502,7 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
 
-      expect(logger.info).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         { command: 'PLAY' },
         'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
       )
