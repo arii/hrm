@@ -14,7 +14,22 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { MeasurementSystem, Gender } from '../../../types'
+import {
+  ToggleButtonGroup,
+  ToggleButton,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
+
+const WEIGHT_VALIDATION = {
+  IMPERIAL: { min: 66, max: 440 }, // lbs
+  METRIC: { min: 30, max: 200 }, // kg
+}
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -38,6 +53,11 @@ interface ConnectViewProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  gender: Gender
+  setGender: React.Dispatch<React.SetStateAction<Gender>>
+  unitSystem: MeasurementSystem
+  onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -67,6 +87,11 @@ export default function ConnectView({
   setUserHeight,
   userWeight,
   setUserWeight,
+  onWeightBlur,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -88,6 +113,8 @@ export default function ConnectView({
   const [ageError, setAgeError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -137,6 +164,20 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
             <TextField
               fullWidth
               label="Your Name"
@@ -182,22 +223,53 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
+              label={`Your Weight (${
+                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
+              })`}
+              placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
               type="number"
               value={userWeight}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserWeight(e.target.value)
-                }
+                setUserWeight(e.target.value)
+                setWeightError(
+                  validate(
+                    e.target.value,
+                    weightValidationRange.min,
+                    weightValidationRange.max,
+                    'weight'
+                  )
+                )
               }}
-              onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
-              }}
+              onBlur={onWeightBlur}
               error={!!weightError}
               helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
+              inputProps={{
+                min: weightValidationRange.min,
+                max: weightValidationRange.max,
+                'aria-invalid': !!weightError,
+              }}
             />
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <FormControlLabel
+                  value="MALE"
+                  control={<Radio />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="FEMALE"
+                  control={<Radio />}
+                  label="Female"
+                />
+              </RadioGroup>
+            </FormControl>
           </Stack>
         ) : (
           <Box
