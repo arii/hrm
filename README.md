@@ -653,3 +653,5 @@ Deployment is automated via a script that syncs the `leader` branch and reloads 
     ./deploy.sh
     ```
 This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
+
+See the [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration) section below for the required Nginx setup.

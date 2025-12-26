@@ -36,7 +36,7 @@ This automated process ensures that code merged into the `leader` branch always 
 
 ### Legacy Pre-commit Hooks
 
-The project may contain legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). While these may still be functional, the primary source of truth for code quality and linting rules is defined in `package.json` and executed via Husky. The Node.js-based tooling is faster and more integrated with the project's ecosystem.
+The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
 
 ## Current Focus
 
@@ -64,6 +64,10 @@ Before submitting a pull request, you can run Knip locally to identify any issue
 ```bash
 pnpm run knip
 ```
+
+If Knip reports unused dependencies, files, or exports, please take one of the following actions:
+- **Remove the code**: If the reported item is genuinely unused, remove it from the codebase.
+- **Update the configuration**: If the item is incorrectly reported (e.g., it's used indirectly), update the `knip.ts` configuration file to ignore it. Add a comment explaining why the ignore rule is necessary.
 
 ### Configuration
 
