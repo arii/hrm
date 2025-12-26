@@ -63,12 +63,14 @@ type SpotifyPagingParams =
 
 /**
  * GET handler for fetching playlist tracks.
- * @param req The incoming NextRequest.
- * @param params The route parameters, containing the playlistId.
+ * @param req The incoming Request object.
+ * @param context The route context, containing the playlistId.
  * @returns A NextResponse with the paginated list of tracks or an error.
  */
-async function getPlaylistTracks(req: Request, ...args: unknown[]) {
-  const { params } = args[0] as { params: { playlistId: string } }
+async function getPlaylistTracks(
+  req: Request,
+  { params }: { params: { playlistId: string } }
+) {
   const { playlistId } = params
   const { searchParams } = new URL(req.url)
   const limit = parseInt(searchParams.get('limit') || '20', 10)

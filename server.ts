@@ -2,6 +2,7 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
+import { closeDb, initDb } from './lib/db.js'
 import { env } from './lib/env.js' // New import
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
@@ -22,6 +23,9 @@ const handle = app.getRequestHandler()
 const expressApp = express()
 
 app.prepare().then(async () => {
+  // Initialize the database connection and schema
+  initDb()
+
   const server = createServer(expressApp)
 
   expressApp.use(express.json())
@@ -165,4 +169,17 @@ app.prepare().then(async () => {
   server.listen(env.PORT, () => {
     logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
   })
+
+  // --- Graceful Shutdown ---
+  const gracefulShutdown = (signal: string) => {
+    logger.info(`Received ${signal}. Shutting down gracefully...`)
+    closeDb()
+    server.close(() => {
+      logger.info('HTTP server closed.')
+      process.exit(0)
+    })
+  }
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
 })
