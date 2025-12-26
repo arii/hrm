@@ -24,11 +24,13 @@
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true
+  },
+  "ts-node": {
+    "esm": true
   },
   "include": [
     "next-env.d.ts",

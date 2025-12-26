@@ -1,9 +1,9 @@
 // services/hrmDataService.ts
-import { db } from './database.js'
+import { db } from './database'
 import { Session, Measurement, SessionWithMeasurements } from '../types/hrm'
 import { Statement } from 'better-sqlite3'
 import { randomUUID } from 'crypto'
-import logger from '../utils/logger.js'
+import logger from '../utils/logger'
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
