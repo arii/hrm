@@ -37,13 +37,13 @@ export class SpotifyPolling implements SpotifyService {
   public forcePollAndBroadcast() {
     return this.getCurrentlyPlaying()
   }
-  private tokenManager: SpotifyTokenManager
+  private readonly tokenManager: SpotifyTokenManager
   private pollInterval: NodeJS.Timeout | null = null
   private devicePollInterval: NodeJS.Timeout | null = null
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
-  private broadcastUpdate: (message: ServerMessage) => void
+  private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null

@@ -5,8 +5,13 @@
  */
 import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
-import { DualModeTimerState, START_COUNTDOWN_DURATION } from './timerState.js'
+import { DualModeTimerState } from './timerState.js'
+import { ValidationError } from '../../types/errors.js'
 import { TimerQueries } from './timerQueries.js'
+import {
+  START_COUNTDOWN_DURATION,
+  TIMER_INTERVAL_MS,
+} from '../../constants/server'
 
 export class TimerCommands {
   private state: DualModeTimerState
@@ -46,7 +51,7 @@ export class TimerCommands {
       this.resetCountdownMarker()
     }
 
-    this.state._timerInterval = setInterval(this.updateTimer, 1000)
+    this.state._timerInterval = setInterval(this.updateTimer, TIMER_INTERVAL_MS)
     this.broadcastUpdate({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
@@ -128,8 +133,13 @@ export class TimerCommands {
     workDuration: number
     restDuration: number
   }): void {
-    const sanitizedWorkDuration = Math.max(1, Math.floor(config.workDuration))
-    const sanitizedRestDuration = Math.max(0, Math.floor(config.restDuration))
+    if (config.workDuration < 1 || config.restDuration < 0) {
+      throw new ValidationError(
+        'Durations must be non-negative, and work duration must be at least 1.'
+      )
+    }
+    const sanitizedWorkDuration = Math.floor(config.workDuration)
+    const sanitizedRestDuration = Math.floor(config.restDuration)
 
     this.state.workDuration = sanitizedWorkDuration
     this.state.restDuration = sanitizedRestDuration

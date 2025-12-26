@@ -25,13 +25,20 @@ import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
+import {
+  DEFAULT_PORT,
+  PROD_HOST,
+  DEV_HOST,
+  CACHE_MAX_AGE,
+} from './constants/server.js'
+import { ServiceInitializationError } from './types/errors.js'
 
-const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+const port: number = process.env.PORT ? +process.env.PORT : DEFAULT_PORT // Explicitly handle undefined and convert to number
 // Allow overriding bind address via the HOST env var for flexibility in CI/containers
 const hostname =
   process.env.NODE_ENV === 'production'
-    ? '0.0.0.0'
-    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
+    ? PROD_HOST
+    : process.env.HOST || DEV_HOST // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
 
@@ -141,7 +148,7 @@ app
         express.static(staticPath, {
           // All files in _next/static have content hashes, so they can be cached indefinitely.
           immutable: true,
-          maxAge: '365d',
+          maxAge: CACHE_MAX_AGE,
         })
       )
     }
@@ -157,9 +164,16 @@ app
     }
 
     // 3. Initialize Persistent Services with the wrapped broadcaster
-    const spotifyService = await SpotifyPolling.create(broadcastUpdate)
-    serviceContainer.register('spotifyService', spotifyService)
-    serviceContainer.register('tabataService', new TabataTimer(broadcastUpdate))
+    try {
+      const spotifyService = await SpotifyPolling.create(broadcastUpdate)
+      serviceContainer.register('spotifyService', spotifyService)
+      serviceContainer.register(
+        'tabataService',
+        new TabataTimer(broadcastUpdate)
+      )
+    } catch (error) {
+      throw new ServiceInitializationError('SpotifyPolling', error)
+    }
 
     // 4. State Snapshot Function
     const getUnifiedStateSnapshot = (): StateSnapshot => ({
