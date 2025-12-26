@@ -11,6 +11,7 @@ import {
 } from '@mui/material'
 import { useCallback, useRef } from 'react'
 import useVolumePreference from '@/hooks/useVolumePreference'
+import { TEST_SOUND_PATH } from '@/constants/audio'
 
 const AudioSettings = () => {
   const { volume, setVolume } = useVolumePreference(70)
@@ -18,12 +19,8 @@ const AudioSettings = () => {
 
   const handleTestSound = useCallback(() => {
     if (!audioRef.current) {
-      audioRef.current = new Audio('/assets/beep-07.wav')
+      audioRef.current = new Audio(TEST_SOUND_PATH)
     }
-    // Apply logarithmic scaling to match the actual timer behavior
-    // or linear if that matches your preference logic.
-    // Here we use the direct volume percent for simplicity,
-    // but you can import volumeToScalar if strict parity is needed.
     audioRef.current.volume = Math.min(Math.max(volume / 100, 0), 1)
     audioRef.current.currentTime = 0
     audioRef.current.play().catch((err) => console.warn('Test sound failed:', err))
@@ -54,7 +51,7 @@ const AudioSettings = () => {
 
         <Stack spacing={2} alignItems="center">
           <Box sx={{ width: '100%', px: 2 }}>
-            <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }}>
+            <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }} id="volume-slider-label">
               Master Volume ({volume}%)
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">
@@ -64,6 +61,10 @@ const AudioSettings = () => {
                 onChange={(_, val) => setVolume(val as number)}
                 min={0}
                 max={100}
+                aria-labelledby="volume-slider-label"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={volume}
                 valueLabelDisplay="auto"
                 sx={{
                   color: '#3B82F6', // Blue to differentiate from Spotify

@@ -4,6 +4,7 @@ import { useError } from '@/context/ErrorContext'
 import { useSession, signOut } from 'next-auth/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import { useSpotifyRemoteExecution } from '@/hooks/useSpotifyRemoteExecution'
+import { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommandMessage } from '@/types/websocket'
 import PauseIcon from '@mui/icons-material/Pause'
@@ -169,10 +170,11 @@ const SpotifyDisplay = () => {
         )
         return
       }
+      const sanitized = clampVolume(volume)
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: volume,
+        volume: sanitized,
         deviceId: targetDeviceId,
       }
       sendData(message)

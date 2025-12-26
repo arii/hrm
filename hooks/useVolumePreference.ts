@@ -4,7 +4,7 @@ import { audioManager } from '../utils/audioManager'
 const VOLUME_KEY = 'hrm-volume'
 const MUTE_KEY = 'hrm-muted'
 
-const clampVolume = (value: number): number =>
+export const clampVolume = (value: number): number =>
   Math.min(100, Math.max(0, Math.round(value)))
 
 const useVolumePreference = (defaultVolume = 70) => {
@@ -24,7 +24,11 @@ const useVolumePreference = (defaultVolume = 70) => {
         setMutedState(storedMute === 'true')
       }
     } catch (error) {
-      console.warn('Failed to read audio settings from localStorage:', error)
+        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
+            console.warn('LocalStorage is not available. Audio settings will not be persisted.', error)
+        } else {
+            console.warn('Failed to read audio settings from localStorage:', error)
+        }
     } finally {
       setIsLoaded(true)
     }
@@ -49,7 +53,11 @@ const useVolumePreference = (defaultVolume = 70) => {
         window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: false }))
       }
     } catch (error) {
-      console.warn('Could not persist volume:', error)
+        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
+            console.warn('LocalStorage is not available. Could not persist volume.', error)
+        } else {
+            console.warn('Could not persist volume:', error)
+        }
     }
   }, [isMuted])
 
@@ -60,7 +68,11 @@ const useVolumePreference = (defaultVolume = 70) => {
       window.localStorage.setItem(MUTE_KEY, String(newMuted))
       window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: newMuted }))
     } catch (error) {
-      console.warn('Could not persist mute status:', error)
+        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
+            console.warn('LocalStorage is not available. Could not persist mute status.', error)
+        } else {
+            console.warn('Could not persist mute status:', error)
+        }
     }
   }, [isMuted])
 
