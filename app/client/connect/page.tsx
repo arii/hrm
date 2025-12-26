@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -7,12 +8,42 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { MeasurementSystem } from '../../../types'
+import { toKg, toDisplay } from '../../../utils/units'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
-  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
+  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
+    'hrm-user-gender',
+    'MALE'
+  )
+  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
+    'hrm-user-units',
+    'IMPERIAL'
+  )
+
+  // Derived state for the input field
+  const [displayWeight, setDisplayWeight] = useState('')
+
+  useEffect(() => {
+    const kgValue = parseFloat(weightInKg)
+    if (!isNaN(kgValue)) {
+      const newDisplayWeight = toDisplay(kgValue, unitSystem).toString()
+      setDisplayWeight(newDisplayWeight)
+    }
+  }, [weightInKg, unitSystem])
+
+  const handleWeightChange = (newDisplayValue: string) => {
+    setDisplayWeight(newDisplayValue) // Update input field immediately for responsiveness
+    const numericValue = parseFloat(newDisplayValue)
+    if (!isNaN(numericValue) && numericValue > 0) {
+      const newKgValue = toKg(numericValue, unitSystem)
+      setWeightInKg(newKgValue.toFixed(2)) // Persist normalized value
+    }
+  }
 
   const {
     connectAndStream,
@@ -32,6 +63,12 @@ export default function ConnectPage() {
     deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
   } else if (disconnectionReason === 'signal_loss') {
     deviceStatusMessage = 'Signal lost. Trying to reconnect...'
+  }
+
+  const handleUnitChange = (newUnit: MeasurementSystem) => {
+    if (newUnit && newUnit !== unitSystem) {
+      setUnitSystem(newUnit)
+    }
   }
 
   const handleConnect = () => {
@@ -68,8 +105,12 @@ export default function ConnectPage() {
       setUserAge={setUserAge}
       userHeight={userHeight}
       setUserHeight={setUserHeight}
-      userWeight={userWeight}
-      setUserWeight={setUserWeight}
+      userWeight={displayWeight}
+      setUserWeight={handleWeightChange}
+      gender={gender}
+      setGender={setGender}
+      unitSystem={unitSystem}
+      onUnitChange={handleUnitChange}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}
