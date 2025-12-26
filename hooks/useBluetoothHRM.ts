@@ -149,8 +149,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const userDetailsRef = useRef<{
     name: string
     age: number
-    weight?: number
-    gender?: Gender
+    weight?: number | undefined
+    gender?: Gender | undefined
   } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)

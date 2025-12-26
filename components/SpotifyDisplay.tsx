@@ -16,6 +16,7 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
+import logger from '@/utils/logger'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -43,12 +44,12 @@ type SpotifyDisplayAction =
 
 // 3. Initial State Factory
 const initialStateFactory = (
-  volume: number | undefined,
+  volume: number,
   isMuted: boolean
 ): SpotifyDisplayState => ({
-  displayVolume: volume ?? 70,
+  displayVolume: volume,
   isMuted: isMuted,
-  lastVolume: volume && volume > 0 ? volume : 70, // Store last non-zero volume
+  lastVolume: volume > 0 ? volume : 70, // Store last non-zero volume
   selectedDeviceId: '',
   deviceMenuAnchor: null,
 })
@@ -129,7 +130,7 @@ const SpotifyDisplay = () => {
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
     spotifyDisplayReducer,
-    initialStateFactory(spotifyData.volume, spotifyData.isMuted ?? false)
+    initialStateFactory(spotifyData.volume ?? 70, spotifyData.isMuted ?? false)
   )
   const { displayVolume, isMuted, selectedDeviceId, deviceMenuAnchor } = state
 
@@ -207,6 +208,17 @@ const SpotifyDisplay = () => {
     dispatch({ type: 'TOGGLE_MUTE' }) // Update UI
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
+
+  // Effect to manage the local browser player's volume
+  useEffect(() => {
+    if (!player || typeof player.setVolume !== 'function') return
+    const scalar = isMuted ? 0 : Math.min(Math.max(displayVolume / 100, 0), 1)
+    player
+      .setVolume(scalar)
+      .catch((err) =>
+        logger.warn({ error: err }, 'Failed to adjust local Spotify volume')
+      )
+  }, [player, displayVolume, isMuted])
 
   // Effect to auto-select the active device
   useEffect(() => {
