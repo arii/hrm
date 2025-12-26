@@ -96,12 +96,21 @@ test.describe('Visual Regression Tests', () => {
     }
   })
 
+  // beforeEach hook to reset state and ensure a stable connection
+  test.beforeEach(async () => {
+    // To ensure a clean state for each test, reload the control page
+    // and wait for it to be fully interactive (including WebSocket connection).
+    await controlPage.reload()
+    await expect(controlPage.getByText('Timer Mode')).toBeVisible({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
+    // Revert timeout to default as WebSocket connection is now more stable
+    await waitForWebSocketConnection(controlPage)
+  })
+
   test('Dashboard - main viewer page', async () => {
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
-
-    // Wait for WebSocket to be connected to ensure a stable UI state
-    await waitForWebSocketConnection(dashboardPage)
 
     // Extra verification: ensure timer is NOT in active state (no WORK/REST)
     // Wait for any existing timer display to settle or disappear
@@ -127,6 +136,8 @@ test.describe('Visual Regression Tests', () => {
         // Use precise data-testid selectors for dynamic content masking
         ...getDynamicContentMasks(dashboardPage),
         ...getSpotifyMasks(dashboardPage),
+        // Add a specific mask for the Spotify display to prevent intermittent flakiness
+        dashboardPage.getByTestId('spotify-display'),
       ],
     })
   })
@@ -152,13 +163,8 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
-    await controlPage.reload()
-    // Wait for control page to be fully loaded - check for Timer Mode text
-    await expect(controlPage.getByText('Timer Mode')).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-    })
-    // Ensure WebSocket is connected before interacting with controls
-    await waitForWebSocketConnection(controlPage)
+    // The beforeEach hook now handles reloading and waiting for WebSocket.
+    // We can proceed directly with the test logic.
 
     // Use the new DurationStepper component to configure the timer
     const decreaseWorkButton = controlPage.getByRole('button', {
