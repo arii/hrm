@@ -1,56 +1,59 @@
 #!/bin/bash
-# Production deployment script for HRM Next.js app
+# deploy.sh - Production deployment for HRM (Leader Branch)
 
-set -e
+set -e # Exit immediately on error
+
+# Configuration
+BRANCH="leader"
+PM2_APP_NAME="hrm-server"
 
 echo "🚀 Starting HRM production deployment..."
 
-# Check for .env.production
+# 1. Environment & Prerequisites Check
+if ! command -v pnpm &> /dev/null; then
+    echo "📦 pnpm not found. Installing global pnpm..."
+    npm install -g pnpm
+fi
+
 if [ ! -f ".env.production" ]; then
     echo "❌ Error: .env.production file not found!"
-    echo "Please create .env.production with:"
-    echo "  NEXTAUTH_URL=https://your-domain.com"
-    echo "  NEXTAUTH_SECRET=your-secret-here"
-    echo "  SPOTIFY_CLIENT_ID=your-client-id"
-    echo "  SPOTIFY_CLIENT_SECRET=your-client-secret"
     exit 1
 fi
 
-# Check if nginx is configured (skip if no sudo access)
-if ! command -v nginx &> /dev/null; then
-    echo "⚠️  Warning: nginx not found. Make sure it's installed and configured."
-else
+# 2. Git Sync (Leader Branch)
+echo "🔄 Syncing with origin/$BRANCH..."
+git fetch origin
+git reset --hard origin/$BRANCH
+
+# 3. Install Dependencies & Build
+echo "📦 Installing dependencies and building application..."
+# We need to temporarily install dev deps to build (TS, Next CLI),
+# OR ensure your build machine has them.
+# STRATEGY: It is often safer to install ALL deps, build, then prune.
+pnpm install --frozen-lockfile # Install all for build tools
+pnpm run build
+pnpm prune --prod # Remove dev deps to keep runtime light
+
+# 4. Nginx Validation
+if command -v nginx &> /dev/null; then
+    echo "🔍 nginx found, testing config..."
     if sudo -n true 2>/dev/null; then
-        if ! sudo nginx -t &> /dev/null; then
-            echo "❌ Error: nginx configuration test failed!"
-            echo "Please check your nginx configuration."
-            exit 1
-        fi
-    else
-        echo "⚠️  Warning: Cannot test nginx configuration (no sudo access). Proceeding..."
+        sudo nginx -t
     fi
 fi
 
-# Create logs directory
-echo "📁 Creating logs directory..."
-mkdir -p logs
+# 6. PM2 Process Management
+echo "🔄 Reloading application..."
+# Check if app is running
+if pm2 list | grep -q "$PM2_APP_NAME"; then
+    # Reload allows for zero-downtime if architecture permits, otherwise use restart
+    pm2 reload ecosystem.config.cjs --env production --update-env
+    echo "✅ Application reloaded."
+else
+    # First time start
+    pm2 start ecosystem.config.cjs --env production
+    echo "✅ Application started."
+fi
 
-# Build the application
-echo "📦 Building Next.js application..."
-pnpm run build
-
-# Stop and delete existing PM2 processes
-echo "🛑 Stopping existing PM2 processes..."
-pnpm run pm2:delete || true
-
-# Start with production environment
-echo "▶️ Starting HRM server with PM2..."
-pnpm run start
-
-# Save PM2 configuration
-echo "💾 Saving PM2 configuration..."
 pm2 save
-
-echo "✅ Deployment complete!"
-echo "📊 Check status with: pm2 status"
-echo "📝 View logs with: pnpm run pm2:logs"
+echo "🎉 Deployment to '$BRANCH' complete!"
