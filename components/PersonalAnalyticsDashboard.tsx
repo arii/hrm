@@ -1,6 +1,5 @@
 // File: components/PersonalAnalyticsDashboard.tsx
-import React from 'react';
-import { useCalorieCounter } from '../hooks/useCalorieCounter';
+import { useCalorieCounter } from '../hooks/useCalorieCounter'
 
 /**
  * A component to display the user's personal analytics.
@@ -10,13 +9,21 @@ import { useCalorieCounter } from '../hooks/useCalorieCounter';
  * @param {number} props.weight - The user's weight in kg.
  * @returns {JSX.Element} - The rendered component.
  */
-export const PersonalAnalyticsDashboard = ({ heartRate, age, weight }: { heartRate: number; age: number; weight: number }): JSX.Element => {
-  const calories = useCalorieCounter(heartRate, age, weight);
+export const PersonalAnalyticsDashboard = ({
+  heartRate,
+  age,
+  weight,
+}: {
+  heartRate: number
+  age: number
+  weight: number
+}) => {
+  const calories = useCalorieCounter(heartRate, age, weight)
 
   return (
     <div>
       <h2>Personal Analytics</h2>
       <p>Calories Burned: {calories.toFixed(2)}</p>
     </div>
-  );
-};
+  )
+}
