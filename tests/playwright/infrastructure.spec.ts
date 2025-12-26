@@ -31,11 +31,11 @@ const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
 test.describe('Infrastructure & Scripts', () => {
   // 1. LINT CHECK
   // Ensures you never commit code that violates ESLint rules.
-  // Skipping since npm build is already running in ci
-  test.skip('npm run lint should pass', () => {
+  // Skipping since pnpm build is already running in ci
+  test.skip('pnpm run lint should pass', () => {
     try {
       // stdio: 'pipe' allows us to capture output if it fails
-      execSync('npm run lint', { stdio: 'pipe' })
+      execSync('pnpm run lint', { stdio: 'pipe' })
     } catch (error: unknown) {
       const execError = error as {
         status: number
@@ -53,17 +53,17 @@ test.describe('Infrastructure & Scripts', () => {
   test.skip('build:server should compile successfully', () => {
     const start = Date.now()
     // Using ignore for stdio to keep test logs clean unless it throws
-    execSync('npm run build:server', { stdio: 'ignore' })
+    execSync('pnpm run build:server', { stdio: 'ignore' })
     expect(Date.now() - start).toBeLessThan(30000) // Fail if build takes > 30s
   })
 
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
-  test('npm run dev should start and listen', async () => {
+  test('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
-    const devServer = spawn('npm', ['run', 'dev'], {
+    const devServer = spawn('pnpm', ['run', 'dev'], {
       detached: true, // Use detached to create a process group
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
