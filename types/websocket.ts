@@ -21,6 +21,7 @@ import type {
 export interface ExtWebSocket extends WebSocket {
   clientId: string
   isAlive: boolean
+  sessionId: string
   clientType?: 'dashboard' | 'controller'
 }
 
@@ -178,7 +179,7 @@ export const HrmInputMessageSchema = z.object({
 
 export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
-  name: z.string().optional(),
+  userName: z.string().optional(),
   age: z.number().optional(),
 })
 

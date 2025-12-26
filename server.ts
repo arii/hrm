@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws'
 // Service Imports (Node loads these .ts files via transpilation)
 import { SpotifyPolling } from './services/spotifyPolling.js'
 import TabataTimer from './services/tabataTimer.js'
+import { hrmDataService } from './services/hrmDataService.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { broadcast } from './utils/websocketUtils.js'
 import { serviceContainer } from './lib/serviceContainer.js'
@@ -41,6 +42,7 @@ const hostname =
     : process.env.HOST || DEFAULT_HOST_DEVELOPMENT // Bind to all interfaces in production
 
 const dev = process.env.NODE_ENV !== 'production'
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 // === CRITICAL SECURITY CHECK ===
 // Ensure NEXTAUTH_SECRET is present in production to prevent runtime errors
@@ -182,6 +184,11 @@ app
 
     // 5. Initialize WebSocket Manager (to handle commands and connections)
     initSocketManager(wss, getUnifiedStateSnapshot)
+
+    // 6. Schedule HRM Data Pruning
+    hrmDataService.pruneOldData() // Run once on startup
+    setInterval(() => hrmDataService.pruneOldData(), ONE_DAY_MS)
+    logger.info('Scheduled daily pruning of old HRM data.')
 
     // --- Express Routing ---
 
