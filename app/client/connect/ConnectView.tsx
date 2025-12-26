@@ -15,6 +15,8 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -38,6 +40,8 @@ interface ConnectViewProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  userGender: 'male' | 'female'
+  setUserGender: (gender: 'male' | 'female') => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -67,6 +71,8 @@ export default function ConnectView({
   setUserHeight,
   userWeight,
   setUserWeight,
+  userGender,
+  setUserGender,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -198,6 +204,24 @@ export default function ConnectView({
               helperText={weightError}
               inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
             />
+            <ToggleButtonGroup
+              color="primary"
+              value={userGender}
+              exclusive
+              onChange={(_, newGender) => {
+                if (newGender) {
+                  setUserGender(newGender);
+                }
+              }}
+              aria-label="Select gender"
+            >
+              <ToggleButton value="male" aria-label="left aligned">
+                Male
+              </ToggleButton>
+              <ToggleButton value="female" aria-label="centered">
+                Female
+              </ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
         ) : (
           <Box

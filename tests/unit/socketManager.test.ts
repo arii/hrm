@@ -218,28 +218,20 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
+    it('should receive and broadcast calorie data from the client', () => {
+      const sendHrmInput = (hr: number, calories: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr, calories },
         })
         mockWs.emit('message', message.toString())
       }
 
-      // Initial input
-      sendHrmInput(150)
-
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
-        sendHrmInput(150)
-      }
+      // Simulate client sending data
+      sendHrmInput(150, 123.45)
 
       // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
       expect(mockBroadcast).toHaveBeenCalled()
       const lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
@@ -247,11 +239,7 @@ describe('WebSocket Manager', () => {
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
+      expect(clientData!.calories).toBe(123.45)
     })
   })
 

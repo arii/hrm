@@ -165,35 +165,11 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
-
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: currentHr,
-              age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            currentAccumulated += caloriesBurned
-          }
-
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
+        if (existingData) {
           hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
+            calories: message.data.calories ?? existingData.calories,
           })
         }
         broadcastState()
