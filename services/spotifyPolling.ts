@@ -318,25 +318,15 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
-  /**
-   * Handles incoming commands for the Spotify service.
-   * @param command The command to execute.
-   * @param params The parameters for the command.
-   * @param params.deviceId The ID of the device to target.
-   * @param params.volume The volume to set.
-   * @param params.playlistUri The URI of a playlist to play (legacy).
-   * @param params.contextUri The URI of a context to play (playlist, album, artist). Takes precedence over playlistUri.
-   */
   public handleCommand(
     command: SpotifyCommand,
     params: {
       deviceId?: string
       volume?: number
       playlistUri?: string
-      contextUri?: string
     }
   ) {
-    const { deviceId, volume, playlistUri, contextUri } = params
+    const { deviceId, volume, playlistUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
       logger.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
@@ -349,12 +339,7 @@ export class SpotifyPolling implements SpotifyService {
 
     return (async () => {
       try {
-        await this.executeSpotifyCommand(
-          command,
-          deviceId,
-          volume,
-          contextUri || playlistUri
-        )
+        await this.executeSpotifyCommand(command, deviceId, volume, playlistUri)
         setTimeout(() => this.getCurrentlyPlaying(), 500)
       } catch (error) {
         await logSpotifyCommandError(command, error)
@@ -366,16 +351,16 @@ export class SpotifyPolling implements SpotifyService {
     command: SpotifyCommand,
     deviceId?: string,
     volume?: number,
-    contextUri?: string
+    playlistUri?: string
   ) {
     // Note: We allow deviceId to be undefined for PLAY/PAUSE/NEXT/PREVIOUS
     // This triggers the action on the currently active device.
 
     switch (command) {
       case 'PLAY':
-        if (contextUri) {
+        if (playlistUri) {
           // The safe API wrapper handles the undefined deviceId correctly.
-          await this.sdk!.player.startResumePlayback(deviceId, contextUri)
+          await this.sdk!.player.startResumePlayback(deviceId, playlistUri)
         } else {
           await this.sdk!.player.startResumePlayback(deviceId)
         }

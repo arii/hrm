@@ -337,28 +337,6 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should extract contextUri and playlistUri from SPOTIFY_COMMAND', () => {
-      const message = JSON.stringify({
-        type: 'SPOTIFY_COMMAND',
-        command: 'PLAY',
-        deviceId: 'test_device',
-        volume: 50,
-        playlistUri: 'spotify:playlist:123',
-        contextUri: 'spotify:album:456',
-      })
-      mockWs.emit('message', message.toString())
-
-      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
-        'PLAY',
-        {
-          deviceId: 'test_device',
-          volume: 50,
-          playlistUri: 'spotify:playlist:123',
-          contextUri: 'spotify:album:456',
-        }
-      )
-    })
-
     it('should handle unknown message types', () => {
       const message = JSON.stringify({ type: 'SOME_GARBAGE' })
       jest
