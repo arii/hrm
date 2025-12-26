@@ -1,5 +1,6 @@
 // server.ts (Refactored)
 import express from 'express'
+import 'express-async-errors'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
