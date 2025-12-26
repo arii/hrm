@@ -1,7 +1,7 @@
 'use client'
 
 import { createTheme } from '@mui/material/styles'
-import { reducedMotionStyles } from './theme/animations.js'
+import { reducedMotionStyles } from './theme/animations'
 
 // Extend the MUI theme types to include custom properties
 declare module '@mui/material/styles' {

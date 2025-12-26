@@ -5,17 +5,7 @@ import { Session, Measurement } from '../../../types/hrm'
 
 // Since we are using a mock for 'better-sqlite3', we can access the mock
 // database instance and its methods to assert that they are called correctly.
-const mockDb = db as unknown as {
-  prepare: jest.Mock<
-    {
-      run: jest.Mock
-      get: jest.Mock
-      all: jest.Mock
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    any[]
-  >
-}
+const mockDb = db as any
 
 describe('HrmDataService', () => {
   afterEach(() => {
@@ -33,9 +23,7 @@ describe('HrmDataService', () => {
 
       expect(sessionId).toBeDefined()
       expect(typeof sessionId).toBe('string')
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO sessions')
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO sessions'))
       expect(mockDb.prepare().run).toHaveBeenCalledWith(
         expect.any(String),
         sessionData.userName,
@@ -74,15 +62,8 @@ describe('HrmDataService', () => {
       const totalCalories = 200
       hrmDataService.endSession(sessionId, endTime, avgBpm, totalCalories)
 
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE sessions')
-      )
-      expect(mockDb.prepare().run).toHaveBeenCalledWith(
-        endTime,
-        avgBpm,
-        totalCalories,
-        sessionId
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE sessions'))
+      expect(mockDb.prepare().run).toHaveBeenCalledWith(endTime, avgBpm, totalCalories, sessionId)
     })
   })
 
@@ -90,21 +71,14 @@ describe('HrmDataService', () => {
     it('should retrieve a list of recent sessions', () => {
       const mockSessions: Session[] = [
         { id: '1', userName: 'User1', startTime: Date.now(), deviceId: 'd1' },
-        {
-          id: '2',
-          userName: 'User2',
-          startTime: Date.now() - 1000,
-          deviceId: 'd2',
-        },
+        { id: '2', userName: 'User2', startTime: Date.now() - 1000, deviceId: 'd2' },
       ]
       mockDb.prepare().all.mockReturnValue(mockSessions)
 
       const sessions = hrmDataService.getSessionHistory(2)
 
       expect(sessions).toEqual(mockSessions)
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT')
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('SELECT'))
       expect(mockDb.prepare().all).toHaveBeenCalledWith(2)
     })
   })
@@ -118,30 +92,17 @@ describe('HrmDataService', () => {
         deviceId: 'd1',
       }
       const mockMeasurements: Measurement[] = [
-        {
-          sessionId: '1',
-          timestamp: Date.now(),
-          bpm: 120,
-          caloriesAccumulated: 10,
-          zoneLabel: 'Cardio',
-        },
+        { sessionId: '1', timestamp: Date.now(), bpm: 120, caloriesAccumulated: 10, zoneLabel: 'Cardio' },
       ]
       mockDb.prepare().get.mockReturnValue(mockSession)
       mockDb.prepare().all.mockReturnValue(mockMeasurements)
 
       const sessionDetails = hrmDataService.getSessionDetails('1')
 
-      expect(sessionDetails).toEqual({
-        ...mockSession,
-        measurements: mockMeasurements,
-      })
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('FROM sessions')
-      )
+      expect(sessionDetails).toEqual({ ...mockSession, measurements: mockMeasurements })
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('FROM sessions'))
       expect(mockDb.prepare().get).toHaveBeenCalledWith('1')
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('FROM measurements')
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('FROM measurements'))
       expect(mockDb.prepare().all).toHaveBeenCalledWith('1')
     })
 
@@ -157,9 +118,7 @@ describe('HrmDataService', () => {
       mockDb.prepare().run.mockReturnValue({ changes: 5 })
       hrmDataService.pruneOldData()
 
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        'DELETE FROM sessions WHERE start_time < ?'
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith('DELETE FROM sessions WHERE start_time < ?')
       expect(mockDb.prepare().run).toHaveBeenCalledWith(expect.any(Number))
     })
   })
@@ -170,9 +129,7 @@ describe('HrmDataService', () => {
       const newUserName = 'New User Name'
       hrmDataService.updateSessionMetadata(sessionId, newUserName)
 
-      expect(mockDb.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE sessions')
-      )
+      expect(mockDb.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE sessions'))
       expect(mockDb.prepare().run).toHaveBeenCalledWith(newUserName, sessionId)
     })
   })

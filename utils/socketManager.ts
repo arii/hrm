@@ -3,7 +3,7 @@
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod'
+import { z } from 'zod' // Import z from zod
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -14,37 +14,30 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js'
 import {
-  broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
 import { hrmDataService } from '../services/hrmDataService.js'
-import { getHrZoneProps } from './visualization.js'
 
+// Define service instances to be managed
+// New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
+// Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 
-interface ClientConnectionState {
-  sessionId: string
-  userName: string
-  age: number
-  maxHr: number
-  lastUpdate: number
-  accumulatedCalories: number
-  totalBpm: number
-  measurementCount: number
-  currentBpm: number
-}
+// Track internal state for calculations (not sent to client)
+const clientSessionState = new Map<
+  string,
+  { lastUpdate: number; accumulatedCalories: number; hrmSessionId?: string }
+>()
 
-const clientConnections = new Map<string, ClientConnectionState>()
-
+/**
+ * Initializes the WebSocket Server manager and registers the core services.
+ */
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot
@@ -64,22 +57,16 @@ const initSocketManager = (
     extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    const sessiondId = hrmDataService.startSession({
-      userName: extWs.clientId,
+    // Start a new HRM session
+    const hrmSessionId = hrmDataService.startSession({
+      userName: 'New User', // Placeholder, will be updated by client
+      deviceId: extWs.clientId,
     })
 
-    extWs.sessionId = sessiondId
-
-    clientConnections.set(extWs.clientId, {
-      sessionId: sessiondId,
-      userName: extWs.clientId,
-      age: 30,
-      maxHr: 185,
+    clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
-      totalBpm: 0,
-      measurementCount: 0,
-      currentBpm: 0,
+      hrmSessionId: hrmSessionId,
     })
 
     extWs.on('message', (message) => {
@@ -88,21 +75,16 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      const sessionState = clientConnections.get(extWs.clientId)
-      if (sessionState) {
-        const avgBpm =
-          sessionState.measurementCount > 0
-            ? Math.round(sessionState.totalBpm / sessionState.measurementCount)
-            : 0
+      const session = clientSessionState.get(extWs.clientId)
+      if (session?.hrmSessionId) {
         hrmDataService.endSession(
-          sessionState.sessionId,
+          session.hrmSessionId,
           Date.now(),
-          avgBpm,
-          Math.round(sessionState.accumulatedCalories)
+          0, // Placeholder for avgBpm
+          Math.round(session.accumulatedCalories)
         )
       }
-      clientConnections.delete(extWs.clientId)
-      broadcastState()
+      clientSessionState.delete(extWs.clientId)
     })
   })
 
@@ -115,30 +97,14 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
-  clientConnections.clear()
+  // This is now more complex as we'd need to mock the db.
+  // For now, we'll just clear the in-memory state.
+  clientSessionState.clear()
 }
 
-const broadcastState = () => {
-  const payload: HrmStreamData[] = Array.from(clientConnections.values()).map(
-    (state) => ({
-      clientId: state.userName,
-      value: state.currentBpm,
-      maxHr: state.maxHr,
-      age: state.age,
-      calories: Math.round(state.accumulatedCalories * 10) / 10,
-    })
-  )
-
-  broadcast(
-    wsServerInstance,
-    {
-      type: 'HRM_UPDATE',
-      payload: payload,
-    },
-    'socketManager.broadcastState'
-  )
-}
-
+/**
+ * Handles incoming JSON messages from client applications.
+ */
 const handleIncomingMessage = (
   ws: ExtWebSocket,
   messageString: string,
@@ -147,14 +113,14 @@ const handleIncomingMessage = (
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
-    const sessionState = clientConnections.get(clientId)
-
-    if (!sessionState && message.type !== 'GET_STATE') {
-      logger.warn({ clientId }, 'Received message for non-existent session.')
-      return
-    }
 
     switch (message.type) {
+      case 'PING': {
+        // This is now a no-op. The server relies on native WebSocket ping/pong
+        // frames for heartbeat. The case is retained for backward
+        // compatibility with older clients that might still send this message.
+        break
+      }
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
@@ -167,7 +133,7 @@ const handleIncomingMessage = (
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
-          hrmData: [], // Cleared as it's no longer stored in memory
+          hrmData: [], // HRM data is now session-based
         }
         const initialStateMessage: ServerMessage = {
           type: 'INITIAL_STATE',
@@ -177,52 +143,27 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        if (sessionState) {
-          sessionState.age = message.data.age ?? sessionState.age
-          sessionState.maxHr = message.data.maxHr ?? sessionState.maxHr
-          sessionState.userName = message.data.userName ?? sessionState.userName
-          if (message.data.userName) {
-            hrmDataService.updateSessionMetadata(
-              sessionState.sessionId,
-              message.data.userName
-            )
-          }
+        const session = clientSessionState.get(clientId)
+        if (session?.hrmSessionId && message.data.userName) {
+          hrmDataService.updateSessionMetadata(
+            session.hrmSessionId,
+            message.data.userName
+          )
         }
-        broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        if (sessionState && message.data.value) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          if (dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: message.data.value,
-              age: sessionState.age,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            sessionState.accumulatedCalories += caloriesBurned
-          }
-          sessionState.totalBpm += message.data.value
-          sessionState.measurementCount++
-          sessionState.currentBpm = message.data.value
-
-          const zone = getHrZoneProps(message.data.value, sessionState.maxHr)
-
+        const session = clientSessionState.get(clientId)
+        if (session?.hrmSessionId) {
           hrmDataService.logMeasurement(
             {
-              timestamp: now,
-              bpm: message.data.value,
-              caloriesAccumulated: sessionState.accumulatedCalories,
-              zoneLabel: zone.zone,
+              timestamp: Date.now(),
+              bpm: message.data.value ?? 0,
+              // Other fields can be added here if needed
             },
-            sessionState.sessionId
+            session.hrmSessionId
           )
         }
-        broadcastState()
         break
       }
 
@@ -230,7 +171,6 @@ const handleIncomingMessage = (
         serviceContainer.get('tabataService').handleCommand(message.command)
         break
 
-      // ... other cases remain the same
       case 'SET_MODE':
         serviceContainer.get('tabataService').setMode(message.mode)
         break

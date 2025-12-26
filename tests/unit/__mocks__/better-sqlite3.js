@@ -18,6 +18,7 @@ const mockDb = {
   exec: jest.fn(),
   pragma: jest.fn(),
   close: jest.fn(),
+  transaction: jest.fn((fn) => fn),
 }
 
 // The default export of 'better-sqlite3' is a constructor function.

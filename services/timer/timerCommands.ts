@@ -3,8 +3,8 @@
  * Encapsulates all state-mutating operations (commands) for the timer.
  * This class directly modifies the state object and triggers broadcasts.
  */
-import { ServerMessage } from '../../types/websocket.js'
-import { TimerMode } from '../../types/core.js'
+import { ServerMessage } from '../../types/websocket'
+import { TimerMode } from '../../types/core'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL,

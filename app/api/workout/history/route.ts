@@ -1,7 +1,7 @@
 // app/api/workout/history/route.ts
 import { NextResponse } from 'next/server'
-import { hrmDataService } from '../../../../services/hrmDataService.js'
-import logger from '../../../../utils/logger.js'
+import { hrmDataService } from '../../../../services/hrmDataService'
+import logger from '../../../../utils/logger'
 
 export async function GET() {
   try {

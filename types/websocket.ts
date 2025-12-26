@@ -9,7 +9,7 @@ import type {
   TimerData,
   SpotifyPlaybackState as SpotifyData,
   TimerMode,
-} from './core.js'
+} from './core'
 
 // --- WebSocket Connection & Augmentation ---
 
@@ -21,7 +21,6 @@ import type {
 export interface ExtWebSocket extends WebSocket {
   clientId: string
   isAlive: boolean
-  sessionId: string
   clientType?: 'dashboard' | 'controller'
 }
 
@@ -179,7 +178,7 @@ export const HrmInputMessageSchema = z.object({
 
 export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
-  userName: z.string().optional(),
+  name: z.string().optional(),
   age: z.number().optional(),
 })
 

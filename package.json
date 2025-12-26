@@ -59,8 +59,7 @@
     "build-storybook": "storybook build",
     "verify:storybook": "pnpm exec ts-node --esm scripts/verify-storybook-setup.ts",
     "generate:openapi": "ts-node --esm scripts/generate-openapi.ts",
-    "prepare": "husky",
-    "db:migrate": "pnpm exec ts-node scripts/migrate-json-to-sqlite.ts"
+    "prepare": "husky"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.2.0",
@@ -71,6 +70,7 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
+    "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.5.0",
     "cheerio": "^1.1.2",
     "express": "^5.1.0",
@@ -84,8 +84,7 @@
     "react-dom": "19.2.3",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.1.13",
-    "@types/better-sqlite3": "^7.6.13"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
