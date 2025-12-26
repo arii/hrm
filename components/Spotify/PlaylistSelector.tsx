@@ -115,7 +115,7 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
 interface Playlist {
   name: string
   uri: string
-  id?: string
+  id: string
   isPreset?: boolean
   isSearchResult?: boolean
   imageUrl?: string | null
