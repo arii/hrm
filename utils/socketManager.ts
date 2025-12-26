@@ -282,7 +282,7 @@ const handleIncomingMessage = (
         if (commandMsg.playlistUri)
           spotifyCommandParams.playlistUri = commandMsg.playlistUri
         if (commandMsg.contextUri)
-          spotifyCommandGommandParams.contextUri = commandMsg.contextUri
+          spotifyCommandParams.contextUri = commandMsg.contextUri
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
