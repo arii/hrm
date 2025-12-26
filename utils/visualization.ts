@@ -20,6 +20,15 @@ type MuiColor =
   | 'success'
 
 // --- Constants ---
+export const getHrZone = (currentHr: number, maxHr: number): string => {
+  const percentage = (currentHr / maxHr) * 100
+  if (percentage < 50) return 'Below Zone'
+  if (percentage < 60) return 'Zone 1'
+  if (percentage < 70) return 'Zone 2'
+  if (percentage < 80) return 'Zone 3'
+  if (percentage < 90) return 'Zone 4'
+  return 'Zone 5'
+}
 // UI properties for each heart rate zone, mapped for efficient O(1) lookup.
 type HrZoneUi = {
   color: string

@@ -79,6 +79,10 @@ interface UseBluetoothHRMProps {
    * A value of 0 disables this feature.
    */
   dataLivenessTimeoutMs?: number
+  onHeartRateData?: (heartRate: number) => {
+    smoothedHr: number
+    totalCalories: number
+  }
 }
 
 /**
@@ -130,7 +134,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  * ```
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000 } = props
+  const { dataLivenessTimeoutMs = 10000, onHeartRateData } = props
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
@@ -345,8 +349,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             sendData(metadata)
 
-            const data: HrmInputData = {
-              value: heartRate,
+            let data: HrmInputData
+
+            if (onHeartRateData) {
+              const { smoothedHr, totalCalories } = onHeartRateData(heartRate)
+              data = {
+                value: smoothedHr,
+                calories: totalCalories,
+              }
+            } else {
+              data = {
+                value: heartRate,
+              }
             }
 
             sendData({
@@ -369,7 +383,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData, onHeartRateData]
   )
 
   useEffect(() => {
