@@ -32,7 +32,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 1. LINT CHECK
   // Ensures you never commit code that violates ESLint rules.
   // Skipping since pnpm build is already running in ci
-  test.skip('pnpm run lint should pass', () => {
+  test('pnpm run lint should pass', () => {
     try {
       // stdio: 'pipe' allows us to capture output if it fails
       execSync('pnpm run lint', { stdio: 'pipe' })
@@ -50,7 +50,7 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 2. BUILD VERIFICATION
   // Verifies the server compilation step (TS -> JS) works.
-  test.skip('build:server should compile successfully', () => {
+  test('build:server should compile successfully', () => {
     const start = Date.now()
     // Using ignore for stdio to keep test logs clean unless it throws
     execSync('pnpm run build:server', { stdio: 'ignore' })
@@ -59,7 +59,7 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
-  test.skip('pnpm run dev should start and listen', async () => {
+  test('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005

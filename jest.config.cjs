@@ -4,6 +4,11 @@ const config = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests/unit'],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "\\.vitest\\.test\\.[jt]sx?$",
+    "\\.ct\\.test\\.[jt]sx?$"
+  ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   coverageDirectory: 'coverage',
   reporters: [
@@ -50,7 +55,23 @@ const config = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testTimeout: 10000,
-  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.tsx'],
+  globals: {
+    'ts-jest': {
+      diagnostics: {
+        ignoreCodes: [1343]
+      },
+      astTransformers: {
+        before: [
+          {
+            path: 'node_modules/ts-jest-mock-import-meta',
+            options: { metaObjectReplacement: { url: 'https://www.url.com' } }
+          }
+        ]
+      }
+    },
+    'process.env.NEXTAUTH_SECRET': 'test-secret'
+  }
 }
 
 module.exports = config
