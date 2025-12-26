@@ -47,6 +47,7 @@ export default defineConfig([
     rules: {
       ...react.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off', // Not needed with Next.js App Router
+      'react/prop-types': 'off', // Not needed for TypeScript projects
     },
   },
 
