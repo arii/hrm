@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
-import logger from '../utils/logger'
-import { env } from './env'
+import logger from '../utils/logger.js'
+import { env } from './env.js'
 
 // Determine the database path. Use an in-memory database for tests.
 const dbPath =

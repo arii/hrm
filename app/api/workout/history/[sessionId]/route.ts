@@ -3,9 +3,9 @@
  * API Route: Fetches details for a single workout session.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler, ApiHandler } from '@/lib/middleware/errorHandler'
-import { getSessionDetails } from '@/services/hrmDataService'
-import { ApiError } from '@/lib/errors'
+import { withErrorHandler } from '../../../../lib/middleware/errorHandler'
+import { getSessionDetails } from '../../../../services/hrmDataService'
+import { ApiError } from '../../../../lib/errors'
 
 // A placeholder for getting the current user's ID
 const getCurrentUserId = async (): Promise<string> => {
@@ -15,13 +15,13 @@ const getCurrentUserId = async (): Promise<string> => {
 /**
  * GET handler for fetching single workout session details.
  * @param _req The incoming Request object.
- * @param context The route context, containing the sessionId.
+ * @param params The route parameters, containing the sessionId.
  * @returns A NextResponse with the session details or a 404 error.
  */
-const getWorkoutSessionDetails: ApiHandler<{ sessionId: string }> = async (
-  _req,
-  { params }
-) => {
+async function getWorkoutSessionDetails(
+  _req: Request,
+  { params }: { params: { sessionId: string } }
+) {
   const { sessionId } = params
   const userId = await getCurrentUserId()
 

@@ -1,24 +1,12 @@
 // lib/middleware/errorHandler.ts
 import { NextResponse } from 'next/server'
-import { ApiError } from '@/lib/errors'
-import logger from '@/utils/logger'
+import { ApiError } from '../lib/errors'
+import logger from '../utils/logger'
 
-/**
- * Defines the context object passed to Next.js API route handlers.
- * @template T - The shape of the route parameters.
- */
-type RouteContext<T = Record<string, string | string[]>> = {
-  params: T
-}
-
-/**
- * Defines the signature for an API route handler.
- * @template T - The shape of the route parameters.
- */
-export type ApiHandler<T = Record<string, unknown>> = (
+export type ApiHandler = (
   req: Request,
-  context: RouteContext<T>
-) => Promise<NextResponse | Response> | NextResponse | Response
+  ...args: unknown[]
+) => Promise<NextResponse>
 
 /**
  * Wraps an API route handler to provide centralized error handling.
@@ -26,14 +14,13 @@ export type ApiHandler<T = Record<string, unknown>> = (
  * This function catches any errors that occur during the execution of the handler,
  * logs them, and returns a standardized JSON error response.
  *
- * @template T - The shape of the route parameters.
  * @param handler The API route handler to wrap.
  * @returns A new handler with error handling.
  */
-export function withErrorHandler<T>(handler: ApiHandler<T>): ApiHandler<T> {
-  return async (req: Request, context: RouteContext<T>) => {
+export function withErrorHandler(handler: ApiHandler): ApiHandler {
+  return async (req: Request, ...args: unknown[]) => {
     try {
-      return await handler(req, context)
+      return await handler(req, ...args)
     } catch (error) {
       if (error instanceof ApiError) {
         logger.warn({ err: error }, `API Error: ${error.message}`)

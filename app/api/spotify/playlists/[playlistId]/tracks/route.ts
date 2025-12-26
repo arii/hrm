@@ -3,68 +3,14 @@
  * API Route: Fetches tracks for a specific Spotify playlist with pagination.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '@/lib/middleware/errorHandler'
-import { ApiError } from '@/lib/errors'
-import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
-
-type SpotifyPagingParams =
-  | 0
-  | 3
-  | 2
-  | 15
-  | 1
-  | 4
-  | 7
-  | 9
-  | 5
-  | 10
-  | 20
-  | 40
-  | 50
-  | 30
-  | 36
-  | 6
-  | 8
-  | 11
-  | 12
-  | 13
-  | 14
-  | 16
-  | 17
-  | 18
-  | 19
-  | 21
-  | 22
-  | 23
-  | 24
-  | 25
-  | 26
-  | 27
-  | 28
-  | 29
-  | 31
-  | 32
-  | 33
-  | 34
-  | 35
-  | 37
-  | 38
-  | 39
-  | 41
-  | 42
-  | 43
-  | 44
-  | 45
-  | 46
-  | 47
-  | 48
-  | 49
-  | undefined
+import { withErrorHandler } from '../../../../../lib/middleware/errorHandler'
+import { ApiError } from '../../../../../lib/errors'
+import { getAuthenticatedSpotifyApi } from '../../../../../lib/spotify/sdk'
 
 /**
  * GET handler for fetching playlist tracks.
  * @param req The incoming Request object.
- * @param context The route context, containing the playlistId.
+ * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the paginated list of tracks or an error.
  */
 async function getPlaylistTracks(
@@ -85,7 +31,7 @@ async function getPlaylistTracks(
     playlistId,
     undefined,
     undefined,
-    limit as SpotifyPagingParams,
+    limit,
     offset
   )
 
@@ -100,7 +46,7 @@ async function getPlaylistTracks(
         artists: track.artists.map((artist) => artist.name).join(', '),
         albumArt:
           track.album.images && track.album.images.length > 0
-            ? (track.album.images[0]?.url ?? null)
+            ? track.album.images[0]?.url ?? null
             : null,
         duration: track.duration_ms,
         uri: track.uri,
