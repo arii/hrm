@@ -6,6 +6,7 @@ import * as healthCheck from '../../../../../../lib/healthCheck'
 
 // Mock the healthCheck module
 jest.mock('../../../../../../lib/healthCheck')
+jest.mock('../../../../../../lib/redis.js')
 
 global.fetch = jest.fn()
 

@@ -48,7 +48,7 @@ const config = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
-    '^ioredis$': '<rootDir>/node_modules/ioredis-mock/build/main/index.js',
+    '^ws$': '<rootDir>/node_modules/ws',
   },
   testTimeout: 10000,
   setupFilesAfterEnv: ['<rootDir>/tests/unit/jest.setup.js'],

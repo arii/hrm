@@ -18,6 +18,7 @@ import { ExtWebSocket } from '@/types/websocket'
 // Mock the logger to prevent console output during tests
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
+jest.mock('../../lib/redis.js')
   default: {
     info: jest.fn(),
     warn: jest.fn(),

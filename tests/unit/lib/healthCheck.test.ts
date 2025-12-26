@@ -7,12 +7,15 @@ import {
   checkSpotifyAPI,
   checkWebSocketService,
   checkTimerService,
+  checkRedis,
 } from '../../../lib/healthCheck'
 import { WebSocket } from 'ws'
 import TabataTimer from '../../../services/tabataTimer'
 
 // Mock the 'ws' module
 jest.mock('ws')
+jest.mock('../../../lib/redis.js')
+
 
 // Mock global fetch
 global.fetch = jest.fn()
@@ -84,4 +87,12 @@ describe('Health Check Logic', () => {
       expect(result.details.instance).toBe('active')
     })
   })
+
+  describe('checkRedis', () => {
+    it('should return healthy when redis is connected', async () => {
+        const result = await checkRedis()
+        expect(result.healthy).toBe(true)
+        expect(result.status).toBe('connected')
+    })
+    })
 })
