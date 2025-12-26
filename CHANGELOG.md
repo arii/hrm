@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.17.0](https://github.com/arii/hrm/compare/v0.16.0...v0.17.0) (2025-12-26)
+
+
+### Features
+
+* add failure comment to auto-fix workflow ([#2156](https://github.com/arii/hrm/issues/2156)) ([ddcb4ea](https://github.com/arii/hrm/commit/ddcb4eafda9ebde5fd0a865f92506b3b1b2f1f12))
+* improve lint performance by optimizing ESLint configuration ([#2169](https://github.com/arii/hrm/issues/2169)) ([79c638f](https://github.com/arii/hrm/commit/79c638f9b1ae6807c35338aa5e67520974820f35))
+* Spotify Playlist Tracks Display ([#2112](https://github.com/arii/hrm/issues/2112)) ([cf854e9](https://github.com/arii/hrm/commit/cf854e96f0107e0a6dc799187c01d0613e5f1193))
+
+
+### Bug Fixes
+
+* correct auto-rebase workflow to use leader branch ([#2155](https://github.com/arii/hrm/issues/2155)) ([ee1d457](https://github.com/arii/hrm/commit/ee1d457853ffed5f896a07e0cfd33d59cbcec83e))
+* workflow failing on success checks ([#2131](https://github.com/arii/hrm/issues/2131)) ([6a8e304](https://github.com/arii/hrm/commit/6a8e3041291d5722b57fc9fcce19b0753942498d))
+
 ## [0.16.0](https://github.com/arii/hrm/compare/v0.15.0...v0.16.0) (2025-12-24)
 
 ### Features
