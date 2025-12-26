@@ -65,13 +65,13 @@ export const CALORIE_DEFAULTS = {
 }
 
 // Server Constants
-export const DEFAULT_PORT = 3000;
-export const DEFAULT_HOST_PRODUCTION = '0.0.0.0';
-export const DEFAULT_HOST_DEVELOPMENT = '127.0.0.1';
-export const CACHE_MAX_AGE = '365d';
+export const DEFAULT_PORT = 3000
+export const DEFAULT_HOST_PRODUCTION = '0.0.0.0'
+export const DEFAULT_HOST_DEVELOPMENT = '127.0.0.1'
+export const CACHE_MAX_AGE = '365d'
 
 // Tabata Timer Constants
-export const DEFAULT_WORK_DURATION = 20; // seconds
-export const DEFAULT_REST_DURATION = 10; // seconds
-export const START_COUNTDOWN_DURATION = 5; // seconds
-export const TIMER_INTERVAL = 1000; // ms
+export const DEFAULT_WORK_DURATION = 20 // seconds
+export const DEFAULT_REST_DURATION = 10 // seconds
+export const START_COUNTDOWN_DURATION = 5 // seconds
+export const TIMER_INTERVAL = 1000 // ms

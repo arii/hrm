@@ -12,9 +12,9 @@ export class ServiceInitializationError extends Error {
    * @param {unknown} [originalError] - The original error that caused the failure.
    */
   constructor(serviceName: string, originalError?: unknown) {
-    super(`Failed to initialize ${serviceName}`);
-    this.name = 'ServiceInitializationError';
-    this.cause = originalError;
+    super(`Failed to initialize ${serviceName}`)
+    this.name = 'ServiceInitializationError'
+    this.cause = originalError
   }
 }
 
@@ -26,7 +26,7 @@ export class ConfigurationError extends Error {
    * @param {string} message - The error message.
    */
   constructor(message: string) {
-    super(message);
-    this.name = 'ConfigurationError';
+    super(message)
+    this.name = 'ConfigurationError'
   }
 }
