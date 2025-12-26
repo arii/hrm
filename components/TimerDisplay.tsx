@@ -83,13 +83,17 @@ const TimerDisplay = () => {
         color: phaseColor, // Dynamic color based on phase
         height: '100%',
         display: 'flex',
+        flexDirection: 'row', // Main layout is a row
+        alignItems: 'center', // Center items vertically
         borderRadius: 2,
         border: '2px solid #1a1a1a', // Subtle border for definition
-        position: 'relative',
+        position: 'relative', // Keep for the status indicator
         animation:
           currentPhase === 'WORK' || currentPhase === 'REST'
             ? 'pulse-opacity 1.5s infinite'
             : 'none',
+        overflow: 'hidden', // Prevents rotated text from causing layout shifts
+        p: { xs: 1, sm: 2 }, // Add padding to the card itself
       }}
     >
       {/* Status Indicator */}
@@ -101,7 +105,7 @@ const TimerDisplay = () => {
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          zIndex: 2,
+          zIndex: 2, // Must be on top
         }}
       >
         <Typography
@@ -127,18 +131,18 @@ const TimerDisplay = () => {
           }}
         />
       </Box>
-      {/* Mode Indicator - Rotated on left side */}
-      {currentPhase !== 'IDLE' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
+
+      {/* Left Column: Mode Indicator */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0, // Prevent this column from shrinking
+          width: { xs: 30, sm: 40 }, // Fixed width for spacing
+        }}
+      >
+        {currentPhase !== 'IDLE' && (
           <Typography
             variant="body2"
             sx={{
@@ -151,53 +155,25 @@ const TimerDisplay = () => {
               px: 1,
               py: 0.5,
               borderRadius: 1,
+              transform: 'rotate(-90deg)',
             }}
           >
             {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
           </Typography>
-        </Box>
-      )}
+        )}
+      </Box>
 
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
-        </Box>
-      )}
-
+      {/* Center Column: Main Timer Content */}
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          flexGrow: 1, // This will take up the available space
+          minWidth: 0, // Allow the content to shrink
           textAlign: 'center',
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          p: { xs: 1, md: 2 }, // Adjust padding inside the content
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
@@ -226,7 +202,7 @@ const TimerDisplay = () => {
           aria-atomic="true"
           sx={{
             fontFamily: 'var(--font-roboto-mono), monospace',
-            fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
+            fontSize: { xs: '5rem', sm: '7rem', md: '9rem' },
             fontWeight: 800,
             letterSpacing: '0.12rem',
             lineHeight: 1,
@@ -266,6 +242,37 @@ const TimerDisplay = () => {
           <VolumeUp sx={{ color: 'white' }} />
         </Stack>
       </CardContent>
+
+      {/* Right Column: Tabata Durations */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0, // Prevent this column from shrinking
+          width: { xs: 30, sm: 40 }, // Fixed width for spacing
+        }}
+      >
+        {mode === 'TABATA' && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              transform: 'rotate(90deg)',
+            }}
+          >
+            WORK:{workDuration}s REST:{restDuration}s
+          </Typography>
+        )}
+      </Box>
     </Card>
   )
 }
