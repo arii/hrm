@@ -14,6 +14,8 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
+import { ThemeProvider } from '@mui/material/styles'
+import theme from '../lib/theme'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -78,7 +80,9 @@ const Dashboard = () => {
         <Box
           sx={{ flexGrow: 1, width: { xs: '100%', lg: 'calc(50% - 16px)' } }}
         >
-          <TimerDisplay />
+          <ThemeProvider theme={theme}>
+            <TimerDisplay />
+          </ThemeProvider>
         </Box>
 
         <ErrorBoundary fallback={<ErrorFallback />}>

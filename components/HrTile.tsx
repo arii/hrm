@@ -145,7 +145,7 @@ const HrTile = ({
                 </Typography>
               </Typography>
             </Box>
-            {name && !/^(user|new user)$/i.test(name) && (
+            {name && (
               <Typography
                 variant="subtitle1"
                 sx={{

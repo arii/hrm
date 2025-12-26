@@ -19,6 +19,7 @@ import {
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import { ServerMessageSchema } from '../types/schemas'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -323,7 +324,18 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-        const message: ServerMessage = JSON.parse(event.data)
+        const rawData = JSON.parse(event.data)
+        const parseResult = ServerMessageSchema.safeParse(rawData)
+
+        if (!parseResult.success) {
+          console.error(
+            'Failed to parse WebSocket message:',
+            parseResult.error.flatten()
+          )
+          return
+        }
+
+        const message = parseResult.data
 
         // Heartbeat pong check
         if (message.type === 'PONG') {
@@ -352,7 +364,7 @@ export const WebSocketProvider = ({
           dispatch(message)
         }
       } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
+        console.error('Failed to parse WebSocket message (not valid JSON):', e)
       }
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])

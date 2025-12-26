@@ -3,10 +3,10 @@
  */
 import { jest } from '@jest/globals'
 import { render, screen, fireEvent } from '@testing-library/react'
-import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import VolumeSlider from '@/components/spotify/VolumeSlider'
 import '@testing-library/jest-dom'
 
-describe('components/Spotify/VolumeSlider', () => {
+describe('components/spotify/VolumeSlider', () => {
   it('renders the volume slider', () => {
     render(
       <VolumeSlider

@@ -5,7 +5,6 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
 import {
-  ClientCommandMessageSchema,
   ClientRegistrationMessage,
   SpotifyCommandMessage,
   SpotifyExecutionMessage,
@@ -14,6 +13,7 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
+import { ClientCommandMessageSchema } from '../types/schemas.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {

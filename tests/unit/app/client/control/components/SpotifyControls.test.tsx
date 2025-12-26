@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 import SpotifyControls from '@/app/client/control/components/SpotifyControls'
 import { mockRouter } from '@/utils/test-utils/mockRouter'
-import useVolumePreference from '@/hooks/useVolumePreference'
 import '@testing-library/jest-dom'
 
 // Mock the router
@@ -40,7 +39,8 @@ describe('components/SpotifyControls', () => {
       },
       sendData: mockSendData,
     })
-    ;(useVolumePreference as jest.Mock).mockReturnValue({
+    // @ts-ignore
+    jest.spyOn(require('@/hooks/useVolumePreference'), 'default').mockReturnValue({
       volume: 50,
       muted: false,
       setVolume: jest.fn(),

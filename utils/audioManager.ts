@@ -57,6 +57,13 @@ export class AudioManager {
   }
 
   /**
+   * Check if the audio context is unlocked.
+   */
+  isAudioContextUnlocked() {
+    return this.loadedAudio
+  }
+
+  /**
    * Play short beep (countdown seconds)
    */
   playShort() {

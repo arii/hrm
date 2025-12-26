@@ -16,7 +16,7 @@ import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
-import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import VolumeSlider from '@/components/spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
