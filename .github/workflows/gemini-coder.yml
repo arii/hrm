@@ -126,7 +126,7 @@ jobs:
           done
 
           # 2. Run Client (Modify this script to output patch.diff)
-          npx tsx scripts/gemini-client.ts --mode "code-edit" --task-file "prompt.txt" --output "patch.diff"
+          npx tsx .github/scripts/gemini-client.ts --mode "code-edit" --task-file "prompt.txt" --output "patch.diff"
 
       - name: Apply Changes (Gemini Direct)
         if: env.PROVIDER == 'gemini'
