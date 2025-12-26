@@ -43,7 +43,7 @@ export class SpotifyPolling implements SpotifyService {
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
-  private broadcastUpdate: (message: ServerMessage) => void
+  private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null

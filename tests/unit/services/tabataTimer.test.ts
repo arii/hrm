@@ -5,6 +5,7 @@
 
 import { jest } from '@jest/globals'
 import TabataTimer from '../../../services/tabataTimer'
+import { ConfigurationError } from '../../../types/errors'
 
 // Mock the broadcast function
 const broadcastUpdate = jest.fn()
@@ -54,6 +55,17 @@ describe('TabataTimer (Refactored)', () => {
     expect(state.restDuration).toBe(15)
     // If idle, timeRemaining should update
     expect(state.timeRemaining).toBe(30)
+  })
+
+  it('should throw a ConfigurationError for invalid durations', () => {
+    expect(() => {
+      timer.setConfig({ workDuration: -10, restDuration: 15 })
+    }).toThrow(ConfigurationError)
+    expect(() => {
+      timer.setConfig({ workDuration: -10, restDuration: 15 })
+    }).toThrow(
+      'Invalid timer configuration: workDuration must be positive, and restDuration must be non-negative. Received workDuration: -10, restDuration: 15'
+    )
   })
 
   // --- STOPWATCH MODE TESTS ---

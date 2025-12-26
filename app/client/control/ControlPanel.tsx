@@ -23,7 +23,6 @@ const SpotifyControls = dynamic(() => import('./components/SpotifyControls'), {
   ),
 })
 import TimerControls from './components/TimerControls'
-import AudioSettings from './components/AudioSettings'
 
 const ControlPanel = () => {
   const { connectionStatus, connect, sendData } = useWebSocket()
@@ -108,7 +107,7 @@ const ControlPanel = () => {
         </Box>
 
         <TimerControls />
-        <AudioSettings />
+        <Box sx={{ height: 8 }} />
         <SpotifyControls />
       </Container>
     </>
