@@ -1,8 +1,8 @@
-import Redis from 'ioredis';
-import { env } from './env.js';
-import logger from '../utils/logger.js';
+import Redis from 'ioredis'
+import { env } from './env.js'
+import logger from '../utils/logger.js'
 
-let redis: Redis;
+let redis: Redis
 let connectionStatus: 'connecting' | 'connected' | 'error' | 'closed' =
   'connecting'
 

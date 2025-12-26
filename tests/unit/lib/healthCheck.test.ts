@@ -16,7 +16,6 @@ import TabataTimer from '../../../services/tabataTimer'
 jest.mock('ws')
 jest.mock('../../../lib/redis.js')
 
-
 // Mock global fetch
 global.fetch = jest.fn()
 
@@ -90,9 +89,9 @@ describe('Health Check Logic', () => {
 
   describe('checkRedis', () => {
     it('should return healthy when redis is connected', async () => {
-        const result = await checkRedis()
-        expect(result.healthy).toBe(true)
-        expect(result.status).toBe('connected')
+      const result = await checkRedis()
+      expect(result.healthy).toBe(true)
+      expect(result.status).toBe('connected')
     })
-    })
+  })
 })

@@ -15,10 +15,10 @@ import { ConnectionMonitor } from '../../utils/websocketUtils'
 import logger from '../../utils/logger'
 import { ExtWebSocket } from '@/types/websocket'
 
+jest.mock('../../lib/redis.js')
 // Mock the logger to prevent console output during tests
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
-jest.mock('../../lib/redis.js')
   default: {
     info: jest.fn(),
     warn: jest.fn(),
