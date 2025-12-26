@@ -1,9 +1,9 @@
 // app/api/workout/history/[sessionId]/route.ts
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { hrmDataService } from '../../../../../services/hrmDataService'
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
   try {
