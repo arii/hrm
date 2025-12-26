@@ -51,7 +51,7 @@ jobs:
           ### Instructions
           1. Determine the type (Bug, Feature, Question, etc.).
           2. Assess the clarity and quality of the issue.
-          3. Generate a refined, professional description if the original is vague.
+          3. Generate a refined, professional title and description if the original is vague. The original content should be preserved.
 
           ### Output Format
           You MUST return a valid JSON object. Do not include markdown formatting like \`\`\`json.
@@ -61,6 +61,7 @@ jobs:
             "summary": "A 1-sentence summary of the issue",
             "analysis": "A brief analysis of what is needed to fix this.",
             "suggested_title": "A clearer title (if original is poor)",
+            "suggested_body": "A professionally formatted issue body. If you generate a new body, you MUST include the original body content within a collapsible ''<details>'' section.",
             "completeness_score": 0-10
           }
           EOF
@@ -121,15 +122,19 @@ jobs:
                 body: commentBody.trim()
               });
 
-              // 3. (Optional) Auto-update Title if score is low and suggestion exists
-              // if (result.completeness_score < 5 && result.suggested_title) {
-              //   await github.rest.issues.update({
-              //     owner: context.repo.owner,
-              //     repo: context.repo.repo,
-              //     issue_number: context.issue.number,
-              //     title: result.suggested_title
-              //   });
-              // }
+              // 3. Auto-update Title and Body if suggestions exist
+              if (result.suggested_title || result.suggested_body) {
+                const newTitle = result.suggested_title || context.payload.issue.title;
+                const newBody = result.suggested_body || context.payload.issue.body;
+
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  title: newTitle,
+                  body: newBody
+                });
+              }
 
             } catch (error) {
               console.error('Error processing triage result:', error);
