@@ -45,6 +45,23 @@ const GoogleDocViewer = ({
     return () => clearTimeout(timeout)
   }, [])
 
+  // Injects a script to prevent a ReferenceError from the embedded Google Doc.
+  // The script initializes `DOCS_timing` on the window object.
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.innerHTML = `
+      window.DOCS_timing = window.DOCS_timing || {};
+    `
+    document.head.appendChild(script)
+
+    return () => {
+      // Clean up the script when the component unmounts
+      if (document.head.contains(script)) {
+        document.head.removeChild(script)
+      }
+    }
+  }, [])
+
   return (
     <Card elevation={6} sx={{ position: 'relative' }}>
       <CardContent sx={{ p: 1 }}>
