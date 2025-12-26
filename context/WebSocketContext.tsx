@@ -70,25 +70,6 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
-/**
- * @component WebSocketProvider
- *
- * @description
- * This provider manages the WebSocket connection for the entire application.
- * It handles connection, disconnection, automatic reconnection with exponential
- * backoff, and state management for real-time data from the server.
- *
- * @details
- * **Heartbeat Mechanism:** This component previously included a custom,
- * application-level heartbeat (sending JSON PING messages) to keep the
- * connection alive. This was removed because it conflicted with the server's
- * use of the native WebSocket ping/pong protocol (RFC 6455). Modern browsers
- * and the server's `ws` library handle this keep-alive mechanism automatically
- * at a lower level. Relying on the native implementation is more efficient,
- * robust, and avoids the "Pong not received in time" errors that the custom
- * implementation was causing. The server-side `ConnectionMonitor` now solely
- * manages connection liveness.
- */
 export const WebSocketProvider = ({
   children,
   serverUrl,
@@ -101,6 +82,9 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
   const pendingActions = useRef<ClientCommandMessage[]>([])
+  // Refs for heartbeat mechanism
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pongTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Configuration for exponential backoff
   const MAX_RECONNECT_ATTEMPTS = 10
@@ -211,6 +195,38 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current)
+    }
+    if (pongTimeoutRef.current) {
+      clearTimeout(pongTimeoutRef.current)
+    }
+  }, [])
+
+  const startHeartbeat = useCallback(() => {
+    stopHeartbeat() // Ensure no existing timers are running
+
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'PING' }))
+
+        // The pong timeout is set to 15 seconds. This is a tripling of the
+        // original 5-second timeout and provides a more generous buffer for
+        // temporary network latency or server-side processing delays. This value
+        // was chosen to be significantly longer than a typical network round-trip
+        // time, but not so long that a genuinely stale connection would persist
+        // for an excessive period.
+        pongTimeoutRef.current = setTimeout(() => {
+          console.warn(
+            '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
+          )
+          wsRef.current?.close() // Triggers the onclose reconnect logic
+        }, 15000)
+      }
+    }, 30000)
+  }, [stopHeartbeat])
+
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
@@ -227,8 +243,7 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set a global flag for Playwright tests to detect when the WebSocket
-      // is ready. This is a pragmatic approach for E2E testing.
+      // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
@@ -255,6 +270,8 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+      // Start the client-side heartbeat
+      startHeartbeat()
     }
 
     ws.onclose = (event) => {
@@ -268,6 +285,9 @@ export const WebSocketProvider = ({
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = false
       }
+
+      // Stop heartbeat on disconnect
+      stopHeartbeat()
 
       // To prevent the UI from flashing stale data from a previous session on
       // reconnect, we dispatch a RESET_STATE action. This clears all
@@ -310,6 +330,14 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
+        // Heartbeat pong check
+        if (message.type === 'PONG') {
+          if (pongTimeoutRef.current) {
+            clearTimeout(pongTimeoutRef.current)
+          }
+          return // Pong message is handled, no state dispatch needed
+        }
+
         // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
           // Dispatch a custom event that the remote execution hook can listen to
@@ -332,10 +360,12 @@ export const WebSocketProvider = ({
         console.error('Failed to parse WebSocket message:', e)
       }
     }
-  }, [wsUrl, throttledDispatch])
+  }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
+    // Stop heartbeat on manual disconnect
+    stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -344,7 +374,7 @@ export const WebSocketProvider = ({
       wsRef.current.close()
     }
     console.log('[useWebSocket] Manually disconnected.')
-  }, [])
+  }, [stopHeartbeat])
 
   useEffect(() => {
     connectRef.current = connect

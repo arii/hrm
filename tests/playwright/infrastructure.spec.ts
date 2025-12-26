@@ -1,31 +1,31 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
-import net from 'net'
+import { promises as fs } from 'fs'
+import path from 'path'
 import { WAIT_TIMEOUTS } from './lib/waits'
+import waitOn from 'wait-on'
 
 /**
- * HELPER: Waits for a port to be actively listening.
- * Used to verify servers (dev or prod) have actually started.
+ * Enhanced waitForPort using the `wait-on` package.
+ * It's more robust and specifically designed for this purpose.
  */
-const waitForPort = (port: number, timeout = WAIT_TIMEOUTS.INFRASTRUCTURE) => {
-  return new Promise<void>((resolve, reject) => {
-    const start = Date.now()
-    const interval = setInterval(() => {
-      const socket = new net.Socket()
-      socket.connect(port, '127.0.0.1', () => {
-        socket.destroy()
-        clearInterval(interval)
-        resolve()
-      })
-      socket.on('error', () => {
-        socket.destroy()
-        if (Date.now() - start > timeout) {
-          clearInterval(interval)
-          reject(new Error(`Timeout waiting for port ${port}`))
-        }
-      })
-    }, 500)
-  })
+const waitForPort = async (
+  port: number,
+  timeout = WAIT_TIMEOUTS.INFRASTRUCTURE
+) => {
+  try {
+    await waitOn({
+      resources: [`tcp:127.0.0.1:${port}`],
+      timeout,
+      verbose: false, // Set to true for debugging flaky tests
+    })
+  } catch (error) {
+    // Re-throw a more informative error, including the stack trace
+    const err = error as Error
+    throw new Error(
+      `Timeout waiting for port ${port}. Error: ${err.message}\nStack: ${err.stack}`
+    )
+  }
 }
 
 test.describe('Infrastructure & Scripts', () => {
@@ -61,6 +61,14 @@ test.describe('Infrastructure & Scripts', () => {
   // Spawns the real dev server on a unique port to ensure it boots.
   test('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
+
+    // Clean up .next/ directory to prevent "lock file" errors from previous runs
+    const nextDir = path.join(process.cwd(), '.next')
+    try {
+      await fs.rm(nextDir, { recursive: true, force: true })
+    } catch (error) {
+      console.warn(`Could not remove .next directory: ${error}`)
+    }
 
     const PORT = 3005
     const devServer = spawn('pnpm', ['run', 'dev'], {

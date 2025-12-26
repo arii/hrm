@@ -14,7 +14,6 @@ import ErrorFallback from '../components/ErrorFallback'
 import HrmConnectionPanel from '../components/HrmConnectionPanel'
 import TimerDisplay from '../components/TimerDisplay'
 import { useAudio } from '../hooks/useAudio'
-import { useWebSocket } from '../context/WebSocketContext'
 
 // Dynamically import SpotifyDisplay with SSR disabled.
 // This prevents the heavy Spotify SDK logic from blocking the initial server HTML or hydration.
@@ -41,31 +40,6 @@ const GoogleDocViewer = dynamic(() => import('../components/GoogleDocViewer'), {
 
 const DOC_ID =
   '1Tev5AMiHYi2Jkg9x6zRQoiJ_o2X_wZMqAXVpwgjlSqzlcXelxSc7psjE8n3N-ghzXMFtnv51nc2fJZ'
-
-const ConnectionStatus = () => {
-  const { connectionStatus } = useWebSocket()
-  if (connectionStatus === 'Connected') {
-    return null
-  }
-  return (
-    <Box
-      data-testid="connection-status"
-      sx={{
-        position: 'fixed',
-        bottom: 8,
-        right: 8,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        color: 'white',
-        padding: '2px 8px',
-        borderRadius: 1,
-        fontSize: '0.75rem',
-        zIndex: 1000,
-      }}
-    >
-      {connectionStatus}
-    </Box>
-  )
-}
 
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
@@ -129,7 +103,6 @@ const Dashboard = () => {
       <ErrorBoundary fallback={<ErrorFallback />}>
         <SpotifyDisplay />
       </ErrorBoundary>
-      <ConnectionStatus />
     </Container>
   )
 }
