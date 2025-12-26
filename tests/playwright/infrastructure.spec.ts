@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
-import fs from 'fs'
+import { promises as fs } from 'fs'
 import path from 'path'
 import { WAIT_TIMEOUTS } from './lib/waits'
 import waitOn from 'wait-on'
@@ -20,8 +20,11 @@ const waitForPort = async (
       verbose: false, // Set to true for debugging flaky tests
     })
   } catch (error) {
-    // Re-throw a more informative error
-    throw new Error(`Timeout waiting for port ${port}. Error: ${error}`)
+    // Re-throw a more informative error, including the stack trace
+    const err = error as Error
+    throw new Error(
+      `Timeout waiting for port ${port}. Error: ${err.message}\nStack: ${err.stack}`
+    )
   }
 }
 
@@ -61,8 +64,10 @@ test.describe('Infrastructure & Scripts', () => {
 
     // Clean up .next/ directory to prevent "lock file" errors from previous runs
     const nextDir = path.join(process.cwd(), '.next')
-    if (fs.existsSync(nextDir)) {
-      fs.rmSync(nextDir, { recursive: true, force: true })
+    try {
+      await fs.rm(nextDir, { recursive: true, force: true })
+    } catch (error) {
+      console.warn(`Could not remove .next directory: ${error}`)
     }
 
     const PORT = 3005
