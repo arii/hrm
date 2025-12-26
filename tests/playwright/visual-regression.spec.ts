@@ -227,12 +227,16 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
+    await mockPage.getByLabel('User Name').fill('Mock User')
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    // Dashboard page already loaded via fixture
+    // Wait for WebSocket to connect and user to be visible
+    await dashboardPage.waitForSelector(
+      '[data-testid="ws-status-indicator"]:has-text("Connected")'
+    )
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     // Wait for fonts to load before snapshot
