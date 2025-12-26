@@ -127,18 +127,16 @@ const TimerDisplay = () => {
           }}
         />
       </Box>
-      {/* Mode Indicator - Rotated on left side */}
-      {currentPhase !== 'IDLE' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
+      {/* Left Column: Mode Indicator */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: '0 0 40px', // Fixed width for the left column
+        }}
+      >
+        {currentPhase !== 'IDLE' && (
           <Typography
             variant="body2"
             sx={{
@@ -151,53 +149,23 @@ const TimerDisplay = () => {
               px: 1,
               py: 0.5,
               borderRadius: 1,
+              transform: 'rotate(-90deg)',
             }}
           >
             {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
           </Typography>
-        </Box>
-      )}
-
-      {/* Tabata Durations - Rotated on right side */}
-      {mode === 'TABATA' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
-            transformOrigin: 'center',
-            zIndex: 1,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
-        </Box>
-      )}
-
+        )}
+      </Box>
       <CardContent
         sx={{
-          p: { xs: 2, md: 3 },
+          py: { xs: 2, md: 3 },
           textAlign: 'center',
-          flex: 1,
+          flex: 1, // Main content takes up the remaining space
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          minWidth: 0, // Prevent content from overflowing
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
@@ -266,6 +234,35 @@ const TimerDisplay = () => {
           <VolumeUp sx={{ color: 'white' }} />
         </Stack>
       </CardContent>
+      {/* Right Column: Tabata Durations */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: '0 0 40px', // Fixed width for the right column
+        }}
+      >
+        {mode === 'TABATA' && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              transform: 'rotate(90deg)',
+            }}
+          >
+            WORK:{workDuration}s REST:{restDuration}s
+          </Typography>
+        )}
+      </Box>
     </Card>
   )
 }
