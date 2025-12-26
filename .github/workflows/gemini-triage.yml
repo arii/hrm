@@ -13,11 +13,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      # Caching is disabled for self-hosted runners to improve performance.
-      - uses: actions/setup-node@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 

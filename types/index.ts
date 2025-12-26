@@ -56,15 +56,3 @@ export interface DashboardSectionLoadingSkeletonProps {
   count?: number
   className?: string
 }
-
-// User Profile & Measurement System
-export type MeasurementSystem = 'IMPERIAL' | 'METRIC'
-export type Gender = 'MALE' | 'FEMALE'
-
-export interface UserProfile {
-  name: string
-  age: number
-  weight: number // Stored normalized in KG
-  gender: Gender
-  unitSystem: MeasurementSystem
-}

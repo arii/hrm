@@ -33,8 +33,8 @@ jobs:
     env:
       # Determine Provider based on Label or Input
       PROVIDER: ${{
-        contains(github.event.issue.labels.*.name, 'jules-task') && 'jules' ||
-        contains(github.event.issue.labels.*.name, 'auto-code') && 'gemini' ||
+        (contains(github.event.issue.labels.*.name, 'jules-task') && 'jules') ||
+        (contains(github.event.issue.labels.*.name, 'auto-code') && 'gemini') ||
         inputs.agent_provider
       }}
 

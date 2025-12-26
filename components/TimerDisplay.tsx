@@ -12,13 +12,10 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
-import SideLabel from './SideLabel'
+
 import { useAudioContext } from '@/context/AudioContext'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-
-// Define a constant for the side column width to avoid magic numbers
-const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -130,33 +127,77 @@ const TimerDisplay = () => {
           }}
         />
       </Box>
-      {/* Left Column: Mode Indicator */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
-        }}
-      >
-        {currentPhase !== 'IDLE' && (
-          <SideLabel
-            text={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-            ariaLabel={`Timer mode: ${mode}`}
-            rotation="left"
-          />
-        )}
-      </Box>
+      {/* Mode Indicator - Rotated on left side */}
+      {currentPhase !== 'IDLE' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 16,
+            top: '50%',
+            transform: 'translateY(-50%) rotate(-90deg)',
+            transformOrigin: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 2,
+              whiteSpace: 'nowrap',
+              fontSize: '0.9rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Tabata Durations - Rotated on right side */}
+      {mode === 'TABATA' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 16,
+            top: '50%',
+            transform: 'translateY(-50%) rotate(90deg)',
+            transformOrigin: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 1,
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+            }}
+          >
+            WORK:{workDuration}s REST:{restDuration}s
+          </Typography>
+        </Box>
+      )}
+
       <CardContent
         sx={{
-          py: { xs: 2, md: 3 },
+          p: { xs: 2, md: 3 },
           textAlign: 'center',
-          flex: 1, // Main content takes up the remaining space
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: 0, // Prevent content from overflowing
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
@@ -225,23 +266,6 @@ const TimerDisplay = () => {
           <VolumeUp sx={{ color: 'white' }} />
         </Stack>
       </CardContent>
-      {/* Right Column: Tabata Durations */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
-        }}
-      >
-        {mode === 'TABATA' && (
-          <SideLabel
-            text={`WORK:${workDuration}s REST:${restDuration}s`}
-            ariaLabel={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
-            rotation="right"
-          />
-        )}
-      </Box>
     </Card>
   )
 }

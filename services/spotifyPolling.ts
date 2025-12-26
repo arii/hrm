@@ -18,7 +18,6 @@ import {
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
-import { env } from '../lib/env.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -67,22 +66,15 @@ export class SpotifyPolling implements SpotifyService {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
-    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error('Spotify client ID or secret not configured.')
-    }
-
     this.tokenManager = new SpotifyTokenManager(
-      env.SPOTIFY_CLIENT_ID,
-      env.SPOTIFY_CLIENT_SECRET
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
     )
   }
 
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
-    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
-      throw new Error('Spotify client ID or secret not configured.')
-    }
     const instance = new SpotifyPolling(broadcastUpdate)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
@@ -111,12 +103,8 @@ export class SpotifyPolling implements SpotifyService {
     // We handle refreshing manually via SpotifyTokenManager.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
-    if (!env.SPOTIFY_CLIENT_ID) {
-      logger.error('Spotify client ID not found, cannot initialize SDK.')
-      return
-    }
     const sdk = SpotifyApi.withAccessToken(
-      env.SPOTIFY_CLIENT_ID,
+      process.env.SPOTIFY_CLIENT_ID || '',
       tokenWithoutRefresh as AccessToken
     )
     // Wrap the SDK with our safe API to handle optional deviceIds correctly.
@@ -176,14 +164,19 @@ export class SpotifyPolling implements SpotifyService {
     if (this.pollInterval) return // Already running
 
     // Interval for currently playing track
-    const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
+    const trackIntervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
+      : 3000
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
       trackIntervalMs
     )
 
     // Interval for available devices (less frequent)
-    const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
+    const deviceIntervalMs = parseInt(
+      process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000',
+      10
+    )
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
       deviceIntervalMs

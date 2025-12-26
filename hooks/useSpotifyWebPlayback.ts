@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { API_SPOTIFY_ACCESS_TOKEN } from '@/constants/apiEndpoints'
-import { fetchWithRetry, AppError } from '@/utils/network'
 
 // Define event data types for better type safety
 interface SpotifyDeviceEvent {
@@ -75,32 +74,36 @@ const useSpotifyWebPlayback = () => {
   const getOAuthToken = useCallback(
     async (cb: (token: string) => void) => {
       try {
-        const response = await fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
+        const response = await fetch(API_SPOTIFY_ACCESS_TOKEN)
+        if (!response.ok) {
+          if (response.status === 401) {
+            // User not logged in - this is expected, don't show as error
+            console.log(
+              '[Spotify Web Playback] User not logged in, Web Playback unavailable'
+            )
+            setIsAuthenticated(false)
+            return
+          }
+          const errorText = await response.text()
+          throw new Error(
+            `Failed to fetch Spotify access token: ${response.status} ${errorText}`
+          )
+        }
         const { accessToken } = await response.json()
-
         if (!accessToken) {
           throw new Error('Access token was not found in the response.')
         }
-
         console.log(
           '[Spotify Web Playback] Access token retrieved successfully'
         )
         setIsAuthenticated(true)
         cb(accessToken)
       } catch (error) {
-        const appError = error as AppError
-        // Don't show a persistent error for unauthenticated users
-        if (appError.code === 'HTTP_ERROR_401') {
-          console.log(
-            '[Spotify Web Playback] User not logged in, Web Playback unavailable'
-          )
-        } else {
-          addError(`Authentication failed: ${appError.message}`, 'persistent')
-          console.warn(
-            `[Spotify Web Playback] getOAuthToken error: ${appError.message}`
-          )
-        }
+        const message =
+          error instanceof Error ? error.message : 'An unknown error occurred.'
+        addError(`Authentication failed: ${message}`, 'persistent')
         setIsAuthenticated(false)
+        console.warn(`[Spotify Web Playback] getOAuthToken error: ${message}`)
       }
     },
     [addError]
@@ -119,14 +122,20 @@ const useSpotifyWebPlayback = () => {
     }
 
     // Check if user has active session before initializing
-    fetchWithRetry(API_SPOTIFY_ACCESS_TOKEN)
-      .then(() => {
+    fetch(API_SPOTIFY_ACCESS_TOKEN)
+      .then((response) => {
+        if (!response.ok) {
+          console.log(
+            '[Spotify Web Playback] No active session, skipping Web Playback initialization'
+          )
+          return
+        }
         // User is logged in, proceed with initialization
         initializeSDK()
       })
       .catch(() => {
         console.log(
-          '[Spotify Web Playback] No active session, skipping Web Playback initialization'
+          '[Spotify Web Playback] Session check failed, skipping Web Playback initialization'
         )
       })
 

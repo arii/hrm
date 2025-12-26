@@ -4,8 +4,6 @@ import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
-import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -25,11 +23,11 @@ declare module 'next-auth' {
  *                               should not be set.
  */
 function getCookieDomain(): string | undefined {
-  if (!env.NEXTAUTH_URL) {
+  if (!process.env.NEXTAUTH_URL) {
     return undefined
   }
   try {
-    const url = new URL(env.NEXTAUTH_URL)
+    const url = new URL(process.env.NEXTAUTH_URL)
     // For localhost and 127.0.0.1, don't set a domain (browsers will use current domain)
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
       return undefined
@@ -37,7 +35,7 @@ function getCookieDomain(): string | undefined {
     return url.hostname
   } catch (e) {
     logger.error(
-      { url: env.NEXTAUTH_URL, error: e },
+      { url: process.env.NEXTAUTH_URL, error: e },
       'Failed to parse NEXTAUTH_URL for cookie domain'
     )
     return undefined
@@ -63,9 +61,31 @@ function getCookieDomain(): string | undefined {
  */
 async function refreshAccessToken(token: JWT) {
   try {
-    const refreshedTokens = await refreshSpotifyToken(
-      token.refreshToken as string
-    )
+    // Use the standard Spotify accounts endpoint for token refresh
+    const url = 'https://accounts.spotify.com/api/token'
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization:
+          'Basic ' +
+          Buffer.from(
+            process.env.SPOTIFY_CLIENT_ID +
+              ':' +
+              process.env.SPOTIFY_CLIENT_SECRET
+          ).toString('base64'),
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: token.refreshToken as string,
+      }),
+    })
+
+    const refreshedTokens = await response.json()
+
+    if (!response.ok) {
+      throw refreshedTokens
+    }
 
     // Update the token object with new values from Spotify
     return {
@@ -102,7 +122,7 @@ const SPOTIFY_SCOPES = [
 // --- CRITICAL SECURITY CHECK ---
 // Ensure NEXTAUTH_SECRET is explicitly checked before configuration.
 // This prevents runtime errors and insecure defaults.
-const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
 
 if (!NEXTAUTH_SECRET) {
   throw new Error(
@@ -119,25 +139,20 @@ if (!NEXTAUTH_SECRET) {
  *
  * @type {AuthOptions}
  */
-
-const providers = []
-
-if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
-  providers.push(
+export const authOptions: AuthOptions = {
+  providers: [
     SpotifyProvider({
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      id: 'spotify',
+      name: 'Spotify',
+      clientId: process.env.SPOTIFY_CLIENT_ID as string,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
         },
       },
-    })
-  )
-}
-
-export const authOptions: AuthOptions = {
-  providers,
+    }),
+  ],
   // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
   cookies: {
     sessionToken: {
@@ -146,7 +161,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -156,7 +171,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -166,7 +181,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         domain: getCookieDomain(),
       },
     },
@@ -176,7 +191,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
         domain: getCookieDomain(),
       },
@@ -187,14 +202,14 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 900, // 15 minutes
         domain: getCookieDomain(),
       },
     },
   },
-  useSecureCookies: env.NODE_ENV === 'production',
-  debug: env.NODE_ENV === 'development',
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     /**
      * Callback executed on a successful sign-in.
