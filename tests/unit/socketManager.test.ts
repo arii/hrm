@@ -332,7 +332,40 @@ describe('WebSocket Manager', () => {
         {
           deviceId: undefined,
           volume: undefined,
-          playlistUri: undefined,
+          contextUri: undefined,
+        }
+      )
+    })
+
+    it('should prioritize contextUri over playlistUri in SPOTIFY_COMMAND', () => {
+      const message = JSON.stringify({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        playlistUri: 'spotify:playlist:old',
+        contextUri: 'spotify:playlist:new',
+      })
+      mockWs.emit('message', message.toString())
+
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
+        'PLAY',
+        {
+          contextUri: 'spotify:playlist:new',
+        }
+      )
+    })
+
+    it('should use playlistUri if contextUri is not provided in SPOTIFY_COMMAND', () => {
+      const message = JSON.stringify({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        playlistUri: 'spotify:playlist:old',
+      })
+      mockWs.emit('message', message.toString())
+
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
+        'PLAY',
+        {
+          contextUri: 'spotify:playlist:old',
         }
       )
     })

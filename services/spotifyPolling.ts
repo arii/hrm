@@ -358,12 +358,10 @@ export class SpotifyPolling implements SpotifyService {
 
     switch (command) {
       case 'PLAY':
-        if (contextUri) {
-          // The safe API wrapper handles the undefined deviceId correctly.
-          await this.sdk!.player.startResumePlayback(deviceId, contextUri)
-        } else {
-          await this.sdk!.player.startResumePlayback(deviceId)
-        }
+        await this.sdk!.player.startResumePlayback({
+          device_id: deviceId,
+          context_uri: contextUri,
+        })
         break
       case 'PAUSE':
         await this.sdk!.player.pausePlayback(deviceId)
