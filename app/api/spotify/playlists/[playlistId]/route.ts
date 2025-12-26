@@ -2,7 +2,7 @@
 /**
  * API Route: Fetches details for a single Spotify playlist.
  */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
@@ -17,8 +17,11 @@ type Props = {
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(_req: Request, { params }: Props) {
-  const { playlistId } = await params
+async function getPlaylistDetails(
+  _req: NextRequest,
+  { params }: { params: { playlistId: string } }
+) {
+  const { playlistId } = params
 
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')
