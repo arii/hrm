@@ -11,13 +11,9 @@ module.exports = {
       max_memory_restart: '1G',
       // Pass PORT from the environment, otherwise it will be undefined
       // and the application can decide on a default.
-      env: {
-        NODE_ENV: 'production',
-        PORT: process.env.PORT,
-      },
       env_production: {
         NODE_ENV: 'production',
-        PORT: process.env.PORT,
+        PORT: process.env.PORT || 3000,
       },
     },
   ],

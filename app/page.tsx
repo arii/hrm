@@ -43,13 +43,11 @@ const DOC_ID =
 
 const Dashboard = () => {
   const [docIsManuallyShrunk, setDocIsManuallyShrunk] = useState(false)
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  const { initializeAudio } = useAudio()
+  const { isAudioContextUnlocked, unlockAudio } = useAudio()
 
   const handleInteraction = () => {
-    if (!audioInitialized) {
-      initializeAudio()
-      setAudioInitialized(true)
+    if (!isAudioContextUnlocked) {
+      unlockAudio()
     }
   }
 

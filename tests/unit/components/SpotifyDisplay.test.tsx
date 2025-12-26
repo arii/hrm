@@ -68,9 +68,13 @@ describe('SpotifyDisplay', () => {
         albumName: '',
         albumArtUrl: '',
         isPlaying: false,
+        devices: [],
+        volume: 50,
+        isMuted: false,
       },
       connectionStatus: 'Connected',
       spotifyServiceInitialized: true,
+      sendData: jest.fn(),
     })
     mockedUseSpotifyWebPlayback.mockReturnValue({
       isAuthenticated: false,
@@ -79,7 +83,7 @@ describe('SpotifyDisplay', () => {
     renderWithProviders(<SpotifyDisplay />)
 
     const loginButton = await screen.findByRole('button', {
-      name: /login with spotify/i,
+      name: /login to spotify/i,
     })
     expect(loginButton).toBeInTheDocument()
 

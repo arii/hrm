@@ -13,9 +13,17 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
-  const { params } = args[0] as { params: { playlistId: string } }
-  const { playlistId } = params
+type PlaylistDetailsContext = {
+  params: {
+    playlistId: string
+  }
+}
+
+async function getPlaylistDetails(
+  _req: Request,
+  context: PlaylistDetailsContext
+) {
+  const { playlistId } = context.params
 
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')

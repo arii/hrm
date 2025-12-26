@@ -1,6 +1,7 @@
 // File: app/components/dashboard/HrmConnectionPanel.tsx
 'use client'
 import { useMemo } from 'react'
+import { useTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
@@ -15,6 +16,7 @@ import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTile from '@/components/HrTile'
 
 const HrmConnectionPanel = () => {
+  const theme = useTheme()
   const { data: session } = useSession()
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
@@ -45,7 +47,8 @@ const HrmConnectionPanel = () => {
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          theme
         )
 
         const matchingAlert = activeAlerts.find(

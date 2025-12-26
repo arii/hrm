@@ -18,6 +18,7 @@ import {
   ActiveAlert,
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
+import { ServerMessageSchema } from '../types/schemas'
 import { getWebSocketURL } from '../utils/urls'
 
 // Client-side extension of HrmData to include connection status
@@ -327,37 +328,40 @@ export const WebSocketProvider = ({
     }
 
     ws.onmessage = (event) => {
-      try {
-        const message: ServerMessage = JSON.parse(event.data)
+      const rawMessage = JSON.parse(event.data as string)
+      const result = ServerMessageSchema.safeParse(rawMessage)
 
-        // Heartbeat pong check
-        if (message.type === 'PONG') {
-          if (pongTimeoutRef.current) {
-            clearTimeout(pongTimeoutRef.current)
-          }
-          return // Pong message is handled, no state dispatch needed
-        }
+      if (!result.success) {
+        console.error('Invalid server message:', result.error.flatten())
+        return
+      }
+      const message = result.data
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
-        if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
-          window.dispatchEvent(
-            new CustomEvent('spotify-remote-command', {
-              detail: message,
-            })
-          )
-          return
+      // Heartbeat pong check
+      if (message.type === 'PONG') {
+        if (pongTimeoutRef.current) {
+          clearTimeout(pongTimeoutRef.current)
         }
+        return // Pong message is handled, no state dispatch needed
+      }
 
-        // Throttle high-frequency messages
-        if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
-          throttledDispatch(message)
-        } else {
-          // Dispatch critical messages immediately
-          dispatch(message)
-        }
-      } catch (e) {
-        console.error('Failed to parse WebSocket message:', e)
+      // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
+      if (message.type === 'EXECUTE_SPOTIFY') {
+        // Dispatch a custom event that the remote execution hook can listen to
+        window.dispatchEvent(
+          new CustomEvent('spotify-remote-command', {
+            detail: message,
+          })
+        )
+        return
+      }
+
+      // Throttle high-frequency messages
+      if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
+        throttledDispatch(message)
+      } else {
+        // Dispatch critical messages immediately
+        dispatch(message)
       }
     }
   }, [wsUrl, throttledDispatch, startHeartbeat, stopHeartbeat])

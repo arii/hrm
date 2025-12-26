@@ -19,6 +19,8 @@ type MuiColor =
   | 'info'
   | 'success'
 
+import { Theme } from '@mui/material/styles'
+
 // --- Constants ---
 // UI properties for each heart rate zone, mapped for efficient O(1) lookup.
 type HrZoneUi = {
@@ -27,7 +29,9 @@ type HrZoneUi = {
   bgColor: string
 }
 
-export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
+export const getHrZoneUiPropsMap = (
+  theme: Theme
+): Record<HrZoneName, HrZoneUi> => ({
   [HrZoneName.WarmUp]: {
     color: 'text-blue-400',
     progressColor: theme.palette.secondary.main,
@@ -64,17 +68,7 @@ export const HR_ZONE_UI_PROPS_MAP: Record<HrZoneName, HrZoneUi> = {
     progressColor: '#9ca3af',
     bgColor: '#9ca3af',
   },
-}
-
-// Zone color lookup for easy access (zone 1-5)
-export const ZONE_COLORS = {
-  grey: '#9E9E9E', // Below zone 1
-  blue: theme.palette.secondary.main, // Zone 1: Warm-up
-  green: theme.palette.success.main, // Zone 2: Fat Burn
-  yellow: theme.palette.warning.main, // Zone 3: Cardio
-  red: theme.palette.primary.main, // Zone 4: Peak
-  purple: '#9C27B0', // Zone 5: Max
-}
+})
 
 export interface HrZoneProps {
   zone: string
@@ -93,23 +87,21 @@ export interface HrZoneProps {
  */
 export const getHrZoneProps = (
   currentHr: number,
-  maxHr: number
+  maxHr: number,
+  theme: Theme
 ): HrZoneProps => {
-  // 1. Get the core HR data from the domain module
   const { zoneName, percentage, bpm } = calculateHrZone(currentHr, maxHr)
+  const zoneUiPropsMap = getHrZoneUiPropsMap(theme)
+  const zoneUiProps = zoneUiPropsMap[zoneName]
 
-  // 2. Look up the UI properties from the map
-  const zoneUiProps = HR_ZONE_UI_PROPS_MAP[zoneName]
-
-  // 3. Combine domain data with UI properties
   return {
-    zone: zoneName, // The enum member is a string at runtime
-    percentage: percentage,
+    zone: zoneName,
+    percentage,
     color: zoneUiProps.color,
     progressColor: zoneUiProps.progressColor,
     backgroundColor: zoneUiProps.bgColor,
     textColor: theme.palette.getContrastText(zoneUiProps.bgColor),
-    bpm: bpm,
+    bpm,
   }
 }
 

@@ -38,7 +38,11 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor, textColor } = getHrZoneProps(
+    percentMax,
+    100,
+    theme
+  )
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -111,7 +115,7 @@ const HrTile = ({
                   bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
               }}
             >
-              {percentMax}%
+              {bpm === null || bpm === 0 ? '---' : `${percentMax}%`}
             </Typography>
             <Box
               sx={{
@@ -123,14 +127,16 @@ const HrTile = ({
             >
               {/* BPM Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {bpm}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
+                {bpm === null || bpm === 0 ? 'Signal Drop' : bpm}{' '}
+                {bpm !== null && bpm !== 0 && (
+                  <Typography
+                    variant="caption"
+                    component="span"
+                    sx={{ opacity: 0.8 }}
+                  >
+                    BPM
+                  </Typography>
+                )}
               </Typography>
 
               {/* Calorie Display */}

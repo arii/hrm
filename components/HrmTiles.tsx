@@ -4,11 +4,13 @@ import HrTile from '@/components/HrTile'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { MAX_HR_DEFAULT } from '@/utils/constants'
 import { getHrZoneProps } from '@/utils/visualization'
+import { useTheme } from '@mui/material/styles'
 import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import { memo, useMemo } from 'react'
 
 const HrmTiles = () => {
+  const theme = useTheme()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
 
   const filteredTiles = useMemo(() => {
@@ -22,7 +24,8 @@ const HrmTiles = () => {
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
           user.value,
-          user.maxHr || MAX_HR_DEFAULT
+          user.maxHr || MAX_HR_DEFAULT,
+          theme
         )
 
         // Find the alert specific to this HR Monitor's clientId

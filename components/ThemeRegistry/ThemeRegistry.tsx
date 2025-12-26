@@ -12,9 +12,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles'
 // This implementation is taken directly from the MUI official docs:
 // https://github.com/mui/material-ui/blob/master/examples/material-ui-nextjs-app-router/src/components/ThemeRegistry/ThemeRegistry.tsx
 
-// --- CREATE YOUR THEME HERE ---
-const theme = createTheme()
-// ------------------------------
+import theme from '@/lib/theme'
 
 type ThemeRegistryProps = {
   options: { key: string }
