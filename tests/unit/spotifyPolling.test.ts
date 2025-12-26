@@ -170,25 +170,6 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('PLAY', { deviceId })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(deviceId)
     })
-
-    it('should handle PLAY command with playlistUri', async () => {
-      const playlistUri = 'spotify:playlist:123'
-      await spotifyService.handleCommand('PLAY', { playlistUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(playlistUri)
-    })
-
-    it('should handle PLAY command with contextUri', async () => {
-      const contextUri = 'spotify:album:456'
-      await spotifyService.handleCommand('PLAY', { contextUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(contextUri)
-    })
-
-    it('should prioritize contextUri over playlistUri', async () => {
-      const contextUri = 'spotify:album:456'
-      const playlistUri = 'spotify:playlist:123'
-      await spotifyService.handleCommand('PLAY', { contextUri, playlistUri })
-      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(contextUri)
-    })
   })
 
   describe('Volume Control', () => {
