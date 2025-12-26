@@ -36,11 +36,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         {/*
-          Workaround for a ReferenceError in embedded Google Docs script.
-          This script initializes `window.DOCS_timing` to prevent an error from
-          Google's own scripts, and is not related to HRM application functionality.
-          It's placed in the <head> to ensure it executes before the Google Docs iframe
-          is parsed.
+          Workaround for a `ReferenceError: DOCS_timing is not defined`
+          error that originates from scripts within an embedded Google Doc.
+          This initializes `window.DOCS_timing` as an empty object before the
+          Google Doc script runs, preventing the error. This is not related
+          to any HRM application functionality.
         */}
         <script
           dangerouslySetInnerHTML={{
