@@ -3,6 +3,7 @@ import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
 import { ServerMessage } from '../types/websocket'
+import logger from '../utils/logger'
 
 export class WebSocketManager {
   public wss: WebSocketServer
@@ -14,9 +15,15 @@ export class WebSocketManager {
   public handleUpgrade(req: IncomingMessage, socket: Socket, head: Buffer) {
     const { pathname } = parse(req.url || '')
     if (pathname === '/ws') {
-      this.wss.handleUpgrade(req, socket, head, (ws) => {
-        this.wss.emit('connection', ws, req)
-      })
+      try {
+        this.wss.handleUpgrade(req, socket, head, (ws) => {
+          this.wss.emit('connection', ws, req)
+        })
+      } catch (error) {
+        logger.error({ err: error }, 'Error during WebSocket upgrade')
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n')
+        socket.destroy()
+      }
     }
   }
 

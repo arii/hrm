@@ -4,6 +4,7 @@ import TabataTimer from '../services/tabataTimer'
 import { SpotifyService } from '../types/interfaces'
 import logger from '../utils/logger'
 import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
+import { SpotifyDevice } from '@/types/core'
 
 export interface AppServices {
   spotifyService: SpotifyService
@@ -31,6 +32,10 @@ const createSpotifyFallback = (): SpotifyService => ({
   handleTokenUpdate: (_tokens: SpotifyTokenPayload) => {
     logger.warn('Spotify token update ignored: service is not initialized.')
     return Promise.resolve()
+  },
+  getAvailableDevices: async (): Promise<SpotifyDevice[]> => {
+    logger.warn('getAvailableDevices is not implemented in fallback service');
+    return [];
   },
   // Optional methods from Lifecycle interface
   startPolling: () => {},
