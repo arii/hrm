@@ -38,7 +38,7 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(bpm, 100, theme)
+  const { backgroundColor, textColor } = getHrZoneProps(bpm || 0, 100, theme)
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -108,7 +108,9 @@ const HrTile = ({
                 my: 0.5,
                 animation: 'subtle-pulse 2s infinite ease-in-out',
                 animationPlayState:
-                  bpm > 0 && !isAlerting && isConnected ? 'running' : 'paused',
+                  bpm && bpm > 0 && !isAlerting && isConnected
+                    ? 'running'
+                    : 'paused',
               }}
             >
               {percentMax}%
@@ -123,14 +125,20 @@ const HrTile = ({
             >
               {/* BPM Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {bpm}{' '}
-                <Typography
-                  variant="caption"
-                  component="span"
-                  sx={{ opacity: 0.8 }}
-                >
-                  BPM
-                </Typography>
+                {bpm === null ? (
+                  'Signal Drop'
+                ) : (
+                  <>
+                    {bpm}{' '}
+                    <Typography
+                      variant="caption"
+                      component="span"
+                      sx={{ opacity: 0.8 }}
+                    >
+                      BPM
+                    </Typography>
+                  </>
+                )}
               </Typography>
 
               {/* Calorie Display */}
