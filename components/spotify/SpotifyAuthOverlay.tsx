@@ -2,7 +2,7 @@
 'use client'
 
 import Box from '@mui/material/Box'
-import AuthButton from '@/components/AuthButton'
+import AuthButton from '@/components/auth/AuthButton'
 
 const SpotifyAuthOverlay = () => {
   return (
