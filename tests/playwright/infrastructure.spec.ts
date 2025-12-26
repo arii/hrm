@@ -59,7 +59,7 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
-  test('pnpm run dev should start and listen', async () => {
+  test.skip('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005

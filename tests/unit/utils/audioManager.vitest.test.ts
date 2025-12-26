@@ -9,7 +9,8 @@ class MockAudioElement {
   currentTime = 0
 }
 
-global.HTMLAudioElement = MockAudioElement as unknown as new () => HTMLAudioElement
+global.HTMLAudioElement =
+  MockAudioElement as unknown as new () => HTMLAudioElement
 
 describe('AudioManager', () => {
   let audioManager: AudioManager

@@ -232,7 +232,9 @@ test.describe('Visual Regression Tests', () => {
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
     // Wait for WebSocket to connect and user to be visible
-    await dashboardPage.waitForSelector('[data-testid="ws-status-indicator"]:has-text("Connected")');
+    await dashboardPage.waitForSelector(
+      '[data-testid="ws-status-indicator"]:has-text("Connected")'
+    )
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     // Wait for fonts to load before snapshot
