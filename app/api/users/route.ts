@@ -30,7 +30,7 @@ async function createUser(
 
 export const POST: (
   req: Request,
-  context?: { params: unknown }
+  context: { params: unknown }
 ) => Promise<NextResponse> = withValidation({
   schema: CreateUserProfileSchema,
 })(createUser)
