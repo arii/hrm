@@ -18,8 +18,9 @@ export async function GET(req: Request) {
   }
 
   try {
+    const SPOTIFY_API_BASE = process.env.SPOTIFY_API_BASE || 'https://api.spotify.com/v1'
     const response = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+      `${SPOTIFY_API_BASE}/search?q=${encodeURIComponent(
         query
       )}&type=${type}&limit=10`,
       {
@@ -31,8 +32,13 @@ export async function GET(req: Request) {
 
     if (!response.ok) {
       if (response.status === 401) {
-          // Token expired handling could be improved here or let client re-auth
-          return NextResponse.json({ error: 'Token expired' }, { status: 401 })
+        return NextResponse.json(
+          {
+            error: 'Spotify token expired',
+            errorCode: 'SPOTIFY_TOKEN_EXPIRED',
+          },
+          { status: 401 }
+        )
       }
       const errorText = await response.text()
       return NextResponse.json(
