@@ -233,6 +233,10 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
+    await mockPage.click('button:has-text("START Streaming")')
+    await expect(
+      mockPage.locator('button:has-text("STOP Streaming")')
+    ).toBeVisible()
     // Wait for WebSocket to connect and user to be visible
     await dashboardPage.waitForSelector(
       '[data-testid="ws-status-indicator"]:has-text("Connected")'
@@ -261,7 +265,7 @@ test.describe('Visual Regression Tests', () => {
   test('HR Tiles - all zones', async () => {
     // Set HR zone first, then start streaming
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
-    await mockPage.click('button:has-text("START")')
+    await mockPage.click('button:has-text("START Streaming")')
     await expect(
       mockPage.locator('button:has-text("STOP Streaming")')
     ).toBeVisible()
