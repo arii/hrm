@@ -38,7 +38,11 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(percentMax, 100)
+  const { backgroundColor, textColor } = getHrZoneProps(
+    bpm,
+    100,
+    theme
+  )
 
   const tooltipTitle = isAlerting
     ? alertMessage
@@ -145,7 +149,7 @@ const HrTile = ({
                 </Typography>
               </Typography>
             </Box>
-            {name && !/^(user|new user)$/i.test(name) && (
+            {name && (
               <Typography
                 variant="subtitle1"
                 sx={{

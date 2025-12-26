@@ -1,10 +1,15 @@
-import { useEffect, useRef } from 'react'
+// hooks/useAudio.ts
+'use client'
+import { useEffect, useRef, useState } from 'react'
 import { audioManager } from '../utils/audioManager'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 export const useAudio = () => {
   const { timerData } = useWebSocket()
   const lastSoundEventId = useRef<number>(0)
+  const [isAudioContextUnlocked, setIsAudioContextUnlocked] = useState(
+    audioManager.isAudioContextUnlocked
+  )
 
   useEffect(() => {
     // Only play sound if we have a new sound event
@@ -13,18 +18,15 @@ export const useAudio = () => {
       timerData.soundEventId &&
       timerData.soundEventId !== lastSoundEventId.current
     ) {
-      console.log(
-        `[useAudio] Triggering sound: ${timerData.soundToPlay} (Event ID: ${timerData.soundEventId})`
-      )
       lastSoundEventId.current = timerData.soundEventId
 
       switch (timerData.soundToPlay) {
         case 'COUNTDOWN':
-          audioManager.playShort() // Will respect isMuted internally
+          audioManager.playShort()
           break
         case 'WORK':
         case 'REST':
-          audioManager.playLong() // Will respect isMuted internally
+          audioManager.playLong()
           break
         default:
           console.warn(
@@ -34,13 +36,13 @@ export const useAudio = () => {
     }
   }, [timerData.soundToPlay, timerData.soundEventId])
 
-  // Initialize audio on first user interaction
-  const initializeAudio = () => {
-    console.log('[useAudio] initializeAudio called')
-    audioManager.loadAudio()
+  const unlockAudio = () => {
+    audioManager.unlockAudioContext()
+    setIsAudioContextUnlocked(true)
   }
 
   return {
-    initializeAudio,
+    isAudioContextUnlocked,
+    unlockAudio,
   }
 }

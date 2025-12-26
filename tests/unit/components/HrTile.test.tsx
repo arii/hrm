@@ -6,75 +6,104 @@ import { jest } from '@jest/globals'
 import HrTile from '@/components/HrTile'
 import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import { ZONE_COLORS } from '@/utils/visualization'
-import theme from '@/lib/theme'
+import { getHrZoneProps } from '@/utils/visualization'
+import { theme } from '@/lib/theme'
+import { ThemeProvider } from '@mui/material/styles'
+import { HrZoneName } from '@/lib/shared/hr-zones'
 
 // Mock the getHrZoneProps function to control the test cases
 jest.mock('@/utils/visualization', () => ({
   ...jest.requireActual('@/utils/visualization'),
-  getHrZoneProps: (percentMax: number) => {
-    let backgroundColor = ZONE_COLORS.grey
-    if (percentMax >= 90) {
-      backgroundColor = ZONE_COLORS.red
-    } else if (percentMax >= 80) {
-      backgroundColor = ZONE_COLORS.yellow
-    } else if (percentMax >= 70) {
-      backgroundColor = ZONE_COLORS.green
-    } else if (percentMax >= 60) {
-      backgroundColor = ZONE_COLORS.blue
-    }
-    const textColor = theme.palette.getContrastText(backgroundColor)
-    return {
-      backgroundColor,
-      textColor,
-      percentage: percentMax,
-    }
-  },
+  getHrZoneProps: jest.fn(),
 }))
 
+const mockedGetHrZoneProps = getHrZoneProps as jest.Mock
+
 describe('HrTile', () => {
+  const renderWithProviders = (component: React.ReactElement) => {
+    return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>)
+  }
+
   it('renders the correct background and text color for the Peak zone', () => {
-    render(<HrTile name="Test" bpm={180} percentMax={95} />)
+    mockedGetHrZoneProps.mockReturnValue({
+      zone: HrZoneName.Peak,
+      percentage: 95,
+      backgroundColor: theme.palette.primary.main,
+      textColor: theme.palette.getContrastText(theme.palette.primary.main),
+    })
+    renderWithProviders(<HrTile name="Test" bpm={180} percentMax={95} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${ZONE_COLORS.red}`)
     expect(card).toHaveStyle(
-      `color: ${theme.palette.getContrastText(ZONE_COLORS.red)}`
+      `background-color: ${theme.palette.primary.main}`
+    )
+    expect(card).toHaveStyle(
+      `color: ${theme.palette.getContrastText(theme.palette.primary.main)}`
     )
   })
 
   it('renders the correct background and text color for the Cardio zone', () => {
-    render(<HrTile name="Test" bpm={160} percentMax={85} />)
+    mockedGetHrZoneProps.mockReturnValue({
+      zone: HrZoneName.Cardio,
+      percentage: 85,
+      backgroundColor: theme.palette.warning.dark,
+      textColor: theme.palette.getContrastText(theme.palette.warning.dark),
+    })
+    renderWithProviders(<HrTile name="Test" bpm={160} percentMax={85} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${ZONE_COLORS.yellow}`)
     expect(card).toHaveStyle(
-      `color: ${theme.palette.getContrastText(ZONE_COLORS.yellow)}`
+      `background-color: ${theme.palette.warning.dark}`
+    )
+    expect(card).toHaveStyle(
+      `color: ${theme.palette.getContrastText(theme.palette.warning.dark)}`
     )
   })
 
   it('renders the correct background and text color for the Fat Burn zone', () => {
-    render(<HrTile name="Test" bpm={140} percentMax={75} />)
+    mockedGetHrZoneProps.mockReturnValue({
+      zone: HrZoneName.FatBurn,
+      percentage: 75,
+      backgroundColor: theme.palette.success.main,
+      textColor: theme.palette.getContrastText(theme.palette.success.main),
+    })
+    renderWithProviders(<HrTile name="Test" bpm={140} percentMax={75} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${ZONE_COLORS.green}`)
     expect(card).toHaveStyle(
-      `color: ${theme.palette.getContrastText(ZONE_COLORS.green)}`
+      `background-color: ${theme.palette.success.main}`
+    )
+    expect(card).toHaveStyle(
+      `color: ${theme.palette.getContrastText(theme.palette.success.main)}`
     )
   })
 
   it('renders the correct background and text color for the Warm-up zone', () => {
-    render(<HrTile name="Test" bpm={120} percentMax={65} />)
+    mockedGetHrZoneProps.mockReturnValue({
+      zone: HrZoneName.WarmUp,
+      percentage: 65,
+      backgroundColor: theme.palette.secondary.main,
+      textColor: theme.palette.getContrastText(theme.palette.secondary.main),
+    })
+    renderWithProviders(<HrTile name="Test" bpm={120} percentMax={65} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${ZONE_COLORS.blue}`)
     expect(card).toHaveStyle(
-      `color: ${theme.palette.getContrastText(ZONE_COLORS.blue)}`
+      `background-color: ${theme.palette.secondary.main}`
+    )
+    expect(card).toHaveStyle(
+      `color: ${theme.palette.getContrastText(theme.palette.secondary.main)}`
     )
   })
 
   it('renders the correct background and text color for the low-intensity zone', () => {
-    render(<HrTile name="Test" bpm={100} percentMax={55} />)
+    mockedGetHrZoneProps.mockReturnValue({
+      zone: HrZoneName.NoData,
+      percentage: 55,
+      backgroundColor: '#9ca3af',
+      textColor: theme.palette.getContrastText('#9ca3af'),
+    })
+    renderWithProviders(<HrTile name="Test" bpm={100} percentMax={55} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(`background-color: ${ZONE_COLORS.grey}`)
+    expect(card).toHaveStyle(`background-color: #9ca3af`)
     expect(card).toHaveStyle(
-      `color: ${theme.palette.getContrastText(ZONE_COLORS.grey)}`
+      `color: ${theme.palette.getContrastText('#9ca3af')}`
     )
   })
 })

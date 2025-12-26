@@ -5,6 +5,8 @@ import HrmTiles from '@/components/HrmTiles'
 import { useWebSocket } from '@/context/WebSocketContext'
 import '@testing-library/jest-dom'
 import { render, screen, within } from '@testing-library/react'
+import { ThemeProvider } from '@mui/material/styles'
+import { theme } from '@/lib/theme'
 
 // Mock the context and child component for isolation
 jest.mock('@/context/WebSocketContext')
@@ -25,6 +27,10 @@ describe('HrmTiles', () => {
     jest.resetAllMocks()
   })
 
+  const renderWithProviders = (component: React.ReactElement) => {
+    return render(<ThemeProvider theme={theme}>{component}</ThemeProvider>)
+  }
+
   it('should render HRM data correctly for a user', () => {
     mockedUseWebSocket.mockReturnValue({
       hrmData: [{ clientId: 'user1', name: 'Ariel', value: 150 }],
@@ -32,7 +38,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    renderWithProviders(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -46,7 +52,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    renderWithProviders(<HrmTiles />)
 
     const tile = screen.getByTestId('mock-hr-tile')
     expect(within(tile).getByText('Ariel')).toBeInTheDocument()
@@ -60,7 +66,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    renderWithProviders(<HrmTiles />)
 
     // The component renders skeleton containers when there's no data
     expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
@@ -75,7 +81,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    renderWithProviders(<HrmTiles />)
 
     expect(screen.getAllByTestId('hr-tile-grid-item')).toHaveLength(2)
     expect(screen.queryByTestId('mock-hr-tile')).not.toBeInTheDocument()
@@ -92,7 +98,7 @@ describe('HrmTiles', () => {
       activeAlerts: [],
     })
 
-    render(<HrmTiles />)
+    renderWithProviders(<HrmTiles />)
 
     // Only the 'Valid User' tile should be rendered
     const tiles = screen.getAllByTestId('mock-hr-tile')

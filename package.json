@@ -75,6 +75,7 @@
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.23.26",
     "lodash": "^4.17.21",
+    "mobx": "^6.15.0",
     "next": "16.0.10",
     "next-auth": "^4.24.13",
     "pino": "^10.1.0",
@@ -82,7 +83,7 @@
     "react-dom": "19.2.3",
     "uuid": "^13.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.1.13"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",

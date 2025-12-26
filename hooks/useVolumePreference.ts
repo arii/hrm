@@ -40,7 +40,7 @@ const useVolumePreference = (defaultVolume = 70) => {
 
   useEffect(() => {
     if (isLoaded) {
-      audioManager.setMuted(muted)
+      audioManager.isMuted = muted
       audioManager.setVolume(volume)
     }
   }, [volume, muted, isLoaded])

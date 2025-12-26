@@ -19,6 +19,7 @@ import {
 } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import { ServerMessageSchema } from '../types/schemas'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
@@ -328,7 +329,15 @@ export const WebSocketProvider = ({
 
     ws.onmessage = (event) => {
       try {
-        const message: ServerMessage = JSON.parse(event.data)
+        const rawMessage = JSON.parse(event.data)
+        const result = ServerMessageSchema.safeParse(rawMessage)
+
+        if (!result.success) {
+          console.error('Failed to validate WebSocket message:', result.error)
+          return
+        }
+
+        const message = result.data
 
         // Heartbeat pong check
         if (message.type === 'PONG') {

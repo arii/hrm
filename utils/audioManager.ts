@@ -2,140 +2,75 @@
  * Audio Manager for Tabata Timer Sounds
  * Handles beep sounds for countdown and phase transitions
  */
+import { makeAutoObservable } from 'mobx'
 
 export class AudioManager {
   private shortBeep: HTMLAudioElement | null = null
   private longBeep: HTMLAudioElement | null = null
-  private isMuted = false
-  private loadedAudio = false
-  private volume = 0.7
+  isMuted = false
+  isAudioContextUnlocked = false
+  volume = 0.7 // Default volume
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.initializeAudio()
     }
+    makeAutoObservable(this)
   }
 
   private initializeAudio() {
     this.shortBeep = new Audio('/assets/beep-07.wav')
     this.longBeep = new Audio('/assets/beep-01a.wav')
-
     this.shortBeep.volume = this.volume
     this.longBeep.volume = this.volume
   }
 
-  /**
-   * Load audio files (required for iOS - must be triggered by user interaction)
-   */
-  loadAudio() {
-    if (!this.loadedAudio && this.shortBeep && this.longBeep) {
-      console.log('[AudioManager] Unlocking audio context via user interaction')
-      // On iOS you can't play back sounds unless it comes from a user
-      // action first, so pretend to play the sound in this callback
-      this.shortBeep
+  unlockAudioContext = () => {
+    if (this.isAudioContextUnlocked || !this.shortBeep || !this.longBeep) return
+
+    console.log('[AudioManager] Unlocking audio context via user interaction')
+
+    const unlock = (audio: HTMLAudioElement) => {
+      audio
         .play()
         .then(() => {
-          this.shortBeep!.pause()
-          this.shortBeep!.currentTime = 0
+          audio.pause()
+          audio.currentTime = 0
+          this.isAudioContextUnlocked = true
+          console.log('[AudioManager] Audio context unlocked successfully.')
         })
         .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock short beep:', e)
+          console.warn('[AudioManager] Failed to unlock audio context:', e)
         })
-
-      this.longBeep
-        .play()
-        .then(() => {
-          this.longBeep!.pause()
-          this.longBeep!.currentTime = 0
-        })
-        .catch((e) => {
-          console.warn('[AudioManager] Failed to unlock long beep:', e)
-        })
-
-      this.loadedAudio = true
     }
+
+    // Attempt to unlock with the first beep
+    unlock(this.shortBeep)
   }
 
-  /**
-   * Play short beep (countdown seconds)
-   */
-  playShort() {
-    if (this.isMuted) {
-      console.log('[AudioManager] Skipped short beep (Muted)')
-      return
-    }
-    if (!this.shortBeep) {
-      console.warn('[AudioManager] Short beep audio not initialized')
-      return
-    }
-
+  playShort = () => {
+    if (this.isMuted) return
+    if (!this.shortBeep) return
     this.shortBeep.currentTime = 0
-    this.shortBeep.play().catch((e) => {
-      console.error('[AudioManager] Failed to play short beep:', e)
-    })
+    this.shortBeep.play().catch((e) => console.error('Failed to play:', e))
   }
 
-  /**
-   * Play long beep (phase transitions)
-   */
-  playLong() {
-    if (this.isMuted) {
-      console.log('[AudioManager] Skipped long beep (Muted)')
-      return
-    }
-    if (!this.longBeep) {
-      console.warn('[AudioManager] Long beep audio not initialized')
-      return
-    }
-
+  playLong = () => {
+    if (this.isMuted) return
+    if (!this.longBeep) return
     this.longBeep.currentTime = 0
-    this.longBeep.play().catch((e) => {
-      console.error('[AudioManager] Failed to play long beep:', e)
-    })
+    this.longBeep.play().catch((e) => console.error('Failed to play:', e))
   }
 
-  /**
-   * Set volume (0-100)
-   */
-  setVolume(volumePercent: number) {
-    const newVolume = Math.max(0, Math.min(1, volumePercent / 100))
-    this.volume = newVolume
+  setVolume = (volumePercent: number) => {
+    this.volume = Math.max(0, Math.min(1, volumePercent / 100))
     if (this.shortBeep) this.shortBeep.volume = this.volume
     if (this.longBeep) this.longBeep.volume = this.volume
-    // console.log(`[AudioManager] Volume set to ${this.volume}`)
   }
 
-  /**
-   * Get current volume (0-100)
-   */
-  getVolume() {
-    return this.volume * 100
-  }
-
-  /**
-   * Toggle mute state
-   */
-  toggleMute() {
+  toggleMute = () => {
     this.isMuted = !this.isMuted
-    console.log(`[AudioManager] Muted: ${this.isMuted}`)
-    return this.isMuted
-  }
-
-  /**
-   * Set mute state
-   */
-  setMuted(muted: boolean) {
-    this.isMuted = muted
-    // console.log(`[AudioManager] Muted set to: ${this.isMuted}`)
-  }
-
-  /**
-   * Get current mute state
-   */
-  getMuted() {
-    return this.isMuted
   }
 }
 
-// Global audio manager instance
 export const audioManager = new AudioManager()

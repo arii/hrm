@@ -33,7 +33,7 @@ const AuthButton = ({ providerId, providerName }: AuthButtonProps) => {
   return (
     <Button
       variant="contained"
-      color="primary"
+      color="secondary"
       onClick={handleLogin}
       disabled={isLoading}
     >
