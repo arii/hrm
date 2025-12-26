@@ -180,8 +180,7 @@ const handleIncomingMessage = (
         if (sessionState) {
           sessionState.age = message.data.age ?? sessionState.age
           sessionState.maxHr = message.data.maxHr ?? sessionState.maxHr
-          sessionState.userName =
-            message.data.userName ?? sessionState.userName
+          sessionState.userName = message.data.userName ?? sessionState.userName
           if (message.data.userName) {
             hrmDataService.updateSessionMetadata(
               sessionState.sessionId,

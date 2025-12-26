@@ -55,7 +55,9 @@ const migrate = () => {
 
   try {
     migrateTransaction()
-    logger.info(`Successfully migrated ${sessions.length} sessions from JSON to SQLite.`)
+    logger.info(
+      `Successfully migrated ${sessions.length} sessions from JSON to SQLite.`
+    )
   } catch (error) {
     logger.error('Failed to migrate data:', error)
   }

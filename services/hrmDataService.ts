@@ -26,7 +26,10 @@ class HrmDataService {
       VALUES (?, ?, ?, ?)
     `)
     stmt.run(sessionId, session.userName, startTime, session.deviceId)
-    logger.info({ sessionId, userName: session.userName }, 'HRM session started.')
+    logger.info(
+      { sessionId, userName: session.userName },
+      'HRM session started.'
+    )
     return sessionId
   }
 

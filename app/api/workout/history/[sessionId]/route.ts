@@ -1,11 +1,12 @@
 // app/api/workout/history/[sessionId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { hrmDataService } from '../../../../../services/hrmDataService'
+import logger from '../../../../../utils/logger'
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { sessionId: string } }
-) {
+): Promise<NextResponse> {
   try {
     const sessionDetails = hrmDataService.getSessionDetails(params.sessionId)
     if (!sessionDetails) {
@@ -13,7 +14,10 @@ export async function GET(
     }
     return NextResponse.json(sessionDetails)
   } catch (error) {
-    console.error('Error fetching session details:', error)
+    logger.error(
+      { err: error, sessionId: params.sessionId },
+      'Failed to fetch session details'
+    )
     return NextResponse.json(
       { error: 'Failed to fetch session details' },
       { status: 500 }
