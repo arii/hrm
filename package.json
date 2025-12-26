@@ -24,7 +24,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm run test:all",
-    "test:unit": "cross-env NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
+    "test:unit": "cross-env NODE_ENV=test SPOTIFY_CLIENT_ID=test SPOTIFY_CLIENT_SECRET=test NEXTAUTH_URL=http://127.0.0.1:3000 NEXTAUTH_SECRET=test-secret-unit jest tests/unit --coverage",
     "test:components": "cross-env NEXTAUTH_SECRET=test-secret-unit jest --config jest.config.components.cjs",
     "test:unit:watch": "jest tests/unit --watch",
     "test:json": "scripts/test-json-with-server.sh",
