@@ -31,8 +31,8 @@ export async function GET(req: Request) {
 
     if (!response.ok) {
       if (response.status === 401) {
-          // Token expired handling could be improved here or let client re-auth
-          return NextResponse.json({ error: 'Token expired' }, { status: 401 })
+        // Token expired handling could be improved here or let client re-auth
+        return NextResponse.json({ error: 'Token expired' }, { status: 401 })
       }
       const errorText = await response.text()
       return NextResponse.json(

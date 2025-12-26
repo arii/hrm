@@ -9,6 +9,7 @@ import {
   InputAdornment,
   List,
   ListItem,
+  ListItemButton,
   ListItemAvatar,
   ListItemText,
   Paper,
@@ -74,10 +75,10 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
         )
 
         if (!res.ok) {
-           if (res.status === 401) {
-             throw new Error('Please log in to Spotify first.')
-           }
-           throw new Error(`Search failed: ${res.statusText}`)
+          if (res.status === 401) {
+            throw new Error('Please log in to Spotify first.')
+          }
+          throw new Error(`Search failed: ${res.statusText}`)
         }
 
         const data = await res.json()
@@ -103,15 +104,25 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const renderEmptyState = () => {
     if (!hasSearched && !query) {
       return (
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
           Start typing to search Spotify...
         </Typography>
       )
     }
     if (hasSearched && !isLoading && results.length === 0 && query) {
       return (
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
-          No results found for "{query}"
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align="center"
+          sx={{ mt: 2 }}
+        >
+          No results found for &quot;{query}&quot;
         </Typography>
       )
     }
@@ -156,27 +167,32 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
           <Paper elevation={3} sx={{ maxHeight: 300, overflow: 'auto' }}>
             <List dense>
               {results.map((track) => (
-                <ListItem
-                  key={track.id}
-                  button={!!onTrackSelect}
-                  onClick={() => onTrackSelect && onTrackSelect(track.uri)}
-                  divider
-                >
-                  <ListItemAvatar>
+                <ListItem key={track.id} divider>
+                  <ListItemButton
+                    onClick={() => onTrackSelect && onTrackSelect(track.uri)}
+                  >
+                    <ListItemAvatar>
                     <Avatar
                       variant="square"
-                      src={track.album.images[2]?.url || track.album.images[0]?.url}
+                      src={
+                        track.album.images[2]?.url ||
+                        track.album.images[0]?.url ||
+                        ''
+                      }
                       alt={track.album.name}
                     >
                       <MusicNote />
                     </Avatar>
                   </ListItemAvatar>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={`${track.artists.map((a) => a.name).join(', ')} • ${track.album.name}`}
-                    primaryTypographyProps={{ noWrap: true }}
-                    secondaryTypographyProps={{ noWrap: true }}
-                  />
+                    <ListItemText
+                      primary={track.name}
+                      secondary={`${track.artists
+                        .map((a) => a.name)
+                        .join(', ')} • ${track.album.name}`}
+                      primaryTypographyProps={{ noWrap: true }}
+                      secondaryTypographyProps={{ noWrap: true }}
+                    />
+                  </ListItemButton>
                 </ListItem>
               ))}
             </List>
