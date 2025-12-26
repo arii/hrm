@@ -334,12 +334,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const {
-              name,
-              age,
-              weight,
-              gender,
-            } = userDetailsRef.current || {}
+            const { name, age, weight, gender } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {

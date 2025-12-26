@@ -176,10 +176,13 @@ export const HrmInputMessageSchema = z.object({
   data: HrmInputDataSchema,
 })
 
+import { Gender } from './index' // Assuming Gender is exported from here
 export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
+  weight: z.number().optional(),
+  gender: z.enum(['MALE', 'FEMALE']).optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({

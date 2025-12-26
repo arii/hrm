@@ -29,7 +29,7 @@ cp -r dist release_build/
 # 5. Copy Process Management & Scripts
 echo "📋 Adding runtime scripts..."
 cp ecosystem.config.cjs release_build/
-cp scripts/start-production.sh release_build/
+cp start-production.sh release_build/
 mkdir -p release_build/scripts
 # Only copy runtime scripts, exclude dev/test scripts if desired
 cp scripts/deploy-artifact.sh release_build/scripts/

@@ -14,6 +14,7 @@ For manual setup, the project includes a script to ensure a consistent environme
 ```
 
 This script will:
+
 1.  Create a `.env.local` file from the example if one doesn't exist.
 2.  Install all dependencies using `pnpm`.
 
@@ -66,6 +67,7 @@ pnpm run knip
 ```
 
 If Knip reports unused dependencies, files, or exports, please take one of the following actions:
+
 - **Remove the code**: If the reported item is genuinely unused, remove it from the codebase.
 - **Update the configuration**: If the item is incorrectly reported (e.g., it's used indirectly), update the `knip.ts` configuration file to ignore it. Add a comment explaining why the ignore rule is necessary.
 

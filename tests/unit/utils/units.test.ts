@@ -1,5 +1,4 @@
 import { toKg, toDisplay } from '@/utils/units'
-import { MeasurementSystem } from '@/types'
 
 describe('utils/units', () => {
   describe('toKg', () => {
