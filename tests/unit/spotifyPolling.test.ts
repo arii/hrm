@@ -10,22 +10,6 @@ import logger from '@/utils/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger
-jest.mock('../../lib/env.js', () => ({
-  env: {
-    SPOTIFY_CLIENT_ID: 'test_client_id',
-    SPOTIFY_CLIENT_SECRET: 'test_client_secret',
-    SPOTIFY_POLLING_INTERVAL_MS: 100,
-    SPOTIFY_DEVICE_POLLING_INTERVAL_MS: 10000,
-    SPOTIFY_DEBUG: false,
-    NODE_ENV: 'test',
-    PORT: 3000,
-    HOST: 'localhost',
-    NEXTAUTH_URL: 'http://localhost:3000',
-    NEXTAUTH_SECRET: 'test-secret',
-    TESTING: true,
-  },
-}))
-
 jest.mock('@/utils/logger', () => ({
   debug: jest.fn(),
   info: jest.fn(),
@@ -106,6 +90,12 @@ describe('SpotifyPolling Service', () => {
         broadcastedStates.push(message.payload)
       }
     })
+
+    // Mock environment variables
+    process.env.SPOTIFY_CLIENT_ID = 'test_client_id'
+    process.env.SPOTIFY_CLIENT_SECRET = 'test_client_secret'
+    process.env.SPOTIFY_POLLING_INTERVAL_MS = '100' // Use a short interval for testing
+    process.env.SPOTIFY_DEBUG = 'false' // Disable debug logging in tests
 
     // Initialize the service and await its creation, which includes SDK setup
     spotifyService = await SpotifyPolling.create(broadcastMock)

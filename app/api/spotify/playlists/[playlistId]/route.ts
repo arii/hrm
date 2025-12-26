@@ -7,19 +7,17 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
-type Props = {
-  params: Promise<{ playlistId: string }>
-}
-
 /**
  * GET handler for fetching single playlist details.
- * @param req The incoming NextRequest.
+ * @param _req The incoming NextRequest.
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
-  const { params } = args[0] as { params: { playlistId: string } }
-  const { playlistId } = params
+async function getPlaylistDetails(
+  _req: Request,
+  { params }: { params: Promise<{ playlistId: string }> }
+) {
+  const { playlistId } = await params
 
   if (!playlistId) {
     throw new ApiError(400, 'Playlist ID is required.')

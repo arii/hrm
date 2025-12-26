@@ -10,7 +10,6 @@ If you encounter strange dependency-related errors, a full reinstall is often th
 
 - **Symptom**: "Module not found" errors for packages that are clearly in `package.json`, or cryptic build failures.
 - **Solution**:
-
   ```bash
   # 1. Remove all installed packages
   rm -rf node_modules

@@ -29,9 +29,11 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { serviceContainer } from '../../lib/serviceContainer.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
+jest.mock('../../lib/serviceContainer.js')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
     withAccessToken: jest.fn(),
@@ -156,7 +158,22 @@ describe('WebSocket Manager', () => {
       spotify: {},
     })
 
-    initSocketManager(mockWss, getSnapshot, mockServices)
+    const mockedServiceContainer = serviceContainer as jest.Mocked<
+      typeof serviceContainer
+    >
+    mockedServiceContainer.get.mockImplementation(
+      (key: 'spotifyService' | 'tabataService') => {
+        if (key === 'spotifyService') {
+          return mockServices.spotifyService
+        }
+        if (key === 'tabataService') {
+          return mockServices.tabataService
+        }
+        throw new Error(`Unexpected service key: ${key}`)
+      }
+    )
+
+    initSocketManager(mockWss, getSnapshot)
 
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)

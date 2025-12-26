@@ -23,8 +23,8 @@ import {
 } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import { serviceContainer } from '../lib/serviceContainer.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { AppServices } from '../lib/services.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -32,7 +32,6 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
-let services: AppServices
 
 const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
@@ -46,12 +45,10 @@ const clientSessionState = new Map<
  */
 const initSocketManager = (
   wss: WebSocketServer,
-  getSnapshot: () => StateSnapshot,
-  svcs: AppServices
+  getSnapshot: () => StateSnapshot
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
-  services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
@@ -204,15 +201,15 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND':
-        services.tabataService.handleCommand(message.command)
+        serviceContainer.get('tabataService').handleCommand(message.command)
         break
 
       case 'SET_MODE':
-        services.tabataService.setMode(message.mode)
+        serviceContainer.get('tabataService').setMode(message.mode)
         break
 
       case 'TIMER_CONFIG':
-        services.tabataService.setConfig({
+        serviceContainer.get('tabataService').setConfig({
           workDuration: message.workDuration,
           restDuration: message.restDuration,
         })
@@ -243,7 +240,7 @@ const handleIncomingMessage = (
           }
         })
 
-        const spotifyService = services.spotifyService
+        const spotifyService = serviceContainer.get('spotifyService')
         const spotifyCommandParams: {
           deviceId?: string
           volume?: number
