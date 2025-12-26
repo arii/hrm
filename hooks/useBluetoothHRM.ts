@@ -79,9 +79,10 @@ interface UseBluetoothHRMProps {
    * A value of 0 disables this feature.
    */
   dataLivenessTimeoutMs?: number
-  onHeartRateData?: (
-    heartRate: number,
-  ) => { smoothedHr: number; totalCalories: number }
+  onHeartRateData?: (heartRate: number) => {
+    smoothedHr: number
+    totalCalories: number
+  }
 }
 
 /**
@@ -348,18 +349,18 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             }
             sendData(metadata)
 
-            let data: HrmInputData;
+            let data: HrmInputData
 
             if (onHeartRateData) {
-              const { smoothedHr, totalCalories } = onHeartRateData(heartRate);
+              const { smoothedHr, totalCalories } = onHeartRateData(heartRate)
               data = {
                 value: smoothedHr,
                 calories: totalCalories,
-              };
+              }
             } else {
               data = {
                 value: heartRate,
-              };
+              }
             }
 
             sendData({
@@ -382,7 +383,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData, onHeartRateData]
   )
 
   useEffect(() => {

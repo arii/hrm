@@ -1,7 +1,16 @@
 // components/PersonalAnalyticsDashboard.tsx
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { formatDuration } from '@/lib/utils';
+import React from 'react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
+import { formatDuration } from '@/lib/utils'
 
 /**
  * @interface AnalyticsProps
@@ -11,11 +20,11 @@ interface AnalyticsProps {
   /**
    * @property {Array<{time: number, hr: number}>} data - An array of heart rate data points over time.
    */
-  data: Array<{time: number, hr: number}>;
+  data: Array<{ time: number; hr: number }>
   /**
    * @property {Record<string, number>} zoneDurations - An object mapping heart rate zones to their durations in seconds.
    */
-  zoneDurations: Record<string, number>;
+  zoneDurations: Record<string, number>
 }
 
 /**
@@ -24,8 +33,11 @@ interface AnalyticsProps {
  * @param {AnalyticsProps} props - The props for the component.
  * @returns {React.FC}
  */
-export const PersonalAnalyticsDashboard: React.FC<AnalyticsProps> = ({ data, zoneDurations }) => {
-  const totalDuration = Object.values(zoneDurations).reduce((a, b) => a + b, 0);
+export const PersonalAnalyticsDashboard: React.FC<AnalyticsProps> = ({
+  data,
+  zoneDurations,
+}) => {
+  const totalDuration = Object.values(zoneDurations).reduce((a, b) => a + b, 0)
 
   return (
     <div>
@@ -40,7 +52,12 @@ export const PersonalAnalyticsDashboard: React.FC<AnalyticsProps> = ({ data, zon
           <YAxis />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="hr" stroke="#8884d8" activeDot={{ r: 8 }} />
+          <Line
+            type="monotone"
+            dataKey="hr"
+            stroke="#8884d8"
+            activeDot={{ r: 8 }}
+          />
         </LineChart>
       </ResponsiveContainer>
 
@@ -58,11 +75,16 @@ export const PersonalAnalyticsDashboard: React.FC<AnalyticsProps> = ({ data, zon
             <tr key={zone}>
               <td>{zone}</td>
               <td>{formatDuration(duration)}</td>
-              <td>{totalDuration > 0 ? ((duration / totalDuration) * 100).toFixed(1) : 0}%</td>
+              <td>
+                {totalDuration > 0
+                  ? ((duration / totalDuration) * 100).toFixed(1)
+                  : 0}
+                %
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  );
-};
+  )
+}

@@ -70,7 +70,6 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@types/recharts": "^2.0.1",
     "cheerio": "^1.1.2",
     "express": "5.1.0",
     "express-rate-limit": "^8.2.1",
