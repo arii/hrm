@@ -109,7 +109,10 @@ export class SpotifyTokenManager {
   }
 
   private async refreshToken(): Promise<boolean> {
-    if (!this.currentToken?.payload.refresh_token) return false
+    if (!this.currentToken?.payload?.refresh_token) {
+      return false
+    }
+    const currentRefreshToken = this.currentToken.payload.refresh_token
 
     const maxRetries = 3
     let attempt = 0
@@ -129,7 +132,7 @@ export class SpotifyTokenManager {
           },
           body: new URLSearchParams({
             grant_type: 'refresh_token',
-            refresh_token: this.currentToken.payload.refresh_token,
+            refresh_token: currentRefreshToken,
           }).toString(),
         })
 
@@ -169,25 +172,29 @@ export class SpotifyTokenManager {
         )
 
         // Update current token with new values
-        this.currentToken = {
-          receivedAt: Date.now(),
-          payload: {
-            ...this.currentToken.payload,
-            access_token: data.access_token,
-            expires_in: data.expires_in,
-            refresh_token:
-              data.refresh_token ?? this.currentToken.payload.refresh_token,
-            obtainedAt: Date.now(),
-          },
+        if (this.currentToken) {
+          this.currentToken = {
+            receivedAt: Date.now(),
+            payload: {
+              ...this.currentToken.payload,
+              access_token: data.access_token,
+              expires_in: data.expires_in,
+              refresh_token:
+                data.refresh_token ?? this.currentToken.payload.refresh_token,
+              obtainedAt: Date.now(),
+            },
+          }
         }
 
         // Save updated token
-        writeTokenFileSafe(this.tokenFile, this.currentToken)
+        if (this.currentToken) {
+          writeTokenFileSafe(this.tokenFile, this.currentToken)
 
-        console.log(
-          'Refreshed Spotify token for:',
-          this.currentToken.payload.sub
-        )
+          console.log(
+            'Refreshed Spotify token for:',
+            this.currentToken.payload.sub
+          )
+        }
         return true
       } catch (error: unknown) {
         const err = error as Error
