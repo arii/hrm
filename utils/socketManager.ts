@@ -121,7 +121,8 @@ const handleIncomingMessage = (
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
-    const { spotifyService, tabataService } = serviceContainer.getServices()
+    const spotifyService = serviceContainer.get('spotifyService')
+    const tabataService = serviceContainer.get('tabataService')
 
     switch (message.type) {
       case 'PING': {

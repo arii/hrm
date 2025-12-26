@@ -3,14 +3,14 @@ import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import path from 'path'
-import { env } from './lib/env'
-import { createServices } from './lib/services'
-import { WebSocketManager } from './lib/websocket'
-import { initSocketManager } from './utils/socketManager'
+import { env } from './lib/env.js'
+import { createServices } from './lib/services.js'
+import { WebSocketManager } from './lib/websocket.js'
+import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket'
-import { serviceContainer } from './lib/serviceContainer'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck'
-import logger from './utils/logger'
+import { serviceContainer } from './lib/serviceContainer.js'
+import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 
 const app = next({
@@ -66,6 +66,7 @@ app.prepare().then(async () => {
   // 6. Routes
   expressApp.get('/api/health', (_req, res) => {
     res.status(200).json({ status: 'ok' })
+    return
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {
@@ -92,7 +93,7 @@ app.prepare().then(async () => {
 
   // 7. Upgrade Handling
   server.on('upgrade', (req, socket, head) => {
-    wsManager.handleUpgrade(req, socket, head)
+    wsManager.handleUpgrade(req, socket as any, head)
   })
 
   server.listen(env.PORT, () => {

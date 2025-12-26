@@ -3,7 +3,7 @@ import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { parse } from 'url'
 import { ServerMessage } from '../types/websocket'
-import logger from '../utils/logger'
+import logger from '../utils/logger.js'
 
 export class WebSocketManager {
   public wss: WebSocketServer

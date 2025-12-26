@@ -1,9 +1,9 @@
-import { ServerMessage, SpotifyData } from '../types/websocket'
-import { SpotifyPolling } from '../services/spotifyPolling'
-import TabataTimer from '../services/tabataTimer'
-import { SpotifyService } from '../types/interfaces'
-import logger from '../utils/logger'
-import { SpotifyTokenPayload } from '@/services/spotifyTokenManager'
+import { ServerMessage, SpotifyData } from '../types/websocket.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TabataTimer from '../services/tabataTimer.js'
+import { SpotifyService } from '../types/interfaces.js'
+import logger from '../utils/logger.js'
+import { SpotifyTokenPayload } from '@/services/spotifyTokenManager.js'
 import { SpotifyDevice } from '@/types/core'
 
 export interface AppServices {
@@ -34,8 +34,8 @@ const createSpotifyFallback = (): SpotifyService => ({
     return Promise.resolve()
   },
   getAvailableDevices: async (): Promise<SpotifyDevice[]> => {
-    logger.warn('getAvailableDevices is not implemented in fallback service');
-    return [];
+    logger.warn('getAvailableDevices is not implemented in fallback service')
+    return []
   },
   // Optional methods from Lifecycle interface
   startPolling: () => {},

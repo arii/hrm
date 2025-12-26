@@ -1,11 +1,11 @@
 // File: lib/auth.ts (NextAuth Configuration - Shared)
 import { Account, AuthOptions, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
-import * as SpotifyProvider from 'next-auth/providers/spotify'
+import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
-import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
+import { env } from './env.js'
+import { refreshSpotifyToken } from './spotify.js'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -108,11 +108,11 @@ const SPOTIFY_SCOPES = [
  */
 export const authOptions: AuthOptions = {
   providers: [
-    SpotifyProvider.default({
+    SpotifyProvider({
       id: 'spotify',
       name: 'Spotify',
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET,
+      clientId: env.SPOTIFY_CLIENT_ID || '',
+      clientSecret: env.SPOTIFY_CLIENT_SECRET || '',
       authorization: {
         params: {
           scope: SPOTIFY_SCOPES,
@@ -296,5 +296,5 @@ export const authOptions: AuthOptions = {
     },
   },
   // Ensure the token can be accessed securely
-  secret: env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET || '',
 }
