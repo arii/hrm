@@ -172,18 +172,18 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
                     onClick={() => onTrackSelect && onTrackSelect(track.uri)}
                   >
                     <ListItemAvatar>
-                    <Avatar
-                      variant="square"
-                      src={
-                        track.album.images[2]?.url ||
-                        track.album.images[0]?.url ||
-                        ''
-                      }
-                      alt={track.album.name}
-                    >
-                      <MusicNote />
-                    </Avatar>
-                  </ListItemAvatar>
+                      <Avatar
+                        variant="square"
+                        src={
+                          track.album.images[2]?.url ||
+                          track.album.images[0]?.url ||
+                          ''
+                        }
+                        alt={track.album.name}
+                      >
+                        <MusicNote />
+                      </Avatar>
+                    </ListItemAvatar>
                     <ListItemText
                       primary={track.name}
                       secondary={`${track.artists
