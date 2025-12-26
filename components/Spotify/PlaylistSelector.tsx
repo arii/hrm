@@ -196,7 +196,11 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           throw new Error('Failed to search playlists')
         }
         const data = await response.json()
-        setSearchResults(data.items || [])
+        const resultsWithFlag = (data.items || []).map((p: Playlist) => ({
+          ...p,
+          isSearchResult: true,
+        }))
+        setSearchResults(resultsWithFlag)
       } catch (error) {
         console.error('Error searching playlists:', error)
         setSearchResults([])

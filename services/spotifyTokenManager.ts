@@ -135,6 +135,18 @@ export class SpotifyTokenManager {
 
         if (!response.ok) {
           const errorBody = await response.text()
+          // Special handling for 'invalid_grant' which means the refresh token is bad
+          if (response.status === 400 && errorBody.includes('invalid_grant')) {
+            console.error(
+              'Spotify refresh token is invalid. Clearing token file to force re-login.'
+            )
+            this.currentToken = null
+            if (fs.existsSync(this.tokenFile)) {
+              fs.unlinkSync(this.tokenFile)
+            }
+            throw new Error('Invalid refresh token (Non-retriable)')
+          }
+
           // Don't retry client errors (4xx) unless it's rate limiting (429)
           if (
             response.status >= 400 &&
