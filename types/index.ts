@@ -14,7 +14,7 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-import { TimerMode, TimerPhase } from './core'
+import { TimerMode, TimerPhase } from './core.js'
 
 export interface HeartRateZonesProps {
   maxHr: number
