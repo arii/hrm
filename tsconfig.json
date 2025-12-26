@@ -44,6 +44,7 @@
     "node_modules",
     "tests/playwright",
     "playwright.config.ts",
-    "scripts"
+    "scripts",
+    ".github"
   ]
 }
