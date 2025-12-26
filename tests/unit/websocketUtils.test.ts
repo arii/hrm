@@ -12,7 +12,6 @@ import {
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '../../utils/websocketUtils'
-import logger from '../../utils/logger'
 import { ExtWebSocket } from '@/types/websocket'
 
 // Mock the logger to prevent console output during tests

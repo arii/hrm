@@ -1,6 +1,5 @@
 import { ApiError } from '@/lib/errors'
 import { NextRequest, NextResponse } from 'next/server'
-import logger from '@/utils/logger'
 import { serviceContainer } from '@/lib/serviceContainer'
 import { AccessToken } from '@spotify/web-api-ts-sdk'
 
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
       scope: '',
       obtainedAt: Date.now(),
     })
-    logger.info('Spotify token delivered and processed successfully.')
+    console.log('Spotify token delivered and processed successfully.')
 
     return NextResponse.json({
       ok: true,
@@ -54,13 +53,13 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     if (err instanceof ApiError) {
-      logger.warn(`API Error in token-delivery: ${err.message}`)
+      console.warn(`API Error in token-delivery: ${err.message}`)
       return NextResponse.json(
         { error: err.message },
         { status: err.statusCode }
       )
     }
-    logger.error({ err }, 'Unhandled error in token-delivery')
+    console.error({ err }, 'Unhandled error in token-delivery')
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 }

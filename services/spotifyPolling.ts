@@ -11,7 +11,6 @@ import {
   SpotifyTokenManager,
   SpotifyTokenPayload,
 } from './spotifyTokenManager.js'
-import logger from '../utils/logger.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
@@ -65,7 +64,7 @@ export class SpotifyPolling implements SpotifyService {
 
   private constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.broadcastUpdate = broadcastUpdate
-    logger.debug('Spotify Polling Service Initialized.')
+    console.debug('Spotify Polling Service Initialized.')
 
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
       throw new Error('Spotify client ID or secret not configured.')
@@ -98,7 +97,7 @@ export class SpotifyPolling implements SpotifyService {
       const sdkToken = this.tokenManager.getSdkAccessToken()
       if (sdkToken) {
         this.setupSdk(sdkToken)
-        logger.debug(
+        console.debug(
           'Loaded existing Spotify tokens from file. Starting polling.'
         )
         this.startPolling()
@@ -112,7 +111,7 @@ export class SpotifyPolling implements SpotifyService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
     if (!env.SPOTIFY_CLIENT_ID) {
-      logger.error('Spotify client ID not found, cannot initialize SDK.')
+      console.error('Spotify client ID not found, cannot initialize SDK.')
       return
     }
     const sdk = SpotifyApi.withAccessToken(
@@ -155,7 +154,7 @@ export class SpotifyPolling implements SpotifyService {
    * @param {SpotifyTokenPayload} tokens - The new token payload.
    */
   public async handleTokenUpdate(tokens: SpotifyTokenPayload): Promise<void> {
-    logger.info(
+    console.log(
       { tokens },
       'Spotify token payload received. Updating SDK and forcing poll.'
     )
@@ -189,7 +188,7 @@ export class SpotifyPolling implements SpotifyService {
       deviceIntervalMs
     )
 
-    logger.debug(
+    console.debug(
       { trackIntervalMs, deviceIntervalMs },
       'Spotify polling started'
     )
@@ -204,7 +203,7 @@ export class SpotifyPolling implements SpotifyService {
       clearInterval(this.devicePollInterval)
       this.devicePollInterval = null
     }
-    logger.debug('Spotify polling stopped.')
+    console.debug('Spotify polling stopped.')
   }
 
   public cleanup() {
@@ -212,7 +211,7 @@ export class SpotifyPolling implements SpotifyService {
     if (this.tokenRefreshInterval) {
       clearInterval(this.tokenRefreshInterval)
       this.tokenRefreshInterval = null
-      logger.debug('Token refresh interval cleared.')
+      console.debug('Token refresh interval cleared.')
     }
   }
 
@@ -296,7 +295,7 @@ export class SpotifyPolling implements SpotifyService {
 
   public async refreshDevices(): Promise<void> {
     if (!this.sdk) {
-      logger.warn('Cannot get devices: SDK not initialized.')
+      console.warn('Cannot get devices: SDK not initialized.')
       return
     }
     try {
@@ -319,9 +318,9 @@ export class SpotifyPolling implements SpotifyService {
         type: 'SPOTIFY_UPDATE',
         payload: this.getState(),
       })
-      logger.debug({ count: this.state.devices.length }, 'Devices refreshed')
+      console.debug({ count: this.state.devices.length }, 'Devices refreshed')
     } catch (error) {
-      logger.error({ err: error }, 'Error fetching Spotify devices')
+      console.error({ err: error }, 'Error fetching Spotify devices')
     }
   }
 
@@ -345,7 +344,7 @@ export class SpotifyPolling implements SpotifyService {
   ) {
     const { deviceId, volume, playlistUri, contextUri } = params
     if (!this.sdk && command !== 'GET_DEVICES') {
-      logger.warn('Cannot execute command: SDK not initialized.')
+      console.warn('Cannot execute command: SDK not initialized.')
       return Promise.resolve()
     }
 
@@ -408,10 +407,10 @@ export class SpotifyPolling implements SpotifyService {
         }
         break
       case 'LOGIN':
-        logger.debug('Received LOGIN command')
+        console.debug('Received LOGIN command')
         break
       default:
-        logger.warn({ command }, 'Unknown Spotify command')
+        console.warn({ command }, 'Unknown Spotify command')
     }
   }
 }
