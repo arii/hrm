@@ -27,7 +27,10 @@ export class StmtCache<T extends Record<string, string>> {
   private prepareAll(statements: T): void {
     for (const key in statements) {
       if (Object.prototype.hasOwnProperty.call(statements, key)) {
-        this.cache.set(key, this.db.prepare(statements[key]))
+        const sql = statements[key]
+        if (typeof sql === 'string') {
+          this.cache.set(key, this.db.prepare(sql))
+        }
       }
     }
   }

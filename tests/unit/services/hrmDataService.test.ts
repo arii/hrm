@@ -1,20 +1,20 @@
 /**
  * @jest-environment-node
  */
-import db, { initDb } from '@/lib/db'
-import {
+import { initDb } from '../../../lib/db'
+
+// Initialize the in-memory database for tests before importing the service
+initDb()
+
+// Dynamically import the service after the database is initialized
+const {
   saveWorkoutSession,
   getSessionHistory,
   getSessionDetails,
   cleanupOldSessions,
-} from '@/services/hrmDataService'
-import { WorkoutSession } from '@/types/workout'
-import { env } from '@/lib/env'
-
-// Initialize the in-memory database for tests
-beforeAll(() => {
-  initDb()
-})
+} = await import('../../../services/hrmDataService')
+import { WorkoutSession } from '../../../types/workout'
+import db from '../../../lib/db'
 
 // Clear the database after each test
 afterEach(() => {

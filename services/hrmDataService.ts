@@ -1,8 +1,8 @@
-import db from '@/lib/db'
-import logger from '@/utils/logger'
-import { WorkoutSession } from '@/types/workout'
-import { StmtCache } from '@/lib/stmtCache'
-import { env } from '@/lib/env'
+import db from '../lib/db'
+import logger from '../utils/logger'
+import { WorkoutSession, WorkoutSessionSummary } from '../types/workout'
+import { StmtCache } from '../lib/stmtCache'
+import { env } from '../lib/env'
 
 const STATEMENTS = {
   // Read operations

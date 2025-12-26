@@ -35,10 +35,7 @@ app.prepare().then(async () => {
     // Schedule periodic cleanup
     const cleanupIntervalHours = env.WORKOUT_DATA_CLEANUP_INTERVAL_HOURS
     if (cleanupIntervalHours > 0) {
-      setInterval(
-        cleanupOldSessions,
-        cleanupIntervalHours * 60 * 60 * 1000
-      )
+      setInterval(cleanupOldSessions, cleanupIntervalHours * 60 * 60 * 1000)
     }
   }
 
