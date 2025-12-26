@@ -318,6 +318,15 @@ export class SpotifyPolling implements SpotifyService {
     }
   }
 
+  /**
+   * Handles incoming commands for the Spotify service.
+   * @param command The command to execute.
+   * @param params The parameters for the command.
+   * @param params.deviceId The ID of the device to target.
+   * @param params.volume The volume to set.
+   * @param params.playlistUri The URI of a playlist to play (legacy).
+   * @param params.contextUri The URI of a context to play (playlist, album, artist). Takes precedence over playlistUri.
+   */
   public handleCommand(
     command: SpotifyCommand,
     params: {
