@@ -7,11 +7,12 @@ import { env } from './lib/env.js'
 import { createServices } from './lib/services.js'
 import { WebSocketManager } from './lib/websocket.js'
 import { initSocketManager } from './utils/socketManager.js'
-import { StateSnapshot } from './types/websocket'
+import { StateSnapshot } from './types/websocket.js'
 import { serviceContainer } from './lib/serviceContainer.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
+import { Socket } from 'net'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -89,11 +90,13 @@ app.prepare().then(async () => {
     res.json(devices)
   })
 
-  expressApp.all('*', (req, res) => handle(req, res))
+  expressApp.all('*', (req, res) => {
+    return handle(req, res)
+  })
 
   // 7. Upgrade Handling
   server.on('upgrade', (req, socket, head) => {
-    wsManager.handleUpgrade(req, socket as any, head)
+    wsManager.handleUpgrade(req, socket as Socket, head)
   })
 
   server.listen(env.PORT, () => {
