@@ -171,7 +171,7 @@ test.describe('Visual Regression Tests', () => {
     })
   })
 
-  test.skip('Dashboard with active timer', async () => {
+  test('Dashboard with active timer', async () => {
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
@@ -185,13 +185,13 @@ test.describe('Visual Regression Tests', () => {
       name: /Decrease Rest Duration/i,
     })
 
-    // Start timer
-    await controlPage.click('button:has-text("START")', { force: true })
-
     // Default work is 20, decrease once to 15
     await decreaseWorkButton.click()
     // Default rest is 10, decrease once to 5
     await decreaseRestButton.click()
+
+    // Start timer
+    await controlPage.click('button:has-text("START")', { force: true })
 
     // wait for broadcast messages to propagate
     // Use the recommended, specific locator
@@ -231,7 +231,8 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    // Dashboard page already loaded via fixture
+    // Wait for WebSocket to connect and user to be visible
+    await dashboardPage.waitForSelector('[data-testid="ws-status-indicator"]:has-text("Connected")');
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     // Wait for fonts to load before snapshot

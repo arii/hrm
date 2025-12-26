@@ -29,9 +29,27 @@ Object.defineProperty(navigator, 'bluetooth', {
 
 describe('useBluetoothHRM', () => {
   let mockSendData: vi.Mock
-  let mockCharacteristic: any
-  let mockGattServer: any
-  let mockDevice: any
+  let mockCharacteristic: {
+    startNotifications: vi.Mock;
+    addEventListener: vi.Mock;
+    removeEventListener: vi.Mock;
+  }
+  let mockGattServer: {
+    connect: vi.Mock;
+    disconnect: vi.Mock;
+    getPrimaryService: vi.Mock;
+  }
+  let mockDevice: {
+    id: string;
+    name: string;
+    gatt: {
+      connected: boolean;
+      connect: vi.Mock;
+      disconnect: vi.Mock;
+    };
+    addEventListener: vi.Mock;
+    removeEventListener: vi.Mock;
+  }
   let consoleWarnSpy: vi.SpyInstance
   let consoleInfoSpy: vi.SpyInstance
 
