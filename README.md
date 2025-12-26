@@ -128,7 +128,7 @@ pnpm --version
 pnpm install --frozen-lockfile
 ```
 
-This will install all the Node.js packages required by the project, including Next.js, Material-UI, and other dependencies.
+This will install all the Node.js packages required by the project and also set up pre-commit hooks using Husky to automatically lint and format your code when you commit.
 
 **4. Install Playwright Browser Dependencies**
 
