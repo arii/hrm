@@ -1,7 +1,5 @@
-
 import { GET } from '@/app/api/spotify/search/route'
 import { getServerSession } from 'next-auth/next'
-import { NextResponse } from 'next/server'
 
 // Mock next-auth
 jest.mock('next-auth/next', () => ({
@@ -34,7 +32,9 @@ describe('Spotify Search API Route', () => {
   })
 
   it('should return 401 with custom error if token is expired', async () => {
-    ;(getServerSession as jest.Mock).mockResolvedValue({ accessToken: 'test-token' })
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      accessToken: 'test-token',
+    })
     ;(fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 401,
@@ -51,7 +51,9 @@ describe('Spotify Search API Route', () => {
   })
 
   it('should return search results successfully', async () => {
-    ;(getServerSession as jest.Mock).mockResolvedValue({ accessToken: 'test-token' })
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      accessToken: 'test-token',
+    })
     const mockData = { tracks: { items: [{ name: 'Test Track' }] } }
     ;(fetch as jest.Mock).mockResolvedValue({
       ok: true,
@@ -66,7 +68,9 @@ describe('Spotify Search API Route', () => {
   })
 
   it('should handle other Spotify API errors', async () => {
-    ;(getServerSession as jest.Mock).mockResolvedValue({ accessToken: 'test-token' })
+    ;(getServerSession as jest.Mock).mockResolvedValue({
+      accessToken: 'test-token',
+    })
     ;(fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,

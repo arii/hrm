@@ -18,7 +18,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const SPOTIFY_API_BASE = process.env.SPOTIFY_API_BASE || 'https://api.spotify.com/v1'
+    const SPOTIFY_API_BASE =
+      process.env.SPOTIFY_API_BASE || 'https://api.spotify.com/v1'
     const response = await fetch(
       `${SPOTIFY_API_BASE}/search?q=${encodeURIComponent(
         query

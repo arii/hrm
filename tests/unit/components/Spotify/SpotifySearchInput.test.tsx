@@ -1,4 +1,3 @@
-
 /**
  * @jest-environment jsdom
  */
@@ -8,7 +7,7 @@ import { SnackbarProvider } from 'notistack'
 import SpotifySearchInput from '@/components/Spotify/SpotifySearchInput'
 
 // Mock useDebounce hook
-jest.mock('@/hooks/useDebounce', () => (value: any) => value)
+jest.mock('@/hooks/useDebounce', () => (value: string) => value)
 
 // Mock fetch
 global.fetch = jest.fn()
@@ -24,7 +23,9 @@ describe('SpotifySearchInput', () => {
         <SpotifySearchInput />
       </SnackbarProvider>
     )
-    expect(screen.getByPlaceholderText('Search for a song...')).toBeInTheDocument()
+    expect(
+      screen.getByPlaceholderText('Search for a song...')
+    ).toBeInTheDocument()
   })
 
   it('should show "Start typing to search" message initially', () => {
@@ -33,7 +34,9 @@ describe('SpotifySearchInput', () => {
         <SpotifySearchInput />
       </SnackbarProvider>
     )
-    expect(screen.getByText('Start typing to search Spotify...')).toBeInTheDocument()
+    expect(
+      screen.getByText('Start typing to search Spotify...')
+    ).toBeInTheDocument()
   })
 
   it('should call fetch with the correct query when user types', async () => {
@@ -52,7 +55,9 @@ describe('SpotifySearchInput', () => {
     await userEvent.type(searchInput, 'test query')
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/spotify/search?q=test%20query&type=track')
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/spotify/search?q=test%20query&type=track'
+      )
     })
   })
 
@@ -72,7 +77,9 @@ describe('SpotifySearchInput', () => {
     await userEvent.type(searchInput, 'no results')
 
     await waitFor(() => {
-      expect(screen.getByText('No results found for "no results"')).toBeInTheDocument()
+      expect(
+        screen.getByText('No results found for "no results"')
+      ).toBeInTheDocument()
     })
   })
 
