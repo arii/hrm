@@ -239,6 +239,7 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
+    await mockPage.click('button:has-text("START")')
     // Wait for WebSocket to connect and user to be visible
     await dashboardPage.waitForSelector(
       '[data-testid="ws-status-indicator"]:has-text("Connected")'
