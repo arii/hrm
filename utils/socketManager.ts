@@ -173,10 +173,10 @@ const handleIncomingMessage = (
           sessionState.lastUpdate = now
 
           let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
+          const currentHr = message.data.value
           const currentAge = existingData.age ?? 30
 
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
+          if (currentHr && currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
             const caloriesBurned = estimateCaloriesBurned({
               heartRate: currentHr,
               age: currentAge,
@@ -192,7 +192,7 @@ const handleIncomingMessage = (
           // ONLY update the value and calories
           hrmDataRepository.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
+            value: message.data.value,
             calories: Math.round(currentAccumulated * 10) / 10,
           })
         }

@@ -18,7 +18,7 @@ const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
       console.log(
         '[TimerSoundProvider] User interaction detected, initializing audio...'
       )
-      audioManager.loadAudio()
+      audioManager.unlockAudioContext()
       // Clean up listeners after initialization
       document.removeEventListener('click', handleFirstInteraction)
       document.removeEventListener('keydown', handleFirstInteraction)
@@ -36,21 +36,10 @@ const TimerSoundProvider = ({ children }: TimerSoundProviderProps) => {
   }, [])
 
   useEffect(() => {
-    const VOLUME_STEP = 5
     const handleKeyDown = (event: KeyboardEvent) => {
       // Mute Toggle
       if (event.key === 'm') {
         audioManager.toggleMute()
-      }
-
-      // Volume Control
-      if (event.key === 'ArrowUp') {
-        const currentVolume = audioManager.getVolume()
-        audioManager.setVolume(currentVolume + VOLUME_STEP)
-      }
-      if (event.key === 'ArrowDown') {
-        const currentVolume = audioManager.getVolume()
-        audioManager.setVolume(currentVolume - VOLUME_STEP)
       }
     }
 

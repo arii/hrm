@@ -22,15 +22,29 @@ declare module '@mui/material/styles' {
       idle?: string
     }
   }
+  interface TypeBackground {
+    overlay: string
+  }
+  interface ZIndex {
+    loadingIndicator: number
+  }
 }
 
 export const theme = createTheme({
+  zIndex: {
+    loadingIndicator: 1301, // MUI modals are 1300
+  },
   palette: {
     primary: {
       main: '#EF4444',
     },
     secondary: {
       main: '#2563EB',
+    },
+    background: {
+      default: '#121212',
+      paper: '#1E1E1E',
+      overlay: 'rgba(0, 0, 0, 0.7)',
     },
     success: {
       main: '#22C55E',

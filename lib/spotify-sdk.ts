@@ -11,7 +11,9 @@ const getOAuthToken = async (cb: (token: string) => void) => {
   try {
     const response = await fetch(API_SPOTIFY_ACCESS_TOKEN)
     if (!response.ok) {
-      throw new Error(`Failed to fetch Spotify access token: ${response.status}`)
+      throw new Error(
+        `Failed to fetch Spotify access token: ${response.status}`
+      )
     }
     const { accessToken } = await response.json()
     if (!accessToken) {
@@ -39,12 +41,16 @@ const initializePlayer = (initialVolume: number) => {
 
   spotifyPlayer.connect().then((success: boolean) => {
     if (success) {
-      console.log('[Spotify SDK] The Web Playback SDK successfully connected to Spotify!')
+      console.log(
+        '[Spotify SDK] The Web Playback SDK successfully connected to Spotify!'
+      )
     }
   })
 }
 
-export const getSpotifyPlayer = (initialVolume = 0.5): Promise<SpotifyPlayer> => {
+export const getSpotifyPlayer = (
+  initialVolume = 0.5
+): Promise<SpotifyPlayer> => {
   return new Promise((resolve) => {
     if (player) {
       resolve(player)

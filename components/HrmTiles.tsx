@@ -24,7 +24,7 @@ const HrmTiles = () => {
       })
       .map((user) => {
         const hrZoneProps = getHrZoneProps(
-          user.value,
+          user.value || 0,
           user.maxHr || MAX_HR_DEFAULT,
           theme
         )
@@ -44,7 +44,7 @@ const HrmTiles = () => {
           >
             <HrTile
               name={user.name || ''}
-              bpm={user.value}
+              bpm={user.value || 0}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
               isAlerting={!!matchingAlert}
@@ -60,7 +60,7 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === 0) {
+  if (isLoading || filteredTiles.length === <strong>0)</strong> {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">

@@ -3,6 +3,7 @@
 import { jest } from '@jest/globals'
 import { render } from '@testing-library/react'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
+import { ErrorProvider } from '@/context/ErrorContext'
 import { useEffect } from 'react'
 
 // Mock the Spotify SDK
@@ -12,7 +13,7 @@ const mockPlayer = {
   addListener: jest.fn(),
   removeListener: jest.fn(),
 }
-window.Spotify = {
+global.window.Spotify = {
   Player: jest.fn().mockImplementation(() => mockPlayer),
 }
 
@@ -33,7 +34,11 @@ describe('useSpotifyWebPlayback', () => {
       return null
     }
 
-    render(<TestComponent />)
+    render(
+      <ErrorProvider>
+        <TestComponent />
+      </ErrorProvider>
+    )
 
     expect(window.Spotify.Player).toHaveBeenCalledWith({
       name: 'HRM Web Player',

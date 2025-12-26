@@ -81,6 +81,13 @@ export const ServerMessageSchema = z.discriminatedUnion('type', [
     payload: z.boolean(),
   }),
   z.object({
+    type: z.literal('EXECUTE_SPOTIFY'),
+    payload: z.object({
+      command: z.string(),
+      args: z.array(z.any()).optional(),
+    }),
+  }),
+  z.object({
     type: z.literal('PONG'),
   }),
 ])
