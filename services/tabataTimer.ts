@@ -17,9 +17,9 @@ import { TimerCommands } from './timer/timerCommands.js'
 type TimerCommand = 'START' | 'PAUSE' | 'STOP'
 
 class TabataTimer {
-  private state: DualModeTimerState
-  private queries: TimerQueries
-  private commands: TimerCommands
+  private readonly state: DualModeTimerState
+  private readonly queries: TimerQueries
+  private readonly commands: TimerCommands
 
   constructor(broadcastUpdate: (message: ServerMessage) => void) {
     this.state = createInitialTimerState()

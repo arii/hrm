@@ -132,7 +132,7 @@ export class TimerCommands {
   }): void {
     if (config.workDuration < 1 || config.restDuration < 0) {
       throw new ConfigurationError(
-        'Work duration must be positive and rest duration must not be negative.'
+        `Invalid timer configuration: workDuration must be positive, and restDuration must be non-negative. Received workDuration: ${config.workDuration}, restDuration: ${config.restDuration}`
       )
     }
     this.state.workDuration = Math.floor(config.workDuration)
