@@ -101,7 +101,10 @@ export const fetchWithRetry = async (
         }
       }
       // Check for HTTP errors
-      else if (error instanceof Error && error.message.startsWith('HTTP Error:')) {
+      else if (
+        error instanceof Error &&
+        error.message.startsWith('HTTP Error:')
+      ) {
         const status = (error.cause as { status: number }).status
         lastError = {
           code: `HTTP_ERROR_${status}`,
