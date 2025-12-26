@@ -38,11 +38,7 @@ const HrTile = ({
   alertMessage = 'Checking signal...',
 }: HrTileProps) => {
   const theme = useTheme()
-  const { backgroundColor, textColor } = getHrZoneProps(
-    bpm,
-    100,
-    theme
-  )
+  const { backgroundColor, textColor } = getHrZoneProps(bpm, 100, theme)
 
   const tooltipTitle = isAlerting
     ? alertMessage

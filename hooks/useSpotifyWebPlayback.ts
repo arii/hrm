@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useError } from '@/context/ErrorContext'
 import { getSpotifyPlayer } from '@/lib/spotify-sdk'
 import { SpotifyPlayer } from '@/types/spotify'
@@ -21,45 +21,45 @@ const useSpotifyWebPlayback = (
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const { addError } = useError()
 
-  const initialize = useCallback(async () => {
-    try {
-      const spotifyPlayer = await getSpotifyPlayer(initialVolume)
-      setPlayer(spotifyPlayer)
-      setIsAuthenticated(true)
-
-      spotifyPlayer.addListener('ready', ({ device_id }) => {
-        setDeviceId(device_id)
-        setIsReady(true)
-      })
-
-      spotifyPlayer.addListener('not_ready', () => {
-        setIsReady(false)
-        setDeviceId(null)
-      })
-
-      spotifyPlayer.addListener('initialization_error', ({ message }) => {
-        addError(`Initialization failed: ${message}`, 'persistent')
-      })
-
-      spotifyPlayer.addListener('authentication_error', ({ message }) => {
-        addError(`Authentication failed: ${message}`, 'persistent')
-      })
-
-      spotifyPlayer.addListener('account_error', ({ message }) => {
-        addError(
-          `Account error: ${message}. A Premium account is required.`,
-          'persistent'
-        )
-      })
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'An unknown error occurred.'
-      addError(`Authentication failed: ${message}`, 'persistent')
-      setIsAuthenticated(false)
-    }
-  }, [addError, initialVolume])
-
   useEffect(() => {
+    const initialize = async () => {
+      try {
+        const spotifyPlayer = await getSpotifyPlayer(initialVolume)
+        setPlayer(spotifyPlayer)
+        setIsAuthenticated(true)
+
+        spotifyPlayer.addListener('ready', ({ device_id }) => {
+          setDeviceId(device_id)
+          setIsReady(true)
+        })
+
+        spotifyPlayer.addListener('not_ready', () => {
+          setIsReady(false)
+          setDeviceId(null)
+        })
+
+        spotifyPlayer.addListener('initialization_error', ({ message }) => {
+          addError(`Initialization failed: ${message}`, 'persistent')
+        })
+
+        spotifyPlayer.addListener('authentication_error', ({ message }) => {
+          addError(`Authentication failed: ${message}`, 'persistent')
+        })
+
+        spotifyPlayer.addListener('account_error', ({ message }) => {
+          addError(
+            `Account error: ${message}. A Premium account is required.`,
+            'persistent'
+          )
+        })
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'An unknown error occurred.'
+        addError(`Authentication failed: ${message}`, 'persistent')
+        setIsAuthenticated(false)
+      }
+    }
+
     initialize()
 
     return () => {
@@ -67,7 +67,7 @@ const useSpotifyWebPlayback = (
         player.disconnect()
       }
     }
-  }, [initialize, player])
+  }, [addError, initialVolume, player])
 
   return { player, isReady, deviceId, isAuthenticated }
 }

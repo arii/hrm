@@ -18,12 +18,7 @@ import { useTimerVisuals } from '@/hooks/useTimerVisuals'
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
   const { volume, setVolume, muted, toggleMute } = useAudioContext()
-  const {
-    mode,
-    workDuration = 20,
-    restDuration = 10,
-    currentPhase,
-  } = timerData
+  const { mode, workDuration = 20, restDuration = 10, currentPhase } = timerData
   const { displayTime, phaseColor, phaseLabel } = useTimerVisuals(timerData)
 
   return (

@@ -7,6 +7,7 @@ import type { TimerData } from '@/types/websocket'
 import '@testing-library/jest-dom'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { AudioProvider } from '@/context/AudioContext'
 
 type UseWebSocketReturn = ReturnType<typeof useWebSocket>
 
@@ -44,6 +45,10 @@ describe('TimerControls', () => {
     ) as jest.Mock
   })
 
+  const renderWithProviders = (component: React.ReactElement) => {
+    return render(<AudioProvider>{component}</AudioProvider>)
+  }
+
   it('should send a TIMER_CONFIG message when durations change before starting the timer', async () => {
     const sendData = jest.fn()
 
@@ -67,7 +72,7 @@ describe('TimerControls', () => {
     }
     mockedUseWebSocket.mockReturnValue(mockUseWebSocket)
 
-    render(<TimerControls />)
+    renderWithProviders(<TimerControls />)
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 

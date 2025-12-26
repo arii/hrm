@@ -1,8 +1,11 @@
+// types/global.d.ts
+import { SpotifyPlayer, SpotifyPlayerOptions } from './spotify'
+
 declare global {
   interface Window {
-    __TEST_READY__?: boolean
-    __TEST_WEBSOCKET_READY__?: boolean
+    Spotify: {
+      Player: new (options: SpotifyPlayerOptions) => SpotifyPlayer
+    }
+    onSpotifyWebPlaybackSDKReady: () => void
   }
 }
-
-export {}

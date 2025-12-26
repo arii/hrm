@@ -33,9 +33,7 @@ describe('HrTile', () => {
     })
     renderWithProviders(<HrTile name="Test" bpm={180} percentMax={95} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${theme.palette.primary.main}`
-    )
+    expect(card).toHaveStyle(`background-color: ${theme.palette.primary.main}`)
     expect(card).toHaveStyle(
       `color: ${theme.palette.getContrastText(theme.palette.primary.main)}`
     )
@@ -50,9 +48,7 @@ describe('HrTile', () => {
     })
     renderWithProviders(<HrTile name="Test" bpm={160} percentMax={85} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${theme.palette.warning.dark}`
-    )
+    expect(card).toHaveStyle(`background-color: ${theme.palette.warning.dark}`)
     expect(card).toHaveStyle(
       `color: ${theme.palette.getContrastText(theme.palette.warning.dark)}`
     )
@@ -67,9 +63,7 @@ describe('HrTile', () => {
     })
     renderWithProviders(<HrTile name="Test" bpm={140} percentMax={75} />)
     const card = screen.getByTestId('hr-tile-card')
-    expect(card).toHaveStyle(
-      `background-color: ${theme.palette.success.main}`
-    )
+    expect(card).toHaveStyle(`background-color: ${theme.palette.success.main}`)
     expect(card).toHaveStyle(
       `color: ${theme.palette.getContrastText(theme.palette.success.main)}`
     )

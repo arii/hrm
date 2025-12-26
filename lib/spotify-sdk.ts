@@ -30,14 +30,14 @@ const initializePlayer = (initialVolume: number) => {
     volume: initialVolume,
   } as SpotifyPlayerOptions)
 
-  spotifyPlayer.addListener('ready', ({ device_id }) => {
+  spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
     console.log('[Spotify SDK] Ready with Device ID', device_id)
     player = spotifyPlayer
     onReadyCallbacks.forEach((callback) => callback(player as SpotifyPlayer))
     onReadyCallbacks.length = 0
   })
 
-  spotifyPlayer.connect().then((success) => {
+  spotifyPlayer.connect().then((success: boolean) => {
     if (success) {
       console.log('[Spotify SDK] The Web Playback SDK successfully connected to Spotify!')
     }
