@@ -15,12 +15,25 @@ const HrmDataSchema = z.object({
 })
 
 const TimerDataSchema = z.object({
-  phase: z.enum(['PREPARE', 'WORK', 'REST', 'IDLE']),
+  phase: z.enum(['PREPARE', 'WORK', 'REST', 'IDLE', 'COOLDOWN', 'RUNNING']),
+  currentPhase: z.enum([
+    'IDLE',
+    'PREPARE',
+    'WORK',
+    'REST',
+    'COOLDOWN',
+    'RUNNING',
+  ]),
   timeRemaining: z.number(),
+  timeElapsed: z.number(),
   totalTime: z.number(),
   workDuration: z.number(),
   restDuration: z.number(),
   mode: z.enum(['STOPWATCH', 'TABATA']),
+  isRunning: z.boolean(),
+  caloriesBurned: z.number(),
+  soundEventId: z.number(),
+  soundToPlay: z.enum(['WORK', 'REST', 'COUNTDOWN']).optional(),
 })
 
 // Simplified Spotify schema for client-side validation

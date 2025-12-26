@@ -1,11 +1,11 @@
 // types/global.d.ts
-export {};
+export {}
 
 declare global {
   interface Window {
-    __TEST_READY__?: boolean;
-    __TEST_WEBSOCKET_READY__?: boolean;
-    Spotify: any;
-    onSpotifyWebPlaybackSDKReady: () => void;
+    __TEST_READY__?: boolean
+    __TEST_WEBSOCKET_READY__?: boolean
+    Spotify: unknown
+    onSpotifyWebPlaybackSDKReady: () => void
   }
 }

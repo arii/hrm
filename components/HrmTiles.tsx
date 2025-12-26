@@ -60,7 +60,7 @@ const HrmTiles = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  if (isLoading || filteredTiles.length === <strong>0)</strong> {
+  if (isLoading || filteredTiles.length === 0) {
     return (
       <>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-testid="hr-tile-grid-item">
