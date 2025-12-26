@@ -17,7 +17,11 @@ async function getPlaylistDetails(
   _req: Request,
   ...args: { params: Promise<{ playlistId: string }> }[]
 ) {
-  const { params } = args[0]
+  const paramsArg = args[0]
+  if (!paramsArg || !paramsArg.params) {
+    throw new ApiError(400, 'Invalid request arguments.')
+  }
+  const { params } = paramsArg
   const { playlistId } = await params
 
   if (!playlistId) {
