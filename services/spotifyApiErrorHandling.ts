@@ -37,12 +37,9 @@ export async function logSpotifyCommandError(
     }
 
     if (error instanceof SyntaxError) {
-      // This is an expected outcome. The Spotify SDK attempts to parse JSON
-      // from a 204 No Content response, which throws a SyntaxError.
-      // We can safely interpret this as a successful command execution.
-      logger.debug(
+      logger.warn(
         { command },
-        'Spotify command executed successfully (204 No Content).'
+        'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
       )
       return
     }
