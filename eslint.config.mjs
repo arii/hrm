@@ -1,5 +1,5 @@
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals'
+import nextPlugin from 'eslint-config-next/core-web-vitals.js'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 import tseslint from 'typescript-eslint'
@@ -28,7 +28,7 @@ export default [
   ...tseslint.configs.recommended,
 
   // 3. Next.js Configuration (includes React/React Hooks rules)
-  ...nextPlugin,
+  nextPlugin,
 
   // 4. Explicit React Configuration for Clarity
   {
