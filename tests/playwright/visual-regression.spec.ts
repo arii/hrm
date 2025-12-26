@@ -100,6 +100,9 @@ test.describe('Visual Regression Tests', () => {
     // Wait for fonts to be fully loaded for consistent rendering
     await waitForFontsLoaded(dashboardPage)
 
+    // Wait for WebSocket to be connected to ensure a stable UI state
+    await waitForWebSocketConnection(dashboardPage)
+
     // Extra verification: ensure timer is NOT in active state (no WORK/REST)
     // Wait for any existing timer display to settle or disappear
     try {
@@ -154,6 +157,8 @@ test.describe('Visual Regression Tests', () => {
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
     })
+    // Ensure WebSocket is connected before interacting with controls
+    await waitForWebSocketConnection(controlPage)
 
     // Use the new DurationStepper component to configure the timer
     const decreaseWorkButton = controlPage.getByRole('button', {
