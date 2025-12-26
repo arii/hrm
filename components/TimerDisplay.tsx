@@ -12,10 +12,13 @@ import VolumeDown from '@mui/icons-material/VolumeDown'
 import VolumeUp from '@mui/icons-material/VolumeUp'
 import VolumeOff from '@mui/icons-material/VolumeOff'
 import IconButton from '@mui/material/IconButton'
-
+import SideLabel from './SideLabel'
 import { useAudioContext } from '@/context/AudioContext'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+// Define a constant for the side column width to avoid magic numbers
+const SIDE_COLUMN_WIDTH = '40px'
 
 const TimerDisplay = () => {
   const { connectionStatus, timerData } = useWebSocket()
@@ -133,27 +136,15 @@ const TimerDisplay = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: '0 0 40px', // Fixed width for the left column
+          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
         }}
       >
         {currentPhase !== 'IDLE' && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 2,
-              whiteSpace: 'nowrap',
-              fontSize: '0.9rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              transform: 'rotate(-90deg)',
-            }}
-          >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
-          </Typography>
+          <SideLabel
+            text={mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            ariaLabel={`Timer mode: ${mode}`}
+            rotation="left"
+          />
         )}
       </Box>
       <CardContent
@@ -240,27 +231,15 @@ const TimerDisplay = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flex: '0 0 40px', // Fixed width for the right column
+          flex: `0 0 ${SIDE_COLUMN_WIDTH}`,
         }}
       >
         {mode === 'TABATA' && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              letterSpacing: 1,
-              whiteSpace: 'nowrap',
-              fontSize: '0.8rem',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              transform: 'rotate(90deg)',
-            }}
-          >
-            WORK:{workDuration}s REST:{restDuration}s
-          </Typography>
+          <SideLabel
+            text={`WORK:${workDuration}s REST:${restDuration}s`}
+            ariaLabel={`Work duration: ${workDuration} seconds, Rest duration: ${restDuration} seconds`}
+            rotation="right"
+          />
         )}
       </Box>
     </Card>
