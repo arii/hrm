@@ -2,12 +2,12 @@
 // API route for the standalone Spotify playlist selection page
 // This endpoint is only used by app/client/spotify-selection/page.tsx
 
-import { authOptions } from '../../../../lib/auth'
+import { authOptions } from '@/lib/auth'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '../../../../lib/middleware/errorHandler'
-import { ApiError } from '../../../../lib/errors'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
+import { ApiError } from '@/lib/errors'
 
 /**
  * API route to fetch preset and user Spotify playlists.
@@ -16,7 +16,7 @@ import { ApiError } from '../../../../lib/errors'
  * It returns both preset playlists (HIIT, Rock, Pop) and the user's personal playlists.
  * Uses the official Spotify Web API TypeScript SDK for type safety and automatic pagination.
  *
- * @param _req The incoming Request object (unused).
+ * @param _req The incoming Next.js API request (unused).
  * @returns A NextResponse object with preset and user playlists or an error.
  */
 async function getPlaylists(_req: Request) {

@@ -3,9 +3,9 @@
  * API Route: Fetches details for a single workout session.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '../../../../lib/middleware/errorHandler'
-import { getSessionDetails } from '../../../../services/hrmDataService'
-import { ApiError } from '../../../../lib/errors'
+import { withErrorHandler } from '@/lib/middleware/errorHandler.js'
+import { getSessionDetails } from '@/services/hrmDataService.js'
+import { ApiError } from '@/lib/errors.js'
 
 // A placeholder for getting the current user's ID
 const getCurrentUserId = async (): Promise<string> => {

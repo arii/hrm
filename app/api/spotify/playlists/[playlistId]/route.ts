@@ -3,20 +3,18 @@
  * API Route: Fetches details for a single Spotify playlist.
  */
 import { NextResponse } from 'next/server'
-import { withErrorHandler } from '../../../../lib/middleware/errorHandler'
-import { ApiError } from '../../../../lib/errors'
-import { getAuthenticatedSpotifyApi } from '../../../../lib/spotify/sdk'
+import { withErrorHandler } from '@/lib/middleware/errorHandler'
+import { ApiError } from '@/lib/errors'
+import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
 /**
  * GET handler for fetching single playlist details.
- * @param _req The incoming Request object.
+ * @param req The incoming NextRequest.
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(
-  _req: Request,
-  { params }: { params: { playlistId: string } }
-) {
+async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
+  const { params } = args[0] as { params: { playlistId: string } }
   const { playlistId } = params
 
   if (!playlistId) {
@@ -35,10 +33,9 @@ async function getPlaylistDetails(
     name: playlist.name,
     description: playlist.description,
     imageUrl:
-      (playlist.images &&
-        playlist.images.length > 0 &&
-        playlist.images[0]?.url) ??
-      null,
+      playlist.images && playlist.images.length > 0
+        ? (playlist.images[0]?.url ?? null)
+        : null,
     owner: playlist.owner?.display_name ?? null,
     trackCount: playlist.tracks?.total ?? 0,
   })
