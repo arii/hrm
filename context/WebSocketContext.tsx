@@ -235,14 +235,7 @@ export const WebSocketProvider = ({
       return
     }
 
-    // In a test environment, we disable the built-in reconnect logic.
-    // The test runner will be responsible for ensuring a stable connection.
-    if (window.__TESTING__) {
-      shouldReconnect.current = false
-    } else {
-      shouldReconnect.current = true
-    }
-
+    shouldReconnect.current = true
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

@@ -126,9 +126,9 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'PING': {
-        // This is now a no-op. The server relies on native WebSocket ping/pong
-        // frames for heartbeat. The case is retained for backward
-        // compatibility with older clients that might still send this message.
+        // The client-side heartbeat sends a PING message and expects a PONG
+        // in return to confirm the connection is alive.
+        sendWebSocketMessage(ws, { type: 'PONG' }, 'socketManager.PING')
         break
       }
       case 'REGISTER_CLIENT': {

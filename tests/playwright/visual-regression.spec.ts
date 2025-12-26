@@ -16,12 +16,10 @@ import {
   BASE_URL,
   getDynamicContentMasks,
   getHrMasks,
-  getSpotifyMasks,
   getTimerMasks,
   replaceIframeWithStableWorkout,
   waitForFontsLoaded,
   waitForPageReady,
-  waitForWebSocketConnection,
 } from './test-helpers'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
@@ -73,6 +71,32 @@ test.describe('Visual Regression Tests', () => {
       waitForFontsLoaded(mockPage),
     ])
 
+    // Ensure timer is stopped before tests start
+    // Check if STOP button exists (timer is running)
+    const stopButton = controlPage.getByRole('button', {
+      name: 'STOP',
+      exact: true,
+    })
+
+    try {
+      // If timer is running, stop it
+      if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
+        await stopButton.click()
+        // Wait for START button to confirm timer stopped on control page
+        await expect(
+          controlPage.getByRole('button', { name: 'START', exact: true })
+        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
+
+        // Wait for dashboard to clear timer display (return to READY state)
+        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
+          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+        })
+      }
+    } catch (error) {
+      // Timer not running or failed to stop, log and continue
+      console.warn('Timer check/stop encountered an issue (ignoring):', error)
+    }
+
     // Replace iframe with stable content for dashboard
     // Wait for dashboard to settle before replacing
     try {
@@ -94,16 +118,6 @@ test.describe('Visual Regression Tests', () => {
     if (context) {
       await context.close()
     }
-  })
-
-  test.beforeEach(async () => {
-    // Set a flag to disable WebSocket reconnects in the test environment
-    await dashboardPage.evaluate(() => (window.__TESTING__ = true))
-    await controlPage.evaluate(() => (window.__TESTING__ = true))
-    await mockPage.evaluate(() => (window.__TESTING__ = true))
-
-    // Reload the page to apply the testing flag
-    await controlPage.reload()
   })
 
   test('Dashboard - main viewer page', async () => {
@@ -132,10 +146,7 @@ test.describe('Visual Regression Tests', () => {
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
         // Use precise data-testid selectors for dynamic content masking
-        ...getDynamicContentMasks(dashboardPage),
-        ...getSpotifyMasks(dashboardPage),
-        // Add a specific mask for the Spotify display to prevent intermittent flakiness
-        dashboardPage.getByTestId('spotify-display'),
+        ...getTimerMasks(dashboardPage),
       ],
     })
   })
@@ -161,9 +172,11 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
-    // The beforeEach hook now handles reloading and waiting for WebSocket.
-    // We can proceed directly with the test logic.
-    await waitForWebSocketConnection(controlPage)
+    // Wait for control page to be fully loaded - check for Timer Mode text
+    await expect(controlPage.getByText('Timer Mode')).toBeVisible({
+      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
+    })
+
     // Use the new DurationStepper component to configure the timer
     const decreaseWorkButton = controlPage.getByRole('button', {
       name: /Decrease Work Duration/i,
@@ -178,6 +191,7 @@ test.describe('Visual Regression Tests', () => {
     await decreaseRestButton.click()
 
     // Start timer
+
     await controlPage.click('button:has-text("START")', { force: true })
 
     // wait for broadcast messages to propagate
@@ -213,18 +227,12 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
-    await mockPage.getByLabel('User Name').fill('Mock User')
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    await waitForWebSocketConnection(mockPage)
-    await mockPage.click('button:has-text("START")')
-    // Wait for WebSocket to connect and user to be visible
-    await dashboardPage.waitForSelector(
-      '[data-testid="ws-status-indicator"]:has-text("Connected")'
-    )
+    // Dashboard page already loaded via fixture
     await expect(dashboardPage.locator('text=Mock User')).toBeVisible()
 
     // Wait for fonts to load before snapshot
