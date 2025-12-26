@@ -31,6 +31,13 @@ if (!hasNextAuthSecret) {
 }
 
 export default defineConfig({
+  webServer: {
+    command: 'pnpm run dev',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    timeout: 120 * 1000, // Allow time for Next.js compile
+  },
   testDir: './tests/playwright',
   testMatch: ['**/*.spec.ts'],
   testIgnore: testIgnoreList,
