@@ -649,9 +649,9 @@ Deployment is automated via a script that syncs the `leader` branch and reloads 
 
 1.  **Commit Changes**: Ensure all your changes are committed and pushed.
 2.  **Run Deploy Script**: On the production host, run the deployment script:
-    ```bash
-    ./deploy.sh
-    ```
-This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
+    `bash
+./deploy.sh
+`
+    This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
 
 See the [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration) section below for the required Nginx setup.

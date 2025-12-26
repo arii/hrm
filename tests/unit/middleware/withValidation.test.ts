@@ -116,7 +116,7 @@ describe('withValidation Middleware', () => {
         {
           location: 'params',
           path: 'userId',
-          message: 'Invalid uuid',
+          message: 'Invalid UUID',
         },
       ])
     )
@@ -138,9 +138,7 @@ describe('withValidation Middleware', () => {
     expect(mockHandler).not.toHaveBeenCalled()
     expect(response.status).toBe(400)
     const json = await response.json()
-    expect(json.details[0].message).toBe(
-      'Request body is not valid JSON.'
-    )
+    expect(json.details[0].message).toBe('Request body is not valid JSON.')
   })
 
   // Case 5: Extra fields (strip check)

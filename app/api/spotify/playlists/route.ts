@@ -45,21 +45,9 @@ async function getPlaylists(_req: Request) {
 
   // 5. Preset playlists for the standalone page
   const presetPlaylists = [
-    {
-      name: 'HIIT',
-      uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5',
-      id: '37i9dQZF1DX4p6TLfEhgD5',
-    },
-    {
-      name: 'Rock',
-      uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC',
-      id: '37i9dQZF1DX1spT6G94GFC',
-    },
-    {
-      name: 'Pop',
-      uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR',
-      id: '37i9dQZF1DXcBWfL3ps8cR',
-    },
+    { name: 'HIIT', uri: 'spotify:playlist:37i9dQZF1DX4p6TLfEhgD5' },
+    { name: 'Rock', uri: 'spotify:playlist:37i9dQZF1DX1spT6G94GFC' },
+    { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
   ]
 
   // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)

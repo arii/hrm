@@ -8,24 +8,24 @@ For endpoints that only need to validate the request body, provide a Zod schema 
 
 ```typescript
 // app/api/users/route.ts
-import { withValidation } from '@/lib/middleware/validation';
-import { z } from 'zod';
+import { withValidation } from '@/lib/middleware/validation'
+import { z } from 'zod'
 
 const schemas = {
   body: z.object({
     username: z.string().min(3),
     email: z.string().email(),
   }),
-};
+}
 
 async function postHandler(req, { body }) {
   // At this point, `body` is guaranteed to be a valid object
   // with a `username` and `email`.
-  console.log(body.username);
+  console.log(body.username)
   // ... create user logic
 }
 
-export const POST = withValidation(schemas)(postHandler);
+export const POST = withValidation(schemas)(postHandler)
 ```
 
 ## Advanced Usage (Body, Params, and Headers)
@@ -34,8 +34,8 @@ For more complex endpoints, you can provide schemas for `body`, `params` (URL pa
 
 ```typescript
 // app/api/users/[userId]/route.ts
-import { withValidation } from '@/lib/middleware/validation';
-import { z } from 'zod';
+import { withValidation } from '@/lib/middleware/validation'
+import { z } from 'zod'
 
 const schemas = {
   params: z.object({
@@ -47,17 +47,17 @@ const schemas = {
   headers: z.object({
     'x-api-key': z.string().length(32),
   }),
-};
+}
 
 async function putHandler(req, { params, body, headers }) {
   // All inputs are validated and type-safe
-  console.log('User ID:', params.userId);
-  console.log('New Role:', body.role);
-  console.log('API Key:', headers['x-api-key']);
+  console.log('User ID:', params.userId)
+  console.log('New Role:', body.role)
+  console.log('API Key:', headers['x-api-key'])
   // ... update user logic
 }
 
-export const PUT = withValidation(schemas)(putHandler);
+export const PUT = withValidation(schemas)(putHandler)
 ```
 
 ## Standardized Error Response

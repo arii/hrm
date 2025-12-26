@@ -15,11 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * @template P The expected type of the URL parameters.
  * @template H The expected type of the request headers.
  */
-export interface ValidationSchemas<
-  B = unknown,
-  P = unknown,
-  H = unknown,
-> {
+export interface ValidationSchemas<B = unknown, P = unknown, H = unknown> {
   body?: z.ZodSchema<B>
   params?: z.ZodSchema<P>
   headers?: z.ZodSchema<H>
@@ -140,25 +136,14 @@ export function withValidation<B, P, H>(schemas: ValidationSchemas<B, P, H>) {
           } else {
             errors.push(...formatZodError(result.error, 'body'))
           }
-        } catch (error) {
-          if (error instanceof SyntaxError) {
-            // Handles empty or malformed JSON
-            errors.push({
-              location: 'body',
-              path: '',
-              message: 'Request body is not valid JSON.',
-            })
-          } else {
-            // For other unexpected errors during body parsing, return a generic 500
-            console.error(
-              'Unhandled error in withValidation body parsing:',
-              error
-            )
-            return NextResponse.json(
-              { message: 'An internal server error occurred.' },
-              { status: 500 }
-            )
-          }
+        } catch (_error) {
+          // Catch any error during body parsing (e.g., empty body, malformed JSON)
+          // and treat it as a validation failure.
+          errors.push({
+            location: 'body',
+            path: '',
+            message: 'Request body is not valid JSON.',
+          })
         }
       }
 
