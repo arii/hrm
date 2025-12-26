@@ -377,59 +377,77 @@ The app includes the original HRM audio feedback system:
 
 ## Architecture Overview
 
-### Custom Stateful Server
+### Decoupled Architecture with Redis
 
-This application uses a custom Express server (`server.ts`) that is **stateful**. It manages:
+This application has been refactored to use a decoupled, horizontally scalable architecture. The core of this is the use of Redis Pub/Sub to manage WebSocket state and communication between server instances.
 
-1. Hosting the Next.js application.
-2. A persistent WebSocket server on the `/ws` endpoint.
-3. Long-running background services like the Tabata Timer and Spotify Polling.
+1. **Hosting the Next.js application**: Each server instance runs the Next.js application.
+2. **WebSocket Server**: Each server instance maintains its own set of WebSocket connections.
+3. **Redis Pub/Sub**: A central Redis instance is used to broadcast messages to all server instances.
+4. **Long-running background services**: Services like the Tabata Timer and Spotify Polling are instantiated on each server instance, but their state is synchronized across all instances via Redis.
 
-**CRITICAL**: This architecture is incompatible with serverless deployment platforms like Vercel or Netlify. It must be deployed on a traditional Node.js host (e.g., VPS, Docker container, or a dedicated server).
+**CRITICAL**: This architecture is incompatible with serverless deployment platforms like Vercel or Netlify. It must be deployed on a traditional Node.js host (e.g., VPS, Docker container, or a dedicated server) with a Redis instance.
 
 ### Real-time Data Flow
 
 All real-time state updates are managed by the server and pushed to clients via WebSocket.
 
 - **Client → Server**: Send commands (e.g., `TIMER_COMMAND`, `SPOTIFY_COMMAND`) or data (`HRM_INPUT`).
-- **Server → Clients**: Broadcasts `STATE_UPDATE` messages containing the latest HR data, timer status, and Spotify track information to all connected clients.
+- **Server → Redis**: The server that receives a command or data update publishes a message to a Redis channel.
+- **Redis → All Servers**: Redis broadcasts the message to all subscribed server instances.
+- **Server → Clients**: Each server instance, upon receiving a message from Redis, broadcasts the update to its connected WebSocket clients.
 
-This ensures a single source of truth for application state, keeping all viewers and control panels perfectly in sync.
+This ensures that all clients, regardless of which server instance they are connected to, receive the same state updates in real-time.
 
 ### Architecture Diagram
 
 ```mermaid
 graph TD
-    subgraph "Browser"
+    subgraph "Clients"
         A[Next.js Frontend]
         B[WebSocket Client]
     end
 
-    subgraph "Server"
-        C[Express Server]
-        D[Next.js Middleware]
-        E[WebSocket Server]
-        F[Tabata Timer Service]
-        G[Spotify Polling Service]
+    subgraph "Server Instances"
+        C1[Express Server 1]
+        D1[WebSocket Server 1]
+        F1[Tabata Timer Service 1]
+        G1[Spotify Polling Service 1]
+
+        C2[Express Server 2]
+        D2[WebSocket Server 2]
+        F2[Tabata Timer Service 2]
+        G2[Spotify Polling Service 2]
+    end
+
+    subgraph "Shared Infrastructure"
+        H[Redis Pub/Sub]
     end
 
     subgraph "External Services"
-        H[Spotify API]
-        I[Bluetooth HRM Device]
+        I[Spotify API]
+        J[Bluetooth HRM Device]
     end
 
-    A -- HTTP Requests --> C
-    C -- Forwards to --> D
-    B -- WebSocket Connection --> E
+    A -- HTTP Requests --> C1
+    A -- HTTP Requests --> C2
+    B -- WebSocket Connection --> D1
+    B -- WebSocket Connection --> D2
 
-    E -- Broadcasts State Updates --> B
-    E -- Receives Commands --> B
+    D1 -- Publishes to --> H
+    D2 -- Publishes to --> H
 
-    F -- Updates --> E
-    G -- Updates --> E
+    H -- Broadcasts to --> D1
+    H -- Broadcasts to --> D2
 
-    G -- Interacts with --> H
-    A -- Interacts with --> I
+    F1 -- Updates --> D1
+    G1 -- Updates --> D1
+    F2 -- Updates --> D2
+    G2 -- Updates --> D2
+
+    G1 -- Interacts with --> I
+    G2 -- Interacts with --> I
+    A -- Interacts with --> J
 ```
 
 ### Key Services

@@ -12,24 +12,21 @@ import {
 import { DualModeTimerState } from './timerState.js'
 import { ConfigurationError } from '../../types/errors.js'
 import { TimerQueries } from './timerQueries.js'
+import { broadcast } from '../../utils/websocketUtils.js'
 
 export class TimerCommands {
   private readonly state: DualModeTimerState
-  private readonly broadcastUpdate: (message: ServerMessage) => void
   private readonly queries: TimerQueries
 
   /**
    * @param {DualModeTimerState} state The timer state object to mutate.
-   * @param {function} broadcastUpdate Function to send updates to clients.
    * @param {TimerQueries} queries The queries instance for getting public state.
    */
   constructor(
     state: DualModeTimerState,
-    broadcastUpdate: (message: ServerMessage) => void,
     queries: TimerQueries
   ) {
     this.state = state
-    this.broadcastUpdate = broadcastUpdate
     this.queries = queries
   }
 
@@ -52,7 +49,7 @@ export class TimerCommands {
     }
 
     this.state._timerInterval = setInterval(this.updateTimer, TIMER_INTERVAL)
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -76,7 +73,7 @@ export class TimerCommands {
     this.state._timerInterval = null
     this.state._startTime = null
 
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -100,7 +97,7 @@ export class TimerCommands {
     this.state._startTime = null
     this.state._timerInterval = null
 
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -119,7 +116,7 @@ export class TimerCommands {
     this.state.timeElapsed = 0
     this.state.soundToPlay = undefined
     this.resetCountdownMarker()
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -145,7 +142,7 @@ export class TimerCommands {
       this.state.timeRemaining = this.state.workDuration
     }
 
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -180,7 +177,7 @@ export class TimerCommands {
       }
     }
 
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })
@@ -230,7 +227,7 @@ export class TimerCommands {
   private queueSound(sound: 'WORK' | 'REST' | 'COUNTDOWN'): void {
     this.state.soundToPlay = sound
     this.state.soundEventId += 1
-    this.broadcastUpdate({
+    broadcast({
       type: 'TIMER_UPDATE',
       payload: this.queries.getState(),
     })

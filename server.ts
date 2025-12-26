@@ -12,6 +12,7 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import { redisClient } from './lib/redis.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -101,9 +102,7 @@ app.prepare().then(async () => {
   const wsManager = new WebSocketManager()
 
   // 2. Setup Services with Broadcaster
-  const services: AppServices = await createServices(
-    wsManager.createBroadcaster()
-  )
+  const services: AppServices = await createServices()
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({

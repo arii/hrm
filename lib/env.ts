@@ -23,6 +23,7 @@ const envSchema = z.object({
     .string()
     .default('10000')
     .transform(Number),
+  REDIS_URL: z.string().url().min(1).default('redis://localhost:6379'),
 })
 
 export const env = envSchema.parse(process.env)

@@ -20,6 +20,7 @@ import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
+  initBroadcaster,
 } from './websocketUtils.js'
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
@@ -29,8 +30,6 @@ import { AppServices } from '../lib/services.js'
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
-let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
@@ -49,11 +48,12 @@ const initSocketManager = (
   getSnapshot: () => StateSnapshot,
   svcs: AppServices
 ) => {
-  wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
+  initBroadcaster(wss);
+
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
@@ -106,7 +106,6 @@ export const resetSocketManager = () => {
 
 const broadcastState = () => {
   broadcast(
-    wsServerInstance,
     {
       type: 'HRM_UPDATE',
       payload: hrmDataRepository.findAll(),
@@ -224,24 +223,6 @@ const handleIncomingMessage = (
           { clientId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
-
-        wsServerInstance.clients.forEach((client: WebSocket) => {
-          const target = client as ExtWebSocket
-          if (
-            target.readyState === WebSocket.OPEN &&
-            target.clientType === 'dashboard'
-          ) {
-            const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
-            }
-            sendWebSocketMessage(
-              target,
-              executionMessage,
-              'socketManager.SPOTIFY_COMMAND'
-            )
-          }
-        })
 
         const spotifyService = services.spotifyService
         const spotifyCommandParams: {

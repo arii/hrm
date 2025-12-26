@@ -6,9 +6,12 @@
 import { jest } from '@jest/globals'
 import TabataTimer from '../../../services/tabataTimer'
 import { ConfigurationError } from '../../../types/errors'
+import { broadcast } from '../../../utils/websocketUtils'
 
 // Mock the broadcast function
-const broadcastUpdate = jest.fn()
+jest.mock('../../../utils/websocketUtils', () => ({
+    broadcast: jest.fn(),
+}));
 
 // Use fake timers to control setInterval
 jest.useFakeTimers()
@@ -18,9 +21,9 @@ describe('TabataTimer (Refactored)', () => {
 
   beforeEach(() => {
     // Clear any previous mocks and timers
-    broadcastUpdate.mockClear()
+    ;(broadcast as jest.Mock).mockClear()
     jest.clearAllTimers()
-    timer = new TabataTimer(broadcastUpdate)
+    timer = new TabataTimer()
   })
 
   // Test initial state
@@ -186,21 +189,21 @@ describe('TabataTimer (Refactored)', () => {
 
     // Countdown sounds
     jest.advanceTimersByTime(2000) // 3s left in PREPARE
-    expect(broadcastUpdate).toHaveBeenCalledWith(
+    expect(broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: expect.objectContaining({ soundToPlay: 'COUNTDOWN' }),
       })
     )
 
     jest.advanceTimersByTime(3000) // End of PREPARE
-    expect(broadcastUpdate).toHaveBeenCalledWith(
+    expect(broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: expect.objectContaining({ soundToPlay: 'WORK' }),
       })
     )
 
     jest.advanceTimersByTime(3000) // End of WORK
-    expect(broadcastUpdate).toHaveBeenCalledWith(
+    expect(broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: expect.objectContaining({ soundToPlay: 'REST' }),
       })

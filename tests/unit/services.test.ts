@@ -29,11 +29,16 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+import { broadcast } from '../../utils/websocketUtils'
+
+jest.mock('../../utils/websocketUtils', () => ({
+    broadcast: jest.fn(),
+}));
+
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
   let spotifyService: SpotifyPolling
   let broadcastedMessages: ServerMessage[]
-  let broadcastFn: (message: ServerMessage) => void
   let mockPlayerFns: jest.Mocked<SpotifyApi['player']>
 
   beforeEach(async () => {
@@ -42,9 +47,9 @@ describe('Services Integration', () => {
     broadcastedMessages = []
 
     // Create broadcast function that collects messages
-    broadcastFn = (message: ServerMessage) => {
-      broadcastedMessages.push(message)
-    }
+    ;(broadcast as jest.Mock).mockImplementation((message: ServerMessage) => {
+        broadcastedMessages.push(message)
+    })
 
     // Mock TokenManager to return a valid token
     ;(SpotifyTokenManager as jest.Mock).mockImplementation(() => ({
@@ -89,9 +94,9 @@ describe('Services Integration', () => {
     // Mock SpotifyApi.withAccessToken to return our mock SDK
     ;(SpotifyApi.withAccessToken as jest.Mock).mockReturnValue(mockSdk)
 
-    tabataTimer = new TabataTimer(broadcastFn)
+    tabataTimer = new TabataTimer()
     // Initialize service (which will trigger async token load)
-    spotifyService = await SpotifyPolling.create(broadcastFn)
+    spotifyService = await SpotifyPolling.create()
   })
 
   afterEach(() => {

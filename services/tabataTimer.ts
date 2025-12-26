@@ -21,10 +21,10 @@ class TabataTimer {
   private readonly queries: TimerQueries
   private readonly commands: TimerCommands
 
-  constructor(broadcastUpdate: (message: ServerMessage) => void) {
+  constructor() {
     this.state = createInitialTimerState()
     this.queries = new TimerQueries(this.state)
-    this.commands = new TimerCommands(this.state, broadcastUpdate, this.queries)
+    this.commands = new TimerCommands(this.state, this.queries)
   }
 
   /**

@@ -39,14 +39,17 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
+import { broadcast } from '../../utils/websocketUtils.js';
+
 // Mock ConnectionMonitor and other utils
 jest.mock('../../utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
-  broadcast: jest.fn(),
   ConnectionMonitor: jest.fn().mockImplementation(() => ({
     start: jest.fn(),
     stop: jest.fn(),
   })),
+  initBroadcaster: jest.fn(),
+  broadcast: jest.fn(),
 }))
 
 // Mock logger globally for the test file
@@ -221,12 +224,11 @@ describe('WebSocket Manager', () => {
       }
 
       // Check the last broadcasted state
-      const mockBroadcast = broadcast as jest.Mock
       jest.runOnlyPendingTimers()
-      expect(mockBroadcast).toHaveBeenCalled()
+      expect(broadcast).toHaveBeenCalled()
       const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
+        (broadcast as jest.Mock).mock.calls[(broadcast as jest.Mock).mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[0].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 
       expect(clientData).toBeDefined()
@@ -281,7 +283,6 @@ describe('WebSocket Manager', () => {
     it('should broadcast state on client disconnect', () => {
       mockWs.emit('close')
       expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
         {
           type: 'HRM_UPDATE',
           payload: [],
@@ -304,11 +305,13 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      expect(sendWebSocketMessage).toHaveBeenCalled()
-      expect(sendWebSocketMessage).toHaveBeenCalledWith(
-        dashboardWs,
-        expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
-        'socketManager.SPOTIFY_COMMAND'
+      expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
+        'PLAY',
+        {
+          deviceId: undefined,
+          volume: undefined,
+          playlistUri: undefined,
+        }
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',

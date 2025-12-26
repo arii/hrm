@@ -19,6 +19,7 @@ import {
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
 import { env } from '../lib/env.js'
+import { broadcast } from '../utils/websocketUtils.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -44,7 +45,6 @@ export class SpotifyPolling implements SpotifyService {
   private tokenRefreshInterval: NodeJS.Timeout | null = null
 
   // Internal auth/state values
-  private readonly broadcastUpdate: (message: ServerMessage) => void
 
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
@@ -63,8 +63,7 @@ export class SpotifyPolling implements SpotifyService {
 
   private sdk: SafeSpotifyApi | null = null
 
-  private constructor(broadcastUpdate: (message: ServerMessage) => void) {
-    this.broadcastUpdate = broadcastUpdate
+  private constructor() {
     logger.debug('Spotify Polling Service Initialized.')
 
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
@@ -77,13 +76,11 @@ export class SpotifyPolling implements SpotifyService {
     )
   }
 
-  public static async create(
-    broadcastUpdate: (message: ServerMessage) => void
-  ): Promise<SpotifyPolling> {
+  public static async create(): Promise<SpotifyPolling> {
     if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
       throw new Error('Spotify client ID or secret not configured.')
     }
-    const instance = new SpotifyPolling(broadcastUpdate)
+    const instance = new SpotifyPolling()
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
       () => instance.checkAndRefreshSdkToken(),
@@ -235,7 +232,7 @@ export class SpotifyPolling implements SpotifyService {
             albumArtUrl: '',
             isPlaying: false,
           }
-          this.broadcastUpdate({
+          broadcast({
             type: 'SPOTIFY_UPDATE',
             payload: this.getState(),
           })
@@ -282,7 +279,7 @@ export class SpotifyPolling implements SpotifyService {
           isPlaying,
         }
 
-        this.broadcastUpdate({
+        broadcast({
           type: 'SPOTIFY_UPDATE',
           payload: this.getState(),
         })
@@ -315,7 +312,7 @@ export class SpotifyPolling implements SpotifyService {
         }))
 
       this.state.devices = validDevices
-      this.broadcastUpdate({
+      broadcast({
         type: 'SPOTIFY_UPDATE',
         payload: this.getState(),
       })

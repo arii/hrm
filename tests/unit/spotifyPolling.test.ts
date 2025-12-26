@@ -81,9 +81,14 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 }))
 
 import { ServerMessage } from '../../types/websocket'
+import { broadcast } from '../../utils/websocketUtils'
+
+jest.mock('../../utils/websocketUtils', () => ({
+    broadcast: jest.fn(),
+}));
+
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
-  let broadcastMock: jest.Mock<(message: ServerMessage) => void>
   let broadcastedStates: SpotifyData[]
 
   beforeEach(async () => {
@@ -101,14 +106,14 @@ describe('SpotifyPolling Service', () => {
     mockPlayer.getAvailableDevices.mockResolvedValue({ devices: [] })
 
     broadcastedStates = []
-    broadcastMock = jest.fn((message) => {
-      if (message.type === 'SPOTIFY_UPDATE') {
-        broadcastedStates.push(message.payload)
-      }
+    ;(broadcast as jest.Mock).mockImplementation((message: ServerMessage) => {
+        if (message.type === 'SPOTIFY_UPDATE') {
+            broadcastedStates.push(message.payload)
+        }
     })
 
     // Initialize the service and await its creation, which includes SDK setup
-    spotifyService = await SpotifyPolling.create(broadcastMock)
+    spotifyService = await SpotifyPolling.create()
     // Stop polling after service creation to avoid side effects in tests
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -268,7 +273,7 @@ describe('SpotifyPolling Service', () => {
 
       await spotifyService.refreshDevices()
 
-      expect(broadcastMock).toHaveBeenCalledWith({
+      expect(broadcast).toHaveBeenCalledWith({
         type: 'SPOTIFY_UPDATE',
         payload: expect.objectContaining({
           devices: mockDevices,
@@ -327,7 +332,7 @@ describe('SpotifyPolling Service', () => {
         getSdkAccessToken: jest.fn().mockReturnValue(null),
       }))
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create()
       await newService.handleCommand('PLAY', {})
       // Should not make API call without token
       expect(mockPlayer.startResumePlayback).not.toHaveBeenCalled()
@@ -463,7 +468,7 @@ describe('SpotifyPolling Service', () => {
         sdk: null, // Ensure SDK is null
       })
 
-      const newService = await SpotifyPolling.create(broadcastMock)
+      const newService = await SpotifyPolling.create()
       await newService.handleCommand('SET_VOLUME', { volume: 50 })
       expect(mockPlayer.setPlaybackVolume).not.toHaveBeenCalled()
 

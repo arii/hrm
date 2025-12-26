@@ -9,15 +9,13 @@ export interface AppServices {
   isSpotifyInitialized: boolean
 }
 
-export async function createServices(
-  broadcast: (data: Partial<ServerMessage>) => void
-): Promise<AppServices> {
-  const tabataService = new TabataTimer(broadcast)
+export async function createServices(): Promise<AppServices> {
+  const tabataService = new TabataTimer()
   let spotifyService: SpotifyService
   let isSpotifyInitialized = true
 
   try {
-    spotifyService = await SpotifyPolling.create(broadcast)
+    spotifyService = await SpotifyPolling.create()
   } catch (e) {
     console.error('SpotifyPolling initialization failed:', e)
     isSpotifyInitialized = false

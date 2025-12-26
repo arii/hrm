@@ -9,6 +9,56 @@
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
+import { redisClient } from '../lib/redis.js'
+
+const BROADCAST_CHANNEL = 'websocket-broadcast';
+const redisSubscriber = redisClient.duplicate();
+
+/**
+ * Initializes the Redis-backed broadcaster for a given WebSocket server instance.
+ * Each server instance will subscribe to the Redis channel and broadcast messages
+ * to its own set of connected clients.
+ *
+ * @param wss The WebSocketServer instance for this server node.
+ */
+export const initBroadcaster = (wss: WebSocketServer): void => {
+  redisSubscriber.subscribe(BROADCAST_CHANNEL, (err) => {
+    if (err) {
+      logger.error({ err }, 'Failed to subscribe to Redis broadcast channel');
+      process.exit(1);
+    } else {
+      logger.info({ channel: BROADCAST_CHANNEL }, 'Subscribed to Redis broadcast channel');
+    }
+  });
+
+  redisSubscriber.on('message', (channel, message) => {
+    if (channel === BROADCAST_CHANNEL) {
+      try {
+        // This is the "local" broadcast to clients connected to this specific instance.
+        wss.clients.forEach((client) => {
+          const extClient = client as ExtWebSocket;
+          if (extClient.readyState === WebSocket.OPEN) {
+            try {
+              extClient.send(message); // message is already a string
+            } catch (error) {
+              logger.error(
+                {
+                  clientId: extClient.clientId,
+                  error,
+                  origin: 'redis-broadcast-listener',
+                },
+                'Failed to broadcast WebSocket message to a client from Redis.'
+              );
+            }
+          }
+        });
+      } catch (error) {
+        logger.error({ error, message }, 'Failed to parse or broadcast message from Redis');
+      }
+    }
+  });
+};
+
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
@@ -46,36 +96,22 @@ export const sendWebSocketMessage = (
 }
 
 /**
- * Broadcasts a typed WebSocket message to all connected and open clients.
- * This is the preferred method for server-wide state updates.
+ * Broadcasts a typed WebSocket message to all connected clients across all server instances
+ * by publishing it to a Redis channel.
  *
- * @param wss The WebSocketServer instance.
  * @param message The `ServerMessage` object to broadcast.
  * @param origin Optional identifier of the calling service for contextual logging.
  */
 export const broadcast = (
-  wss: WebSocketServer,
   message: ServerMessage,
   origin?: string
 ): void => {
-  const messageString = JSON.stringify(message)
-  wss.clients.forEach((client) => {
-    const extClient = client as ExtWebSocket
-    if (extClient.readyState === WebSocket.OPEN) {
-      try {
-        extClient.send(messageString)
+    try {
+        const messageString = JSON.stringify(message);
+        redisClient.publish(BROADCAST_CHANNEL, messageString);
       } catch (error) {
-        logger.error(
-          {
-            clientId: extClient.clientId,
-            error,
-            origin,
-          },
-          'Failed to broadcast WebSocket message to a client.'
-        )
+        logger.error({ error, origin }, 'Failed to publish message to Redis');
       }
-    }
-  })
 }
 
 /**
