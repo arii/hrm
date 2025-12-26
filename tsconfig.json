@@ -7,8 +7,8 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -28,13 +28,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true
-  },
-  "ts-node": {
-    "esm": true,
-    "compilerOptions": {
-      "module": "NodeNext",
-      "moduleResolution": "NodeNext"
-    }
   },
   "include": [
     "next-env.d.ts",
