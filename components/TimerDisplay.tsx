@@ -74,6 +74,11 @@ const TimerDisplay = () => {
     phaseLabel = 'READY'
   }
 
+  // Extracted logic for clarity, per code review
+  const isTimerActive = currentPhase !== 'IDLE'
+  const showPhaseLabel = isTimerActive && currentPhase !== 'RUNNING'
+  const modeLabel = mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'
+
   return (
     <Card
       elevation={6}
@@ -134,17 +139,18 @@ const TimerDisplay = () => {
 
       {/* Left Column: Mode Indicator */}
       <Box
-        sx={{
+        sx={(theme) => ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           flexShrink: 0, // Prevent this column from shrinking
-          width: { xs: 30, sm: 40 }, // Fixed width for spacing
-        }}
+          width: { xs: theme.spacing(4), sm: theme.spacing(5) }, // Use theme spacing
+        })}
       >
-        {currentPhase !== 'IDLE' && (
+        {isTimerActive && (
           <Typography
             variant="body2"
+            aria-label={`Timer mode is ${modeLabel}`}
             sx={{
               color: '#fff',
               fontWeight: 700,
@@ -158,7 +164,7 @@ const TimerDisplay = () => {
               transform: 'rotate(-90deg)',
             }}
           >
-            {mode === 'STOPWATCH' ? 'STOPWATCH' : 'TABATA'}
+            {modeLabel}
           </Typography>
         )}
       </Box>
@@ -177,7 +183,7 @@ const TimerDisplay = () => {
         }}
       >
         {/* Phase Label - only show for Tabata phases, not RUNNING */}
-        {currentPhase !== 'IDLE' && currentPhase !== 'RUNNING' && (
+        {showPhaseLabel && (
           <Typography
             data-testid="timer-phase"
             variant="h6"
@@ -245,17 +251,18 @@ const TimerDisplay = () => {
 
       {/* Right Column: Tabata Durations */}
       <Box
-        sx={{
+        sx={(theme) => ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           flexShrink: 0, // Prevent this column from shrinking
-          width: { xs: 30, sm: 40 }, // Fixed width for spacing
-        }}
+          width: { xs: theme.spacing(4), sm: theme.spacing(5) }, // Use theme spacing
+        })}
       >
         {mode === 'TABATA' && (
           <Typography
             variant="body2"
+            aria-label={`Work duration ${workDuration} seconds, Rest duration ${restDuration} seconds`}
             sx={{
               color: '#fff',
               fontWeight: 700,
