@@ -98,7 +98,7 @@ export type SpotifyService = StateProvider<SpotifyData> &
     {
       deviceId?: string
       volume?: number
-      playlistUri?: string
+      contextUri?: string
     }
   > &
   Lifecycle &

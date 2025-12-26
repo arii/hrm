@@ -127,8 +127,8 @@ export interface SpotifyCommandMessage {
   command: SpotifyCommand
   deviceId?: string
   volume?: number
-  playlistUri?: string // Added to support your incoming message
-  contextUri?: string // Generic support for albums/artists
+  playlistUri?: string
+  contextUri?: string
 }
 
 export interface GetStateMessage {
