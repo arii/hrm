@@ -3,40 +3,7 @@
 > [!NOTE]
 > For a comprehensive guide to our coding standards, PR processes, and architectural patterns, please see the new **[Development Standards](./DEVELOPMENT_STANDARDS.md)** document. This file now serves as a high-level overview of ongoing work.
 
-## Setup Instructions
-
-For a fully automated setup, please refer to the "One-Click Start with DevContainer" instructions in the main [README.md](./README.md).
-
-For manual setup, the project includes a script to ensure a consistent environment:
-
-```bash
-./scripts/setup.sh
-```
-
-This script will:
-1.  Create a `.env.local` file from the example if one doesn't exist.
-2.  Install all dependencies using `pnpm`.
-
-> **⚠️ Important**: This project uses `pnpm` as its package manager. **Do not use `npm install`**, as this will create a `package-lock.json` file, causing conflicts with the official `pnpm-lock.yaml`. The pre-commit hooks will block any commits that include this file.
-
-## Quality Assurance Tooling
-
-To maintain code quality and consistency, this project uses a combination of automated tooling.
-
-### Automated Linting and Formatting with Husky
-
-This project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/okonet/lint-staged) to automate code quality checks before each commit. When you run `git commit`, the following actions are automatically performed on the files you've staged:
-
-1.  **Prettier**: Your code is automatically formatted to ensure a consistent style across the entire codebase.
-2.  **ESLint**: The linter runs to catch potential bugs, enforce best practices, and fix any auto-fixable issues.
-
-If ESLint finds errors it cannot fix automatically, the commit will be aborted. You must fix the reported errors before you can successfully commit your changes.
-
-This automated process ensures that code merged into the `leader` branch always adheres to our quality standards without requiring manual checks. You can run these checks for the entire project at any time with `pnpm run lint` and `pnpm run format`.
-
-### Legacy Pre-commit Hooks
-
-The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.yaml`). These are now considered **deprecated** in favor of the Husky-based Node.js tooling. The Python hooks will be removed in a future pull request to eliminate redundancy.
+This file contains notes and action items related to the ongoing development of the HRM application.
 
 ## Current Focus
 
@@ -65,10 +32,6 @@ Before submitting a pull request, you can run Knip locally to identify any issue
 pnpm run knip
 ```
 
-If Knip reports unused dependencies, files, or exports, please take one of the following actions:
-- **Remove the code**: If the reported item is genuinely unused, remove it from the codebase.
-- **Update the configuration**: If the item is incorrectly reported (e.g., it's used indirectly), update the `knip.ts` configuration file to ignore it. Add a comment explaining why the ignore rule is necessary.
-
 ### Configuration
 
 Knip is configured in the `knip.ts` file in the root of the project. This file defines the entry points for the application, as well as any files or dependencies that should be ignored.
@@ -94,6 +57,9 @@ When a change requires adding, updating, or removing an external package from `n
 When creating new internal modules or utilities (e.g., a new file in `lib/` or `utils/`) that **only** use built-in Node.js APIs or dependencies already listed in `package.json`, changes to `package.json` or `pnpm-lock.yaml` are **not** required.
 
 - **No Lockfile Changes**: The PR should not include modifications to `package.json` or `pnpm-lock.yaml`.
+- **Running Local Checks**: The CI pipeline runs several checks to maintain code quality. We encourage running these locally before pushing your changes:
+  - **Linting**: Run `pnpm run lint` to catch common code quality issues.
+  - **Dependency Check**: The pipeline uses `knip` to identify unused dependencies. You can see the configuration in the [`knip.ts`](./knip.ts) file. Adding new internal modules should not introduce unused dependency warnings.
 
 **Example Scenario**: Creating a new file `lib/stringUtils.ts` with helper functions that use built-in JavaScript methods. This does not require any changes to `package.json`.
 

@@ -128,13 +128,13 @@ pnpm --version
 pnpm install --frozen-lockfile
 ```
 
-This will install all the Node.js packages required by the project and also set up pre-commit hooks using Husky to automatically lint and format your code when you commit.
+This will install all the Node.js packages required by the project, including Next.js, Material-UI, and other dependencies.
 
 **4. Install Playwright Browser Dependencies**
 
 ```bash
 # Install Playwright browsers for testing
-pnpm exec playwright install --with-deps
+npx playwright install --with-deps
 ```
 
 **5. Set Up Environment Variables**
@@ -202,7 +202,7 @@ If you encounter issues during setup:
 
 - **Port 3000 already in use**: Kill any process using port 3000, or use `pnpm run pm2:stop` if PM2 is running
 - **Module not found errors**: Ensure all dependencies are installed with `pnpm install --frozen-lockfile`
-- **Playwright errors**: Run `pnpm exec playwright install --with-deps` again
+- **Playwright errors**: Run `npx playwright install --with-deps` again
 - **Environment variable issues**: Double-check that `.env.local` exists and contains valid values
 
 For more detailed troubleshooting, see the [Troubleshooting](#troubleshooting) section below.
@@ -222,7 +222,7 @@ npm install -g pnpm
 pnpm install --frozen-lockfile
 
 # 5. Install Playwright's browser dependencies
-pnpm exec playwright install --with-deps
+npx playwright install --with-deps
 
 # 6. Start the development server
 pnpm run dev
@@ -278,7 +278,6 @@ This project follows a standard Next.js application structure with a few key add
 pnpm run dev                 # Start dev server (Next.js + WebSocket + services)
 pnpm run build               # Build for production
 pnpm run start               # Start production server with PM2
-pnpm run prepare             # Install git hooks with Husky
 pnpm run lint                # Run ESLint
 pnpm run lint:fix            # Auto-fix lint issues
 pnpm run format              # Format codebase with Prettier
@@ -307,7 +306,7 @@ The app includes URL redirects for easier navigation:
 - `/connect` → `/client/connect` (Stream HR)
 - `/mock` → `/client/mock` (Mock HRM)
 
-### Testing \& Verification
+### Testing & Verification
 
 - **Baseline visual regression:** `pnpm run test:core`
 - **Snapshot updates (intentional UI changes):** `pnpm run test:visual:update`
@@ -443,7 +442,7 @@ graph TD
 1. **Run the custom server**: Always use `pnpm run dev` for development to ensure all background services are running.
 2. **State Management**: All global state is owned by the server. Client-side state should be ephemeral.
 3. **UI Components**: Use Material-UI (MUI) for all components.
-4. **Code Quality**: Git hooks (Husky) automatically enforce linting and formatting on commit. Use `pnpm run lint` only for full-project checks.
+4. **Code Quality**: Run `pnpm run lint` before committing changes.
 5. **Visual Testing**:
    - Run `pnpm run test:core` before committing UI changes.
    - Use `pnpm run test:visual:update` only after verifying differences locally.
@@ -530,22 +529,17 @@ MIT
 #### Prerequisites
 
 - Node.js & pnpm
-- PM2 (`pnpm add -g pm2`)
+- PM2 (`npm install -g pm2`)
 - Nginx
 - A domain name with DDNS
 - An SSL certificate (Let's Encrypt is recommended)
 
 #### Deployment Steps
 
-1.  **Run Deployment Script**: Ensure `.env.production` exists. Then, on the production host, run the automated deployment script:
-    ```bash
-    ./deploy.sh
-    ```
-    This script automatically syncs the `leader` branch, installs dependencies, builds the project, and reloads the application using PM2.
-2.  **Initial Server Setup**: For the first deployment, you will need to:
-    - Configure Nginx as a reverse proxy (see configuration below).
-    - Set up SSL certificates (e.g., with Let's Encrypt).
-    - Configure PM2 to start on system boot with `pm2 startup`.
+1.  **Build and Start**: Ensure `.env.production` exists, then run `pnpm run start`. The script verifies build artifacts and kicks off `pnpm run build` automatically when needed.
+2.  **Nginx Configuration**: Ensure Nginx is configured to proxy requests to port 3000 with WebSocket support.
+3.  **SSL Configuration**: Ensure SSL certificates are configured and renewed as needed.
+4.  **PM2 Startup**: Configure PM2 to start on boot with `pm2 startup`.
 
 #### Nginx Reverse Proxy Configuration
 
@@ -643,15 +637,24 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` Maintenance (e.g., `chore: update .gitignore`)
 - `docs:` Documentation updates
 
-### 🚀 Production Deployment
+### 🚀 Production Deployment Checklist
 
-Deployment is automated via a script that syncs the `leader` branch and reloads the application.
+**Do not run `deploy.sh` manually from a dirty tree.**
 
-1.  **Commit Changes**: Ensure all your changes are committed and pushed.
-2.  **Run Deploy Script**: On the production host, run the deployment script:
+1.  **Clean & Verify**:
+    ```bash
+    pnpm run clean
+    pnpm install
+    pnpm run lint
+    pnpm run build:server
+    ```
+2.  **Pass Core Tests**:
+    The core suite must pass against the fresh build.
+    ```bash
+    pnpm run test:core
+    ```
+3.  **Deploy**:
+    Commit your changes, then run the deployment script on the host.
     ```bash
     ./deploy.sh
     ```
-This script will handle pulling the latest changes from the `leader` branch, installing dependencies, and gracefully reloading the PM2 process.
-
-See the [Nginx Reverse Proxy Configuration](#nginx-reverse-proxy-configuration) section below for the required Nginx setup.

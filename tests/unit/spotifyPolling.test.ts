@@ -175,6 +175,10 @@ describe('SpotifyPolling Service', () => {
       const contextUri = 'spotify:playlist:123'
       await spotifyService.handleCommand('PLAY', { contextUri })
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
+      expect(mockPlayer.startResumePlayback).toHaveBeenCalledWith(
+        undefined,
+        contextUri
+      )
     })
   })
 

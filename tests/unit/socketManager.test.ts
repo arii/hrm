@@ -332,7 +332,7 @@ describe('WebSocket Manager', () => {
         {
           deviceId: undefined,
           volume: undefined,
-          contextUri: undefined,
+          playlistUri: undefined,
         }
       )
     })

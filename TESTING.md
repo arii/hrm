@@ -8,11 +8,11 @@ These are the most frequently used commands for testing and code quality checks.
 
 | Command                      | Description                                                                                                  |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `pnpm run test:visual`        | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes. |
-| `pnpm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                    |
-| `pnpm run test:unit`          | Executes the Jest unit test suite for testing individual components and business logic.                      |
-| `pnpm run lint`               | Runs ESLint to check for code quality and style issues.                                                      |
-| `pnpm run format`             | Formats the entire codebase using Prettier to ensure consistent styling.                                     |
+| `npm run test:visual`        | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes. |
+| `npm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                    |
+| `npm run test:unit`          | Executes the Jest unit test suite for testing individual components and business logic.                      |
+| `npm run lint`               | Runs ESLint to check for code quality and style issues.                                                      |
+| `npm run format`             | Formats the entire codebase using Prettier to ensure consistent styling.                                     |
 
 ---
 
@@ -20,29 +20,29 @@ These are the most frequently used commands for testing and code quality checks.
 
 ### Visual & E2E Testing
 
-- **`pnpm run test:visual`**: Runs the main visual regression test suite.
-- **`pnpm run test:visual:headed`**: Runs the visual tests with a visible browser for debugging.
-- **`pnpm run test:visual:update`**: Updates the visual test snapshots.
-- **`pnpm run test:comprehensive`**: Runs a longer, more detailed E2E test suite covering full user journeys.
-- **`pnpm run test:visual:report`**: Opens a detailed web report of the last Playwright test run.
+- **`npm run test:visual`**: Runs the main visual regression test suite.
+- **`npm run test:visual:headed`**: Runs the visual tests with a visible browser for debugging.
+- **`npm run test:visual:update`**: Updates the visual test snapshots.
+- **`npm run test:comprehensive`**: Runs a longer, more detailed E2E test suite covering full user journeys.
+- **`npm run test:visual:report`**: Opens a detailed web report of the last Playwright test run.
 
 ### Unit Testing
 
-- **`pnpm run test:unit`**: Runs all Jest unit tests.
-- **`pnpm run test:unit:coverage`**: Runs unit tests and generates a code coverage report.
+- **`npm run test:unit`**: Runs all Jest unit tests.
+- **`npm run test:unit:coverage`**: Runs unit tests and generates a code coverage report.
 
 ### Server & Process Management
 
-- **`pnpm run test:clean`**: Shuts down any running server instances, starts a fresh server, and runs the visual tests.
-- **`pnpm run kill-all`**: A utility script to find and kill all running Node.js processes related to the application, useful for clearing a stuck server.
-- **`pnpm run pm2:logs`**: Displays the logs from the PM2 process manager when the application is running in production mode.
+- **`npm run test:clean`**: Shuts down any running server instances, starts a fresh server, and runs the visual tests.
+- **`npm run kill-all`**: A utility script to find and kill all running Node.js processes related to the application, useful for clearing a stuck server.
+- **`npm run pm2:logs`**: Displays the logs from the PM2 process manager when the application is running in production mode.
 
 ### Code Quality
 
-- **`pnpm run lint`**: Lints the codebase.
-- **`pnpm run lint:fix`**: Automatically fixes fixable linting errors.
-- **`pnpm run format`**: Formats all code with Prettier.
-- **`pnpm run format:check`**: Checks for formatting issues without modifying files.
+- **`npm run lint`**: Lints the codebase.
+- **`npm run lint:fix`**: Automatically fixes fixable linting errors.
+- **`npm run format`**: Formats all code with Prettier.
+- **`npm run format:check`**: Checks for formatting issues without modifying files.
 
 ---
 
@@ -67,10 +67,6 @@ The project uses a combination of Jest for unit tests and Playwright for end-to-
   - `comprehensive-assessment.spec.ts`: Tests longer, more complex user journeys.
   - `mobile-assessment.spec.ts`: Contains tests specifically for mobile viewports.
 - **Snapshots**: Visual snapshots are stored in a `*-snapshots` directory alongside the test file.
-
-## CI/CD Integration
-
-In our GitHub Actions workflows, we use `pnpm install --frozen-lockfile` to ensure that the exact versions of dependencies specified in `pnpm-lock.yaml` are installed. This guarantees a consistent and reproducible build environment for all test runs.
 
 ---
 
