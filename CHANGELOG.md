@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.0](https://github.com/arii/hrm/compare/v0.17.0...v0.18.0) (2025-12-26)
+
+
+### Features
+
+* **audio:** Implement persistent volume controls ([#2202](https://github.com/arii/hrm/issues/2202)) ([a2ac8d9](https://github.com/arii/hrm/commit/a2ac8d945d3a75105c2e56db9667d73875f90c3e))
+* Centralize and Validate Environment Variables with Zod ([#2192](https://github.com/arii/hrm/issues/2192)) ([96063b6](https://github.com/arii/hrm/commit/96063b63aa9c9cb7693961e388153b30621344ac))
+* Finalize `withValidation` Middleware (Headers, Errors, Docs & Tests) ([7fa5641](https://github.com/arii/hrm/commit/7fa5641c3b1049171a98b70c53cd138824fdabac))
+
 ## [0.17.0](https://github.com/arii/hrm/compare/v0.16.0...v0.17.0) (2025-12-26)
 
 
