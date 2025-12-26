@@ -1,4 +1,13 @@
+@font-face {
+  font-family: 'Digital-7 Mono';
+  src: url('/assets/digital-7-mono.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  --font-digital-7-mono: 'Digital-7 Mono', monospace;
   --background: #ffffff;
   --foreground: #171717;
 }
