@@ -30,7 +30,7 @@ jest.mock('@/context/WebSocketContext', () => ({
   // The context object is exported
   WebSocketContext: WebSocketContext,
   // The provider is a simple component that renders its children
-  WebSocketProvider: ({ children }) => (
+  WebSocketProvider: ({ children }: { children: React.ReactNode }) => (
     <WebSocketContext.Provider value={mockContextValue}>
       {children}
     </WebSocketContext.Provider>

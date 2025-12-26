@@ -92,6 +92,10 @@ test.describe('Visual Regression Tests', () => {
           timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
         })
       }
+      const resetButton = controlPage.getByRole('button', { name: /RESET/i });
+      if (await resetButton.isVisible()) {
+          await resetButton.click();
+      }
     } catch (error) {
       // Timer not running or failed to stop, log and continue
       console.warn('Timer check/stop encountered an issue (ignoring):', error)

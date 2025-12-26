@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { execSync, spawn } from 'child_process'
 import net from 'net'
+import fs from 'fs'
+import path from 'path'
 import { WAIT_TIMEOUTS } from './lib/waits'
 
 /**
@@ -63,6 +65,10 @@ test.describe('Infrastructure & Scripts', () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
+    const lockfilePath = path.join(process.cwd(), '.next', 'dev', 'lock')
+    if (fs.existsSync(lockfilePath)) {
+      fs.unlinkSync(lockfilePath)
+    }
     const devServer = spawn('pnpm', ['run', 'dev'], {
       detached: true, // Use detached to create a process group
       stdio: 'pipe',
