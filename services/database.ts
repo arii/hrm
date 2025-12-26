@@ -2,7 +2,7 @@
 import Database from 'better-sqlite3'
 import path from 'path'
 import fs from 'fs'
-import logger from '../utils/logger.js'
+import logger from '../utils/logger'
 
 const DB_DIR = path.join(process.cwd(), 'logs')
 const DB_PATH = path.join(DB_DIR, 'hrm-data.db')
