@@ -35,6 +35,15 @@ export default defineConfig({
   testMatch: ['**/*.spec.ts'],
   testIgnore: testIgnoreList,
 
+  // Start dev server automatically for local development
+  webServer: {
+    command: 'cross-env TESTING=true NEXTAUTH_SECRET=a-super-secret-for-testing pnpm run dev',
+    url: 'http://127.0.0.1:3000',
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    timeout: 120 * 1000, // Allow time for Next.js to compile
+  },
+
   // Performance Optimizations
   fullyParallel: false,
   workers: 1, // process.env.CI ? 2 : undefined, // Use available CPU cores locally, 2 on CI
