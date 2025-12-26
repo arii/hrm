@@ -22,6 +22,11 @@ test.describe('Frontend Performance', () => {
     // Navigate to the mock client page to simulate HRM data
     await page.goto('/client/mock')
 
+    // Wait for WebSocket to connect
+    await expect(page.locator('text=Server Status: Connected')).toBeVisible({
+      timeout: 15000,
+    })
+
     // Start the mock HRM data stream
     await page.getByRole('button', { name: 'START Continuous Stream' }).click()
 
