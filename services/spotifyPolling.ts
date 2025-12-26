@@ -18,6 +18,7 @@ import {
 } from './spotifyApiErrorHandling.js'
 import { SpotifyCommand, SpotifyService } from '../types/interfaces.js'
 import { SafeSpotifyApi, createSafeSpotifyApi } from './safeSpotifyApi.js'
+import { env } from '../lib/env.js'
 
 // We use SDK types now, but keep internal state types as needed.
 // Removed manual SpotifyCurrentlyPlayingResponse, SpotifyDevice, etc.
@@ -67,8 +68,8 @@ export class SpotifyPolling implements SpotifyService {
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
-      process.env.SPOTIFY_CLIENT_ID || '',
-      process.env.SPOTIFY_CLIENT_SECRET || ''
+      env.SPOTIFY_CLIENT_ID,
+      env.SPOTIFY_CLIENT_SECRET
     )
   }
 
@@ -104,7 +105,7 @@ export class SpotifyPolling implements SpotifyService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
     const sdk = SpotifyApi.withAccessToken(
-      process.env.SPOTIFY_CLIENT_ID || '',
+      env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
     )
     // Wrap the SDK with our safe API to handle optional deviceIds correctly.
@@ -164,19 +165,14 @@ export class SpotifyPolling implements SpotifyService {
     if (this.pollInterval) return // Already running
 
     // Interval for currently playing track
-    const trackIntervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
-      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
-      : 3000
+    const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
       trackIntervalMs
     )
 
     // Interval for available devices (less frequent)
-    const deviceIntervalMs = parseInt(
-      process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000',
-      10
-    )
+    const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
       deviceIntervalMs
