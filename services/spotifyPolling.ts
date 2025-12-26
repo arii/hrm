@@ -48,7 +48,7 @@ export class SpotifyPolling implements SpotifyService {
   private lastTrackId: string | null = null
   private lastPlaybackState: boolean | null = null
 
-  private state: SpotifyData = {
+  private readonly state: SpotifyData = {
     trackId: null,
     trackName: 'Awaiting Login...',
     artist: '',
@@ -207,6 +207,10 @@ export class SpotifyPolling implements SpotifyService {
       this.tokenRefreshInterval = null
       logger.debug('Token refresh interval cleared.')
     }
+  }
+
+  public dispose() {
+    this.cleanup()
   }
 
   private getCurrentlyPlaying = async () => {

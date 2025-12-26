@@ -11,10 +11,10 @@ import { TimerQueries } from './timerQueries.js'
 import {
   START_COUNTDOWN_DURATION,
   TIMER_INTERVAL_MS,
-} from '../../constants/server'
+} from '../../constants/index'
 
 export class TimerCommands {
-  private state: DualModeTimerState
+  private readonly state: DualModeTimerState
   private broadcastUpdate: (message: ServerMessage) => void
   private queries: TimerQueries
 

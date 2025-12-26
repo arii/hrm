@@ -6,7 +6,11 @@ import { TimerMode, TimerPhase } from '../../types/core'
 import {
   DEFAULT_WORK_DURATION,
   DEFAULT_REST_DURATION,
-} from '../../constants/server'
+} from '../../constants/index'
+
+// --- Constants ---
+export const START_COUNTDOWN_DURATION = 5 // seconds
+
 /**
  * Encapsulates the complete state of the timer, including both publicly
  * exposed properties and internal tracking variables.

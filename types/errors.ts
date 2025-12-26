@@ -9,9 +9,8 @@
  */
 export class ServiceInitializationError extends Error {
   constructor(serviceName: string, originalError?: unknown) {
-    super(`Failed to initialize ${serviceName}`);
+    super(`Failed to initialize ${serviceName}`, { cause: originalError });
     this.name = 'ServiceInitializationError';
-    this.cause = originalError;
   }
 }
 
@@ -20,8 +19,7 @@ export class ServiceInitializationError extends Error {
  */
 export class ValidationError extends Error {
   constructor(message: string, originalError?: unknown) {
-    super(message);
+    super(message, { cause: originalError });
     this.name = 'ValidationError';
-    this.cause = originalError;
   }
 }

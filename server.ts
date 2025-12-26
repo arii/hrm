@@ -30,7 +30,7 @@ import {
   PROD_HOST,
   DEV_HOST,
   CACHE_MAX_AGE,
-} from './constants/server.js'
+} from './constants/index.js'
 import { ServiceInitializationError } from './types/errors.js'
 
 const port: number = process.env.PORT ? +process.env.PORT : DEFAULT_PORT // Explicitly handle undefined and convert to number
