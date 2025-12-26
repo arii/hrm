@@ -103,7 +103,7 @@ app.prepare().then(async () => {
     })
 
     // Apply the rate limiters to specific routes
-    expressApp..use('/api/spotify/', spotifyApiLimiter)
+    expressApp.use('/api/spotify/', spotifyApiLimiter)
     expressApp.use('/api/internal/', internalApiLimiter)
     expressApp.use('/api/', generalApiLimiter)
   }

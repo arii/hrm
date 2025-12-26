@@ -5,7 +5,17 @@ import { initDb } from '@/lib/db.js'
 import { WorkoutSession } from '@/types/workout.js'
 import db from '@/lib/db.js'
 
-let hrmDataService: any
+let hrmDataService: {
+  saveWorkoutSession: (
+    session: WorkoutSession & { userId: string }
+  ) => Promise<void>
+  getSessionDetails: (
+    id: string,
+    userId: string
+  ) => Promise<WorkoutSession | null>
+  getSessionHistory: (userId: string) => Promise<WorkoutSession[]>
+  cleanupOldSessions: () => void
+}
 
 beforeAll(async () => {
   // Initialize the in-memory database for tests before importing the service
