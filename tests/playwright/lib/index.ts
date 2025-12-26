@@ -57,6 +57,7 @@ export {
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
+  getSpotifyMasks,
   // Snapshot assertions
   assertPageSnapshot,
   assertElementSnapshot,
