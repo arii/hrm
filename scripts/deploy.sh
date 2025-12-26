@@ -20,25 +20,36 @@ if [ ! -f ".env.production" ]; then
     exit 1
 fi
 
-# 2. Git Sync (Leader Branch)
+# 2. Git Repository Check
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    echo "❌ Error: This is not a Git repository. Deployment aborted."
+    exit 1
+fi
+
+# 3. Git Sync (Leader Branch)
 echo "🔄 Syncing with origin/$BRANCH..."
 git fetch origin
 git reset --hard origin/$BRANCH
 
-# 3. Install Dependencies & Build
+# 4. Install Dependencies & Build
 echo "📦 Installing dependencies and building application..."
-# We need to temporarily install dev deps to build (TS, Next CLI),
-# OR ensure your build machine has them.
-# STRATEGY: It is often safer to install ALL deps, build, then prune.
+# STRATEGY: Install all dependencies (including dev) to ensure build tools are available.
+# After a successful build, prune dev dependencies to keep the runtime environment light.
 pnpm install --frozen-lockfile # Install all for build tools
 pnpm run build
 pnpm prune --prod # Remove dev deps to keep runtime light
 
-# 4. Nginx Validation
+# 5. Nginx Validation
 if command -v nginx &> /dev/null; then
     echo "🔍 nginx found, testing config..."
     if sudo -n true 2>/dev/null; then
-        sudo nginx -t
+        # Capture output and check exit code
+        if ! NGINX_OUTPUT=$(sudo nginx -t 2>&1); then
+            echo "❌ Error: nginx configuration test failed!"
+            echo "$NGINX_OUTPUT"
+            exit 1
+        fi
+        echo "✅ Nginx configuration is valid."
     fi
 fi
 
