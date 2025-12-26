@@ -1,22 +1,44 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from 'eslint-plugin-storybook'
-
 import js from '@eslint/js'
 import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
-import react from 'eslint-plugin-react'
+import react from 'eslint-plugin-react' // Explicitly import the React plugin
 
 export default defineConfig([
-  // Apply recommended ESLint JavaScript rules
-  js.configs.recommended,
+  // 1. GLOBAL IGNORES
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/out/**',
+      '**/build/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/test-results/**',
+      '**/playwright-report/**',
+      '**/test-recordings/**',
+      '**/logs/**',
+      '**/*.min.js',
+      '**/*.d.ts',
+      'next-env.d.ts',
+      'server.js',
+      'ecosystem.config.cjs',
+      '**/.config/chrome-debug-profile/**',
+      '.github/copilot-instructions.md',
+      'tests/unit/jest.setup.js',
+    ],
+  },
 
-  // Apply recommended TypeScript ESLint rules
+  // 2. Base Configurations
+  js.configs.recommended,
   ...tseslint.configs.recommended,
 
-  // Apply recommended React rules, including the new JSX runtime
+  // 3. Next.js Configuration (includes React/React Hooks rules)
+  ...nextPlugin,
+
+  // 4. Explicit React Configuration for Clarity
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
@@ -24,24 +46,14 @@ export default defineConfig([
     },
     rules: {
       ...react.configs.recommended.rules,
-      'react/react-in-jsx-scope': 'off',
+      'react/react-in-jsx-scope': 'off', // Not needed with Next.js App Router
+      'react/prop-types': 'off', // Not needed for TypeScript projects
     },
   },
 
-  // Configure JavaScript unused vars to work with TypeScript
+  // 5. Custom Rules: General Variables & Formatting
   {
     rules: {
-      'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors with TypeScript
-    },
-  },
-
-  // Next.js specific rules and configurations (includes TypeScript support)
-  ...nextPlugin, // Extends the core-web-vitals configuration from eslint-config-next
-
-  // Apply TypeScript rules without redefining the plugin
-  {
-    rules: {
-      // Explicitly ignore unused variables starting with '_'
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -50,7 +62,7 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      // Configure trailing comma rules for consistent code formatting
+      // This rule is not purely stylistic and helps prevent VCS noise.
       '@typescript-eslint/comma-dangle': [
         'error',
         {
@@ -63,81 +75,40 @@ export default defineConfig([
       ],
     },
   },
-  {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      // You can override or add Next.js specific rules here
-      // For example:
-      // '@next/next/no-html-link-for-pages': 'off',
-    },
-  },
 
-  // Ignore files and directories
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-    'node_modules/',
-    'dist/**', // Exclude compiled output
-    'server.js', // Exclude server.js
-    '~/.config/chrome-debug-profile/**', // Exclude chrome debug profile files
-    '.github/copilot-instructions.md', // Exclude copilot instructions
-    'ecosystem.config.cjs', // Exclude PM2 config file
-    'tests/unit/jest.setup.js', // Exclude the Jest setup file from linting
-  ]),
-
-  // Configuration for TypeScript files
+  // 6. TypeScript Specific Settings
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.eslint.json', // Adjust if your tsconfig.json is elsewhere
+        project: './tsconfig.eslint.json',
         ecmaFeatures: {
           jsx: true,
         },
       },
-      globals: {
-        React: 'readonly',
-        NodeJS: 'readonly',
-      },
-    },
-    rules: {
-      // TypeScript specific rules
-      // For example, to prevent unused variables:
-      // '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
 
-  // Override for Playwright test files
+  // 7. Test Overrides
   {
     files: ['tests/playwright/**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         project: './tests/playwright/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
       },
     },
     rules: {
-      // Disable react-hooks/rules-of-hooks for Playwright fixtures (use() is not a React hook)
-      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/rules-of-hooks': 'off', // Playwright's use() fixture is not a hook
     },
   },
-
-  // Override for Jest unit test files
   {
     files: ['tests/unit/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         project: './tests/unit/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
       },
       globals: {
         describe: 'readonly',
@@ -146,24 +117,15 @@ export default defineConfig([
         beforeEach: 'readonly',
         afterEach: 'readonly',
         jest: 'readonly',
-        NodeJS: 'readonly',
       },
     },
-    rules: {
-      // Jest specific rules or overrides
-    },
   },
-
-  // Override for Jest integration test files
   {
     files: ['tests/integration/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         project: './tests/integration/tsconfig.json',
-        ecmaFeatures: {
-          jsx: true,
-        },
       },
       globals: {
         describe: 'readonly',
@@ -172,15 +134,11 @@ export default defineConfig([
         beforeAll: 'readonly',
         afterAll: 'readonly',
         jest: 'readonly',
-        NodeJS: 'readonly',
       },
-    },
-    rules: {
-      // Jest specific rules or overrides
     },
   },
 
-  // Override for services files to ignore unused 'fetch' import and other service-related imports/constants
+  // 8. Services Override (Specific Ignores)
   {
     files: ['services/**/*.ts'],
     rules: {
@@ -194,10 +152,11 @@ export default defineConfig([
       ],
     },
   },
-  // This turns off any ESLint style rules that conflict with Prettier.
-  prettierConfig,
 
-  // Add the Prettier plugin configuration
+  // 9. Prettier Config (Must be last to override conflicting rules)
+  // This disables ESLint's stylistic rules in favor of Prettier.
+  // Code formatting is enforced via a pre-commit hook using lint-staged.
+  prettierConfig,
   {
     plugins: {
       prettier: prettierPlugin,
@@ -206,8 +165,6 @@ export default defineConfig([
       'prettier/prettier': 'error',
     },
   },
-
-  // Restrict console statements in production
   {
     rules: {
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
