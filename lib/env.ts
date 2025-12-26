@@ -23,6 +23,13 @@ const envSchema = z.object({
     .string()
     .default('10000')
     .transform(Number),
+  // New variables for SQLite persistence
+  DATABASE_PATH: z.string().default('hrm-data.db'),
+  WORKOUT_DATA_RETENTION_DAYS: z.string().default('90').transform(Number),
+  WORKOUT_DATA_CLEANUP_INTERVAL_HOURS: z
+    .string()
+    .default('24')
+    .transform(Number),
 })
 
 export const env = envSchema.parse(process.env)

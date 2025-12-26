@@ -1,5 +1,5 @@
 import db from '@/lib/db'
-import { logger } from '@/utils/logger'
+import logger from '@/utils/logger'
 import { WorkoutSession } from '@/types/workout'
 import { StmtCache } from '@/lib/stmtCache'
 import { env } from '@/lib/env'
@@ -133,7 +133,9 @@ export const saveWorkoutSession = async (
 export const cleanupOldSessions = () => {
   try {
     const retentionDays = env.WORKOUT_DATA_RETENTION_DAYS
-    logger.info(`🗄️ Deleting workout sessions older than ${retentionDays} days...`)
+    logger.info(
+      `🗄️ Deleting workout sessions older than ${retentionDays} days...`
+    )
     const stmt = stmtCache.get('deleteOldSessions')
     const result = stmt.run({ retentionDays })
     if (result.changes > 0) {

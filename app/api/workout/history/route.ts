@@ -3,12 +3,8 @@
  * API Route: Fetches a user's workout session history.
  */
 import { NextResponse } from 'next/server'
-import {
-  withErrorHandler,
-  ApiHandler,
-} from '@/lib/middleware/errorHandler'
+import { withErrorHandler, ApiHandler } from '@/lib/middleware/errorHandler'
 import { getSessionHistory } from '@/services/hrmDataService'
-// import { getSession } from 'next-auth/react' // This is a client-side hook and cannot be used here.
 
 // A placeholder for getting the current user's ID
 // In a real app, this would come from an authentication session using a server-side method.

@@ -3,10 +3,7 @@
  * API Route: Fetches details for a single workout session.
  */
 import { NextResponse } from 'next/server'
-import {
-  withErrorHandler,
-  ApiHandler,
-} from '@/lib/middleware/errorHandler'
+import { withErrorHandler, ApiHandler } from '@/lib/middleware/errorHandler'
 import { getSessionDetails } from '@/services/hrmDataService'
 import { ApiError } from '@/lib/errors'
 
