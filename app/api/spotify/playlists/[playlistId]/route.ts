@@ -13,11 +13,8 @@ import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
  * @param args The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(
-  _req: Request,
-  ...args: { params: Promise<{ playlistId: string }> }[]
-) {
-  const paramsArg = args[0]
+async function getPlaylistDetails(_req: Request, ...args: unknown[]) {
+  const paramsArg = args[0] as { params: Promise<{ playlistId: string }> }
   if (!paramsArg || !paramsArg.params) {
     throw new ApiError(400, 'Invalid request arguments.')
   }
