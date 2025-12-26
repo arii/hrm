@@ -51,6 +51,7 @@ logs/*
 *.swp
 *.tmp
 diff.txt
+.husky/_/
 
 # Debugging Profiles (Chrome MCP)
 .config/chrome-debug-profile/

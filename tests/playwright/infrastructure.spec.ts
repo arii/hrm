@@ -108,7 +108,7 @@ test.describe('Infrastructure & Scripts', () => {
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 
-    const prodServer = spawn('./start-production.sh', [], {
+    const prodServer = spawn('./scripts/start-production.sh', [], {
       detached: true,
       stdio: 'pipe',
       env,
