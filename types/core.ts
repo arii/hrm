@@ -101,16 +101,18 @@ export type TimerPhase =
  * Represents the complete state of the application timer.
  */
 export interface TimerData {
-  isRunning: boolean
+  phase: TimerPhase
   currentPhase: TimerPhase
   timeRemaining: number
   timeElapsed: number
-  caloriesBurned: number
+  totalTime: number
   mode: TimerMode
   workDuration: number
   restDuration: number
-  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
+  isRunning: boolean
+  caloriesBurned: number
   soundEventId: number
+  soundToPlay?: 'WORK' | 'REST' | 'COUNTDOWN'
 }
 
 // =================================================================================================

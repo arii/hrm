@@ -37,14 +37,16 @@ interface WebSocketState {
 const INITIAL_STATE: WebSocketState = {
   hrmData: [],
   timerData: {
-    isRunning: false,
+    phase: 'IDLE',
     currentPhase: 'IDLE',
     timeRemaining: 0,
     timeElapsed: 0,
+    totalTime: 0,
     caloriesBurned: 0,
     mode: 'TABATA',
     workDuration: 30,
     restDuration: 10,
+    isRunning: false,
     soundEventId: 0,
   },
   spotifyData: {
@@ -337,7 +339,7 @@ export const WebSocketProvider = ({
           return
         }
 
-        const message = result.data
+        const message = result.data as ServerMessage
 
         // Heartbeat pong check
         if (message.type === 'PONG') {

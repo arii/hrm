@@ -26,8 +26,8 @@ const getOAuthToken = async (cb: (token: string) => void) => {
 }
 
 const initializePlayer = (initialVolume: number) => {
-  const SpotifyPlayer = (window.Spotify as any).Player
-  const spotifyPlayer = new SpotifyPlayer({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const spotifyPlayer = new (window.Spotify as any).Player({
     name: 'HRM Web Player',
     getOAuthToken,
     volume: initialVolume,
