@@ -3,7 +3,7 @@ import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import path from 'path'
-import { env } from './lib/env.js'
+import { env, validateProductionEnv } from './lib/env.js'
 import { createServices } from './lib/services.js'
 import { WebSocketManager } from './lib/websocket.js'
 import { initSocketManager } from './utils/socketManager.js'
@@ -13,6 +13,8 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import { Socket } from 'net'
+
+validateProductionEnv()
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
