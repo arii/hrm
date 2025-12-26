@@ -1,5 +1,5 @@
 // lib/env.ts
-import { z, ZodObject, ZodOptional, ZodString } from 'zod'
+import { z } from 'zod'
 
 // Define the base schema without partials
 const baseSchema = z.object({
@@ -21,7 +21,7 @@ const baseSchema = z.object({
 })
 
 // Create a new schema that is conditionally partial
-let schema: ZodObject<any> = baseSchema
+let schema = baseSchema
 
 if (process.env.NODE_ENV === 'test') {
   schema = baseSchema.partial()
