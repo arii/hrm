@@ -3,8 +3,8 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "./dist",
-    "module": "commonjs",
-    "moduleResolution": "bundler",
+    "module": "esnext",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "traceResolution": false
   },
