@@ -26,6 +26,7 @@ export const VRT_MASK_SELECTORS = {
   timerCountdown: '[data-testid="timer-countdown"]',
   /** Timer phase label (WORK/REST) */
   timerPhaseLabel: '[data-testid="timer-phase-label"]',
+  spotify: '[data-testid="spotify-display"]',
 } as const
 
 /**
@@ -67,6 +68,17 @@ export function getTimerMasks(page: Page): Locator[] {
   return [
     page.locator(VRT_MASK_SELECTORS.timerCountdown),
     page.locator(VRT_MASK_SELECTORS.timerPhaseLabel),
+  ]
+}
+/**
+ * Get an array of Playwright locators for masking timer content.
+ *
+ * @param page - The Playwright Page object
+ * @returns Array of locators for timer-related dynamic elements
+ */
+export function getSpotifyMasks(page: Page): Locator[] {
+  return [
+    page.locator(VRT_MASK_SELECTORS.spotify),
   ]
 }
 
