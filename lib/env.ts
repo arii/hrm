@@ -20,12 +20,9 @@ const baseSchema = z.object({
   TESTING: z.string().optional(),
 })
 
-// Create a new schema that is conditionally partial
-let schema = baseSchema
-
-if (process.env.NODE_ENV === 'test') {
-  schema = baseSchema.partial()
-}
+// Conditionally create a partial schema for the test environment
+const schema =
+  process.env.NODE_ENV === 'test' ? baseSchema.partial() : baseSchema
 
 const parsedEnv = schema.safeParse(process.env)
 
@@ -44,4 +41,7 @@ if (!parsedEnv.success) {
   process.exit(1)
 }
 
-export const env = parsedEnv.data
+// Cast the parsed data to the inferred type of the base schema.
+// This is safe because in non-test environments, the schema is strict,
+// and in test environments, the necessary variables are provided by the test script.
+export const env = parsedEnv.data as z.infer<typeof baseSchema>
