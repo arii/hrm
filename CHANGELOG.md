@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.18.0](https://github.com/arii/hrm/compare/v0.17.0...v0.18.0) (2025-12-26)
+
+
+### Features
+
+* **audio:** Implement persistent volume controls ([#2202](https://github.com/arii/hrm/issues/2202)) ([a2ac8d9](https://github.com/arii/hrm/commit/a2ac8d945d3a75105c2e56db9667d73875f90c3e))
+* Centralize and Validate Environment Variables with Zod ([#2192](https://github.com/arii/hrm/issues/2192)) ([96063b6](https://github.com/arii/hrm/commit/96063b63aa9c9cb7693961e388153b30621344ac))
+* Finalize `withValidation` Middleware (Headers, Errors, Docs & Tests) ([7fa5641](https://github.com/arii/hrm/commit/7fa5641c3b1049171a98b70c53cd138824fdabac))
+
+
+### Bug Fixes
+
+* **deploy:** Ensure script permissions and correct startup path ([#2229](https://github.com/arii/hrm/issues/2229)) ([4e30ffc](https://github.com/arii/hrm/commit/4e30ffc1d89b5f822ec8388ed1e77de5df3aa8a2))
+* Increase WebSocket pong timeout to prevent premature reconnections ([#2216](https://github.com/arii/hrm/issues/2216)) ([9ed7f68](https://github.com/arii/hrm/commit/9ed7f684368f0dd30ccd95cc31566b74a9adcd77))
+* **spotify:** Change log level for expected 204 responses ([732caf5](https://github.com/arii/hrm/commit/732caf569d61beefdd262949edde53a448c30e52))
+
 ## [0.17.0](https://github.com/arii/hrm/compare/v0.16.0...v0.17.0) (2025-12-26)
 
 
