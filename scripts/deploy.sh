@@ -10,14 +10,10 @@ PM2_APP_NAME="hrm-server"
 echo "🚀 Starting HRM production deployment..."
 
 # 1. Environment & Prerequisites Check
+# Bootstrap pnpm if it's not installed.
 if ! command -v pnpm &> /dev/null; then
     echo "📦 pnpm not found. Installing global pnpm..."
     npm install -g pnpm
-fi
-
-if ! command -v pm2 &> /dev/null; then
-    echo "pm2 not found. Installing global pm2..."
-    pnpm install -g pm2
 fi
 
 if [ ! -f ".env.production" ]; then
@@ -58,18 +54,18 @@ if command -v nginx &> /dev/null; then
     fi
 fi
 
-# 6. PM2 Process Management
+# 6. PM2 Process Management (using local dependency)
 echo "🔄 Reloading application..."
 # Check if app is running
-if pm2 list | grep -q "$PM2_APP_NAME"; then
+if pnpm exec pm2 list | grep -q "$PM2_APP_NAME"; then
     # Reload allows for zero-downtime if architecture permits, otherwise use restart
-    pm2 reload ecosystem.config.cjs --env production --update-env
+    pnpm exec pm2 reload ecosystem.config.cjs --env production --update-env
     echo "✅ Application reloaded."
 else
     # First time start
-    pm2 start ecosystem.config.cjs --env production
+    pnpm exec pm2 start ecosystem.config.cjs --env production
     echo "✅ Application started."
 fi
 
-pm2 save
+pnpm exec pm2 save
 echo "🎉 Deployment to '$BRANCH' complete!"
