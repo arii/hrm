@@ -61,7 +61,7 @@ jobs:
             "summary": "A 1-sentence summary of the issue",
             "analysis": "A brief analysis of what is needed to fix this.",
             "suggested_title": "A clearer title (if original is poor)",
-            "suggested_body": "A professionally formatted issue body. If you generate a new body, you MUST include the original body content within a collapsible ''<details>'' section.",
+            "suggested_body": "A professionally formatted issue body.",
             "completeness_score": 0-10
           }
           EOF
@@ -125,7 +125,16 @@ jobs:
               // 3. Auto-update Title and Body if suggestions exist
               if (result.suggested_title || result.suggested_body) {
                 const newTitle = result.suggested_title || context.payload.issue.title;
-                const newBody = result.suggested_body || context.payload.issue.body;
+
+                let newBody = context.payload.issue.body;
+                if (result.suggested_body) {
+                  const originalBody = context.payload.issue.body;
+                  let suggestedBody = result.suggested_body;
+                  if (suggestedBody.length > 60000) {
+                    suggestedBody = suggestedBody.substring(0, 60000) + '\n... (truncated)';
+                  }
+                  newBody = '<details>\n<summary>Original Issue Body</summary>\n\n' + originalBody + '\n</details>\n\n' + suggestedBody;
+                }
 
                 await github.rest.issues.update({
                   owner: context.repo.owner,
