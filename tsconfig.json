@@ -21,6 +21,7 @@
     "paths": {
       "@/*": ["./*"]
     },
+    "typeRoots": ["./node_modules/@types", "./types"],
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
