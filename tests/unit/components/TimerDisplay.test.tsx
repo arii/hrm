@@ -120,7 +120,7 @@ describe('TimerDisplay', () => {
         restDuration: 15,
       })
 
-      const { container } = render(
+      render(
         <AudioProvider>
           <TimerDisplay />
         </AudioProvider>
@@ -131,7 +131,8 @@ describe('TimerDisplay', () => {
 
       // Filter out absolutely positioned elements to only test the flex items
       const flexItems = Array.from(flexContainer.children).filter(
-        (child) => window.getComputedStyle(child as Element).position !== 'absolute'
+        (child) =>
+          window.getComputedStyle(child as Element).position !== 'absolute'
       )
 
       // Expect three direct children in the flex layout: left column, content, right column
@@ -145,7 +146,9 @@ describe('TimerDisplay', () => {
 
       // Verify Center Column (Timer)
       expect(mainContent).toHaveStyle('flex: 1')
-      expect(mainContent).toContainElement(screen.getByTestId('timer-countdown'))
+      expect(mainContent).toContainElement(
+        screen.getByTestId('timer-countdown')
+      )
 
       // Verify Right Column (Durations)
       expect(rightColumn).toHaveStyle('flex: 0 0 40px')
