@@ -29,11 +29,11 @@ if (!hasSpotifyCredentials) {
 if (!hasNextAuthSecret) {
   testIgnoreList.push('debug.spec.ts')
 }
-
+const baseURL = getBaseURL();
 export default defineConfig({
   webServer: {
     command: 'pnpm run dev',
-    url: 'http://127.0.0.1:3000',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     timeout: 240 * 1000, // Allow time for Next.js compile
@@ -64,7 +64,7 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for all tests
-    baseURL: getBaseURL(),
+    baseURL: baseURL,
     actionTimeout: 10000, // Fails clicks/fills after 10s if element isn't found
     navigationTimeout: 15000, // Navigation timeout
     headless: true,

@@ -92,9 +92,9 @@ test.describe('Visual Regression Tests', () => {
           timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
         })
       }
-      const resetButton = controlPage.getByRole('button', { name: /RESET/i });
+      const resetButton = controlPage.getByRole('button', { name: /RESET/i })
       if (await resetButton.isVisible()) {
-          await resetButton.click();
+        await resetButton.click()
       }
     } catch (error) {
       // Timer not running or failed to stop, log and continue
@@ -150,7 +150,7 @@ test.describe('Visual Regression Tests', () => {
       maxDiffPixelRatio: 0.02, // Allow up to 2% pixel difference (robustness fix)
       mask: [
         // Use precise data-testid selectors for dynamic content masking
-        ...getTimerMasks(dashboardPage),
+        ...getDynamicContentMasks(dashboardPage),
       ],
     })
   })
@@ -230,6 +230,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with mock HR data streaming', async () => {
+    await mockPage.getByLabel('User Name').fill('Mock User')
     // Set HR to yellow zone on mock page
     await mockPage.getByLabel('Current BPM').fill('155')
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
