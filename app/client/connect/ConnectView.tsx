@@ -15,8 +15,8 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -210,7 +210,7 @@ export default function ConnectView({
               exclusive
               onChange={(_, newGender) => {
                 if (newGender) {
-                  setUserGender(newGender);
+                  setUserGender(newGender)
                 }
               }}
               aria-label="Select gender"

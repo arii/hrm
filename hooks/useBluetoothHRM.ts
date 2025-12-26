@@ -145,12 +145,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number, weight: number, gender: 'male' | 'female' } | null>(null)
-  const calorieDataRef = useRef<{ totalCalories: number, lastCalculationTime: number, hrReadings: number[] }>({
-    totalCalories: 0,
-    lastCalculationTime: Date.now(),
-    hrReadings: [],
-  });
+  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -283,30 +278,11 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
     }
   }, [])
 
-  const calculateCalories = (hr: number, age: number, weight: number, gender: 'male' | 'female', dt: number) => {
-    let caloriesPerMinute;
-    if (gender === 'male') {
-      caloriesPerMinute = (-55.0969 + 0.6309 * hr + 0.1988 * weight + 0.2017 * age) / 4.184;
-    } else {
-      caloriesPerMinute = (-20.4022 + 0.4472 * hr - 0.1263 * weight + 0.074 * age) / 4.184;
-    }
-    return (caloriesPerMinute / 60) * dt;
-  };
-
-  const getSmoothedHr = (newHr: number) => {
-    const readings = calorieDataRef.current.hrReadings;
-    readings.push(newHr);
-    if (readings.length > 5) {
-      readings.shift();
-    }
-    return readings.reduce((acc, val) => acc + val, 0) / readings.length;
-  };
-
   const connectToGatt = useCallback(
     async (device: BluetoothDevice) => {
       try {
-        deviceRef.current = device;
-        setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`);
+        deviceRef.current = device
+        setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
 
         abortControllerRef.current = new AbortController()
         const server = await cancellablePromise(device.gatt!.connect(), {
@@ -352,17 +328,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age, weight, gender } = userDetailsRef.current || { name: '', age: 0, weight: 0, gender: 'male' };
-            if (age && weight && gender) {
-              const now = Date.now();
-              const dt = (now - calorieDataRef.current.lastCalculationTime) / 1000;
-              calorieDataRef.current.lastCalculationTime = now;
-
-              const smoothedHr = getSmoothedHr(heartRate);
-              const caloriesBurned = calculateCalories(smoothedHr, age, weight, gender, dt);
-              calorieDataRef.current.totalCalories += caloriesBurned;
-            }
-            const calculatedMaxHr = calculateMaxHr(age);
+            const { name, age } = userDetailsRef.current || {}
+            const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
@@ -380,13 +347,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
             const data: HrmInputData = {
               value: heartRate,
-              calories: calorieDataRef.current.totalCalories,
-            };
+            }
 
             sendData({
               type: 'HRM_INPUT',
               data,
-            });
+            })
           }
         )
 
@@ -424,7 +390,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number, userWeight?: number, userGender?: 'male' | 'female'): Promise<void> => {
+    async (userName?: string, userAge?: number): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -432,9 +398,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
-        weight: userWeight || 0,
-        gender: userGender || 'male',
-      };
+      }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {
         const err = new Error('WebSocket not connected')
