@@ -1,7 +1,7 @@
-const Redis = require('ioredis-mock');
+import Redis from 'ioredis-mock';
 
-module.exports.redisClient = new Redis();
+export const redisClient = new Redis();
 
-module.exports.checkRedisConnection = async () => {
+export const checkRedisConnection = async () => {
   return { healthy: true, status: 'connected' };
 };
