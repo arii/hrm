@@ -3,11 +3,27 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatDuration } from '@/lib/utils';
 
+/**
+ * @interface AnalyticsProps
+ * @description Props for the PersonalAnalyticsDashboard component.
+ */
 interface AnalyticsProps {
+  /**
+   * @property {Array<{time: number, hr: number}>} data - An array of heart rate data points over time.
+   */
   data: Array<{time: number, hr: number}>;
+  /**
+   * @property {Record<string, number>} zoneDurations - An object mapping heart rate zones to their durations in seconds.
+   */
   zoneDurations: Record<string, number>;
 }
 
+/**
+ * @component PersonalAnalyticsDashboard
+ * @description A component that displays a real-time heart rate graph and a table of time spent in each heart rate zone.
+ * @param {AnalyticsProps} props - The props for the component.
+ * @returns {React.FC}
+ */
 export const PersonalAnalyticsDashboard: React.FC<AnalyticsProps> = ({ data, zoneDurations }) => {
   const totalDuration = Object.values(zoneDurations).reduce((a, b) => a + b, 0);
 
