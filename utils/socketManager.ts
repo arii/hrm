@@ -245,10 +245,12 @@ const handleIncomingMessage = (
           deviceId?: string
           volume?: number
           playlistUri?: string
+          contextUri?: string
         } = {}
         if (commandMsg.deviceId) params.deviceId = commandMsg.deviceId
         if (commandMsg.volume !== undefined) params.volume = commandMsg.volume
         if (commandMsg.playlistUri) params.playlistUri = commandMsg.playlistUri
+        if (commandMsg.contextUri) params.contextUri = commandMsg.contextUri
 
         spotifyService.handleCommand(commandMsg.command, params)
         break
