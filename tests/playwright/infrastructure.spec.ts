@@ -96,7 +96,10 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4)
+
+    // Ensure the production build exists before trying to run it
+    execSync('pnpm run build', { stdio: 'pipe' })
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production
@@ -108,7 +111,7 @@ test.describe('Infrastructure & Scripts', () => {
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 
-    const prodServer = spawn('./start-production.sh', [], {
+    const prodServer = spawn('./scripts/start-production.sh', [], {
       detached: true,
       stdio: 'pipe',
       env,

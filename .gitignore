@@ -30,6 +30,7 @@ test_output.txt
 /build
 *.tsbuildinfo
 next-env.d.ts
+.husky/_/
 
 # Production & Logs
 *.log
