@@ -1,0 +1,153 @@
+name: Gemini Coder & Jules Agent
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task_description:
+        description: 'Task instructions'
+        required: true
+      target_files:
+        description: 'Target files (Gemini Direct only)'
+        required: false
+      agent_provider:
+        description: 'AI Agent Provider'
+        type: choice
+        options:
+          - gemini
+          - jules
+        default: gemini
+      branch_name:
+        description: 'Target branch name (optional)'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  ai-developer:
+    runs-on: ubuntu-latest
+    env:
+      # Determine Provider based on Label or Input
+      PROVIDER: ${{
+        contains(github.event.issue.labels.*.name, 'jules-task') && 'jules' ||
+        contains(github.event.issue.labels.*.name, 'auto-code') && 'gemini' ||
+        inputs.agent_provider
+      }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Common Setup ---
+      - name: Parse Task Context
+        id: context
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: |
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "TASK_DESC=$ISSUE_BODY" >> $GITHUB_ENV
+            echo "TASK_TITLE=$ISSUE_TITLE" >> $GITHUB_ENV
+            echo "TARGET_FILES=$(echo "$ISSUE_BODY" | grep -oP '(?<=File: ).*')" >> $GITHUB_ENV
+            echo "ISSUE_ID=$ISSUE_NUM" >> $GITHUB_ENV
+          else
+            echo "TASK_DESC=${{ inputs.task_description }}" >> $GITHUB_ENV
+            echo "TASK_TITLE=Manual Task" >> $GITHUB_ENV
+            echo "TARGET_FILES=${{ inputs.target_files }}" >> $GITHUB_ENV
+            echo "ISSUE_ID=manual" >> $GITHUB_ENV
+          fi
+
+      # --- Path A: Jules Remote Session ---
+      - name: Setup Python (For Jules)
+        if: env.PROVIDER == 'jules'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Jules Deps
+        if: env.PROVIDER == 'jules'
+        run: pip install requests
+
+      - name: Trigger Jules Session (Fire-and-Forget)
+        if: env.PROVIDER == 'jules'
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          BRANCH_NAME: ${{ inputs.branch_name || format('ai/refactor-{0}', env.ISSUE_ID) }}
+        run: |
+          echo "🚀 Starting Jules Session..."
+
+          # Construct a rich prompt with issue context
+          PROMPT="Task from Issue #${{ env.ISSUE_ID }}: ${{ env.TASK_TITLE }}
+
+          ${{ env.TASK_DESC }}
+
+          Please implement this fix in branch '${{ env.BRANCH_NAME }}' and open a PR."
+
+          # NOTE: This is a "fire-and-forget" operation. It triggers the Jules
+          # session and exits. A future enhancement would be to add a polling
+          # mechanism here to monitor the session until the PR is created.
+          # Execute jules_ops.py (Assuming it's in .github/scripts/)
+          export PYTHONPATH=$PYTHONPATH:.github/scripts
+          python3 .github/scripts/jules_ops.py create \
+            --prompt "$PROMPT" \
+            --branch "${{ env.BRANCH_NAME }}" \
+            --title "🤖 AI Refactor: ${{ env.TASK_TITLE }}" \
+            --source "sources/github/${{ github.repository }}"
+
+      # --- Path B: Gemini Direct (Local Runner) ---
+      - name: Setup Node (For Gemini Direct)
+        if: env.PROVIDER == 'gemini'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Node Deps
+        if: env.PROVIDER == 'gemini'
+        run: npm ci
+
+      - name: Execute Gemini Direct
+        if: env.PROVIDER == 'gemini'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TASK: ${{ env.TASK_DESC }}
+          FILES: ${{ env.TARGET_FILES }}
+        run: |
+          # 1. Build Context
+          echo "Task: $TASK" > prompt.txt
+          echo "Files to Edit: $FILES" >> prompt.txt
+          echo "Also adhere to DESIGN_GUIDELINES.md" >> prompt.txt
+
+          for file in $(echo $FILES | tr "," " "); do
+            if [ -f "$file" ]; then
+              echo "--- FILE: $file ---" >> prompt.txt
+              cat "$file" >> prompt.txt
+            fi
+          done
+
+          # 2. Run Client (Modify this script to output patch.diff)
+          npx tsx scripts/gemini-client.ts --mode "code-edit" --task-file "prompt.txt" --output "patch.diff"
+
+      - name: Apply Patch (Gemini Direct)
+        if: env.PROVIDER == 'gemini'
+        run: git apply patch.diff
+
+      - name: Verify Changes (Gemini Direct)
+        if: env.PROVIDER == 'gemini'
+        run: |
+          npm run lint --if-present
+          npm run build --if-present
+
+      - name: Create PR (Gemini Direct)
+        if: env.PROVIDER == 'gemini'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.ARI_PAT }}
+          commit-message: "feat(ai): Auto-refactor Issue #${{ env.ISSUE_ID }}"
+          title: "🤖 AI Refactor: ${{ env.TASK_TITLE }}"
+          branch: "ai/refactor-${{ env.ISSUE_ID }}"
+          body: "Implemented by Gemini Direct.\n\nCloses #${{ env.ISSUE_ID }}"
