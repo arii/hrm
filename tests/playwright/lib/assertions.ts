@@ -77,9 +77,7 @@ export function getTimerMasks(page: Page): Locator[] {
  * @returns Array of locators for timer-related dynamic elements
  */
 export function getSpotifyMasks(page: Page): Locator[] {
-  return [
-    page.locator(VRT_MASK_SELECTORS.spotify),
-  ]
+  return [page.locator(VRT_MASK_SELECTORS.spotify)]
 }
 
 /**

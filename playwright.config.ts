@@ -29,7 +29,7 @@ if (!hasSpotifyCredentials) {
 if (!hasNextAuthSecret) {
   testIgnoreList.push('debug.spec.ts')
 }
-const baseURL = getBaseURL();
+const baseURL = getBaseURL()
 export default defineConfig({
   webServer: {
     command: 'pnpm run dev',
