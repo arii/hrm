@@ -17,7 +17,7 @@ type Props = {
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(_req: NextRequest, { params }: Props) {
+async function getPlaylistDetails(_req: Request, { params }: Props) {
   const { playlistId } = await params
 
   if (!playlistId) {
