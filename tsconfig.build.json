@@ -14,5 +14,6 @@
     "utils/**/*.ts",
     "types/**/*.ts",
     "lib/**/*.ts"
-  ]
+  ],
+  "exclude": ["node_modules", "scripts"]
 }
