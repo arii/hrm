@@ -54,13 +54,18 @@ echo "📂 Extracting artifact..."
 # Use --overwrite to ensure clean state
 tar -xzf release.tar.gz --overwrite
 
+echo "🔐 Setting script permissions..."
+chmod +x ./start-production.sh
+chmod +x ./scripts/deploy-artifact.sh
+chmod +x ./scripts/verify-deployment.sh
+
 echo "📦 Hydrating production dependencies..."
 # Use the dynamic command (pnpm or npx pnpm)
 $PNPM_CMD install --prod --ignore-scripts
 
 echo "🔄 Reloading PM2..."
-# We use 'npx pm2' to ensure we use the local dependency if global isn't there
-npx pm2 startOrReload ecosystem.config.cjs --env production --update-env
+# Use pnpm exec to ensure the project's local pm2 is used
+$PNPM_CMD exec pm2 startOrReload ecosystem.config.cjs --env production --update-env
 
 echo "🕵️ Running Verification..."
 ./scripts/verify-deployment.sh
