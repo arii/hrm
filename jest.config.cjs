@@ -48,6 +48,7 @@ const config = {
     'next-auth': require.resolve('next-auth'),
     jose: require.resolve('jose'),
     '@panva/hkdf': require.resolve('@panva/hkdf'),
+    'preact-render-to-string': require.resolve('preact-render-to-string'),
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },

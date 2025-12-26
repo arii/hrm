@@ -1,5 +1,5 @@
 // server.ts (Refactored)
-import express from 'express'
+import express, { Request } from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import path from 'path'
@@ -30,11 +30,64 @@ app.prepare().then(async () => {
 
   // Rate Limiting
   if (env.NODE_ENV !== 'test') {
-    const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 100,
+    const spotifyApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 30,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req: Request) => {
+        // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: {
+        error: 'Too many requests to Spotify API, please try again later.',
+      },
     })
-    expressApp.use(limiter)
+
+    const internalApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req: Request) => {
+        // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: {
+        error: 'Too many requests to internal API, please try again later.',
+      },
+    })
+    const generalApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 200, // General limit for all other routes
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req: Request) => {
+        // Use X-Forwarded-For if available (from reverse proxy), else use socket address
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: { error: 'Too many requests, please try again later.' },
+      skip: (req: Request) =>
+        req.path.startsWith('/api/spotify') ||
+        req.path.startsWith('/api/internal'),
+    })
+
+    // Apply the rate limiters to specific routes
+    expressApp.use('/api/spotify/', spotifyApiLimiter)
+    expressApp.use('/api/internal/', internalApiLimiter)
+    expressApp.use('/api/', generalApiLimiter)
   }
 
   // Static Asset Serving
@@ -82,17 +135,18 @@ app.prepare().then(async () => {
       websocket: wsCheck,
     }
 
-    res.status(healthy ? 200 : 503).json({ healthy, details })
+    return res.status(healthy ? 200 : 503).json({ healthy, details })
   })
 
   expressApp.get('/api/spotify/devices', async (_req, res) => {
-    if (!services.spotifyService.isReady())
+    if (!services.spotifyService.isReady()) {
       return res.status(503).json({ error: 'Service unavailable' })
+    }
     const devices = await services.spotifyService.getAvailableDevices()
-    res.json(devices)
+    return res.json(devices)
   })
 
-  expressApp.all('*', (req, res) => {
+  expressApp.use((req, res) => {
     return handle(req, res)
   })
 

@@ -89,7 +89,6 @@ export type ServerMessage =
 
 export type HrmInputData = {
   value: number | null
-  calories?: number
 }
 
 export interface HrmInputMessage {
@@ -170,7 +169,6 @@ import { z } from 'zod'
 
 export const HrmInputDataSchema = z.object({
   value: z.number().nullable(),
-  calories: z.number().optional(),
 })
 
 export const HrmInputMessageSchema = z.object({

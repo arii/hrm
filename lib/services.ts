@@ -53,7 +53,10 @@ export async function createServices(
     // Await the static create method to properly initialize the service
     spotifyService = await SpotifyPolling.create(broadcast)
   } catch (e) {
-    logger.error({ err: e }, 'SpotifyPolling initialization failed. Using fallback.')
+    logger.error(
+      { err: e },
+      'SpotifyPolling initialization failed. Using fallback.'
+    )
     // Use the type-safe fallback stub
     spotifyService = createSpotifyFallback()
   }
