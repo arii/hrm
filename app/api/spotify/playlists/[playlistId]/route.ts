@@ -7,19 +7,16 @@ import { withErrorHandler } from '@/lib/middleware/errorHandler'
 import { ApiError } from '@/lib/errors'
 import { getAuthenticatedSpotifyApi } from '@/lib/spotify/sdk'
 
-type Props = {
-  params: {
-    playlistId: string
-  }
-}
-
 /**
  * GET handler for fetching single playlist details.
  * @param _req The incoming NextRequest.
  * @param params The route parameters, containing the playlistId.
  * @returns A NextResponse with the playlist details or an error.
  */
-async function getPlaylistDetails(_req: NextRequest, { params }: Props) {
+async function getPlaylistDetails(
+  _req: NextRequest,
+  { params }: { params: { playlistId: string } }
+) {
   const { playlistId } = params
 
   if (!playlistId) {
