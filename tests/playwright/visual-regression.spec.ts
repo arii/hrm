@@ -89,10 +89,6 @@ test.describe('Visual Regression Tests', () => {
     }
   })
 
-  test.beforeEach(async () => {
-    await controlPage.reload();
-  });
-
   // Clean up after all tests
   test.afterAll(async () => {
     if (context) {
@@ -153,6 +149,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
+    await controlPage.reload();
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
