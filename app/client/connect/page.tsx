@@ -25,23 +25,24 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  // Derived state for the input field
   const [displayWeight, setDisplayWeight] = useState('')
 
   useEffect(() => {
     const kgValue = parseFloat(weightInKg)
     if (!isNaN(kgValue)) {
-      const newDisplayWeight = toDisplay(kgValue, unitSystem).toString()
-      setDisplayWeight(newDisplayWeight)
+      setDisplayWeight(toDisplay(kgValue, unitSystem).toString())
     }
   }, [weightInKg, unitSystem])
 
   const handleWeightChange = (newDisplayValue: string) => {
-    setDisplayWeight(newDisplayValue) // Update input field immediately for responsiveness
-    const numericValue = parseFloat(newDisplayValue)
+    setDisplayWeight(newDisplayValue)
+  }
+
+  const handleWeightBlur = () => {
+    const numericValue = parseFloat(displayWeight)
     if (!isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
-      setWeightInKg(newKgValue.toFixed(2)) // Persist normalized value
+      setWeightInKg(newKgValue.toFixed(2))
     }
   }
 
@@ -107,6 +108,7 @@ export default function ConnectPage() {
       setUserHeight={setUserHeight}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
+      onWeightBlur={handleWeightBlur}
       gender={gender}
       setGender={setGender}
       unitSystem={unitSystem}

@@ -14,7 +14,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   ToggleButtonGroup,
@@ -55,7 +55,7 @@ interface ConnectViewProps {
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   gender: Gender
-  setGender: (gender: Gender) => void
+  setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
@@ -223,7 +223,9 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label={`Your Weight (${unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'})`}
+              label={`Your Weight (${
+                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
+              })`}
               placeholder={
                 unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'
               }
@@ -231,9 +233,6 @@ export default function ConnectView({
               value={userWeight}
               onChange={(e) => {
                 setUserWeight(e.target.value)
-              }}
-              onBlur={(e) => {
-                onWeightBlur()
                 setWeightError(
                   validate(
                     e.target.value,
@@ -243,6 +242,7 @@ export default function ConnectView({
                   )
                 )
               }}
+              onBlur={onWeightBlur}
               error={!!weightError}
               helperText={weightError}
               inputProps={{
