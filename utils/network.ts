@@ -77,7 +77,7 @@ export const fetchWithRetry = async (
       }
 
       return response // Success
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId)
 
       // Check if the caller aborted the request
@@ -101,8 +101,8 @@ export const fetchWithRetry = async (
         }
       }
       // Check for HTTP errors
-      else if (error.message.startsWith('HTTP Error:')) {
-        const status = error.cause.status as number
+      else if (error instanceof Error && error.message.startsWith('HTTP Error:')) {
+        const status = (error.cause as { status: number }).status
         lastError = {
           code: `HTTP_ERROR_${status}`,
           message: `Request failed with status ${status}.`,
@@ -114,7 +114,10 @@ export const fetchWithRetry = async (
       else {
         lastError = {
           code: 'NETWORK_ERROR',
-          message: error.message || 'An unknown network error occurred.',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'An unknown network error occurred.',
           retryable: true,
           originalError: error,
         }

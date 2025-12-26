@@ -20,7 +20,7 @@ interface FetchOptions extends RequestInit {
  * @param options The fetch options.
  * @returns An object with data, error, isLoading, and an execute function.
  */
-export const useFetchWithRetry = <T,>(
+export const useFetchWithRetry = <T>(
   url: string,
   options: FetchOptions = {}
 ) => {

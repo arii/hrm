@@ -68,10 +68,9 @@ describe('useFetchWithRetry', () => {
   })
 
   it('should abort the request on unmount', async () => {
-    const abortController = new AbortController()
     ;(fetch as jest.Mock).mockImplementation(
-      (url, { signal }) =>
-        new Promise((resolve, reject) => {
+      (_url, { signal }) =>
+        new Promise((_resolve, reject) => {
           signal.addEventListener('abort', () => {
             reject(new Error('Aborted'))
           })
