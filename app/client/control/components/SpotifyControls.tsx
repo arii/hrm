@@ -12,7 +12,7 @@ import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import useVolumePreference from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
@@ -130,13 +130,12 @@ const SpotifyControls = () => {
       // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
-      const sanitized = clampVolume(value)
-      const messageKey = `${targetDeviceId}:${sanitized}`
+      const messageKey = `${targetDeviceId}:${value}`
       if (lastSentVolumeRef.current === messageKey) return
       const message: SpotifyCommandMessage = {
         type: 'SPOTIFY_COMMAND',
         command: 'SET_VOLUME',
-        volume: sanitized,
+        volume: value,
         ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
       }
       sendData(message)
