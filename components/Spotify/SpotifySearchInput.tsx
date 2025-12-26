@@ -32,7 +32,7 @@ interface SpotifyTrack {
 }
 
 interface SpotifySearchInputProps {
-  onTrackSelect?: (trackUri: string) => void
+  onTrackSelect: (trackUri: string) => void
 }
 
 const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
@@ -41,9 +41,6 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const { enqueueSnackbar } = useSnackbar()
-
-  // Debounce the search query by 500ms
-  const debouncedQuery = useDebounce(query, 500)
 
   // Handle Input Change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,19 +58,17 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
     setHasSearched(false)
   }
 
-  // Effect to trigger search when debounced query changes
+  // Effect to trigger search when query changes
   useEffect(() => {
     const searchSpotify = async () => {
-      if (!debouncedQuery.trim()) return
+      if (!query.trim()) return
 
       setIsLoading(true)
       setHasSearched(true) // Mark that a search has been attempted
 
       try {
         const res = await fetch(
-          `/api/spotify/search?q=${encodeURIComponent(
-            debouncedQuery
-          )}&type=track`
+          `/api/spotify/search?q=${encodeURIComponent(query)}&type=track`
         )
 
         if (!res.ok) {
@@ -174,9 +169,7 @@ const SpotifySearchInput = ({ onTrackSelect }: SpotifySearchInputProps) => {
                   disablePadding
                   divider={index < results.length - 1}
                 >
-                  <ListItemButton
-                    onClick={() => onTrackSelect && onTrackSelect(track.uri)}
-                  >
+                  <ListItemButton onClick={() => onTrackSelect(track.uri)}>
                     <ListItemAvatar>
                       <Avatar
                         variant="square"

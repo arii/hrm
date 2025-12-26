@@ -17,8 +17,10 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import VolumeSlider from '@/components/Spotify/VolumeSlider'
+import SpotifySearchInput from '@/components/Spotify/SpotifySearchInput'
+import { SnackbarProvider } from 'notistack'
 
-const SpotifyControls = () => {
+const SpotifyControlsInternal = () => {
   const router = useRouter()
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
@@ -121,6 +123,17 @@ const SpotifyControls = () => {
     },
     [sendSpotifyCommand]
   )
+
+  const handleTrackSelect = (uri: string) => {
+    const targetDeviceId = resolveTargetDeviceId()
+    const message: SpotifyCommandMessage = {
+      type: 'SPOTIFY_COMMAND',
+      command: 'PLAY',
+      uri,
+      ...(targetDeviceId ? { deviceId: targetDeviceId } : {}),
+    }
+    sendData(message)
+  }
 
   const sendVolumeCommand = useCallback(
     (value: number) => {
@@ -268,6 +281,9 @@ const SpotifyControls = () => {
             >
               Select Playlist
             </Button>
+            <Box sx={{ mt: 2 }}>
+              <SpotifySearchInput onTrackSelect={handleTrackSelect} />
+            </Box>
           </>
         ) : (
           <Button onClick={handleBrowseClick}>Select Music</Button>
@@ -276,5 +292,14 @@ const SpotifyControls = () => {
     </Card>
   )
 }
+
+const SpotifyControls = () => (
+  <SnackbarProvider
+    maxSnack={3}
+    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+  >
+    <SpotifyControlsInternal />
+  </SnackbarProvider>
+)
 
 export default SpotifyControls
