@@ -27,10 +27,9 @@ test.describe('Remote Capabilities & Command Relay', () => {
     // 2. Navigate and Wait for Component
     await page.goto(BASE_URL)
     // Wait for WebSocket to connect on the main page
-    await expect(page.locator('[data-testid="ws-status-indicator"]')).toHaveText(
-      'Server: Connected',
-      { timeout: 15000 }
-    )
+    await expect(
+      page.locator('[data-testid="ws-status-indicator"]')
+    ).toHaveText('Server: Connected', { timeout: 15000 })
     await page.goto(`${BASE_URL}/client/control`)
 
     // Wait for both components to be ready
@@ -42,10 +41,9 @@ test.describe('Remote Capabilities & Command Relay', () => {
     })
 
     // Wait for WebSocket to connect
-    await expect(page.locator('[data-testid="ws-status-indicator"]')).toHaveText(
-      'Server: Connected',
-      { timeout: 15000 }
-    )
+    await expect(
+      page.locator('[data-testid="ws-status-indicator"]')
+    ).toHaveText('Server: Connected', { timeout: 15000 })
 
     // 3. Verify GET_DEVICES
     await expect

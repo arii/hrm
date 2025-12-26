@@ -13,11 +13,9 @@ module.exports = {
       // and the application can decide on a default.
       env: {
         NODE_ENV: 'production',
-        PORT: process.env.PORT,
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: process.env.PORT,
       },
     },
   ],
