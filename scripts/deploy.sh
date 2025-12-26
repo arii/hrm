@@ -15,6 +15,11 @@ if ! command -v pnpm &> /dev/null; then
     npm install -g pnpm
 fi
 
+if ! command -v pm2 &> /dev/null; then
+    echo "pm2 not found. Installing global pm2..."
+    pnpm install -g pm2
+fi
+
 if [ ! -f ".env.production" ]; then
     echo "❌ Error: .env.production file not found!"
     exit 1
