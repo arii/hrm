@@ -28,6 +28,7 @@ export {
   getDynamicContentMasks,
   getHrMasks,
   getTimerMasks,
+  getSpotifyMasks,
   // Setup utilities
   replaceIframeWithStableWorkout,
   setupVisualRegressionTest,
