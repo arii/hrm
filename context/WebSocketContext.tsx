@@ -70,6 +70,25 @@ export interface WebSocketContextType extends WebSocketState {
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
+/**
+ * @component WebSocketProvider
+ *
+ * @description
+ * This provider manages the WebSocket connection for the entire application.
+ * It handles connection, disconnection, automatic reconnection with exponential
+ * backoff, and state management for real-time data from the server.
+ *
+ * @details
+ * **Heartbeat Mechanism:** This component previously included a custom,
+ * application-level heartbeat (sending JSON PING messages) to keep the
+ * connection alive. This was removed because it conflicted with the server's
+ * use of the native WebSocket ping/pong protocol (RFC 6455). Modern browsers
+ * and the server's `ws` library handle this keep-alive mechanism automatically
+ * at a lower level. Relying on the native implementation is more efficient,
+ * robust, and avoids the "Pong not received in time" errors that the custom
+ * implementation was causing. The server-side `ConnectionMonitor` now solely
+ * manages connection liveness.
+ */
 export const WebSocketProvider = ({
   children,
   serverUrl,
@@ -208,7 +227,8 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
+      // Set a global flag for Playwright tests to detect when the WebSocket
+      // is ready. This is a pragmatic approach for E2E testing.
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
@@ -235,7 +255,6 @@ export const WebSocketProvider = ({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      // Native WebSocket ping/pong will handle heartbeat.
     }
 
     ws.onclose = (event) => {
