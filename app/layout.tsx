@@ -35,6 +35,20 @@ export default function RootLayout({
           type="font/ttf"
           crossOrigin="anonymous"
         />
+        {/*
+          Workaround for a ReferenceError in embedded Google Docs script.
+          This script initializes `window.DOCS_timing` to prevent an error from
+          Google's own scripts, and is not related to HRM application functionality.
+          It's placed in the <head> to ensure it executes before the Google Docs iframe
+          is parsed.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.DOCS_timing = window.DOCS_timing || {};
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         <Main>{children}</Main>
