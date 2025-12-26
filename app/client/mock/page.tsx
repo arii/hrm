@@ -9,7 +9,7 @@ import Container from '@mui/material/Container'
 import Grid from '@mui/material/Grid'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import BottomNavBar from '../../../components/BottomNavBar'
 import { useWebSocket } from '@/context/WebSocketContext'
 import {
@@ -23,7 +23,7 @@ export default function MockPage() {
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
-  const [isInitialMetadataSent, setIsInitialMetadataSent] = useState(false)
+  const isInitialMetadataSent = useRef(false)
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
@@ -69,11 +69,11 @@ export default function MockPage() {
   // or when the user explicitly saves settings. For this mock, we send it
   // on every change to the local state for simplicity and immediate feedback.
   useEffect(() => {
-    if (!isInitialMetadataSent) {
+    if (!isInitialMetadataSent.current) {
       sendMetadataPacket()
-      setIsInitialMetadataSent(true)
+      isInitialMetadataSent.current = true
     }
-  }, [sendMetadataPacket, isInitialMetadataSent])
+  }, [sendMetadataPacket])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
