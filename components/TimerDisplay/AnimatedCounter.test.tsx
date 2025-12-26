@@ -13,6 +13,8 @@ describe('AnimatedCounter', () => {
   it('applies the correct font family', () => {
     render(<AnimatedCounter displayTime="12:34" phaseColor="#fff" />)
     const counterElement = screen.getByTestId('timer-countdown')
-    expect(counterElement).toHaveStyle('font-family: var(--font-digital-7-mono), monospace')
+    expect(counterElement).toHaveStyle(
+      'font-family: var(--font-digital-7-mono), monospace'
+    )
   })
 })
