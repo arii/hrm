@@ -63,7 +63,9 @@ function getCookieDomain(): string | undefined {
  */
 async function refreshAccessToken(token: JWT) {
   try {
-    const refreshedTokens = await refreshSpotifyToken(token.refreshToken as string)
+    const refreshedTokens = await refreshSpotifyToken(
+      token.refreshToken as string
+    )
 
     // Update the token object with new values from Spotify
     return {

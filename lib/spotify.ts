@@ -9,9 +9,12 @@ export const SPOTIFY_CONSTANTS = {
  * Returns the Basic Auth header value for Spotify
  */
 export function getSpotifyBasicAuth() {
-  return 'Basic ' + Buffer.from(
-    `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
-  ).toString('base64')
+  return (
+    'Basic ' +
+    Buffer.from(
+      `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
+    ).toString('base64')
+  )
 }
 
 /**
