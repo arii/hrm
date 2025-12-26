@@ -20,14 +20,14 @@ export default function ConnectPage() {
     'hrm-user-weight-kg',
     70
   )
-  const [displayWeight, setDisplayWeight] = useState(() =>
-    toDisplay(userWeightInKg, unitSystem).toString()
-  )
-  const debouncedWeight = useDebounce(displayWeight, 500)
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-unit-system',
     'IMPERIAL'
   )
+  const [displayWeight, setDisplayWeight] = useState(() =>
+    toDisplay(userWeightInKg, unitSystem).toString()
+  )
+  const debouncedWeight = useDebounce(displayWeight, 500)
   const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'MALE')
 
   useEffect(() => {
