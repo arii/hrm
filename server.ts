@@ -77,10 +77,7 @@ app
     // Run pruning once on startup
     hrmDataService.pruneOldData()
     // Schedule pruning to run daily
-    setInterval(
-      () => hrmDataService.pruneOldData(),
-      24 * 60 * 60 * 1000
-    ) // 24 hours
+    setInterval(() => hrmDataService.pruneOldData(), 24 * 60 * 60 * 1000) // 24 hours
 
     const server = createServer(expressApp)
 

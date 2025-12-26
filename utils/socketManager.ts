@@ -14,10 +14,7 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import {
-  sendWebSocketMessage,
-  ConnectionMonitor,
-} from './websocketUtils.js'
+import { sendWebSocketMessage, ConnectionMonitor } from './websocketUtils.js'
 import logger from './logger.js'
 import { serviceContainer } from '../lib/serviceContainer.js'
 import { hrmDataService } from '../services/hrmDataService.js'

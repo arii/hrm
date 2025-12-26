@@ -18,13 +18,11 @@ import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import {
-  HrmData,
   StateSnapshot,
   ClientCommandMessageSchema,
   ExtWebSocket,
 } from '../../types/websocket'
 import {
-  broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'

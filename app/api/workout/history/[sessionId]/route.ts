@@ -1,7 +1,7 @@
 // app/api/workout/history/[sessionId]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { hrmDataService } from '../../../../../services/hrmDataService'
-import logger from '../../../../../utils/logger'
+import { hrmDataService } from '../../../../../services/hrmDataService.js'
+import logger from '../../../../../utils/logger.js'
 
 export async function GET(
   _request: NextRequest,

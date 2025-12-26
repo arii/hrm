@@ -1,9 +1,9 @@
 // services/hrmDataService.ts
-import { db } from './database'
-import { Session, Measurement, SessionWithMeasurements } from '../types/hrm'
+import { db } from './database.js'
+import { Session, Measurement, SessionWithMeasurements } from '../types/hrm.js'
 import { Statement } from 'better-sqlite3'
 import { randomUUID } from 'crypto'
-import logger from '../utils/logger'
+import logger from '../utils/logger.js'
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -26,7 +26,10 @@ class HrmDataService {
       VALUES (?, ?, ?, ?)
     `)
     stmt.run(sessionId, session.userName, startTime, session.deviceId)
-    logger.info({ sessionId, userName: session.userName }, 'HRM session started.')
+    logger.info(
+      { sessionId, userName: session.userName },
+      'HRM session started.'
+    )
     return sessionId
   }
 
