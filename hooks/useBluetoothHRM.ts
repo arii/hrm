@@ -15,6 +15,7 @@ import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { cancellablePromise } from '@/utils/promise'
+import { Gender } from '@/types'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
@@ -145,7 +146,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const lastDataTime = useRef<number>(0)
   const deviceRef = useRef<BluetoothDevice | null>(null)
   const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
+  const userDetailsRef = useRef<{
+    name: string
+    age: number
+    weight?: number
+    gender?: Gender
+  } | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const connectToGattRef = useRef<
@@ -328,16 +334,21 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const heartRate = parseHeartRate(target.value!)
             lastDataTime.current = Date.now()
 
-            const { name, age } = userDetailsRef.current || {}
+            const {
+              name,
+              age,
+              weight,
+              gender,
+            } = userDetailsRef.current || {}
             const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
             }
-            if (typeof age === 'number') {
-              metadataData.age = age
-            }
+            if (typeof age === 'number') metadataData.age = age
+            if (typeof weight === 'number') metadataData.weight = weight
+            if (gender) metadataData.gender = gender
 
             const metadata: HrmMetadataUpdateMessage = {
               type: 'HRM_METADATA_UPDATE',
@@ -383,6 +394,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    *
    * @param {string} [userName] - The user's name for display.
    * @param {number} [userAge] - The user's age to calculate max heart rate.
+   * @param {number} [userWeightInKg] - The user's weight in kilograms.
+   * @param {Gender} [gender] - The user's gender.
    * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
    * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
    * device not found, user cancellation).
@@ -390,7 +403,12 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
    * @sideeffect Updates component state throughout the connection process.
    */
   const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
+    async (
+      userName?: string,
+      userAge?: number,
+      userWeightInKg?: number,
+      gender?: Gender
+    ): Promise<void> => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
@@ -398,6 +416,8 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       userDetailsRef.current = {
         name: userName || '',
         age: userAge || 0,
+        weight: userWeightInKg,
+        gender: gender,
       }
       if (statusRef.current.startsWith('Connected')) return
       if (connectionStatus !== 'Connected') {

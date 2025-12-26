@@ -7,12 +7,46 @@ import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { toKg, toDisplay } from '@/utils/units'
+import { Gender, MeasurementSystem } from '@/types'
+import { useState, useEffect } from 'react'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
-  const [userWeight, setUserWeight] = useLocalStorage('hrm-user-weight', '')
+  const [userWeightInKg, setUserWeightInKg] = useLocalStorage<number>(
+    'hrm-user-weight-kg',
+    70
+  )
+  const [displayWeight, setDisplayWeight] = useState('')
+  const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
+    'hrm-unit-system',
+    'IMPERIAL'
+  )
+  const [gender, setGender] = useLocalStorage<Gender>('hrm-user-gender', 'MALE')
+
+  useEffect(() => {
+    if (userWeightInKg) {
+      const converted = toDisplay(userWeightInKg, unitSystem)
+      setDisplayWeight(String(converted))
+    }
+  }, [userWeightInKg, unitSystem])
+
+  const handleDisplayWeightChange = (value: string) => {
+    setDisplayWeight(value)
+    const numValue = parseFloat(value)
+    if (!isNaN(numValue)) {
+      const kgValue = toKg(numValue, unitSystem)
+      setUserWeightInKg(kgValue)
+    }
+  }
+
+  const handleUnitSystemChange = (newUnit: MeasurementSystem) => {
+    if (newUnit) {
+      setUnitSystem(newUnit)
+    }
+  }
 
   const {
     connectAndStream,
@@ -36,7 +70,7 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    connectAndStream(userName, age, userWeightInKg, gender)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
@@ -68,8 +102,12 @@ export default function ConnectPage() {
       setUserAge={setUserAge}
       userHeight={userHeight}
       setUserHeight={setUserHeight}
-      userWeight={userWeight}
-      setUserWeight={setUserWeight}
+      userWeight={displayWeight}
+      setUserWeight={handleDisplayWeightChange}
+      unitSystem={unitSystem}
+      onUnitSystemChange={handleUnitSystemChange}
+      gender={gender}
+      setGender={setGender}
       isConnected={isConnected}
       deviceStatus={deviceStatusMessage}
       batteryLevel={batteryLevel}

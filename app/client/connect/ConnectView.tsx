@@ -6,6 +6,12 @@ import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
@@ -15,6 +21,7 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import { useState } from 'react'
+import { MeasurementSystem, Gender } from '@/types'
 
 const validate = (value: string, min: number, max: number, name: string) => {
   if (!value || value.trim() === '') {
@@ -38,6 +45,10 @@ interface ConnectViewProps {
   setUserHeight: (height: string) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  unitSystem: MeasurementSystem
+  onUnitSystemChange: (system: MeasurementSystem) => void
+  gender: Gender
+  setGender: (gender: Gender) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -67,6 +78,10 @@ export default function ConnectView({
   setUserHeight,
   userWeight,
   setUserWeight,
+  unitSystem,
+  onUnitSystemChange,
+  gender,
+  setGender,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -88,6 +103,11 @@ export default function ConnectView({
   const [ageError, setAgeError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+
+  const weightValidation =
+    unitSystem === 'IMPERIAL'
+      ? { min: 66, max: 440, unit: 'lbs' }
+      : { min: 30, max: 200, unit: 'kg' }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -137,6 +157,20 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_, newUnit) => onUnitSystemChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
             <TextField
               fullWidth
               label="Your Name"
@@ -182,8 +216,8 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Weight (kg)"
-              placeholder="e.g., 70"
+              label={`Your Weight (${unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'})`}
+              placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
               type="number"
               value={userWeight}
               onChange={(e) => {
@@ -192,12 +226,36 @@ export default function ConnectView({
                 }
               }}
               onBlur={(e) => {
-                setWeightError(validate(e.target.value, 30, 200, 'weight'))
+                setWeightError(
+                  validate(
+                    e.target.value,
+                    weightValidation.min,
+                    weightValidation.max,
+                    `weight in ${weightValidation.unit}`
+                  )
+                )
               }}
               error={!!weightError}
               helperText={weightError}
-              inputProps={{ min: 30, max: 200, 'aria-invalid': !!weightError }}
+              inputProps={{
+                min: weightValidation.min,
+                max: weightValidation.max,
+                'aria-invalid': !!weightError,
+              }}
             />
+            <FormControl fullWidth>
+              <InputLabel id="gender-select-label">Gender</InputLabel>
+              <Select
+                labelId="gender-select-label"
+                id="gender-select"
+                value={gender}
+                label="Gender"
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <MenuItem value="MALE">Male</MenuItem>
+                <MenuItem value="FEMALE">Female</MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
         ) : (
           <Box
