@@ -35,9 +35,10 @@ async function getPlaylistDetails(
     name: playlist.name,
     description: playlist.description,
     imageUrl:
-      playlist.images && playlist.images.length > 0
-        ? playlist.images[0]?.url ?? null
-        : null,
+      (playlist.images &&
+        playlist.images.length > 0 &&
+        playlist.images[0]?.url) ??
+      null,
     owner: playlist.owner?.display_name ?? null,
     trackCount: playlist.tracks?.total ?? 0,
   })

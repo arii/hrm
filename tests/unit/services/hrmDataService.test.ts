@@ -1,9 +1,9 @@
 /**
  * @jest-environment-node
  */
-import { initDb } from '../../../lib/db.js'
-import { WorkoutSession } from '../../../types/workout.js'
-import db from '../../../lib/db.js'
+import { initDb } from '@/lib/db.js'
+import { WorkoutSession } from '@/types/workout.js'
+import db from '@/lib/db.js'
 
 let hrmDataService: any
 
@@ -11,7 +11,7 @@ beforeAll(async () => {
   // Initialize the in-memory database for tests before importing the service
   initDb()
   // Dynamically import the service after the database is initialized
-  hrmDataService = await import('../../../services/hrmDataService.js')
+  hrmDataService = await import('@/services/hrmDataService.js')
 })
 
 // Clear the database after each test
@@ -37,7 +37,15 @@ describe('hrmDataService', () => {
       session.id,
       userId
     )
-    expect(retrievedSession).toEqual(expect.objectContaining(session))
+    expect(retrievedSession).toEqual(
+      expect.objectContaining({
+        id: session.id,
+        name: session.name,
+        duration: session.duration,
+        avgHr: session.avgHr,
+        maxHr: session.maxHr,
+      })
+    )
   })
 
   test('should return null for a non-existent session', async () => {

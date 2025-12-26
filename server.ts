@@ -3,10 +3,8 @@ import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
 import { closeDb, initDb } from './lib/db.js'
-import { env } from './lib/env.js' // New import
-import { AppServices, createServices } from './lib/services.js' // New import
-import { cleanupOldSessions } from './services/hrmDataService.js'
-import { WebSocketManager } from './lib/websocket.js' // New import
+import { env } from './lib/env.js'
+import { WebSocketManager } from './lib/websocket.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
@@ -27,13 +25,19 @@ app.prepare().then(async () => {
   // Initialize the database connection and schema
   initDb()
 
+  // Dynamically import services after DB initialization
+  const { createServices } = await import('./lib/services.js')
+  const { cleanupOldSessions } = await import(
+    './services/hrmDataService.js'
+  )
+
   // --- Scheduled Tasks ---
   const startScheduledTasks = () => {
     // Run once on startup
     cleanupOldSessions()
 
     // Schedule periodic cleanup
-    const cleanupIntervalHours = env.WORKOUT_DATA_CLEANUP_INTERVAL_HOURS
+    const cleanupIntervalHours = env.WORK_DATA_CLEANUP_INTERVAL_HOURS
     if (cleanupIntervalHours > 0) {
       setInterval(cleanupOldSessions, cleanupIntervalHours * 60 * 60 * 1000)
     }
@@ -99,7 +103,7 @@ app.prepare().then(async () => {
     })
 
     // Apply the rate limiters to specific routes
-    expressApp.use('/api/spotify/', spotifyApiLimiter)
+    expressApp..use('/api/spotify/', spotifyApiLimiter)
     expressApp.use('/api/internal/', internalApiLimiter)
     expressApp.use('/api/', generalApiLimiter)
   }
@@ -120,9 +124,7 @@ app.prepare().then(async () => {
   const wsManager = new WebSocketManager()
 
   // 2. Setup Services with Broadcaster
-  const services: AppServices = await createServices(
-    wsManager.createBroadcaster()
-  )
+  const services = await createServices(wsManager.createBroadcaster())
 
   // 3. Initialize Socket Logic (Controllers)
   const getUnifiedStateSnapshot = (): StateSnapshot => ({

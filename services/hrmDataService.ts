@@ -1,8 +1,8 @@
-import db from '../lib/db.js'
-import logger from '../utils/logger.js'
-import { WorkoutSession, WorkoutSessionSummary } from '../types/workout.js'
-import { StmtCache } from '../lib/stmtCache.js'
-import { env } from '../lib/env.js'
+import db from '@/lib/db.js'
+import logger from '@/utils/logger.js'
+import { WorkoutSession, WorkoutSessionSummary } from '@/types/workout.js'
+import { StmtCache } from '@/lib/stmtCache.js'
+import { env } from '@/lib/env.js'
 
 const STATEMENTS = {
   // Read operations
@@ -87,10 +87,14 @@ export const getSessionDetails = async (
       return null
     }
 
+    const sessionData = JSON.parse(row.data)
+    // Ensure userId is not in the returned session data
+    delete sessionData.userId
+
     return {
       id: row.id,
       date: row.date,
-      ...JSON.parse(row.data),
+      ...sessionData,
     }
   } catch (error) {
     logger.error('Failed to get session details from DB', {
