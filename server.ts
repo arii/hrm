@@ -8,11 +8,14 @@ import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
-import { checkTimerService, checkWebSocketService, checkRedis } from './lib/healthCheck.js'
+import {
+  checkTimerService,
+  checkWebSocketService,
+  checkRedis,
+} from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
-import { redisClient } from './lib/redis.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',

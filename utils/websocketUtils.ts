@@ -12,33 +12,37 @@ import logger from './logger.js'
 import { redisClient } from '../lib/redis.js'
 import { env } from '../lib/env.js'
 
-const redisSubscriber = redisClient.duplicate();
+const redisSubscriber = redisClient.duplicate()
 
 /**
  * Initializes the Redis-backed broadcaster for a given WebSocket server instance.
  * Each server instance will subscribe to the Redis channel and broadcast messages
  * to its own set of connected clients.
  *
+ * @param wss The WebSocketServer instance for this server node.
  */
-export const initBroadcaster = (): void => {
+export const initBroadcaster = (wss: WebSocketServer): void => {
   redisSubscriber.subscribe(env.BROADCAST_CHANNEL, (err) => {
     if (err) {
-      logger.error({ err }, 'Failed to subscribe to Redis broadcast channel');
-      process.exit(1);
+      logger.error({ err }, 'Failed to subscribe to Redis broadcast channel')
+      process.exit(1)
     } else {
-      logger.info({ channel: env.BROADCAST_CHANNEL }, 'Subscribed to Redis broadcast channel');
+      logger.info(
+        { channel: env.BROADCAST_CHANNEL },
+        'Subscribed to Redis broadcast channel'
+      )
     }
-  });
+  })
 
   redisSubscriber.on('message', (channel, message) => {
     if (channel === env.BROADCAST_CHANNEL) {
       try {
         // This is the "local" broadcast to clients connected to this specific instance.
         wss.clients.forEach((client) => {
-          const extClient = client as ExtWebSocket;
+          const extClient = client as ExtWebSocket
           if (extClient.readyState === WebSocket.OPEN) {
             try {
-              extClient.send(message); // message is already a string
+              extClient.send(message) // message is already a string
             } catch (error) {
               logger.error(
                 {
@@ -47,17 +51,19 @@ export const initBroadcaster = (): void => {
                   origin: 'redis-broadcast-listener',
                 },
                 'Failed to broadcast WebSocket message to a client from Redis.'
-              );
+              )
             }
           }
-        });
+        })
       } catch (error) {
-        logger.error({ error, message }, 'Failed to parse or broadcast message from Redis');
+        logger.error(
+          { error, message },
+          'Failed to parse or broadcast message from Redis'
+        )
       }
     }
-  });
-};
-
+  })
+}
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
@@ -101,16 +107,13 @@ export const sendWebSocketMessage = (
  * @param message The `ServerMessage` object to broadcast.
  * @param origin Optional identifier of the calling service for contextual logging.
  */
-export const broadcast = (
-  message: ServerMessage,
-  origin?: string
-): void => {
-    try {
-        const messageString = JSON.stringify(message);
-        redisClient.publish(env.BROADCAST_CHANNEL, messageString);
-      } catch (error) {
-        logger.error({ error, origin }, 'Failed to publish message to Redis');
-      }
+export const broadcast = (message: ServerMessage, origin?: string): void => {
+  try {
+    const messageString = JSON.stringify(message)
+    redisClient.publish(env.BROADCAST_CHANNEL, messageString)
+  } catch (error) {
+    logger.error({ error, origin }, 'Failed to publish message to Redis')
+  }
 }
 
 /**

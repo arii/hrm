@@ -8,7 +8,6 @@ import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
   SpotifyCommandMessage,
-  SpotifyExecutionMessage,
   InitialStateSnapshotPayload,
   ServerMessage,
   StateSnapshot,
@@ -52,8 +51,7 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
-  initBroadcaster();
-
+  initBroadcaster(wss)
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket

@@ -10,8 +10,8 @@ import { broadcast } from '../../../utils/websocketUtils'
 
 // Mock the broadcast function
 jest.mock('../../../utils/websocketUtils', () => ({
-    broadcast: jest.fn(),
-}));
+  broadcast: jest.fn(),
+}))
 
 // Use fake timers to control setInterval
 jest.useFakeTimers()

@@ -1,4 +1,3 @@
-import { ServerMessage } from '../types/websocket.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import TabataTimer from '../services/tabataTimer.js'
 import { SpotifyService } from '../types/interfaces.js'

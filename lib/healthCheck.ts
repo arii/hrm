@@ -1,11 +1,11 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
-import { checkRedisConnection } from './redis'
+import { checkRedisConnection } from './redis.js'
 
 // Individual health check functions
 export async function checkRedis() {
-    return await checkRedisConnection();
+  return await checkRedisConnection()
 }
 
 export function checkMemoryUsage() {

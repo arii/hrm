@@ -84,8 +84,8 @@ import { ServerMessage } from '../../types/websocket'
 import { broadcast } from '../../utils/websocketUtils'
 
 jest.mock('../../utils/websocketUtils', () => ({
-    broadcast: jest.fn(),
-}));
+  broadcast: jest.fn(),
+}))
 
 describe('SpotifyPolling Service', () => {
   let spotifyService: SpotifyPolling
@@ -107,9 +107,9 @@ describe('SpotifyPolling Service', () => {
 
     broadcastedStates = []
     ;(broadcast as jest.Mock).mockImplementation((message: ServerMessage) => {
-        if (message.type === 'SPOTIFY_UPDATE') {
-            broadcastedStates.push(message.payload)
-        }
+      if (message.type === 'SPOTIFY_UPDATE') {
+        broadcastedStates.push(message.payload)
+      }
     })
 
     // Initialize the service and await its creation, which includes SDK setup

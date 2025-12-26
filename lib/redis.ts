@@ -1,9 +1,10 @@
-import Redis from 'ioredis';
-import { env } from './env';
-import logger from '../utils/logger';
+import Redis from 'ioredis'
+import { env } from './env'
+import logger from '../utils/logger'
 
-let redis: Redis;
-let connectionStatus: 'connecting' | 'connected' | 'error' | 'closed' = 'connecting';
+let redis: Redis
+let connectionStatus: 'connecting' | 'connected' | 'error' | 'closed' =
+  'connecting'
 
 const getRedisClient = (): Redis => {
   if (!redis) {
@@ -11,37 +12,40 @@ const getRedisClient = (): Redis => {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        logger.info({ attempt: times, delay }, 'Reconnecting to Redis...');
-        return delay;
+        const delay = Math.min(times * 50, 2000)
+        logger.info({ attempt: times, delay }, 'Reconnecting to Redis...')
+        return delay
       },
-    });
+    })
 
     redis.on('connect', () => {
-      logger.info('Connected to Redis');
-      connectionStatus = 'connected';
-    });
+      logger.info('Connected to Redis')
+      connectionStatus = 'connected'
+    })
 
     redis.on('error', (err) => {
-      logger.error({ err }, 'Redis connection error');
-      connectionStatus = 'error';
-    });
+      logger.error({ err }, 'Redis connection error')
+      connectionStatus = 'error'
+    })
 
     redis.on('close', () => {
-        logger.info('Redis connection closed');
-        connectionStatus = 'closed';
-    });
+      logger.info('Redis connection closed')
+      connectionStatus = 'closed'
+    })
   }
-  return redis;
-};
+  return redis
+}
 
-export const redisClient = getRedisClient();
+export const redisClient = getRedisClient()
 
-export const checkRedisConnection = async (): Promise<{ healthy: boolean; status: string }> => {
-    try {
-        await redisClient.ping();
-        return { healthy: true, status: connectionStatus };
-    } catch (error) {
-        return { healthy: false, status: 'error' };
-    }
-};
+export const checkRedisConnection = async (): Promise<{
+  healthy: boolean
+  status: string
+}> => {
+  try {
+    await redisClient.ping()
+    return { healthy: true, status: connectionStatus }
+    } catch (_error) {
+    return { healthy: false, status: 'error' }
+  }
+}

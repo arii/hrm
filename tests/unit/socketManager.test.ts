@@ -39,7 +39,7 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
-import { broadcast } from '../../utils/websocketUtils.js';
+import { broadcast } from '../../utils/websocketUtils.js'
 
 // Mock ConnectionMonitor and other utils
 jest.mock('../../utils/websocketUtils.js', () => ({
@@ -226,8 +226,9 @@ describe('WebSocket Manager', () => {
       // Check the last broadcasted state
       jest.runOnlyPendingTimers()
       expect(broadcast).toHaveBeenCalled()
-      const lastCall =
-        (broadcast as jest.Mock).mock.calls[(broadcast as jest.Mock).mock.calls.length - 1]
+      const lastCall = (broadcast as jest.Mock).mock.calls[
+        (broadcast as jest.Mock).mock.calls.length - 1
+      ]
       const finalPayload: HrmData[] = lastCall[0].payload
       const clientData = finalPayload.find((c) => c.calories > 0)
 

@@ -32,8 +32,8 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
 import { broadcast } from '../../utils/websocketUtils'
 
 jest.mock('../../utils/websocketUtils', () => ({
-    broadcast: jest.fn(),
-}));
+  broadcast: jest.fn(),
+}))
 
 describe('Services Integration', () => {
   let tabataTimer: TabataTimer
@@ -48,7 +48,7 @@ describe('Services Integration', () => {
 
     // Create broadcast function that collects messages
     ;(broadcast as jest.Mock).mockImplementation((message: ServerMessage) => {
-        broadcastedMessages.push(message)
+      broadcastedMessages.push(message)
     })
 
     // Mock TokenManager to return a valid token

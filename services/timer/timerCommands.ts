@@ -3,7 +3,6 @@
  * Encapsulates all state-mutating operations (commands) for the timer.
  * This class directly modifies the state object and triggers broadcasts.
  */
-import { ServerMessage } from '../../types/websocket'
 import { TimerMode } from '../../types/core'
 import {
   START_COUNTDOWN_DURATION,
@@ -22,10 +21,7 @@ export class TimerCommands {
    * @param {DualModeTimerState} state The timer state object to mutate.
    * @param {TimerQueries} queries The queries instance for getting public state.
    */
-  constructor(
-    state: DualModeTimerState,
-    queries: TimerQueries
-  ) {
+  constructor(state: DualModeTimerState, queries: TimerQueries) {
     this.state = state
     this.queries = queries
   }
