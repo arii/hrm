@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -9,13 +9,13 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
-import { toKg, toDisplay } from '../../../utils/units'
+import { toKg } from '../../../utils/units'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
-  const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
     'MALE'
@@ -26,13 +26,6 @@ export default function ConnectPage() {
   )
 
   const [displayWeight, setDisplayWeight] = useState('')
-
-  useEffect(() => {
-    const kgValue = parseFloat(weightInKg)
-    if (!isNaN(kgValue)) {
-      setDisplayWeight(toDisplay(kgValue, unitSystem).toString())
-    }
-  }, [weightInKg, unitSystem])
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)

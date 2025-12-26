@@ -226,9 +226,7 @@ export default function ConnectView({
               label={`Your Weight (${
                 unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
               })`}
-              placeholder={
-                unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'
-              }
+              placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
               type="number"
               value={userWeight}
               onChange={(e) => {

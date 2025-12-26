@@ -23,7 +23,10 @@ export const toKg = (value: number, system: MeasurementSystem): number => {
  * @param system The target measurement system.
  * @returns The display value, rounded to one decimal place.
  */
-export const toDisplay = (kgValue: number, system: MeasurementSystem): number => {
+export const toDisplay = (
+  kgValue: number,
+  system: MeasurementSystem
+): number => {
   const displayValue = system === 'IMPERIAL' ? kgValue * KG_TO_LBS : kgValue
   return parseFloat(displayValue.toFixed(1))
 }
