@@ -1,5 +1,6 @@
 // server.ts (Refactored)
 import express from 'express'
+import 'express-async-errors'
 import { createServer } from 'http'
 import next from 'next'
 import { env } from './lib/env.js' // New import
@@ -134,7 +135,22 @@ app.prepare().then(async () => {
 
   expressApp.use((req, res) => handle(req, res))
 
-  // 5. Upgrade Handling
+  // 5. Global Error Handler (must be the last middleware)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  expressApp.use(
+    (
+      err: Error,
+      _req: express.Request,
+      res: express.Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _next: express.NextFunction
+    ) => {
+      logger.error(err, 'An unhandled error occurred in an Express route')
+      res.status(500).send('Internal Server Error')
+    }
+  )
+
+  // 6. Upgrade Handling
   const wsConnections = new Map<string, number>()
   const WS_MAX_CONNECTIONS = 5
 
