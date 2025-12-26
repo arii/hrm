@@ -14,6 +14,7 @@ For manual setup, the project includes a script to ensure a consistent environme
 ```
 
 This script will:
+
 1.  Create a `.env.local` file from the example if one doesn't exist.
 2.  Install all dependencies using `pnpm`.
 
@@ -47,6 +48,10 @@ The primary focus of ongoing development is to enhance the user experience and i
 - **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
+### API Validation
+
+For details on how to validate API requests, please see the [API Validation Guide](./docs/api-validation.md).
+
 ## Completed Milestones
 
 - **Tabata Timer Refactoring**: The `TabataTimer` service was successfully refactored to support both stopwatch and Tabata modes with a more robust and maintainable architecture.
@@ -66,6 +71,7 @@ pnpm run knip
 ```
 
 If Knip reports unused dependencies, files, or exports, please take one of the following actions:
+
 - **Remove the code**: If the reported item is genuinely unused, remove it from the codebase.
 - **Update the configuration**: If the item is incorrectly reported (e.g., it's used indirectly), update the `knip.ts` configuration file to ignore it. Add a comment explaining why the ignore rule is necessary.
 
