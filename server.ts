@@ -1,4 +1,5 @@
 // server.ts (Refactored)
+import 'express-async-errors';
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
