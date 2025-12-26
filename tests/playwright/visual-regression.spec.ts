@@ -149,7 +149,7 @@ test.describe('Visual Regression Tests', () => {
   })
 
   test('Dashboard with active timer', async () => {
-    await controlPage.reload();
+    await controlPage.reload()
     // Wait for control page to be fully loaded - check for Timer Mode text
     await expect(controlPage.getByText('Timer Mode')).toBeVisible({
       timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
@@ -210,7 +210,7 @@ test.describe('Visual Regression Tests', () => {
     await mockPage.getByRole('button', { name: 'Zone 4' }).click()
     await expect(mockPage.getByLabel('Current BPM')).toHaveValue('155')
 
-    await waitForWebSocketConnection(mockPage);
+    await waitForWebSocketConnection(mockPage)
     await mockPage.click('button:has-text("START")')
     // Wait for WebSocket to connect and user to be visible
     await dashboardPage.waitForSelector(
