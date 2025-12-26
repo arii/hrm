@@ -208,7 +208,6 @@ const SpotifyDisplay = () => {
     sendVolumeCommand(newVolume) // Send command with the new volume
   }, [isMuted, state.lastVolume, sendVolumeCommand])
 
-
   // Effect to auto-select the active device
   useEffect(() => {
     const devices = spotifyData.devices || []
