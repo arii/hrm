@@ -29,6 +29,25 @@ env:
   LOG_TRUNCATE_BYTES: 20000
 
 jobs:
+  dependency-check:
+    name: 📦 Dependency Check
+    runs-on: self-hosted
+    if: "contains(github.event.pull_request.labels.*.name, 'dependencies')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Check for lockfile changes
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.ref }})
+          if echo "$CHANGED_FILES" | grep -q "package.json" && ! echo "$CHANGED_FILES" | grep -q "pnpm-lock.yaml"; then
+            echo "Error: package.json was changed but pnpm-lock.yaml was not."
+            exit 1
+          fi
   # ===========================================================================
   # SINGLE JOB: SETUP AND ALL TESTS
   # Sets up environment and runs all quality checks, tests in one job
