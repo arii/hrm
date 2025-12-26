@@ -59,11 +59,11 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
-  test('npm run dev should start and listen', async () => {
+  test('pnpm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
-    const devServer = spawn('npm', ['run', 'dev'], {
+    const devServer = spawn('pnpm', ['run', 'dev'], {
       detached: true, // Use detached to create a process group
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
@@ -108,7 +108,7 @@ test.describe('Infrastructure & Scripts', () => {
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 
-    const prodServer = spawn('./scripts/start-production.sh', [], {
+    const prodServer = spawn('./start-production.sh', [], {
       detached: true,
       stdio: 'pipe',
       env,
