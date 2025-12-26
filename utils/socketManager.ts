@@ -52,7 +52,7 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
-  initBroadcaster(wss);
+  initBroadcaster();
 
 
   wss.on('connection', (ws: WebSocket) => {

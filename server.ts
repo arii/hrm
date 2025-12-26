@@ -8,7 +8,7 @@ import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
-import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
+import { checkTimerService, checkWebSocketService, checkRedis } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
@@ -121,11 +121,13 @@ app.prepare().then(async () => {
   expressApp.get('/api/internal/health/services', async (_req, res) => {
     const timerCheck = checkTimerService(services.tabataService)
     const wsCheck = await checkWebSocketService()
+    const redisCheck = await checkRedis()
 
-    const healthy = timerCheck.healthy && wsCheck.healthy
+    const healthy = timerCheck.healthy && wsCheck.healthy && redisCheck.healthy
     const details = {
       timer: timerCheck,
       websocket: wsCheck,
+      redis: redisCheck,
     }
 
     res.status(200).json({ healthy, details })

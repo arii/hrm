@@ -1,8 +1,13 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
 import TabataTimer from '../services/tabataTimer'
+import { checkRedisConnection } from './redis'
 
 // Individual health check functions
+export async function checkRedis() {
+    return await checkRedisConnection();
+}
+
 export function checkMemoryUsage() {
   const memUsage = process.memoryUsage()
   const memUsageMB = memUsage.heapUsed / 1024 / 1024

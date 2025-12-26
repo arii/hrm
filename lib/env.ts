@@ -24,6 +24,7 @@ const envSchema = z.object({
     .default('10000')
     .transform(Number),
   REDIS_URL: z.string().url().min(1).default('redis://localhost:6379'),
+  BROADCAST_CHANNEL: z.string().min(1).default('websocket-broadcast'),
 })
 
 export const env = envSchema.parse(process.env)

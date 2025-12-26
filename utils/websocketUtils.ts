@@ -10,8 +10,8 @@ import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
 import logger from './logger.js'
 import { redisClient } from '../lib/redis.js'
+import { env } from '../lib/env.js'
 
-const BROADCAST_CHANNEL = 'websocket-broadcast';
 const redisSubscriber = redisClient.duplicate();
 
 /**
@@ -19,20 +19,19 @@ const redisSubscriber = redisClient.duplicate();
  * Each server instance will subscribe to the Redis channel and broadcast messages
  * to its own set of connected clients.
  *
- * @param wss The WebSocketServer instance for this server node.
  */
-export const initBroadcaster = (wss: WebSocketServer): void => {
-  redisSubscriber.subscribe(BROADCAST_CHANNEL, (err) => {
+export const initBroadcaster = (): void => {
+  redisSubscriber.subscribe(env.BROADCAST_CHANNEL, (err) => {
     if (err) {
       logger.error({ err }, 'Failed to subscribe to Redis broadcast channel');
       process.exit(1);
     } else {
-      logger.info({ channel: BROADCAST_CHANNEL }, 'Subscribed to Redis broadcast channel');
+      logger.info({ channel: env.BROADCAST_CHANNEL }, 'Subscribed to Redis broadcast channel');
     }
   });
 
   redisSubscriber.on('message', (channel, message) => {
-    if (channel === BROADCAST_CHANNEL) {
+    if (channel === env.BROADCAST_CHANNEL) {
       try {
         // This is the "local" broadcast to clients connected to this specific instance.
         wss.clients.forEach((client) => {
@@ -108,7 +107,7 @@ export const broadcast = (
 ): void => {
     try {
         const messageString = JSON.stringify(message);
-        redisClient.publish(BROADCAST_CHANNEL, messageString);
+        redisClient.publish(env.BROADCAST_CHANNEL, messageString);
       } catch (error) {
         logger.error({ error, origin }, 'Failed to publish message to Redis');
       }
