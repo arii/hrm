@@ -76,4 +76,24 @@ describe('PlaylistSelector', () => {
 
     expect(onPlaylistPlay).toHaveBeenCalledWith('spotify:playlist:3')
   })
+  it('should render playlist items with valid links', async () => {
+    render(
+      <PlaylistSelector
+        onPlaylistSelected={jest.fn()}
+        onPlaylistPlay={jest.fn()}
+      />
+    )
+
+    // Wait for the playlists to be fetched and rendered
+    await waitFor(() => {
+      expect(screen.getByText('Chill Hits')).toBeInTheDocument()
+    })
+
+    // Check that all rendered playlist links are valid
+    const links = screen.getAllByRole('link')
+    links.forEach((link) => {
+      expect(link).toHaveAttribute('href')
+      expect(link.getAttribute('href')).not.toContain('undefined')
+    })
+  })
 })
