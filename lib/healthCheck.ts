@@ -1,6 +1,6 @@
 // lib/healthCheck.ts
 import { WebSocket } from 'ws'
-import TabataTimer from '../services/tabataTimer'
+import TabataTimer from '../services/tabataTimer.js'
 import { checkRedisConnection } from './redis.js'
 
 // Individual health check functions

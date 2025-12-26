@@ -1,6 +1,6 @@
 import Redis from 'ioredis'
-import { env } from './env'
-import logger from '../utils/logger'
+import { env } from './env.js';
+import logger from '../utils/logger.js';
 
 let redis: Redis
 let connectionStatus: 'connecting' | 'connected' | 'error' | 'closed' =
@@ -45,7 +45,7 @@ export const checkRedisConnection = async (): Promise<{
   try {
     await redisClient.ping()
     return { healthy: true, status: connectionStatus }
-    } catch (_error) {
+  } catch (_error) {
     return { healthy: false, status: 'error' }
   }
 }
