@@ -1,11 +1,12 @@
 import js from '@eslint/js'
-import nextPlugin from 'eslint-config-next/core-web-vitals.js'
+import nextPlugin from 'eslint-config-next/core-web-vitals'
 import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
+import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react' // Explicitly import the React plugin
 
-export default [
+export default defineConfig([
   // 1. GLOBAL IGNORES
   {
     ignores: [
@@ -28,7 +29,7 @@ export default [
   ...tseslint.configs.recommended,
 
   // 3. Next.js Configuration (includes React/React Hooks rules)
-  nextPlugin,
+  ...nextPlugin,
 
   // 4. Explicit React Configuration for Clarity
   {
