@@ -23,6 +23,7 @@ export default function MockPage() {
   const [name, setName] = useState('Mock User')
   const [age, setAge] = useState(30)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
+  const [isInitialMetadataSent, setIsInitialMetadataSent] = useState(false)
 
   const isStreaming = intervalId !== null
   const maxHr = 220 - age
@@ -68,8 +69,11 @@ export default function MockPage() {
   // or when the user explicitly saves settings. For this mock, we send it
   // on every change to the local state for simplicity and immediate feedback.
   useEffect(() => {
-    sendMetadataPacket()
-  }, [sendMetadataPacket])
+    if (!isInitialMetadataSent) {
+      sendMetadataPacket()
+      setIsInitialMetadataSent(true)
+    }
+  }, [sendMetadataPacket, isInitialMetadataSent])
 
   const startStreaming = () => {
     if (isStreaming || connectionStatus !== 'Connected') return
