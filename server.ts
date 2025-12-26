@@ -131,9 +131,7 @@ app.prepare().then(async () => {
     res.status(200).json({ healthy, details })
   })
 
-  expressApp.use((req, res) => {
-    return handle(req, res)
-  })
+  expressApp.use((req, res) => handle(req, res))
 
   // 5. Upgrade Handling
   const wsConnections = new Map<string, number>()

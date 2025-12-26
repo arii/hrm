@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 import { SpotifyTokenManager } from '../../services/spotifyTokenManager'
 import { SpotifyData } from '../../types/websocket'
+import logger from '@/utils/logger'
 import { SpotifyApi } from '@spotify/web-api-ts-sdk'
 
 // Mock the logger
@@ -23,6 +24,13 @@ jest.mock('../../lib/env.js', () => ({
     NEXTAUTH_SECRET: 'test-secret',
     TESTING: true,
   },
+}))
+
+jest.mock('@/utils/logger', () => ({
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
 }))
 
 // Mock the SpotifyTokenManager module
@@ -219,6 +227,15 @@ describe('SpotifyPolling Service', () => {
       await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
       expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
     })
+
+    it('should return false on failed volume change', async () => {
+      mockPlayer.setPlaybackVolume.mockImplementation(() =>
+        Promise.reject(new Error('API Error'))
+      )
+      await spotifyService.handleCommand('SET_VOLUME', { volume: 50 })
+      expect(mockPlayer.setPlaybackVolume).toHaveBeenCalledWith(50, undefined)
+      expect(logger.error).toHaveBeenCalled()
+    })
   })
 
   describe('Device Management', () => {
@@ -408,6 +425,7 @@ describe('SpotifyPolling Service', () => {
       ).resolves.not.toThrow()
 
       expect(mockPlayer.startResumePlayback).toHaveBeenCalled()
+      expect(logger.error).toHaveBeenCalled()
     })
 
     it('should handle 401 unauthorized responses', async () => {
@@ -424,6 +442,9 @@ describe('SpotifyPolling Service', () => {
 
       // Should attempt to handle 401 without crashing
       expect(() => spotifyService.getState()).not.toThrow()
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Spotify token expired during polling. Attempting refresh.'
+      )
       expect(refreshSpy).toHaveBeenCalled()
     })
 
@@ -460,6 +481,11 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.startResumePlayback.mockRejectedValue(errorResponse)
 
       await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+
+      expect(logger.error).toHaveBeenCalledWith(
+        { command: 'PLAY', response: 'Invalid JSON' },
+        'Error executing Spotify command'
+      )
     })
 
     it('should handle unexpected errors in error logging safely', async () => {
@@ -472,6 +498,11 @@ describe('SpotifyPolling Service', () => {
       mockPlayer.startResumePlayback.mockRejectedValue(badError)
 
       await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+
+      expect(logger.error).toHaveBeenCalledWith(
+        { command: 'PLAY', err: expect.any(Error) },
+        'Could not read response body for failed Spotify command'
+      )
     })
 
     it('should handle direct SyntaxError gracefully (suppress logs)', async () => {
@@ -480,6 +511,12 @@ describe('SpotifyPolling Service', () => {
       )
 
       await spotifyService.handleCommand('PLAY', { deviceId: 'device_id' })
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        { command: 'PLAY' },
+        'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
+      )
+      expect(logger.error).not.toHaveBeenCalled()
     })
   })
 })

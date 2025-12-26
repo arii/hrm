@@ -21,6 +21,7 @@ import {
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
+import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
@@ -62,7 +63,7 @@ const initSocketManager = (
     })
 
     extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    console.info({ clientId: extWs.clientId }, 'WebSocket client connected')
+    logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
     const newClient: HrmStreamData = {
@@ -83,7 +84,7 @@ const initSocketManager = (
     })
 
     extWs.on('close', () => {
-      console.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       hrmDataRepository.deleteById(extWs.clientId)
       clientSessionState.delete(extWs.clientId)
       broadcastState()
@@ -135,7 +136,7 @@ const handleIncomingMessage = (
       }
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
-        console.info(
+        logger.info(
           { clientId, clientType: ws.clientType },
           'Client registered'
         )
@@ -219,7 +220,7 @@ const handleIncomingMessage = (
 
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
-        console.info(
+        logger.info(
           { clientId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
@@ -263,7 +264,7 @@ const handleIncomingMessage = (
       }
       default: {
         const unknownMessage = message as { type: unknown }
-        console.warn(
+        logger.warn(
           { clientId, type: unknownMessage.type },
           'Unknown message type received'
         )
@@ -272,12 +273,12 @@ const handleIncomingMessage = (
     }
   } catch (e) {
     if (e instanceof z.ZodError) {
-      console.error(
+      logger.error(
         { clientId, errors: e.issues },
         'WebSocket message validation failed'
       )
     } else {
-      console.error({ clientId, error: e }, 'Error processing incoming message')
+      logger.error({ clientId, error: e }, 'Error processing incoming message')
     }
   }
 }

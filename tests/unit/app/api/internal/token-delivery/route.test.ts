@@ -5,6 +5,16 @@ import { describe, expect, it, jest, beforeAll, afterAll } from '@jest/globals'
 import { POST } from '@/app/api/internal/token-delivery/route'
 import { NextRequest } from 'next/server'
 
+// Mock logger
+jest.mock('@/utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}))
+
 // Mock Service Container
 const mockSpotifyService = {
   isReady: jest.fn(),

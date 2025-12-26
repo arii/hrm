@@ -4,12 +4,10 @@ const config: KnipConfig = {
   entry: [
     'server.ts',
     'proxy.ts',
-    // Explicitly add Next.js App Router entry points
     'app/layout.tsx',
     'app/page.tsx',
     'app/main.tsx',
     'app/api/**/route.ts',
-    // Storybook entries
     'components/**/*.ts',
     'components/**/*.tsx',
     'constants/**/*.ts',

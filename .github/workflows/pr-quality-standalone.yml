@@ -156,7 +156,7 @@ jobs:
         id: knip
         run: |
           set -o pipefail
-          pnpm run knip 2>&1 | tee logs/knip-output.log
+          pnpm run lint:knip 2>&1 | tee logs/knip-output.log
         continue-on-error: true
 
       - name: Verify Build

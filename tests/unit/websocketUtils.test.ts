@@ -12,7 +12,19 @@ import {
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import { ConnectionMonitor } from '../../utils/websocketUtils'
+import logger from '../../utils/logger'
 import { ExtWebSocket } from '@/types/websocket'
+
+// Mock the logger to prevent console output during tests
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+}))
 
 // Mock the 'ws' module to control the WebSocket server and clients
 jest.mock('ws', () => ({
@@ -68,6 +80,10 @@ describe('ConnectionMonitor', () => {
   it('should start the monitoring interval', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     connectionMonitor.start()
+    expect(logger.info).toHaveBeenCalledWith(
+      { interval: WATCHDOG_INTERVAL },
+      'ConnectionMonitor started.'
+    )
     // Check if setInterval has been called
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
     expect(setIntervalSpy).toHaveBeenCalledWith(
@@ -81,6 +97,7 @@ describe('ConnectionMonitor', () => {
     connectionMonitor.start()
     connectionMonitor.stop()
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
+    expect(logger.info).toHaveBeenCalledWith('ConnectionMonitor stopped.')
   })
 
   it('should terminate a client if isAlive is false', () => {
@@ -93,6 +110,10 @@ describe('ConnectionMonitor', () => {
     jest.advanceTimersByTime(WATCHDOG_INTERVAL)
 
     expect(unresponsiveClient.terminate).toHaveBeenCalledTimes(1)
+    expect(logger.warn).toHaveBeenCalledWith(
+      { clientId: unresponsiveClient.clientId },
+      'Terminating stale WebSocket connection due to missed heartbeat.'
+    )
   })
 
   it('should NOT terminate a client if isAlive is true', () => {
@@ -151,6 +172,9 @@ describe('ConnectionMonitor', () => {
     connectionMonitor = new ConnectionMonitor(mockWss, WATCHDOG_INTERVAL)
     connectionMonitor.start()
     connectionMonitor.start() // Attempt to start again
+    expect(logger.warn).toHaveBeenCalledWith(
+      'ConnectionMonitor is already running.'
+    )
     expect(setIntervalSpy).toHaveBeenCalledTimes(1) // Should only be called once
   })
 
@@ -168,6 +192,10 @@ describe('ConnectionMonitor', () => {
     it('should fall back to default if provided interval is zero or negative', () => {
       const monitor = new ConnectionMonitor(mockWss, 0)
       monitor.start()
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.any(Object),
+        'Watchdog interval must be a positive integer. Using fallback.'
+      )
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
     })
 
@@ -182,6 +210,10 @@ describe('ConnectionMonitor', () => {
       process.env.WEBSOCKET_WATCHDOG_INTERVAL = 'invalid'
       const monitor = new ConnectionMonitor(mockWss)
       monitor.start()
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.any(Object),
+        'Invalid WEBSOCKET_WATCHDOG_INTERVAL. Using fallback.'
+      )
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000)
     })
 

@@ -8,8 +8,12 @@ import { v4 as uuidv4 } from 'uuid'
 /**
  * Handles the POST request to create a new user.
  *
+ * @param {Request} req - The incoming request.
+ * @param {object} context - The context object, containing the validated body.
+ * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
  * @param {Request} _req - The incoming request (unused).
- * @param {{ body: Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> }} context - The context object, containing the validated body.
+ * @param {object} context - The context object, containing the validated body.
+ * @param {Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>} context.body - The validated user profile data.
  * @returns {Promise<NextResponse>} A promise that resolves to the response.
  */
 async function createUser(
@@ -28,9 +32,6 @@ async function createUser(
   return NextResponse.json(newUser, { status: 201 })
 }
 
-export const POST: (
-  req: Request,
-  context: { params: unknown }
-) => Promise<NextResponse> = withValidation({
-  schema: CreateUserProfileSchema,
-})(createUser)
+export const POST = withValidation({ schema: CreateUserProfileSchema })(
+  createUser
+)

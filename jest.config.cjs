@@ -27,14 +27,12 @@ const config = {
     '!**/node_modules/**',
   ],
   transform: {
-    '^.+\\.(js|jsx)$': 'babel-jest',
     '^.+\\.mjs$': 'babel-jest', // Added to handle .mjs files if any
     '^.+\\.(ts|tsx)$': [
       'ts-jest',
       {
         useESM: true,
         tsconfig: {
-          jsx: 'react-jsx',
           module: 'ES2022',
           moduleResolution: 'bundler', // bundler is a better choice for modern apps
           esModuleInterop: true,
