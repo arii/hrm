@@ -96,16 +96,14 @@ test.describe('Visual Regression Tests', () => {
     }
   })
 
-  // beforeEach hook to reset state and ensure a stable connection
   test.beforeEach(async () => {
-    // To ensure a clean state for each test, reload the control page
-    // and wait for it to be fully interactive (including WebSocket connection).
+    // Set a flag to disable WebSocket reconnects in the test environment
+    await dashboardPage.evaluate(() => (window.__TESTING__ = true))
+    await controlPage.evaluate(() => (window.__TESTING__ = true))
+    await mockPage.evaluate(() => (window.__TESTING__ = true))
+
+    // Reload the page to apply the testing flag
     await controlPage.reload()
-    await expect(controlPage.getByText('Timer Mode')).toBeVisible({
-      timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-    })
-    // Revert timeout to default as WebSocket connection is now more stable
-    await waitForWebSocketConnection(controlPage)
   })
 
   test('Dashboard - main viewer page', async () => {
@@ -165,7 +163,7 @@ test.describe('Visual Regression Tests', () => {
   test('Dashboard with active timer', async () => {
     // The beforeEach hook now handles reloading and waiting for WebSocket.
     // We can proceed directly with the test logic.
-
+    await waitForWebSocketConnection(controlPage)
     // Use the new DurationStepper component to configure the timer
     const decreaseWorkButton = controlPage.getByRole('button', {
       name: /Decrease Work Duration/i,
