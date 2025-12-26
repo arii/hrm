@@ -103,9 +103,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Node Deps
+      - name: Install Node Deps (For Gemini Direct)
         if: env.PROVIDER == 'gemini'
-        run: npm install -g tsx && npm ci
+        run: |
+          pnpm install -g tsx
+          pnpm install --frozen-lockfile
 
       - name: Execute Gemini Direct
         if: env.PROVIDER == 'gemini'
