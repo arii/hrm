@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/.."
 
 # Initialize NVM if it exists (for systems where Node is managed by NVM)
 export NVM_DIR="$HOME/.nvm"
@@ -40,4 +40,4 @@ echo "🚀 Starting HRM Production Server..."
 
 # Exec ensures the node process replaces the shell
 # allowing signals (SIGINT/SIGTERM) to reach the app
-exec node dist/server.mjs
+exec node dist/server.js

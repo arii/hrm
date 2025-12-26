@@ -10,9 +10,7 @@ const baseSchema = z.object({
   PORT: z.coerce.number().default(3000),
   HOST: z
     .string()
-    .default(
-      process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'
-    ),
+    .default(process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1'),
   NODE_ENV: z.enum(['development', 'production', 'test']),
   SPOTIFY_DEBUG: z.coerce.boolean().optional(),
   SPOTIFY_POLLING_INTERVAL_MS: z.coerce.number().default(3000),
@@ -20,9 +18,11 @@ const baseSchema = z.object({
   TESTING: z.string().optional(),
 })
 
-// Conditionally create a partial schema for the test environment
+// Conditionally create a partial schema for test or testing environments
 const schema =
-  process.env.NODE_ENV === 'test' ? baseSchema.partial() : baseSchema
+  process.env.NODE_ENV === 'test' || process.env.TESTING === 'true'
+    ? baseSchema.partial()
+    : baseSchema
 
 const parsedEnv = schema.safeParse(process.env)
 
@@ -33,15 +33,13 @@ if (!parsedEnv.success) {
   Object.keys(fieldErrors).forEach((field) => {
     // TypeScript now knows `field` is a key of `fieldErrors`
     console.error(
-      `- ${field}: ${(fieldErrors[field as keyof typeof fieldErrors] ?? []).join(
-        ', '
-      )}`
+      `- ${field}: ${(
+        fieldErrors[field as keyof typeof fieldErrors] ?? []
+      ).join(', ')}`
     )
   })
   process.exit(1)
 }
 
 // Cast the parsed data to the inferred type of the base schema.
-// This is safe because in non-test environments, the schema is strict,
-// and in test environments, the necessary variables are provided by the test script.
 export const env = parsedEnv.data as z.infer<typeof baseSchema>

@@ -338,60 +338,25 @@ This workspace is pre-configured for a seamless development experience with VS C
 
 ## Environment Variables
 
-This project uses Zod to validate all server-side environment variables at startup. If any required variables are missing or invalid, the server will **exit immediately** with a descriptive error message, following a "fail-fast" strategy. The canonical list of variables is defined in `lib/env.ts`.
-
-Create a `.env.local` file in the root directory and add the following variables:
+Create a `.env.local` file in the root directory for secrets:
 
 ```env
-# .env.local
-
-# Node Environment (development, production, or test)
-NODE_ENV=development
-
-# NextAuth.js configuration
-NEXTAUTH_URL=http://127.0.0.1:3000
-# Generate a secure secret with: openssl rand -base64 32
-NEXTAUTH_SECRET=your_random_secret_here
-
 # Spotify OAuth credentials (from developer.spotify.com/dashboard)
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
 
-# --- Optional ---
-
-# Server network settings
-# PORT=3000
-# HOST=127.0.0.1
-
-# Enable verbose logging for the Spotify service
-# SPOTIFY_DEBUG=true
+# NextAuth.js configuration
+NEXTAUTH_URL=http://127.0.0.1:3000
+NEXTAUTH_SECRET=your_random_secret_here
 ```
-
-### Required Variables
-
-| Variable                | Description                                                                                             |
-| ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`              | The runtime environment. Must be `development`, `production`, or `test`.                                |
-| `NEXTAUTH_URL`          | The full public URL of your application (e.g., `http://127.0.0.1:3000`).                                 |
-| `NEXTAUTH_SECRET`       | A long, random string used to encrypt session tokens.                                                   |
-| `SPOTIFY_CLIENT_ID`     | Your Spotify application's Client ID.                                                                   |
-| `SPOTIFY_CLIENT_SECRET` | Your Spotify application's Client Secret.                                                               |
-
-### Optional Variables
-
-| Variable          | Description                                                                    | Default                               |
-| ----------------- | ------------------------------------------------------------------------------ | ------------------------------------- |
-| `PORT`            | The port to run the server on.                                                 | `3000`                                |
-| `HOST`            | The hostname to bind the server to.                                            | `127.0.0.1` (dev), `0.0.0.0` (prod)   |
-| `SPOTIFY_DEBUG`   | Set to `true` to enable verbose logging for the Spotify Polling service.         | `false`                               |
 
 ### Spotify Setup
 
-1.  Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-2.  Add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
-3.  Copy the Client ID and Client Secret into your `.env.local` file.
-4.  Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
-5.  Restart the server and run `pnpm run verify:spotify` to test the connection.
+1. Create an app at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Add `http://127.0.0.1:3000/api/auth/callback/spotify` as a Redirect URI in the app settings.
+3. Copy the Client ID and Client Secret into your `.env.local` file.
+4. Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
+5. Restart the server and run `pnpm run verify:spotify` to test the connection.
 
 ### Audio System
 

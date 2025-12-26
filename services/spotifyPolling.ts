@@ -12,7 +12,6 @@ import {
   SpotifyTokenPayload,
 } from './spotifyTokenManager.js'
 import logger from '../utils/logger.js'
-import { env } from '../lib/env.js'
 import {
   handleSpotifyApiError,
   logSpotifyCommandError,
@@ -68,8 +67,8 @@ export class SpotifyPolling implements SpotifyService {
     logger.debug('Spotify Polling Service Initialized.')
 
     this.tokenManager = new SpotifyTokenManager(
-      env.SPOTIFY_CLIENT_ID,
-      env.SPOTIFY_CLIENT_SECRET
+      process.env.SPOTIFY_CLIENT_ID || '',
+      process.env.SPOTIFY_CLIENT_SECRET || ''
     )
   }
 
@@ -105,7 +104,7 @@ export class SpotifyPolling implements SpotifyService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
     const sdk = SpotifyApi.withAccessToken(
-      env.SPOTIFY_CLIENT_ID,
+      process.env.SPOTIFY_CLIENT_ID || '',
       tokenWithoutRefresh as AccessToken
     )
     // Wrap the SDK with our safe API to handle optional deviceIds correctly.
@@ -165,14 +164,19 @@ export class SpotifyPolling implements SpotifyService {
     if (this.pollInterval) return // Already running
 
     // Interval for currently playing track
-    const trackIntervalMs = env.SPOTIFY_POLLING_INTERVAL_MS
+    const trackIntervalMs = process.env.SPOTIFY_POLLING_INTERVAL_MS
+      ? parseInt(process.env.SPOTIFY_POLLING_INTERVAL_MS, 10)
+      : 3000
     this.pollInterval = setInterval(
       () => this.getCurrentlyPlaying(),
       trackIntervalMs
     )
 
     // Interval for available devices (less frequent)
-    const deviceIntervalMs = env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS
+    const deviceIntervalMs = parseInt(
+      process.env.SPOTIFY_DEVICE_POLLING_INTERVAL_MS || '10000',
+      10
+    )
     this.devicePollInterval = setInterval(
       () => this.refreshDevices(),
       deviceIntervalMs

@@ -25,19 +25,28 @@ import { ServerMessage, StateSnapshot } from './types/websocket.js'
 import logger from './utils/logger.js'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import rateLimit from 'express-rate-limit'
-import { env } from './lib/env.js'
 
-const port = env.PORT
-const hostname = env.HOST
-const dev = env.NODE_ENV !== 'production'
+const port: number = process.env.PORT ? +process.env.PORT : 3000 // Explicitly handle undefined and convert to number
+// Allow overriding bind address via the HOST env var for flexibility in CI/containers
+const hostname =
+  process.env.NODE_ENV === 'production'
+    ? '0.0.0.0'
+    : process.env.HOST || '127.0.0.1' // Bind to all interfaces in production
 
-// Zod validation in lib/env.ts handles all critical checks.
-// The server will not start if required variables are missing.
+const dev = process.env.NODE_ENV !== 'production'
+
+// === CRITICAL SECURITY CHECK ===
+// Ensure NEXTAUTH_SECRET is present in production to prevent runtime errors
+if (!dev && !process.env.NEXTAUTH_SECRET) {
+  console.error('FATAL: NEXTAUTH_SECRET environment variable is missing.')
+  console.error('This is mandatory for production security. Shutting down.')
+  process.exit(1)
+}
 
 const app = next({ dev, hostname, port })
 
 logger.info(`Starting server in ${dev ? 'development' : 'production'} mode`)
-logger.info(`Environment: NODE_ENV=${env.NODE_ENV}`)
+logger.info(`Environment: NODE_ENV=${process.env.NODE_ENV}`)
 logger.info(`NEXTAUTH_URL: ${getBaseURL()}`)
 logger.info(`Hostname: ${hostname}, Port: ${port}`)
 const nextRequestHandler = app.getRequestHandler()
