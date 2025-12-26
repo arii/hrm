@@ -1,0 +1,200 @@
+
+name: Gemini Coder
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      task_description:
+        description: 'The detailed description of the coding task.'
+        required: true
+      target_files:
+        description: 'Comma-separated list of files for the AI to consider.'
+        required: false
+      agent_provider:
+        description: 'The AI agent to use (jules or gemini).'
+        required: true
+        default: 'jules'
+        type: choice
+        options:
+          - jules
+          - gemini
+      branch_name:
+        description: 'Optional custom branch name.'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write # Required to read issue body
+
+jobs:
+  ai-developer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 'Context Setup: Set Agent Provider'
+        id: set_provider
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "AGENT_PROVIDER=${{ github.event.inputs.agent_provider }}" >> $GITHUB_ENV
+          elif [[ "${{ github.event.label.name }}" == "auto-code" ]]; then
+            # Default to jules for issue-triggered runs
+            echo "AGENT_PROVIDER=jules" >> $GITHUB_ENV
+          else
+            echo "Unsupported trigger or label. Exiting."
+            exit 1
+          fi
+
+      - name: 'Context Setup: Parse Issue Body'
+        if: github.event_name == 'issues'
+        id: parse_issue
+        run: |
+          # Save issue body to a file for easier parsing
+          echo "${{ github.event.issue.body }}" > issue_body.txt
+
+          # Extract Task Description
+          TASK_DESC=$(awk '/### Refactoring Task/{flag=1; next} /### Target Files/{flag=0} flag' issue_body.txt)
+          echo "task_description<<EOF" >> $GITHUB_OUTPUT
+          echo "$TASK_DESC" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Extract Target Files
+          TARGET_FILES=$(awk '/### Target Files/{flag=1; next} /### Custom Branch Name/{flag=0} flag' issue_body.txt | sed -e 's/^- //g' -e 's/`//g' | tr '\n' ',' | sed 's/,$//')
+          echo "target_files=$TARGET_FILES" >> $GITHUB_OUTPUT
+
+          # Extract Branch Name (optional)
+          BRANCH_NAME=$(grep 'branch-name:' issue_body.txt | cut -d '`' -f2)
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+      - name: 'Context Setup: Consolidate Inputs'
+        id: consolidate_inputs
+        run: |
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "PROMPT<<EOF" >> $GITHUB_ENV
+            echo "${{ steps.parse_issue.outputs.task_description }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "FILES=${{ steps.parse_issue.outputs.target_files }}" >> $GITHUB_ENV
+            echo "TITLE=${{ github.event.issue.title }}" >> $GITHUB_ENV
+            if [ -n "${{ steps.parse_issue.outputs.branch_name }}" ]; then
+              echo "BRANCH=${{ steps.parse_issue.outputs.branch_name }}" >> $GITHUB_ENV
+            else
+              BRANCH_SLUG=$(echo "${{ github.event.issue.title }}" | iconv -t ascii//TRANSLIT | sed -r 's/[^a-zA-Z0-9]+/-/g' | sed -r 's/^-+\|-+$//g' | tr '[:upper:]' '[:lower:]')
+              echo "BRANCH=ai/${BRANCH_SLUG}-${{ github.event.issue.number }}" >> $GITHUB_ENV
+            fi
+          else # workflow_dispatch
+            echo "PROMPT<<EOF" >> $GITHUB_ENV
+            echo "${{ github.event.inputs.task_description }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "FILES=${{ github.event.inputs.target_files }}" >> $GITHUB_ENV
+            TITLE_TEXT=$(echo "${{ github.event.inputs.task_description }}" | cut -c 1-50)
+            echo "TITLE=AI Task: $TITLE_TEXT" >> $GITHUB_ENV
+            if [ -n "${{ github.event.inputs.branch_name }}" ]; then
+              echo "BRANCH=${{ github.event.inputs.branch_name }}" >> $GITHUB_ENV
+            else
+              BRANCH_SLUG=$(echo "${{ github.event.inputs.task_description }}" | iconv -t ascii//TRANSLIT | sed -r 's/[^a-zA-Z0-9]+/-/g' | sed -r 's/^-+\|-+$//g' | tr '[:upper:]' '[:lower:]' | head -c 30)
+              echo "BRANCH=ai/${BRANCH_SLUG}-${{ github.run_id }}" >> $GITHUB_ENV
+            fi
+          fi
+
+      # --- Path A: Jules (Remote Agent) ---
+      - name: 'Jules: Prepare Prompt'
+        if: env.AGENT_PROVIDER == 'jules'
+        run: |
+          echo "Invoking Jules Agent..."
+          FULL_PROMPT="Task: ${{ env.PROMPT }}\n\nTarget Files:\n${{ env.FILES }}"
+          echo "FULL_PROMPT<<EOF" >> $GITHUB_ENV
+          echo -e "$FULL_PROMPT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: 'Jules: Setup Python'
+        if: env.AGENT_PROVIDER == 'jules'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 'Jules: Install Dependencies'
+        if: env.AGENT_PROVIDER == 'jules'
+        run: pip install requests
+
+      - name: 'Jules: Execute API Call'
+        if: env.AGENT_PROVIDER == 'jules'
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+        run: |
+          python3 .github/scripts/jules_ops.py \
+            --prompt "${{ env.FULL_PROMPT }}" \
+            --branch "${{ env.BRANCH }}" \
+            --title "${{ env.TITLE }}" \
+            --owner "${{ github.repository_owner }}" \
+            --repo-name "${{ github.event.repository.name }}"
+
+      # --- Path B: Gemini (Local Agent) ---
+      - name: 'Gemini: Prepare Prompt'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: |
+          echo "Invoking Gemini Agent..."
+          FULL_PROMPT="Task: ${{ env.PROMPT }}\n\nTarget Files:\n${{ env.FILES }}"
+          echo -e "$FULL_PROMPT" > prompt.txt
+
+      - name: 'Gemini: Setup pnpm'
+        if: env.AGENT_PROVIDER == 'gemini'
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: 'Gemini: Setup Node.js'
+        if: env.AGENT_PROVIDER == 'gemini'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 'Gemini: Install Dependencies'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: pnpm install --frozen-lockfile
+
+      - name: 'Gemini: Run AI Code Generation'
+        if: env.AGENT_PROVIDER == 'gemini'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          npx tsx scripts/gemini-client.ts \
+            --task-file "prompt.txt" \
+            --context "${{ env.FILES }}" \
+            --output "patch.diff"
+
+      - name: 'Gemini: Apply Patch'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: |
+          git checkout -b ${{ env.BRANCH }}
+          git apply patch.diff
+
+      - name: 'Gemini: Verify Changes'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: |
+          pnpm run lint -- --fix || echo "Lint fix failed, continuing..."
+          pnpm run build
+          # Add test run if applicable
+          # pnpm test
+
+      - name: 'Gemini: Create Pull Request'
+        if: env.AGENT_PROVIDER == 'gemini'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.ARI_PAT }}
+          commit-message: "feat(ai): ${{ env.TITLE }}"
+          title: ${{ env.TITLE }}
+          body: |
+            Automated pull request created by the Gemini Coder agent.
+
+            **Task:**
+            ${{ env.PROMPT }}
+
+            **Files Modified:**
+            ${{ env.FILES }}
+          branch: ${{ env.BRANCH }}
+          delete-branch: true
