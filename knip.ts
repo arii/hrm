@@ -20,7 +20,6 @@ const config: KnipConfig = {
     'services/**/*.ts',
     'tests/**/*.ts',
     'types/**/*.ts',
-    'utils/**/*.ts',
     'stories/**/*.ts',
     'stories/**/*.tsx',
     '.storybook/**/*.ts',

@@ -29,7 +29,7 @@ export default defineConfig([
   ...tseslint.configs.recommended,
 
   // 3. Next.js Configuration (includes React/React Hooks rules)
-  ...nextPlugin,
+  nextPlugin,
 
   // 4. Explicit React Configuration for Clarity
   {
