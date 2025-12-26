@@ -23,7 +23,9 @@ const AudioSettings = () => {
     }
     audioRef.current.volume = Math.min(Math.max(volume / 100, 0), 1)
     audioRef.current.currentTime = 0
-    audioRef.current.play().catch((err) => console.warn('Test sound failed:', err))
+    audioRef.current
+      .play()
+      .catch((err) => console.warn('Test sound failed:', err))
   }, [volume])
 
   return (
@@ -51,7 +53,11 @@ const AudioSettings = () => {
 
         <Stack spacing={2} alignItems="center">
           <Box sx={{ width: '100%', px: 2 }}>
-            <Typography variant="body2" sx={{ color: 'grey.400', mb: 1 }} id="volume-slider-label">
+            <Typography
+              variant="body2"
+              sx={{ color: 'grey.400', mb: 1 }}
+              id="volume-slider-label"
+            >
               Master Volume ({volume}%)
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">

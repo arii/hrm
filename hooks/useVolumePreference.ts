@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { audioManager } from '../utils/audioManager'
 
 const VOLUME_KEY = 'hrm-volume'
@@ -11,18 +11,22 @@ const useVolumePreference = (defaultVolume = 70) => {
   const [volume, setVolumeState] = useState(clampVolume(defaultVolume))
   const [isMuted, setMutedState] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const lastVolumeRef = useRef(clampVolume(defaultVolume));
+
 
   useEffect(() => {
     try {
       const storedVolume = window.localStorage.getItem(VOLUME_KEY)
       const storedMute = window.localStorage.getItem(MUTE_KEY)
 
-      if (storedVolume !== null) {
-        setVolumeState(clampVolume(Number(storedVolume)))
-      }
-      if (storedMute !== null) {
-        setMutedState(storedMute === 'true')
-      }
+      const preferredVolume = storedVolume !== null ? clampVolume(Number(storedVolume)) : clampVolume(defaultVolume);
+      lastVolumeRef.current = preferredVolume;
+
+      const isMuted = storedMute === 'true';
+
+      setMutedState(isMuted);
+      setVolumeState(isMuted ? 0 : preferredVolume);
+
     } catch (error) {
         if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
             console.warn('LocalStorage is not available. Audio settings will not be persisted.', error)
@@ -32,7 +36,7 @@ const useVolumePreference = (defaultVolume = 70) => {
     } finally {
       setIsLoaded(true)
     }
-  }, [])
+  }, [defaultVolume])
 
   useEffect(() => {
     if (isLoaded) {
@@ -43,15 +47,19 @@ const useVolumePreference = (defaultVolume = 70) => {
 
   const setVolume = useCallback((newVolume: number) => {
     const clamped = clampVolume(newVolume)
-    setVolumeState(clamped)
+    setVolumeState(clamped);
+    if (clamped > 0) {
+        lastVolumeRef.current = clamped;
+        setMutedState(false);
+    } else {
+        setMutedState(true);
+    }
+
     try {
-      window.localStorage.setItem(VOLUME_KEY, String(clamped))
+      window.localStorage.setItem(VOLUME_KEY, String(lastVolumeRef.current))
+      window.localStorage.setItem(MUTE_KEY, String(clamped === 0));
       window.dispatchEvent(new CustomEvent('hrm:volumeChange', { detail: clamped }))
-      if (clamped > 0 && isMuted) {
-        setMutedState(false)
-        window.localStorage.setItem(MUTE_KEY, 'false')
-        window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: false }))
-      }
+      window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: clamped === 0 }))
     } catch (error) {
         if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
             console.warn('LocalStorage is not available. Could not persist volume.', error)
@@ -59,11 +67,12 @@ const useVolumePreference = (defaultVolume = 70) => {
             console.warn('Could not persist volume:', error)
         }
     }
-  }, [isMuted])
+  }, [])
 
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted
     setMutedState(newMuted)
+    setVolumeState(newMuted ? 0 : lastVolumeRef.current);
     try {
       window.localStorage.setItem(MUTE_KEY, String(newMuted))
       window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: newMuted }))
@@ -79,10 +88,16 @@ const useVolumePreference = (defaultVolume = 70) => {
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === VOLUME_KEY && e.newValue) {
-        setVolumeState(clampVolume(Number(e.newValue)))
+        const newVolume = clampVolume(Number(e.newValue));
+        lastVolumeRef.current = newVolume;
+        if (!isMuted) {
+            setVolumeState(newVolume);
+        }
       }
       if (e.key === MUTE_KEY && e.newValue) {
-        setMutedState(e.newValue === 'true')
+        const newMuted = e.newValue === 'true';
+        setMutedState(newMuted);
+        setVolumeState(newMuted ? 0 : lastVolumeRef.current);
       }
     }
 
@@ -105,7 +120,7 @@ const useVolumePreference = (defaultVolume = 70) => {
       window.removeEventListener('hrm:volumeChange', handleLocalVolume)
       window.removeEventListener('hrm:muteChange', handleLocalMute)
     }
-  }, [])
+  }, [isMuted])
 
   return { volume, setVolume, muted: isMuted, toggleMute, isLoaded }
 }
