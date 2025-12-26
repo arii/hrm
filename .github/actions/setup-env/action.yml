@@ -1,0 +1,68 @@
+# .github/actions/setup-env/action.yml
+name: 'Setup Environment'
+description: 'Checks out code, sets up Node.js and pnpm, and installs dependencies.'
+
+inputs:
+  fetch-depth:
+    description: 'Number of commits to fetch. 0 for all history.'
+    required: false
+    default: '1'
+  ref:
+    description: 'The branch, tag or SHA to checkout.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Checkout Code'
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - name: 'Sanitize workspace'
+      shell: bash
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        git clean -xdf
+        git reset --hard
+
+    - name: 'Setup pnpm'
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+
+    - name: 'Setup Node.js'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Install GitHub CLI
+      shell: bash
+      run: |
+        mkdir -p $HOME/.local/bin
+        # Detect OS and Architecture
+        OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+        ARCH="$(uname -m)"
+        if [ "$ARCH" = "x86_64" ]; then
+          ARCH="amd64"
+        elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+          ARCH="arm64"
+        fi
+
+        GH_VERSION=2.63.0
+        URL="https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_${OS}_${ARCH}.tar.gz"
+
+        echo "Downloading GitHub CLI from $URL"
+        curl -L "$URL" -o gh.tar.gz
+        tar xvf gh.tar.gz
+
+        # Move binary to local bin
+        mv "gh_${GH_VERSION}_${OS}_${ARCH}/bin/gh" "$HOME/.local/bin/"
+        # Add to PATH for this and future steps
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: 'Install Dependencies'
+      shell: bash
+      run: pnpm install --frozen-lockfile
