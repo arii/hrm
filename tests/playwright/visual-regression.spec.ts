@@ -72,37 +72,6 @@ test.describe('Visual Regression Tests', () => {
       waitForFontsLoaded(mockPage),
     ])
 
-    // Ensure timer is stopped before tests start
-    // Check if STOP button exists (timer is running)
-    const stopButton = controlPage.getByRole('button', {
-      name: 'STOP',
-      exact: true,
-    })
-
-    try {
-      // If timer is running, stop it
-      if (await stopButton.isVisible({ timeout: WAIT_TIMEOUTS.SHORT * 2 })) {
-        await stopButton.click()
-        // Wait for START button to confirm timer stopped on control page
-        await expect(
-          controlPage.getByRole('button', { name: 'START', exact: true })
-        ).toBeVisible({ timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE })
-
-        // Wait for dashboard to clear timer display (return to READY state)
-        await expect(dashboardPage.locator('text=00:00')).toBeVisible({
-          timeout: WAIT_TIMEOUTS.ELEMENT_VISIBLE,
-        })
-      }
-      const resetButton = controlPage.getByRole('button', { name: /RESET/i })
-      if (await resetButton.isVisible()) {
-        await resetButton.click()
-      }
-      await controlPage.reload()
-    } catch (error) {
-      // Timer not running or failed to stop, log and continue
-      console.warn('Timer check/stop encountered an issue (ignoring):', error)
-    }
-
     // Replace iframe with stable content for dashboard
     // Wait for dashboard to settle before replacing
     try {
@@ -118,6 +87,10 @@ test.describe('Visual Regression Tests', () => {
       )
     }
   })
+
+  test.beforeEach(async () => {
+    await controlPage.reload();
+  });
 
   // Clean up after all tests
   test.afterAll(async () => {
