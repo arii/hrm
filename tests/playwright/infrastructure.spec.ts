@@ -59,11 +59,11 @@ test.describe('Infrastructure & Scripts', () => {
 
   // 3. DEV SERVER TEST
   // Spawns the real dev server on a unique port to ensure it boots.
-  test('pnpm run dev should start and listen', async () => {
+  test('npm run dev should start and listen', async () => {
     test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2) // Server startup timeout
 
     const PORT = 3005
-    const devServer = spawn('pnpm', ['run', 'dev'], {
+    const devServer = spawn('npm', ['run', 'dev'], {
       detached: true, // Use detached to create a process group
       stdio: 'pipe',
       env: { ...process.env, PORT: String(PORT) },
@@ -96,10 +96,7 @@ test.describe('Infrastructure & Scripts', () => {
   // 4. PRODUCTION SCRIPT TEST
   // Runs the exact shell script used in production (start-production.sh).
   test('start-production.sh should start successfully', async () => {
-    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 4)
-
-    // Ensure the production build exists before trying to run it
-    execSync('pnpm run build', { stdio: 'pipe' })
+    test.setTimeout(WAIT_TIMEOUTS.INFRASTRUCTURE * 2)
 
     const PORT = 3006
     // Mock env vars usually provided by .env.production
@@ -111,7 +108,7 @@ test.describe('Infrastructure & Scripts', () => {
       NEXTAUTH_URL: `http://localhost:${PORT}`,
     }
 
-    const prodServer = spawn('./scripts/start-production.sh', [], {
+    const prodServer = spawn('./start-production.sh', [], {
       detached: true,
       stdio: 'pipe',
       env,
