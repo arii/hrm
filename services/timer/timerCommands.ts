@@ -10,7 +10,7 @@ import {
   TIMER_INTERVAL,
 } from '../../utils/constants.js'
 import { DualModeTimerState } from './timerState.js'
-import { ConfigurationError } from '../../types/errors'
+import { ConfigurationError } from '../../types/errors.js'
 import { TimerQueries } from './timerQueries.js'
 
 export class TimerCommands {
