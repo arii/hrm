@@ -217,7 +217,7 @@ export const WebSocketProvider = ({
             '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
           )
           wsRef.current?.close() // Triggers the onclose reconnect logic
-        }, 5000)
+        }, 15000)
       }
     }, 30000)
   }, [stopHeartbeat])
