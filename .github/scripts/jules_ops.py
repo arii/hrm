@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 JULES_API_BASE_URL = os.getenv("JULES_API_URL", "https://api.jules.ai/v1")
 JULES_API_KEY = os.getenv("JULES_API_KEY")
 
-def create_jules_session(prompt, branch, title, source):
+def create_jules_session(prompt, branch, title, owner, repo_name):
     """
     Starts a new Jules coding session via the API.
     """
@@ -28,8 +28,8 @@ def create_jules_session(prompt, branch, title, source):
         "prompt": prompt,
         "source_code_reference": {
             "github_repo": {
-                "owner": source.split('/')[2],
-                "name": source.split('/')[3],
+                "owner": owner,
+                "name": repo_name,
                 "branch": branch
             }
         },
@@ -70,7 +70,8 @@ def main():
     create_parser.add_argument("--prompt", required=True, help="The task prompt for the AI agent.")
     create_parser.add_argument("--branch", required=True, help="The target git branch for the changes.")
     create_parser.add_argument("--title", required=True, help="The title for the resulting Pull Request.")
-    create_parser.add_argument("--source", required=True, help="The source repository in 'sources/github/owner/repo' format.")
+    create_parser.add_argument("--owner", required=True, help="The owner of the source repository.")
+    create_parser.add_argument("--repo-name", required=True, help="The name of the source repository.")
 
     args = parser.parse_args()
 
@@ -79,7 +80,8 @@ def main():
             prompt=args.prompt,
             branch=args.branch,
             title=args.title,
-            source=args.source
+            owner=args.owner,
+            repo_name=args.repo_name
         )
 
 if __name__ == "__main__":

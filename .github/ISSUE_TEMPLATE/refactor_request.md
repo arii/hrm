@@ -19,3 +19,10 @@ assignees: ''
 File: server.ts
 File: utils/constants.ts
 -->
+
+## Custom Branch Name (Optional)
+<!-- If you want to specify a custom branch name, do so here. -->
+<!-- If left blank, a default name like `ai/refactor-123` will be used. -->
+<!-- Example:
+Branch: feature/new-refactor
+-->

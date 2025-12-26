@@ -54,11 +54,13 @@ jobs:
             echo "TASK_TITLE=$ISSUE_TITLE" >> $GITHUB_ENV
             echo "TARGET_FILES=$(echo "$ISSUE_BODY" | grep -oP '(?<=File: ).*')" >> $GITHUB_ENV
             echo "ISSUE_ID=$ISSUE_NUM" >> $GITHUB_ENV
+            echo "BRANCH_NAME_FROM_ISSUE=$(echo "$ISSUE_BODY" | grep -oP '(?<=Branch: ).*')" >> $GITHUB_ENV
           else
             echo "TASK_DESC=${{ inputs.task_description }}" >> $GITHUB_ENV
             echo "TASK_TITLE=Manual Task" >> $GITHUB_ENV
             echo "TARGET_FILES=${{ inputs.target_files }}" >> $GITHUB_ENV
             echo "ISSUE_ID=manual" >> $GITHUB_ENV
+            echo "BRANCH_NAME_FROM_ISSUE=${{ inputs.branch_name }}" >> $GITHUB_ENV
           fi
 
       # --- Path A: Jules Remote Session ---
@@ -77,7 +79,7 @@ jobs:
         if: env.PROVIDER == 'jules'
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
-          BRANCH_NAME: ${{ inputs.branch_name || format('ai/refactor-{0}', env.ISSUE_ID) }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME_FROM_ISSUE || format('ai/refactor-{0}', env.ISSUE_ID) }}
         run: |
           echo "🚀 Starting Jules Session..."
 
@@ -97,7 +99,8 @@ jobs:
             --prompt "$PROMPT" \
             --branch "${{ env.BRANCH_NAME }}" \
             --title "🤖 AI Refactor: ${{ env.TASK_TITLE }}" \
-            --source "sources/github/${{ github.repository }}"
+            --owner "${{ github.repository_owner }}" \
+            --repo-name "${{ github.event.repository.name }}"
 
       # --- Path B: Gemini Direct (Local Runner) ---
       - name: Setup Node (For Gemini Direct)
@@ -134,7 +137,15 @@ jobs:
 
       - name: Apply Patch (Gemini Direct)
         if: env.PROVIDER == 'gemini'
-        run: git apply patch.diff
+        run: |
+          git apply patch.diff || (
+            echo "❌ Patch application failed. The AI-generated diff could not be applied."
+            echo "This is often due to a malformed patch or conflicts with the base branch."
+            gh issue comment ${{ env.ISSUE_ID }} --body "🤖 **Error:** AI patch application failed. Please review the workflow logs for details."
+            exit 1
+          )
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
 
       - name: Verify Changes (Gemini Direct)
         if: env.PROVIDER == 'gemini'
@@ -149,5 +160,11 @@ jobs:
           token: ${{ secrets.ARI_PAT }}
           commit-message: "feat(ai): Auto-refactor Issue #${{ env.ISSUE_ID }}"
           title: "🤖 AI Refactor: ${{ env.TASK_TITLE }}"
-          branch: "ai/refactor-${{ env.ISSUE_ID }}"
+          branch: ${{ env.BRANCH_NAME_FROM_ISSUE || format('ai/refactor-{0}', env.ISSUE_ID) }}
           body: "Implemented by Gemini Direct.\n\nCloses #${{ env.ISSUE_ID }}"
+
+      - name: Add Label to Issue
+        if: env.PROVIDER == 'gemini' && github.event_name == 'issues'
+        run: gh issue edit ${{ env.ISSUE_ID }} --add-label "ai-refactor-pr-created"
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
