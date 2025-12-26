@@ -12,10 +12,10 @@ This document outlines the best practices and standards for development in the H
 
 For detailed information on specific topics, please refer to the following documents:
 
-- [TypeScript Best Practices](./TYPESCRIPT_PATTERNS.md)
-- [Environment Variable Handling](./ENVIRONMENT_VARIABLES.md)
-- [Testing Guidelines](./TESTING_GUIDELINES.md)
-- [Hook Design Patterns](./HOOK_DESIGN_PATTERNS.md)
+- [TypeScript Best Practices](./docs/TYPESCRIPT_PATTERNS.md)
+- [Environment Variable Handling](./docs/ENVIRONMENT_VARIABLES.md)
+- [Testing Guidelines](./docs/TESTING_GUIDELINES.md)
+- [Hook Design Patterns](./docs/HOOK_DESIGN_PATTERNS.md)
 
 ## Architectural Decision Records (ADRs)
 
@@ -32,7 +32,7 @@ An ADR should be created for any change that has a significant impact on the sys
 
 ### The ADR Process
 
-1.  **Drafting**: Copy the [ADR template](./adr/template.md) to a new file in the `docs/adr/` directory. The filename should be in the format `{adr-number}-{title}.md` (e.g., `0001-use-nextjs-for-frontend.md`). The status should be "Proposed".
+1.  **Drafting**: Copy the [ADR template](./docs/adr/template.md) to a new file in the `docs/adr/` directory. The filename should be in the format `{adr-number}-{title}.md` (e.g., `0001-use-nextjs-for-frontend.md`). The status should be "Proposed".
 2.  **Review**: The new ADR is included in the Pull Request for the architectural change. The PR review process serves as the formal review for the ADR.
 3.  **Approval & Status Change**: Once the PR is approved and merged, the ADR's status is updated to "Accepted".
 4.  **Updating**: If a decision is later changed, the original ADR should be marked as "Superseded" or "Deprecated" by a new ADR that documents the new decision.
@@ -41,7 +41,7 @@ An ADR should be created for any change that has a significant impact on the sys
 
 Disagreements on architectural decisions are expected and healthy. If a consensus cannot be reached during the PR review, the final decision will be made by the project's technical lead. The goal is to make a decision that is in the best interest of the project, even if it is not everyone's first choice. All viewpoints should be respectfully considered and documented in the ADR.
 
-All ADRs are stored in the [`docs/adr/`](./adr/) directory.
+All ADRs are stored in the [`docs/adr/`](./docs/adr/) directory.
 
 ## Pull Request (PR) Process
 

@@ -5,7 +5,7 @@
 
 ## Setup Instructions
 
-For a fully automated setup, please refer to the "One-Click Start with DevContainer" instructions in the main [README.md](../README.md).
+For a fully automated setup, please refer to the "One-Click Start with DevContainer" instructions in the main [README.md](./README.md).
 
 For manual setup, the project includes a script to ensure a consistent environment:
 
@@ -43,9 +43,9 @@ The project contains legacy Python-based pre-commit hooks (`.pre-commit-config.y
 
 The primary focus of ongoing development is to enhance the user experience and improve the long-term maintainability of the application. Key priorities include:
 
-- **UI/UX Polish**: Implementing the enhancements outlined in [FRONTEND_IMPROVEMENT_PLAN.md](./FRONTEND_IMPROVEMENT_PLAN.md), focusing on typography, color consistency, and mobile optimization.
+- **UI/UX Polish**: Implementing the enhancements outlined in `FRONTEND_IMPROVEMENT_PLAN.md`, focusing on typography, color consistency, and mobile optimization.
 - **Accessibility**: Ensuring the application is fully accessible by meeting WCAG 2.1 AA compliance, including keyboard navigation and screen reader support.
-- **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in [TESTING.md](./TESTING.md) to ensure faster and more reliable CI/CD feedback.
+- **Test Suite Optimization**: Consolidating and stabilizing the test suite as described in `TESTING.md` to ensure faster and more reliable CI/CD feedback.
 - **Code Quality & Documentation**: Continuously refactoring components for clarity and keeping all development documentation up-to-date.
 
 ## Completed Milestones

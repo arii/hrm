@@ -13,10 +13,12 @@ A clear and concise description of the refactoring task. What should be improved
 ### Target Files
 List the files that the AI agent should focus on. Please provide full paths from the repository root.
 
-- `src/components/Example.tsx`
-- `src/services/api.ts`
+```
+- src/components/Example.tsx
+- src/services/api.ts
+```
 
 ### Custom Branch Name (Optional)
 If you want to specify a branch name for the AI to work on, provide it here. Otherwise, a name will be generated automatically.
 
-branch-name: `feature/ai-refactor-`
+`branch-name: feature/ai-refactor-`

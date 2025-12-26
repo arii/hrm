@@ -1,5 +1,6 @@
 
 import os
+import sys
 import requests
 import argparse
 
@@ -9,10 +10,10 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
     """
     api_key = os.environ.get("JULES_API_KEY")
     if not api_key:
-        raise ValueError("JULES_API_KEY environment variable not set.")
+        sys.stderr.write("Error: JULES_API_KEY environment variable not set. Please set it to your Jules API key.\n")
+        sys.exit(1)
 
-    # TODO: Replace with the actual Jules API endpoint
-    url = "https://api.jules.ai/v1/sessions"
+    url = os.environ.get("JULES_API_URL", "https://api.jules.ai/v1/sessions")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -29,11 +30,11 @@ def create_jules_session(prompt, branch, title, owner, repo_name):
 
     try:
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        response.raise_for_status()
         print(f"Successfully created Jules session: {response.json()}")
     except requests.exceptions.RequestException as e:
-        print(f"Error creating Jules session: {e}")
-        exit(1)
+        sys.stderr.write(f"Error creating Jules session: {e}\n")
+        sys.exit(1)
 
 def main():
     """

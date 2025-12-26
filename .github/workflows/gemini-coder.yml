@@ -26,10 +26,11 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  issues: write # Required to read issue body
+  issues: read
 
 jobs:
   ai-developer:
+    if: (github.event_name == 'workflow_dispatch') || (github.event.label.name == 'auto-code')
     runs-on: ubuntu-latest
 
     steps:
@@ -42,33 +43,15 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "AGENT_PROVIDER=${{ github.event.inputs.agent_provider }}" >> $GITHUB_ENV
           elif [[ "${{ github.event.label.name }}" == "auto-code" ]]; then
-            # Default to jules for issue-triggered runs
             echo "AGENT_PROVIDER=jules" >> $GITHUB_ENV
-          else
-            echo "Unsupported trigger or label. Exiting."
-            exit 1
           fi
 
       - name: 'Context Setup: Parse Issue Body'
         if: github.event_name == 'issues'
         id: parse_issue
         run: |
-          # Save issue body to a file for easier parsing
           echo "${{ github.event.issue.body }}" > issue_body.txt
-
-          # Extract Task Description
-          TASK_DESC=$(awk '/### Refactoring Task/{flag=1; next} /### Target Files/{flag=0} flag' issue_body.txt)
-          echo "task_description<<EOF" >> $GITHUB_OUTPUT
-          echo "$TASK_DESC" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          # Extract Target Files
-          TARGET_FILES=$(awk '/### Target Files/{flag=1; next} /### Custom Branch Name/{flag=0} flag' issue_body.txt | sed -e 's/^- //g' -e 's/`//g' | tr '\n' ',' | sed 's/,$//')
-          echo "target_files=$TARGET_FILES" >> $GITHUB_OUTPUT
-
-          # Extract Branch Name (optional)
-          BRANCH_NAME=$(grep 'branch-name:' issue_body.txt | cut -d '`' -f2)
-          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          python3 .github/scripts/parse_issue.py issue_body.txt >> $GITHUB_OUTPUT
 
       - name: 'Context Setup: Consolidate Inputs'
         id: consolidate_inputs
@@ -82,25 +65,24 @@ jobs:
             if [ -n "${{ steps.parse_issue.outputs.branch_name }}" ]; then
               echo "BRANCH=${{ steps.parse_issue.outputs.branch_name }}" >> $GITHUB_ENV
             else
-              BRANCH_SLUG=$(echo "${{ github.event.issue.title }}" | iconv -t ascii//TRANSLIT | sed -r 's/[^a-zA-Z0-9]+/-/g' | sed -r 's/^-+\|-+$//g' | tr '[:upper:]' '[:lower:]')
+              BRANCH_SLUG=$(echo "${{ github.event.issue.title }}" | tr -cs 'a-zA-Z0-9' '-' | sed -e 's/--/-/g' -e 's/^-//' -e 's/-$//' | tr '[:upper:]' '[:lower:]')
               echo "BRANCH=ai/${BRANCH_SLUG}-${{ github.event.issue.number }}" >> $GITHUB_ENV
             fi
-          else # workflow_dispatch
+          else
             echo "PROMPT<<EOF" >> $GITHUB_ENV
             echo "${{ github.event.inputs.task_description }}" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
             echo "FILES=${{ github.event.inputs.target_files }}" >> $GITHUB_ENV
-            TITLE_TEXT=$(echo "${{ github.event.inputs.task_description }}" | cut -c 1-50)
+            TITLE_TEXT=$(echo "${{ github.event.inputs.task_description }}" | head -c 50)
             echo "TITLE=AI Task: $TITLE_TEXT" >> $GITHUB_ENV
             if [ -n "${{ github.event.inputs.branch_name }}" ]; then
               echo "BRANCH=${{ github.event.inputs.branch_name }}" >> $GITHUB_ENV
             else
-              BRANCH_SLUG=$(echo "${{ github.event.inputs.task_description }}" | iconv -t ascii//TRANSLIT | sed -r 's/[^a-zA-Z0-9]+/-/g' | sed -r 's/^-+\|-+$//g' | tr '[:upper:]' '[:lower:]' | head -c 30)
+              BRANCH_SLUG=$(echo "${{ github.event.inputs.task_description }}" | tr -cs 'a-zA-Z0-9' '-' | sed -e 's/--/-/g' -e 's/^-//' -e 's/-$//' -e 's/^\(.\{30\}\).*$/\1/' | tr '[:upper:]' '[:lower:]')
               echo "BRANCH=ai/${BRANCH_SLUG}-${{ github.run_id }}" >> $GITHUB_ENV
             fi
           fi
 
-      # --- Path A: Jules (Remote Agent) ---
       - name: 'Jules: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'jules'
         run: |
@@ -132,7 +114,6 @@ jobs:
             --owner "${{ github.repository_owner }}" \
             --repo-name "${{ github.event.repository.name }}"
 
-      # --- Path B: Gemini (Local Agent) ---
       - name: 'Gemini: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'gemini'
         run: |
@@ -170,6 +151,10 @@ jobs:
       - name: 'Gemini: Apply Patch'
         if: env.AGENT_PROVIDER == 'gemini'
         run: |
+          if [ ! -s patch.diff ]; then
+            echo "Error: patch.diff is empty or does not exist."
+            exit 1
+          fi
           git checkout -b ${{ env.BRANCH }}
           git apply patch.diff
 
@@ -178,8 +163,6 @@ jobs:
         run: |
           pnpm run lint -- --fix || echo "Lint fix failed, continuing..."
           pnpm run build
-          # Add test run if applicable
-          # pnpm test
 
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'

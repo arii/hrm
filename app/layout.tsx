@@ -39,20 +39,6 @@ export default function RootLayout({
           type="font/ttf"
           crossOrigin="anonymous"
         />
-        {/*
-          Workaround for a `ReferenceError: DOCS_timing is not defined`
-          error that originates from scripts within an embedded Google Doc.
-          This initializes `window.DOCS_timing` as an empty object before the
-          Google Doc script runs, preventing the error. This is not related
-          to any HRM application functionality.
-        */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.DOCS_timing = window.DOCS_timing || {};
-            `,
-          }}
-        />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
         <AppRouterCacheProvider>
