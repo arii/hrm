@@ -12,7 +12,7 @@ import {
   TimerData,
   SpotifyData,
 } from '@/types/websocket'
-import { action } from '@storybook/addon-actions'
+import { fn } from '@storybook/test'
 
 // Explicitly type the state to avoid incorrect type inference on empty arrays
 // and string literals.
@@ -135,7 +135,7 @@ export const MockWebSocketProvider = ({
 
   // 3. Mock Actions (Log to Storybook Actions panel)
   const sendData = useCallback((data: ClientCommandMessage) => {
-    action('WebSocket Sent')(data)
+    fn()('WebSocket Sent')
 
     // Optional: Auto-respond to specific commands if needed
     if (data.type === 'TIMER_COMMAND' && data.command === 'START') {
@@ -148,12 +148,12 @@ export const MockWebSocketProvider = ({
 
   const connect = useCallback(() => {
     setConnectionStatus('Connected')
-    action('WebSocket')('Connect called')
+    fn()('WebSocket')
   }, [])
 
   const disconnect = useCallback(() => {
     setConnectionStatus('Disconnected')
-    action('WebSocket')('Disconnect called')
+    fn()('WebSocket')
   }, [])
 
   // 4. Construct Context
