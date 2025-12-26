@@ -11,28 +11,35 @@ const useVolumePreference = (defaultVolume = 70) => {
   const [volume, setVolumeState] = useState(clampVolume(defaultVolume))
   const [isMuted, setMutedState] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const lastVolumeRef = useRef(clampVolume(defaultVolume));
-
+  const lastVolumeRef = useRef(clampVolume(defaultVolume))
 
   useEffect(() => {
     try {
       const storedVolume = window.localStorage.getItem(VOLUME_KEY)
       const storedMute = window.localStorage.getItem(MUTE_KEY)
 
-      const preferredVolume = storedVolume !== null ? clampVolume(Number(storedVolume)) : clampVolume(defaultVolume);
-      lastVolumeRef.current = preferredVolume;
+      const preferredVolume =
+        storedVolume !== null
+          ? clampVolume(Number(storedVolume))
+          : clampVolume(defaultVolume)
+      lastVolumeRef.current = preferredVolume
 
-      const isMuted = storedMute === 'true';
+      const isMuted = storedMute === 'true'
 
-      setMutedState(isMuted);
-      setVolumeState(isMuted ? 0 : preferredVolume);
-
+      setMutedState(isMuted)
+      setVolumeState(isMuted ? 0 : preferredVolume)
     } catch (error) {
-        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
-            console.warn('LocalStorage is not available. Audio settings will not be persisted.', error)
-        } else {
-            console.warn('Failed to read audio settings from localStorage:', error)
-        }
+      if (
+        error instanceof DOMException &&
+        (error.name === 'SecurityError' || error.name === 'QuotaExceededError')
+      ) {
+        console.warn(
+          'LocalStorage is not available. Audio settings will not be persisted.',
+          error
+        )
+      } else {
+        console.warn('Failed to read audio settings from localStorage:', error)
+      }
     } finally {
       setIsLoaded(true)
     }
@@ -47,57 +54,75 @@ const useVolumePreference = (defaultVolume = 70) => {
 
   const setVolume = useCallback((newVolume: number) => {
     const clamped = clampVolume(newVolume)
-    setVolumeState(clamped);
+    setVolumeState(clamped)
     if (clamped > 0) {
-        lastVolumeRef.current = clamped;
-        setMutedState(false);
+      lastVolumeRef.current = clamped
+      setMutedState(false)
     } else {
-        setMutedState(true);
+      setMutedState(true)
     }
 
     try {
       window.localStorage.setItem(VOLUME_KEY, String(lastVolumeRef.current))
-      window.localStorage.setItem(MUTE_KEY, String(clamped === 0));
-      window.dispatchEvent(new CustomEvent('hrm:volumeChange', { detail: clamped }))
-      window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: clamped === 0 }))
+      window.localStorage.setItem(MUTE_KEY, String(clamped === 0))
+      window.dispatchEvent(
+        new CustomEvent('hrm:volumeChange', { detail: clamped })
+      )
+      window.dispatchEvent(
+        new CustomEvent('hrm:muteChange', { detail: clamped === 0 })
+      )
     } catch (error) {
-        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
-            console.warn('LocalStorage is not available. Could not persist volume.', error)
-        } else {
-            console.warn('Could not persist volume:', error)
-        }
+      if (
+        error instanceof DOMException &&
+        (error.name === 'SecurityError' || error.name === 'QuotaExceededError')
+      ) {
+        console.warn(
+          'LocalStorage is not available. Could not persist volume.',
+          error
+        )
+      } else {
+        console.warn('Could not persist volume:', error)
+      }
     }
   }, [])
 
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted
     setMutedState(newMuted)
-    setVolumeState(newMuted ? 0 : lastVolumeRef.current);
+    setVolumeState(newMuted ? 0 : lastVolumeRef.current)
     try {
       window.localStorage.setItem(MUTE_KEY, String(newMuted))
-      window.dispatchEvent(new CustomEvent('hrm:muteChange', { detail: newMuted }))
+      window.dispatchEvent(
+        new CustomEvent('hrm:muteChange', { detail: newMuted })
+      )
     } catch (error) {
-        if (error instanceof DOMException && (error.name === 'SecurityError' || error.name === 'QuotaExceededError')) {
-            console.warn('LocalStorage is not available. Could not persist mute status.', error)
-        } else {
-            console.warn('Could not persist mute status:', error)
-        }
+      if (
+        error instanceof DOMException &&
+        (error.name === 'SecurityError' || error.name === 'QuotaExceededError')
+      ) {
+        console.warn(
+          'LocalStorage is not available. Could not persist mute status.',
+          error
+        )
+      } else {
+        console.warn('Could not persist mute status:', error)
+      }
     }
   }, [isMuted])
 
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === VOLUME_KEY && e.newValue) {
-        const newVolume = clampVolume(Number(e.newValue));
-        lastVolumeRef.current = newVolume;
+        const newVolume = clampVolume(Number(e.newValue))
+        lastVolumeRef.current = newVolume
         if (!isMuted) {
-            setVolumeState(newVolume);
+          setVolumeState(newVolume)
         }
       }
       if (e.key === MUTE_KEY && e.newValue) {
-        const newMuted = e.newValue === 'true';
-        setMutedState(newMuted);
-        setVolumeState(newMuted ? 0 : lastVolumeRef.current);
+        const newMuted = e.newValue === 'true'
+        setMutedState(newMuted)
+        setVolumeState(newMuted ? 0 : lastVolumeRef.current)
       }
     }
 
