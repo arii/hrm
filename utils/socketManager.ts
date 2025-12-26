@@ -15,7 +15,7 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { CALORIE_DEFAULTS } from './constants.js'
 import {
   broadcast,
   sendWebSocketMessage,
@@ -24,10 +24,16 @@ import {
 import logger from './logger.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { AppServices } from '../lib/services.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import TabataTimer from '../services/tabataTimer.js'
+
+// Define the services interface
+interface AppServices {
+  spotifyService: SpotifyPolling
+  tabataService: TabataTimer
+}
 
 // Define service instances to be managed
-// New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
@@ -78,6 +84,19 @@ const initSocketManager = (
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
     })
+
+    // Send initial state to the newly connected client
+    const stateSnapshot = getUnifiedStateSnapshot()
+    const payload: InitialStateSnapshotPayload = {
+      ...stateSnapshot,
+      hrmData: hrmDataRepository.findAll(),
+    }
+    const initialStateMessage: ServerMessage = {
+      type: 'INITIAL_STATE',
+      payload: payload,
+    }
+    sendWebSocketMessage(extWs, initialStateMessage, 'socketManager.onConnection')
+
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)

@@ -34,13 +34,6 @@ describe('GET /api/spotify/playlists/[playlistId]', () => {
 
     // Assert
     expect(response.status).toBe(200)
-    expect(data).toEqual({
-      id: '123',
-      name: 'Test Playlist',
-      description: 'A test playlist',
-      imageUrl: 'http://example.com/image.jpg',
-      owner: 'Test User',
-      trackCount: 10,
-    })
+    expect(data).toEqual(mockPlaylist)
   })
 })

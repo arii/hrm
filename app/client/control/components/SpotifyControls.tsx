@@ -11,9 +11,10 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyContext } from '@/context/SpotifyContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
 import SpotifySearchInput from '@/components/SpotifySearchInput'
@@ -21,12 +22,11 @@ import VolumeSlider from '@/components/Spotify/VolumeSlider'
 
 const SpotifyControls = () => {
   const router = useRouter()
-  // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
-  const { devices = [] } = spotifyData // Default to empty array if undefined
+  const { devices = [] } = spotifyData
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
+  const { selectedDeviceId, setSelectedDeviceId } = useSpotifyContext()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleTrackSelect = (uri: string) => {
@@ -49,7 +49,6 @@ const SpotifyControls = () => {
     spotifyData.trackName !== '' &&
     spotifyData.trackName !== 'No Track Playing'
 
-  // 3. Request devices on mount or connection
   useEffect(() => {
     if (connectionStatus === 'Connected') {
       sendData({
@@ -59,20 +58,15 @@ const SpotifyControls = () => {
     }
   }, [connectionStatus, sendData])
 
-  // 4. Update selection logic and volume sync
   useEffect(() => {
     const activeDevice = devices.find((d) => d.is_active)
     const activeId = activeDevice?.id
 
-    // Sync Selected Device
     if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
       setSelectedDeviceId(activeId)
     } else if (activeId && activeId !== prevActiveIdRef.current) {
-      // Active device changed externally, update selection
       setSelectedDeviceId(activeId)
     } else {
-      // Check if selected device is still valid
       const selectedStillExists = devices.some((d) => d.id === selectedDeviceId)
       if (selectedDeviceId && !selectedStillExists) {
         setSelectedDeviceId(activeId ?? '')
@@ -83,15 +77,12 @@ const SpotifyControls = () => {
     }
     prevActiveIdRef.current = activeId
 
-    // Sync Volume (if not dragging)
     if (activeDevice && typeof activeDevice.volume_percent === 'number') {
       if (activeDevice.volume_percent !== volume) {
         setVolume(activeDevice.volume_percent)
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices, selectedDeviceId, setSelectedDeviceId, setVolume, volume])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {
@@ -139,7 +130,6 @@ const SpotifyControls = () => {
       if (connectionStatus !== 'Connected') return
       const targetDeviceId = resolveTargetDeviceId()
 
-      // Prevent sending volume command if no device is targeted
       if (!targetDeviceId) return
 
       const sanitized = clampVolume(value)
@@ -166,18 +156,14 @@ const SpotifyControls = () => {
   }, [connectionStatus])
 
   useEffect(() => {
-    // Clear any existing timer
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
     }
 
-    // Set a new timer to send the volume command after 300ms
     debounceTimeoutRef.current = setTimeout(() => {
       sendVolumeCommand(volume)
     }, 300)
 
-    // Cleanup function to clear the timeout if the component unmounts
-    // or if the volume changes again before the timeout has passed
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
@@ -247,7 +233,7 @@ const SpotifyControls = () => {
                 </Typography>
                 <FormControl fullWidth size="small">
                   <Select
-                    value={selectedDeviceId}
+                    value={selectedDeviceId || ''}
                     onChange={(e) => {
                       const deviceId = e.target.value
                       setSelectedDeviceId(deviceId)

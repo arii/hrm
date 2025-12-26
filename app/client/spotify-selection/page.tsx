@@ -9,6 +9,8 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
 import { useWebSocket } from '@/context/WebSocketContext'
+import { useSpotifyContext } from '@/context/SpotifyContext'
+import { SpotifyCommandMessage } from '@/types/websocket'
 
 const PlaylistSelector = dynamic(
   () => import('../../../components/Spotify/PlaylistSelector'),
@@ -20,17 +22,16 @@ const PlaylistSelector = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
-
-  const handlePlaylistSelected = (_uri: string) => {
-    //
-  }
+  const { selectedDeviceId } = useSpotifyContext()
 
   const handlePlaylistPlay = (uri: string) => {
-    sendData({
+    const message: SpotifyCommandMessage = {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
-      playlistUri: uri,
-    })
+      contextUri: uri, // Corrected from playlistUri to contextUri
+      ...(selectedDeviceId && { deviceId: selectedDeviceId }),
+    }
+    sendData(message)
   }
 
   return (
@@ -64,7 +65,7 @@ const SpotifySelectionPage = () => {
             Select a Playlist to view its tracks
           </Typography>
           <PlaylistSelector
-            onPlaylistSelected={handlePlaylistSelected}
+            onPlaylistSelected={() => {}}
             onPlaylistPlay={handlePlaylistPlay}
           />
         </CardContent>
