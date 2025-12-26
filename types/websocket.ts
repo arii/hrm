@@ -127,7 +127,8 @@ export interface SpotifyCommandMessage {
   command: SpotifyCommand
   deviceId?: string
   volume?: number
-  playlistUri?: string
+  playlistUri?: string // Added to support your incoming message
+  contextUri?: string // Generic support for albums/artists
 }
 
 export interface GetStateMessage {
@@ -216,6 +217,7 @@ export const SpotifyCommandMessageSchema = z.object({
   deviceId: z.string().optional(),
   volume: z.number().min(0).max(100).optional(),
   playlistUri: z.string().optional(),
+  contextUri: z.string().optional(),
 })
 
 export const GetStateMessageSchema = z.object({
