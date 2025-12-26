@@ -44,7 +44,7 @@ const HrmTiles = () => {
           >
             <HrTile
               name={user.name || ''}
-              bpm={user.value || 0}
+              bpm={user.value}
               percentMax={hrZoneProps.percentage}
               calories={user.calories || 0} // Pass calories
               isAlerting={!!matchingAlert}
