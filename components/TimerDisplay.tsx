@@ -225,7 +225,7 @@ const TimerDisplay = () => {
           aria-live="polite"
           aria-atomic="true"
           sx={{
-            fontFamily: 'var(--font-roboto-mono), monospace',
+            fontFamily: 'var(--font-digital-7-mono), monospace',
             fontSize: { xs: '6rem', sm: '8rem', md: '10rem' },
             fontWeight: 800,
             letterSpacing: '0.12rem',
