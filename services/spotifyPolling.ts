@@ -134,6 +134,32 @@ export class SpotifyPolling implements SpotifyService {
     return this.sdk !== null
   }
 
+  public async getAvailableDevices(): Promise<SpotifyDevice[]> {
+    if (!this.sdk) {
+      logger.warn('Cannot get devices: SDK not initialized.')
+      return []
+    }
+    try {
+      const response = await this.sdk.player.getAvailableDevices()
+      const validDevices: SpotifyDevice[] = (response.devices || [])
+        .filter((d: Device): d is Device & { id: string } => d.id !== null)
+        .map((d) => ({
+          // Non-null assertion is safe here due to the type guard in the filter.
+          id: d.id,
+          is_active: d.is_active,
+          is_private_session: d.is_private_session,
+          is_restricted: d.is_restricted,
+          name: d.name,
+          type: d.type,
+          volume_percent: d.volume_percent ?? 0,
+        }))
+      return validDevices
+    } catch (error) {
+      logger.error({ err: error }, 'Error fetching Spotify devices')
+      return []
+    }
+  }
+
   // --- Token Management (Used by NextAuth route) ---
 
   /**

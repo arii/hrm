@@ -121,6 +121,7 @@ const handleIncomingMessage = (
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
+    const { spotifyService, tabataService } = serviceContainer.getServices()
 
     switch (message.type) {
       case 'PING': {
@@ -177,15 +178,15 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND':
-        serviceContainer.get('tabataService').handleCommand(message.command)
+        tabataService.handleCommand(message.command)
         break
 
       case 'SET_MODE':
-        serviceContainer.get('tabataService').setMode(message.mode)
+        tabataService.setMode(message.mode)
         break
 
       case 'TIMER_CONFIG':
-        serviceContainer.get('tabataService').setConfig({
+        tabataService.setConfig({
           workDuration: message.workDuration,
           restDuration: message.restDuration,
         })
@@ -216,7 +217,6 @@ const handleIncomingMessage = (
           }
         })
 
-        const spotifyService = serviceContainer.get('spotifyService')
         const spotifyCommandParams: {
           deviceId?: string
           volume?: number

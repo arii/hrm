@@ -102,4 +102,6 @@ export type SpotifyService = StateProvider<SpotifyData> &
     }
   > &
   Lifecycle &
-  SpotifyTokenHandler
+  SpotifyTokenHandler & {
+    getAvailableDevices(): Promise<SpotifyDevice[]>
+  }

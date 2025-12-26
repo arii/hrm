@@ -41,11 +41,13 @@ const config = {
       },
     ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!uuid|@asteasolutions/zod-to-openapi)',
-  ],
+  transformIgnorePatterns: [],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
+    uuid: require.resolve('uuid'),
+    'next-auth': require.resolve('next-auth'),
+    jose: require.resolve('jose'),
+    '@panva/hkdf': require.resolve('@panva/hkdf'),
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
