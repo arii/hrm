@@ -1,0 +1,43 @@
+# .github/actions/setup-env/action.yml
+name: 'Setup Environment'
+description: 'Checks out code, sets up Node.js and pnpm, and installs dependencies.'
+
+inputs:
+  fetch-depth:
+    description: 'Number of commits to fetch. 0 for all history.'
+    required: false
+    default: '1'
+  ref:
+    description: 'The branch, tag or SHA to checkout.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Checkout Code'
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - name: 'Sanitize workspace'
+      shell: bash
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        git clean -xdf
+        git reset --hard
+
+    - name: 'Setup pnpm'
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+
+    - name: 'Setup Node.js'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: 'Install Dependencies'
+      shell: bash
+      run: pnpm install --frozen-lockfile
