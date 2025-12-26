@@ -10,9 +10,18 @@ These are the most frequently used commands for testing and code quality checks.
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `pnpm run test:visual`        | Runs the core visual regression test suite in a headless browser. Use this before committing any UI changes. |
 | `pnpm run test:visual:update` | Updates the visual snapshots after intentional UI changes have been made.                                    |
-| `pnpm run test:unit`          | Executes the Jest unit test suite for testing individual components and business logic.                      |
+| `pnpm run test:unit`          | Executes the Vitest unit test suite for testing individual components and business logic.                      |
 | `pnpm run lint`               | Runs ESLint to check for code quality and style issues.                                                      |
 | `pnpm run format`             | Formats the entire codebase using Prettier to ensure consistent styling.                                     |
+
+---
+
+## Visual Regression Testing Environment
+
+To ensure consistency across different operating systems, it is **highly recommended** to run visual regression tests within a containerized environment. This project is configured to use a Dev Container, which provides a consistent Linux-based environment for all developers.
+
+- **To run visual tests:** Use the `pnpm run test:visual` command from within the Dev Container.
+- **To update snapshots:** Use the `pnpm run test:visual:update` command from within the Dev Container.
 
 ---
 
@@ -28,12 +37,11 @@ These are the most frequently used commands for testing and code quality checks.
 
 ### Unit Testing
 
-- **`pnpm run test:unit`**: Runs all Jest unit tests.
+- **`pnpm run test:unit`**: Runs all Vitest unit tests.
 - **`pnpm run test:unit:coverage`**: Runs unit tests and generates a code coverage report.
 
 ### Server & Process Management
 
-- **`pnpm run test:clean`**: Shuts down any running server instances, starts a fresh server, and runs the visual tests.
 - **`pnpm run kill-all`**: A utility script to find and kill all running Node.js processes related to the application, useful for clearing a stuck server.
 - **`pnpm run pm2:logs`**: Displays the logs from the PM2 process manager when the application is running in production mode.
 
@@ -48,14 +56,14 @@ These are the most frequently used commands for testing and code quality checks.
 
 ## Test Structure
 
-The project uses a combination of Jest for unit tests and Playwright for end-to-end (E2E) and visual regression testing.
+The project uses a combination of Vitest for unit tests and Playwright for end-to-end (E2E) and visual regression testing.
 
 ### Unit Tests (`tests/unit`)
 
 - **Purpose**: To test individual functions, components, and services in isolation.
-- **Framework**: Jest with `@testing-library/react`.
+- **Framework**: Vitest with `@testing-library/react`.
 - **Location**: `tests/unit/`
-- **Configuration**: `jest.config.cjs`
+- **Configuration**: `vitest.config.ts`
 
 ### E2E and Visual Tests (`tests/playwright`)
 
@@ -71,27 +79,3 @@ The project uses a combination of Jest for unit tests and Playwright for end-to-
 ## CI/CD Integration
 
 In our GitHub Actions workflows, we use `pnpm install --frozen-lockfile` to ensure that the exact versions of dependencies specified in `pnpm-lock.yaml` are installed. This guarantees a consistent and reproducible build environment for all test runs.
-
----
-
-## Future Improvements & Test Consolidation Plan
-
-The current test suite has some redundancy and opportunities for optimization. The following plan is in place to improve the test suite's efficiency and maintainability.
-
-### 1. Consolidate Core Tests
-
-- **Goal**: Reduce the number of redundant tests and screenshots.
-- **Action**: Create a single `core-functionality.spec.ts` that covers the most critical UI components and workflows, reducing the total number of tests from ~29 to ~12.
-- **Benefit**: Faster execution time, lower maintenance overhead, and clearer test focus.
-
-### 2. Stabilize Unstable Tests
-
-- **Goal**: Eliminate flaky tests caused by timing issues.
-- **Action**: Replace fixed delays (`waitForTimeout`) with more resilient waiting strategies, such as waiting for specific network responses, DOM elements to be visible, or WebSocket connection statuses.
-- **Benefit**: More reliable test runs and fewer false positives.
-
-### 3. Optimize Test Performance
-
-- **Goal**: Reduce the overall test execution time.
-- **Action**: Enable parallel test execution in `playwright.config.ts` and reduce the number of screenshots to only the most essential views.
-- **Benefit**: Faster feedback loops for developers and in the CI/CD pipeline.

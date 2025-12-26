@@ -1,3 +1,16 @@
-// tests/unit/jest.setup.js
-/* eslint-disable @typescript-eslint/no-var-requires */
-require('@testing-library/jest-dom')
+// jest.setup.js
+import { jest } from '@jest/globals'
+
+// Mock the WebSocket context
+jest.mock('@/context/WebSocketContext', () => ({
+  useWebSocket: jest.fn(),
+}))
+
+// Mock navigator.bluetooth
+const mockBluetooth = {
+  requestDevice: jest.fn(),
+}
+Object.defineProperty(navigator, 'bluetooth', {
+  value: mockBluetooth,
+  writable: true,
+})
