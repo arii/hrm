@@ -4,8 +4,8 @@ import { JWT } from 'next-auth/jwt'
 import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
-import { env } from './env.js'
-import { refreshSpotifyToken } from './spotify.js'
+import { env } from './env'
+import { refreshSpotifyToken } from './spotify'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -117,11 +117,12 @@ if (!NEXTAUTH_SECRET) {
  *
  * @type {AuthOptions}
  */
-export const authOptions: AuthOptions = {
-  providers: [
+
+const providers = []
+
+if (env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
+  providers.push(
     SpotifyProvider({
-      id: 'spotify',
-      name: 'Spotify',
       clientId: env.SPOTIFY_CLIENT_ID,
       clientSecret: env.SPOTIFY_CLIENT_SECRET,
       authorization: {
@@ -129,8 +130,12 @@ export const authOptions: AuthOptions = {
           scope: SPOTIFY_SCOPES,
         },
       },
-    }),
-  ],
+    })
+  )
+}
+
+export const authOptions: AuthOptions = {
+  providers,
   // In NextAuth v4, URL is automatically detected from NEXTAUTH_URL env var
   cookies: {
     sessionToken: {

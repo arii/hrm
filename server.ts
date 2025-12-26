@@ -7,7 +7,7 @@ import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
-import { serviceContainer } from './lib/serviceContainer.js'
+import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
@@ -159,7 +159,7 @@ app.prepare().then(async () => {
         }
       })
     }
-    wsManager.handleUpgrade(req, socket as any, head)
+    wsManager.handleUpgrade(req, socket as Socket, head)
   })
 
   server.listen(env.PORT, () => {

@@ -29,7 +29,6 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
-import { serviceContainer } from '../../lib/serviceContainer.js'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')

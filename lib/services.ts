@@ -26,7 +26,6 @@ export async function createServices(
       handleCommand: () => {},
       stopPolling: () => {},
       startPolling: () => {},
-      setRefreshToken: () => {},
       getState: () => ({ trackName: 'Service Error', artist: '', isPlaying: false, trackId: '', albumName: '', albumArtUrl: '', devices: [], volume: 0, isMuted: false }),
       isReady: () => false,
       forcePollAndBroadcast: () => {},

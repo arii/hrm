@@ -1,4 +1,4 @@
-import { env } from './env.js'
+import { env } from './env'
 
 export const SPOTIFY_CONSTANTS = {
   TOKEN_URL: 'https://accounts.spotify.com/api/token',

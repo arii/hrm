@@ -67,6 +67,10 @@ export class SpotifyPolling implements SpotifyService {
     this.broadcastUpdate = broadcastUpdate
     logger.debug('Spotify Polling Service Initialized.')
 
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error('Spotify client ID or secret not configured.')
+    }
+
     this.tokenManager = new SpotifyTokenManager(
       env.SPOTIFY_CLIENT_ID,
       env.SPOTIFY_CLIENT_SECRET
@@ -76,6 +80,9 @@ export class SpotifyPolling implements SpotifyService {
   public static async create(
     broadcastUpdate: (message: ServerMessage) => void
   ): Promise<SpotifyPolling> {
+    if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+      throw new Error('Spotify client ID or secret not configured.')
+    }
     const instance = new SpotifyPolling(broadcastUpdate)
     await instance.initializeSdk()
     instance.tokenRefreshInterval = setInterval(
@@ -104,6 +111,10 @@ export class SpotifyPolling implements SpotifyService {
     // We handle refreshing manually via SpotifyTokenManager.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { refresh_token, ...tokenWithoutRefresh } = accessToken
+    if (!env.SPOTIFY_CLIENT_ID) {
+      logger.error('Spotify client ID not found, cannot initialize SDK.')
+      return
+    }
     const sdk = SpotifyApi.withAccessToken(
       env.SPOTIFY_CLIENT_ID,
       tokenWithoutRefresh as AccessToken
