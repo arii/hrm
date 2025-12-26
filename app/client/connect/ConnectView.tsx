@@ -218,11 +218,12 @@ export default function ConnectView({
               fullWidth
               label={`Your Weight (${unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'})`}
               placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
-              type="number"
+              type="text"
               value={userWeight}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserWeight(e.target.value)
+                const { value } = e.target
+                if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                  setUserWeight(value)
                 }
               }}
               onBlur={(e) => {

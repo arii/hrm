@@ -10,6 +10,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { toKg, toDisplay } from '@/utils/units'
 import { Gender, MeasurementSystem } from '@/types'
 import { useState, useEffect } from 'react'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -20,6 +21,7 @@ export default function ConnectPage() {
     70
   )
   const [displayWeight, setDisplayWeight] = useState('')
+  const debouncedWeight = useDebounce(displayWeight, 500)
   const [unitSystem, setUnitSystem] = useLocalStorage<MeasurementSystem>(
     'hrm-unit-system',
     'IMPERIAL'
@@ -33,14 +35,13 @@ export default function ConnectPage() {
     }
   }, [userWeightInKg, unitSystem])
 
-  const handleDisplayWeightChange = (value: string) => {
-    setDisplayWeight(value)
-    const numValue = parseFloat(value)
+  useEffect(() => {
+    const numValue = parseFloat(debouncedWeight)
     if (!isNaN(numValue)) {
       const kgValue = toKg(numValue, unitSystem)
       setUserWeightInKg(kgValue)
     }
-  }
+  }, [debouncedWeight, unitSystem, setUserWeightInKg])
 
   const handleUnitSystemChange = (newUnit: MeasurementSystem) => {
     if (newUnit) {
@@ -103,7 +104,7 @@ export default function ConnectPage() {
       userHeight={userHeight}
       setUserHeight={setUserHeight}
       userWeight={displayWeight}
-      setUserWeight={handleDisplayWeightChange}
+      setUserWeight={setDisplayWeight}
       unitSystem={unitSystem}
       onUnitSystemChange={handleUnitSystemChange}
       gender={gender}
