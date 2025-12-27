@@ -26,7 +26,7 @@ export const createSpotifyTrack = (overrides: Partial<Track> = {}): Track => {
       ],
       available_markets: ['US'],
       copyrights: [],
-      external_ids: { isrc: 'USUG11901208' },
+      external_ids: { isrc: 'USUG11901208', upc: '194399222629', ean: '0194399222629' },
       external_urls: {
         spotify: 'https://open.spotify.com/album/6kZ42qRrzov54LcAk4onW9',
       },
