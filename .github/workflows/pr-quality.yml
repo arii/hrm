@@ -1,8 +1,10 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    branches: [ "leader" ]
+  # pull_request:
+  #   branches: [ "leader" ]
+  # NOTE: PR quality checks are now handled by gemini-orchestrator.yml
+  # which calls pr-quality-standalone.yml as a reusable workflow
   workflow_dispatch:
     inputs:
       branch:
