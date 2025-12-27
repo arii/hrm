@@ -52,14 +52,6 @@ jobs:
           node-version: '20.x'
           cache: 'pnpm'
 
-      - name: Cache Playwright
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'pnpm-lock.yaml') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
       - name: Configure Persistent Store
         shell: bash
         run: |
