@@ -202,7 +202,8 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       if (error instanceof DOMException && error.name === 'NotFoundError') {
         logger.info('User cancelled Bluetooth device selection.')
       } else {
-        logger.error(error, 'Failed to connect to device.')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        logger.error(error as any, 'Failed to connect to device.')
       }
     }
   }, [deviceManager, wsStatus])
