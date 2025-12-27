@@ -1,0 +1,170 @@
+# .github/workflows/pr-enrichment.yml
+# Enriches pull request titles and descriptions with contextual information
+# based on the files changed, scope of changes, and related issues/PRs.
+
+name: PR Enrichment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  enrich-pr:
+    name: Enrich PR Title and Description
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Analyze PR Changes
+        id: analyze
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Get files changed
+          FILES=$(gh pr diff "$PR_NUMBER" --name-only)
+          echo "FILES<<EOF" >> $GITHUB_ENV
+          echo "$FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          # Categorize changes
+          CATEGORIES=()
+          
+          if echo "$FILES" | grep -qE '^app/|^components/|^lib/'; then
+            CATEGORIES+=("features")
+          fi
+          
+          if echo "$FILES" | grep -qE '^tests/|\.test\.|\.spec\.'; then
+            CATEGORIES+=("testing")
+          fi
+          
+          if echo "$FILES" | grep -qE '^\.github/workflows/|scripts/'; then
+            CATEGORIES+=("ci")
+          fi
+          
+          if echo "$FILES" | grep -qE '\.md$|docs/'; then
+            CATEGORIES+=("docs")
+          fi
+          
+          if echo "$FILES" | grep -qE 'package\.json|tsconfig|eslint|prettier'; then
+            CATEGORIES+=("build-config")
+          fi
+          
+          if echo "$FILES" | grep -qE '\.css$|theme/|styles'; then
+            CATEGORIES+=("styling")
+          fi
+          
+          # Store categories
+          IFS=', ' read -ra CATS <<< "${CATEGORIES[@]}"
+          echo "CATEGORIES=${CATEGORIES[*]}" >> $GITHUB_ENV
+          
+          # Count file changes
+          FILE_COUNT=$(echo "$FILES" | wc -l)
+          echo "FILE_COUNT=$FILE_COUNT" >> $GITHUB_ENV
+          
+          # Get lines changed
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          ADDITIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$1} END {print sum}')
+          DELETIONS=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" | awk '{sum+=$2} END {print sum}')
+          echo "ADDITIONS=${ADDITIONS:-0}" >> $GITHUB_ENV
+          echo "DELETIONS=${DELETIONS:-0}" >> $GITHUB_ENV
+          
+          # Determine change scope
+          if [ "$FILE_COUNT" -le 3 ] && [ "${ADDITIONS:-0}" -le 100 ]; then
+            SCOPE="small"
+          elif [ "$FILE_COUNT" -le 10 ] && [ "${ADDITIONS:-0}" -le 500 ]; then
+            SCOPE="medium"
+          else
+            SCOPE="large"
+          fi
+          echo "SCOPE=$SCOPE" >> $GITHUB_ENV
+
+      - name: Update PR Description
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CURRENT_BODY="${{ github.event.pull_request.body }}"
+          
+          # Build metadata section
+          METADATA="## 📊 Change Summary
+          
+          - **Scope**: ${{ env.SCOPE }} (${{ env.FILE_COUNT }} files changed)
+          - **Lines Added**: ${{ env.ADDITIONS }}
+          - **Lines Deleted**: ${{ env.DELETIONS }}
+          - **Impact Areas**: ${{ env.CATEGORIES }}"
+          
+          # Check if metadata section already exists
+          if echo "$CURRENT_BODY" | grep -q "## 📊 Change Summary"; then
+            # Update existing metadata
+            NEW_BODY=$(echo "$CURRENT_BODY" | sed '/## 📊 Change Summary/,/## /c\'"$METADATA"'\n')
+          else
+            # Add metadata section
+            if [ -z "$CURRENT_BODY" ]; then
+              NEW_BODY="$METADATA"
+            else
+              NEW_BODY="$CURRENT_BODY
+
+          $METADATA"
+            fi
+          fi
+          
+          # Update PR
+          gh pr edit "$PR_NUMBER" --body "$NEW_BODY" || echo "::warning::Could not update PR description"
+
+      - name: Enhance PR Title
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CURRENT_TITLE="${{ github.event.pull_request.title }}"
+          
+          # Only enhance if title doesn't have scope prefix already
+          if [[ ! "$CURRENT_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|ci)\( ]]; then
+            
+            # Determine prefix based on categories
+            CATEGORIES="${{ env.CATEGORIES }}"
+            
+            if echo "$CATEGORIES" | grep -q "features"; then
+              PREFIX="feat"
+            elif echo "$CATEGORIES" | grep -q "ci"; then
+              PREFIX="ci"
+            elif echo "$CATEGORIES" | grep -q "docs"; then
+              PREFIX="docs"
+            elif echo "$CATEGORIES" | grep -q "testing"; then
+              PREFIX="test"
+            elif echo "$CATEGORIES" | grep -q "styling"; then
+              PREFIX="style"
+            else
+              PREFIX="chore"
+            fi
+            
+            # Determine scope
+            SCOPE="${{ env.SCOPE }}"
+            
+            # Create enhanced title (only if it doesn't already have conventional commit format)
+            if [[ ! "$CURRENT_TITLE" =~ ^[a-z]+\( ]]; then
+              NEW_TITLE="$PREFIX($SCOPE): $CURRENT_TITLE"
+              echo "Updating title from: $CURRENT_TITLE"
+              echo "Updating title to: $NEW_TITLE"
+              gh pr edit "$PR_NUMBER" --title "$NEW_TITLE" || echo "::warning::Could not update PR title"
+            fi
+          fi
+
+      - name: Log PR Enrichment
+        run: |
+          echo "## PR Enrichment Summary"
+          echo ""
+          echo "**Scope**: ${{ env.SCOPE }}"
+          echo "**Files Changed**: ${{ env.FILE_COUNT }}"
+          echo "**Lines Added**: ${{ env.ADDITIONS }}"
+          echo "**Lines Deleted**: ${{ env.DELETIONS }}"
+          echo "**Categories**: ${{ env.CATEGORIES }}"
