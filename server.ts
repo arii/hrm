@@ -6,11 +6,8 @@ import { env } from './lib/env.js' // New import
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
 import { initializeSocketManager } from './utils/socketManager.js' // Corrected import
-import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
-import rateLimit from 'express-rate-limit'
-import path from 'path'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -35,7 +32,7 @@ app.prepare().then(async () => {
   )
 
   // 3. Initialize Socket Logic (Controllers)
-  initializeSocketManager(wsManager.wss, services) // Simplified initialization
+  initializeSocketManager(wsManager.wss) // Simplified initialization
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {

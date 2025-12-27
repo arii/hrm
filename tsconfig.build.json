@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "./dist",
+    "outDir": "dist",
     "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
@@ -10,9 +10,11 @@
   },
   "include": [
     "server.ts",
+    "proxy.ts",
     "services/**/*.ts",
     "utils/**/*.ts",
     "types/**/*.ts",
-    "lib/**/*.ts"
+    "lib/**/*.ts",
+    "constants/**/*.ts"
   ]
 }
