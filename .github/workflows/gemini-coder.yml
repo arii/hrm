@@ -314,7 +314,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ARI_PAT }}
-          commit-message: "feat(ai): ${{ env.TITLE }}"
+          commit-message: "feat(ai): ${{ env.PROMPT | toLower }}"
           title: ${{ env.TITLE }}
           body: |
             Automated pull request created by the Gemini Coder agent.
