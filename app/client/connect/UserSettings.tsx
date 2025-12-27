@@ -10,20 +10,20 @@ interface UserSettingsProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
+  onAgeBlur: () => void
+  ageError: string | null
   userHeight: { cm: string; feet: string; inches: string }
   setUserHeight: (
     height: Partial<{ cm: string; feet: string; inches: string }>
   ) => void
+  onHeightBlur: () => void
+  heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  weightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
-  ageError: string | null
-  heightError: string | null
-  weightError: string | null
-  validateAge: (value: string) => void
-  validateHeight: () => void
-  validateWeight: () => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -31,18 +31,18 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserName,
   userAge,
   setUserAge,
+  onAgeBlur,
+  ageError,
   userHeight,
   setUserHeight,
+  onHeightBlur,
+  heightError,
   userWeight,
   setUserWeight,
+  onWeightBlur,
+  weightError,
   unit,
   setUnit,
-  ageError,
-  heightError,
-  weightError,
-  validateAge,
-  validateHeight,
-  validateWeight,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -64,7 +64,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
-        onBlur={(e) => validateAge(e.target.value)}
+        onBlur={onAgeBlur}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
@@ -102,7 +102,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               setUserHeight({ cm: e.target.value })
             }
           }}
-          onBlur={validateHeight}
+          onBlur={onHeightBlur}
           error={!!heightError}
           helperText={heightError}
         />
@@ -119,7 +119,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 setUserHeight({ feet: e.target.value })
               }
             }}
-            onBlur={validateHeight}
+            onBlur={onHeightBlur}
           />
           <TextField
             fullWidth
@@ -132,7 +132,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 setUserHeight({ inches: e.target.value })
               }
             }}
-            onBlur={validateHeight}
+            onBlur={onHeightBlur}
           />
         </Stack>
       )}
@@ -147,7 +147,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserWeight(e.target.value)
           }
         }}
-        onBlur={validateWeight}
+        onBlur={onWeightBlur}
         error={!!weightError}
         helperText={weightError}
       />

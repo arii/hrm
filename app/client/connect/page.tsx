@@ -16,6 +16,11 @@ import {
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 
+const WEIGHT_VALIDATION = {
+  IMPERIAL: { min: 66, max: 440 }, // lbs
+  METRIC: { min: 30, max: 200 }, // kg
+}
+
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
@@ -36,15 +41,37 @@ export default function ConnectPage() {
     inches: string
   } | null>(null)
   const [displayWeight, setDisplayWeight] = useState('')
-  const [heightError, setHeightError] = useState<string | null>(null)
 
-  const validateHeight = (cm: number, unitSystem: MeasurementSystem) => {
+  const [heightError, setHeightError] = useState<string | null>(null)
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
+
+  const validateHeightValue = (cm: number, unitSystem: MeasurementSystem) => {
     if (isNaN(cm) || cm < 100 || cm > 250) {
       if (unitSystem === 'METRIC') {
         return 'Please enter a valid height (100-250 cm)'
       } else {
         return 'Please enter a valid height (3ft 3in - 8ft 2in)'
       }
+    }
+    return null
+  }
+
+  const validateAgeValue = (age: string) => {
+    if (!age || age.trim() === '') return null
+    const num = Number(age)
+    if (isNaN(num) || num < 1 || num > 120) {
+      return 'Please enter a valid age (1-120)'
+    }
+    return null
+  }
+
+  const validateWeightValue = (weight: string, unit: MeasurementSystem) => {
+    if (!weight || weight.trim() === '') return null
+    const num = Number(weight)
+    const range = WEIGHT_VALIDATION[unit]
+    if (isNaN(num) || num < range.min || num > range.max) {
+      return `Please enter a valid weight (${range.min}-${range.max})`
     }
     return null
   }
@@ -86,7 +113,7 @@ export default function ConnectPage() {
       }
     }
 
-    const error = validateHeight(cmValue, unitSystem)
+    const error = validateHeightValue(cmValue, unitSystem)
     setHeightError(error)
 
     if (!error && cmValue > 0) {
@@ -96,13 +123,21 @@ export default function ConnectPage() {
     setTransientHeightInput(null)
   }
 
+  const handleAgeBlur = () => {
+    const error = validateAgeValue(userAge)
+    setAgeError(error)
+  }
+
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
   }
 
   const handleWeightBlur = () => {
+    const error = validateWeightValue(displayWeight, unitSystem)
+    setWeightError(error)
+
     const numericValue = parseFloat(displayWeight)
-    if (!isNaN(numericValue) && numericValue > 0) {
+    if (!error && !isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
       setWeightInKg(newKgValue.toFixed(2))
     }
@@ -132,6 +167,13 @@ export default function ConnectPage() {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
       setTransientHeightInput(null) // Reset transient input on unit change
+      // Re-validate weight with new unit
+      // Note: displayWeight might need conversion here if we wanted to be fancy,
+      // but simpler to let user re-enter or let the effect update it (but displayWeight is local state).
+      // Ideally we should convert displayWeight. But for now, reset it?
+      // Or just let the user see the old number in new unit (likely invalid).
+      // Let's clear displayWeight so it picks up from stored _weightInKg (converted)
+      setDisplayWeight('')
     }
   }
 
@@ -181,6 +223,8 @@ export default function ConnectPage() {
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
+      onAgeBlur={handleAgeBlur}
+      ageError={ageError}
       userHeight={displayHeight}
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
@@ -188,6 +232,7 @@ export default function ConnectPage() {
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
+      weightError={weightError}
       gender={gender}
       setGender={setGender}
       unitSystem={unitSystem}
