@@ -3,7 +3,7 @@
  */
 // tests/unit/components/shared/ValidatedTextField.test.tsx
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import ValidatedTextField from '@/components/shared/ValidatedTextField'
 import '@testing-library/jest-dom'
 
@@ -15,12 +15,13 @@ describe('ValidatedTextField', () => {
 
   it('should show an error for invalid input', async () => {
     render(
-      <ValidatedTextField
-        validationRules={[{ type: 'required' }]}
-        value=""
-      />
+      <ValidatedTextField validationRules={[{ type: 'required' }]} value="" />
     )
-    expect(await screen.findByText('This field is required.')).toBeInTheDocument()
+    const textbox = screen.getByRole('textbox')
+    fireEvent.blur(textbox)
+    expect(
+      await screen.findByText('This field is required.')
+    ).toBeInTheDocument()
   })
 
   it('should have correct accessibility attributes when invalid', async () => {
@@ -32,6 +33,7 @@ describe('ValidatedTextField', () => {
       />
     )
     const textbox = screen.getByRole('textbox')
+    fireEvent.blur(textbox)
     expect(textbox).toHaveAttribute('aria-invalid', 'true')
     expect(textbox).toHaveAttribute('aria-describedby', 'test-field-error-text')
   })

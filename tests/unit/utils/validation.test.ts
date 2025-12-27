@@ -5,9 +5,9 @@ import { ValidationRule } from '@/components/shared/ValidatedTextField'
 describe('Validation Utility', () => {
   it('should validate required fields', () => {
     const rules: ValidationRule[] = [{ type: 'required' }]
-    expect(validate(' ', rules).isValid).toBe(true)
     expect(validate('a', rules).isValid).toBe(true)
     expect(validate('', rules).isValid).toBe(false)
+    expect(validate(' ', rules).isValid).toBe(false)
   })
 
   it('should validate email addresses', () => {

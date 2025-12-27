@@ -1,15 +1,8 @@
 // app/settings/page.tsx
 'use client'
 
-import React, { useState } from 'react'
-import {
-  Container,
-  Typography,
-  Paper,
-  Stack,
-  Button,
-  Box,
-} from '@mui/material'
+import { useState } from 'react'
+import { Container, Typography, Paper, Stack, Button, Box } from '@mui/material'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import ValidatedTextField from '@/components/shared/ValidatedTextField'
 import { useSnackbar } from 'notistack'
@@ -57,7 +50,10 @@ const SettingsPage = () => {
               label="User Name"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-                validationRules={[{ type: 'required' }, { type: 'minLength', value: 2 }]}
+              validationRules={[
+                { type: 'required' },
+                { type: 'minLength', value: 2 },
+              ]}
               onValidation={setIsNameValid}
               fullWidth
             />
@@ -65,7 +61,7 @@ const SettingsPage = () => {
               label="User Age"
               value={userAge}
               onChange={(e) => setUserAge(e.target.value)}
-                validationRules={[{ type: 'positiveInteger' }]}
+              validationRules={[{ type: 'positiveInteger' }]}
               onValidation={setIsAgeValid}
               fullWidth
             />

@@ -1,7 +1,4 @@
-import {
-  ValidationRule,
-  ValidationRuleType,
-} from '@/types/validation'
+import { ValidationRule, ValidationRuleType } from '@/types/validation'
 
 /**
  * Default error messages for validation rules.

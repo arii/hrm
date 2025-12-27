@@ -1,15 +1,14 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import { TextField, type TextFieldProps } from '@mui/material'
 import { validate } from '@/utils/validation'
-import {
-  ValidationRule,
-  ValidationRuleType,
-} from '@/types/validation'
+import { ValidationRule, ValidationRuleType } from '@/types/validation'
 
-export interface ValidatedTextFieldProps
-  extends Omit<TextFieldProps, 'error' | 'helperText'> {
+export interface ValidatedTextFieldProps extends Omit<
+  TextFieldProps,
+  'error' | 'helperText'
+> {
   validationRules?: ValidationRule[]
   errorMessageOverrides?: Partial<Record<ValidationRuleType, string>>
   onValidation?: (isValid: boolean) => void
@@ -27,26 +26,29 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
   const [error, setError] = React.useState<string | null>(null)
   const [touched, setTouched] = React.useState(false)
 
-  const handleValidation = (value: string) => {
-    if (validationRules.length === 0) {
-      if (onValidation) onValidation(true)
-      return
-    }
+  const handleValidation = useCallback(
+    (value: string) => {
+      if (validationRules.length === 0) {
+        if (onValidation) onValidation(true)
+        return
+      }
 
-    const { isValid, message } = validate(
-      value,
-      validationRules,
-      errorMessageOverrides
-    )
+      const { isValid, message } = validate(
+        value,
+        validationRules,
+        errorMessageOverrides
+      )
 
-    if (touched) {
-      setError(isValid ? null : message)
-    }
+      if (touched) {
+        setError(isValid ? null : message)
+      }
 
-    if (onValidation) {
-      onValidation(isValid)
-    }
-  }
+      if (onValidation) {
+        onValidation(isValid)
+      }
+    },
+    [validationRules, errorMessageOverrides, touched, onValidation]
+  )
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleValidation(event.target.value)
@@ -68,17 +70,17 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
     if (touched) {
       handleValidation(props.value as string)
     }
-  }, [props.value, touched])
+  }, [props.value, touched, handleValidation])
 
   const a11yProps = {
     'aria-invalid': !!error,
-    'aria-describedby': !!error ? `${props.id}-error-text` : undefined,
+    'aria-describedby': error ? `${props.id}-error-text` : undefined,
   }
 
   return (
     <TextField
       {...props}
-      error={!!error}
+      error={Boolean(error)}
       helperText={error}
       onChange={handleChange}
       onBlur={handleBlur}

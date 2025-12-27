@@ -1,5 +1,4 @@
 // components/shared/ValidatedTextField.stories.tsx
-import React from 'react'
 import { Meta, StoryFn } from '@storybook/react'
 import ValidatedTextField, {
   ValidatedTextFieldProps,
@@ -36,28 +35,28 @@ Default.args = {
 export const Required = Template.bind({})
 Required.args = {
   label: 'Required Field',
-  validationRules: ['required'],
+  validationRules: [{ type: 'required' }],
   fullWidth: true,
 }
 
 export const Email = Template.bind({})
 Email.args = {
   label: 'Email Field',
-  validationRules: ['email'],
+  validationRules: [{ type: 'email' }],
   fullWidth: true,
 }
 
 export const MinLength = Template.bind({})
 MinLength.args = {
   label: 'Min Length Field',
-  validationRules: [{ minLength: 5 }],
+  validationRules: [{ type: 'minLength', value: 5 }],
   fullWidth: true,
 }
 
 export const CustomErrorMessage = Template.bind({})
 CustomErrorMessage.args = {
   label: 'Required Field',
-  validationRules: ['required'],
+  validationRules: [{ type: 'required' }],
   errorMessageOverrides: { required: 'This is a custom required message.' },
   fullWidth: true,
 }
