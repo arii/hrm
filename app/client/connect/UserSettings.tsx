@@ -6,6 +6,14 @@ import { validate } from '../../../utils/validation'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import {
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
+import { Gender } from '../../../types'
 
 const WEIGHT_VALIDATION = {
   IMPERIAL: { min: 66, max: 440 }, // lbs
@@ -23,6 +31,8 @@ interface UserSettingsProps {
   setUserWeight: (weight: string) => void
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  gender: Gender
+  setGender: (gender: Gender) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -36,6 +46,8 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserWeight,
   unit,
   setUnit,
+  gender,
+  setGender,
 }) => {
   const [feet, setFeet] = React.useState('')
   const [inches, setInches] = React.useState('')
@@ -53,7 +65,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         setInches(String(newInches))
       }
     }
-  }, [unit, userHeight, feet, inches])
+  }, [unit, userHeight])
 
   const handleImperialHeightChange = (ft: string, inch: string) => {
     const feetNum = Number(ft)
@@ -92,9 +104,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         aria-label="Unit system"
         aria-describedby="unit-system-description"
       >
-        <p id="unit-system-description" style={{ display: 'none' }}>
+        <span id="unit-system-description" style={{ clip: 'rect(0 0 0 0)', position: 'absolute' }}>
           Currently selected unit system is {unit}.
-        </p>
+        </span>
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
@@ -199,6 +211,19 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           />
         </Stack>
       )}
+      <FormControl component="fieldset">
+        <FormLabel component="legend">Gender</FormLabel>
+        <RadioGroup
+          row
+          aria-label="gender"
+          name="gender"
+          value={gender}
+          onChange={(e) => setGender(e.target.value as Gender)}
+        >
+          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
+          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
+        </RadioGroup>
+      </FormControl>
     </Stack>
   )
 }

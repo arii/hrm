@@ -141,75 +141,20 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-            <TextField
-              fullWidth
-              label="Your Name"
-              placeholder="e.g., Jane Doe"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Your Age"
-              placeholder="e.g., 30"
-              type="number"
-              value={userAge}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserAge(e.target.value)
-                }
-              }}
-              inputProps={{ min: 1, max: 120 }}
-            />
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Stack>
+          <UserSettings
+            userName={userName}
+            setUserName={setUserName}
+            userAge={userAge}
+            setUserAge={setUserAge}
+            userHeight={userHeight}
+            setUserHeight={setUserHeight}
+            userWeight={userWeight}
+            setUserWeight={setUserWeight}
+            unit={unitSystem}
+            setUnit={onUnitChange}
+            gender={gender}
+            setGender={setGender}
+          />
         ) : (
           <Box
             sx={{
