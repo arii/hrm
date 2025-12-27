@@ -110,10 +110,15 @@ export default function ConnectPage() {
     totalCalories,
   })
 
+  // Determine which calorie value to display.
+  // Before a workout starts, show the live total from the WebSocket.
+  // After a workout starts, show the calories burned during that session.
+  const displayCalories = hasStarted ? caloriesBurned : totalCalories
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
+      caloriesBurned={displayCalories}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}

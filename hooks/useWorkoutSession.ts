@@ -175,10 +175,12 @@ export const useWorkoutSession = ({
   }, [])
 
   const startWorkout = useCallback(() => {
-    // Capture the calorie count at the moment the workout starts.
-    setStartCalories(totalCalories)
+    // Only set startCalories if a workout is not already in progress.
+    if (state.status === 'idle') {
+      setStartCalories(totalCalories)
+    }
     dispatch({ type: 'START_WORKOUT' })
-  }, [totalCalories])
+  }, [totalCalories, state.status])
 
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
