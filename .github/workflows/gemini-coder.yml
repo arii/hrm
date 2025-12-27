@@ -212,33 +212,58 @@ jobs:
         env:
           BRANCH: ${{ env.BRANCH }}
         run: |
-          echo "Checking patch.diff..."
+          echo "::notice::Checking patch.diff..."
           if [ ! -f patch.diff ]; then
-            echo "❌ patch.diff file not found"
+            echo "::error::patch.diff file not found. The gemini-client failed to generate a patch."
             exit 1
           fi
           
           PATCH_SIZE=$(wc -c < patch.diff)
-          echo "Patch file size: $PATCH_SIZE bytes"
+          echo "::notice::Patch file size: $PATCH_SIZE bytes"
           
           if [ $PATCH_SIZE -eq 0 ]; then
-            echo "❌ patch.diff is empty - gemini-client did not generate a valid diff"
+            echo "::error::patch.diff is empty. The gemini-client did not generate any code changes."
+            echo "::notice::Possible causes:"
+            echo "::notice::  - The gemini-client failed to understand the task"
+            echo "::notice::  - The API response was incomplete or malformed"
             exit 1
           fi
           
           # Validate patch format starts with --- a/
           if ! head -1 patch.diff | grep -q "^--- a/"; then
-            echo "❌ Patch does not start with '--- a/' header"
-            echo "Patch content (first 30 lines):"
-            head -30 patch.diff
+            echo "::error::Patch does not start with '--- a/' header"
+            echo "::notice::The patch is not in unified diff format. This usually means:"
+            echo "::notice::  - The gemini-client included explanation text before the diff"
+            echo "::notice::  - The output was not properly formatted as a diff"
+            echo "::notice::First 30 lines of patch.diff:"
+            head -30 patch.diff | sed 's/^/::notice::  /'
             exit 1
           fi
           
-          echo "✅ Patch format valid, applying..."
+          echo "::notice::✅ Patch format valid. Validating patch can be applied..."
+          
+          # Check if patch can be applied cleanly without actually applying it
+          if ! git apply --check patch.diff 2>&1; then
+            APPLY_ERROR=$(git apply --check patch.diff 2>&1)
+            echo "::error::Patch cannot be applied cleanly."
+            echo "::notice::Git apply check failed with:"
+            echo "$APPLY_ERROR" | sed 's/^/::notice::  /'
+            echo "::notice::Common causes:"
+            echo "::notice::  - Files referenced in the patch don't exist in the repository"
+            echo "::notice::  - The patch targets incorrect file paths"
+            echo "::notice::  - There are conflicts with the current codebase"
+            exit 1
+          fi
+          
+          echo "::notice::✅ Patch validation passed. Applying patch..."
           git config user.name "AI Agent"
           git config user.email "ai@agent.local"
           git checkout -b "$BRANCH"
-          git apply patch.diff
+          if ! git apply patch.diff; then
+            echo "::error::Failed to apply patch. This should not happen after validation passed."
+            exit 1
+          fi
+          echo "::notice::✅ Patch applied successfully"
 
       - name: 'Gemini: Verify Changes'
         if: env.AGENT_PROVIDER == 'gemini'
