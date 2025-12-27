@@ -231,7 +231,6 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     beforeEach(() => {
-      jest.clearAllMocks()
       ;(estimateCaloriesBurned as jest.Mock).mockClear()
     })
 

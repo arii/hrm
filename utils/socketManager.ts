@@ -103,11 +103,11 @@ const updateCaloriesForClient = (clientId: string): boolean => {
  */
 const updateCaloriesForAllClients = () => {
   let needsBroadcast = false
-  for (const clientId of clientSessionState.keys()) {
-    if (updateCaloriesForClient(clientId)) {
+  hrmDataRepository.findAll().forEach((client) => {
+    if (updateCaloriesForClient(client.clientId)) {
       needsBroadcast = true
     }
-  }
+  })
 
   if (needsBroadcast) {
     broadcastState()
