@@ -9,7 +9,6 @@ import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
 
@@ -163,6 +162,6 @@ app.prepare().then(async () => {
   })
 
   server.listen(env.PORT, () => {
-    logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
+    console.info(`> Ready on http://${env.HOST}:${env.PORT}`)
   })
 })

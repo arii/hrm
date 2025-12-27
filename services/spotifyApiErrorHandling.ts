@@ -1,4 +1,3 @@
-import logger from '../utils/logger.js'
 
 // Utility: Safely parse JSON, fallback to text
 function safeParseJSON(input: string): unknown {
@@ -29,7 +28,7 @@ export async function logSpotifyCommandError(
           errObj.message.includes('Device not found'))) ||
       errObj?.status === 404
     ) {
-      logger.warn(
+      console.warn(
         { command },
         'Spotify command failed: No active device found. Playback cannot be controlled.'
       )
@@ -37,7 +36,7 @@ export async function logSpotifyCommandError(
     }
 
     if (error instanceof SyntaxError) {
-      logger.warn(
+      console.warn(
         { command },
         'Command executed, but response was not valid JSON (likely 204 No Content). SyntaxError suppressed.'
       )
@@ -60,28 +59,28 @@ export async function logSpotifyCommandError(
             ).response.text()
           }
           const parsed = safeParseJSON(text)
-          logger.error(
+          console.error(
             { command, response: parsed },
             'Error executing Spotify command'
           )
         } catch (e) {
-          logger.error(
+          console.error(
             { command, err: e },
             'Could not read response body for failed Spotify command'
           )
         }
       } else {
-        logger.error({ command, err: error }, 'Error executing Spotify command')
+        console.error({ command, err: error }, 'Error executing Spotify command')
       }
     } else {
-      logger.error({ command, err: error }, 'Error executing Spotify command')
+      console.error({ command, err: error }, 'Error executing Spotify command')
     }
   } catch (loggingError) {
-    logger.error(
+    console.error(
       { command, err: loggingError },
       'Error in logSpotifyCommandError'
     )
-    logger.error({ command, originalError: error }, 'Original error')
+    console.error({ command, originalError: error }, 'Original error')
   }
 }
 
@@ -104,12 +103,12 @@ export async function handleSpotifyApiError(
   }
 
   if (err?.status === 429) {
-    logger.warn('Spotify API Rate Limited. Backing off...')
+    console.warn('Spotify API Rate Limited. Backing off...')
     return true // Handled
   }
 
   if (err?.status === 401) {
-    logger.warn('Spotify token expired during polling. Attempting refresh.')
+    console.warn('Spotify token expired during polling. Attempting refresh.')
     onTokenExpired()
     return true // Handled
   }
@@ -122,7 +121,7 @@ export async function handleSpotifyApiError(
     errMsg.includes('ENETUNREACH') ||
     errMsg.includes('ECONNREFUSED')
   ) {
-    logger.warn(
+    console.warn(
       { err: error },
       `Temporary network connectivity issue during Spotify polling: ${errMsg} (suppressed)`
     )
@@ -133,12 +132,12 @@ export async function handleSpotifyApiError(
   if (err?.response && typeof err.response.text === 'function') {
     const text = await err.response.text()
     const parsed = safeParseJSON(text)
-    logger.error(
+    console.error(
       { response: parsed },
       'Unhandled Spotify API error during polling'
     )
   } else {
-    logger.error({ err: error }, 'Error fetching currently playing track')
+    console.error({ err: error }, 'Error fetching currently playing track')
   }
   return false // Not a specifically handled API error
 }

@@ -2,7 +2,6 @@ import { ApiError } from '@/lib/errors'
 import * as fs from 'fs'
 import { NextResponse } from 'next/server'
 import * as path from 'path'
-import logger from '@/utils/logger'
 
 /**
  * API route to clear the persisted Spotify token file.
@@ -19,13 +18,13 @@ export async function POST(_req: Request) {
     // Check if file exists before attempting to delete
     if (fs.existsSync(tokenFilePath)) {
       fs.unlinkSync(tokenFilePath)
-      logger.info('[API /clear-token] Deleted spotify_tokens.json')
+      console.info('[API /clear-token] Deleted spotify_tokens.json')
       return NextResponse.json({
         success: true,
         message: 'Token file cleared',
       })
     } else {
-      logger.info('[API /clear-token] Token file does not exist')
+      console.info('[API /clear-token] Token file does not exist')
       return NextResponse.json({
         success: true,
         message: 'Token file already cleared',
@@ -38,7 +37,7 @@ export async function POST(_req: Request) {
         { status: error.statusCode }
       )
     }
-    logger.error('[API /clear-token] Error clearing token file:', error)
+    console.error('[API /clear-token] Error clearing token file:', error)
     return NextResponse.json(
       {
         success: false,

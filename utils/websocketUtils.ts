@@ -8,7 +8,6 @@
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { ExtWebSocket, ServerMessage } from '../types/websocket.js'
-import logger from './logger.js'
 
 /**
  * Sends a typed WebSocket message to a single client. This is the preferred
@@ -25,7 +24,7 @@ export const sendWebSocketMessage = (
 ): void => {
   const extWs = ws as ExtWebSocket
   if (extWs.readyState !== WebSocket.OPEN) {
-    logger.warn(
+    console.warn(
       { clientId: extWs.clientId, origin }, // Assuming clientId is attached
       'Attempted to send message to a non-open WebSocket.'
     )
@@ -34,7 +33,7 @@ export const sendWebSocketMessage = (
   try {
     extWs.send(JSON.stringify(message))
   } catch (error) {
-    logger.error(
+    console.error(
       {
         clientId: extWs.clientId,
         error,
@@ -65,7 +64,7 @@ export const broadcast = (
       try {
         extClient.send(messageString)
       } catch (error) {
-        logger.error(
+        console.error(
           {
             clientId: extClient.clientId,
             error,
@@ -101,7 +100,7 @@ export class ConnectionMonitor {
       const parsedValue = parseInt(envValue || '30000', 10)
 
       if (envValue && (isNaN(parsedValue) || parsedValue <= 0)) {
-        logger.warn(
+        console.warn(
           {
             provided: envValue,
             fallback: 30000,
@@ -116,7 +115,7 @@ export class ConnectionMonitor {
 
     // Final validation for any source.
     if (interval <= 0) {
-      logger.warn(
+      console.warn(
         {
           provided: interval,
           fallback: 30000,
@@ -134,7 +133,7 @@ export class ConnectionMonitor {
    */
   start(): void {
     if (this.intervalId) {
-      logger.warn('ConnectionMonitor is already running.')
+      console.warn('ConnectionMonitor is already running.')
       return
     }
 
@@ -143,7 +142,7 @@ export class ConnectionMonitor {
         const extWs = ws as ExtWebSocket
 
         if (extWs.isAlive === false) {
-          logger.warn(
+          console.warn(
             { clientId: extWs.clientId },
             'Terminating stale WebSocket connection due to missed heartbeat.'
           )
@@ -157,7 +156,7 @@ export class ConnectionMonitor {
       })
     }, this.watchdogInterval)
 
-    logger.info(
+    console.info(
       { interval: this.watchdogInterval },
       'ConnectionMonitor started.'
     )
@@ -170,7 +169,7 @@ export class ConnectionMonitor {
     if (this.intervalId) {
       clearInterval(this.intervalId)
       this.intervalId = null
-      logger.info('ConnectionMonitor stopped.')
+      console.info('ConnectionMonitor stopped.')
     }
   }
 }

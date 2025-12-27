@@ -2,7 +2,6 @@
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
-import logger from '@/utils/logger'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -123,7 +122,7 @@ export async function POST(req: NextRequest) {
       } catch (_e) {
         // Text was not JSON
       }
-      logger.error(
+      console.error(
         { status: response.status, details: errorDetails },
         'Spotify API Error'
       )
@@ -138,7 +137,7 @@ export async function POST(req: NextRequest) {
       message: `Command '${command}' executed.`,
     })
   } catch (error) {
-    logger.error({ error }, 'REST control failed')
+    console.error({ error }, 'REST control failed')
     return NextResponse.json(
       {
         error: 'Internal server error processing command.',

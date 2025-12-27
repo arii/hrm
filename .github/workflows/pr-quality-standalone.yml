@@ -152,6 +152,13 @@ jobs:
           pnpm run lint 2>&1 | tee logs/lint-output.log
         continue-on-error: true
 
+      - name: Knip Dependency Check
+        id: knip_check
+        run: |
+          set -o pipefail
+          pnpm run lint:knip 2>&1 | tee logs/knip-output.log
+        continue-on-error: true
+
       - name: Verify Build
         id: build
         run: |
@@ -264,11 +271,12 @@ jobs:
 
       # Post comment on PR when tests fail
       - name: Report Failure to Jules
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.knip_check.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
           # Pass all test outcomes to the script as env vars for easier access
           LINT_OUTCOME: ${{ steps.lint.outcome }}
+          KNIP_CHECK_OUTCOME: ${{ steps.knip_check.outcome }}
           BUILD_OUTCOME: ${{ steps.build.outcome }}
           INFRA_TESTS_DEV_OUTCOME: ${{ steps.infra_tests_dev.outcome }}
           INFRA_TESTS_PROD_OUTCOME: ${{ steps.infra_tests_prod.outcome }}
@@ -296,6 +304,7 @@ jobs:
           # Each line: <OUTCOME_VAR_NAME>|<Display Name>|<primary_log_file>
           read -r -d '' CHECKS_DEFINITION <<'EOF'
           LINT_OUTCOME|Lint|logs/lint-output.log
+          KNIP_CHECK_OUTCOME|Knip Check|logs/knip-output.log
           BUILD_OUTCOME|Build|logs/build-output.log
           INFRA_TESTS_DEV_OUTCOME|Infrastructure (Dev)|logs/infra-dev-output.log
           INFRA_TESTS_PROD_OUTCOME|Infrastructure (Prod)|logs/infra-prod-output.log
@@ -392,7 +401,7 @@ jobs:
 
       # Fail the job if any tests failed (must be at the very end)
       - name: Fail Workflow on Test Failures
-        if: always() && (steps.lint.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.knip_check.outcome == 'failure' || steps.build.outcome == 'failure' || steps.infra_tests_dev.outcome == 'failure' || steps.infra_tests_prod.outcome == 'failure' || steps.unit_tests.outcome == 'failure' || steps.visual_tests.outcome == 'failure' || steps.perf_tests.outcome == 'failure')
         run: |
           echo "One or more tests failed. Failing the workflow."
           exit 1
