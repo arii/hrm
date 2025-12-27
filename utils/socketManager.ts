@@ -1,286 +1,314 @@
-// File: utils/socketManager.ts (WebSocket Manager - Typed)
-/**
- * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
- */
-import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
-import {
-  ClientCommandMessageSchema,
-  ClientRegistrationMessage,
-  SpotifyCommandMessage,
-  SpotifyExecutionMessage,
-  InitialStateSnapshotPayload,
-  ServerMessage,
-  StateSnapshot,
-  ExtWebSocket,
-} from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
-import {
-  broadcast,
-  sendWebSocketMessage,
-  ConnectionMonitor,
-} from './websocketUtils.js'
-import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
-import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { AppServices } from '../lib/services.js'
-
-// Define service instances to be managed
-// New: Define a function to get the state snapshot
-let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
-let wsServerInstance: WebSocketServer
-let connectionMonitor: ConnectionMonitor
-let services: AppServices
-
-const hrmDataRepository = new HrmDataRepository()
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
-
-/**
- * Initializes the WebSocket Server manager and registers the core services.
- */
-const initSocketManager = (
-  wss: WebSocketServer,
-  getSnapshot: () => StateSnapshot,
-  svcs: AppServices
-) => {
-  wsServerInstance = wss
-  getUnifiedStateSnapshot = getSnapshot
-  services = svcs
-  connectionMonitor = new ConnectionMonitor(wss)
-  connectionMonitor.start()
-
-  wss.on('connection', (ws: WebSocket) => {
-    const extWs = ws as ExtWebSocket
-    extWs.isAlive = true
-    extWs.on('pong', () => {
-      extWs.isAlive = true
-    })
-
-    extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
-    logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
-
-    // Initialize new client
-    const newClient: HrmStreamData = {
-      clientId: extWs.clientId,
-      value: 0,
-      maxHr: 185,
-      age: 30,
-      calories: 0, // Initialize to 0
-    }
-    hrmDataRepository.save(newClient)
-    clientSessionState.set(extWs.clientId, {
-      lastUpdate: Date.now(),
-      accumulatedCalories: 0,
-    })
-
-    extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
-    })
-
-    extWs.on('close', () => {
-      logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
-      broadcastState()
-    })
-  })
-
-  wss.on('close', () => {
-    connectionMonitor.stop()
+// utils/SocketManager.ts
+import { WebSocketServer, WebSocket } from 'ws'
+// A simple UUID generator to avoid the ESM issues with the uuid package
+const uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
   })
 }
+import { HrmDataRepository } from '@/lib/repositories/HrmDataRepository'
+import { HrmStreamData } from '@/types'
+import { IncomingMessage } from 'http'
+import logger from './logger'
+import { parse as urlParse } from 'url'
+import { ParsedUrlQuery } from 'querystring'
+import { broadcast } from './websocketUtils'
+import {
+  WebSocketMessageSchema,
+  HrmInputSchema,
+  HrmMetadataUpdateSchema,
+  HrmMetadataUpdate,
+} from '@/lib/validation/ws-schemas'
 
-/**
- * Resets the socket manager state. Use this for testing purposes only.
- */
-export const resetSocketManager = () => {
-  hrmDataRepository.clear()
-  clientSessionState.clear()
-}
+const RECONNECT_GRACE_PERIOD = 5000 // 5 seconds
+const KEEP_ALIVE_INTERVAL = 30000 // 30 seconds
 
-const broadcastState = () => {
-  broadcast(
-    wsServerInstance,
-    {
-      type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
-    },
-    'socketManager.broadcastState'
-  )
-}
-
-/**
- * Handles incoming JSON messages from client applications.
- */
-const handleIncomingMessage = (
-  ws: ExtWebSocket,
-  messageString: string,
+interface ExtWebSocket extends WebSocket {
+  isAlive: boolean
   clientId: string
-) => {
-  try {
-    const parsedJson = JSON.parse(messageString)
-    const message = ClientCommandMessageSchema.parse(parsedJson)
+}
 
-    switch (message.type) {
-      case 'PING': {
-        // This is now a no-op. The server relies on native WebSocket ping/pong
-        // frames for heartbeat. The case is retained for backward
-        // compatibility with older clients that might still send this message.
-        break
-      }
-      case 'REGISTER_CLIENT': {
-        ws.clientType = (message as ClientRegistrationMessage).role
-        logger.info(
-          { clientId, clientType: ws.clientType },
-          'Client registered'
-        )
-        break
-      }
-      case 'GET_STATE': {
-        const stateSnapshot = getUnifiedStateSnapshot()
-        const payload: InitialStateSnapshotPayload = {
-          ...stateSnapshot,
-          hrmData: hrmDataRepository.findAll(),
-        }
-        const initialStateMessage: ServerMessage = {
-          type: 'INITIAL_STATE',
-          payload: payload,
-        }
-        sendWebSocketMessage(ws, initialStateMessage, 'socketManager.GET_STATE')
-        break
-      }
-      case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmDataRepository.save({ ...existingData, ...updateData })
-        }
-        broadcastState()
-        break
-      }
-      case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+export class SocketManager {
+  private wss: WebSocketServer
+  private hrmDataRepository: HrmDataRepository
+  private disconnectionTimers = new Map<string, NodeJS.Timeout>()
 
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
+  constructor(wss: WebSocketServer) {
+    this.wss = wss
+    this.hrmDataRepository = new HrmDataRepository()
 
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
+    this.initialize()
+  }
 
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: currentHr,
-              age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            currentAccumulated += caloriesBurned
-          }
+  private initialize() {
+    this.wss.on('connection', this.handleConnection.bind(this))
+    const interval = setInterval(
+      this.pingClients.bind(this),
+      KEEP_ALIVE_INTERVAL
+    )
+    this.wss.on('close', () => clearInterval(interval))
+  }
 
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
-          hrmDataRepository.save({
-            ...existingData,
-            value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
-          })
-        }
-        broadcastState()
-        break
-      }
-
-      case 'TIMER_COMMAND':
-        services.tabataService.handleCommand(message.command)
-        break
-
-      case 'SET_MODE':
-        services.tabataService.setMode(message.mode)
-        break
-
-      case 'TIMER_CONFIG':
-        services.tabataService.setConfig({
-          workDuration: message.workDuration,
-          restDuration: message.restDuration,
-        })
-        break
-
-      case 'SPOTIFY_COMMAND': {
-        const commandMsg = message as SpotifyCommandMessage
-        logger.info(
-          { clientId, command: commandMsg.command },
-          'Forwarding Spotify command'
-        )
-
-        wsServerInstance.clients.forEach((client: WebSocket) => {
-          const target = client as ExtWebSocket
-          if (
-            target.readyState === WebSocket.OPEN &&
-            target.clientType === 'dashboard'
-          ) {
-            const executionMessage: SpotifyExecutionMessage = {
-              type: 'EXECUTE_SPOTIFY',
-              payload: commandMsg,
-            }
-            sendWebSocketMessage(
-              target,
-              executionMessage,
-              'socketManager.SPOTIFY_COMMAND'
-            )
-          }
-        })
-
-        const spotifyService = services.spotifyService
-        const spotifyCommandParams: {
-          deviceId?: string
-          volume?: number
-          playlistUri?: string
-          contextUri?: string
-        } = {}
-        if (commandMsg.deviceId)
-          spotifyCommandParams.deviceId = commandMsg.deviceId
-        if (commandMsg.volume !== undefined)
-          spotifyCommandParams.volume = commandMsg.volume
-        if (commandMsg.playlistUri)
-          spotifyCommandParams.playlistUri = commandMsg.playlistUri
-        if (commandMsg.contextUri)
-          spotifyCommandParams.contextUri = commandMsg.contextUri
-
-        spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
-        break
-      }
-      default: {
-        const unknownMessage = message as { type: unknown }
+  private pingClients() {
+    this.wss.clients.forEach((ws) => {
+      const extWs = ws as ExtWebSocket
+      if (!extWs.isAlive) {
         logger.warn(
-          { clientId, type: unknownMessage.type },
-          'Unknown message type received'
+          { clientId: extWs.clientId },
+          'Terminating unresponsive client'
         )
-        break
+        return extWs.terminate()
+      }
+      extWs.isAlive = false
+      extWs.ping(() => {})
+    })
+  }
+
+  private handleConnection(ws: ExtWebSocket, req: IncomingMessage) {
+    const queryParams = this.getQueryParams(req.url)
+    const clientId = (queryParams.clientId as string) || `user-${uuidv4()}`
+    ws.clientId = clientId
+
+    ws.isAlive = true
+    ws.on('pong', () => {
+      ws.isAlive = true
+    })
+
+    const existingClient = this.hrmDataRepository.findById(clientId);
+    if (!existingClient) {
+        this.hrmDataRepository.save({
+        clientId,
+        value: 0,
+        age: 30, // Default age
+        maxHr: 185, // Default max HR
+        calories: 0,
+        isConnected: true,
+        });
+        this.broadcastState();
+    }
+
+    ws.on('message', (message) => this.handleMessage(ws, message))
+    ws.on('close', () => this.handleDisconnection(ws.clientId))
+  }
+
+  private handleDisconnection(clientId: string) {
+    const clientData = this.hrmDataRepository.findById(clientId)
+    if (clientData) {
+      clientData.isConnected = false
+      clientData.value = 0
+      this.hrmDataRepository.save(clientData)
+      this.broadcastState()
+
+      const timer = setTimeout(() => {
+        this.hrmDataRepository.deleteById(clientId)
+        this.broadcastState()
+        logger.info(
+          { clientId },
+          'Permanently removed client after grace period.'
+        )
+      }, RECONNECT_GRACE_PERIOD)
+      this.disconnectionTimers.set(clientId, timer)
+    }
+  }
+
+  private handleMessage(ws: ExtWebSocket, message: any) {
+    try {
+      const parsedJson = JSON.parse(message.toString())
+      const messageValidation = WebSocketMessageSchema.safeParse(parsedJson)
+
+      if (!messageValidation.success) {
+        this.sendError(ws, 'Invalid message structure', messageValidation.error)
+        return
+      }
+
+      const { type, data } = messageValidation.data
+      const clientId = ws.clientId
+
+      switch (type) {
+        case 'HRM_INPUT': {
+          const hrmInputValidation = HrmInputSchema.safeParse(data)
+          if (!hrmInputValidation.success) {
+            this.sendError(ws, 'Invalid HRM_INPUT data', hrmInputValidation.error)
+            return
+          }
+          const hrmData = this.hrmDataRepository.findById(clientId)
+          if (hrmData) {
+            hrmData.value = hrmInputValidation.data.value
+            this.hrmDataRepository.save(hrmData)
+          }
+          break
+        }
+        case 'HRM_METADATA_UPDATE': {
+          const metadataValidation = HrmMetadataUpdateSchema.safeParse(data)
+          if (!metadataValidation.success) {
+            this.sendError(
+              ws,
+              'Invalid HRM_METADATA_UPDATE data',
+              metadataValidation.error
+            )
+            return
+          }
+          this.handleMetadataUpdate(clientId, metadataValidation.data)
+          break
+        }
+      }
+      this.broadcastState()
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        this.sendError(ws, 'Invalid JSON format', error.message)
+      } else {
+        logger.error({ error }, 'Failed to handle incoming websocket message')
+        this.sendError(
+          ws,
+          'An unexpected server error occurred',
+          (error as Error).message
+        )
       }
     }
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      logger.error(
-        { clientId, errors: e.issues },
-        'WebSocket message validation failed'
-      )
-    } else {
-      logger.error({ clientId, error: e }, 'Error processing incoming message')
+  }
+
+  private handleMetadataUpdate(clientId: string, data: HrmMetadataUpdate) {
+    const existingData = this.hrmDataRepository.findById(clientId)
+    if (!existingData) {
+      logger.warn({ clientId }, 'Received metadata for non-existent client.')
+      return
     }
+
+    const deviceId =
+      data.deviceId || existingData.deviceId || `fallback-device-${clientId}`
+    const oldClientData = this.hrmDataRepository.findByDeviceId(deviceId)
+
+    if (oldClientData && oldClientData.clientId !== clientId) {
+      // Reclaim or terminate logic
+      if (oldClientData.isConnected) {
+        logger.warn(
+          {
+            deviceId,
+            zombieClientId: oldClientData.clientId,
+            newClientId: clientId,
+          },
+          'Terminating zombie connection and migrating state.'
+        )
+        this.terminateAndMigrate(oldClientData, existingData)
+      } else {
+        logger.info(
+          {
+            deviceId,
+            oldClientId: oldClientData.clientId,
+            newClientId: clientId,
+          },
+          'Reclaiming disconnected session.'
+        )
+        const oldTimer = this.disconnectionTimers.get(oldClientData.clientId)
+        if (oldTimer) {
+          logger.debug(
+            { clientId: oldClientData.clientId },
+            'Cleared disconnection timer for reclaimed session.'
+          )
+          clearTimeout(oldTimer)
+          this.disconnectionTimers.delete(oldClientData.clientId)
+        }
+        this.hrmDataRepository.deleteById(oldClientData.clientId)
+      }
+    }
+
+    this.hrmDataRepository.save({
+      ...existingData,
+      ...data,
+      deviceId,
+      isConnected: true,
+    })
+  }
+
+  private terminateAndMigrate(
+    zombieData: HrmStreamData,
+    newData: HrmStreamData
+  ) {
+    let zombieWsFound = false
+    // Find the WebSocket connection for the zombie client and terminate it
+    this.wss.clients.forEach((client) => {
+      const extWs = client as ExtWebSocket
+      if (extWs.clientId === zombieData.clientId) {
+        logger.info(
+          { clientId: zombieData.clientId },
+          'Terminating zombie WebSocket connection.'
+        )
+        extWs.terminate()
+        zombieWsFound = true
+      }
+    })
+
+    if (!zombieWsFound) {
+      logger.warn(
+        { clientId: zombieData.clientId },
+        'Could not find the WebSocket connection to terminate for zombie client.'
+      )
+    }
+
+    // Migrate relevant data
+    logger.debug(
+      {
+        fromClientId: zombieData.clientId,
+        toClientId: newData.clientId,
+        migratedData: { age: zombieData.age, maxHr: zombieData.maxHr },
+      },
+      'Migrating data from zombie to new client.'
+    )
+    newData.age = zombieData.age ?? 30
+    newData.maxHr = zombieData.maxHr ?? 185
+
+    // Delete the old record
+    this.hrmDataRepository.deleteById(zombieData.clientId)
+  }
+
+  private sendError(ws: WebSocket, message: string, details: any) {
+    const errorResponse = {
+      type: 'ERROR',
+      payload: {
+        message,
+        details,
+      },
+    }
+    logger.warn(
+      { clientId: (ws as ExtWebSocket).clientId, ...errorResponse.payload },
+      'Sending error to client'
+    )
+    ws.send(JSON.stringify(errorResponse))
+  }
+
+  public broadcastState() {
+    const hrmData = this.hrmDataRepository.findAll()
+    const state = {
+      type: 'HRM_UPDATE' as const,
+      payload: hrmData,
+    }
+    broadcast(this.wss, state)
+  }
+
+  private getQueryParams(url?: string): ParsedUrlQuery {
+    if (!url) return {}
+    const parsedUrl = urlParse(url, true)
+    return parsedUrl.query
   }
 }
 
-export { initSocketManager }
+let socketManager: SocketManager
+
+export const initializeSocketManager = (
+  wss: WebSocketServer
+) => {
+  if (!socketManager) {
+    socketManager = new SocketManager(wss)
+  }
+  return socketManager
+}
+
+// Export a function to get the instance, ensuring it's initialized first.
+export const getSocketManager = (): SocketManager => {
+  if (!socketManager) {
+    throw new Error('SocketManager has not been initialized.')
+  }
+  return socketManager
+}
