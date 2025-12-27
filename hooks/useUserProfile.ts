@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import { MeasurementSystem } from '../types'
+import { MeasurementSystem } from '@/types'
 import { toKg, toDisplay } from '../utils/units'
 
 export function useUserProfile() {
