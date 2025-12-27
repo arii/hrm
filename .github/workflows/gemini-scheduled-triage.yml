@@ -1,8 +1,8 @@
-# .github/workflows/reusable-gemini-tasks.yml
-name: Reusable Gemini Tasks
-
+name: Gemini Scheduled Triage
 on:
-  workflow_call:
+  schedule:
+    - cron: '0 9 * * 1' # Weekly on Monday
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +16,7 @@ jobs:
       - uses: pnpm/action-setup@v3
         with:
           version: 9
+      # Caching is disabled for self-hosted runners to improve performance.
       - uses: actions/setup-node@v6
         with:
           node-version: '20'

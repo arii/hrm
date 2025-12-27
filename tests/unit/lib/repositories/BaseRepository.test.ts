@@ -72,28 +72,36 @@ describe('BaseRepository', () => {
       jest.spyOn(repository['data'], 'get').mockImplementation(() => {
         throw new Error('Get failed')
       })
-      expect(() => repository.findById(1)).toThrow('Failed to find entity with id 1')
+      expect(() => repository.findById(1)).toThrow(
+        'Failed to find entity with id 1'
+      )
     })
 
     it('should throw an error when findAll fails', () => {
       jest.spyOn(repository['data'], 'values').mockImplementation(() => {
         throw new Error('Values failed')
       })
-      expect(() => repository.findAll()).toThrow('Failed to retrieve all entities')
+      expect(() => repository.findAll()).toThrow(
+        'Failed to retrieve all entities'
+      )
     })
 
     it('should throw an error when save fails', () => {
       jest.spyOn(repository['data'], 'set').mockImplementation(() => {
         throw new Error('Set failed')
       })
-      expect(() => repository.save(entity1)).toThrow('Failed to save entity with id 1')
+      expect(() => repository.save(entity1)).toThrow(
+        'Failed to save entity with id 1'
+      )
     })
 
     it('should throw an error when deleteById fails', () => {
       jest.spyOn(repository['data'], 'delete').mockImplementation(() => {
         throw new Error('Delete failed')
       })
-      expect(() => repository.deleteById(1)).toThrow('Failed to delete entity with id 1')
+      expect(() => repository.deleteById(1)).toThrow(
+        'Failed to delete entity with id 1'
+      )
     })
 
     it('should throw an error when clear fails', () => {
