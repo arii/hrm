@@ -51,6 +51,7 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   userHeight: string
   setUserHeight: (height: string) => void
+  onHeightBlur: () => void
   userWeight: string
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
@@ -85,6 +86,7 @@ export default function ConnectView({
   setUserAge,
   userHeight,
   setUserHeight,
+  onHeightBlur,
   userWeight,
   setUserWeight,
   onWeightBlur,
@@ -205,21 +207,21 @@ export default function ConnectView({
             />
             <TextField
               fullWidth
-              label="Your Height (cm)"
-              placeholder="e.g., 175"
+              label={`Your Height (${
+                unitSystem === 'IMPERIAL' ? 'in' : 'cm'
+              })`}
+              placeholder={
+                unitSystem === 'IMPERIAL' ? 'e.g., 70' : 'e.g., 178'
+              }
               type="number"
               value={userHeight}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserHeight(e.target.value)
-                }
+                setUserHeight(e.target.value)
               }}
-              onBlur={(e) => {
-                setHeightError(validate(e.target.value, 100, 250, 'height'))
-              }}
+              onBlur={onHeightBlur}
               error={!!heightError}
               helperText={heightError}
-              inputProps={{ min: 100, max: 250, 'aria-invalid': !!heightError }}
+              inputProps={{ 'aria-invalid': !!heightError }}
             />
             <TextField
               fullWidth

@@ -5,11 +5,12 @@ import { useState, useMemo } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { MeasurementSystem } from '@/types'
 import { toKg, toDisplay } from '../utils/units'
+import { toCm, toDisplayHeight } from '../utils/units'
 
 export function useUserProfile() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
+  const [heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '180') // Always CM
   const [weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
@@ -20,9 +21,8 @@ export function useUserProfile() {
     'IMPERIAL'
   )
 
-  const [displayWeightInput, setDisplayWeightInput] = useState<string | null>(
-    null
-  )
+  const [displayWeightInput, setDisplayWeightInput] = useState<string | null>(null)
+  const [displayHeightInput, setDisplayHeightInput] = useState<string | null>(null)
 
   const displayWeight = useMemo(() => {
     if (displayWeightInput !== null) {
@@ -35,6 +35,18 @@ export function useUserProfile() {
     }
     return ''
   }, [displayWeightInput, weightInKg, unitSystem])
+
+  const displayHeight = useMemo(() => {
+    if (displayHeightInput !== null) {
+      return displayHeightInput
+    }
+    const numericHeightInCm = parseFloat(heightInCm)
+    if (!isNaN(numericHeightInCm)) {
+      const displayValue = toDisplayHeight(numericHeightInCm, unitSystem)
+      return displayValue.toString()
+    }
+    return ''
+  }, [displayHeightInput, heightInCm, unitSystem])
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeightInput(newDisplayValue)
@@ -51,10 +63,26 @@ export function useUserProfile() {
     setDisplayWeightInput(null) // Reset to derive from localStorage
   }
 
+  const handleHeightChange = (newDisplayValue: string) => {
+    setDisplayHeightInput(newDisplayValue)
+  }
+
+  const handleHeightBlur = () => {
+    if (displayHeightInput === null) return
+
+    const numericValue = parseFloat(displayHeightInput)
+    if (!isNaN(numericValue) && numericValue > 0) {
+      const newCmValue = toCm(numericValue, unitSystem)
+      setHeightInCm(newCmValue.toFixed(2))
+    }
+    setDisplayHeightInput(null) // Reset to derive from localStorage
+  }
+
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
       setDisplayWeightInput(null) // Recalculate display weight
+      setDisplayHeightInput(null) // Recalculate display height
     }
   }
 
@@ -63,8 +91,9 @@ export function useUserProfile() {
     setUserName,
     userAge,
     setUserAge,
-    userHeight,
-    setUserHeight,
+    displayHeight,
+    handleHeightChange,
+    handleHeightBlur,
     displayWeight,
     handleWeightChange,
     handleWeightBlur,

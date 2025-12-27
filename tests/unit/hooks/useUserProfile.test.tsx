@@ -13,7 +13,7 @@ describe('useUserProfile', () => {
     const { result } = renderHook(() => useUserProfile())
     expect(result.current.userName).toBe('')
     expect(result.current.userAge).toBe('')
-    expect(result.current.userHeight).toBe('')
+    expect(result.current.displayHeight).toBe('70.9') // 180cm in inches
     expect(result.current.gender).toBe('MALE')
     expect(result.current.unitSystem).toBe('IMPERIAL')
     expect(result.current.displayWeight).toBe('154.3') // 70kg in lbs
@@ -54,17 +54,44 @@ describe('useUserProfile', () => {
     expect(result.current.displayWeight).toBe('72.6')
   })
 
+  it('should handle height conversion correctly', () => {
+    const { result } = renderHook(() => useUserProfile())
+
+    // Initial display height (180cm in inches)
+    expect(result.current.displayHeight).toBe('70.9')
+
+    act(() => {
+      result.current.handleHeightChange('72')
+    })
+
+    expect(result.current.displayHeight).toBe('72')
+
+    act(() => {
+      result.current.handleHeightBlur()
+    })
+
+    // After blur, the display height should be derived from the new cm value
+    expect(result.current.displayHeight).toBe('72')
+
+    act(() => {
+      result.current.handleUnitChange('METRIC')
+    })
+
+    // After switching to METRIC, the height should be displayed in cm
+    expect(result.current.displayHeight).toBe('182.9')
+  })
+
   it('should not update weight on invalid input', () => {
     const { result } = renderHook(() => useUserProfile())
 
     act(() => {
-      result.current.handleWeightChange('abc')
+        result.current.handleWeightChange('abc')
     })
 
     expect(result.current.displayWeight).toBe('abc')
 
     act(() => {
-      result.current.handleWeightBlur()
+        result.current.handleWeightBlur()
     })
 
     // After blur, it should revert to the original value
