@@ -37,7 +37,6 @@ interface ConnectViewProps {
   heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
@@ -73,7 +72,6 @@ export default function ConnectView({
   heightError,
   userWeight,
   setUserWeight,
-  onWeightBlur,
   gender,
   setGender,
   unitSystem,
@@ -162,11 +160,8 @@ export default function ConnectView({
               heightError={heightError}
               weightError={weightError}
               validateAge={setAgeError}
-              onValidateHeight={validateHeight}
-              validateWeight={(value) => {
-                onWeightBlur()
-                setWeightError(value)
-              }}
+              validateHeight={validateHeight}
+              validateWeight={setWeightError}
             />
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>

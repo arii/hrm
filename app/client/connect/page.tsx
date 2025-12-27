@@ -50,10 +50,7 @@ export default function ConnectPage() {
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
-  }
-
-  const handleWeightBlur = () => {
-    const numericValue = parseFloat(displayWeight)
+    const numericValue = parseFloat(newDisplayValue)
     if (!isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
       setWeightInKg(newKgValue.toFixed(2))
@@ -124,7 +121,6 @@ export default function ConnectPage() {
       heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
       gender={gender}
       setGender={setGender}
       unitSystem={unitSystem}

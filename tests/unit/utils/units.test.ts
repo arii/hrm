@@ -1,18 +1,62 @@
-// tests/unit/utils/units.test.ts
+import {
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+  toKg,
+  toDisplay,
+} from '../../../utils/units'
+import { MeasurementSystem } from '../types'
 
-import { toKg, toDisplay } from '../../../utils/units'
-
-describe('Unit Conversion Utilities', () => {
-  describe('toKg', () => {
-    it('should correctly convert lbs to kg', () => {
-      const pounds = 150
-      const expectedKg = 68.0389
-      expect(toKg(pounds, 'IMPERIAL')).toBeCloseTo(expectedKg, 4)
+describe('unit conversion utilities', () => {
+  describe('cmToFeetAndInches', () => {
+    it('should correctly convert centimeters to feet and inches', () => {
+      expect(cmToFeetAndInches(175)).toEqual({ feet: 5, inches: 9 })
+      expect(cmToFeetAndInches(183)).toEqual({ feet: 6, inches: 0 })
+      expect(cmToFeetAndInches(152.4)).toEqual({ feet: 5, inches: 0 })
+      expect(cmToFeetAndInches(0)).toEqual({ feet: 0, inches: 0 })
     })
 
+    it('should handle rounding correctly', () => {
+      // 5ft 10.86in -> rounds to 5ft 11in
+      expect(cmToFeetAndInches(180)).toEqual({ feet: 5, inches: 11 })
+      // 5ft 8.5in -> rounds to 5ft 9in
+      expect(cmToFeetAndInches(174)).toEqual({ feet: 5, inches: 9 })
+    })
+
+    it('should handle invalid input gracefully', () => {
+      expect(cmToFeetAndInches(-10)).toEqual({ feet: 0, inches: 0 })
+      expect(cmToFeetAndInches(NaN)).toEqual({ feet: 0, inches: 0 })
+    })
+
+    it('should handle large numbers', () => {
+      expect(cmToFeetAndInches(10000)).toEqual({ feet: 328, inches: 1 })
+    })
+  })
+
+  describe('feetAndInchesToCm', () => {
+    it('should correctly convert feet and inches to centimeters', () => {
+      expect(feetAndInchesToCm(5, 9)).toBeCloseTo(175.26)
+      expect(feetAndInchesToCm(6, 0)).toBeCloseTo(182.88)
+      expect(feetAndInchesToCm(5, 0)).toBeCloseTo(152.4)
+      expect(feetAndInchesToCm(0, 0)).toBe(0)
+    })
+
+    it('should handle zero feet or inches', () => {
+      expect(feetAndInchesToCm(5, 0)).toBeCloseTo(152.4)
+      expect(feetAndInchesToCm(0, 11)).toBeCloseTo(27.94)
+    })
+
+    it('should handle large numbers', () => {
+      expect(feetAndInchesToCm(100, 5)).toBeCloseTo(3060.7)
+    })
+  })
+
+  describe('toKg', () => {
     it('should return the same value if the system is METRIC', () => {
-      const kilograms = 70
-      expect(toKg(kilograms, 'METRIC')).toBe(kilograms)
+      expect(toKg(70, 'METRIC')).toBe(70)
+    })
+
+    it('should convert pounds to kilograms if the system is IMPERIAL', () => {
+      expect(toKg(154, 'IMPERIAL')).toBeCloseTo(69.85)
     })
 
     it('should handle zero', () => {
@@ -26,21 +70,12 @@ describe('Unit Conversion Utilities', () => {
   })
 
   describe('toDisplay', () => {
-    it('should correctly convert kg to lbs for display', () => {
-      const kilograms = 68.0389
-      const expectedLbs = 150.0
-      expect(toDisplay(kilograms, 'IMPERIAL')).toBe(expectedLbs)
+    it('should return the same value (rounded) if the system is METRIC', () => {
+      expect(toDisplay(69.853, 'METRIC')).toBe(69.9)
     })
 
-    it('should round the lbs value to one decimal place', () => {
-      const kilograms = 70
-      const expectedLbs = 154.3
-      expect(toDisplay(kilograms, 'IMPERIAL')).toBe(expectedLbs)
-    })
-
-    it('should return the same value rounded to one decimal if the system is METRIC', () => {
-      const kilograms = 70.123
-      expect(toDisplay(kilograms, 'METRIC')).toBe(70.1)
+    it('should convert kilograms to pounds if the system is IMPERIAL', () => {
+      expect(toDisplay(70, 'IMPERIAL')).toBeCloseTo(154.3)
     })
 
     it('should handle zero', () => {
