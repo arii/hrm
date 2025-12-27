@@ -236,42 +236,48 @@ jobs:
           
           # Enhanced conversational text filtering
           # Remove common LLM preamble/postamble text while preserving the diff
-          echo "::notice::Filtering conversational text from patch..."
-          
-          # Create temporary file for cleaned content
-          CLEANED_PATCH="patch.diff.cleaned"
-          
-          # Remove markdown code block markers and common preamble patterns
-          sed '/^```/d' patch.diff | \
-            grep -v "^Here" | \
-            grep -v "^I'll" | \
-            grep -v "^Let me" | \
-            grep -v "^This" | \
-            grep -v "^The" | \
-            grep -v "^Sure" | \
-            grep -v "^Based" | \
-            grep -v "^## " | \
-            grep -v "^# " > "$CLEANED_PATCH.tmp"
-          
-          # Find the first diff header in the cleaned content
-          DIFF_START=$(grep -n "^--- a/" "$CLEANED_PATCH.tmp" | head -1 | cut -d: -f1)
-          
-          if [ -z "$DIFF_START" ]; then
-            echo "::warning::Could not find unified diff markers, trying original"
-            rm "$CLEANED_PATCH.tmp"
-          else
-            echo "::notice::Found diff starting at line $DIFF_START, extracting..."
-            # Extract from first diff header to end
-            tail -n +$DIFF_START "$CLEANED_PATCH.tmp" > "$CLEANED_PATCH"
+          # Set DISABLE_TEXT_FILTERING=true to skip this step
+          if [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
+            echo "::notice::Filtering conversational text from patch..."
             
-            if [ -s "$CLEANED_PATCH" ]; then
-              mv "$CLEANED_PATCH" patch.diff
-              echo "::notice::Extracted unified diff, removed conversational text"
+            # Create temporary file for cleaned content
+            CLEANED_PATCH="patch.diff.cleaned"
+            
+            # Remove markdown code block markers and common preamble patterns
+            # These patterns are intentionally broad to catch most LLM preamble/postamble
+            sed '/^```/d' patch.diff | \
+              grep -v "^Here" | \
+              grep -v "^I'll" | \
+              grep -v "^Let me" | \
+              grep -v "^This" | \
+              grep -v "^The" | \
+              grep -v "^Sure" | \
+              grep -v "^Based" | \
+              grep -v "^## " | \
+              grep -v "^# " > "$CLEANED_PATCH.tmp"
+            
+            # Find the first diff header in the cleaned content
+            DIFF_START=$(grep -n "^--- a/" "$CLEANED_PATCH.tmp" | head -1 | cut -d: -f1)
+            
+            if [ -z "$DIFF_START" ]; then
+              echo "::warning::Could not find unified diff markers after filtering, trying original"
+              rm "$CLEANED_PATCH.tmp"
             else
-              echo "::warning::Cleaned patch is empty, using original"
-              rm "$CLEANED_PATCH" 2>/dev/null
+              echo "::notice::Found diff starting at line $DIFF_START, extracting..."
+              # Extract from first diff header to end
+              tail -n +$DIFF_START "$CLEANED_PATCH.tmp" > "$CLEANED_PATCH"
+              
+              if [ -s "$CLEANED_PATCH" ]; then
+                mv "$CLEANED_PATCH" patch.diff
+                echo "::notice::Extracted unified diff, removed conversational text"
+              else
+                echo "::warning::Cleaned patch is empty, using original"
+                rm "$CLEANED_PATCH" 2>/dev/null
+              fi
+              rm "$CLEANED_PATCH.tmp" 2>/dev/null
             fi
-            rm "$CLEANED_PATCH.tmp" 2>/dev/null
+          else
+            echo "::notice::Conversational text filtering disabled (DISABLE_TEXT_FILTERING=true)"
           fi
           
           # Extract diff from markdown code block if present (fallback)
@@ -366,16 +372,17 @@ jobs:
       - name: Generate Patch Debug Report
         if: failure() && env.AGENT_PROVIDER == 'gemini'
         run: |
-          # Helper function to scrub secrets from content
+          # Comprehensive secret scrubbing function
           scrub_secrets() {
             local content="$1"
-            # Remove GitHub tokens, PATs, and API keys
+            # Scrub all known secret patterns and environment variables
             echo "$content" | \
-              sed 's/ghp_[A-Za-z0-9_]*/***GITHUB_TOKEN***/g' | \
-              sed 's/github_pat_[A-Za-z0-9_]*/***GITHUB_PAT***/g' | \
-              sed 's/NEXTAUTH_SECRET=[^ ]*/NEXTAUTH_SECRET=***REDACTED***/g' | \
-              sed 's/GEMINI_API_KEY=[^ ]*/GEMINI_API_KEY=***REDACTED***/g' | \
-              sed 's/ARI_PAT=[^ ]*/ARI_PAT=***REDACTED***/g'
+              sed 's/ghp_[A-Za-z0-9_]\{36\}/***GITHUB_TOKEN***/g' | \
+              sed 's/github_pat_[A-Za-z0-9_]\{62\}/***GITHUB_PAT***/g' | \
+              sed 's/ghu_[A-Za-z0-9_]\{36\}/***GITHUB_USER_TOKEN***/g' | \
+              sed 's/ghs_[A-Za-z0-9_]\{36\}/***GITHUB_APP_TOKEN***/g' | \
+              sed 's/gho_[A-Za-z0-9_]\{36\}/***GITHUB_OAUTH_TOKEN***/g' | \
+              sed 's/[A-Za-z0-9_-]*API[_-]*KEY[=:][^ "'\'']*\|[A-Za-z0-9_-]*SECRET[=:][^ "'\'']*\|[A-Za-z0-9_-]*TOKEN[=:][^ "'\'']*\|[A-Za-z0-9_-]*PASSWORD[=:][^ "'\'']*\|NEXTAUTH_[A-Z_]*[=:][^ "'\'']*\|GEMINI_[A-Z_]*[=:][^ "'\'']*\|ARI_[A-Z_]*[=:][^ "'\'']*\|[A-Za-z0-9_-]*BEARER[=:][^ "'\'']*\|[A-Za-z0-9_-]*AUTHORIZATION[=:][^ "'\'']*\|Authorization:[^'\n']*\|[A-Za-z0-9._%+-]*@[A-Za-z0-9.-]*\|"[A-Za-z0-9._-]*":[^}]*/***REDACTED***/gi'
           }
           
           {
@@ -387,19 +394,25 @@ jobs:
             echo ""
             echo "## Patch File"
             echo '```diff'
-            head -100 patch.diff | sed 's/^.*secret.*/***LINE_REDACTED***/g'
+            # Scrub patch content and redact lines with sensitive keywords
+            head -100 patch.diff | \
+              sed 's/^.*\(secret\|token\|password\|api[_-]*key\|authorization\|bearer\).*/***LINE_REDACTED***/gi'
             echo '```'
             echo ""
             echo "## Rejected Hunks"
             if find . -name "*.rej" | grep -q .; then
-              find . -name "*.rej" -exec sh -c 'echo "### {}"; cat "{}" | sed "s/^.*secret.*/***LINE_REDACTED***/g"' \;
+              find . -name "*.rej" -exec sh -c 'echo "### {}"; cat "{}" | sed "s/^.*\(secret\|token\|password\|api[_-]*key\|authorization\|bearer\).*/***LINE_REDACTED***/gi"' \;
             else
               echo "No rejected hunks found"
             fi
             echo ""
             echo "## Task Description"
             echo '```'
-            cat task_desc.txt 2>/dev/null | scrub_secrets || echo "N/A"
+            if [ -f task_desc.txt ]; then
+              scrub_secrets "$(cat task_desc.txt)"
+            else
+              echo "N/A"
+            fi
             echo '```'
             echo ""
             echo "---"

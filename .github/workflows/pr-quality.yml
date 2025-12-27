@@ -127,13 +127,20 @@ jobs:
         continue-on-error: true
 
       - name: Upload Knip Report
-        if: always() && steps.knip.outcome == 'failure'
+        if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
+        id: upload-knip
         uses: actions/upload-artifact@v4
         with:
           name: knip-report
           path: knip-output.txt
           retention-days: 30
-        continue-on-error: true
+
+      - name: Handle Knip Upload Failure
+        if: failure() && steps.upload-knip.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload knip report artifact"
+          echo "::notice::Knip output may be available in logs above"
+          exit 1
 
       - name: Lint Code
         run: pnpm run lint
@@ -193,6 +200,7 @@ jobs:
 
       - name: Upload Test Reports
         if: always() && (steps.infra-tests.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
+        id: upload-tests
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
@@ -200,7 +208,13 @@ jobs:
             infra-tests.log
             unit-tests.log
           retention-days: 30
-        continue-on-error: true
+
+      - name: Handle Test Report Upload Failure
+        if: failure() && steps.upload-tests.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload test report artifacts"
+          echo "::notice::Test logs are available in the workflow logs above"
+          exit 1
 
   # ===========================================================================
   # JOB 4: VISUAL REGRESSION TESTS
