@@ -118,6 +118,23 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason | null>(null)
 
+  // Send metadata when device connects or user details change
+  useEffect(() => {
+    if (deviceStatus.startsWith('Connected') && deviceManager.device) {
+      const metadata: HrmMetadataUpdateMessage = {
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          maxHr: calculateMaxHr(userAge),
+          name:
+            userName ||
+            `Bluetooth HRM (${deviceManager.device.name || 'Unknown'})`,
+          ...(userAge && { age: userAge }),
+        } as HrmMetadataUpdateData,
+      }
+      sendData(metadata)
+    }
+  }, [deviceStatus, userName, userAge, sendData, deviceManager.device])
+
   // Effect to subscribe to device manager events and update React state
   useEffect(() => {
     const handleStatusChange = (e: CustomEvent) => {
@@ -133,18 +150,6 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
 
     const handleHeartRate = (e: CustomEvent) => {
       const { heartRate } = e.detail as { heartRate: number }
-      const metadata: HrmMetadataUpdateMessage = {
-        type: 'HRM_METADATA_UPDATE',
-        data: {
-          maxHr: calculateMaxHr(userAge),
-          name:
-            userName ||
-            `Bluetooth HRM (${deviceManager.device?.name || 'Unknown'})`,
-          ...(userAge && { age: userAge }),
-        } as HrmMetadataUpdateData,
-      }
-      sendData(metadata)
-
       const data: HrmInputData = { value: heartRate }
       sendData({ type: 'HRM_INPUT', data })
     }
