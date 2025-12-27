@@ -47,9 +47,8 @@ interface DeviceManagerEventMap {
   'device-connected': { device: BluetoothDevice }
 }
 
-export type DeviceManagerEvent<
-  K extends keyof DeviceManagerEventMap
-> = CustomEvent<DeviceManagerEventMap[K]>
+export type DeviceManagerEvent<K extends keyof DeviceManagerEventMap> =
+  CustomEvent<DeviceManagerEventMap[K]>
 
 /**
  * @interface DeviceManagerOptions
@@ -67,6 +66,14 @@ export interface DeviceManagerOptions {
    * @description Delay in ms before attempting to reconnect after an unexpected disconnection.
    */
   reconnectIntervalMs?: number
+}
+
+/**
+ * @interface BluetoothDeviceWithForget
+ * @description Interface extending BluetoothDevice to include the experimental forget method.
+ */
+interface BluetoothDeviceWithForget extends BluetoothDevice {
+  forget(): Promise<void>
 }
 
 /**
@@ -221,7 +228,7 @@ class DeviceManagerService extends EventTarget {
   public async forget(): Promise<void> {
     if (this.device && 'forget' in this.device) {
       try {
-        await (this.device as any).forget()
+        await (this.device as BluetoothDeviceWithForget).forget()
       } catch (error) {
         logger.error({ error }, 'Error forgetting device')
         throw error

@@ -129,9 +129,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
 
   // Effect to subscribe to device manager events and update React state
   useEffect(() => {
-    const handleStatusChange = (
-      e: DeviceManagerEvent<'status-changed'>
-    ) => {
+    const handleStatusChange = (e: DeviceManagerEvent<'status-changed'>) => {
       const { status, message } = e.detail
       setDeviceStatus(message)
       if (status === 'error') {
@@ -139,17 +137,14 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       }
     }
 
-    const handleHeartRate = (
-      e: DeviceManagerEvent<'heart-rate-received'>
-    ) => {
+    const handleHeartRate = (e: DeviceManagerEvent<'heart-rate-received'>) => {
       const { heartRate } = e.detail
       const data: HrmInputData = { value: heartRate }
       sendData({ type: 'HRM_INPUT', data })
     }
 
-    const handleBattery = (
-      e: DeviceManagerEvent<'battery-level-received'>
-    ) => setBatteryLevel(e.detail.batteryLevel)
+    const handleBattery = (e: DeviceManagerEvent<'battery-level-received'>) =>
+      setBatteryLevel(e.detail.batteryLevel)
     const handleDeviceConnected = (
       e: DeviceManagerEvent<'device-connected'>
     ) => {
