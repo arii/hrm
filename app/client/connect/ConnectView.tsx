@@ -88,7 +88,7 @@ export default function ConnectView({
   setUserAge,
   userHeight,
   setUserHeight,
-  onHeightBlur,
+  onValidateHeight,
   heightError,
   userWeight,
   setUserWeight,
@@ -117,45 +117,8 @@ export default function ConnectView({
   const [isResetting, setIsResetting] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
-  const [feet, setFeet] = useState('')
-  const [inches, setInches] = useState('')
 
   const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
-
-  /**
-   * This effect synchronizes the imperial height inputs (feet and inches)
-   * with the userHeight state (stored in cm). It triggers whenever the
-   * unit system is set to IMPERIAL or when the userHeight value changes.
-   */
-  useEffect(() => {
-    // Only convert and update if the unit system is IMPERIAL and height is positive.
-    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
-      // Convert the height from cm to feet and inches.
-      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      // Update the local state for feet and inches if they have changed.
-      if (String(newFeet) !== feet || String(newInches) !== inches) {
-        setFeet(String(newFeet))
-        setInches(String(newInches))
-      }
-    }
-  }, [unitSystem, userHeight, feet, inches])
-
-  const handleImperialHeightChange = (ft: string, inch: string) => {
-    const feetNum = Number(ft)
-    const inchesNum = Number(inch)
-    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
-      const cm = feetAndInchesToCm(feetNum, inchesNum)
-      setUserHeight(cm)
-    }
-  }
-
-  const handleImperialHeightBlur = () => {
-    const feetNum = Number(feet)
-    const inchesNum = Number(inches)
-    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-      onHeightBlur()
-    }
-  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -222,7 +185,7 @@ export default function ConnectView({
               validateAge={(value) => {
                 setAgeError(validate(value, 1, 120, 'age'))
               }}
-              validateHeight={onHeightBlur}
+              validateHeight={onValidateHeight}
               validateWeight={(value) => {
                 onWeightBlur()
                 setWeightError(
@@ -235,54 +198,6 @@ export default function ConnectView({
                 )
               }}
             />
-            {unitSystem === 'METRIC' ? (
-              <TextField
-                fullWidth
-                label="Your Height (cm)"
-                placeholder="e.g., 175"
-                type="number"
-                value={userHeight}
-                onChange={(e) => {
-                  if (/^\d*\.?\d*$/.test(e.target.value)) {
-                    setUserHeight(Number(e.target.value))
-                  }
-                }}
-                onBlur={onHeightBlur}
-                error={!!heightError}
-                helperText={heightError}
-              />
-            ) : (
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Feet"
-                  placeholder="e.g., 5"
-                  type="number"
-                  value={feet}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      setFeet(e.target.value)
-                      handleImperialHeightChange(e.target.value, inches)
-                    }
-                  }}
-                  onBlur={handleImperialHeightBlur}
-                />
-                <TextField
-                  fullWidth
-                  label="Inches"
-                  placeholder="e.g., 9"
-                  type="number"
-                  value={inches}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      setInches(e.target.value)
-                      handleImperialHeightChange(feet, e.target.value)
-                    }
-                  }}
-                  onBlur={handleImperialHeightBlur}
-                />
-              </Stack>
-            )}
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>
               <RadioGroup

@@ -21,7 +21,7 @@ interface UserSettingsProps {
   heightError: string | null
   weightError: string | null
   validateAge: (value: string) => void
-  validateHeight: (value: string) => void
+  onValidateHeight: (value: string) => void
   validateWeight: (value: string) => void
 }
 
@@ -40,9 +40,47 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   heightError,
   weightError,
   validateAge,
-  validateHeight,
+  onValidateHeight,
   validateWeight,
 }) => {
+  const [feet, setFeet] = React.useState('')
+  const [inches, setInches] = React.useState('')
+
+  /**
+   * This effect synchronizes the imperial height inputs (feet and inches)
+   * with the userHeight state (stored in cm). It triggers whenever the
+   * unit system is set to IMPERIAL or when the userHeight value changes.
+   */
+  React.useEffect(() => {
+    // Only convert and update if the unit system is IMPERIAL and height is positive.
+    if (unit === 'IMPERIAL' && userHeight > 0) {
+      // Convert the height from cm to feet and inches.
+      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
+      // Update the local state for feet and inches if they have changed.
+      if (String(newFeet) !== feet || String(newInches) !== inches) {
+        setFeet(String(newFeet))
+        setInches(String(newInches))
+      }
+    }
+  }, [unit, userHeight, feet, inches])
+
+  const handleImperialHeightChange = (ft: string, inch: string) => {
+    const feetNum = Number(ft)
+    const inchesNum = Number(inch)
+    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
+      const cm = feetAndInchesToCm(feetNum, inchesNum)
+      setUserHeight(cm)
+    }
+  }
+
+  const handleImperialHeightBlur = () => {
+    const feetNum = Number(feet)
+    const inchesNum = Number(inches)
+    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+      onValidateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <ToggleButtonGroup
@@ -104,12 +142,56 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         error={!!weightError}
         helperText={weightError}
       />
+      {unit === 'METRIC' ? (
+        <TextField
+          fullWidth
+          label="Your Height (cm)"
+          placeholder="e.g., 175"
+          type="number"
+          value={userHeight}
+          onChange={(e) => {
+            if (/^\d*\.?\d*$/.test(e.target.value)) {
+              setUserHeight(Number(e.target.value))
+            }
+          }}
+          onBlur={(e) => onValidateHeight(e.target.value)}
+          error={!!heightError}
+          helperText={heightError}
+        />
+      ) : (
+        <Stack direction="row" spacing={2}>
+          <TextField
+            fullWidth
+            label="Feet"
+            placeholder="e.g., 5"
+            type="number"
+            value={feet}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setFeet(e.target.value)
+                handleImperialHeightChange(e.target.value, inches)
+              }
+            }}
+            onBlur={handleImperialHeightBlur}
+          />
+          <TextField
+            fullWidth
+            label="Inches"
+            placeholder="e.g., 9"
+            type="number"
+            value={inches}
+            onChange={(e) => {
+              if (/^\d*$/.test(e.target.value)) {
+                setInches(e.target.value)
+                handleImperialHeightChange(feet, e.target.value)
+              }
+            }}
+            onBlur={handleImperialHeightBlur}
+          />
+        </Stack>
+      )}
     </Stack>
   )
 }
 
 export default UserSettings
-   * It converts the feet and inches values to centimeters and updates the userHeight state.
-   * @param ft The value from the feet input field.
-   * @param inch The value from the inches input field.
-   */
