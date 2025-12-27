@@ -162,6 +162,17 @@ jobs:
           FILES_CONTENT: ${{ env.FILES }}
         run: |
           echo "Invoking Gemini Agent..."
+          
+          # Include current file hashes to help with context
+          echo "File state information:" > file_state.txt
+          for file in $(echo "$FILES_CONTENT" | tr ',' '\n'); do
+            if [ -f "$file" ]; then
+              HASH=$(sha256sum "$file" 2>/dev/null | awk '{print $1}' | cut -c1-8)
+              LINES=$(wc -l < "$file" 2>/dev/null)
+              echo "  $file: $LINES lines (hash: $HASH)" >> file_state.txt
+            fi
+          done
+          
           cat > prompt.txt << 'PROMPTEOF'
           You are a code generation assistant. Your task is to generate code changes in unified diff format.
 
@@ -182,9 +193,20 @@ jobs:
           Target Files (may be empty, infer from task):
           PROMPTEOF
           echo "$FILES_CONTENT" >> prompt.txt
+          
+          # Include current file state for context
+          if [ -f file_state.txt ]; then
+            cat >> prompt.txt << 'PROMPTEOF'
 
+          Current File State (for context):
+          PROMPTEOF
+            cat file_state.txt >> prompt.txt
+          fi
+          
+          cat >> prompt.txt << 'PROMPTEOF'
 
-
+          Generate the unified diff for the changes described above.
+          PROMPTEOF
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: pnpm/action-setup@v3
@@ -325,31 +347,44 @@ jobs:
             echo "::notice::Git apply validation failed:"
             echo "$APPLY_ERROR" | sed 's/^/::notice::  /'
             
-            # Attempt to apply with --reject to show which hunks failed
+            # Try 3-way merge attempt (might work even if strict check fails)
             echo ""
-            echo "::notice::Attempting to apply with --reject to identify failing hunks..."
-            git apply --reject patch.diff 2>&1 || true
-            
-            # Collect rejected hunks for artifact upload
-            if [ -f "*.rej" ]; then
-              echo "::notice::Found rejected hunks:"
-              find . -name "*.rej" -exec echo "  - {}" \;
+            echo "::notice::Attempting 3-way merge..."
+            if git apply --3way patch.diff 2>&1; then
+              echo "::notice::✅ 3-way merge succeeded!"
+            else
+              echo "::notice::3-way merge also failed. Attempting detailed diagnostics..."
+              
+              # Attempt to apply with --reject to show which hunks failed
+              echo "::notice::Applying with --reject to identify failing hunks..."
+              git apply --reject patch.diff 2>&1 || true
+              
+              # Collect rejected hunks for artifact upload
+              if find . -name "*.rej" -type f | grep -q .; then
+                echo "::notice::Found rejected hunks:"
+                find . -name "*.rej" -type f -exec echo "  - {}" \;
+              fi
+              
+              echo ""
+              echo "::notice::Debugging information:"
+              echo "::notice::Files in patch:"
+              grep "^--- a/" patch.diff | sed 's/^--- a\///;s/^/::notice::  /' || echo "::notice::  (unable to extract file list)"
+              echo ""
+              echo "::notice::Common causes and solutions:"
+              echo "::notice::  1. File content has changed - Run gemini-coder again with fresh context"
+              echo "::notice::  2. Line numbers are off - Check if files were recently modified"
+              echo "::notice::  3. Whitespace issues - The patch may have different line endings"
+              echo ""
+              echo "::notice::To debug locally, try:"
+              echo "::notice::  git apply --reject patch.diff  # Shows which hunks fail"
+              echo "::notice::  git diff  # Compare current state with patch"
+              
+              # Upload patch for manual review
+              echo ""
+              echo "::notice::Uploading patch for manual review..."
+              
+              exit 1
             fi
-            
-            echo ""
-            echo "::notice::Debugging information:"
-            echo "::notice::Files in patch:"
-            grep "^--- a/" patch.diff | sed 's/^--- a\///;s/^/::notice::  /' || echo "::notice::  (unable to extract file list)"
-            echo ""
-            echo "::notice::Common causes and solutions:"
-            echo "::notice::  1. File content has changed - Run gemini-coder again with fresh context"
-            echo "::notice::  2. Line numbers are off - Check if files were recently modified"
-            echo "::notice::  3. Whitespace issues - The patch may have different line endings"
-            echo ""
-            echo "::notice::To debug locally, try:"
-            echo "::notice::  git apply --reject patch.diff  # Shows which hunks fail"
-            echo "::notice::  git diff  # Compare current state with patch"
-            exit 1
           fi
           
           echo "::notice::✅ Patch validation passed. Applying patch..."
