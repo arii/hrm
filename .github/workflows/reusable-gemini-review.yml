@@ -43,34 +43,63 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          # Get PR metadata with timeout
-          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
+          set +e  # Disable exit on error for this step
           
+          # Initialize error tracking
+          ERRORS=()
+          WARNINGS=()
+          
+          # Get PR metadata with timeout
+          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels 2>&1)
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            ERRORS+=("Failed to fetch PR data (exit code: $EXIT_CODE)")
+            PR_DATA='{"labels":[]}'
+          fi
+          
+          # Use proper GitHub Actions multiline format for environment variables
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          
+          # For values that may contain special characters, use EOF delimiter
+          {
+            echo "PR_TITLE<<EOF"
+            echo "${{ github.event.pull_request.title }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
+          
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
-          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          
+          {
+            echo "PR_DESCRIPTION<<EOF"
+            echo "${{ github.event.pull_request.body }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
           
           # Get labels - simplified with jq
-          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")')
+          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")' 2>/dev/null)
+          LABEL_EXIT=$?
+          if [ $LABEL_EXIT -ne 0 ]; then
+            WARNINGS+=("Failed to parse labels from PR data")
+            LABELS=""
+          fi
           echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
           
           # Count reviews using separate command with timeout and error handling
           REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length' 2>&1)
           if [ $? -ne 0 ]; then
-            echo "⚠️ Failed to fetch review count: $REVIEW_COUNT"
+            WARNINGS+=("Failed to fetch review count")
             REVIEW_COUNT=0
           fi
           
           CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length' 2>&1)
           if [ $? -ne 0 ]; then
-            echo "⚠️ Failed to fetch changes requested count: $CHANGES_REQUESTED"
+            WARNINGS+=("Failed to fetch changes requested count")
             CHANGES_REQUESTED=0
           fi
           
           RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length' 2>&1)
           if [ $? -ne 0 ]; then
-            echo "⚠️ Failed to fetch resolved count: $RESOLVED_COUNT"
+            WARNINGS+=("Failed to fetch resolved count")
             RESOLVED_COUNT=0
           fi
           
@@ -80,8 +109,13 @@ jobs:
           
           # Get file stats
           FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | wc -l)
-          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= insertion)' || echo "0")
-          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= deletion)' || echo "0")
+          if [ $? -ne 0 ]; then
+            ERRORS+=("Failed to count changed files")
+            FILES_CHANGED=0
+          fi
+          
+          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | grep -oP '\d+(?= insertion)' || echo "0")
+          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | grep -oP '\d+(?= deletion)' || echo "0")
           TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
           echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
           echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
@@ -96,8 +130,45 @@ jobs:
           fi
           
           # Get changed areas
-          CHANGED_AREAS=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | awk -F/ '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
+          CHANGED_AREAS=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} 2>/dev/null | awk -F/ '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
+          if [ $? -ne 0 ]; then
+            WARNINGS+=("Failed to determine changed areas")
+            CHANGED_AREAS=""
+          fi
           echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+          
+          # Log summary
+          echo ""
+          echo "========== Context Gathering Summary =========="
+          echo "✅ PR Number: ${{ github.event.pull_request.number }}"
+          echo "✅ Files Changed: $FILES_CHANGED"
+          echo "✅ Lines of Code Changed: $TOTAL_LOC"
+          echo "✅ Review Depth: $([ "$TOTAL_LOC" -lt 100 ] && echo 'detailed' || ([ "$TOTAL_LOC" -lt 400 ] && echo 'standard' || echo 'focused'))"
+          
+          # Report warnings
+          if [ ${#WARNINGS[@]} -gt 0 ]; then
+            echo ""
+            echo "⚠️  WARNINGS:"
+            for warning in "${WARNINGS[@]}"; do
+              echo "  - $warning"
+            done
+          fi
+          
+          # Report errors and fail if critical
+          if [ ${#ERRORS[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ ERRORS:"
+            for error in "${ERRORS[@]}"; do
+              echo "  - $error"
+            done
+            echo ""
+            echo "::error::Context gathering encountered critical errors. Review may be incomplete."
+          fi
+          
+          echo "==========================================="
+          
+          # Exit with error if we have critical errors
+          [ ${#ERRORS[@]} -eq 0 ]
 
       - name: Run Gemini Review
         env:
