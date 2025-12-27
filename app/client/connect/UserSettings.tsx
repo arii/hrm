@@ -1,4 +1,3 @@
-// app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
@@ -65,6 +64,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     }
   }
 
+  const handleImperialHeightBlur = () => {
+    const feetNum = Number(feet)
+    const inchesNum = Number(inches)
+    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+      validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -118,11 +125,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           placeholder="e.g., 175"
           type="number"
           value={userHeight}
-          onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight(Number(e.target.value))
-            }
-          }}
+          onChange={(e) => setUserHeight(e.target.valueAsNumber)}
           onBlur={(e) => validateHeight(e.target.value)}
           error={!!heightError}
           helperText={heightError}
@@ -141,13 +144,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 handleImperialHeightChange(e.target.value, inches)
               }
             }}
-            onBlur={() => {
-              const feetNum = Number(feet)
-              const inchesNum = Number(inches)
-              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
-              }
-            }}
+            onBlur={handleImperialHeightBlur}
           />
           <TextField
             fullWidth
@@ -161,13 +158,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 handleImperialHeightChange(feet, e.target.value)
               }
             }}
-            onBlur={() => {
-              const feetNum = Number(feet)
-              const inchesNum = Number(inches)
-              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
-              }
-            }}
+            onBlur={handleImperialHeightBlur}
           />
         </Stack>
       )}
