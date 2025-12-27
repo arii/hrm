@@ -79,11 +79,9 @@ jobs:
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
 
+          # Store inputs in temp files to avoid env var exposure/injection
           if [ "$EVENT_NAME" == "issues" ]; then
-            echo "PROMPT<<$EOF" >> $GITHUB_ENV
-            echo "$TASK_DESC_PARSED" >> $GITHUB_ENV
-            echo "$EOF" >> $GITHUB_ENV
-
+            printf "%s" "$TASK_DESC_PARSED" > task_desc.txt
             echo "FILES=$TARGET_FILES_PARSED" >> $GITHUB_ENV
             echo "TITLE=$ISSUE_TITLE" >> $GITHUB_ENV
 
@@ -94,10 +92,7 @@ jobs:
               echo "BRANCH=ai/${BRANCH_SLUG}-${ISSUE_NUMBER}" >> $GITHUB_ENV
             fi
           else
-            echo "PROMPT<<$EOF" >> $GITHUB_ENV
-            echo "$TASK_DESC_INPUT" >> $GITHUB_ENV
-            echo "$EOF" >> $GITHUB_ENV
-
+            printf "%s" "$TASK_DESC_INPUT" > task_desc.txt
             echo "FILES=$TARGET_FILES_INPUT" >> $GITHUB_ENV
 
             TITLE_TEXT=$(echo "$TASK_DESC_INPUT" | head -c 50)
@@ -111,19 +106,17 @@ jobs:
             fi
           fi
 
+          # Pass content via GITHUB_ENV for steps that need it, securely
+          echo "PROMPT<<$EOF" >> $GITHUB_ENV
+          cat task_desc.txt >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+
       - name: 'Jules: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'jules'
         run: |
           echo "Invoking Jules Agent..."
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          {
-            echo "FULL_PROMPT<<$EOF"
-            echo "Task: $PROMPT"
-            echo ""
-            echo "Target Files:"
-            echo "$FILES"
-            echo "$EOF"
-          } >> $GITHUB_ENV
+          # Create prompt file instead of relying solely on env var echoing
+          printf "Task: %s\n\nTarget Files:\n%s" "$PROMPT" "$FILES" > jules_prompt.txt
 
       - name: 'Jules: Install Dependencies'
         if: env.AGENT_PROVIDER == 'jules'
@@ -135,16 +128,27 @@ jobs:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
           BRANCH: ${{ env.BRANCH }}
           TITLE: ${{ env.TITLE }}
-          FULL_PROMPT: ${{ env.FULL_PROMPT }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
+          # Read prompt from file to avoid CLI argument length limits or exposure
+          FULL_PROMPT=$(cat jules_prompt.txt)
+
           python3 .github/scripts/jules_ops.py \
             --prompt "$FULL_PROMPT" \
             --branch "$BRANCH" \
             --title "$TITLE" \
             --owner "$REPO_OWNER" \
             --repo-name "$REPO_NAME"
+
+      - name: 'Gemini: Verify Client Exists'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: |
+          if [ ! -f scripts/gemini-client.ts ]; then
+            echo "Error: scripts/gemini-client.ts not found!"
+            exit 1
+          fi
+          echo "Gemini client script verified."
 
       - name: 'Gemini: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'gemini'

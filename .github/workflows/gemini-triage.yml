@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   triage:
-    if: github.actor != 'github-actions[bot]'
+    # Prevent the workflow from triggering itself in a loop.
+    # The workflow uses a PAT owned by 'ari-party-bot', so we check for that actor.
+    if: github.actor != 'ari-party-bot'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
