@@ -197,9 +197,13 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     try {
       await deviceManager.findAndConnect()
     } catch (error) {
-      // Error is already handled/emitted by deviceManager.findAndConnect
-      // and caught by the status-changed listener, but we log here for safety
-      logger.error({ error }, 'Failed to connect to device.')
+      // Errors are primarily handled by the 'status-changed' event listener
+      // to update UI state. We catch here to prevent unhandled promise rejections.
+      if (error instanceof DOMException && error.name === 'NotFoundError') {
+        logger.info('User cancelled Bluetooth device selection.')
+      } else {
+        logger.error({ error }, 'Failed to connect to device.')
+      }
     }
   }, [deviceManager, wsStatus])
 

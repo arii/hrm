@@ -115,7 +115,7 @@ class DeviceManagerService extends EventTarget {
       | EventListenerOrEventListenerObject
       | null
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      | ((event: any) => void),
+      | ((event: any) => void), // 'any' required for compatibility with CustomEvent overrides
     options?: boolean | AddEventListenerOptions
   ): void {
     super.addEventListener(
@@ -141,7 +141,7 @@ class DeviceManagerService extends EventTarget {
       | EventListenerOrEventListenerObject
       | null
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      | ((event: any) => void),
+      | ((event: any) => void), // 'any' required for compatibility with CustomEvent overrides
     options?: boolean | EventListenerOptions
   ): void {
     super.removeEventListener(
@@ -315,6 +315,15 @@ class DeviceManagerService extends EventTarget {
         this.onBatteryLevelChangedEvent
       )
       this.batteryCharacteristic = null
+    }
+
+    // Ensure any pending connection attempt is cancelled
+    if (this.device?.gatt) {
+      try {
+        this.device.gatt.disconnect()
+      } catch (_error) {
+        // Ignore errors during disconnect (e.g. already disconnected)
+      }
     }
 
     this.device = null
