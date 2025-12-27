@@ -1,7 +1,7 @@
 // hooks/useUserProfile.ts
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import { MeasurementSystem } from '@/types'
 import { toKg, toDisplay } from '../utils/units'
@@ -20,31 +20,41 @@ export function useUserProfile() {
     'IMPERIAL'
   )
 
-  const [displayWeight, setDisplayWeight] = useState('')
+  const [displayWeightInput, setDisplayWeightInput] = useState<string | null>(
+    null
+  )
 
-  useEffect(() => {
+  const displayWeight = useMemo(() => {
+    if (displayWeightInput !== null) {
+      return displayWeightInput
+    }
     const numericWeightInKg = parseFloat(weightInKg)
     if (!isNaN(numericWeightInKg)) {
       const displayValue = toDisplay(numericWeightInKg, unitSystem)
-      setDisplayWeight(displayValue.toString())
+      return displayValue.toString()
     }
-  }, [weightInKg, unitSystem])
+    return ''
+  }, [displayWeightInput, weightInKg, unitSystem])
 
   const handleWeightChange = (newDisplayValue: string) => {
-    setDisplayWeight(newDisplayValue)
+    setDisplayWeightInput(newDisplayValue)
   }
 
   const handleWeightBlur = () => {
-    const numericValue = parseFloat(displayWeight)
+    if (displayWeightInput === null) return
+
+    const numericValue = parseFloat(displayWeightInput)
     if (!isNaN(numericValue) && numericValue > 0) {
       const newKgValue = toKg(numericValue, unitSystem)
       setWeightInKg(newKgValue.toFixed(2))
     }
+    setDisplayWeightInput(null) // Reset to derive from localStorage
   }
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
+      setDisplayWeightInput(null) // Recalculate display weight
     }
   }
 

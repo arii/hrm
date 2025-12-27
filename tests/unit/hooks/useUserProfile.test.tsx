@@ -37,10 +37,13 @@ describe('useUserProfile', () => {
       result.current.handleWeightChange('160')
     })
 
+    expect(result.current.displayWeight).toBe('160')
+
     act(() => {
       result.current.handleWeightBlur()
     })
 
+    // After blur, the display weight should be derived from the new kg value
     expect(result.current.displayWeight).toBe('160')
 
     act(() => {
@@ -55,14 +58,17 @@ describe('useUserProfile', () => {
     const { result } = renderHook(() => useUserProfile())
 
     act(() => {
-        result.current.handleWeightChange('abc')
-    })
-
-    act(() => {
-        result.current.handleWeightBlur()
+      result.current.handleWeightChange('abc')
     })
 
     expect(result.current.displayWeight).toBe('abc')
+
+    act(() => {
+      result.current.handleWeightBlur()
+    })
+
+    // After blur, it should revert to the original value
+    expect(result.current.displayWeight).toBe('154.3')
   })
 
   it('should handle different combinations of weight and unit systems', () => {
@@ -80,4 +86,4 @@ describe('useUserProfile', () => {
 
     expect(result.current.displayWeight).toBe('176.4')
   })
-}, 'useUserProfile-hook-test')
+})
