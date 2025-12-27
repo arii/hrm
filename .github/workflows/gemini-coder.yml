@@ -415,12 +415,19 @@ jobs:
           echo "::notice::Building project..."
           pnpm run build
 
+      - name: 'Gemini: Prepare Commit Message'
+        if: env.AGENT_PROVIDER == 'gemini'
+        run: |
+          # Convert TITLE to lowercase for commitlint compliance
+          COMMIT_MSG=$(echo "${{ env.TITLE }}" | tr '[:upper:]' '[:lower:]')
+          echo "COMMIT_MESSAGE=feat(ai): $COMMIT_MSG" >> $GITHUB_ENV
+
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ARI_PAT }}
-          commit-message: "feat(ai): ${{ env.TITLE }}"
+          commit-message: ${{ env.COMMIT_MESSAGE }}
           title: ${{ env.TITLE }}
           body: |
             Automated pull request created by the Gemini Coder agent.
