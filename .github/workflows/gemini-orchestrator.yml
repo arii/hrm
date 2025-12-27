@@ -12,10 +12,6 @@ on:
         default: 'review'
   issue_comment:
     types: [created]
-  issues:
-    types: [opened]
-  schedule:
-    - cron: '0 0 * * *' # Runs daily at midnight
 
 jobs:
   gemini-review:
@@ -28,10 +24,7 @@ jobs:
     uses: ./.github/workflows/reusable-gemini-rereview.yml
     secrets: inherit
 
-  gemini-triage:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'issues' }}
-    uses: ./.github/workflows/reusable-gemini-tasks.yml
-    secrets: inherit
+
 
   gemini-dispatch:
     if: github.event_name == 'workflow_dispatch'
