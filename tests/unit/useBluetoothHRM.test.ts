@@ -43,7 +43,7 @@ describe('useBluetoothHRM', () => {
       await result.current.connect('Test User', 30)
     })
 
-    expect(mockDeviceManager.scanAndConnect).toHaveBeenCalled()
+    expect(mockDeviceManager.connect).toHaveBeenCalled()
   })
 
   it('should disconnect and update status', async () => {
@@ -58,5 +58,15 @@ describe('useBluetoothHRM', () => {
     })
 
     expect(mockDeviceManager.disconnect).toHaveBeenCalled()
+  })
+
+  it('should forget a device', async () => {
+    const { result } = renderHook(() => useBluetoothHRM(mockDeviceManager))
+
+    await act(async () => {
+      await result.current.forgetDevice()
+    })
+
+    expect(mockDeviceManager.forgetDevice).toHaveBeenCalled()
   })
 })

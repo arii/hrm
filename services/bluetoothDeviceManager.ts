@@ -9,11 +9,13 @@
 import { cancellablePromise } from '@/utils/promise'
 import logger from '@/utils/logger'
 import { EventEmitter } from 'events'
+import { setCookie, getCookie } from './cookieService'
 
 const HR_SERVICE_UUID = 'heart_rate'
 const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
 const BATTERY_SERVICE_UUID = 'battery_service'
 const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
+const HRM_COOKIE_NAME = 'hrm_device_id'
 
 /**
  * @function parseHeartRate
@@ -65,6 +67,9 @@ export class BluetoothDeviceManager extends EventEmitter {
   private device: BluetoothDevice | null = null
   private abortController: AbortController | null = null
   private status: DeviceManagerStatus = 'disconnected'
+  private watchdogTimer: NodeJS.Timeout | null = null
+  private lastDataTime: number = 0
+  private manualDisconnect: boolean = false
 
   constructor() {
     super()
@@ -110,12 +115,12 @@ export class BluetoothDeviceManager extends EventEmitter {
   }
 
   /**
-   * @method scanAndConnect
-   * @description Initiates a Bluetooth scan for HRM devices and connects to the selected one.
+   * @method connect
+   * @description Attempts to connect to a device, either by re-establishing a connection
+   * to a known device or by initiating a scan for a new one.
    * @async
-   * @throws {Error} If the scan is cancelled or fails.
    */
-  async scanAndConnect(): Promise<void> {
+  async connect(): Promise<void> {
     if (!this.isSupported) {
       this.setStatus('error', 'Bluetooth not supported')
       return
@@ -125,49 +130,70 @@ export class BluetoothDeviceManager extends EventEmitter {
       return
     }
 
-    this.abortController = new AbortController()
-
     try {
-      this.setStatus('scanning', 'Requesting Bluetooth device...')
-      this.device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [HR_SERVICE_UUID] }],
-        optionalServices: [BATTERY_SERVICE_UUID],
-      })
+      this.manualDisconnect = false
+      this.abortController = new AbortController()
+      const savedDeviceId = getCookie(HRM_COOKIE_NAME)
+      let deviceToConnect: BluetoothDevice | null = null
 
-      if (!this.device) {
-        throw new Error('No device selected')
+      if (savedDeviceId && navigator.bluetooth?.getDevices) {
+        this.setStatus('scanning', 'Checking for saved devices...')
+        const devices = await navigator.bluetooth.getDevices()
+        deviceToConnect = devices.find((d) => d.id === savedDeviceId) || null
       }
 
-      this.device.addEventListener(
-        'gattserverdisconnected',
-        this.onDisconnected
-      )
-      await this.connectGatt()
+      if (deviceToConnect) {
+        this.device = deviceToConnect
+        await this.connectGatt()
+      } else {
+        await this.scanForNewDevice()
+      }
     } catch (error) {
       const errorMessage =
         error instanceof DOMException && error.name === 'NotFoundError'
           ? 'Scan cancelled by user.'
-          : `Scan failed: ${(error as Error).message}`
+          : `Connection failed: ${(error as Error).message}`
       this.setStatus('error', errorMessage)
-      logger.error({ error }, 'Error during device scan and connect')
+      logger.error({ error }, 'Error during connection process')
       this.reset()
-      throw error // Re-throw to allow UI to handle it
+      throw error
     }
+  }
+
+  private async scanForNewDevice(): Promise<void> {
+    this.setStatus('scanning', 'Requesting Bluetooth device...')
+    this.device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [HR_SERVICE_UUID] }],
+      optionalServices: [BATTERY_SERVICE_UUID],
+    })
+
+    if (!this.device) {
+      throw new Error('No device selected')
+    }
+    await this.connectGatt()
   }
 
   private async connectGatt(): Promise<void> {
     if (!this.device) return
 
+    this.device.addEventListener(
+      'gattserverdisconnected',
+      this.onDisconnected,
+      { once: true }
+    )
+
     try {
       this.setStatus('connecting', `Connecting to ${this.device.name}...`)
 
-      const server = await cancellablePromise(this.device.gatt!.connect(), {
-        timeoutMs: 15000,
-        errorMessage: 'GATT connection timeout',
-        signal: this.abortController?.signal,
-      })
+      const server = await cancellablePromise(
+        this.device.gatt!.connect(),
+        {
+          timeoutMs: 15000,
+          errorMessage: 'GATT connection timeout',
+        },
+        this.abortController?.signal
+      )
 
-      // Heart Rate Service
       const hrService = await server.getPrimaryService(HR_SERVICE_UUID)
       const hrCharacteristic = await hrService.getCharacteristic(
         HR_CHARACTERISTIC_UUID
@@ -178,7 +204,6 @@ export class BluetoothDeviceManager extends EventEmitter {
         this.onHeartRateChanged
       )
 
-      // Battery Service (optional)
       try {
         const batteryService =
           await server.getPrimaryService(BATTERY_SERVICE_UUID)
@@ -199,24 +224,24 @@ export class BluetoothDeviceManager extends EventEmitter {
         logger.warn('Battery service not found, skipping.')
       }
 
+      setCookie(HRM_COOKIE_NAME, this.device.id)
       this.setStatus('connected', `Connected to ${this.device.name}`)
+      this.startWatchdog()
     } catch (error) {
-      const errorMessage = `Connection to ${this.device.name} failed: ${
-        (error as Error).message
-      }`
-      this.setStatus('error', errorMessage)
-      logger.error({ error }, 'Error during GATT connection')
       this.reset()
       throw error
     }
   }
 
   private onHeartRateChanged = (event: Event): void => {
+    this.lastDataTime = Date.now()
     const target = event.target as BluetoothRemoteGATTCharacteristic
     const value = target.value!
     const heartRate = parseHeartRate(value)
     this.emit('heartRateUpdate', heartRate)
   }
+
+
 
   private onBatteryLevelChanged = (value: DataView): void => {
     const batteryLevel = value.getUint8(0)
@@ -224,47 +249,84 @@ export class BluetoothDeviceManager extends EventEmitter {
   }
 
   private onDisconnected = (): void => {
+    this.stopWatchdog()
     this.setStatus('disconnected', 'Device disconnected')
-    this.reset(false) // Keep device reference for potential reconnect
+    this.reset(this.manualDisconnect) // Reset state. If manual, clear device.
+    if (!this.manualDisconnect) {
+      this.reconnect()
+    }
   }
 
-  /**
-   * @method disconnect
-   * @description Disconnects from the currently connected device.
-   */
-  disconnect(): void {
-    if (!this.device || !this.device.gatt) {
-      this.onDisconnected()
+  private reconnect(): void {
+    if (this.status === 'connecting' || this.status === 'connected') {
       return
     }
+    this.setStatus('connecting', 'Reconnecting...')
+    setTimeout(() => {
+      this.connectGatt().catch((error) => {
+        logger.error({ error }, 'Failed to reconnect')
+        this.setStatus('error', 'Reconnection failed')
+      })
+    }, 2000)
+  }
+
+  disconnect(): void {
+    this.manualDisconnect = true
+    if (!this.device) return
     this.abortController?.abort()
-    if (this.device.gatt.connected) {
+    if (this.device.gatt?.connected) {
       this.device.gatt.disconnect()
     } else {
       this.onDisconnected()
     }
-    this.reset()
+  }
+
+  async forgetDevice(): Promise<void> {
+    const deviceToForget = this.device
+    this.disconnect()
+    setCookie(HRM_COOKIE_NAME, '', -1)
+    try {
+      if (deviceToForget?.forget) {
+        await deviceToForget.forget()
+      }
+    } catch (e) {
+      logger.warn({ error: e }, 'Error during device forget')
+    }
+    this.setStatus('disconnected', 'Device forgotten')
+  }
+
+  private startWatchdog(): void {
+    this.lastDataTime = Date.now()
+    this.watchdogTimer = setInterval(() => {
+      if (Date.now() - this.lastDataTime > 10000) {
+        logger.warn('Watchdog triggered: no data received. Reconnecting...')
+        if (this.device?.gatt?.connected) {
+          this.manualDisconnect = false // Ensure it's treated as an auto-reconnect
+          this.device.gatt.disconnect()
+        }
+      }
+    }, 5000) // Check more frequently
+  }
+
+  private stopWatchdog(): void {
+    if (this.watchdogTimer) {
+      clearInterval(this.watchdogTimer)
+      this.watchdogTimer = null
+    }
   }
 
   private reset(clearDevice = true): void {
+    this.stopWatchdog()
     if (this.device) {
       this.device.removeEventListener(
         'gattserverdisconnected',
         this.onDisconnected
       )
-      if (clearDevice) {
-        this.device = null
-      }
+      if (clearDevice) this.device = null
     }
-    if (this.abortController) {
-      this.abortController = null
-    }
+    this.abortController = null
   }
 
-  /**
-   * @method destroy
-   * @description Cleans up all resources and listeners. Used for testing.
-   */
   destroy(): void {
     this.disconnect()
     this.removeAllListeners()

@@ -16,6 +16,7 @@ import {
   BluetoothDeviceManager,
   DeviceManagerStatus,
 } from '@/services/bluetoothDeviceManager'
+import { DisconnectionReason } from '@/hooks/useBluetoothHRM'
 
 /**
  * @hook useBluetoothHRM
@@ -26,10 +27,12 @@ import {
  * @returns {object} An object containing functions and state for managing a Bluetooth HRM device.
  * @property {Function} connect - Initiates device connection.
  * @property {Function} disconnect - Manually disconnects the device.
+ * @property {Function} forgetDevice - Forgets the currently saved device.
  * @property {string} deviceStatus - A human-readable string of the current connection status.
  * @property {number | null} batteryLevel - The device's battery level (0-100), or null if unavailable.
  * @property {boolean} isConnected - True if the device is connected.
  * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
+ * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  */
 const useBluetoothHRM = (
   injectedDeviceManager?: BluetoothDeviceManager
@@ -37,14 +40,14 @@ const useBluetoothHRM = (
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
+  const [disconnectionReason, setDisconnectionReason] =
+    useState<DisconnectionReason>(null)
   const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
-  const deviceManagerRef = useRef<BluetoothDeviceManager | null>(null)
+  const [deviceManager] = useState(
+    () => injectedDeviceManager || new BluetoothDeviceManager()
+  )
 
   useEffect(() => {
-    deviceManagerRef.current =
-      injectedDeviceManager || new BluetoothDeviceManager()
-    const deviceManager = deviceManagerRef.current
-
     const handleStatusChange = (
       status: DeviceManagerStatus,
       message: string
@@ -88,7 +91,7 @@ const useBluetoothHRM = (
     return () => {
       deviceManager.destroy()
     }
-  }, [sendData, injectedDeviceManager])
+  }, [sendData, deviceManager])
 
   /**
    * @function connect
@@ -113,13 +116,13 @@ const useBluetoothHRM = (
       }
 
       try {
-        await deviceManagerRef.current?.scanAndConnect()
+        await deviceManager.connect()
       } catch (error) {
         // Error is already logged by the manager, just re-throw for the UI
         throw error
       }
     },
-    [connectionStatus]
+    [connectionStatus, deviceManager]
   )
 
   /**
@@ -127,16 +130,27 @@ const useBluetoothHRM = (
    * @description Manually disconnects the device.
    */
   const disconnect = useCallback(() => {
-    deviceManagerRef.current?.disconnect()
-  }, [])
+    setDisconnectionReason('manual')
+    deviceManager.disconnect()
+  }, [deviceManager])
+
+  /**
+   * @function forgetDevice
+   * @description Forgets the currently saved device.
+   */
+  const forgetDevice = useCallback(async () => {
+    await deviceManager.forgetDevice()
+  }, [deviceManager])
 
   return {
     connect,
     disconnect,
+    forgetDevice,
     deviceStatus,
     batteryLevel,
     isConnected: deviceStatus.startsWith('Connected'),
-    isSupported: deviceManagerRef.current?.isSupported || false,
+    isSupported: deviceManager.isSupported,
+    disconnectionReason,
   }
 }
 
