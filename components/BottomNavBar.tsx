@@ -12,10 +12,12 @@ import { useState } from 'react'
 export default function BottomNavBar() {
   const pathname = usePathname()
   const [value, setValue] = useState(() => {
-    if (pathname === '/client/control') {
+    if (pathname === '/settings') {
       return 1
-    } else if (pathname === '/client/connect') {
+    } else if (pathname === '/client/control') {
       return 2
+    } else if (pathname === '/client/connect') {
+      return 3
     }
     return 0 // Default to Dashboard
   })
@@ -43,6 +45,18 @@ export default function BottomNavBar() {
         icon={<DashboardIcon />}
         component={Link}
         href="/"
+        sx={{
+          '&:hover, &.Mui-focusVisible': {
+            backgroundColor: 'action.hover',
+          },
+        }}
+      />
+      <BottomNavigationAction
+        label="Settings"
+        aria-label="Navigate to Settings page"
+        icon={<SettingsIcon />}
+        component={Link}
+        href="/settings"
         sx={{
           '&:hover, &.Mui-focusVisible': {
             backgroundColor: 'action.hover',
