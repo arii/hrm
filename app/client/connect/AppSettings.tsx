@@ -34,10 +34,6 @@ interface AppSettingsProps {
   setGender: (gender: Gender) => void
 }
 
-// Using React.memo to prevent re-renders when the props haven't changed.
-// This is particularly useful here because the parent component, ConnectView,
-// has a lot of state that can change frequently (e.g., workout timer, HR data),
-// and we want to avoid re-rendering the settings form unnecessarily.
 const AppSettings: React.FC<AppSettingsProps> = React.memo(
   ({
     userName,
@@ -59,29 +55,29 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
     gender,
     setGender,
   }) => {
-    // Internal state for imperial height units
     const [feet, setFeet] = useState('')
     const [inches, setInches] = useState('')
 
-    // When the userHeight prop (in cm) or the unit system changes,
-    // update the internal feet/inches state for display.
-    useEffect(() => {
+    const imperialHeight = useMemo(() => {
       if (unit === 'IMPERIAL' && userHeight > 0) {
-        const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
-        setFeet(String(ft))
-        setInches(String(inch))
+        return cmToFeetAndInches(userHeight)
       }
+      return { feet: 0, inches: 0 }
     }, [userHeight, unit])
 
-    // When the internal feet or inches state changes, update the
-    // parent's userHeight state (in cm).
+    useEffect(() => {
+      if (unit === 'IMPERIAL') {
+        setFeet(String(imperialHeight.feet))
+        setInches(String(imperialHeight.inches))
+      }
+    }, [imperialHeight, unit])
+
     useEffect(() => {
       if (unit === 'IMPERIAL') {
         const heightInCm = feetAndInchesToCm(
           parseInt(feet, 10) || 0,
           parseInt(inches, 10) || 0
         )
-        // Only call setUserHeight if the value has actually changed to prevent infinite loops
         if (heightInCm !== userHeight) {
           setUserHeight(heightInCm)
         }
@@ -100,14 +96,14 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
           }}
           aria-label="Unit system"
         >
-        <span id="unit-system-description" className="sr-only">
+          <span id="unit-system-description" className="sr-only">
             Currently selected unit system is {unit}.
           </span>
-        <ToggleButton
-          value="IMPERIAL"
-          aria-label="imperial units"
-          aria-describedby="unit-system-description"
-        >
+          <ToggleButton
+            value="IMPERIAL"
+            aria-label="imperial units"
+            aria-describedby="unit-system-description"
+          >
             Imperial (lbs, ft, in)
           </ToggleButton>
           <ToggleButton value="METRIC" aria-label="metric units">
@@ -183,7 +179,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
               }}
               onBlur={onHeightBlur}
               error={!!heightError}
-              helperText={heightError ? ' ' : ''} // Reserve space for the helper text
+              helperText={heightError ? ' ' : ''}
             />
             <TextField
               fullWidth
@@ -223,5 +219,6 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
     )
   }
 )
+AppSettings.displayName = 'AppSettings'
 
 export default AppSettings
