@@ -234,6 +234,22 @@ jobs:
             exit 1
           fi
           
+          # Extract diff from markdown code block if present
+          if head -1 patch.diff | grep -q "^\`\`\`"; then
+            echo "::notice::Detected markdown code block, extracting diff..."
+            # Extract content between ```diff and ``` markers
+            sed -n '/^```diff/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
+            if [ -s patch.diff.tmp ]; then
+              mv patch.diff.tmp patch.diff
+              echo "::notice::Extracted diff from markdown code block"
+            else
+              echo "::error::Failed to extract diff from markdown code block"
+              echo "::notice::First 20 lines of patch.diff:"
+              head -20 patch.diff | sed 's/^/::notice::  /'
+              exit 1
+            fi
+          fi
+          
           # Validate patch format starts with --- a/
           if ! head -1 patch.diff | grep -q "^--- a/"; then
             echo "::error::Patch does not start with '--- a/' header"
