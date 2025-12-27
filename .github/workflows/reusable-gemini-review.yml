@@ -132,3 +132,26 @@ jobs:
             echo "Debug info:"
             ls -la | grep -E "review|result" || echo "No review-related files found"
           fi
+
+      - name: Apply Review Labels
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "review_result.json" ]; then
+            # Extract labels from the review result
+            LABELS=$(jq -r '.labels[]? // empty' review_result.json)
+            
+            if [ -n "$LABELS" ]; then
+              echo "📌 Applying labels to PR #$PR_NUMBER:"
+              echo "$LABELS" | while read label; do
+                echo "  Adding label: $label"
+                timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" || echo "  ⚠️ Failed to add label: $label"
+              done
+            else
+              echo "ℹ️ No labels to apply"
+            fi
+          else
+            echo "⚠️ review_result.json not found, skipping label application"
+          fi
