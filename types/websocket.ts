@@ -89,6 +89,7 @@ export type ServerMessage =
 
 export type HrmInputData = {
   value: number | null
+  deviceId?: string
 }
 
 export interface HrmInputMessage {

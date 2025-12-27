@@ -14,7 +14,7 @@ type CharacteristicValueChangedListener = (event: Event) => void
 type GattServerDisconnectedListener = () => void
 
 export interface ConnectedDevice {
-  id: DeviceId
+  id?: DeviceId
   device: BluetoothDevice
   status: string
   batteryLevel?: number
@@ -151,37 +151,6 @@ const useMultiDeviceBluetooth = () => {
     [connectionStatus, sendData]
   )
 
-  const scheduleReconnect = useCallback(
-    (deviceId: DeviceId) => {
-      const deviceState = connectedDevices[deviceId]
-      if (
-        !deviceState ||
-        deviceState.reconnectAttempt >= MAX_RECONNECT_ATTEMPTS
-      ) {
-        console.log(
-          `Max reconnect attempts reached for ${deviceId}. Giving up.`
-        )
-        updateDeviceState(deviceId, { status: 'Failed to reconnect' })
-        removeDevice(deviceId)
-        return
-      }
-
-      const delay =
-        INITIAL_RECONNECT_DELAY * Math.pow(2, deviceState.reconnectAttempt)
-      updateDeviceState(deviceId, {
-        status: `Connection lost. Retrying in ${delay / 1000}s...`,
-      })
-
-      reconnectTimeouts.current[deviceId] = setTimeout(() => {
-        updateDeviceState(deviceId, {
-          reconnectAttempt: deviceState.reconnectAttempt + 1,
-        })
-        connectToGatt(deviceState.device)
-      }, delay)
-    },
-    [connectedDevices, connectToGatt]
-  )
-
   const removeDevice = useCallback(
     (deviceId: string) => {
       const deviceState = connectedDevices[deviceId]
@@ -216,6 +185,37 @@ const useMultiDeviceBluetooth = () => {
       })
     },
     [connectedDevices]
+  )
+
+  const scheduleReconnect = useCallback(
+    (deviceId: DeviceId) => {
+      const deviceState = connectedDevices[deviceId]
+      if (
+        !deviceState ||
+        deviceState.reconnectAttempt >= MAX_RECONNECT_ATTEMPTS
+      ) {
+        console.log(
+          `Max reconnect attempts reached for ${deviceId}. Giving up.`
+        )
+        updateDeviceState(deviceId, { status: 'Failed to reconnect' })
+        removeDevice(deviceId)
+        return
+      }
+
+      const delay =
+        INITIAL_RECONNECT_DELAY * Math.pow(2, deviceState.reconnectAttempt)
+      updateDeviceState(deviceId, {
+        status: `Connection lost. Retrying in ${delay / 1000}s...`,
+      })
+
+      reconnectTimeouts.current[deviceId] = setTimeout(() => {
+        updateDeviceState(deviceId, {
+          reconnectAttempt: deviceState.reconnectAttempt + 1,
+        })
+        connectToGatt(deviceState.device)
+      }, delay)
+    },
+    [connectedDevices, connectToGatt, removeDevice]
   )
 
   const handleDisconnect = useCallback(
@@ -291,7 +291,7 @@ const useMultiDeviceBluetooth = () => {
         disconnectDevice(deviceId)
       })
     }
-  }, [])
+  }, [connectedDevices, disconnectDevice])
 
   return {
     connectedDevices,
