@@ -11,6 +11,26 @@ on:
         description: 'Branch to check'
         required: true
         default: 'leader'
+      pr_number:
+        description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
+  
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to check'
+        required: false
+        type: string
+        default: 'leader'
+      pr_number:
+        description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'GitHub token for posting comments'
+        required: true
 
 concurrency:
   group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -121,21 +141,84 @@ jobs:
           fi
 
       - name: Run Knip
-        run: pnpm run knip
+        id: knip
+        run: |
+          pnpm run knip 2>&1 | tee knip-output.txt
+        continue-on-error: true
+
+      - name: Upload Knip Report
+        if: always() && steps.knip.outcome == 'failure' && hashFiles('knip-output.txt') != ''
+        id: upload-knip
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-report
+          path: knip-output.txt
+          retention-days: 30
+
+      - name: Handle Knip Upload Failure
+        if: failure() && steps.upload-knip.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload knip report artifact"
+          echo "::notice::Knip output may be available in logs above"
+          exit 1
 
       - name: Lint Code
-        run: pnpm run lint
+        id: lint
+        run: pnpm run lint 2>&1 | tee lint-output.log
+        continue-on-error: true
+
+      - name: Upload Lint Report
+        if: always() && steps.lint.outcome == 'failure' && hashFiles('lint-output.log') != ''
+        id: upload-lint
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint-output.log
+          retention-days: 30
+
+      - name: Handle Lint Upload Failure
+        if: failure() && steps.upload-lint.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload lint report artifact"
+          echo "::notice::Lint output may be available in logs above"
+          exit 1
+
+      - name: Fail on Lint Errors
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
 
       - name: Verify Build
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         run: pnpm run build
+
+      - name: Upload Build Artifacts
+        if: success()
+        id: upload-build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          include-hidden-files: true  # Required to upload the .next directory
+          path: |
+            dist/**
+            .next/**
+          retention-days: 1
+      
+      - name: Handle Build Artifact Upload Failure
+        if: failure() && steps.upload-build.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload build artifacts"
+          echo "::notice::Build output may be available in logs above"
+          exit 1
 
   # ===========================================================================
   # JOB 3: CORE LOGIC TESTS
-  # Reuses workspace. Runs functional tests.
+  # Downloads build artifacts and runs functional tests.
   # ===========================================================================
   core-tests:
     name: 🧪 Core Logic
-    needs: quality-check
+    needs: [infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -169,11 +252,81 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: .
+          merge-multiple: true
+
+      - name: Verify Build Presence (Debug)
+        run: |
+          echo "Checking for build artifacts..."
+          ls -la | head -20
+          if [ -d ".next" ]; then
+            echo "✅ .next directory found"
+          else
+            echo "⚠️ .next directory MISSING"
+          fi
+          if [ -d "dist" ]; then
+            echo "✅ dist directory found"
+          else
+            echo "⚠️ dist directory MISSING"
+          fi
+
+      - name: Verify Server Build
+        run: |
+          if [ ! -f "dist/server.js" ]; then
+            echo "::error::Server build failed - dist/server.js not found"
+            echo "Contents of dist directory:"
+            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
+            echo "Contents of current directory:"
+            ls -la | grep -E "^d" | head -20
+            exit 1
+          fi
+          echo "✅ Server successfully built at dist/server.js"
+
+      - name: Check dist Before Infra Tests
+        run: |
+          echo "Checking dist before infra tests..."
+          if [ -f "dist/server.js" ]; then
+            echo "✅ dist/server.js exists"
+            ls -lh dist/server.js
+          else
+            echo "❌ dist/server.js NOT FOUND"
+            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
+          fi
+
       - name: Run Infra Tests
-        run: pnpm run test:infra
+        id: infra-tests
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
+        run: pnpm run test:infra 2>&1 | tee infra-tests.log
+        continue-on-error: true
 
       - name: Run Unit Tests
-        run: pnpm run test:unit
+        id: unit-tests
+        run: pnpm run test:unit 2>&1 | tee unit-tests.log
+        continue-on-error: true
+
+      - name: Upload Test Reports
+        if: always() && (steps.infra-tests.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
+        id: upload-tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            infra-tests.log
+            unit-tests.log
+          retention-days: 30
+
+      - name: Handle Test Report Upload Failure
+        if: failure() && steps.upload-tests.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload test report artifacts"
+          echo "::notice::Test logs are available in the workflow logs above"
+          exit 1
 
   # ===========================================================================
   # JOB 4: VISUAL REGRESSION TESTS
@@ -181,7 +334,7 @@ jobs:
   # ===========================================================================
   visual-tests:
     name: 🎨 Visual Regression
-    needs: core-tests
+    needs: [infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -214,13 +367,30 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: .
+          merge-multiple: true
+
       - name: Run Visual Tests
+        id: visual-tests
         run: |
-          pnpm run test:json || true
+          pnpm run test:json 2>&1 | tee visual-tests.log
           python3 scripts/analyze-playwright-report.py playwright-report.json
+        continue-on-error: true
+
+      - name: Upload Visual Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-logs
+          path: visual-tests.log
+          retention-days: 30
 
       - name: Upload Report on Failure
-        if: failure()
+        if: always() && steps.visual-tests.outcome == 'failure'
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
@@ -267,3 +437,175 @@ jobs:
               echo "✅ Cache within limits (under 7GB)"
             fi
           fi
+
+  # ===========================================================================
+  # JOB 5: QUALITY REPORT & FAILURE NOTIFICATION
+  # Aggregates results and notifies Jules of any failures
+  # ===========================================================================
+  quality-report:
+    name: 📊 Quality Report
+    if: always()
+    needs: [quality-check, core-tests, visual-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect Failure Information
+        id: failures
+        env:
+          CODE_QUALITY_RESULT: ${{ needs.quality-check.result }}
+          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
+          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
+        run: |
+          set +e
+          
+          FAILED_JOBS=""
+          FAILURE_COUNT=0
+          
+          if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Core Tests ($CORE_TESTS_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Visual Regression Tests ($VISUAL_TESTS_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
+          echo "$FAILED_JOBS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
+
+      - name: Download All Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-logs'
+          path: logs
+          merge-multiple: true
+
+      - name: Download Lint Report
+        uses: actions/download-artifact@v4
+        with:
+          name: lint-report
+          path: logs
+
+      - name: Post Comprehensive Quality Report
+        if: always()
+        env:
+          QUALITY_RESULT: ${{ needs.quality-check.result }}
+          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
+          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
+          LOG_TRUNCATE_BYTES: 15000
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT }}
+        run: |
+          set +e
+          
+          
+          # Find PR number
+          # Move lint output to code-quality for consistent naming
+          if [ -f "logs/lint-output.log" ]; then
+            mv "logs/lint-output.log" "logs/code-quality.log"
+          fi
+
+          # Handle inputs from both workflow_dispatch and workflow_call
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Try workflow_dispatch input
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          fi
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Try workflow_call input
+            PR_NUMBER="${{ inputs.pr_number }}"
+          fi
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Fall back to searching for PR on current branch
+            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
+          fi
+          
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            echo "::warning::No Pull Request found. Skipping comment."
+            exit 0
+          fi
+          
+          mkdir -p test-results
+          COMMENT_FILE="test-results/pr-comment.md"
+          
+          # Build the comment with embedded logs
+          {
+            echo "## 📋 Quality Gate Results"
+            echo ""
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| Code Quality | $([ "$QUALITY_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$QUALITY_RESULT) |"
+            echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
+            echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
+            echo ""
+            
+            # Add failed logs
+            FAILED_ANY=0
+            if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Code Quality Failures</strong></summary>"
+              echo ""
+              echo '```'
+              if [ -f "logs/code-quality.log" ]; then
+                tail -c $LOG_TRUNCATE_BYTES "logs/code-quality.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              else
+                echo "Log file not found"
+              fi
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+            
+            if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+               echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
+               echo ""
+               echo '```'
+               if [ -f "logs/infra-tests.log" ]; then
+                 tail -c $LOG_TRUNCATE_BYTES "logs/infra-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+               elif [ -f "logs/unit-tests.log" ]; then
+                 tail -c $LOG_TRUNCATE_BYTES "logs/unit-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+               else
+                 echo "Log file not found"
+               fi
+               echo '```'
+               echo ""
+               echo "</details>"
+            
+            if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Visual Tests Failures</strong></summary>"
+              echo ""
+              echo '```'
+              if [ -f "logs/visual-tests.log" ]; then
+                tail -c $LOG_TRUNCATE_BYTES "logs/visual-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              else
+                echo "Log file not found"
+              fi
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+            
+            if [ $FAILED_ANY -eq 0 ]; then
+              echo "✅ All quality checks passed!"
+            else
+              echo ""
+              echo "---"
+              echo "*Note: Logs are truncated to 15KB. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for complete details.*"
+            fi
+          } > "$COMMENT_FILE"
+          
+          # Post the comment
+          gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" || {
+            echo "::error::Failed to post comment to PR #$PR_NUMBER"
+            exit 1
+          }

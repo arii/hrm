@@ -84,24 +84,25 @@ jobs:
           NEEDS_REVIEW="false"
           REVIEW_TYPE="none"
           SKIP_REASON="no criteria met"
-          if [[ "$IS_MERGE" -eq 1 && "$SIGNIFICANT_CHANGES" -eq 0 ]]; then
+          
+          # Skip if no significant changes (just response comments, no code changes)
+          if [[ "$SIGNIFICANT_CHANGES" -eq 0 ]]; then
+            SKIP_REASON="no code changes"
+          elif [[ "$IS_MERGE" -eq 1 && "$SIGNIFICANT_CHANGES" -eq 0 ]]; then
             SKIP_REASON="merge"
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
           elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="initial"
-          elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
+          elif [[ "$CHANGES_REQUESTED" -gt 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="full"
-          elif [[ "$REVIEW_COMMENTS" -gt 0 && "$APPROVED" -eq 0 ]]; then
-            NEEDS_REVIEW="true"
-            REVIEW_TYPE="quick"
           elif [[ "$APPROVED" -gt 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="verification"
           else
-            SKIP_REASON="no"
+            SKIP_REASON="awaiting code changes"
           fi
           echo "needs-review=$NEEDS_REVIEW" >> $GITHUB_OUTPUT
           echo "review-type=$REVIEW_TYPE" >> $GITHUB_OUTPUT
@@ -135,6 +136,10 @@ jobs:
               summary = 'Merge commit detected with no significant code changes.';
             } else if (skipReason === 'trivial') {
               summary = 'Trivial change detected (docs/chore/style only).';
+            } else if (skipReason === 'no code changes') {
+              summary = 'No code changes detected. Review will resume when code changes are pushed.';
+            } else if (skipReason === 'awaiting code changes') {
+              summary = 'Awaiting code changes from Jules. Review will resume when code is updated.';
             } else if (skipReason === 'no') {
               summary = 'No re-review criteria were met.';
             }
