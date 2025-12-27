@@ -26,4 +26,14 @@ it('should create a spotify track with a custom name', () => {
   const track = createSpotifyTrack({ name: 'My Favorite Song' });
   expect(track.name).toBe('My Favorite Song');
 });
+
+it('should override a nested property', () => {
+  const track = createSpotifyTrack({
+    album: {
+      ...createSpotifyTrack().album,
+      name: 'My Favorite Album',
+    },
+  });
+  expect(track.album.name).toBe('My Favorite Album');
+});
 ```

@@ -9,6 +9,9 @@ import { Playlist, Track } from '@spotify/web-api-ts-sdk'
  */
 export const createSpotifyTrack = (overrides: Partial<Track> = {}): Track => {
   const defaultTrack: Track = {
+    available_markets: ['US'],
+    episode: false,
+    track: true,
     album: {
       album_group: 'album',
       album_type: 'album',
