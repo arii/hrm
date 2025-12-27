@@ -30,7 +30,7 @@ jobs:
   # ===========================================================================
   infra-setup:
     name: 🏗️ Infra Setup
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -85,7 +85,7 @@ jobs:
   quality-check:
     name: 🛡️ Quality Check
     needs: infra-setup
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -128,7 +128,7 @@ jobs:
   core-tests:
     name: 🧪 Core Logic
     needs: quality-check
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -174,7 +174,7 @@ jobs:
   visual-tests:
     name: 🎨 Visual Regression
     needs: core-tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
