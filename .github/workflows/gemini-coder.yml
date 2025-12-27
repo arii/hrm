@@ -325,4 +325,5 @@ jobs:
             **Files Modified:**
             ${{ env.FILES }}
           branch: ${{ env.BRANCH }}
+          base: leader
           delete-branch: true
