@@ -156,6 +156,16 @@ jobs:
             ls -la | grep -E "review|result" || echo "No review-related files found"
           fi
 
+      - name: Upload Review Debug Artifact on Failure
+        if: always() && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-debug-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: |
+            review_result.json
+            review_comment.txt
+          retention-days: 7
+
       - name: Apply Review Labels
         if: always()
         env:
@@ -168,36 +178,30 @@ jobs:
             
             if [ -n "$LABELS" ]; then
               echo "📌 Applying labels to PR #$PR_NUMBER:"
-              LABEL_COUNT=0
-              LABEL_FAILURES=0
               
-              # Create temp file to hold labels to avoid subshell issues
-              jq -r '.labels[]? // empty' review_result.json > /tmp/labels.txt
+              # Build the label string for gh pr edit
+              LABEL_ARGS=""
+              LABEL_COUNT=0
               
               while IFS= read -r label; do
                 [ -z "$label" ] && continue
-                
-                echo "  Adding label: '$label'"
-                OUTPUT=$(timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" 2>&1)
+                LABEL_ARGS="$LABEL_ARGS --add-label \"$label\""
+                LABEL_COUNT=$((LABEL_COUNT + 1))
+              done < <(jq -r '.labels[]? // empty' review_result.json)
+              
+              if [ $LABEL_COUNT -gt 0 ]; then
+                echo "Applying $LABEL_COUNT labels in a single API call..."
+                eval "timeout 30 gh pr edit $PR_NUMBER $LABEL_ARGS 2>&1"
                 EXIT_CODE=$?
                 
                 if [ $EXIT_CODE -eq 0 ]; then
-                  echo "  ✅ Label added: $label"
-                  LABEL_COUNT=$((LABEL_COUNT + 1))
+                  echo "✅ Labels applied successfully: $LABELS" | tr '\n' ' ' && echo ""
                 elif [ $EXIT_CODE -eq 124 ]; then
-                  echo "  ❌ Timeout (30s) applying label: $label"
-                  LABEL_FAILURES=$((LABEL_FAILURES + 1))
+                  echo "❌ Timeout (30s) applying labels"
                 else
-                  echo "  ❌ Failed to add label: $label (exit code: $EXIT_CODE)"
-                  if [ -n "$OUTPUT" ]; then
-                    echo "     Error details: $OUTPUT"
-                  fi
-                  LABEL_FAILURES=$((LABEL_FAILURES + 1))
+                  echo "❌ Failed to apply labels (exit code: $EXIT_CODE)"
                 fi
-              done < /tmp/labels.txt
-              
-              echo "Label application summary: Applied $LABEL_COUNT labels with $LABEL_FAILURES failures"
-              rm -f /tmp/labels.txt
+              fi
             else
               echo "ℹ️ No labels to apply from review result"
             fi
