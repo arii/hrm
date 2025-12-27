@@ -23,7 +23,7 @@ permissions:
 jobs:
   analyze-changes:
     name: Analyze Changes for Re-Review
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       review-type: ${{ steps.decision.outputs.review-type }}
@@ -64,9 +64,11 @@ jobs:
           CHANGES_REQUESTED=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
           APPROVED=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state == "APPROVED")] | length')
           REVIEW_COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '[.comments[] | select(.author.login == "arii")] | length')
+          TOTAL_REVIEWS=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[]] | length')
           echo "CHANGES_REQUESTED=${CHANGES_REQUESTED:-0}" >> $GITHUB_ENV
           echo "APPROVED=${APPROVED:-0}" >> $GITHUB_ENV
           echo "REVIEW_COMMENTS=${REVIEW_COMMENTS:-0}" >> $GITHUB_ENV
+          echo "TOTAL_REVIEWS=${TOTAL_REVIEWS:-0}" >> $GITHUB_ENV
 
       - name: Decide Re-Review Strategy
         id: decision
@@ -77,6 +79,7 @@ jobs:
           CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED || 0 }}
           APPROVED: ${{ env.APPROVED || 0 }}
           REVIEW_COMMENTS: ${{ env.REVIEW_COMMENTS || 0 }}
+          TOTAL_REVIEWS: ${{ env.TOTAL_REVIEWS || 0 }}
         run: |
           NEEDS_REVIEW="false"
           REVIEW_TYPE="none"
@@ -85,6 +88,9 @@ jobs:
             SKIP_REASON="merge"
           elif [[ "$COMMIT_MSG" =~ ^(docs?|chore|style): ]]; then
             SKIP_REASON="trivial"
+          elif [[ "$TOTAL_REVIEWS" -eq 0 && "$SIGNIFICANT_CHANGES" -gt 0 ]]; then
+            NEEDS_REVIEW="true"
+            REVIEW_TYPE="initial"
           elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
             NEEDS_REVIEW="true"
             REVIEW_TYPE="full"
@@ -114,7 +120,7 @@ jobs:
     name: Post Skip Check
     needs: analyze-changes
     if: needs.analyze-changes.outputs.needs-review == 'false'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       checks: write
     steps:

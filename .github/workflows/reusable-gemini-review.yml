@@ -15,14 +15,183 @@ permissions:
 
 jobs:
   gemini-review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Setup Environment
         uses: ./.github/actions/setup-env
         with:
           fetch-depth: 0
+
+      - name: Get PR Diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          timeout 60 gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+          if [ ! -s pr.diff ]; then
+            echo "Error: Unable to generate PR diff"
+            exit 1
+          fi
+
+      - name: Gather PR Context
+        id: context
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          # Get PR metadata with timeout
+          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
+          
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
+          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          
+          # Get labels - simplified with jq
+          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")')
+          echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
+          
+          # Count reviews using separate command with timeout and error handling
+          REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch review count: $REVIEW_COUNT"
+            REVIEW_COUNT=0
+          fi
+          
+          CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch changes requested count: $CHANGES_REQUESTED"
+            CHANGES_REQUESTED=0
+          fi
+          
+          RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch resolved count: $RESOLVED_COUNT"
+            RESOLVED_COUNT=0
+          fi
+          
+          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
+          echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
+          echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
+          
+          # Get file stats
+          FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | wc -l)
+          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= insertion)' || echo "0")
+          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= deletion)' || echo "0")
+          TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
+          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
+          
+          # Determine review depth
+          if [ "$TOTAL_LOC" -lt 100 ]; then
+            echo "REVIEW_DEPTH=detailed" >> $GITHUB_ENV
+          elif [ "$TOTAL_LOC" -lt 400 ]; then
+            echo "REVIEW_DEPTH=standard" >> $GITHUB_ENV
+          else
+            echo "REVIEW_DEPTH=focused" >> $GITHUB_ENV
+          fi
+          
+          # Get changed areas
+          CHANGED_AREAS=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | awk -F/ '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
+          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+
       - name: Run Gemini Review
-        run: pnpm tsx scripts/gemini-client.ts --preset "review"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_DIFF_FILE: pr.diff
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+          PR_TITLE: ${{ env.PR_TITLE }}
+          PR_AUTHOR: ${{ env.PR_AUTHOR }}
+          PR_DESCRIPTION: ${{ env.PR_DESCRIPTION }}
+          PR_LABELS: ${{ env.PR_LABELS }}
+          FILES_CHANGED: ${{ env.FILES_CHANGED }}
+          TOTAL_LOC: ${{ env.TOTAL_LOC }}
+          REVIEW_DEPTH: ${{ env.REVIEW_DEPTH }}
+          CHANGED_AREAS: ${{ env.CHANGED_AREAS }}
+          REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
+          RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
+          CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
+        run: |
+          pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
+
+      - name: Post Review Comment
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "review_result.json" ]; then
+            echo "Review result file found, processing..."
+            
+            jq -r '.reviewComment // empty' review_result.json > review_comment.txt
+            COMMENT_SIZE=$(wc -c < review_comment.txt)
+            
+            if [ "$COMMENT_SIZE" -gt 0 ]; then
+              echo "Posting review comment to PR #$PR_NUMBER (${COMMENT_SIZE} bytes)"
+              # Use --body-file to prevent command line length issues
+              gh pr comment "$PR_NUMBER" --body-file review_comment.txt 2>&1
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                echo "✅ Review comment posted successfully"
+              else
+                echo "❌ Failed to post review comment (exit code: $EXIT_CODE)"
+                echo "Command: gh pr comment $PR_NUMBER --body-file review_comment.txt"
+              fi
+            else
+              echo "⚠️ No review comment found in result"
+              echo "Debug info:"
+              echo "--- Full review_result.json content ---"
+              cat review_result.json | jq '.' || echo "Failed to parse JSON"
+              echo "--- End of review_result.json ---"
+            fi
+          else
+            echo "❌ review_result.json not found. Review generation may have failed."
+            echo "Debug info:"
+            ls -la | grep -E "review|result" || echo "No review-related files found"
+          fi
+
+      - name: Upload Review Debug Artifact on Failure
+        if: always() && failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-debug-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: |
+            review_result.json
+            review_comment.txt
+          retention-days: 7
+
+      - name: Apply Review Labels
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "review_result.json" ]; then
+            # Extract labels from the review result
+            LABELS=$(jq -r '.labels[]? // empty' review_result.json)
+            
+            if [ -n "$LABELS" ]; then
+              echo "📌 Applying labels to PR #$PR_NUMBER:"
+              
+              LABEL_COUNT=$(jq '.labels | length' review_result.json)
+              
+              if [ $LABEL_COUNT -gt 0 ]; then
+                echo "Applying $LABEL_COUNT labels..."
+                jq -r '.labels[]' review_result.json | while read -r label; do
+                  echo "  Adding: $label"
+                  timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" >/dev/null 2>&1 || echo "    ⚠️ Failed to add: $label"
+                done
+                echo "✅ Label application complete"
+              fi
+            else
+              echo "ℹ️ No labels to apply from review result"
+            fi
+          else
+            echo "⚠️ review_result.json not found, skipping label application"
+          fi

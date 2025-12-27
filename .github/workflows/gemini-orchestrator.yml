@@ -28,12 +28,6 @@ jobs:
     uses: ./.github/workflows/reusable-gemini-rereview.yml
     secrets: inherit
 
-  execute-rereview:
-    needs: gemini-rereview
-    if: needs.gemini-rereview.outputs.needs-review == 'true'
-    uses: ./.github/workflows/reusable-gemini-review.yml
-    secrets: inherit
-
   gemini-triage:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'issues' }}
     uses: ./.github/workflows/reusable-gemini-tasks.yml

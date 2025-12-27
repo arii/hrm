@@ -30,7 +30,7 @@ jobs:
   # ===========================================================================
   infra-setup:
     name: 🏗️ Infra Setup
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -46,6 +46,20 @@ jobs:
         with:
           run_install: false
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Configure Persistent Store
         shell: bash
         run: |
@@ -55,12 +69,6 @@ jobs:
           pnpm config set store-dir ~/.local/share/pnpm/store
           pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
           pnpm config set side-effects-cache true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20.x'
-      # ---------------------------------
 
       - name: Create Runtime Envs
         run: |
@@ -85,7 +93,7 @@ jobs:
   quality-check:
     name: 🛡️ Quality Check
     needs: infra-setup
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -128,7 +136,7 @@ jobs:
   core-tests:
     name: 🧪 Core Logic
     needs: quality-check
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -174,7 +182,7 @@ jobs:
   visual-tests:
     name: 🎨 Visual Regression
     needs: core-tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -218,3 +226,44 @@ jobs:
           name: playwright-report-visual-${{ env.SESSION_ID }}
           path: playwright-report/
           retention-days: 5
+
+      - name: Cache Cleanup - Prune if Over 7GB
+        if: always()
+        shell: bash
+        run: |
+          CACHE_DIR="${{ github.workspace }}/.cache/ms-playwright"
+          if [ -d "$CACHE_DIR" ]; then
+            CACHE_SIZE=$(du -sh "$CACHE_DIR" | cut -f1)
+            CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
+            SEVEN_GB=$((7 * 1024 * 1024 * 1024))
+            
+            echo "📊 Playwright cache size: $CACHE_SIZE"
+            
+            if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
+              echo "⚠️ Cache exceeds 7GB threshold ($((CACHE_SIZE_BYTES / 1024 / 1024 / 1024))GB), pruning..."
+              
+              # List cache structure before cleanup
+              echo "Cache structure before cleanup:"
+              du -sh "$CACHE_DIR"/* 2>/dev/null | sort -rh | head -10
+              
+              # Remove oldest chromium versions, keeping only latest
+              echo "Removing older browser versions..."
+              find "$CACHE_DIR" -type d -name "chromium-*" | sort -V | head -n -1 | while read dir; do
+                DIR_SIZE=$(du -sh "$dir" | cut -f1)
+                echo "  Removing $dir (${DIR_SIZE})"
+                rm -rf "$dir"
+              done
+              
+              # If still over threshold, remove entire cache
+              CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
+              if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
+                echo "Still over 7GB after version cleanup, removing entire cache..."
+                rm -rf "$CACHE_DIR"
+              fi
+              
+              FINAL_SIZE=$(du -sh "$CACHE_DIR" 2>/dev/null | cut -f1)
+              echo "✅ Cache pruned. Final size: ${FINAL_SIZE:-0MB} (under 7GB limit)"
+            else
+              echo "✅ Cache within limits (under 7GB)"
+            fi
+          fi
