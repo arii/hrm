@@ -297,8 +297,14 @@ jobs:
 
       - name: 'Gemini: Verify Changes'
         if: env.AGENT_PROVIDER == 'gemini'
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-time-secret-for-verification
         run: |
-          pnpm run lint -- --fix || echo "Lint fix failed, continuing..."
+          echo "::notice::Running lint..."
+          pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
+          
+          echo "::notice::Building project..."
           pnpm run build
 
       - name: 'Gemini: Create Pull Request'
