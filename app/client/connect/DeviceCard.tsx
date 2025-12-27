@@ -73,7 +73,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             <Button
               variant="outlined"
               color="error"
-              onClick={() => onDisconnect(device.id)}
+              onClick={() => device.id && onDisconnect(device.id)}
             >
               Disconnect
             </Button>
@@ -83,7 +83,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           <Button
             variant="text"
             color="secondary"
-            onClick={() => onForget(device.id)}
+            onClick={() => device.id && onForget(device.id)}
             sx={{ ml: 1 }}
           >
             Forget
