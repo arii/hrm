@@ -168,6 +168,45 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <TextField
+              fullWidth
+              label="Your Name"
+              placeholder="e.g., Jane Doe"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Your Age"
+              placeholder="e.g., 30"
+              type="number"
+              value={userAge}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserAge(e.target.value)
+                }
+              }}
+              onBlur={(e) => {
+                setAgeError(validate(e.target.value, 1, 120, 'age'))
+              }}
+              error={!!ageError}
+              helperText={ageError}
+              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
+            />
             <UserSettings
               userName={userName}
               setUserName={setUserName}
@@ -186,16 +225,34 @@ export default function ConnectView({
                 setAgeError(validate(value, 1, 120, 'age'))
               }}
               validateHeight={onHeightBlur}
-              validateWeight={(value) => {
-                onWeightBlur()
+              validateWeight={onWeightBlur}
+            />
+            <TextField
+              fullWidth
+              label={`Your Weight (${
+                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
+              })`}
+              placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
+              type="number"
+              value={userWeight}
+              onChange={(e) => {
+                setUserWeight(e.target.value)
                 setWeightError(
                   validate(
-                    value,
+                    e.target.value,
                     weightValidationRange.min,
                     weightValidationRange.max,
                     'weight'
                   )
                 )
+              }}
+              onBlur={onWeightBlur}
+              error={!!weightError}
+              helperText={weightError}
+              inputProps={{
+                min: weightValidationRange.min,
+                max: weightValidationRange.max,
+                'aria-invalid': !!weightError,
               }}
             />
             <FormControl component="fieldset">

@@ -14,6 +14,15 @@ describe('Unit Conversion Utilities', () => {
       const kilograms = 70
       expect(toKg(kilograms, 'METRIC')).toBe(kilograms)
     })
+
+    it('should handle zero', () => {
+      expect(toKg(0, 'IMPERIAL')).toBe(0)
+      expect(toKg(0, 'METRIC')).toBe(0)
+    })
+
+    it('should handle large numbers', () => {
+      expect(toKg(1000, 'IMPERIAL')).toBeCloseTo(453.5929)
+    })
   })
 
   describe('toDisplay', () => {
@@ -32,6 +41,15 @@ describe('Unit Conversion Utilities', () => {
     it('should return the same value rounded to one decimal if the system is METRIC', () => {
       const kilograms = 70.123
       expect(toDisplay(kilograms, 'METRIC')).toBe(70.1)
+    })
+
+    it('should handle zero', () => {
+      expect(toDisplay(0, 'IMPERIAL')).toBe(0)
+      expect(toDisplay(0, 'METRIC')).toBe(0)
+    })
+
+    it('should handle large numbers', () => {
+      expect(toDisplay(500, 'IMPERIAL')).toBe(1102.3)
     })
   })
 })

@@ -1,3 +1,4 @@
+// app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
@@ -55,11 +56,21 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     }
   }, [unit, userHeight, feet, inches])
 
+  /**
+   * Handles changes to the imperial height inputs (feet and inches).
+   * It converts the feet and inches values to centimeters and updates the userHeight state.
+   * @param ft The value from the feet input field.
+   * @param inch The value from the inches input field.
+   */
   const handleImperialHeightChange = (ft: string, inch: string) => {
+    // Convert the string values from the input fields to numbers.
     const feetNum = Number(ft)
     const inchesNum = Number(inch)
+    // Check if the parsed numbers are valid before converting.
     if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
+      // Convert the feet and inches to centimeters.
       const cm = feetAndInchesToCm(feetNum, inchesNum)
+      // Update the userHeight state with the centimeter value.
       setUserHeight(cm)
     }
   }
@@ -125,7 +136,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           placeholder="e.g., 175"
           type="number"
           value={userHeight}
-          onChange={(e) => setUserHeight(e.target.valueAsNumber)}
+          onChange={(e) => {
+            if (/^\d*\.?\d*$/.test(e.target.value)) {
+              setUserHeight(Number(e.target.value))
+            }
+          }}
           onBlur={(e) => validateHeight(e.target.value)}
           error={!!heightError}
           helperText={heightError}
