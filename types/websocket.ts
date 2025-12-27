@@ -178,7 +178,6 @@ export const HrmInputMessageSchema = z.object({
 })
 
 export const HrmMetadataUpdateDataSchema = z.object({
-  deviceId: z.string().optional(),
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
