@@ -341,8 +341,8 @@ jobs:
           echo "::notice::✅ Patch validation passed. Applying patch..."
           git config user.name "AI Agent"
           git config user.email "ai@agent.local"
-          # Create branch, or checkout if it already exists
-          git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
+          
+          # Apply patch to current branch (will be committed by create-pull-request action)
           if ! git apply patch.diff; then
             echo "::error::Failed to apply patch. This should not happen after validation passed."
             exit 1
