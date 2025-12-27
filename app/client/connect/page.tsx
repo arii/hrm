@@ -18,10 +18,7 @@ import {
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [_heightInCm, setHeightInCm] = useLocalStorage(
-    'hrm-user-height',
-    '175'
-  ) // Always CM
+  const [_heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
   const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
@@ -32,11 +29,11 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
-  const [displayHeight, setDisplayHeight] = useState({
-    cm: '',
-    feet: '',
-    inches: '',
-  })
+  const [transientHeightInput, setTransientHeightInput] = useState<{
+    cm: string
+    feet: string
+    inches: string
+  } | null>(null)
   const [displayWeight, setDisplayWeight] = useState('')
   const [heightError, setHeightError] = useState<string | null>(null)
 
@@ -47,30 +44,29 @@ export default function ConnectPage() {
     return null
   }
 
-  useEffect(() => {
-    const numericHeight = parseFloat(_heightInCm)
-    if (isNaN(numericHeight)) return
-
+  // Calculate the display value based on the source of truth (_heightInCm)
+  const numericHeight = parseFloat(_heightInCm)
+  let derivedDisplayHeight = { cm: '', feet: '', inches: '' }
+  if (!isNaN(numericHeight)) {
     if (unitSystem === 'METRIC') {
-      setDisplayHeight({
-        cm: String(Math.round(numericHeight)),
-        feet: '',
-        inches: '',
-      })
+      derivedDisplayHeight.cm = String(Math.round(numericHeight))
     } else {
       const { feet, inches } = cmToFeetAndInches(numericHeight)
-      setDisplayHeight({
-        cm: '',
-        feet: String(feet),
-        inches: String(inches),
-      })
+      derivedDisplayHeight.feet = String(feet)
+      derivedDisplayHeight.inches = String(inches)
     }
-  }, [_heightInCm, unitSystem])
+  }
+
+  // If the user is typing, show their input. Otherwise, show the derived value.
+  const displayHeight = transientHeightInput ?? derivedDisplayHeight
 
   const handleHeightChange = (
     newDisplayValue: Partial<{ cm: string; feet: string; inches: string }>
   ) => {
-    setDisplayHeight((prev) => ({ ...prev, ...newDisplayValue }))
+    setTransientHeightInput((prev) => ({
+      ...(prev ?? derivedDisplayHeight),
+      ...newDisplayValue,
+    }))
   }
 
   const handleHeightBlur = () => {
@@ -91,6 +87,8 @@ export default function ConnectPage() {
     if (!error && cmValue > 0) {
       setHeightInCm(cmValue.toFixed(2))
     }
+    // Reset transient state after blur to show the canonical value
+    setTransientHeightInput(null)
   }
 
   const handleWeightChange = (newDisplayValue: string) => {
@@ -128,6 +126,7 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
+      setTransientHeightInput(null) // Reset transient input on unit change
     }
   }
 
