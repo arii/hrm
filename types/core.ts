@@ -79,7 +79,6 @@ export interface HrmStreamData {
   name?: string
   age?: number
   calories: number
-  isConnected: boolean
 }
 
 /**

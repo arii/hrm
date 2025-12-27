@@ -41,6 +41,9 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
+// Track disconnection cleanup timers
+const disconnectionTimers = new Map<string, NodeJS.Timeout>()
+
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
@@ -72,7 +75,6 @@ const initSocketManager = (
       maxHr: 185,
       age: 30,
       calories: 0, // Initialize to 0
-      isConnected: true,
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -96,7 +98,7 @@ const initSocketManager = (
         hrmDataRepository.save(clientData)
 
         // Schedule deletion of the data after the reclaim window
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
           const currentClientData = hrmDataRepository.findById(extWs.clientId)
           // Only delete if the client is still marked as disconnected (i.e., hasn't reconnected)
           if (currentClientData && !currentClientData.isConnected) {
@@ -108,7 +110,11 @@ const initSocketManager = (
             clientSessionState.delete(extWs.clientId)
             broadcastState() // Broadcast final state after deletion
           }
+          disconnectionTimers.delete(extWs.clientId) // Clean up the timer map
         }, RECLAIM_WINDOW_MS)
+
+        // Store the timer to allow for cancellation on reconnect
+        disconnectionTimers.set(extWs.clientId, timerId)
 
         broadcastState() // Broadcast disconnected state immediately
       } else {
@@ -206,6 +212,19 @@ const handleIncomingMessage = (
             if (sessionState) {
               clientSessionState.set(clientId, sessionState)
               clientSessionState.delete(oldClientData.clientId)
+            }
+            // Cancel the pending deletion timer for the old client
+            const oldTimer = disconnectionTimers.get(oldClientData.clientId)
+            if (oldTimer) {
+              clearTimeout(oldTimer)
+              disconnectionTimers.delete(oldClientData.clientId)
+              logger.info(
+                {
+                  reclaimedClientId: oldClientData.clientId,
+                  newClientId: clientId,
+                },
+                'Cancelled disconnect timer for reclaimed session.'
+              )
             }
             // Remove the old, disconnected client's data
             hrmDataRepository.deleteById(oldClientData.clientId)

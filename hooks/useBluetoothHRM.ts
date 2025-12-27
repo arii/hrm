@@ -241,8 +241,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
       if (error.name === 'NotFoundError') {
         msg = 'Connection cancelled. No device selected.'
       } else if (error.name === 'SecurityError') {
-        msg =
-          'Security error. Web Bluetooth requires a secure context. Please use HTTPS or connect via localhost.'
+        msg = 'Security error. Use HTTPS or localhost.'
       } else if (error.name === 'NetworkError') {
         msg = 'Connection failed. Device might be too far or low battery.'
       } else {
@@ -335,6 +334,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const metadataData: HrmMetadataUpdateData = {
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+              deviceId: device.id,
             }
             if (typeof age === 'number') {
               metadataData.age = age

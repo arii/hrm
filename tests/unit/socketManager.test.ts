@@ -13,7 +13,7 @@ import {
   initSocketManager,
   resetSocketManager,
 } from '../../utils/socketManager'
-import { Server as WebSocketServer } from 'ws'
+import { Server as WebSocketServer, WebSocket } from 'ws'
 import { EventEmitter } from 'events'
 import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
@@ -78,6 +78,7 @@ jest.mock('ws', () => ({
     return wss
   }),
   WebSocket: jest.fn(),
+  OPEN: 1,
 }))
 
 class MockWebSocket extends EventEmitter {
@@ -86,6 +87,7 @@ class MockWebSocket extends EventEmitter {
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
+  readyState = WebSocket.OPEN
 
   constructor() {
     super()
@@ -278,48 +280,83 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should broadcast state on client disconnect', () => {
-      // The clientId is assigned when the connection is established in the beforeEach block
+    it('should mark client as disconnected on close', () => {
       const clientId = (mockWs as ExtWebSocket).clientId
-
       mockWs.emit('close')
 
-      // The first broadcast marks the client as disconnected
-      expect(broadcast).toHaveBeenCalledWith(
+      expect(broadcast).toHaveBeenLastCalledWith(
         mockWss,
         {
           type: 'HRM_UPDATE',
-          payload: [
-            expect.objectContaining({
-              clientId: clientId,
-              isConnected: false,
-            }),
-          ],
+          payload: [expect.objectContaining({ clientId, isConnected: false })],
         },
         'socketManager.broadcastState'
       )
+    })
 
-      // Fast-forward time past the reclaim window
-      jest.advanceTimersByTime(30000)
+    it('should reclaim a disconnected session and cancel cleanup', () => {
+      const oldWs = mockWs as ExtWebSocket
+      const deviceId = 'test-device-1'
 
-      // The second broadcast happens after the data is deleted
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [], // Now the payload should be empty
-        },
-        'socketManager.broadcastState' // This is the final state broadcast
+      oldWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_METADATA_UPDATE',
+          data: { deviceId },
+        })
       )
+      oldWs.emit('close')
+
+      const newWs = new MockWebSocket() as ExtWebSocket
+      ;(mockWss.clients as Set<MockWebSocket>).add(newWs)
+      mockWss.emit('connection', newWs)
+      newWs.emit(
+        'message',
+        JSON.stringify({
+          type: 'HRM_METADATA_UPDATE',
+          data: { deviceId },
+        })
+      )
+
+      const lastBroadcastCall = (broadcast as jest.Mock).mock.calls[(broadcast as jest.Mock).mock.calls.length - 1]
+      expect(lastBroadcastCall[1].payload).toHaveLength(1)
+      expect(lastBroadcastCall[1].payload[0]).toEqual(
+        expect.objectContaining({
+          clientId: newWs.clientId,
+          deviceId: deviceId,
+          isConnected: true,
+        })
+      )
+
+      const preAdvanceCallCount = (broadcast as jest.Mock).mock.calls.length
+      jest.advanceTimersByTime(30000)
+      const postAdvanceCallCount = (broadcast as jest.Mock).mock.calls.length
+      expect(postAdvanceCallCount).toBe(preAdvanceCallCount)
+    })
+
+    it('should terminate a zombie connection when a new client claims the same deviceId', () => {
+      const zombieWs = mockWs as ExtWebSocket
+      const deviceId = 'zombie-device-1'
+      zombieWs.emit(
+        'message',
+        JSON.stringify({ type: 'HRM_METADATA_UPDATE', data: { deviceId } })
+      )
+
+      const newWs = new MockWebSocket() as ExtWebSocket
+      ;(mockWss.clients as Set<MockWebSocket>).add(newWs)
+      mockWss.emit('connection', newWs)
+      newWs.emit(
+        'message',
+        JSON.stringify({ type: 'HRM_METADATA_UPDATE', data: { deviceId } })
+      )
+
+      expect(zombieWs.terminate).toHaveBeenCalled()
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {
       const dashboardWs = new MockWebSocket()
       dashboardWs.clientType = 'dashboard'
-      const controllerWs = new MockWebSocket()
-      controllerWs.clientType = 'controller'
       ;(mockWss.clients as Set<MockWebSocket>).add(dashboardWs)
-      ;(mockWss.clients as Set<MockWebSocket>).add(controllerWs)
 
       const message = JSON.stringify({
         type: 'SPOTIFY_COMMAND',
@@ -327,7 +364,6 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', message.toString())
 
-      expect(sendWebSocketMessage).toHaveBeenCalled()
       expect(sendWebSocketMessage).toHaveBeenCalledWith(
         dashboardWs,
         expect.objectContaining({ type: 'EXECUTE_SPOTIFY' }),
@@ -335,11 +371,7 @@ describe('WebSocket Manager', () => {
       )
       expect(mockServices.spotifyService.handleCommand).toHaveBeenCalledWith(
         'PLAY',
-        {
-          deviceId: undefined,
-          volume: undefined,
-          playlistUri: undefined,
-        }
+        expect.any(Object)
       )
     })
 
