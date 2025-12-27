@@ -367,7 +367,8 @@ jobs:
                 echo "::error::Failed to extract diff from markdown code block"
                 echo "::notice::First 20 lines of patch.diff:"
                 head -20 patch.diff | sed 's/^/::notice::  /'
-              exit 1
+                exit 1
+              fi
             fi
           fi
           
@@ -469,7 +470,14 @@ jobs:
               sed 's/ghu_[A-Za-z0-9_]\{36\}/***GITHUB_USER_TOKEN***/g' | \
               sed 's/ghs_[A-Za-z0-9_]\{36\}/***GITHUB_APP_TOKEN***/g' | \
               sed 's/gho_[A-Za-z0-9_]\{36\}/***GITHUB_OAUTH_TOKEN***/g' | \
-              sed 's/[A-Za-z0-9_-]*API[_-]*KEY[=:][^ "'\'']*\|[A-Za-z0-9_-]*SECRET[=:][^ "'\'']*\|[A-Za-z0-9_-]*TOKEN[=:][^ "'\'']*\|[A-Za-z0-9_-]*PASSWORD[=:][^ "'\'']*\|NEXTAUTH_[A-Z_]*[=:][^ "'\'']*\|GEMINI_[A-Z_]*[=:][^ "'\'']*\|ARI_[A-Z_]*[=:][^ "'\'']*\|[A-Za-z0-9_-]*BEARER[=:][^ "'\'']*\|[A-Za-z0-9_-]*AUTHORIZATION[=:][^ "'\'']*\|Authorization:[^'\n']*\|[A-Za-z0-9._%+-]*@[A-Za-z0-9.-]*\|"[A-Za-z0-9._-]*":[^}]*/***REDACTED***/gi'
+              sed 's/[A-Za-z0-9_-]*API[_-]*KEY[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/[A-Za-z0-9_-]*SECRET[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/[A-Za-z0-9_-]*TOKEN[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/[A-Za-z0-9_-]*PASSWORD[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/NEXTAUTH_[A-Z_]*[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/GEMINI_[A-Z_]*[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/ARI_[A-Z_]*[=:][^ ]*/***REDACTED***/gi' | \
+              sed 's/Authorization:[^ ]*/***REDACTED***/gi'
           }
           
           {
