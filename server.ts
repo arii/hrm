@@ -9,9 +9,9 @@ import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
-import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
+import helmet from 'helmet'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -25,6 +25,7 @@ app.prepare().then(async () => {
   const server = createServer(expressApp)
 
   expressApp.use(express.json())
+  expressApp.use(helmet())
 
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
@@ -163,6 +164,6 @@ app.prepare().then(async () => {
   })
 
   server.listen(env.PORT, () => {
-    logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
+    console.info(`> Ready on http://${env.HOST}:${env.PORT}`)
   })
 })

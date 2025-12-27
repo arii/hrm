@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Roboto_Mono } from 'next/font/google'
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
-import { ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import theme from '../theme/theme'
+import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry' // New import
 import Main from './main'
 import './globals.css'
 const inter = Inter({
@@ -55,12 +52,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${roboto_mono.variable}`}>
-        <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Main>{children}</Main>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <ThemeRegistry>
+          <Main>{children}</Main>
+        </ThemeRegistry>
       </body>
     </html>
   )

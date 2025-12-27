@@ -20,7 +20,6 @@ import CardContent from '@mui/material/CardContent'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
 import DurationStepper from './DurationStepper'
 
 const actionButtonBaseSx = {
@@ -203,9 +202,7 @@ const TimerControls = () => {
                 {mode.charAt(0) + mode.slice(1).toLowerCase()}
               </Button>
             ))}
-            <motion.div
-              layoutId="pill-switch"
-              transition={{ type: 'spring', duration: 0.4 }}
+            <Box
               style={{
                 position: 'absolute',
                 top: '4px',
@@ -215,6 +212,7 @@ const TimerControls = () => {
                 background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                 borderRadius: '20px',
                 zIndex: 0,
+                transition: 'left 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
               }}
             />
           </Box>
@@ -286,11 +284,7 @@ const TimerControls = () => {
         )}
 
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <motion.div
-            style={{ flex: 1 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
+          <Box sx={{flex: 1}}>
             {!timerData.isRunning ? (
               <Button
                 data-testid="start-timer-button"
@@ -314,7 +308,7 @@ const TimerControls = () => {
                 STOP
               </Button>
             )}
-          </motion.div>
+          </Box>
         </Stack>
       </CardContent>
     </Card>

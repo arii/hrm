@@ -1,7 +1,6 @@
 // File: components/TimerDisplay/AnimatedCounter.tsx
 'use client'
 import { memo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Typography } from '@mui/material'
 
 const AnimatedCounter = ({
@@ -34,25 +33,13 @@ const AnimatedCounter = ({
         justifyContent: 'center',
       }}
     >
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={displayTime}
-          initial={{ y: 50, opacity: 0, scale: 0.7 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -50, opacity: 0, scale: 0.7 }}
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 30,
-            duration: 0.5,
-          }}
-          style={{
-            position: 'absolute',
-          }}
-        >
-          {displayTime}
-        </motion.div>
-      </AnimatePresence>
+      <div
+        style={{
+          position: 'absolute',
+        }}
+      >
+        {displayTime}
+      </div>
     </Typography>
   )
 }
