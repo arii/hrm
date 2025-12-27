@@ -56,15 +56,10 @@ export NEXTAUTH_SECRET="test-secret-for-ci"
 export NEXTAUTH_URL="http://127.0.0.1:$PORT"
 HEALTH_CHECK_URL="${HEALTH_CHECK_URL_TEMPLATE/\{\{PORT\}\}/$PORT}"
 
-# Clean up any stale PM2 processes
-log "🧹 Cleaning up any old PM2 processes..."
-pnpm pm2 kill || true
-
-log "🚀 Starting server with PM2 on port $PORT..."
-# Start server with `pnpm start`, which uses PM2
-# The PORT variable is passed via ecosystem.config.cjs
+log "🚀 Starting server on port $PORT..."
+# Start server with `pnpm start`
 pnpm start > "$SERVER_LOG" 2>&1 &
-log "✅ Server process started via PM2."
+log "✅ Server process started."
 
 log "⏳ Waiting up to ${TIMEOUT}ms for $HEALTH_CHECK_URL..."
 if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
@@ -72,7 +67,10 @@ if ! npx wait-on "$HEALTH_CHECK_URL" --timeout $TIMEOUT; then
     exit 1
 fi
 
-log "✅ Server is ready. Executing test command: $@"
+log "✅ Server is ready. Waiting an additional 30 seconds for services to initialize..."
+sleep 30
+
+log "✅ Executing test command: $@"
 log "---------------------------------------------------"
 
 # Execute the passed command

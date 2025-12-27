@@ -138,7 +138,7 @@ const HrmConnectionPanel = () => {
               name={user.name || ''}
               bpm={user.value}
               percentMax={user.percentage}
-              totalCalories={user.totalCalories || 0}
+              calories={user.calories}
               isConnected={user.isConnected}
               isAlerting={user.isAlerting}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}

@@ -63,7 +63,6 @@ export const CALORIE_DEFAULTS = {
   INTERCEPT: 55.0969,
   JOULE_CONVERSION: 4.184,
 }
-export const CALORIE_UPDATE_INTERVAL = 15000 // ms
 
 // Server Constants
 export const DEFAULT_PORT = 3000

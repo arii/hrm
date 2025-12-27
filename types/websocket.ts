@@ -153,11 +153,6 @@ export interface PingMessage {
   type: 'PING'
 }
 
-export interface ResetCaloriesMessage {
-  type: 'RESET_CALORIES'
-  clientId: string
-}
-
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -168,7 +163,6 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
-  | ResetCaloriesMessage
 
 import { z } from 'zod'
 
@@ -241,11 +235,6 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
-export const ResetCaloriesMessageSchema = z.object({
-  type: z.literal('RESET_CALORIES'),
-  clientId: z.string(),
-})
-
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -256,5 +245,4 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
-  ResetCaloriesMessageSchema,
 ])

@@ -6,7 +6,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useWebSocket } from '@/context/WebSocketContext'
 
 // --- State, Actions, and Reducer for managing session state ---
 
@@ -87,13 +86,11 @@ function sessionReducer(
 interface WorkoutSessionOptions {
   isConnected: boolean
   totalCalories?: number
-  clientId?: string
 }
 
 export const useWorkoutSession = ({
   isConnected,
   totalCalories = 0,
-  clientId,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
@@ -183,13 +180,9 @@ export const useWorkoutSession = ({
     dispatch({ type: 'START_WORKOUT' })
   }, [totalCalories])
 
-  const { sendData } = useWebSocket()
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
-    if (clientId) {
-      sendData({ type: 'RESET_CALORIES', clientId: clientId })
-    }
-  }, [sendData, clientId])
+  }, [])
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {

@@ -32,7 +32,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  totalCalories = 0, // Default to 0 to prevent NaN
+  calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
@@ -44,7 +44,7 @@ const HrTile = ({
     ? alertMessage
     : !isConnected
       ? 'Disconnected - Showing last known value'
-      : `Name: ${name}, BPM: ${bpm}, Kcal: ${totalCalories}, % Max HR: ${percentMax}%`
+      : `Name: ${name}, BPM: ${bpm}, Kcal: ${calories}, % Max HR: ${percentMax}%`
 
   return (
     <Tooltip title={tooltipTitle} arrow>
@@ -135,7 +135,7 @@ const HrTile = ({
 
               {/* Calorie Display */}
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {Math.floor(totalCalories)}{' '}
+                {Math.floor(calories)}{' '}
                 <Typography
                   variant="caption"
                   component="span"
@@ -174,7 +174,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
-    prevProps.totalCalories === nextProps.totalCalories &&
+    prevProps.calories === nextProps.calories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage

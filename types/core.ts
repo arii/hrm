@@ -78,8 +78,7 @@ export interface HrmStreamData {
   maxHr: number
   name?: string
   age?: number
-  totalCalories?: number
-  weightKg?: number
+  calories: number
 }
 
 /**

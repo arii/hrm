@@ -12,7 +12,7 @@
     "build": "pnpm run build:server && next build",
     "build:server": "pnpm exec tsc -p tsconfig.build.json",
     "analyze": "cross-env ANALYZE=true pnpm run build:server && cross-env ANALYZE=true next build --webpack",
-    "start": "pm2 start ecosystem.config.cjs --env production",
+    "start": "cross-env NODE_ENV=production node --trace-warnings .next/standalone/server.js",
     "profile:server": "bash scripts/profile-server.sh",
     "profile:frontend": "bash scripts/profile-frontend.sh",
     "profile:all": "pnpm run profile:server && pnpm run profile:frontend",
