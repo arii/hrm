@@ -1,7 +1,6 @@
 // app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
-import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -11,8 +10,10 @@ interface UserSettingsProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number
-  setUserHeight: (height: number) => void
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
   userWeight: string
   setUserWeight: (weight: string) => void
   unit: 'METRIC' | 'IMPERIAL'
@@ -21,8 +22,8 @@ interface UserSettingsProps {
   heightError: string | null
   weightError: string | null
   validateAge: (value: string) => void
-  validateHeight: (value: string) => void
-  validateWeight: (value: string) => void
+  validateHeight: () => void
+  validateWeight: () => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -43,28 +44,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   validateHeight,
   validateWeight,
 }) => {
-  const [feet, setFeet] = React.useState('')
-  const [inches, setInches] = React.useState('')
-
-  React.useEffect(() => {
-    if (unit === 'IMPERIAL' && userHeight > 0) {
-      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      if (String(newFeet) !== feet || String(newInches) !== inches) {
-        setFeet(String(newFeet))
-        setInches(String(newInches))
-      }
-    }
-  }, [unit, userHeight, feet, inches])
-
-  const handleImperialHeightChange = (ft: string, inch: string) => {
-    const feetNum = Number(ft)
-    const inchesNum = Number(inch)
-    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
-      const cm = feetAndInchesToCm(feetNum, inchesNum)
-      setUserHeight(cm)
-    }
-  }
-
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -117,13 +96,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
-          value={userHeight}
+          value={userHeight.cm}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight(Number(e.target.value))
+              setUserHeight({ cm: e.target.value })
             }
           }}
-          onBlur={(e) => validateHeight(e.target.value)}
+          onBlur={validateHeight}
           error={!!heightError}
           helperText={heightError}
         />
@@ -134,40 +113,26 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             label="Feet"
             placeholder="e.g., 5"
             type="number"
-            value={feet}
+            value={userHeight.feet}
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
-                setFeet(e.target.value)
-                handleImperialHeightChange(e.target.value, inches)
+                setUserHeight({ feet: e.target.value })
               }
             }}
-            onBlur={() => {
-              const feetNum = Number(feet)
-              const inchesNum = Number(inches)
-              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
-              }
-            }}
+            onBlur={validateHeight}
           />
           <TextField
             fullWidth
             label="Inches"
             placeholder="e.g., 9"
             type="number"
-            value={inches}
+            value={userHeight.inches}
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
-                setInches(e.target.value)
-                handleImperialHeightChange(feet, e.target.value)
+                setUserHeight({ inches: e.target.value })
               }
             }}
-            onBlur={() => {
-              const feetNum = Number(feet)
-              const inchesNum = Number(inches)
-              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
-              }
-            }}
+            onBlur={validateHeight}
           />
         </Stack>
       )}
@@ -182,7 +147,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserWeight(e.target.value)
           }
         }}
-        onBlur={(e) => validateWeight(e.target.value)}
+        onBlur={validateWeight}
         error={!!weightError}
         helperText={weightError}
       />

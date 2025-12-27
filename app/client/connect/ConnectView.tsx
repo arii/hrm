@@ -50,8 +50,10 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number
-  setUserHeight: (height: number) => void
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
   onHeightBlur: () => void
   heightError: string | null
   userWeight: string
