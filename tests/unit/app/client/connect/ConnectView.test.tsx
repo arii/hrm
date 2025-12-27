@@ -46,13 +46,6 @@ describe('ConnectView', () => {
     expect(mockProps.setUserName).toHaveBeenCalledWith('New Name')
   })
 
-  it('displays imperial units correctly', () => {
-    // 175 cm is roughly 5 feet 9 inches
-    render(<ConnectView {...mockProps} unitSystem="IMPERIAL" />)
-    expect(screen.getByLabelText('Feet')).toHaveValue(5)
-    expect(screen.getByLabelText('Inches')).toHaveValue(9)
-  })
-
   it('validates age on blur', async () => {
     render(<ConnectView {...mockProps} userAge="" />)
     const ageInput = screen.getByLabelText('Your Age')

@@ -99,18 +99,15 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
             }
           }}
           aria-label="Unit system"
-          aria-describedby="unit-system-description"
         >
-          <span
-            id="unit-system-description"
-            style={{
-              clip: 'rect(0 0 0 0)',
-              position: 'absolute',
-            }}
-          >
+        <span id="unit-system-description" className="sr-only">
             Currently selected unit system is {unit}.
           </span>
-          <ToggleButton value="IMPERIAL" aria-label="imperial units">
+        <ToggleButton
+          value="IMPERIAL"
+          aria-label="imperial units"
+          aria-describedby="unit-system-description"
+        >
             Imperial (lbs, ft, in)
           </ToggleButton>
           <ToggleButton value="METRIC" aria-label="metric units">

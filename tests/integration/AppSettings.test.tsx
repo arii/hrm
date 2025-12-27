@@ -47,7 +47,9 @@ describe('AppSettings Integration Tests', () => {
   })
 
   it('correctly converts height from feet/inches to cm when switching to metric', async () => {
-    const { rerender } = render(<AppSettings {...mockProps} unit="IMPERIAL" />)
+    const { rerender } = render(
+      <AppSettings {...mockProps} unit="IMPERIAL" />
+    )
 
     // Initially imperial, showing feet/inches
     await waitFor(() => {

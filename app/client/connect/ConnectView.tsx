@@ -96,7 +96,8 @@ export default function ConnectView({
   // Local state for handling imperial units
   const [displayedWeight, setDisplayedWeight] = useState(userWeight)
 
-  // Sync displayed weight when weight (kg) or unit system changes
+  // This effect synchronizes the displayed weight with the userWeight prop (in kg)
+  // when the unit system changes. This is a one-way sync from props to local state.
   useEffect(() => {
     if (userWeight) {
       if (unitSystem === 'IMPERIAL') {
