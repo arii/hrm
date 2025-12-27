@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -9,12 +9,19 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
-import { toKg } from '../../../utils/units'
+import {
+  toKg,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
+  const [_heightInCm, setHeightInCm] = useLocalStorage(
+    'hrm-user-height',
+    '175'
+  ) // Always CM
   const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
@@ -25,7 +32,66 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
+  const [displayHeight, setDisplayHeight] = useState({
+    cm: '',
+    feet: '',
+    inches: '',
+  })
   const [displayWeight, setDisplayWeight] = useState('')
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  const validateHeight = (cm: number) => {
+    if (isNaN(cm) || cm < 100 || cm > 250) {
+      return 'Please enter a valid height (100-250 cm)'
+    }
+    return null
+  }
+
+  useEffect(() => {
+    const numericHeight = parseFloat(_heightInCm)
+    if (isNaN(numericHeight)) return
+
+    if (unitSystem === 'METRIC') {
+      setDisplayHeight({
+        cm: String(Math.round(numericHeight)),
+        feet: '',
+        inches: '',
+      })
+    } else {
+      const { feet, inches } = cmToFeetAndInches(numericHeight)
+      setDisplayHeight({
+        cm: '',
+        feet: String(feet),
+        inches: String(inches),
+      })
+    }
+  }, [_heightInCm, unitSystem])
+
+  const handleHeightChange = (
+    newDisplayValue: Partial<{ cm: string; feet: string; inches: string }>
+  ) => {
+    setDisplayHeight((prev) => ({ ...prev, ...newDisplayValue }))
+  }
+
+  const handleHeightBlur = () => {
+    let cmValue = 0
+    if (unitSystem === 'METRIC') {
+      cmValue = parseFloat(displayHeight.cm)
+    } else {
+      const feet = parseFloat(displayHeight.feet)
+      const inches = parseFloat(displayHeight.inches)
+      if (!isNaN(feet) && !isNaN(inches)) {
+        cmValue = feetAndInchesToCm(feet, inches)
+      }
+    }
+
+    const error = validateHeight(cmValue)
+    setHeightError(error)
+
+    if (!error && cmValue > 0) {
+      setHeightInCm(cmValue.toFixed(2))
+    }
+  }
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
@@ -97,8 +163,10 @@ export default function ConnectPage() {
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
-      userHeight={userHeight}
-      setUserHeight={setUserHeight}
+      userHeight={displayHeight}
+      setUserHeight={handleHeightChange}
+      onHeightBlur={handleHeightBlur}
+      heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
