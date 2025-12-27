@@ -49,7 +49,7 @@ jest.mock('../../utils/websocketUtils.js', () => ({
   })),
 }))
 
-// Mock logger globally for the test file
+// Mock logger, ws, and calorie-estimation globally for the test file
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
   default: {
@@ -60,7 +60,6 @@ jest.mock('../../utils/logger', () => ({
   },
 }))
 
-// Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
     const wss = new EventEmitter() as jest.Mocked<WebSocketServer>
@@ -78,6 +77,10 @@ jest.mock('ws', () => ({
     return wss
   }),
   WebSocket: jest.fn(),
+}))
+
+jest.mock('../../lib/calorie-estimation', () => ({
+  estimateCaloriesBurned: jest.fn(),
 }))
 
 class MockWebSocket extends EventEmitter {
@@ -201,40 +204,64 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    it('should accumulate calories correctly with small frequent updates', () => {
-      const sendHrmInput = (hr: number) => {
-        const message = JSON.stringify({
-          type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
-        })
-        mockWs.emit('message', message.toString())
-      }
+    const { estimateCaloriesBurned } = require('../../lib/calorie-estimation')
 
-      // Initial input
+    beforeEach(() => {
+      ;(estimateCaloriesBurned as jest.Mock).mockClear()
+    })
+
+    const sendHrmInput = (hr: number) => {
+      const message = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: hr },
+      })
+      mockWs.emit('message', message.toString())
+    }
+
+    it('should calculate calories periodically based on average HR', () => {
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(14.5)
+
       sendHrmInput(150)
+      jest.advanceTimersByTime(60000)
 
-      // Send 100 updates, each 100ms apart
-      // Should accumulate significant calories even if each step < 0.1 kcal
-      for (let i = 0; i < 100; i++) {
-        jest.advanceTimersByTime(100) // 100ms
-        sendHrmInput(150)
-      }
-
-      // Check the last broadcasted state
       const mockBroadcast = broadcast as jest.Mock
-      jest.runOnlyPendingTimers()
       expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall =
-        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const finalPayload: HrmData[] = lastCall[1].payload
-      const clientData = finalPayload.find((c) => c.calories > 0)
+
+      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+      const clientData = payload.find((c) => c.clientId === mockWs.clientId)
 
       expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeGreaterThan(0.1)
-      // A more precise check based on the known formula for short duration.
-      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
-      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
-      expect(clientData!.calories).toBeGreaterThan(1)
+      expect(clientData!.calories).toBeCloseTo(14.5, 1)
+    })
+
+    it('should handle errors in calorie estimation without crashing', () => {
+      ;(estimateCaloriesBurned as jest.Mock).mockImplementation(() => {
+        throw new Error('Test estimation error')
+      })
+
+      sendHrmInput(150)
+      jest.advanceTimersByTime(60000)
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clientId: mockWs.clientId,
+        }),
+        'Failed to estimate calories burned'
+      )
+
+      const mockBroadcast = broadcast as jest.Mock
+      mockBroadcast.mockClear()
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(10)
+
+      sendHrmInput(160)
+      jest.advanceTimersByTime(60000)
+
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const payload: HrmData[] = lastCall[1].payload
+      const clientData = payload.find((c) => c.clientId === mockWs.clientId)
+      expect(clientData!.calories).toBe(10)
     })
   })
 

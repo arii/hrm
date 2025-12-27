@@ -66,16 +66,28 @@ const updateCaloriesForAllClients = () => {
 
     // Only calculate if there's meaningful activity
     if (avgHr > 30) {
-      const caloriesBurned = estimateCaloriesBurned({
-        heartRate: avgHr,
-        age: clientData.age ?? 30,
-        weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-        durationMinutes: 1, // This function runs every minute
-      })
+      try {
+        const durationMinutes = (now - session.lastUpdate) / 1000 / 60
 
-      if (caloriesBurned > 0) {
-        session.accumulatedCalories += caloriesBurned
-        needsBroadcast = true
+        // Prevent calculating for excessively long durations if the system clock changes.
+        if (durationMinutes > 0 && durationMinutes < 5) {
+          const caloriesBurned = estimateCaloriesBurned({
+            heartRate: avgHr,
+            age: clientData.age ?? 30,
+            weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+            durationMinutes: durationMinutes,
+          })
+
+          if (caloriesBurned > 0) {
+            session.accumulatedCalories += caloriesBurned
+            needsBroadcast = true
+          }
+        }
+      } catch (error) {
+        logger.error(
+          { clientId, error },
+          'Failed to estimate calories burned'
+        )
       }
     }
 
