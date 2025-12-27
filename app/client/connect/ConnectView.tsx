@@ -27,9 +27,7 @@ import {
   Radio,
 } from '@mui/material'
 
-interface ConnectViewProps {
-  duration: string
-  caloriesBurned: number
+interface UserSettingsProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -41,7 +39,12 @@ interface ConnectViewProps {
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
+  onUnitChange: (unit: 'IMPERIAL' | 'METRIC') => void
+}
+
+interface ConnectViewProps extends UserSettingsProps {
+  duration: string
+  caloriesBurned: number
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null

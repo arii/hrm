@@ -67,6 +67,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     }
   }, [unit, userHeight])
 
+  /**
+   * Handles changes to the imperial height input fields (feet and inches).
+   * It converts the feet and inches values to centimeters and updates the userHeight state.
+   * @param ft The value from the feet input field.
+   * @param inch The value from the inches input field.
+   */
   const handleImperialHeightChange = (ft: string, inch: string) => {
     const feetNum = Number(ft)
     const inchesNum = Number(inch)
