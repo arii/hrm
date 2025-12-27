@@ -31,16 +31,8 @@ interface AppSettingsProps {
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
   gender: Gender
   setGender: (gender: Gender) => void
-  feet: string
-  setFeet: (feet: string) => void
-  inches: string
-  setInches: (inches: string) => void
   ageError: string | null
   weightError: string | null
-  heightError: string | null
-  handleImperialHeightChange: (ft: string, inch: string) => void
-  handleImperialHeightBlur: () => void
-  onHeightBlur: () => void
 }
 
 const AppSettings: React.FC<AppSettingsProps> = ({
@@ -56,16 +48,8 @@ const AppSettings: React.FC<AppSettingsProps> = ({
   setUnit,
   gender,
   setGender,
-  feet,
-  setFeet,
-  inches,
-  setInches,
   ageError,
   weightError,
-  heightError,
-  handleImperialHeightChange,
-  handleImperialHeightBlur,
-  onHeightBlur,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -138,9 +122,6 @@ const AppSettings: React.FC<AppSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
-          onBlur={onHeightBlur}
-          error={!!heightError}
-          helperText={heightError}
         />
       ) : (
         <Stack direction="row" spacing={2}>
@@ -153,10 +134,8 @@ const AppSettings: React.FC<AppSettingsProps> = ({
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 setFeet(e.target.value)
-                handleImperialHeightChange(e.target.value, inches)
               }
             }}
-            onBlur={handleImperialHeightBlur}
           />
           <TextField
             fullWidth
@@ -167,10 +146,8 @@ const AppSettings: React.FC<AppSettingsProps> = ({
             onChange={(e) => {
               if (/^\d*$/.test(e.target.value)) {
                 setInches(e.target.value)
-                handleImperialHeightChange(feet, e.target.value)
               }
             }}
-            onBlur={handleImperialHeightBlur}
           />
         </Stack>
       )}

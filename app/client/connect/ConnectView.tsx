@@ -98,44 +98,8 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const [feet, setFeet] = useState('')
-  const [inches, setInches] = useState('')
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
-  const [heightError, setHeightError] = useState<string | null>(null)
-
-  const validateHeight = () => {
-    const cm = userHeight
-    if (isNaN(cm) || cm < 122 || cm > 213) {
-      setHeightError('Please enter a valid height (122-213 cm)')
-    } else {
-      setHeightError(null)
-    }
-  }
-
-  const handleImperialHeightChange = (ft: string, inch: string) => {
-    const feetNum = Number(ft)
-    const inchesNum = Number(inch)
-    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
-      const cm = feetAndInchesToCm(feetNum, inchesNum)
-      setUserHeight(cm)
-    }
-  }
-
-  const handleImperialHeightBlur = () => {
-    const feetNum = Number(feet)
-    const inchesNum = Number(inches)
-    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-      setHeightError(
-        validate(
-          String(feetAndInchesToCm(feetNum, inchesNum)),
-          122,
-          213,
-          'height'
-        )
-      )
-    }
-  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -197,16 +161,8 @@ export default function ConnectView({
             setUnit={onUnitChange}
             gender={gender}
             setGender={setGender}
-            feet={feet}
-            setFeet={setFeet}
-            inches={inches}
-            setInches={setInches}
             ageError={ageError}
             weightError={weightError}
-            heightError={heightError}
-            handleImperialHeightChange={handleImperialHeightChange}
-            handleImperialHeightBlur={handleImperialHeightBlur}
-            onHeightBlur={validateHeight}
           />
         ) : (
           <Box
