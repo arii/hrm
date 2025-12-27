@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -11,6 +11,7 @@ import {
   Radio,
 } from '@mui/material'
 import { Gender } from '../../../types'
+import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
 
 interface AppSettingsProps {
   userName: string
@@ -23,7 +24,7 @@ interface AppSettingsProps {
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
   weightError: string | null
-  userHeight: number
+  userHeight: number // Always in cm
   setUserHeight: (height: number) => void
   onHeightBlur: () => void
   heightError: string | null
@@ -31,10 +32,6 @@ interface AppSettingsProps {
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
   gender: Gender
   setGender: (gender: Gender) => void
-  feet: string
-  setFeet: (value: string) => void
-  inches: string
-  setInches: (value: string) => void
 }
 
 const AppSettings: React.FC<AppSettingsProps> = ({
@@ -56,11 +53,36 @@ const AppSettings: React.FC<AppSettingsProps> = ({
   setUnit,
   gender,
   setGender,
-  feet,
-  setFeet,
-  inches,
-  setInches,
 }) => {
+  // Internal state for imperial height units
+  const [feet, setFeet] = useState('')
+  const [inches, setInches] = useState('')
+
+  // When the userHeight prop (in cm) or the unit system changes,
+  // update the internal feet/inches state for display.
+  useEffect(() => {
+    if (unit === 'IMPERIAL' && userHeight > 0) {
+      const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
+      setFeet(String(ft))
+      setInches(String(inch))
+    }
+  }, [userHeight, unit])
+
+  // When the internal feet or inches state changes, update the
+  // parent's userHeight state (in cm).
+  useEffect(() => {
+    if (unit === 'IMPERIAL') {
+      const heightInCm = feetAndInchesToCm(
+        parseInt(feet, 10) || 0,
+        parseInt(inches, 10) || 0
+      )
+      // Only call setUserHeight if the value has actually changed to prevent infinite loops
+      if (heightInCm !== userHeight) {
+        setUserHeight(heightInCm)
+      }
+    }
+  }, [feet, inches, unit, setUserHeight, userHeight])
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <ToggleButtonGroup

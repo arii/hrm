@@ -99,18 +99,7 @@ export default function ConnectView({
   const [heightError, setHeightError] = useState<string | null>(null)
 
   // Local state for handling imperial units
-  const [feet, setFeet] = useState('')
-  const [inches, setInches] = useState('')
   const [displayedWeight, setDisplayedWeight] = useState(userWeight)
-
-  // Sync imperial height fields when height (cm) or unit system changes
-  useEffect(() => {
-    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
-      const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
-      setFeet(String(ft))
-      setInches(String(inch))
-    }
-  }, [userHeight, unitSystem])
 
   // Sync displayed weight when weight (kg) or unit system changes
   useEffect(() => {
@@ -153,18 +142,10 @@ export default function ConnectView({
     if (unitSystem === 'METRIC') {
       setHeightError(validate(String(userHeight), 50, 300, 'height in cm'))
     } else {
-      const totalInches =
-        parseInt(feet || '0', 10) * 12 + parseInt(inches || '0', 10)
+      const { feet, inches } = cmToFeetAndInches(userHeight)
+      const totalInches = feet * 12 + inches
       const error = validate(String(totalInches), 20, 120, 'height in inches')
       setHeightError(error)
-      if (!error) {
-        setUserHeight(
-          feetAndInchesToCm(
-            parseInt(feet || '0', 10),
-            parseInt(inches || '0', 10)
-          )
-        )
-      }
     }
   }
 
@@ -234,10 +215,6 @@ export default function ConnectView({
             setUnit={onUnitChange}
             gender={gender}
             setGender={setGender}
-            feet={feet}
-            setFeet={setFeet}
-            inches={inches}
-            setInches={setInches}
           />
         ) : (
           <Box
