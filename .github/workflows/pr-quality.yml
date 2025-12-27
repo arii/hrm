@@ -46,6 +46,20 @@ jobs:
         with:
           run_install: false
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Configure Persistent Store
         shell: bash
         run: |
@@ -55,12 +69,6 @@ jobs:
           pnpm config set store-dir ~/.local/share/pnpm/store
           pnpm config set cache-dir ~/.cache/pnpm-${{ env.SESSION_ID }}
           pnpm config set side-effects-cache true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20.x'
-      # ---------------------------------
 
       - name: Create Runtime Envs
         run: |
@@ -218,3 +226,23 @@ jobs:
           name: playwright-report-visual-${{ env.SESSION_ID }}
           path: playwright-report/
           retention-days: 5
+
+      - name: Cache Cleanup - Prune if Over 7GB
+        if: always()
+        shell: bash
+        run: |
+          CACHE_DIR="${{ github.workspace }}/.cache/ms-playwright"
+          if [ -d "$CACHE_DIR" ]; then
+            CACHE_SIZE=$(du -sh "$CACHE_DIR" | cut -f1)
+            CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
+            SEVEN_GB=$((7 * 1024 * 1024 * 1024))
+            
+            echo "Cache size: $CACHE_SIZE"
+            
+            if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
+              echo "Cache exceeds 7GB threshold, pruning oldest files..."
+              # Remove playwright cache and let it be regenerated on next run
+              rm -rf "$CACHE_DIR"
+              echo "Playwright cache pruned to stay under 10GB limit"
+            fi
+          fi
