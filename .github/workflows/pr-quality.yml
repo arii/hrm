@@ -15,6 +15,22 @@ on:
         description: 'PR number to post comments to (optional)'
         required: false
         type: string
+  
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to check'
+        required: false
+        type: string
+        default: 'leader'
+      pr_number:
+        description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
+    secrets:
+      GH_TOKEN:
+        description: 'GitHub token for posting comments'
+        required: true
 
 concurrency:
   group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -127,7 +143,7 @@ jobs:
       - name: Run Knip
         id: knip
         run: |
-          pnpm run knip 2>&1 | tee knip-output.txt || true
+          pnpm run knip 2>&1 | tee knip-output.txt
         continue-on-error: true
 
       - name: Upload Knip Report
@@ -148,7 +164,7 @@ jobs:
 
       - name: Lint Code
         id: lint
-        run: pnpm run lint 2>&1 | tee lint-output.log || true
+        run: pnpm run lint 2>&1 | tee lint-output.log
         continue-on-error: true
 
       - name: Upload Lint Report
@@ -240,7 +256,23 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
+          path: .
+          merge-multiple: true
+
+      - name: Verify Build Presence (Debug)
+        run: |
+          echo "Checking for build artifacts..."
+          ls -la | head -20
+          if [ -d ".next" ]; then
+            echo "✅ .next directory found"
+          else
+            echo "⚠️ .next directory MISSING"
+          fi
+          if [ -d "dist" ]; then
+            echo "✅ dist directory found"
+          else
+            echo "⚠️ dist directory MISSING"
+          fi
 
       - name: Verify Server Build
         run: |
@@ -270,12 +302,12 @@ jobs:
         env:
           NEXTAUTH_URL: http://localhost:3000
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
-        run: pnpm run test:infra 2>&1 | tee infra-tests.log || true
+        run: pnpm run test:infra 2>&1 | tee infra-tests.log
         continue-on-error: true
 
       - name: Run Unit Tests
         id: unit-tests
-        run: pnpm run test:unit 2>&1 | tee unit-tests.log || true
+        run: pnpm run test:unit 2>&1 | tee unit-tests.log
         continue-on-error: true
 
       - name: Upload Test Reports
@@ -339,15 +371,26 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
-          path: ./
+          path: .
+          merge-multiple: true
 
       - name: Run Visual Tests
+        id: visual-tests
         run: |
-          pnpm run test:json || true
+          pnpm run test:json 2>&1 | tee visual-tests.log
           python3 scripts/analyze-playwright-report.py playwright-report.json
+        continue-on-error: true
+
+      - name: Upload Visual Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-logs
+          path: visual-tests.log
+          retention-days: 30
 
       - name: Upload Report on Failure
-        if: failure()
+        if: always() && steps.visual-tests.outcome == 'failure'
         uses: actions/upload-artifact@v5
         with:
           name: playwright-report-visual-${{ env.SESSION_ID }}
@@ -439,6 +482,19 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
           echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
 
+      - name: Download All Test Logs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-logs'
+          path: logs
+          merge-multiple: true
+
+      - name: Download Lint Report
+        uses: actions/download-artifact@v4
+        with:
+          name: lint-report
+          path: logs
+
       - name: Post Comprehensive Quality Report
         if: always()
         env:
@@ -446,29 +502,29 @@ jobs:
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
           LOG_TRUNCATE_BYTES: 15000
-          GH_TOKEN: ${{ secrets.ARI_PAT }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.ARI_PAT }}
         run: |
           set +e
           
-          # Download artifacts with logs
-          mkdir -p logs
-          echo "::notice::Downloading test artifacts..."
-          
-          # Download each artifact if it exists
-           if gh run download ${{ github.run_id }} -n "lint-report" -D logs 2>/dev/null; then
-             [ -f "logs/lint-output.log" ] && mv "logs/lint-output.log" "logs/code-quality.log" && echo "✅ Downloaded lint logs"
-           fi
-           if gh run download ${{ github.run_id }} -n "test-reports" -D logs 2>/dev/null; then
-             [ -f "logs/infra-tests.log" ] && echo "✅ Downloaded infra test logs"
-             [ -f "logs/unit-tests.log" ] && echo "✅ Downloaded unit test logs"
-           fi
           
           # Find PR number
+          # Move lint output to code-quality for consistent naming
+          if [ -f "logs/lint-output.log" ]; then
+            mv "logs/lint-output.log" "logs/code-quality.log"
+          fi
+
+          # Handle inputs from both workflow_dispatch and workflow_call
           PR_NUMBER="${{ github.event.pull_request.number }}"
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Try workflow_dispatch input
             PR_NUMBER="${{ github.event.inputs.pr_number }}"
           fi
           if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Try workflow_call input
+            PR_NUMBER="${{ inputs.pr_number }}"
+          fi
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            # Fall back to searching for PR on current branch
             PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
           fi
           
