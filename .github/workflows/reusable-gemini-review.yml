@@ -43,8 +43,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
+          set +e  # Disable exit on error for this step
+          
           # Get PR metadata with timeout
-          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
+          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch PR data: $PR_DATA"
+            PR_DATA='{"labels":[]}'
+          fi
           
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
@@ -52,7 +58,7 @@ jobs:
           echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
           
           # Get labels - simplified with jq
-          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")')
+          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")' 2>/dev/null || echo "")
           echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
           
           # Count reviews using separate command with timeout and error handling
