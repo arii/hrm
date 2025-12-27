@@ -57,6 +57,7 @@ jest.mock('../../utils/logger', () => ({
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
+    trace: jest.fn(),
   },
 }))
 
@@ -357,9 +358,10 @@ describe('WebSocket Manager', () => {
     })
   })
   describe('HRM Data Handling and Reconnection', () => {
+    // Test case for migrating HRM data on device reconnection
     it('should migrate HRM data when a device reconnects with a new client ID', () => {
       const deviceId = 'test-device-123'
-      const initialClientId = (mockWs as any).clientId
+      const initialClientId = (mockWs as ExtWebSocket).clientId
 
       // 1. Initial connection and metadata update
       const metadataMessage = JSON.stringify({
@@ -375,7 +377,7 @@ describe('WebSocket Manager', () => {
       const newMockWs = new MockWebSocket()
       ;(mockWss.clients as Set<MockWebSocket>).add(newMockWs)
       mockWss.emit('connection', newMockWs)
-      const newClientId = (newMockWs as any).clientId
+      const newClientId = (newMockWs as ExtWebSocket).clientId
 
       // 4. Send metadata from the new client
       newMockWs.emit('message', metadataMessage)
@@ -397,6 +399,7 @@ describe('WebSocket Manager', () => {
       expect(oldDeviceData).toBeUndefined()
     })
 
+    // Test case for cleaning up stale HRM data after a timeout
     it('should clean up stale HRM data after a timeout', () => {
       jest.useFakeTimers()
       const deviceId = 'stale-device-456'
@@ -424,6 +427,7 @@ describe('WebSocket Manager', () => {
       jest.useRealTimers()
     })
 
+    // Test case for cancelling the cleanup timer on reconnection
     it('should cancel cleanup timer if the device reconnects in time', () => {
       jest.useFakeTimers()
       const deviceId = 'reconnecting-device-789'
