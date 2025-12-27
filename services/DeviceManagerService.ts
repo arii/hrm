@@ -372,7 +372,8 @@ class DeviceManagerService extends EventTarget {
 
   // --- Event Handlers ---
   private onGattServerDisconnected = (): void => {
-    const disconnectedDevice = this.device!
+    if (!this.device) return
+    const disconnectedDevice = this.device
     const reason: DisconnectionReason = this.isManualDisconnect
       ? 'manual'
       : 'signal_loss'

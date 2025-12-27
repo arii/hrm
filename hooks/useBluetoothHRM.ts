@@ -275,6 +275,13 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     }
   }, [wsStatusRef, lastDeviceId, deviceManager, setLastDeviceId])
 
+  // Attempt auto-connect when WebSocket connects
+  useEffect(() => {
+    if (wsStatus === 'Connected') {
+      void autoConnect()
+    }
+  }, [wsStatus, autoConnect])
+
   return {
     connect,
     disconnect,
