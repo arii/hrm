@@ -1,4 +1,3 @@
-// app/client/connect/AppSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
@@ -13,26 +12,29 @@ import {
 } from '@mui/material'
 import { Gender } from '../../../types'
 
-const WEIGHT_VALIDATION = {
-  IMPERIAL: { min: 66, max: 440 }, // lbs
-  METRIC: { min: 30, max: 200 }, // kg
-}
-
 interface AppSettingsProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number
-  setUserHeight: (height: number) => void
+  onAgeBlur: () => void
+  ageError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  weightError: string | null
+  userHeight: number
+  setUserHeight: (height: number) => void
+  onHeightBlur: () => void
+  heightError: string | null
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
   gender: Gender
   setGender: (gender: Gender) => void
-  ageError: string | null
-  weightError: string | null
+  feet: string
+  setFeet: (value: string) => void
+  inches: string
+  setInches: (value: string) => void
 }
 
 const AppSettings: React.FC<AppSettingsProps> = ({
@@ -40,16 +42,24 @@ const AppSettings: React.FC<AppSettingsProps> = ({
   setUserName,
   userAge,
   setUserAge,
-  userHeight,
-  setUserHeight,
+  onAgeBlur,
+  ageError,
   userWeight,
   setUserWeight,
+  onWeightBlur,
+  weightError,
+  userHeight,
+  setUserHeight,
+  onHeightBlur,
+  heightError,
   unit,
   setUnit,
   gender,
   setGender,
-  ageError,
-  weightError,
+  feet,
+  setFeet,
+  inches,
+  setInches,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -64,7 +74,13 @@ const AppSettings: React.FC<AppSettingsProps> = ({
         aria-label="Unit system"
         aria-describedby="unit-system-description"
       >
-        <span id="unit-system-description" style={{ clip: 'rect(0 0 0 0)', position: 'absolute' }}>
+        <span
+          id="unit-system-description"
+          style={{
+            clip: 'rect(0 0 0 0)',
+            position: 'absolute',
+          }}
+        >
           Currently selected unit system is {unit}.
         </span>
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
@@ -92,6 +108,7 @@ const AppSettings: React.FC<AppSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
+        onBlur={onAgeBlur}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
@@ -107,6 +124,7 @@ const AppSettings: React.FC<AppSettingsProps> = ({
             setUserWeight(e.target.value)
           }
         }}
+        onBlur={onWeightBlur}
         error={!!weightError}
         helperText={weightError}
       />
@@ -122,6 +140,9 @@ const AppSettings: React.FC<AppSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
+          onBlur={onHeightBlur}
+          error={!!heightError}
+          helperText={heightError}
         />
       ) : (
         <Stack direction="row" spacing={2}>
@@ -136,6 +157,9 @@ const AppSettings: React.FC<AppSettingsProps> = ({
                 setFeet(e.target.value)
               }
             }}
+            onBlur={onHeightBlur}
+            error={!!heightError}
+            helperText={heightError ? ' ' : ''} // Reserve space for the helper text
           />
           <TextField
             fullWidth
@@ -148,6 +172,9 @@ const AppSettings: React.FC<AppSettingsProps> = ({
                 setInches(e.target.value)
               }
             }}
+            onBlur={onHeightBlur}
+            error={!!heightError}
+            helperText={heightError}
           />
         </Stack>
       )}

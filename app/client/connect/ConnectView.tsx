@@ -4,10 +4,7 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import ToggleButton from '@mui/material/ToggleButton'
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
@@ -17,34 +14,30 @@ import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import AppSettings from './AppSettings'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-} from '@mui/material'
-import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+  kgToLbs,
+  lbsToKg,
+} from '../../../utils/units'
 import { validate } from '../../../utils/validation'
 
-interface AppSettingsProps {
+// Props passed from the parent page component
+interface ConnectViewPageProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number
+  userHeight: number // Always in cm
   setUserHeight: (height: number) => void
-  userWeight: string
+  userWeight: string // Always in kg
   setUserWeight: (weight: string) => void
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
   onUnitChange: (unit: 'IMPERIAL' | 'METRIC') => void
-}
-
-interface ConnectViewProps extends AppSettingsProps {
   duration: string
   caloriesBurned: number
   isConnected: boolean
@@ -66,8 +59,7 @@ interface ConnectViewProps extends AppSettingsProps {
 }
 
 export default function ConnectView({
-  duration,
-  caloriesBurned,
+  // User settings props
   userName,
   setUserName,
   userAge,
@@ -80,6 +72,9 @@ export default function ConnectView({
   setGender,
   unitSystem,
   onUnitChange,
+  // HRM connection and workout props
+  duration,
+  caloriesBurned,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -96,10 +91,82 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
-}: ConnectViewProps) {
+}: ConnectViewPageProps) {
+  // Local state for UI and validation
   const [isResetting, setIsResetting] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  // Local state for handling imperial units
+  const [feet, setFeet] = useState('')
+  const [inches, setInches] = useState('')
+  const [displayedWeight, setDisplayedWeight] = useState(userWeight)
+
+  // Sync imperial height fields when height (cm) or unit system changes
+  useEffect(() => {
+    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
+      const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
+      setFeet(String(ft))
+      setInches(String(inch))
+    }
+  }, [userHeight, unitSystem])
+
+  // Sync displayed weight when weight (kg) or unit system changes
+  useEffect(() => {
+    if (userWeight) {
+      if (unitSystem === 'IMPERIAL') {
+        setDisplayedWeight(kgToLbs(parseFloat(userWeight)).toFixed(1))
+      } else {
+        setDisplayedWeight(userWeight)
+      }
+    } else {
+      setDisplayedWeight('')
+    }
+  }, [userWeight, unitSystem])
+
+  // Validation handlers
+  const handleAgeBlur = () => {
+    setAgeError(validate(userAge, 1, 120, 'age'))
+  }
+
+  const handleWeightBlur = () => {
+    const isMetric = unitSystem === 'METRIC'
+    const [min, max] = isMetric ? [20, 300] : [44, 660]
+    const error = validate(
+      displayedWeight,
+      min,
+      max,
+      `weight in ${isMetric ? 'kg' : 'lbs'}`
+    )
+    setWeightError(error)
+    if (!error && displayedWeight) {
+      const weightInKg =
+        unitSystem === 'IMPERIAL'
+          ? lbsToKg(parseFloat(displayedWeight)).toFixed(2)
+          : displayedWeight
+      setUserWeight(weightInKg)
+    }
+  }
+
+  const handleHeightBlur = () => {
+    if (unitSystem === 'METRIC') {
+      setHeightError(validate(String(userHeight), 50, 300, 'height in cm'))
+    } else {
+      const totalInches =
+        parseInt(feet || '0', 10) * 12 + parseInt(inches || '0', 10)
+      const error = validate(String(totalInches), 20, 120, 'height in inches')
+      setHeightError(error)
+      if (!error) {
+        setUserHeight(
+          feetAndInchesToCm(
+            parseInt(feet || '0', 10),
+            parseInt(inches || '0', 10)
+          )
+        )
+      }
+    }
+  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -153,16 +220,24 @@ export default function ConnectView({
             setUserName={setUserName}
             userAge={userAge}
             setUserAge={setUserAge}
+            onAgeBlur={handleAgeBlur}
+            ageError={ageError}
+            userWeight={displayedWeight}
+            setUserWeight={setDisplayedWeight}
+            onWeightBlur={handleWeightBlur}
+            weightError={weightError}
             userHeight={userHeight}
             setUserHeight={setUserHeight}
-            userWeight={userWeight}
-            setUserWeight={setUserWeight}
+            onHeightBlur={handleHeightBlur}
+            heightError={heightError}
             unit={unitSystem}
             setUnit={onUnitChange}
             gender={gender}
             setGender={setGender}
-            ageError={ageError}
-            weightError={weightError}
+            feet={feet}
+            setFeet={setFeet}
+            inches={inches}
+            setInches={setInches}
           />
         ) : (
           <Box
@@ -207,6 +282,9 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
+                !!ageError ||
+                !!weightError ||
+                !!heightError ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -289,7 +367,7 @@ export default function ConnectView({
             mt: 3,
             mb: 3,
             alignItems: 'center',
-            minHeight: '48px', // Ensure consistent height for layout stability
+            minHeight: '48px',
           }}
         >
           {workoutStatus === 'idle' && isConnected && (

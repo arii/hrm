@@ -5,6 +5,24 @@ import { MeasurementSystem } from '../types'
 export const KG_TO_LBS = 2.20462
 
 /**
+ * Converts kilograms to pounds.
+ * @param kg The weight in kilograms.
+ * @returns The weight in pounds.
+ */
+export const kgToLbs = (kg: number): number => {
+  return kg * KG_TO_LBS
+}
+
+/**
+ * Converts pounds to kilograms.
+ * @param lbs The weight in pounds.
+ * @returns The weight in kilograms.
+ */
+export const lbsToKg = (lbs: number): number => {
+  return lbs / KG_TO_LBS
+}
+
+/**
  * Converts a value to kilograms based on the measurement system.
  * @param value The value to convert.
  * @param system The measurement system of the value.
@@ -12,7 +30,7 @@ export const KG_TO_LBS = 2.20462
  */
 export const toKg = (value: number, system: MeasurementSystem): number => {
   if (system === 'IMPERIAL') {
-    return value / KG_TO_LBS
+    return lbsToKg(value)
   }
   return value
 }
@@ -27,7 +45,7 @@ export const toDisplay = (
   kgValue: number,
   system: MeasurementSystem
 ): number => {
-  const displayValue = system === 'IMPERIAL' ? kgValue * KG_TO_LBS : kgValue
+  const displayValue = system === 'IMPERIAL' ? kgToLbs(kgValue) : kgValue
   return parseFloat(displayValue.toFixed(1))
 }
 
