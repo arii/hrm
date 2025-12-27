@@ -71,8 +71,7 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0,
-      isConnected: true,
+      calories: 0, // Initialize to 0
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -86,7 +85,7 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.updateConnectionStatus(extWs.clientId, false)
+      hrmDataRepository.deleteById(extWs.clientId)
       clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
@@ -130,35 +129,7 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'IDENTIFY_CLIENT': {
-        const oldId = clientId
-        const newId = message.clientId
-        ws.clientId = newId
-
-        const sessionState = clientSessionState.get(oldId)
-        if (sessionState) {
-          clientSessionState.set(newId, sessionState)
-          clientSessionState.delete(oldId)
-        }
-
-        const persistentData = hrmDataRepository.findById(newId)
-        if (persistentData) {
-          // Device reconnected, discard temporary data and mark as connected
-          hrmDataRepository.deleteById(oldId)
-          hrmDataRepository.updateConnectionStatus(newId, true)
-          logger.info({ newId }, 'Client re-identified and marked as connected')
-        } else {
-          // First time this device is identifying, re-associate temp data
-          const existingData = hrmDataRepository.findById(oldId)
-          if (existingData) {
-            hrmDataRepository.deleteById(oldId)
-            hrmDataRepository.save({ ...existingData, clientId: newId })
-            logger.info(
-              { oldId, newId },
-              'Client identified and data re-associated'
-            )
-          }
-        }
-        broadcastState()
+        logger.info('IDENTIFY_CLIENT message received')
         break
       }
       case 'PING': {
