@@ -186,7 +186,6 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   if (calorieUpdateInterval) {
     clearInterval(calorieUpdateInterval)
-    calorieUpdateInterval = undefined
   }
   hrmDataRepository.clear()
   clientSessionState.clear()
@@ -246,7 +245,14 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          hrmDataRepository.save({ ...existingData, ...(message.data as any) })
+          // Explicitly type updateData to ensure weightKg is handled correctly
+          const updateData: Partial<HrmStreamData> = {}
+          if (message.data.age) updateData.age = message.data.age
+          if (message.data.maxHr) updateData.maxHr = message.data.maxHr
+          if (message.data.name) updateData.name = message.data.name
+          if (message.data.weightKg) updateData.weightKg = message.data.weightKg
+
+          hrmDataRepository.save({ ...existingData, ...updateData })
         }
         broadcastState()
         break
