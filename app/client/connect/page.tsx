@@ -93,7 +93,7 @@ export default function ConnectPage() {
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
+  const totalCalories = currentUserData?.totalCalories ?? 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
@@ -110,15 +110,10 @@ export default function ConnectPage() {
     totalCalories,
   })
 
-  // Determine which calorie value to display.
-  // Before a workout starts, show the live total from the WebSocket.
-  // After a workout starts, show the calories burned during that session.
-  const displayCalories = hasStarted ? caloriesBurned : totalCalories
-
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={displayCalories}
+      caloriesBurned={caloriesBurned}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}

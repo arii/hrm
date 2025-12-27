@@ -175,15 +175,10 @@ export const useWorkoutSession = ({
   }, [])
 
   const startWorkout = useCallback(() => {
-    // This function can be called to start a new workout or resume a paused one.
-    // We only want to capture the starting calorie count when a brand new
-    // workout begins, which is when the status is 'idle'.
-    // If the workout is paused, this function will resume it without resetting the calorie count.
-    if (state.status === 'idle') {
-      setStartCalories(totalCalories)
-    }
+    // Capture the calorie count at the moment the workout starts.
+    setStartCalories(totalCalories)
     dispatch({ type: 'START_WORKOUT' })
-  }, [totalCalories, state.status])
+  }, [totalCalories])
 
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })

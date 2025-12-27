@@ -89,17 +89,11 @@ jest.mock('../../lib/repositories/HrmDataRepository', () => {
   const mockInstance = {
     findById: jest.fn((clientId: string) => mockRepositoryStore.get(clientId)),
     save: jest.fn((data: HrmData) => {
-      // Defensive save: ensure we merge with existing data and accumulate calories
       const existingData = mockRepositoryStore.get(data.clientId) || {
         totalCalories: 0,
         hrSamples: [],
       }
-      mockRepositoryStore.set(data.clientId, {
-        ...existingData,
-        ...data,
-        // Ensure hrSamples is always an array
-        hrSamples: data.hrSamples || existingData.hrSamples,
-      })
+      mockRepositoryStore.set(data.clientId, { ...existingData, ...data })
     }),
     clear: jest.fn(() => mockRepositoryStore.clear()),
     deleteById: jest.fn((clientId: string) =>
@@ -317,8 +311,6 @@ describe('WebSocket Manager', () => {
       hrmDataRepository.save({
         clientId: mockWs.clientId,
         weightKg: 85,
-        hrSamples: [],
-        lastHrmTimestamp: Date.now(),
         totalCalories: 0,
       })
 
@@ -354,9 +346,8 @@ describe('WebSocket Manager', () => {
       expect(hrmDataRepository.deleteById).toHaveBeenCalledWith(mockWs.clientId)
       const saveCallOrder = (hrmDataRepository.save as jest.Mock)
         .mock.invocationCallOrder[saveCalls.length - 1]
-      const deleteCallOrder = (
-        hrmDataRepository.deleteById as jest.Mock
-      ).mock.invocationCallOrder[0]
+      const deleteCallOrder = (hrmDataRepository.deleteById as jest.Mock)
+        .mock.invocationCallOrder[0]
       expect(saveCallOrder).toBeLessThan(deleteCallOrder)
     })
   })
@@ -405,8 +396,6 @@ describe('WebSocket Manager', () => {
       hrmDataRepository.save({
         clientId: mockWs.clientId,
         weightKg: 75,
-        hrSamples: [150],
-        lastHrmTimestamp: Date.now(),
         totalCalories: 5,
       })
 
