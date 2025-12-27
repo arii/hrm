@@ -61,7 +61,7 @@ export default function ConnectPage() {
   }
 
   const {
-    connectAndStream,
+    connect,
     disconnect,
     forgetDevice,
     deviceStatus,
@@ -69,7 +69,10 @@ export default function ConnectPage() {
     isConnected,
     isSupported,
     disconnectionReason,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    userName,
+    userAge: userAge ? parseInt(userAge, 10) : 0,
+  })
 
   const { connectionStatus, hrmData } = useWebSocket()
 
@@ -87,8 +90,7 @@ export default function ConnectPage() {
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    connect()
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)

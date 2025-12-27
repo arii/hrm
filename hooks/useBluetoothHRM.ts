@@ -19,7 +19,7 @@ import DeviceManagerService, {
   DeviceConnectionStatus,
   DisconnectionReason,
 } from '@/services/DeviceManagerService'
-import { useLocalStorage } from '@/hooks/useLocalStorage'
+import useLocalStorage from '@/hooks/useLocalStorage'
 
 /**
  * @constant isBluetoothSupported
@@ -53,6 +53,14 @@ const getPreviouslyConnectedDevice = async (
 }
 
 /**
+ * @interface BluetoothDeviceWithForget
+ * @description Interface extending BluetoothDevice to include the experimental forget method.
+ */
+interface BluetoothDeviceWithForget extends BluetoothDevice {
+  forget(): Promise<void>
+}
+
+/**
  * @interface UseBluetoothHRMProps
  * @description Props for the `useBluetoothHRM` hook, allowing customization of the underlying `DeviceManagerService`.
  */
@@ -82,12 +90,8 @@ interface UseBluetoothHRMProps extends DeviceManagerOptions {
  * @property {DisconnectionReason | null} disconnectionReason - The reason for the last disconnection.
  */
 export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
-  const {
-    userName,
-    userAge,
-    dataLivenessTimeoutMs,
-    reconnectIntervalMs,
-  } = props
+  const { userName, userAge, dataLivenessTimeoutMs, reconnectIntervalMs } =
+    props
   const { sendData, connectionStatus: wsStatus } = useWebSocket()
   const [lastDeviceId, setLastDeviceId] = useLocalStorage<string | null>(
     'hrm_device_id',
@@ -95,10 +99,14 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   )
 
   // Memoize the service instance to ensure it persists across re-renders
-  const deviceManager = useMemo(
-    () => new DeviceManagerService({ dataLivenessTimeoutMs, reconnectIntervalMs }),
-    [dataLivenessTimeoutMs, reconnectIntervalMs]
-  )
+  const deviceManager = useMemo(() => {
+    const options: DeviceManagerOptions = {}
+    if (dataLivenessTimeoutMs !== undefined)
+      options.dataLivenessTimeoutMs = dataLivenessTimeoutMs
+    if (reconnectIntervalMs !== undefined)
+      options.reconnectIntervalMs = reconnectIntervalMs
+    return new DeviceManagerService(options)
+  }, [dataLivenessTimeoutMs, reconnectIntervalMs])
 
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -183,14 +191,26 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     if (wsStatus !== 'Connected') {
       const msg = 'WebSocket not connected. Cannot stream HRM data.'
       setDeviceStatus(`Failed: ${msg}`)
-      throw new Error(msg)
+      logger.error(msg)
+      return
     }
-    await deviceManager.findAndConnect()
+    try {
+      await deviceManager.findAndConnect()
+    } catch (error) {
+      // Error is already handled/emitted by deviceManager.findAndConnect
+      // and caught by the status-changed listener, but we log here for safety
+      logger.error({ error }, 'Failed to connect to device.')
+    }
   }, [deviceManager, wsStatus])
 
-  const disconnect = useCallback(() => deviceManager.disconnect(), [
-    deviceManager,
-  ])
+  const disconnect = useCallback(() => {
+    try {
+      deviceManager.disconnect()
+    } catch (error) {
+      logger.error({ error }, 'Failed to disconnect device.')
+      setDeviceStatus('Error disconnecting.')
+    }
+  }, [deviceManager])
 
   const forgetDevice = useCallback(async () => {
     logger.info('Forgetting Bluetooth device...')
@@ -202,7 +222,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       'forget' in deviceManager.device
     ) {
       try {
-        await (deviceManager.device as any).forget()
+        await (deviceManager.device as BluetoothDeviceWithForget).forget()
         setDeviceStatus('Device permissions revoked.')
       } catch (error) {
         logger.error({ error }, 'Error revoking device permissions.')
@@ -215,16 +235,21 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     if (wsStatus !== 'Connected' || !lastDeviceId) return
 
     setDeviceStatus('Reconnecting to last device...')
-    const device = await getPreviouslyConnectedDevice(lastDeviceId)
-    if (device) {
-      try {
-        await deviceManager.connectToDevice(device)
-      } catch (error) {
-        setDeviceStatus('Auto-connect failed. Please connect manually.')
-        setLastDeviceId(null) // Clear invalid device ID
+    try {
+      const device = await getPreviouslyConnectedDevice(lastDeviceId)
+      if (device) {
+        try {
+          await deviceManager.connectToDevice(device)
+        } catch (_error) {
+          setDeviceStatus('Auto-connect failed. Please connect manually.')
+          setLastDeviceId(null) // Clear invalid device ID
+        }
+      } else {
+        setDeviceStatus('Last device not found. Please connect manually.')
       }
-    } else {
-      setDeviceStatus('Last device not found. Please connect manually.')
+    } catch (error) {
+      logger.error({ error }, 'Error during auto-connect.')
+      setDeviceStatus('Error checking previous devices.')
     }
   }, [wsStatus, lastDeviceId, deviceManager, setLastDeviceId])
 

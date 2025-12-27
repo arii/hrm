@@ -48,9 +48,9 @@ describe('DeviceManagerService', () => {
 
     expect(navigator.bluetooth.requestDevice).toHaveBeenCalled()
     expect(mockBluetoothDevice.gatt!.connect).toHaveBeenCalled()
-    expect(
-      mockBluetoothDevice.gatt!.getPrimaryService
-    ).toHaveBeenCalledWith('heart_rate')
+    expect(mockBluetoothDevice.gatt!.getPrimaryService).toHaveBeenCalledWith(
+      'heart_rate'
+    )
     expect(
       (await mockBluetoothDevice.gatt!.getPrimaryService()).getCharacteristic
     ).toHaveBeenCalledWith('heart_rate_measurement')

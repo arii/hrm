@@ -40,7 +40,10 @@ interface DeviceManagerEventMap {
   'status-changed': { status: DeviceConnectionStatus; message: string }
   'heart-rate-received': { heartRate: number }
   'battery-level-received': { batteryLevel: number }
-  'device-disconnected': { reason: DisconnectionReason; device: BluetoothDevice }
+  'device-disconnected': {
+    reason: DisconnectionReason
+    device: BluetoothDevice
+  }
   'device-connected': { device: BluetoothDevice }
 }
 /**
@@ -80,6 +83,8 @@ class DeviceManagerService extends EventTarget {
   private watchdogInterval: NodeJS.Timeout | null = null
   private reconnectTimeout: NodeJS.Timeout | null = null
   private isManualDisconnect: boolean = false
+  private hrCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  private batteryCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
 
   /**
    * @constructor
@@ -98,19 +103,55 @@ class DeviceManagerService extends EventTarget {
     type: K,
     listener: (event: CustomEvent<DeviceManagerEventMap[K]>) => void,
     options?: boolean | AddEventListenerOptions
+  ): void
+  public addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions
+  ): void
+  public addEventListener(
+    type: string,
+    listener:
+      | EventListenerOrEventListenerObject
+      | null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      | ((event: any) => void),
+    options?: boolean | AddEventListenerOptions
   ): void {
-    super.addEventListener(type, listener as EventListener, options)
+    super.addEventListener(
+      type,
+      listener as EventListenerOrEventListenerObject,
+      options
+    )
   }
 
   public removeEventListener<K extends keyof DeviceManagerEventMap>(
     type: K,
     listener: (event: CustomEvent<DeviceManagerEventMap[K]>) => void,
     options?: boolean | EventListenerOptions
+  ): void
+  public removeEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions
+  ): void
+  public removeEventListener(
+    type: string,
+    listener:
+      | EventListenerOrEventListenerObject
+      | null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      | ((event: any) => void),
+    options?: boolean | EventListenerOptions
   ): void {
-    super.removeEventListener(type, listener as EventListener, options)
+    super.removeEventListener(
+      type,
+      listener as EventListenerOrEventListenerObject,
+      options
+    )
   }
 
-  private dispatchEvent<K extends keyof DeviceManagerEventMap>(
+  private emit<K extends keyof DeviceManagerEventMap>(
     type: K,
     detail: DeviceManagerEventMap[K]
   ): boolean {
@@ -130,7 +171,7 @@ class DeviceManagerService extends EventTarget {
    * @throws {Error} If connection fails.
    */
   public async findAndConnect(): Promise<void> {
-    this.dispatchEvent('status-changed', {
+    this.emit('status-changed', {
       status: 'connecting',
       message: 'Requesting Bluetooth device...',
     })
@@ -153,7 +194,9 @@ class DeviceManagerService extends EventTarget {
    * @async
    * @throws {Error} If connection fails.
    */
-  public async connectToDevice(deviceToConnect: BluetoothDevice): Promise<void> {
+  public async connectToDevice(
+    deviceToConnect: BluetoothDevice
+  ): Promise<void> {
     this.cleanup() // Ensure clean state before connecting
     this.isManualDisconnect = false
     this.device = deviceToConnect
@@ -169,53 +212,58 @@ class DeviceManagerService extends EventTarget {
     if (!this.device) throw new Error('No device to connect to.')
 
     try {
-      this.dispatchEvent('status-changed', {
+      this.emit('status-changed', {
         status: 'connecting',
         message: `Connecting to ${this.device.name}...`,
       })
 
-      const server = await cancellablePromise(this.device.gatt!.connect(), {
+      const cancelOptions = {
         timeoutMs: 15000,
         errorMessage: 'GATT connection timeout',
-        signal: this.abortController?.signal,
-      })
+        ...(this.abortController?.signal
+          ? { signal: this.abortController.signal }
+          : {}),
+      }
+
+      const server = await cancellablePromise(
+        this.device.gatt!.connect(),
+        cancelOptions
+      )
 
       const hrService = await server.getPrimaryService(HR_SERVICE_UUID)
-      const hrCharacteristic =
-        await hrService.getCharacteristic(HR_CHARACTERISTIC_UUID)
-      hrCharacteristic.addEventListener(
+      this.hrCharacteristic = await hrService.getCharacteristic(
+        HR_CHARACTERISTIC_UUID
+      )
+      this.hrCharacteristic.addEventListener(
         'characteristicvaluechanged',
         this.onHeartRateChanged
       )
-      await hrCharacteristic.startNotifications()
+      await this.hrCharacteristic.startNotifications()
       this.lastDataTime = Date.now()
       this.startWatchdog()
 
       try {
         const batteryService =
           await server.getPrimaryService(BATTERY_SERVICE_UUID)
-        const batteryCharacteristic = await batteryService.getCharacteristic(
+        this.batteryCharacteristic = await batteryService.getCharacteristic(
           BATTERY_LEVEL_CHARACTERISTIC_UUID
         )
-        const batteryValue = await batteryCharacteristic.readValue()
-        this.onBatteryLevelChanged(batteryValue)
-        batteryCharacteristic.addEventListener(
+        const batteryValue = await this.batteryCharacteristic.readValue()
+        this.onBatteryLevelChangedValue(batteryValue)
+        this.batteryCharacteristic.addEventListener(
           'characteristicvaluechanged',
-          (e: Event) =>
-            this.onBatteryLevelChanged(
-              (e.target as BluetoothRemoteGATTCharacteristic).value!
-            )
+          this.onBatteryLevelChangedEvent
         )
-        await batteryCharacteristic.startNotifications()
-      } catch (error) {
+        await this.batteryCharacteristic.startNotifications()
+      } catch {
         logger.warn('Battery service not found. Skipping.')
       }
 
-      this.dispatchEvent('status-changed', {
+      this.emit('status-changed', {
         status: 'connected',
         message: `Connected to ${this.device.name}`,
       })
-      this.dispatchEvent('device-connected', { device: this.device })
+      this.emit('device-connected', { device: this.device })
     } catch (error) {
       this.handleConnectionError(error)
       throw error
@@ -234,12 +282,12 @@ class DeviceManagerService extends EventTarget {
       const disconnectedDevice = this.device
       this.cleanup()
       if (disconnectedDevice) {
-        this.dispatchEvent('device-disconnected', {
+        this.emit('device-disconnected', {
           reason: 'manual',
           device: disconnectedDevice,
         })
       }
-      this.dispatchEvent('status-changed', {
+      this.emit('status-changed', {
         status: 'disconnected',
         message: 'Disconnected',
       })
@@ -254,6 +302,21 @@ class DeviceManagerService extends EventTarget {
       'gattserverdisconnected',
       this.onGattServerDisconnected
     )
+    if (this.hrCharacteristic) {
+      this.hrCharacteristic.removeEventListener(
+        'characteristicvaluechanged',
+        this.onHeartRateChanged
+      )
+      this.hrCharacteristic = null
+    }
+    if (this.batteryCharacteristic) {
+      this.batteryCharacteristic.removeEventListener(
+        'characteristicvaluechanged',
+        this.onBatteryLevelChangedEvent
+      )
+      this.batteryCharacteristic = null
+    }
+
     this.device = null
     this.abortController = null
   }
@@ -266,7 +329,7 @@ class DeviceManagerService extends EventTarget {
     this.watchdogInterval = setInterval(() => {
       if (Date.now() - this.lastDataTime > this.options.dataLivenessTimeoutMs) {
         logger.warn('Bluetooth data stale. Forcing reconnection...')
-        this.dispatchEvent('status-changed', {
+        this.emit('status-changed', {
           status: 'connecting',
           message: 'Connection unstable. Reconnecting...',
         })
@@ -293,13 +356,13 @@ class DeviceManagerService extends EventTarget {
       : 'signal_loss'
 
     this.cleanup()
-    this.dispatchEvent('device-disconnected', {
+    this.emit('device-disconnected', {
       reason,
       device: disconnectedDevice,
     })
 
     if (reason !== 'manual' && disconnectedDevice) {
-      this.dispatchEvent('status-changed', {
+      this.emit('status-changed', {
         status: 'connecting',
         message: 'Signal Lost. Retrying...',
       })
@@ -316,7 +379,7 @@ class DeviceManagerService extends EventTarget {
         })
       }, this.options.reconnectIntervalMs)
     } else {
-      this.dispatchEvent('status-changed', {
+      this.emit('status-changed', {
         status: 'disconnected',
         message: 'Disconnected',
       })
@@ -327,15 +390,19 @@ class DeviceManagerService extends EventTarget {
     this.lastDataTime = Date.now()
     const target = event.target as BluetoothRemoteGATTCharacteristic
     const heartRate = this.parseHeartRate(target.value!)
-    this.dispatchEvent('heart-rate-received', { heartRate })
+    this.emit('heart-rate-received', { heartRate })
   }
 
-  private onBatteryLevelChanged = (value: DataView): void => {
+  private onBatteryLevelChangedEvent = (event: Event): void => {
+    this.onBatteryLevelChangedValue(
+      (event.target as BluetoothRemoteGATTCharacteristic).value!
+    )
+  }
+
+  private onBatteryLevelChangedValue = (value: DataView): void => {
     const batteryLevel = value.getUint8(0)
-    this.dispatchEvent('battery-level-received', { batteryLevel })
+    this.emit('battery-level-received', { batteryLevel })
   }
-
-
 
   private handleConnectionError = (error: unknown): void => {
     let message = 'An unknown connection error occurred.'
@@ -350,7 +417,7 @@ class DeviceManagerService extends EventTarget {
     } else if (error instanceof Error) {
       message = error.message
     }
-    this.dispatchEvent('status-changed', { status: 'error', message })
+    this.emit('status-changed', { status: 'error', message })
     this.cleanup()
   }
 }

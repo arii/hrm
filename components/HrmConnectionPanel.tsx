@@ -19,19 +19,19 @@ const HrmConnectionPanel = () => {
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
-    connectAndStream,
+    connect,
     disconnect,
     deviceStatus,
     batteryLevel,
     isConnected,
     isSupported,
-  } = useBluetoothHRM()
+  } = useBluetoothHRM({
+    userName: session?.user?.name || userSettings.userName || 'Unknown User',
+    userAge: userSettings.userAge || 30,
+  })
 
   const handleConnect = () => {
-    const userName =
-      session?.user?.name || userSettings.userName || 'Unknown User'
-    const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    connect()
   }
 
   const tileData = useMemo(() => {

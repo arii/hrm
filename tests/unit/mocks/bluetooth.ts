@@ -14,7 +14,7 @@ class MockEventTarget {
   addEventListener(
     type: string,
     listener: (event: Event) => void,
-    _options?: any
+    _options?: unknown
   ): void {
     if (!this.listeners[type]) {
       this.listeners[type] = []
@@ -25,7 +25,7 @@ class MockEventTarget {
   removeEventListener(
     type: string,
     listener: (event: Event) => void,
-    _options?: any
+    _options?: unknown
   ): void {
     if (this.listeners[type]) {
       this.listeners[type] = this.listeners[type].filter((l) => l !== listener)
@@ -33,8 +33,9 @@ class MockEventTarget {
   }
 
   dispatchEvent(event: Event): boolean {
-    if (this.listeners[event.type]) {
-      this.listeners[event.type].forEach((listener) => listener.call(this, event))
+    const listeners = this.listeners[event.type]
+    if (listeners) {
+      listeners.forEach((listener) => listener.call(this, event))
       return true
     }
     return false
@@ -57,9 +58,7 @@ class MockGATTCharacteristic extends MockEventTarget {
 
 // Mock for BluetoothRemoteGATTService
 class MockGATTService extends MockEventTarget {
-  getCharacteristic = jest
-    .fn()
-    .mockResolvedValue(new MockGATTCharacteristic())
+  getCharacteristic = jest.fn().mockResolvedValue(new MockGATTCharacteristic())
 }
 
 // Mock for BluetoothRemoteGATTServer

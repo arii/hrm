@@ -9,8 +9,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { useBluetoothHRM } from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import DeviceManagerService from '@/services/DeviceManagerService'
-import { useLocalStorage } from '@/hooks/useLocalStorage'
+import useLocalStorage from '@/hooks/useLocalStorage'
 
 // Mock DeviceManagerService
 const mockDeviceManager = {
@@ -31,9 +30,12 @@ jest.mock('@/context/WebSocketContext', () => ({
 }))
 
 // Mock useLocalStorage hook
-jest.mock('@/hooks/useLocalStorage', () => ({
-  useLocalStorage: jest.fn(),
-}))
+jest.mock('@/hooks/useLocalStorage', () => {
+  return {
+    __esModule: true,
+    default: jest.fn(),
+  }
+})
 
 describe('useBluetoothHRM Hook', () => {
   let mockSendData: jest.Mock
@@ -45,14 +47,12 @@ describe('useBluetoothHRM Hook', () => {
 
     mockSendData = jest.fn()
     mockSetLastDeviceId = jest.fn()
-
     ;(useWebSocket as jest.Mock).mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Connected',
     })
     ;(useLocalStorage as jest.Mock).mockReturnValue([null, mockSetLastDeviceId])
   })
-
   // Test 1: Initial state
   it('should initialize with correct default state', () => {
     const { result } = renderHook(() => useBluetoothHRM({}))
@@ -149,9 +149,9 @@ describe('useBluetoothHRM Hook', () => {
     const { result } = renderHook(() => useBluetoothHRM({}))
 
     await act(async () => {
-      await expect(result.current.connect()).rejects.toThrow(
-        'WebSocket not connected. Cannot stream HRM data.'
-      )
+      // Connect handles the error internally now, but logs it.
+      // In the implementation, it returns early if WS not connected.
+      await result.current.connect()
     })
     expect(result.current.deviceStatus).toBe(
       'Failed: WebSocket not connected. Cannot stream HRM data.'
