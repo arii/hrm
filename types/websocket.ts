@@ -42,8 +42,8 @@ export type SpotifyCommand =
  */
 export interface InitialStateSnapshotPayload {
   hrmData: HrmData[]
-  timerData: TimerData
-  spotifyData: SpotifyData
+  timer: TimerData
+  spotify: SpotifyData
   spotifyServiceInitialized?: boolean
 }
 

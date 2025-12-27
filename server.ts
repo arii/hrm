@@ -2,13 +2,9 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { Server as WebSocketServer } from 'ws'
+import { WebSocketServer } from 'ws'
 import { env } from './lib/env.js'
-import {
-  initSocketManager,
-  tabataService,
-  spotifyService,
-} from './utils/socketManager.js'
+import { initSocketManager, tabataService } from './utils/socketManager.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
@@ -100,7 +96,7 @@ app.prepare().then(async () => {
   }
 
   const wss = new WebSocketServer({ noServer: true })
-  initSocketManager(wss)
+  await initSocketManager(wss)
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {

@@ -11,10 +11,14 @@ const mockSpotifyInstance = {
 }
 
 jest.mock('../../services/tabataTimer', () => ({
-  TabataTimer: jest.fn().mockImplementation(() => mockTabataInstance),
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockTabataInstance),
 }))
 jest.mock('../../services/spotifyPolling', () => ({
-  SpotifyPolling: jest.fn().mockImplementation(() => mockSpotifyInstance),
+  __esModule: true,
+  SpotifyPolling: {
+    create: jest.fn().mockResolvedValue(mockSpotifyInstance),
+  },
 }))
 jest.mock('../../services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
@@ -48,13 +52,20 @@ jest.mock('../../utils/logger', () => ({
 // Manual mock for the 'ws' module
 jest.mock('ws', () => ({
   Server: jest.fn().mockImplementation(() => {
-    const EventEmitter = require('events')
-    const wss = new EventEmitter()
-    wss.clients = new Set()
-    const originalOn = wss.on.bind(wss)
-    const originalEmit = wss.emit.bind(wss)
-    wss.on = jest.fn((event, listener) => originalOn(event, listener))
-    wss.emit = jest.fn((event, ...args) => originalEmit(event, ...args))
+    const listeners = new Map<string, (...args: any[]) => void>()
+    const wss = {
+      clients: new Set(),
+      on: jest.fn((event, listener) => {
+        listeners.set(event, listener)
+      }),
+      emit: jest.fn((event, ...args) => {
+        const listener = listeners.get(event)
+        if (listener) {
+          listener(...args)
+        }
+      }),
+      close: jest.fn(),
+    }
     return wss
   }),
   WebSocket: jest.fn(),
@@ -71,7 +82,10 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { initSocketManager, resetSocketManager } from '../../utils/socketManager'
+import {
+  initSocketManager,
+  resetSocketManager,
+} from '../../utils/socketManager'
 import { Server as WebSocketServer } from 'ws'
 import { EventEmitter } from 'events'
 import {
@@ -85,7 +99,7 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
-import { TabataTimer } from '../../services/tabataTimer'
+import TabataTimer from '../../services/tabataTimer'
 import { SpotifyPolling } from '../../services/spotifyPolling'
 
 class MockWebSocket extends EventEmitter {
@@ -116,12 +130,12 @@ describe('WebSocket Manager', () => {
   let mockWss: jest.Mocked<WebSocketServer>
   let mockWs: MockWebSocket
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.useFakeTimers()
 
     // Clear mocks on the constructors and instance methods
     ;(TabataTimer as jest.Mock).mockClear()
-    ;(SpotifyPolling as jest.Mock).mockClear()
+    ;(SpotifyPolling.create as jest.Mock).mockClear()
     Object.values(mockTabataInstance).forEach((mockFn) => mockFn.mockClear())
     Object.values(mockSpotifyInstance).forEach((mockFn) => mockFn.mockClear())
 
@@ -132,7 +146,7 @@ describe('WebSocket Manager', () => {
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
-    initSocketManager(mockWss)
+    await initSocketManager(mockWss)
 
     mockWs = new MockWebSocket()
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
@@ -273,6 +287,25 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
+    })
+
+    it('should forward SPOTIFY_COMMAND to the spotifyService', () => {
+      const message = JSON.stringify({
+        type: 'SPOTIFY_COMMAND',
+        command: 'PLAY',
+        deviceId: 'test_device',
+        volume: 50,
+        contextUri: 'spotify:album:456',
+      })
+      mockWs.emit('message', message.toString())
+
+      expect(mockSpotifyInstance.handleCommand).toHaveBeenCalledWith('PLAY', {
+        deviceId: 'test_device',
+        volume: 50,
+        contextUri: 'spotify:album:456',
+        playlistUri: undefined,
+        uri: undefined,
+      })
     })
   })
 })

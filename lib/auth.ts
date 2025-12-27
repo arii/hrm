@@ -60,6 +60,43 @@ function getCookieDomain(): string | undefined {
  * @returns {Promise<JWT>} The updated JWT with a new accessToken and expiry,
  *                         or the original token with an error flag if refresh fails.
  */
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    const url = 'https://accounts.spotify.com/api/token'
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(
+          `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`
+        ).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: token.refreshToken as string,
+      }),
+    })
+
+    const refreshedTokens = await response.json()
+
+    if (!response.ok) {
+      throw refreshedTokens
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+    }
+  } catch (error) {
+    logger.error({ error }, 'Error refreshing access token')
+    return {
+      ...token,
+      error: 'RefreshAccessTokenError',
+    }
+  }
+}
 
 // Define scopes required: user-read-playback-state to poll the current track,
 // user-modify-playback-state to control playback (play/pause/skip),
@@ -258,10 +295,18 @@ export const authOptions: AuthOptions = {
         return updatedToken
       }
 
-      // The token refresh logic is now handled by the SpotifyPolling service.
-      // The session will remain valid as long as the service can refresh the token.
-      // We no longer need to check for token expiration here.
-      return token
+      // 2. Token is still valid - return it as-is
+      // Add a 60-second buffer to be safe
+      if (
+        token.accessTokenExpires &&
+        Date.now() < (token.accessTokenExpires as number) - 60000
+      ) {
+        return token
+      }
+
+      // 3. Token is expired - try to refresh it
+      logger.info('[AUTH] Access token expired, refreshing...')
+      return await refreshAccessToken(token)
     },
     /**
      * Callback for creating and managing the user session.

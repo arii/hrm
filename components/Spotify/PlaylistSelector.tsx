@@ -71,9 +71,9 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
           primary={playlist.name}
           secondary={
             playlist.trackCount !== undefined
-              ? `${playlist.trackCount} tracks${playlist.owner ? ` • ${playlist.owner}` : ''}`
-              : playlist.owner
-                ? playlist.owner
+              ? `${playlist.trackCount} tracks${playlist.owner?.display_name ? ` • ${playlist.owner.display_name}` : ''}`
+              : playlist.owner?.display_name
+                ? playlist.owner.display_name
                 : undefined
           }
         />
@@ -123,7 +123,6 @@ interface Playlist extends Partial<SimplifiedPlaylist> {
   isSearchResult?: boolean
   imageUrl?: string | null // Keep imageUrl for simplicity in the component
   trackCount?: number
-  owner?: string
 }
 
 interface PlaylistSelectorProps {
@@ -173,7 +172,6 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
               isPreset: false,
               imageUrl: p.images?.[0]?.url,
               trackCount: p.tracks?.total,
-              owner: p.owner?.display_name,
             }) as Playlist
         )
         setPresetPlaylists(presets)

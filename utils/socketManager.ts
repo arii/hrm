@@ -15,6 +15,8 @@ import {
   ServerMessage,
   StateSnapshot,
   ExtWebSocket,
+  TimerData,
+  SpotifyData,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
 import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
@@ -25,7 +27,7 @@ import {
 } from './websocketUtils.js'
 import logger from './logger.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { TabataTimer } from '../services/tabataTimer.js'
+import TabataTimer from '../services/tabataTimer.js'
 import { SpotifyPolling } from '../services/spotifyPolling.js'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
@@ -52,7 +54,30 @@ const getUnifiedStateSnapshot = (): StateSnapshot => {
   if (!tabataService || !spotifyService) {
     logger.error('Services not initialized when getting state snapshot.')
     // Return a default state to prevent crashes
-    return { timer: {} as any, spotify: {} as any }
+    return {
+      timer: {
+        isRunning: false,
+        currentPhase: 'IDLE',
+        timeRemaining: 0,
+        timeElapsed: 0,
+        caloriesBurned: 0,
+        mode: 'STOPWATCH',
+        workDuration: 0,
+        restDuration: 0,
+        soundEventId: 0,
+      } as TimerData,
+      spotify: {
+        trackId: null,
+        trackName: 'Offline',
+        artist: '',
+        albumName: '',
+        albumArtUrl: '',
+        isPlaying: false,
+        devices: [],
+        volume: 0,
+        isMuted: false,
+      } as SpotifyData,
+    }
   }
   return {
     timer: tabataService.getState(),
@@ -63,14 +88,14 @@ const getUnifiedStateSnapshot = (): StateSnapshot => {
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-const initSocketManager = (wss: WebSocketServer) => {
+const initSocketManager = async (wss: WebSocketServer) => {
   wsServerInstance = wss
 
   // Instantiate the core services and provide them with a broadcast function.
   const broadcastFn = (message: ServerMessage) =>
     broadcast(wss, message, 'service-broadcast')
   tabataService = new TabataTimer(broadcastFn)
-  spotifyService = new SpotifyPolling(broadcastFn)
+  spotifyService = await SpotifyPolling.create(broadcastFn)
 
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
@@ -109,7 +134,11 @@ const initSocketManager = (wss: WebSocketServer) => {
       type: 'INITIAL_STATE',
       payload: payload,
     }
-    sendWebSocketMessage(extWs, initialStateMessage, 'socketManager.onConnection')
+    sendWebSocketMessage(
+      extWs,
+      initialStateMessage,
+      'socketManager.onConnection'
+    )
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -280,6 +309,7 @@ const handleIncomingMessage = (
           volume?: number
           playlistUri?: string
           contextUri?: string
+          uri?: string
         } = {}
         if (commandMsg.deviceId)
           spotifyCommandParams.deviceId = commandMsg.deviceId
@@ -289,6 +319,7 @@ const handleIncomingMessage = (
           spotifyCommandParams.playlistUri = commandMsg.playlistUri
         if (commandMsg.contextUri)
           spotifyCommandParams.contextUri = commandMsg.contextUri
+        if (commandMsg.uri) spotifyCommandParams.uri = commandMsg.uri
 
         spotifyService.handleCommand(commandMsg.command, spotifyCommandParams)
         break
