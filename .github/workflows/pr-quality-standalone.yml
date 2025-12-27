@@ -9,6 +9,7 @@ on:
         description: 'Branch to check'
         required: true
         default: 'leader'
+  workflow_call:
 
 concurrency:
   group: pr-quality-standalone-${{ github.event.pull_request.number || github.ref || github.run_id }}

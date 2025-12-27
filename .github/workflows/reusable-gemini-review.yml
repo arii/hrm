@@ -3,6 +3,11 @@ name: Reusable Gemini Review
 
 on:
   workflow_call:
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      ARI_PAT:
+        required: true
 
 permissions:
   contents: read
