@@ -298,8 +298,10 @@ jobs:
       - name: 'Gemini: Verify Changes'
         if: env.AGENT_PROVIDER == 'gemini'
         env:
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: build-time-secret-for-verification
+          # These are build-time values for CI verification only
+          # In production, these should be provided by the deployment environment
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || format('build-verification-{0}', github.run_id) }}
         run: |
           echo "::notice::Running lint..."
           pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
