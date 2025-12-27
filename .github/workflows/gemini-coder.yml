@@ -234,7 +234,47 @@ jobs:
             exit 1
           fi
           
-          # Extract diff from markdown code block if present
+          # Enhanced conversational text filtering
+          # Remove common LLM preamble/postamble text while preserving the diff
+          echo "::notice::Filtering conversational text from patch..."
+          
+          # Create temporary file for cleaned content
+          CLEANED_PATCH="patch.diff.cleaned"
+          
+          # Remove markdown code block markers and common preamble patterns
+          sed '/^```/d' patch.diff | \
+            grep -v "^Here" | \
+            grep -v "^I'll" | \
+            grep -v "^Let me" | \
+            grep -v "^This" | \
+            grep -v "^The" | \
+            grep -v "^Sure" | \
+            grep -v "^Based" | \
+            grep -v "^## " | \
+            grep -v "^# " > "$CLEANED_PATCH.tmp"
+          
+          # Find the first diff header in the cleaned content
+          DIFF_START=$(grep -n "^--- a/" "$CLEANED_PATCH.tmp" | head -1 | cut -d: -f1)
+          
+          if [ -z "$DIFF_START" ]; then
+            echo "::warning::Could not find unified diff markers, trying original"
+            rm "$CLEANED_PATCH.tmp"
+          else
+            echo "::notice::Found diff starting at line $DIFF_START, extracting..."
+            # Extract from first diff header to end
+            tail -n +$DIFF_START "$CLEANED_PATCH.tmp" > "$CLEANED_PATCH"
+            
+            if [ -s "$CLEANED_PATCH" ]; then
+              mv "$CLEANED_PATCH" patch.diff
+              echo "::notice::Extracted unified diff, removed conversational text"
+            else
+              echo "::warning::Cleaned patch is empty, using original"
+              rm "$CLEANED_PATCH" 2>/dev/null
+            fi
+            rm "$CLEANED_PATCH.tmp" 2>/dev/null
+          fi
+          
+          # Extract diff from markdown code block if present (fallback)
           # Handles variations: ```diff, ``` diff, ```
           if head -1 patch.diff | grep -q "^\`\`\`"; then
             echo "::notice::Detected markdown code block, extracting diff..."
@@ -270,6 +310,18 @@ jobs:
             echo "::error::Patch cannot be applied cleanly."
             echo "::notice::Git apply validation failed:"
             echo "$APPLY_ERROR" | sed 's/^/::notice::  /'
+            
+            # Attempt to apply with --reject to show which hunks failed
+            echo ""
+            echo "::notice::Attempting to apply with --reject to identify failing hunks..."
+            git apply --reject patch.diff 2>&1 || true
+            
+            # Collect rejected hunks for artifact upload
+            if [ -f "*.rej" ]; then
+              echo "::notice::Found rejected hunks:"
+              find . -name "*.rej" -exec echo "  - {}" \;
+            fi
+            
             echo ""
             echo "::notice::Debugging information:"
             echo "::notice::Files in patch:"
@@ -277,12 +329,12 @@ jobs:
             echo ""
             echo "::notice::Common causes and solutions:"
             echo "::notice::  1. File content has changed - Run gemini-coder again with fresh context"
-            echo "::notice::  2. Line numbers are off - Check if README.md was recently modified"
+            echo "::notice::  2. Line numbers are off - Check if files were recently modified"
             echo "::notice::  3. Whitespace issues - The patch may have different line endings"
             echo ""
             echo "::notice::To debug locally, try:"
             echo "::notice::  git apply --reject patch.diff  # Shows which hunks fail"
-            echo "::notice::  git diff README.md  # Compare current state with patch"
+            echo "::notice::  git diff  # Compare current state with patch"
             exit 1
           fi
           
@@ -296,6 +348,58 @@ jobs:
             exit 1
           fi
           echo "::notice::✅ Patch applied successfully"
+
+      - name: Upload Failed Hunks as Artifact
+        if: failure() && env.AGENT_PROVIDER == 'gemini'
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-artifacts-run-${{ github.run_id }}
+          path: |
+            patch.diff
+            prompt.txt
+            task_desc.txt
+            *.rej
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
+
+      - name: Generate Patch Debug Report
+        if: failure() && env.AGENT_PROVIDER == 'gemini'
+        run: |
+          {
+            echo "# Patch Failure Debug Report"
+            echo ""
+            echo "**Run ID**: ${{ github.run_id }}"
+            echo "**Branch**: ${{ env.BRANCH }}"
+            echo "**Title**: ${{ env.TITLE }}"
+            echo ""
+            echo "## Patch File"
+            echo '```diff'
+            head -100 patch.diff
+            echo '```'
+            echo ""
+            echo "## Rejected Hunks"
+            if find . -name "*.rej" | grep -q .; then
+              find . -name "*.rej" -exec sh -c 'echo "### {}"; cat "{}"' \;
+            else
+              echo "No rejected hunks found"
+            fi
+            echo ""
+            echo "## Task Description"
+            echo '```'
+            cat task_desc.txt || echo "N/A"
+            echo '```'
+          } > patch-debug-report.md
+          
+          cat patch-debug-report.md
+
+      - name: Upload Debug Report
+        if: failure() && env.AGENT_PROVIDER == 'gemini'
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-debug-report-run-${{ github.run_id }}
+          path: patch-debug-report.md
+          retention-days: 30
 
       - name: 'Gemini: Verify Changes'
         if: env.AGENT_PROVIDER == 'gemini'
