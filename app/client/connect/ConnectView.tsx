@@ -1,17 +1,11 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import BatteryStdIcon from '@mui/icons-material/BatteryStd'
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
 import React, { useState } from 'react'
@@ -25,6 +19,8 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+import DeviceCard from './DeviceCard'
+import { ConnectedDevice } from '@/hooks/useMultiDeviceBluetooth'
 
 const WEIGHT_VALIDATION = {
   IMPERIAL: { min: 66, max: 440 }, // lbs
@@ -58,17 +54,12 @@ interface ConnectViewProps {
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
-  isConnected: boolean
-  deviceStatus: string
-  batteryLevel: number | null
+  connectedDevices: Record<string, ConnectedDevice>;
   onConnect: () => void
-  onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
+  onDisconnect: (deviceId: string) => void
+  onForgetDevice: (deviceId: string) => Promise<void>
   isSupported: boolean
-  currentHR: number
-  hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
-  bluetoothConnected: boolean
   hasStarted: boolean
   onReset: () => void
   workoutStatus: 'idle' | 'running' | 'paused'
@@ -92,17 +83,12 @@ export default function ConnectView({
   setGender,
   unitSystem,
   onUnitChange,
-  isConnected,
-  deviceStatus,
-  batteryLevel,
+  connectedDevices,
   onConnect,
   onDisconnect,
   onForgetDevice,
   isSupported,
-  currentHR,
-  hrZoneProps,
   connectionStatus,
-  bluetoothConnected,
   hasStarted,
   onReset,
   workoutStatus,
@@ -116,17 +102,10 @@ export default function ConnectView({
 
   const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
 
-  const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />
-    if (level > 50) return <BatteryChargingFullIcon color="action" />
-    if (level > 20) return <BatteryStdIcon color="warning" />
-    return <BatteryAlertIcon color="error" />
-  }
-
   const handleFullReset = async () => {
     setIsResetting(true)
     try {
-      await onForgetDevice()
+      await Promise.all(Object.keys(connectedDevices).map(deviceId => onForgetDevice(deviceId)));
       onReset()
     } catch (error) {
       console.error('Reset failed:', error)
@@ -153,6 +132,7 @@ export default function ConnectView({
     )
   }
 
+  const isConnected = Object.values(connectedDevices).length > 0;
   const showUserDetails = hasStarted || isConnected
 
   return (
@@ -294,100 +274,34 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
-
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
             <Button
               variant="contained"
               size="large"
               onClick={onConnect}
               disabled={
                 !userName.trim() ||
-                !userAge.trim() ||
-                deviceStatus.includes('Connecting')
+                !userAge.trim()
               }
             >
-              {deviceStatus.includes('Connecting') ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Connecting...</span>
-                </Stack>
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
+              Connect New Bluetooth HRM
             </Button>
-          ) : (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                {batteryLevel !== null && (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {getBatteryIcon(batteryLevel)}
-                    <Typography variant="body2">
-                      {batteryLevel}% Battery
-                    </Typography>
-                  </Stack>
-                )}
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={onDisconnect}
-                color="error"
-              >
-                Disconnect
-              </Button>
-              {deviceStatus !== 'Connected' && (
-                <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
-                </Typography>
-              )}
-            </Stack>
-          )}
         </Box>
 
-        {isConnected && bluetoothConnected && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Connected! Heart rate data is being streamed.
-          </Alert>
-        )}
+        {Object.values(connectedDevices).map((device) => (
+            <DeviceCard
+                key={device.id}
+                device={device}
+                onDisconnect={onDisconnect}
+                onForget={onForgetDevice}
+                userAge={parseInt(userAge, 10)}
+            />
+        ))}
 
         {hasStarted && !isConnected && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Device Disconnected - Workout Paused
+            All Devices Disconnected - Workout Paused
           </Alert>
-        )}
-
-        {isConnected && currentHR > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <HrTile
-              name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
-              isAlerting={false}
-            />
-          </Box>
         )}
 
         <Stack

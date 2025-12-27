@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
-import useBluetoothHRM from '@/hooks/useBluetoothHRM'
+import useMultiDeviceBluetooth from '@/hooks/useMultiDeviceBluetooth'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { getHrZoneProps } from '@/utils/visualization'
 import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg } from '../../../utils/units'
+import DeviceSelectionModal from './DeviceSelectionModal'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -26,6 +26,7 @@ export default function ConnectPage() {
   )
 
   const [displayWeight, setDisplayWeight] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
@@ -40,24 +41,18 @@ export default function ConnectPage() {
   }
 
   const {
-    connectAndStream,
-    disconnect,
+    connectedDevices,
+    discoveredDevices,
+    isScanning,
+    startScan,
+    stopScan,
+    selectDeviceToConnect,
+    disconnectDevice,
     forgetDevice,
-    deviceStatus,
-    batteryLevel,
-    isConnected,
     isSupported,
-    disconnectionReason,
-  } = useBluetoothHRM()
+  } = useMultiDeviceBluetooth()
 
   const { connectionStatus, hrmData } = useWebSocket()
-
-  let deviceStatusMessage = deviceStatus
-  if (disconnectionReason === 'timeout') {
-    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
-  } else if (disconnectionReason === 'signal_loss') {
-    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
-  }
 
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
@@ -65,16 +60,20 @@ export default function ConnectPage() {
     }
   }
 
-  const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+  const handleConnectClick = () => {
+    startScan();
+    setIsModalOpen(true);
   }
 
+  const handleModalClose = () => {
+    stopScan();
+    setIsModalOpen(false);
+  }
+
+  const isConnected = Object.values(connectedDevices).some(d => d.status.startsWith('Connected'))
+
   const currentUserData = hrmData.find((d) => d.name === userName)
-  const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
 
   const {
     workoutDuration,
@@ -90,41 +89,44 @@ export default function ConnectPage() {
   })
 
   return (
-    <ConnectView
-      duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
-      userName={userName}
-      setUserName={setUserName}
-      userAge={userAge}
-      setUserAge={setUserAge}
-      userHeight={userHeight}
-      setUserHeight={setUserHeight}
-      userWeight={displayWeight}
-      setUserWeight={handleWeightChange}
-      onWeightBlur={handleWeightBlur}
-      gender={gender}
-      setGender={setGender}
-      unitSystem={unitSystem}
-      onUnitChange={handleUnitChange}
-      isConnected={isConnected}
-      deviceStatus={deviceStatusMessage}
-      batteryLevel={batteryLevel}
-      onConnect={handleConnect}
-      onDisconnect={disconnect}
-      onForgetDevice={forgetDevice}
-      isSupported={isSupported}
-      currentHR={currentHR}
-      hrZoneProps={{
-        percentage: hrZoneProps.percentage,
-        progressColor: hrZoneProps.progressColor,
-      }}
-      connectionStatus={connectionStatus}
-      bluetoothConnected={isConnected}
-      hasStarted={hasStarted}
-      onReset={resetWorkout}
-      workoutStatus={workoutStatus}
-      onStartWorkout={startWorkout}
-      onEndWorkout={endWorkout}
-    />
+    <>
+      <ConnectView
+        duration={formatDuration(workoutDuration)}
+        caloriesBurned={caloriesBurned}
+        userName={userName}
+        setUserName={setUserName}
+        userAge={userAge}
+        setUserAge={setUserAge}
+        userHeight={userHeight}
+        setUserHeight={setUserHeight}
+        userWeight={displayWeight}
+        setUserWeight={handleWeightChange}
+        onWeightBlur={handleWeightBlur}
+        gender={gender}
+        setGender={setGender}
+        unitSystem={unitSystem}
+        onUnitChange={handleUnitChange}
+        connectedDevices={connectedDevices}
+        onConnect={handleConnectClick}
+        onDisconnect={disconnectDevice}
+        onForgetDevice={forgetDevice}
+        isSupported={isSupported}
+        connectionStatus={connectionStatus}
+        hasStarted={hasStarted}
+        onReset={resetWorkout}
+        workoutStatus={workoutStatus}
+        onStartWorkout={startWorkout}
+        onEndWorkout={endWorkout}
+      />
+      <DeviceSelectionModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        discoveredDevices={discoveredDevices}
+        onSelectDevice={(device, rssi) => {
+            selectDeviceToConnect(device, rssi);
+            handleModalClose();
+        }}
+      />
+    </>
   )
 }
