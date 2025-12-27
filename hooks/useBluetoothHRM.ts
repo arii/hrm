@@ -48,7 +48,7 @@ const getPreviouslyConnectedDevice = async (
       { error },
       'Failed to retrieve list of permitted Bluetooth devices.'
     )
-    return null
+    throw error
   }
 }
 
@@ -192,10 +192,9 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   // --- Public API ---
   const connect = useCallback(async () => {
     if (wsStatus !== 'Connected') {
-      const msg = 'WebSocket not connected. Cannot stream HRM data.'
-      setDeviceStatus(`Failed: ${msg}`)
-      logger.error(msg)
-      return
+      logger.warn(
+        'WebSocket not connected. HRM data will be queued until connection is established.'
+      )
     }
 
     // Try to reconnect to last known device first
@@ -264,15 +263,15 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
         } catch (error) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           logger.error(error as any, 'Auto-connect failed.')
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error'
           setDeviceStatus(
-            `Auto-connect failed: ${errorMessage}. Please connect manually.`
+            'Auto-connect failed. Please connect manually to resume.'
           )
           setLastDeviceId(null) // Clear invalid device ID
         }
       } else {
-        setDeviceStatus('Last device not found. Please connect manually.')
+        setDeviceStatus(
+          'Auto-connect failed. Please connect manually to resume.'
+        )
       }
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

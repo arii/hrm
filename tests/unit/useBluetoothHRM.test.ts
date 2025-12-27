@@ -141,8 +141,11 @@ describe('useBluetoothHRM Hook', () => {
     expect(mockSetLastDeviceId).toHaveBeenCalledWith('test-device-id')
   })
 
-  // Test 5: WebSocket disconnected error
-  it('should throw an error and set status if WebSocket is not connected', async () => {
+  // Test 5: WebSocket disconnected warning
+  it('should warn and proceed if WebSocket is not connected', async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
     ;(useWebSocket as jest.Mock).mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Disconnected',
@@ -150,13 +153,14 @@ describe('useBluetoothHRM Hook', () => {
     const { result } = renderHook(() => useBluetoothHRM({}))
 
     await act(async () => {
-      // Connect handles the error internally now, but logs it.
-      // In the implementation, it returns early if WS not connected.
       await result.current.connect()
     })
-    expect(result.current.deviceStatus).toBe(
-      'Failed: WebSocket not connected. Cannot stream HRM data.'
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('WebSocket not connected')
     )
+    expect(mockDeviceManager.findAndConnect).toHaveBeenCalled()
+    consoleWarnSpy.mockRestore()
   })
 
   // Test 6: Connection failure logging
