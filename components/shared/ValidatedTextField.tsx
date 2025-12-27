@@ -6,15 +6,17 @@ import { validate } from '@/utils/validation'
 
 // Define validation rule types
 export type ValidationRule =
-  | 'required'
-  | 'email'
-  | 'positiveInteger'
-  | { minLength: number }
+  | { type: 'required' }
+  | { type: 'email' }
+  | { type: 'positiveInteger' }
+  | { type: 'minLength'; value: number }
+
+export type ValidationRuleType = ValidationRule['type']
 
 export interface ValidatedTextFieldProps
   extends Omit<TextFieldProps, 'error' | 'helperText'> {
   validationRules?: ValidationRule[]
-  errorMessageOverrides?: Partial<Record<string, string>>
+  errorMessageOverrides?: Partial<Record<ValidationRuleType, string>>
   onValidation?: (isValid: boolean) => void
 }
 
@@ -56,12 +58,22 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
     handleValidation(props.value as string)
   }, [props.value])
 
+  const a11yProps = {
+    'aria-invalid': !!error,
+    'aria-describedby': !!error ? `${props.id}-error-text` : undefined,
+  }
+
   return (
     <TextField
       {...props}
       error={!!error}
       helperText={error}
       onChange={handleChange}
+      inputProps={{ ...props.inputProps, ...a11yProps }}
+      FormHelperTextProps={{
+        ...props.FormHelperTextProps,
+        id: a11yProps['aria-describedby'],
+      }}
     />
   )
 }

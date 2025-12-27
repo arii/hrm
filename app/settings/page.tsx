@@ -13,6 +13,7 @@ import {
 import { useUserSettings } from '@/context/UserSettingsContext'
 import ValidatedTextField from '@/components/shared/ValidatedTextField'
 import { useSnackbar } from 'notistack'
+import { sanitize } from '@/utils/sanitize'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -36,9 +37,11 @@ const SettingsPage = () => {
       return
     }
 
+    const sanitizedUserName = sanitize(userName)
+
     setUserSettings((prev) => ({
       ...prev,
-      userName,
+      userName: sanitizedUserName,
       userAge: userAge ? parseInt(userAge, 10) : null,
     }))
 
@@ -57,7 +60,7 @@ const SettingsPage = () => {
               label="User Name"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
-              validationRules={['required', { minLength: 2 }]}
+                validationRules={[{ type: 'required' }, { type: 'minLength', value: 2 }]}
               onValidation={setIsNameValid}
               fullWidth
             />
@@ -65,7 +68,7 @@ const SettingsPage = () => {
               label="User Age"
               value={userAge}
               onChange={(e) => setUserAge(e.target.value)}
-                validationRules={['positiveInteger']}
+                validationRules={[{ type: 'positiveInteger' }]}
               onValidation={setIsAgeValid}
               fullWidth
             />

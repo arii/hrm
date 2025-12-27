@@ -1,12 +1,16 @@
-import { type ValidationRule } from '@/components/shared/ValidatedTextField'
+import {
+  ValidationRule,
+  ValidationRuleType,
+} from '@/components/shared/ValidatedTextField'
 
 /**
  * Default error messages for validation rules.
  */
-const defaultErrorMessages: Record<string, string> = {
+const defaultErrorMessages: Record<ValidationRuleType, string> = {
   required: 'This field is required.',
   email: 'Invalid email address.',
   positiveInteger: 'Must be a positive integer.',
+  minLength: 'Value is too short.',
 }
 
 /**
@@ -19,48 +23,44 @@ const defaultErrorMessages: Record<string, string> = {
 export const validate = (
   value: string,
   rules: ValidationRule[],
-  customMessages: Partial<Record<string, string>> = {}
+  customMessages: Partial<Record<ValidationRuleType, string>> = {}
 ): { isValid: boolean; message: string | null } => {
   for (const rule of rules) {
-    if (typeof rule === 'string') {
-      switch (rule) {
-        case 'required':
-          if (!value) {
-            return {
-              isValid: false,
-              message:
-                customMessages.required ?? defaultErrorMessages.required,
-            }
+    switch (rule.type) {
+      case 'required':
+        if (!value) {
+          return {
+            isValid: false,
+            message: customMessages.required ?? defaultErrorMessages.required,
           }
-          break
-        case 'email':
-          if (value && !/\S+@\S+\.\S+/.test(value)) {
-            return {
-              isValid: false,
-              message: customMessages.email ?? defaultErrorMessages.email,
-            }
-          }
-          break
-        case 'positiveInteger':
-          if (value && !/^\d+$/.test(value)) {
-            return {
-              isValid: false,
-              message:
-                customMessages.positiveInteger ??
-                defaultErrorMessages.positiveInteger,
-            }
-          }
-          break
-      }
-    } else if (typeof rule === 'object' && 'minLength' in rule) {
-      if (value.length < rule.minLength) {
-        return {
-          isValid: false,
-          message:
-            customMessages.minLength ??
-            `Must be at least ${rule.minLength} characters.`,
         }
-      }
+        break
+      case 'email':
+        if (value && !/\S+@\S+\.\S+/.test(value)) {
+          return {
+            isValid: false,
+            message: customMessages.email ?? defaultErrorMessages.email,
+          }
+        }
+        break
+      case 'positiveInteger':
+        if (value && !/^\d+$/.test(value)) {
+          return {
+            isValid: false,
+            message:
+              customMessages.positiveInteger ??
+              defaultErrorMessages.positiveInteger,
+          }
+        }
+        break
+      case 'minLength':
+        if (value.length < rule.value) {
+          return {
+            isValid: false,
+            message: `Must be at least ${rule.value} characters.`,
+          }
+        }
+        break
     }
   }
 
