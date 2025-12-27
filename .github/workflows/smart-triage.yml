@@ -32,6 +32,8 @@
 name: Smart Triage
 
 on:
+  schedule:
+    - cron: '0 2 * * *'
   workflow_dispatch:
   issues:
     types: [opened, edited]

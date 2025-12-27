@@ -253,7 +253,6 @@ jobs:
 
       - name: Run Visual Tests
         id: visual_tests
-        if: steps.build.outcome == 'success'
         run: |
           set -o pipefail
           pnpm run test:visual 2>&1 | tee logs/visual-output.log

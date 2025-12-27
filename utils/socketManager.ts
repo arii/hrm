@@ -15,16 +15,20 @@ import {
   ExtWebSocket,
 } from '../types/websocket.js'
 import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
+import {
+  startCalorieService,
+  stopCalorieService,
+  resetCalorieService,
+  getClientSessionState,
+} from '../services/calorieService.js'
 
 // Define service instances to be managed
 // New: Define a function to get the state snapshot
@@ -33,13 +37,12 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
-
 const hrmDataRepository = new HrmDataRepository()
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+
+const CLIENT_DEFAULTS = {
+  maxHr: 185,
+  age: 30,
+}
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
@@ -55,6 +58,8 @@ const initSocketManager = (
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
+  startCalorieService(hrmDataRepository, broadcastState)
+
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
     extWs.isAlive = true
@@ -69,14 +74,14 @@ const initSocketManager = (
     const newClient: HrmStreamData = {
       clientId: extWs.clientId,
       value: 0,
-      maxHr: 185,
-      age: 30,
-      calories: 0, // Initialize to 0
+      maxHr: CLIENT_DEFAULTS.maxHr,
+      age: CLIENT_DEFAULTS.age,
+      totalCalories: 0,
     }
     hrmDataRepository.save(newClient)
-    clientSessionState.set(extWs.clientId, {
+    getClientSessionState().set(extWs.clientId, {
       lastUpdate: Date.now(),
-      accumulatedCalories: 0,
+      hrSamples: [],
     })
 
     extWs.on('message', (message) => {
@@ -86,13 +91,14 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
+      getClientSessionState().delete(extWs.clientId)
       broadcastState()
     })
   })
 
   wss.on('close', () => {
     connectionMonitor.stop()
+    stopCalorieService()
   })
 }
 
@@ -100,8 +106,8 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
+  resetCalorieService()
   hrmDataRepository.clear()
-  clientSessionState.clear()
 }
 
 const broadcastState = () => {
@@ -168,35 +174,16 @@ const handleIncomingMessage = (
       }
       case 'HRM_INPUT': {
         const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        const sessionState = getClientSessionState().get(clientId)
+        const currentHr = message.data.value
 
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: currentHr,
-              age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            currentAccumulated += caloriesBurned
-          }
-
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
+        if (existingData && sessionState && currentHr && currentHr > 0) {
+          // Store the current heart rate sample for the periodic calculation.
+          sessionState.hrSamples.push(currentHr)
+          // Update the immediate HR value for real-time display.
           hrmDataRepository.save({
             ...existingData,
-            value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
+            value: currentHr,
           })
         }
         broadcastState()

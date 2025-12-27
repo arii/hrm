@@ -29,6 +29,7 @@ import {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  totalCalories: number
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -70,6 +71,7 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
+  totalCalories,
   userName,
   setUserName,
   userAge,
@@ -387,7 +389,11 @@ export default function ConnectView({
         </Stack>
 
         {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+          <WorkoutSummary
+            duration={duration}
+            caloriesBurned={caloriesBurned}
+            totalCalories={totalCalories}
+          />
         )}
 
         <Typography

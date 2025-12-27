@@ -10,3 +10,12 @@ export const formatDuration = (ms: number): string => {
   const seconds = totalSeconds % 60
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
+
+/**
+ * Formats a number of calories to a string with one decimal place.
+ * @param calories The number of calories.
+ * @returns A string representing the calories with one decimal place.
+ */
+export const formatCalories = (calories: number): string => {
+  return calories.toFixed(1)
+}

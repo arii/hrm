@@ -5,12 +5,29 @@ import Stack from '@mui/material/Stack'
 import WatchLaterIcon from '@mui/icons-material/WatchLater'
 import WhatshotIcon from '@mui/icons-material/Whatshot'
 
+import { memo, useMemo } from 'react'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { formatCalories } from '@/utils/formatters'
+
 interface WorkoutSummaryProps {
   duration: string
   caloriesBurned: number
+  totalCalories: number
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = memo(function WorkoutSummary({
+  duration,
+  caloriesBurned,
+  totalCalories,
+}: WorkoutSummaryProps) {
+  const { hasStarted } = useWorkoutSession({
+    isConnected: true,
+    totalCalories,
+  })
+  const displayedCalories = useMemo(() => {
+    return formatCalories(hasStarted ? caloriesBurned : totalCalories)
+  }, [hasStarted, caloriesBurned, totalCalories])
+
   return (
     <Paper
       elevation={3}
@@ -45,16 +62,16 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
           <Stack spacing={1} alignItems="center">
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
             <Typography variant="h5" component="p" fontWeight="bold">
-              {caloriesBurned}
+              {displayedCalories}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Calories Burned
+              {hasStarted ? 'Workout Calories' : 'Total Calories'}
             </Typography>
           </Stack>
         </Box>
       </Stack>
     </Paper>
   )
-}
+})
 
 export default WorkoutSummary

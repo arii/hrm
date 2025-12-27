@@ -7,7 +7,11 @@ import { useWebSocket } from '@/context/WebSocketContext'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import HrTile from './HrTile'
 import { HrmData } from '@/types/websocket'
-import { MAX_HR_DEFAULT } from '@/utils/constants'
+import {
+  MAX_HR_DEFAULT,
+  USER_AGE_DEFAULT,
+  USER_WEIGHT_DEFAULT_KG,
+} from '@/utils/constants'
 import { useUserWeight } from '@/hooks/useUserWeight'
 import { useHrZone } from '@/hooks/useHrZone'
 
@@ -28,8 +32,8 @@ const HrTileWithCalories = ({
 
   const { calories, resetCalories } = useCalorieCounter(
     user.value || 0,
-    userSettings.userAge || 30,
-    weightInKg || 70,
+    userSettings.userAge || USER_AGE_DEFAULT,
+    weightInKg || USER_WEIGHT_DEFAULT_KG,
     timerData.isRunning
   )
 

@@ -71,7 +71,7 @@ export const useCalorieCounter = (
     // Other dependencies like `heartRate`, `age`, and `weight` are managed
     // via refs to avoid resetting the interval on every change, which would
     // otherwise cause performance issues and prevent calorie accumulation.
-  }, [isActive])
+  }, [isActive, heartRate, age, weight])
 
   const resetCalories = useCallback(() => {
     setCalories(0)
