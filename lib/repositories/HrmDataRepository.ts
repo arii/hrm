@@ -18,6 +18,20 @@ export class HrmDataRepository {
   }
 
   /**
+   * Finds a client's data by their device ID.
+   * @param deviceId The client's device identifier.
+   * @returns The client's data or undefined if not found.
+   */
+  findByDeviceId(deviceId: string): HrmStreamData | undefined {
+    for (const client of this.clientData.values()) {
+      if (client.deviceId === deviceId) {
+        return client
+      }
+    }
+    return undefined
+  }
+
+  /**
    * Retrieves all client data entries.
    * @returns An array of all client data.
    */
