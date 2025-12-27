@@ -64,6 +64,7 @@ const updateCaloriesForClient = (clientId: string): boolean => {
   if (avgHr > 30) {
     try {
       const durationMinutes = (now - session.lastUpdate) / 1000 / 60
+      // Prevent calculating for excessively long durations if the system clock changes.
       if (durationMinutes > 0 && durationMinutes < 5) {
         const caloriesBurned = estimateCaloriesBurned({
           heartRate: avgHr,
