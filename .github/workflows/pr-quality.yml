@@ -11,6 +11,10 @@ on:
         description: 'Branch to check'
         required: true
         default: 'leader'
+      pr_number:
+        description: 'PR number to post comments to (optional)'
+        required: false
+        type: string
 
 concurrency:
   group: pr-quality-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -151,13 +155,23 @@ jobs:
           NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         run: pnpm run build
 
+      - name: Upload Build Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: |
+            dist/
+            .next/
+          retention-days: 1
+
   # ===========================================================================
   # JOB 3: CORE LOGIC TESTS
-  # Reuses workspace. Runs functional tests.
+  # Downloads build artifacts and runs functional tests.
   # ===========================================================================
   core-tests:
     name: 🧪 Core Logic
-    needs: quality-check
+    needs: [infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -191,21 +205,40 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
-      - name: Build Server
-        env:
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
+
+      - name: Verify Server Build
         run: |
-          # Only rebuild if dist doesn't exist
-          if [ ! -d "dist" ] || [ ! -f "dist/server.js" ]; then
-            echo "Building server..."
-            pnpm run build:server
+          if [ ! -f "dist/server.js" ]; then
+            echo "::error::Server build failed - dist/server.js not found"
+            echo "Contents of dist directory:"
+            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
+            echo "Contents of current directory:"
+            ls -la | grep -E "^d" | head -20
+            exit 1
+          fi
+          echo "✅ Server successfully built at dist/server.js"
+
+      - name: Check dist Before Infra Tests
+        run: |
+          echo "Checking dist before infra tests..."
+          if [ -f "dist/server.js" ]; then
+            echo "✅ dist/server.js exists"
+            ls -lh dist/server.js
           else
-            echo "Server already built, skipping build step"
+            echo "❌ dist/server.js NOT FOUND"
+            ls -la dist/ 2>/dev/null || echo "dist directory does not exist"
           fi
 
       - name: Run Infra Tests
         id: infra-tests
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         run: pnpm run test:infra 2>&1 | tee infra-tests.log || true
         continue-on-error: true
 
@@ -238,7 +271,7 @@ jobs:
   # ===========================================================================
   visual-tests:
     name: 🎨 Visual Regression
-    needs: core-tests
+    needs: [infra-setup, quality-check]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -270,6 +303,12 @@ jobs:
             pnpm install --frozen-lockfile
             pnpm exec playwright install chromium
           fi
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ env.SESSION_ID }}
+          path: ./
 
       - name: Run Visual Tests
         run: |
@@ -369,53 +408,118 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
           echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
 
-      - name: Post Quality Check Comment
-        if: github.event.pull_request.number != ''
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const code_quality = '${{ needs.quality-check.result }}';
-            const core_tests = '${{ needs.core-tests.result }}';
-            const visual_tests = '${{ needs.visual-tests.result }}';
-            const pr = context.payload.pull_request;
+      - name: Post Comprehensive Quality Report
+        if: always()
+        env:
+          QUALITY_RESULT: ${{ needs.quality-check.result }}
+          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
+          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
+          LOG_TRUNCATE_BYTES: 15000
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          set +e
+          
+          # Download artifacts with logs
+          mkdir -p logs
+          echo "::notice::Downloading test artifacts..."
+          
+          # Download each artifact if it exists
+          if gh run download ${{ github.run_id }} -n "code-quality-logs" -D logs 2>/dev/null; then
+            [ -f "logs/code-quality.log" ] && echo "✅ Downloaded code-quality logs"
+          fi
+          if gh run download ${{ github.run_id }} -n "core-tests-logs" -D logs 2>/dev/null; then
+            [ -f "logs/core-tests.log" ] && echo "✅ Downloaded core-tests logs"
+          fi
+          if gh run download ${{ github.run_id }} -n "visual-tests-logs" -D logs 2>/dev/null; then
+            [ -f "logs/visual-tests.log" ] && echo "✅ Downloaded visual-tests logs"
+          fi
+          
+          # Find PR number
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          fi
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number' 2>/dev/null)
+          fi
+          
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" == "null" ]; then
+            echo "::warning::No Pull Request found. Skipping comment."
+            exit 0
+          fi
+          
+          mkdir -p test-results
+          COMMENT_FILE="test-results/pr-comment.md"
+          
+          # Build the comment with embedded logs
+          {
+            echo "## 📋 Quality Gate Results"
+            echo ""
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| Code Quality | $([ "$QUALITY_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$QUALITY_RESULT) |"
+            echo "| Core Tests | $([ "$CORE_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$CORE_TESTS_RESULT) |"
+            echo "| Visual Tests | $([ "$VISUAL_TESTS_RESULT" = "success" ] && echo '✅ success' || echo '❌ '$VISUAL_TESTS_RESULT) |"
+            echo ""
             
-            let summary = '## 📋 Quality Gate Status\n\n';
-            summary += `| Check | Status |\n`;
-            summary += `|-------|--------|\n`;
-            summary += `| Code Quality | ${code_quality === 'success' ? '✅' : code_quality === 'skipped' ? '⊘' : '❌'} ${code_quality} |\n`;
-            summary += `| Core Tests | ${core_tests === 'success' ? '✅' : core_tests === 'skipped' ? '⊘' : '❌'} ${core_tests} |\n`;
-            summary += `| Visual Tests | ${visual_tests === 'success' ? '✅' : visual_tests === 'skipped' ? '⊘' : '❌'} ${visual_tests} |\n`;
+            # Add failed logs
+            FAILED_ANY=0
+            if [ "$QUALITY_RESULT" != "success" ] && [ "$QUALITY_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Code Quality Failures</strong></summary>"
+              echo ""
+              echo '```'
+              if [ -f "logs/code-quality.log" ]; then
+                tail -c $LOG_TRUNCATE_BYTES "logs/code-quality.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              else
+                echo "Log file not found"
+              fi
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
             
-            if ('${{ env.FAILURE_COUNT }}' > 0) {
-              summary += `\n⚠️ **${{ env.FAILURE_COUNT }} Quality Check(s) Need Attention**\n`;
-              summary += `\n${{ env.FAILED_JOBS }}`;
-              summary += `\n📦 Check [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed reports.\n`;
-            } else {
-              summary += `\n✅ All quality checks passed!\n`;
-            }
+            if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
+              echo ""
+              echo '```'
+              if [ -f "logs/core-tests.log" ]; then
+                tail -c $LOG_TRUNCATE_BYTES "logs/core-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              else
+                echo "Log file not found"
+              fi
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
             
-            summary += `\n📖 [Full Workflow Log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
+              FAILED_ANY=1
+              echo "<details><summary><strong>❌ Visual Tests Failures</strong></summary>"
+              echo ""
+              echo '```'
+              if [ -f "logs/visual-tests.log" ]; then
+                tail -c $LOG_TRUNCATE_BYTES "logs/visual-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+              else
+                echo "Log file not found"
+              fi
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
             
-            github.rest.issues.createComment({
-              issue_number: pr.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary
-            });
-
-      - name: Notify on Critical Failures
-        if: env.FAILURE_COUNT > 0
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const pr = context.payload.pull_request;
-            if (!pr) return;
-            
-            github.rest.issues.createComment({
-              issue_number: pr.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '⏸️ **Review Status**: Quality checks have issues. Please review the failing checks above and either:\n\n1. Fix the issues locally and push updates\n2. Reach out if you need help resolving these issues\n\nI will continue to monitor and re-test as you make changes.'
-            });
+            if [ $FAILED_ANY -eq 0 ]; then
+              echo "✅ All quality checks passed!"
+            else
+              echo ""
+              echo "---"
+              echo "*Note: Logs are truncated to 15KB. View the [full workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for complete details.*"
+            fi
+          } > "$COMMENT_FILE"
+          
+          # Post the comment
+          gh pr comment "$PR_NUMBER" --body-file "$COMMENT_FILE" || {
+            echo "::error::Failed to post comment to PR #$PR_NUMBER"
+            exit 1
+          }

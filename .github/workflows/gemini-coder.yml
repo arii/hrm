@@ -300,24 +300,32 @@ jobs:
             exit 1
           fi
           
-          # Enhanced conversational text filtering
+          # Step 1: Extract from markdown code block if present (do this FIRST)
+          FIRST_LINE=$(head -1 patch.diff)
+          if [[ "$FIRST_LINE" == *'```'* ]]; then
+            echo "::notice::Detected markdown code block, extracting diff..."
+            # Handles variations: ```diff, ``` diff, ```
+            sed -n '/^```/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
+            if [ -s patch.diff.tmp ]; then
+              mv patch.diff.tmp patch.diff
+              echo "::notice::✅ Extracted diff from markdown code block"
+            else
+              rm patch.diff.tmp 2>/dev/null
+              echo "::warning::Markdown extraction resulted in empty file, using original"
+            fi
+          fi
+          
+          # Step 2: Enhanced conversational text filtering
           # Remove common LLM preamble/postamble text while preserving the diff
           # Set DISABLE_TEXT_FILTERING=true to skip this step
-          
-          # First check: is the patch already valid without any processing?
-          if grep -q "^--- a/" patch.diff && grep -q "^+++ b/" patch.diff; then
-            echo "::notice::✅ Patch appears to be valid unified diff format already"
-            echo "::notice::Skipping conversational text filtering to preserve content"
-          elif [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
+          if [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
             echo "::notice::Filtering conversational text from patch..."
             
             # Create temporary file for cleaned content
             CLEANED_PATCH="patch.diff.cleaned"
             
-            # Remove markdown code block markers and common preamble patterns
-            # These patterns are intentionally broad to catch most LLM preamble/postamble
-            sed '/^```/d' patch.diff | \
-              grep -v "^Here" | \
+            # Remove common preamble patterns
+            grep -v "^Here" patch.diff | \
               grep -v "^I'll" | \
               grep -v "^Let me" | \
               grep -v "^This" | \
@@ -331,7 +339,7 @@ jobs:
             DIFF_START=$(grep -n "^--- a/" "$CLEANED_PATCH.tmp" | head -1 | cut -d: -f1)
             
             if [ -z "$DIFF_START" ]; then
-              echo "::warning::Could not find unified diff markers after filtering, trying original"
+              echo "::notice::No conversational text found to filter, using original"
               rm "$CLEANED_PATCH.tmp"
             else
               echo "::notice::Found diff starting at line $DIFF_START, extracting..."
@@ -340,7 +348,7 @@ jobs:
               
               if [ -s "$CLEANED_PATCH" ]; then
                 mv "$CLEANED_PATCH" patch.diff
-                echo "::notice::Extracted unified diff, removed conversational text"
+                echo "::notice::✅ Removed conversational text from patch"
               else
                 echo "::warning::Cleaned patch is empty, using original"
                 rm "$CLEANED_PATCH" 2>/dev/null
@@ -349,27 +357,6 @@ jobs:
             fi
           else
             echo "::notice::Conversational text filtering disabled (DISABLE_TEXT_FILTERING=true)"
-          fi
-          
-          # Extract diff from markdown code block if present (fallback)
-          # Only apply if patch doesn't already have valid diff markers
-          if ! grep -q "^--- a/" patch.diff; then
-            echo "::notice::No valid diff markers found, checking for markdown code block..."
-            # Handles variations: ```diff, ``` diff, ```
-            if head -1 patch.diff | grep -q "^\`\`\`"; then
-              echo "::notice::Detected markdown code block, extracting diff..."
-              # Extract content between ``` (optionally followed by diff/language) and closing ```
-              sed -n '/^```.*$/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
-              if [ -s patch.diff.tmp ]; then
-                mv patch.diff.tmp patch.diff
-                echo "::notice::Extracted diff from markdown code block"
-              else
-                echo "::error::Failed to extract diff from markdown code block"
-                echo "::notice::First 20 lines of patch.diff:"
-                head -20 patch.diff | sed 's/^/::notice::  /'
-                exit 1
-              fi
-            fi
           fi
           
           # Validate patch format starts with --- a/
@@ -527,23 +514,26 @@ jobs:
       - name: 'Gemini: Generate Build-Time Secrets'
         if: env.AGENT_PROVIDER == 'gemini'
         id: build-secrets
+        env:
+          NEXTAUTH_URL_SECRET: ${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
         run: |
           # Generate unique build-time values for CI verification only
           BUILD_ID=$(uuidgen || python3 -c "import uuid; print(uuid.uuid4())")
           
           # Only use provided secrets, never use defaults
-          if [ -z "${{ secrets.NEXTAUTH_URL }}" ]; then
+          if [ -z "$NEXTAUTH_URL_SECRET" ]; then
             echo "::warning::NEXTAUTH_URL secret not configured. Using generated build-time value."
             echo "NEXTAUTH_URL=http://localhost:3000" >> $GITHUB_ENV
           else
-            echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> $GITHUB_ENV
+            echo "NEXTAUTH_URL=$NEXTAUTH_URL_SECRET" >> $GITHUB_ENV
           fi
           
-          if [ -z "${{ secrets.NEXTAUTH_SECRET }}" ]; then
+          if [ -z "$NEXTAUTH_SECRET_SECRET" ]; then
             echo "::warning::NEXTAUTH_SECRET secret not configured. Generating build-time value."
             echo "NEXTAUTH_SECRET=build-verification-$BUILD_ID" >> $GITHUB_ENV
           else
-            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> $GITHUB_ENV
+            echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET_SECRET" >> $GITHUB_ENV
           fi
           
           echo "::notice::Build-time secrets configured for verification phase"
@@ -554,11 +544,11 @@ jobs:
           NEXTAUTH_URL: ${{ env.NEXTAUTH_URL }}
           NEXTAUTH_SECRET: ${{ env.NEXTAUTH_SECRET }}
         run: |
-          echo "::notice::Running lint..."
-          pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
-          
           echo "::notice::Building project..."
           pnpm run build
+          
+          echo "::notice::Running lint fixes..."
+          pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
 
       - name: 'Gemini: Prepare Commit Message'
         if: env.AGENT_PROVIDER == 'gemini'
@@ -569,41 +559,30 @@ jobs:
           
           TITLE="${{ env.TITLE }}"
           
-          # Convert title to lowercase for commitlint compliance
+          # Generate commit message following conventional commits and commitlint rules
+          # Rules: lowercase subject, max 100 chars, must be lowercase (no sentence case)
           TITLE_LOWER=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]')
-          
-          # Extract scope from title if it exists (e.g., "Update readme" -> use "ai")
-          # or if title starts with conventional commit type (e.g., "feat: update readme")
           SCOPE="ai"
           
-          # Check if title already has a conventional commit scope-like prefix
-          if [[ "$TITLE_LOWER" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([^)]*\))?:[[:space:]] ]]; then
-            # Extract the type part before colon
-            SCOPE=$(echo "$TITLE_LOWER" | sed 's/^\([a-z]*\).*/\1/')
-            # Remove type and colon from title to avoid duplication
-            TITLE_LOWER=$(echo "$TITLE_LOWER" | sed 's/^[a-z]*(\([^)]*\))?:[[:space:]]*//' 2>/dev/null || echo "$TITLE_LOWER" | sed 's/^[a-z]*:[[:space:]]*//')
+          # If title already has a conventional commit format, use as-is (just lowercase)
+          if echo "$TITLE_LOWER" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test)(\([^)]*\))?:[[:space:]]'; then
+            COMMIT_MESSAGE="$TITLE_LOWER"
+          else
+            # Add feat(ai): prefix if not already present
+            COMMIT_MESSAGE="feat($SCOPE): $TITLE_LOWER"
           fi
           
-          # Trim whitespace and remove any leading/trailing hyphens
-          TITLE_LOWER=$(echo "$TITLE_LOWER" | xargs | sed -e 's/^-*//' -e 's/-*$//')
+          # Trim whitespace
+          COMMIT_MESSAGE=$(echo "$COMMIT_MESSAGE" | xargs)
           
-          # Ensure message doesn't exceed commitlint limits (72 chars max for subject)
-          # Leaves room for "feat(ai): " prefix (10 chars) + description (62 chars)
-          if [ ${#TITLE_LOWER} -gt 62 ]; then
-            TITLE_LOWER="${TITLE_LOWER:0:59}..."
-          fi
-          
-          # Generate final commit message
-          COMMIT_MESSAGE="feat($SCOPE): $TITLE_LOWER"
-          
-          # Validate the final message doesn't exceed limits
-          if [ ${#COMMIT_MESSAGE} -gt 72 ]; then
-            echo "::warning::Commit message exceeds 72 characters, truncating further"
-            COMMIT_MESSAGE="${COMMIT_MESSAGE:0:69}..."
+          # Enforce commitlint subject-max-length: 100 chars
+          if [ ${#COMMIT_MESSAGE} -gt 100 ]; then
+            echo "::warning::Commit message exceeds 100 characters, truncating"
+            COMMIT_MESSAGE="${COMMIT_MESSAGE:0:97}..."
           fi
           
           echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
-          echo "::notice::Generated commit message: $COMMIT_MESSAGE"
+          echo "::notice::Generated commit message: $COMMIT_MESSAGE (${#COMMIT_MESSAGE} chars)"
 
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'
