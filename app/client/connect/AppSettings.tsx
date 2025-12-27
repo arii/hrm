@@ -58,8 +58,8 @@ const AppSettings: React.FC<AppSettingsProps> = ({
   const [feet, setFeet] = useState('')
   const [inches, setInches] = useState('')
 
-  // When the userHeight prop (in cm) or the unit system changes,
-  // update the internal feet/inches state for display.
+  // This effect synchronizes the internal feet/inches state with the userHeight prop (in cm)
+  // when the unit system is imperial. This is a one-way sync from props to local state.
   useEffect(() => {
     if (unit === 'IMPERIAL' && userHeight > 0) {
       const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
@@ -68,8 +68,8 @@ const AppSettings: React.FC<AppSettingsProps> = ({
     }
   }, [userHeight, unit])
 
-  // When the internal feet or inches state changes, update the
-  // parent's userHeight state (in cm).
+  // This effect synchronizes the parent's userHeight state (in cm) with the internal
+  // feet/inches state. This is a one-way sync from local state to props.
   useEffect(() => {
     if (unit === 'IMPERIAL') {
       const heightInCm = feetAndInchesToCm(
