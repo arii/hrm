@@ -9,12 +9,18 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
-import { toKg } from '../../../utils/units'
+import {
+  toKg,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { useHrZone } from '@/hooks/useHrZone'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [_heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', 175) // Always CM
+  const [_heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
   const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
@@ -25,6 +31,11 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
+  const [transientHeightInput, setTransientHeightInput] = useState<{
+    cm: string
+    feet: string
+    inches: string
+  } | null>(null)
   const [displayWeight, setDisplayWeight] = useState('')
   const [heightError, setHeightError] = useState<string | null>(null)
 
@@ -39,13 +50,51 @@ export default function ConnectPage() {
     return null
   }
 
-  const handleHeightChange = (newHeight: number) => {
-    setHeightInCm(newHeight)
+  // Calculate the display value based on the source of truth (_heightInCm)
+  const numericHeight = parseFloat(_heightInCm)
+  const derivedDisplayHeight = { cm: '', feet: '', inches: '' }
+  if (!isNaN(numericHeight)) {
+    if (unitSystem === 'METRIC') {
+      derivedDisplayHeight.cm = String(Math.round(numericHeight))
+    } else {
+      const { feet, inches } = cmToFeetAndInches(numericHeight)
+      derivedDisplayHeight.feet = String(feet)
+      derivedDisplayHeight.inches = String(inches)
+    }
+  }
+
+  // If the user is typing, show their input. Otherwise, show the derived value.
+  const displayHeight = transientHeightInput ?? derivedDisplayHeight
+
+  const handleHeightChange = (
+    newDisplayValue: Partial<{ cm: string; feet: string; inches: string }>
+  ) => {
+    setTransientHeightInput((prev) => ({
+      ...(prev ?? derivedDisplayHeight),
+      ...newDisplayValue,
+    }))
   }
 
   const handleHeightBlur = () => {
-    const error = validateHeight(_heightInCm, unitSystem)
+    let cmValue = 0
+    if (unitSystem === 'METRIC') {
+      cmValue = parseFloat(displayHeight.cm)
+    } else {
+      const feet = parseFloat(displayHeight.feet)
+      const inches = parseFloat(displayHeight.inches)
+      if (!isNaN(feet) && !isNaN(inches)) {
+        cmValue = feetAndInchesToCm(feet, inches)
+      }
+    }
+
+    const error = validateHeight(cmValue, unitSystem)
     setHeightError(error)
+
+    if (!error && cmValue > 0) {
+      setHeightInCm(cmValue.toFixed(2))
+    }
+    // Reset transient state after blur to show the canonical value
+    setTransientHeightInput(null)
   }
 
   const handleWeightChange = (newDisplayValue: string) => {
@@ -83,19 +132,22 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
+      setTransientHeightInput(null) // Reset transient input on unit change
     }
   }
 
   const handleConnect = () => {
-    const age = userAge ? parseInt(userAge, 10) : 0
+    // Age and weight are parsed as floats for consistency in calorie calculation.
+    const age = userAge ? parseFloat(userAge) : 0
     connectAndStream(userName, age)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
   const totalCalories = currentUserData?.calories ?? 0
-  const maxHr = userAge ? 220 - parseInt(userAge) : 190
-  const hrZoneProps = getHrZoneProps(currentHR, maxHr)
+  // Age is parsed as a float for consistency in calorie calculation.
+  const maxHr = userAge ? 220 - parseFloat(userAge) : 190
+  const hrZoneProps = useHrZone(currentHR, maxHr)
 
   const {
     workoutDuration,
@@ -110,15 +162,28 @@ export default function ConnectPage() {
     totalCalories,
   })
 
+  const { calories, resetCalories } = useCalorieCounter(
+    currentHR,
+    // Age and weight are parsed as floats for consistency in calorie calculation.
+    parseFloat(userAge) || 30,
+    parseFloat(_weightInKg) || 70,
+    workoutStatus === 'running'
+  )
+
+  const resetWorkout = () => {
+    resetWorkoutSession()
+    resetCalories()
+  }
+
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={caloriesBurned}
+      caloriesBurned={calories}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
-      userHeight={_heightInCm}
+      userHeight={displayHeight}
       setUserHeight={handleHeightChange}
       onHeightBlur={handleHeightBlur}
       heightError={heightError}
