@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import { formatDuration } from '@/utils/formatters'
@@ -42,9 +42,10 @@ describe('PlaylistTracksDisplay', () => {
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Failed to fetch'
-    )
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Failed to fetch')
   })
 
   it('should render empty state', async () => {
@@ -57,9 +58,10 @@ describe('PlaylistTracksDisplay', () => {
         <PlaylistTracksDisplay playlistId="123" />
       </WebSocketContext.Provider>
     )
-    expect(
-      await screen.findByText('This playlist is empty.')
-    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+    expect(screen.getByText('This playlist is empty.')).toBeInTheDocument()
   })
 
   it('should render tracks and handle pagination', async () => {
@@ -88,7 +90,11 @@ describe('PlaylistTracksDisplay', () => {
       </WebSocketContext.Provider>
     )
 
-    expect(await screen.findByText('Track 1')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Track 1')).toBeInTheDocument()
     expect(screen.getByText('Artist 1')).toBeInTheDocument()
     expect(screen.getByText(formatDuration(180000))).toBeInTheDocument()
 

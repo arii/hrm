@@ -15,7 +15,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import { useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import AuthButton from './AuthButton'
 import VolumeSlider from './Spotify/VolumeSlider'
 import SpotifyDeviceSelectorWrapper from './SpotifyDeviceSelectorWrapper'
@@ -125,6 +125,7 @@ const SpotifyDisplay = () => {
   const { spotifyData, sendData, connectionStatus } = useWebSocket()
   const isLoggedIn = status === 'authenticated'
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [isSliding, setIsSliding] = useState(false)
 
   // 5. Integrate useReducer
   const [state, dispatch] = useReducer(
@@ -150,11 +151,14 @@ const SpotifyDisplay = () => {
 
   // Synchronize local UI state with WebSocket data (the source of truth)
   useEffect(() => {
+    if (isSliding) {
+      return
+    }
     dispatch({
       type: 'SYNC_WITH_WEBSOCKET',
       payload: { volume: spotifyData.volume, isMuted: spotifyData.isMuted },
     })
-  }, [spotifyData.volume, spotifyData.isMuted])
+  }, [spotifyData.volume, spotifyData.isMuted, isSliding])
 
   // Centralized command sender for volume changes
   const sendVolumeCommand = useCallback(
@@ -183,6 +187,7 @@ const SpotifyDisplay = () => {
 
   // Handler for the VolumeSlider component's onChange
   const handleVolumeChange = (newVolume: number) => {
+    setIsSliding(true)
     dispatch({ type: 'SET_VOLUME', payload: newVolume }) // Update UI immediately
 
     // Debounce sending the command to avoid API flooding
@@ -191,6 +196,7 @@ const SpotifyDisplay = () => {
     }
     debounceTimeoutRef.current = setTimeout(() => {
       sendVolumeCommand(newVolume)
+      setIsSliding(false)
     }, 300)
   }
 
