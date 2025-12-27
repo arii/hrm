@@ -8,6 +8,7 @@ import Container from '@mui/material/Container'
 import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { useWebSocket } from '@/context/WebSocketContext'
 
 const PlaylistSelector = dynamic(
@@ -20,9 +21,13 @@ const PlaylistSelector = dynamic(
 
 const SpotifySelectionPage = () => {
   const { spotifyData, sendData } = useWebSocket()
+  const router = useRouter()
 
-  const handlePlaylistSelected = (_uri: string) => {
-    //
+  const handlePlaylistSelected = (uri: string) => {
+    const playlistId = uri.split(':').pop()
+    if (playlistId) {
+      router.push(`/spotify/playlist/${playlistId}`)
+    }
   }
 
   const handlePlaylistPlay = (uri: string) => {
@@ -30,6 +35,7 @@ const SpotifySelectionPage = () => {
       type: 'SPOTIFY_COMMAND',
       command: 'PLAY',
       playlistUri: uri,
+      deviceId: spotifyData.deviceId,
     })
   }
 
