@@ -371,7 +371,7 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         throw error
       }
     },
-    [onDisconnected, sendData]
+    [onDisconnected, sendData, identifyClient]
   )
 
   useEffect(() => {

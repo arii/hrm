@@ -75,7 +75,6 @@ const initSocketManager = (
       isConnected: true,
     }
     hrmDataRepository.save(newClient)
-
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
@@ -134,6 +133,12 @@ const handleIncomingMessage = (
         const oldId = clientId
         const newId = message.clientId
         ws.clientId = newId
+
+        const sessionState = clientSessionState.get(oldId)
+        if (sessionState) {
+          clientSessionState.set(newId, sessionState)
+          clientSessionState.delete(oldId)
+        }
 
         const persistentData = hrmDataRepository.findById(newId)
         if (persistentData) {

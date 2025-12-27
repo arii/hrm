@@ -30,7 +30,10 @@ import {
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
 
+import { HrmDataRepository } from '../../lib/repositories/HrmDataRepository'
+
 // Mock dependencies
+jest.mock('../../lib/repositories/HrmDataRepository')
 jest.mock('../../services/spotifyTokenManager')
 jest.mock('@spotify/web-api-ts-sdk', () => ({
   SpotifyApi: {
@@ -81,7 +84,6 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter {
-  clientId = ''
   isAlive: boolean
   clientType: string | undefined
   terminate = jest.fn()
@@ -113,8 +115,11 @@ describe('WebSocket Manager', () => {
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
+  let hrmDataRepository: jest.Mocked<HrmDataRepository>
 
   beforeEach(() => {
+    hrmDataRepository =
+      new HrmDataRepository() as jest.Mocked<HrmDataRepository>
     jest.useFakeTimers()
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
@@ -365,15 +370,13 @@ describe('WebSocket Manager', () => {
   })
   describe('IDENTIFY_CLIENT', () => {
     it('should re-associate client data on IDENTIFY_CLIENT for a new device', () => {
+      const oldId = (mockWs as unknown as ExtWebSocket).clientId
       const newId = 'stable-device-id'
-      ;(mockWs as unknown as ExtWebSocket).clientId = 'user-abc'
 
-      // Simulate some HRM data for the temporary client
-      const hrmMessage = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 150 },
-      })
-      mockWs.emit('message', hrmMessage.toString())
+      // Verify initial state
+      let hrmData = hrmDataRepository.findAll()
+      expect(hrmData).toHaveLength(1)
+      expect(hrmData[0].clientId).toBe(oldId)
 
       const identifyMessage = JSON.stringify({
         type: 'IDENTIFY_CLIENT',
@@ -381,22 +384,15 @@ describe('WebSocket Manager', () => {
       })
       mockWs.emit('message', identifyMessage.toString())
 
-      const lastCall = (broadcast as jest.Mock).mock.calls.pop()
-      const hrmData = lastCall[1].payload
-      const clientData = hrmData.find((c: HrmData) => c.clientId === newId)
-      expect(clientData).toBeDefined()
-      expect(clientData.isConnected).toBe(true)
+      // Verify that the client ID has been updated
+      hrmData = hrmDataRepository.findAll()
+      expect(hrmData).toHaveLength(1)
+      expect(hrmData[0].clientId).toBe(newId)
     })
 
     it('should preserve data on IDENTIFY_CLIENT for a reconnecting device', () => {
       const stableId = 'stable-device-id'
-      ;(mockWs as unknown as ExtWebSocket).clientId = 'user-abc'
-      // Simulate a previous session
-      const hrmMessage = JSON.stringify({
-        type: 'HRM_INPUT',
-        data: { value: 150 },
-      })
-      mockWs.emit('message', hrmMessage.toString())
+      const initialId = (mockWs as unknown as ExtWebSocket).clientId
 
       const identifyMessage = JSON.stringify({
         type: 'IDENTIFY_CLIENT',
@@ -407,9 +403,14 @@ describe('WebSocket Manager', () => {
       // Disconnect
       mockWs.emit('close')
 
+      let broadcastPayload = (broadcast as jest.Mock).mock.calls.pop()[1].payload
+      let clientData = broadcastPayload.find(
+        (c: HrmData) => c.clientId === stableId
+      )
+      expect(clientData.isConnected).toBe(false)
+
       // Reconnect
       const newMockWs = new MockWebSocket()
-      ;(newMockWs as unknown as ExtWebSocket).clientId = 'user-xyz'
       ;(mockWss.clients as Set<MockWebSocket>).add(newMockWs)
       mockWss.emit('connection', newMockWs)
 
@@ -419,10 +420,10 @@ describe('WebSocket Manager', () => {
       })
       newMockWs.emit('message', newIdentifyMessage.toString())
 
-      const lastCall = (broadcast as jest.Mock).mock.calls.pop()
-      const hrmData = lastCall[1].payload
-      const clientData = hrmData.find((c: HrmData) => c.clientId === stableId)
-      expect(clientData).toBeDefined()
+      broadcastPayload = (broadcast as jest.Mock).mock.calls.pop()[1].payload
+      clientData = broadcastPayload.find(
+        (c: HrmData) => c.clientId === stableId
+      )
       expect(clientData.isConnected).toBe(true)
     })
   })
