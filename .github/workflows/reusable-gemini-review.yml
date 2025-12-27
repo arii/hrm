@@ -171,9 +171,14 @@ jobs:
               LABEL_COUNT=0
               LABEL_FAILURES=0
               
-              echo "$LABELS" | while read label; do
+              # Create temp file to hold labels to avoid subshell issues
+              jq -r '.labels[]? // empty' review_result.json > /tmp/labels.txt
+              
+              while IFS= read -r label; do
+                [ -z "$label" ] && continue
+                
                 echo "  Adding label: '$label'"
-                timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" 2>&1
+                OUTPUT=$(timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" 2>&1)
                 EXIT_CODE=$?
                 
                 if [ $EXIT_CODE -eq 0 ]; then
@@ -184,11 +189,15 @@ jobs:
                   LABEL_FAILURES=$((LABEL_FAILURES + 1))
                 else
                   echo "  ❌ Failed to add label: $label (exit code: $EXIT_CODE)"
+                  if [ -n "$OUTPUT" ]; then
+                    echo "     Error details: $OUTPUT"
+                  fi
                   LABEL_FAILURES=$((LABEL_FAILURES + 1))
                 fi
-              done
+              done < /tmp/labels.txt
               
               echo "Label application summary: Applied $LABEL_COUNT labels with $LABEL_FAILURES failures"
+              rm -f /tmp/labels.txt
             else
               echo "ℹ️ No labels to apply from review result"
             fi
