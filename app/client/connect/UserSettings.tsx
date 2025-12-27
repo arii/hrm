@@ -55,6 +55,11 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   const [weightError, setWeightError] = React.useState<string | null>(null)
   const [heightError, setHeightError] = React.useState<string | null>(null)
 
+  /**
+   * This effect synchronizes the local `feet` and `inches` state with the `userHeight` prop
+   * when the unit system is set to IMPERIAL. This ensures that the imperial height
+   * input fields display the correct values when the component loads or the `userHeight` changes.
+   */
   React.useEffect(() => {
     if (unit === 'IMPERIAL' && userHeight > 0) {
       const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
