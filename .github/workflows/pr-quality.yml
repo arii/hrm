@@ -147,7 +147,29 @@ jobs:
           exit 1
 
       - name: Lint Code
-        run: pnpm run lint
+        id: lint
+        run: pnpm run lint 2>&1 | tee lint-output.log || true
+        continue-on-error: true
+
+      - name: Upload Lint Report
+        if: always() && steps.lint.outcome == 'failure' && hashFiles('lint-output.log') != ''
+        id: upload-lint
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: lint-output.log
+          retention-days: 30
+
+      - name: Handle Lint Upload Failure
+        if: failure() && steps.upload-lint.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload lint report artifact"
+          echo "::notice::Lint output may be available in logs above"
+          exit 1
+
+      - name: Fail on Lint Errors
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
 
       - name: Verify Build
         env:
@@ -156,14 +178,23 @@ jobs:
         run: pnpm run build
 
       - name: Upload Build Artifacts
-        if: always()
+        if: success()
+        id: upload-build
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ env.SESSION_ID }}
+          include-hidden-files: true  # Required to upload the .next directory
           path: |
-            dist/
-            .next/
+            dist/**
+            .next/**
           retention-days: 1
+      
+      - name: Handle Build Artifact Upload Failure
+        if: failure() && steps.upload-build.conclusion == 'failure'
+        run: |
+          echo "::error::Failed to upload build artifacts"
+          echo "::notice::Build output may be available in logs above"
+          exit 1
 
   # ===========================================================================
   # JOB 3: CORE LOGIC TESTS
@@ -424,15 +455,13 @@ jobs:
           echo "::notice::Downloading test artifacts..."
           
           # Download each artifact if it exists
-          if gh run download ${{ github.run_id }} -n "code-quality-logs" -D logs 2>/dev/null; then
-            [ -f "logs/code-quality.log" ] && echo "✅ Downloaded code-quality logs"
-          fi
-          if gh run download ${{ github.run_id }} -n "core-tests-logs" -D logs 2>/dev/null; then
-            [ -f "logs/core-tests.log" ] && echo "✅ Downloaded core-tests logs"
-          fi
-          if gh run download ${{ github.run_id }} -n "visual-tests-logs" -D logs 2>/dev/null; then
-            [ -f "logs/visual-tests.log" ] && echo "✅ Downloaded visual-tests logs"
-          fi
+           if gh run download ${{ github.run_id }} -n "lint-report" -D logs 2>/dev/null; then
+             [ -f "logs/lint-output.log" ] && mv "logs/lint-output.log" "logs/code-quality.log" && echo "✅ Downloaded lint logs"
+           fi
+           if gh run download ${{ github.run_id }} -n "test-reports" -D logs 2>/dev/null; then
+             [ -f "logs/infra-tests.log" ] && echo "✅ Downloaded infra test logs"
+             [ -f "logs/unit-tests.log" ] && echo "✅ Downloaded unit test logs"
+           fi
           
           # Find PR number
           PR_NUMBER="${{ github.event.pull_request.number }}"
@@ -481,18 +510,19 @@ jobs:
             
             if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
               FAILED_ANY=1
-              echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
-              echo ""
-              echo '```'
-              if [ -f "logs/core-tests.log" ]; then
-                tail -c $LOG_TRUNCATE_BYTES "logs/core-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
-              else
-                echo "Log file not found"
-              fi
-              echo '```'
-              echo ""
-              echo "</details>"
-            fi
+               echo "<details><summary><strong>❌ Core Tests Failures</strong></summary>"
+               echo ""
+               echo '```'
+               if [ -f "logs/infra-tests.log" ]; then
+                 tail -c $LOG_TRUNCATE_BYTES "logs/infra-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+               elif [ -f "logs/unit-tests.log" ]; then
+                 tail -c $LOG_TRUNCATE_BYTES "logs/unit-tests.log" | sed -r 's/\x1b\[[0-9;]*m//g'
+               else
+                 echo "Log file not found"
+               fi
+               echo '```'
+               echo ""
+               echo "</details>"
             
             if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
               FAILED_ANY=1
