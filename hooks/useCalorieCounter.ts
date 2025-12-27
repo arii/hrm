@@ -1,5 +1,5 @@
 // File: hooks/useCalorieCounter.ts
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 
 /**
@@ -51,5 +51,5 @@ export const useCalorieCounter = (
     setCalories(0)
   }, [])
 
-  return { calories, resetCalories }
+  return useMemo(() => ({ calories, resetCalories }), [calories, resetCalories])
 }

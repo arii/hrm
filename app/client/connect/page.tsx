@@ -15,41 +15,11 @@ import {
 } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
-
-const WEIGHT_VALIDATION = {
-  IMPERIAL: { min: 66, max: 440 }, // lbs
-  METRIC: { min: 30, max: 200 }, // kg
-}
-
-const validateHeightValue = (cm: number, unitSystem: MeasurementSystem) => {
-  if (isNaN(cm) || cm < 100 || cm > 250) {
-    if (unitSystem === 'METRIC') {
-      return 'Please enter a valid height (100-250 cm)'
-    } else {
-      return 'Please enter a valid height (3ft 3in - 8ft 2in)'
-    }
-  }
-  return null
-}
-
-const validateAgeValue = (age: string) => {
-  if (!age || age.trim() === '') return null
-  const num = Number(age)
-  if (isNaN(num) || num < 1 || num > 120) {
-    return 'Please enter a valid age (1-120)'
-  }
-  return null
-}
-
-const validateWeightValue = (weight: string, unit: MeasurementSystem) => {
-  if (!weight || weight.trim() === '') return null
-  const num = Number(weight)
-  const range = WEIGHT_VALIDATION[unit]
-  if (isNaN(num) || num < range.min || num > range.max) {
-    return `Please enter a valid weight (${range.min}-${range.max})`
-  }
-  return null
-}
+import {
+  validateAgeValue,
+  validateHeightValue,
+  validateWeightValue,
+} from './validation'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
