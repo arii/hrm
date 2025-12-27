@@ -24,8 +24,6 @@ const expressApp = express()
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
-  expressApp.use(express.json())
-
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
     const spotifyApiLimiter = rateLimit({
