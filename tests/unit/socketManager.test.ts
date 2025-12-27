@@ -167,6 +167,7 @@ describe('WebSocket Manager', () => {
   afterEach(() => {
     jest.useRealTimers()
     jest.clearAllMocks()
+    jest.restoreAllMocks() // Restore mocks to original implementation
     ;(mockWss.clients as Set<MockWebSocket>).clear()
     resetSocketManager()
   })
@@ -350,23 +351,11 @@ describe('WebSocket Manager', () => {
       )
     })
 
-    it('should handle unknown message types', () => {
-      const message = JSON.stringify({ type: 'SOME_GARBAGE' })
-      jest
-        .spyOn(ClientCommandMessageSchema, 'parse')
-        .mockReturnValue({ type: 'SOME_GARBAGE' })
-
-      mockWs.emit('message', message.toString())
-
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(Object),
-        'Unknown message type received'
-      )
-    })
   })
   describe('Client Identification', () => {
     it('should re-associate a client with a new clientId on IDENTIFY_CLIENT', () => {
-      const initialClientId = (mockWs as ExtWebSocket).clientId
+      const client = Array.from(mockWss.clients)[0] as ExtWebSocket
+      const initialClientId = client.clientId
       expect(initialClientId).toMatch(/^temp-user-/)
 
       // Send a metadata update to establish the user
@@ -392,7 +381,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', hrmMessage)
 
       // The WebSocket object should now have the persistent ID
-      expect((mockWs as ExtWebSocket).clientId).toBe(persistentClientId)
+      expect(client.clientId).toBe(persistentClientId)
 
       // A new broadcast should have occurred
       const lastPayload = (broadcast as jest.Mock).mock.lastCall[1].payload

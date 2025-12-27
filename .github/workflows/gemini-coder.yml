@@ -152,33 +152,9 @@ jobs:
 
       - name: 'Gemini: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'gemini'
-        env:
-          TASK_CONTENT: ${{ env.PROMPT }}
-          FILES_CONTENT: ${{ env.FILES }}
         run: |
           echo "Invoking Gemini Agent..."
-          cat > prompt.txt << 'PROMPTEOF'
-          You are a code generation assistant. Your task is to generate code changes in unified diff format.
-
-          IMPORTANT: Output ONLY a valid unified diff that can be applied with `git apply`. Do not include any explanation, markdown, or extra text.
-
-          The diff must:
-          1. Start with "--- a/path/to/file" and "+++ b/path/to/file" headers
-          2. Include @@ hunk headers showing line numbers
-          3. Have proper context lines (unchanged lines prefixed with space)
-          4. Have additions prefixed with +
-          5. Have deletions prefixed with -
-
-          Task Description:
-          PROMPTEOF
-          echo "$TASK_CONTENT" >> prompt.txt
-          cat >> prompt.txt << 'PROMPTEOF'
-
-          Target Files (may be empty, infer from task):
-          PROMPTEOF
-          echo "$FILES_CONTENT" >> prompt.txt
-
-
+          printf "Task: %s\n\nTarget Files:\n%s" "$PROMPT" "$FILES" > prompt.txt
 
       - name: 'Gemini: Setup pnpm'
         if: env.AGENT_PROVIDER == 'gemini'
@@ -216,8 +192,6 @@ jobs:
             echo "Error: patch.diff is empty or does not exist."
             exit 1
           fi
-          git config user.name "AI Agent"
-          git config user.email "ai@agent.local"
           git checkout -b "$BRANCH"
           git apply patch.diff
 

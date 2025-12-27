@@ -9,10 +9,6 @@ on:
     branches:
       - leader
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   release:
     runs-on: self-hosted

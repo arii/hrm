@@ -121,9 +121,7 @@ const broadcastState = () => {
  * Handles incoming JSON messages from client applications.
  */
 const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
-  // Always use the clientId from the WebSocket object, as it may be updated
-  // by an IDENTIFY_CLIENT message.
-  const { clientId } = ws
+  // Do not destructure clientId, as it can be updated by IDENTIFY_CLIENT
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
@@ -137,7 +135,7 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
       }
       case 'IDENTIFY_CLIENT': {
         const newClientId = message.clientId
-        const oldClientId = clientId // The temporary ID assigned on connection
+        const oldClientId = ws.clientId // The temporary ID assigned on connection
 
         // Re-associate the WebSocket connection with the persistent client ID
         ws.clientId = newClientId
@@ -158,7 +156,7 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
       case 'REGISTER_CLIENT': {
         ws.clientType = (message as ClientRegistrationMessage).role
         logger.info(
-          { clientId, clientType: ws.clientType },
+          { clientId: ws.clientId, clientType: ws.clientType },
           'Client registered'
         )
         break
@@ -177,7 +175,7 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
+        const existingData = hrmDataRepository.findById(ws.clientId)
         if (existingData) {
           const updateData: Partial<HrmStreamData> = Object.fromEntries(
             Object.entries(message.data).filter(([_, value]) => value !== null)
@@ -188,8 +186,8 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
+        const existingData = hrmDataRepository.findById(ws.clientId)
+        const sessionState = clientSessionState.get(ws.clientId)
 
         if (existingData && sessionState) {
           const now = Date.now()
@@ -242,7 +240,7 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
       case 'SPOTIFY_COMMAND': {
         const commandMsg = message as SpotifyCommandMessage
         logger.info(
-          { clientId, command: commandMsg.command },
+          { clientId: ws.clientId, command: commandMsg.command },
           'Forwarding Spotify command'
         )
 
@@ -295,11 +293,14 @@ const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
   } catch (e) {
     if (e instanceof z.ZodError) {
       logger.error(
-        { clientId, errors: e.issues },
+        { clientId: ws.clientId, errors: e.issues },
         'WebSocket message validation failed'
       )
     } else {
-      logger.error({ clientId, error: e }, 'Error processing incoming message')
+      logger.error(
+        { clientId: ws.clientId, error: e },
+        'Error processing incoming message'
+      )
     }
   }
 }
