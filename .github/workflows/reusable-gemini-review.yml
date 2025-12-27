@@ -103,3 +103,21 @@ jobs:
           CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
         run: |
           pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
+
+      - name: Post Review Comment
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -f "review_result.json" ]; then
+            REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
+            if [ -n "$REVIEW_COMMENT" ]; then
+              echo "Posting review comment to PR #$PR_NUMBER"
+              gh pr comment "$PR_NUMBER" --body "$REVIEW_COMMENT"
+            else
+              echo "No review comment in result"
+            fi
+          else
+            echo "review_result.json not found"
+          fi
