@@ -145,4 +145,12 @@ describe('DeviceManagerService', () => {
     )
     expect(service.device).toBeNull()
   })
+
+  // Test 6: Forget device
+  it('should forget the device and cleanup', async () => {
+    await service.findAndConnect()
+    await service.forget()
+    expect(mockBluetoothDevice.forget).toHaveBeenCalled()
+    expect(service.device).toBeNull()
+  })
 })

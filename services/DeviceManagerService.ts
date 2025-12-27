@@ -176,16 +176,17 @@ class DeviceManagerService extends EventTarget {
       status: 'connecting',
       message: 'Requesting Bluetooth device...',
     })
+    let device: BluetoothDevice
     try {
-      const device = await navigator.bluetooth.requestDevice({
+      device = await navigator.bluetooth.requestDevice({
         filters: [{ services: [HR_SERVICE_UUID] }],
         optionalServices: [BATTERY_SERVICE_UUID],
       })
-      await this.connectToDevice(device)
     } catch (error) {
-      this.handleConnectionError(error)
+      this.handleConnectionError(error, 'requestDevice')
       throw error
     }
+    await this.connectToDevice(device)
   }
 
   /**
@@ -210,6 +211,18 @@ class DeviceManagerService extends EventTarget {
       this.onGattServerDisconnected
     )
     await this.connectToGattServer()
+  }
+
+  public async forget(): Promise<void> {
+    if (this.device && 'forget' in this.device) {
+      try {
+        await (this.device as any).forget()
+      } catch (error) {
+        logger.error({ error }, 'Error forgetting device')
+        throw error
+      }
+    }
+    this.cleanup()
   }
 
   private async connectToGattServer(): Promise<void> {
@@ -427,11 +440,18 @@ class DeviceManagerService extends EventTarget {
     this.emit('battery-level-received', { batteryLevel })
   }
 
-  private handleConnectionError = (error: unknown): void => {
+  private handleConnectionError = (
+    error: unknown,
+    context?: 'requestDevice'
+  ): void => {
     let message = 'An unknown connection error occurred.'
     if (error instanceof DOMException) {
       if (error.name === 'NotFoundError') {
-        message = 'Connection cancelled. No device selected.'
+        if (context === 'requestDevice') {
+          message = 'Connection cancelled. No device selected.'
+        } else {
+          message = 'Bluetooth service or characteristic not found.'
+        }
       } else if (error.name === 'NetworkError') {
         message = 'Connection failed. Device is out of range.'
       } else {

@@ -53,14 +53,6 @@ const getPreviouslyConnectedDevice = async (
 }
 
 /**
- * @interface BluetoothDeviceWithForget
- * @description Interface extending BluetoothDevice to include the experimental forget method.
- */
-interface BluetoothDeviceWithForget extends BluetoothDevice {
-  forget(): Promise<void>
-}
-
-/**
  * @interface UseBluetoothHRMProps
  * @description Props for the `useBluetoothHRM` hook, allowing customization of the underlying `DeviceManagerService`.
  */
@@ -244,23 +236,17 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
 
   const forgetDevice = useCallback(async () => {
     logger.info('Forgetting Bluetooth device...')
-    disconnect()
+    // No need to call disconnect(), service.forget() handles it
     setLastDeviceId(null) // Clear from local storage
-    if (
-      isBluetoothSupported &&
-      deviceManager.device &&
-      'forget' in deviceManager.device
-    ) {
-      try {
-        await (deviceManager.device as BluetoothDeviceWithForget).forget()
-        setDeviceStatus('Device permissions revoked.')
-      } catch (error) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        logger.error(error as any, 'Error revoking device permissions.')
-        setDeviceStatus('Error forgetting device.')
-      }
+    try {
+      await deviceManager.forget()
+      setDeviceStatus('Device permissions revoked.')
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      logger.error(error as any, 'Error revoking device permissions.')
+      setDeviceStatus('Error forgetting device.')
     }
-  }, [disconnect, deviceManager, setLastDeviceId])
+  }, [deviceManager, setLastDeviceId])
 
   const autoConnect = useCallback(async () => {
     if (wsStatusRef.current !== 'Connected' || !lastDeviceId) return

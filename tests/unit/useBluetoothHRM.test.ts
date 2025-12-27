@@ -15,6 +15,7 @@ import useLocalStorage from '@/hooks/useLocalStorage'
 const mockDeviceManager = {
   findAndConnect: jest.fn(),
   disconnect: jest.fn(),
+  forget: jest.fn(),
   connectToDevice: jest.fn(),
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
@@ -195,5 +196,14 @@ describe('useBluetoothHRM Hook', () => {
       expect.stringContaining('User cancelled')
     )
     consoleInfoSpy.mockRestore()
+  })
+
+  // Test 8: Forget device
+  it('should call service forget when forgetDevice is called', async () => {
+    const { result } = renderHook(() => useBluetoothHRM({}))
+    await act(async () => {
+      await result.current.forgetDevice()
+    })
+    expect(mockDeviceManager.forget).toHaveBeenCalled()
   })
 })
