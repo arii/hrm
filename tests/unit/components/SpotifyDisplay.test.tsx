@@ -11,7 +11,7 @@ import { ErrorProvider } from '@/context/ErrorContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import useSpotifyWebPlayback from '@/hooks/useSpotifyWebPlayback'
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
@@ -39,7 +39,7 @@ const mockedUseSpotifyWebPlayback = useSpotifyWebPlayback as jest.Mock
 
 // Custom renderer to wrap component with required providers
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<ErrorProvider>{ui}</ErrorProvider>)
+  return render(ui, { wrapper: ErrorProvider })
 }
 
 describe('SpotifyDisplay', () => {
@@ -92,5 +92,108 @@ describe('SpotifyDisplay', () => {
       callbackUrl: '/',
       redirect: true,
     })
+  })
+
+  describe('when authenticated', () => {
+    let mockSendData: jest.Mock
+    let rerender: (ui: React.ReactElement) => void
+    let initialSpotifyData: any
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      mockSendData = jest.fn()
+      initialSpotifyData = {
+        trackName: 'Test Track',
+        artist: 'Test Artist',
+        albumName: 'Test Album',
+        albumArtUrl: '',
+        isPlaying: true,
+        volume: 50,
+        isMuted: false,
+        devices: [{ id: 'mock-device-1', name: 'Test Device', is_active: true }],
+      }
+
+      mockedUseSession.mockReturnValue({ data: { accessToken: 'fake-token' }, status: 'authenticated' })
+      mockedUseWebSocket.mockReturnValue({
+        spotifyData: initialSpotifyData,
+        sendData: mockSendData,
+        connectionStatus: 'Connected',
+        spotifyServiceInitialized: true,
+      })
+
+      const { rerender: rerenderComponent } = renderWithProviders(<SpotifyDisplay />)
+      rerender = (ui: React.ReactElement) => rerenderComponent(ui)
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('updates volume on external change when user is not sliding', () => {
+      const slider = screen.getByRole('slider', { name: /volume control/i })
+      expect(slider).toHaveValue('50')
+
+      // Simulate external update
+      const updatedSpotifyData = { ...initialSpotifyData, volume: 80 }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+
+      expect(slider).toHaveValue('80')
+    })
+
+    it('does not update volume on external change while user is sliding', () => {
+      const slider = screen.getByRole('slider', { name: /volume control/i })
+      expect(slider).toHaveValue('50')
+
+      // Simulate user starting to slide
+      fireEvent.change(slider, { target: { value: '70' } })
+      expect(slider).toHaveValue('70')
+
+      // Simulate external update while sliding
+      const updatedSpotifyData = { ...initialSpotifyData, volume: 90 }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+
+      // Volume should not change because user is sliding
+      expect(slider).toHaveValue('70')
+    })
+
+    it('re-enables external updates after sliding and debounce period', () => {
+        const slider = screen.getByRole('slider', { name: /volume control/i })
+        expect(slider).toHaveValue('50')
+
+        // Simulate user sliding
+        fireEvent.change(slider, { target: { value: '75' } })
+        expect(slider).toHaveValue('75')
+
+        // Simulate external update while sliding (should be ignored)
+        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
+        mockedUseWebSocket.mockReturnValue({
+          ...mockedUseWebSocket(),
+          spotifyData: updatedSpotifyData,
+        })
+        rerender(<SpotifyDisplay />)
+        expect(slider).toHaveValue('75')
+
+        // Advance timers to end the debounce period
+        act(() => {
+          jest.advanceTimersByTime(300)
+        })
+
+        // Simulate another external update (should now be applied)
+        updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
+        mockedUseWebSocket.mockReturnValue({
+            ...mockedUseWebSocket(),
+            spotifyData: updatedSpotifyData,
+        })
+        rerender(<SpotifyDisplay />)
+        expect(slider).toHaveValue('25')
+      })
   })
 })
