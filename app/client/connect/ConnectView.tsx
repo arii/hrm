@@ -4,7 +4,10 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
 import BatteryStdIcon from '@mui/icons-material/BatteryStd'
@@ -33,8 +36,6 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   userHeight: number
   setUserHeight: (height: number) => void
-  validateHeight: () => void
-  heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
   gender: Gender
@@ -68,8 +69,6 @@ export default function ConnectView({
   setUserAge,
   userHeight,
   setUserHeight,
-  validateHeight,
-  heightError,
   userWeight,
   setUserWeight,
   gender,
@@ -94,8 +93,6 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -145,6 +142,40 @@ export default function ConnectView({
 
         {!showUserDetails ? (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <TextField
+              fullWidth
+              label="Your Name"
+              placeholder="e.g., Jane Doe"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Your Age"
+              placeholder="e.g., 30"
+              type="number"
+              value={userAge}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserAge(e.target.value)
+                }
+              }}
+              inputProps={{ min: 1, max: 120 }}
+            />
             <UserSettings
               userName={userName}
               setUserName={setUserName}
@@ -156,12 +187,6 @@ export default function ConnectView({
               setUserWeight={setUserWeight}
               unit={unitSystem}
               setUnit={onUnitChange}
-              ageError={ageError}
-              heightError={heightError}
-              weightError={weightError}
-              validateAge={setAgeError}
-              validateHeight={validateHeight}
-              validateWeight={setWeightError}
             />
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>

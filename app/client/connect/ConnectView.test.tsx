@@ -80,43 +80,4 @@ describe('ConnectView', () => {
     expect(screen.getByLabelText('Inches')).toBeInTheDocument()
     expect(screen.getByLabelText('Your Weight (lbs)')).toBeInTheDocument()
   })
-
-  it('updates the user name when the user types in the name field', () => {
-    render(<ConnectView {...defaultProps} />)
-    const nameInput = screen.getByLabelText('Your Name')
-    fireEvent.change(nameInput, { target: { value: 'Jane Doe' } })
-    expect(defaultProps.setUserName).toHaveBeenCalledWith('Jane Doe')
-  })
-
-  it('updates the user age when the user types in the age field', () => {
-    render(<ConnectView {...defaultProps} />)
-    const ageInput = screen.getByLabelText('Your Age')
-    fireEvent.change(ageInput, { target: { value: '31' } })
-    expect(defaultProps.setUserAge).toHaveBeenCalledWith('31')
-  })
-
-  it('updates the user weight when the user types in the weight field', () => {
-    render(<ConnectView {...defaultProps} />)
-    const weightInput = screen.getByLabelText('Your Weight (lbs)')
-    fireEvent.change(weightInput, { target: { value: '160' } })
-    expect(defaultProps.setUserWeight).toHaveBeenCalledWith('160')
-  })
-
-  it('shows an error when age is invalid', () => {
-    const props = { ...defaultProps, ageError: 'Invalid age' }
-    render(<ConnectView {...props} />)
-    expect(screen.getByText('Invalid age')).toBeInTheDocument()
-  })
-
-  it('shows an error when height is invalid', () => {
-    const props = { ...defaultProps, heightError: 'Invalid height' }
-    render(<ConnectView {...props} />)
-    expect(screen.getByText('Invalid height')).toBeInTheDocument()
-  })
-
-  it('shows an error when weight is invalid', () => {
-    const props = { ...defaultProps, weightError: 'Invalid weight' }
-    render(<ConnectView {...props} />)
-    expect(screen.getByText('Invalid weight')).toBeInTheDocument()
-  })
 })

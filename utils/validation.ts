@@ -1,17 +1,16 @@
 // utils/validation.ts
-
 export const validate = (
   value: string,
   min: number,
   max: number,
-  name: string
-) => {
-  if (!value || value.trim() === '') {
-    return null
+  fieldName: string
+): string | null => {
+  if (!value) {
+    return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required.`
   }
-  const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
+  const numValue = Number(value)
+  if (isNaN(numValue) || numValue < min || numValue > max) {
+    return `Please enter a valid ${fieldName} between ${min} and ${max}.`
   }
   return null
 }

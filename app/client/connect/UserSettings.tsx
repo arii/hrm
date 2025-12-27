@@ -7,6 +7,11 @@ import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 
+const WEIGHT_VALIDATION = {
+  IMPERIAL: { min: 66, max: 440 }, // lbs
+  METRIC: { min: 30, max: 200 }, // kg
+}
+
 interface UserSettingsProps {
   userName: string
   setUserName: (name: string) => void
@@ -18,12 +23,6 @@ interface UserSettingsProps {
   setUserWeight: (weight: string) => void
   unit: 'METRIC' | 'IMPERIAL'
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
-  ageError: string | null
-  heightError: string | null
-  weightError: string | null
-  validateAge: (value: string) => void
-  validateHeight: (value: string) => void
-  validateWeight: (value: string | null) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -37,26 +36,20 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUserWeight,
   unit,
   setUnit,
-  ageError,
-  heightError,
-  weightError,
-  validateAge,
-  validateHeight,
-  validateWeight,
 }) => {
   const [feet, setFeet] = React.useState('')
   const [inches, setInches] = React.useState('')
-
-  const WEIGHT_VALIDATION = {
-    IMPERIAL: { min: 66, max: 440 }, // lbs
-    METRIC: { min: 30, max: 200 }, // kg
-  }
+  const [ageError, setAgeError] = React.useState<string | null>(null)
+  const [weightError, setWeightError] = React.useState<string | null>(null)
+  const [heightError, setHeightError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (unit === 'IMPERIAL' && userHeight > 0) {
       const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      if (String(newFeet) !== feet || String(newInches) !== inches) {
+      if (String(newFeet) !== feet) {
         setFeet(String(newFeet))
+      }
+      if (String(newInches) !== inches) {
         setInches(String(newInches))
       }
     }
@@ -75,7 +68,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     const feetNum = Number(feet)
     const inchesNum = Number(inches)
     if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-      validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
+      setHeightError(
+        validate(String(feetAndInchesToCm(feetNum, inchesNum)), 122, 213, 'height')
+      )
     }
   }
 
@@ -120,7 +115,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
-        onBlur={(e) => validateAge(validate(e.target.value, 1, 120, 'age'))}
+        onBlur={(e) => setAgeError(validate(e.target.value, 1, 120, 'age'))}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
@@ -132,12 +127,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         type="number"
         value={userWeight}
         onChange={(e) => {
-          if (/^\d*\.?\d*$/.test(e.target.value)) {
+          if (/^\d*\.?\d{0,2}$/.test(e.target.value)) {
             setUserWeight(e.target.value)
           }
         }}
         onBlur={(e) =>
-          validateWeight(
+          setWeightError(
             validate(
               e.target.value,
               WEIGHT_VALIDATION[unit].min,
@@ -161,7 +156,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
-          onBlur={(e) => validateHeight(e.target.value)}
+        onBlur={(e) =>
+          setHeightError(validate(e.target.value, 122, 213, 'height'))
+        }
           error={!!heightError}
           helperText={heightError}
         />
