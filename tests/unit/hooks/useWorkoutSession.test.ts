@@ -3,18 +3,26 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { WebSocketProvider } from '@/context/WebSocketContext'
+import { ReactNode } from 'react'
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <WebSocketProvider>{children}</WebSocketProvider>
+)
 
 describe('useWorkoutSession calorie logic', () => {
   it('should initialize with zero calories burned', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 0 })
+    const { result } = renderHook(
+      () => useWorkoutSession({ isConnected: false, totalCalories: 0 }),
+      { wrapper }
     )
     expect(result.current.caloriesBurned).toBe(0)
   })
 
   it('should start with zero calories burned even if totalCalories is non-zero', () => {
-    const { result } = renderHook(() =>
-      useWorkoutSession({ isConnected: false, totalCalories: 100 })
+    const { result } = renderHook(
+      () => useWorkoutSession({ isConnected: false, totalCalories: 100 }),
+      { wrapper }
     )
     expect(result.current.caloriesBurned).toBe(0)
   })
@@ -23,7 +31,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: false, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
+      {
+        initialProps: { totalCalories: 100 },
+        wrapper,
+      }
     )
 
     act(() => {
@@ -38,7 +49,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 50 } }
+      {
+        initialProps: { totalCalories: 50 },
+        wrapper,
+      }
     )
 
     act(() => {
@@ -56,7 +70,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 100 } }
+      {
+        initialProps: { totalCalories: 100 },
+        wrapper,
+      }
     )
 
     act(() => {
@@ -71,7 +88,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 200 } }
+      {
+        initialProps: { totalCalories: 200 },
+        wrapper,
+      }
     )
 
     act(() => {
@@ -94,7 +114,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
         useWorkoutSession({ isConnected: true, totalCalories }),
-      { initialProps: { totalCalories: 300 } }
+      {
+        initialProps: { totalCalories: 300 },
+        wrapper,
+      }
     )
 
     act(() => {
@@ -115,7 +138,10 @@ describe('useWorkoutSession calorie logic', () => {
     const { result, rerender } = renderHook(
       ({ isConnected, totalCalories }) =>
         useWorkoutSession({ isConnected, totalCalories }),
-      { initialProps: { isConnected: true, totalCalories: 100 } }
+      {
+        initialProps: { isConnected: true, totalCalories: 100 },
+        wrapper,
+      }
     )
 
     act(() => {
