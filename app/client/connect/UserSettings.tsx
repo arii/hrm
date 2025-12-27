@@ -1,6 +1,7 @@
 // app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
+import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -10,12 +11,12 @@ interface UserSettingsProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: string
-  setUserHeight: (height: string) => void
+  userHeight: number
+  setUserHeight: (height: number) => void
   userWeight: string
   setUserWeight: (weight: string) => void
-  unit: 'metric' | 'imperial'
-  setUnit: (unit: 'metric' | 'imperial') => void
+  unit: 'METRIC' | 'IMPERIAL'
+  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
   ageError: string | null
   heightError: string | null
   weightError: string | null
@@ -46,15 +47,22 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   const [inches, setInches] = React.useState('')
 
   React.useEffect(() => {
-    if (unit === 'imperial') {
-      const [ft, inch] = userHeight.split('.')
-      setFeet(ft || '')
-      setInches(inch || '')
+    if (unit === 'IMPERIAL' && userHeight > 0) {
+      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
+      if (String(newFeet) !== feet || String(newInches) !== inches) {
+        setFeet(String(newFeet))
+        setInches(String(newInches))
+      }
     }
-  }, [unit, userHeight])
+  }, [unit, userHeight, feet, inches])
 
   const handleImperialHeightChange = (ft: string, inch: string) => {
-    setUserHeight(`${ft}.${inch}`)
+    const feetNum = Number(ft)
+    const inchesNum = Number(inch)
+    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
+      const cm = feetAndInchesToCm(feetNum, inchesNum)
+      setUserHeight(cm)
+    }
   }
 
   return (
@@ -96,14 +104,14 @@ const UserSettings: React.FC<UserSettingsProps> = ({
         <p id="unit-system-description" style={{ display: 'none' }}>
           Currently selected unit system is {unit}.
         </p>
-        <ToggleButton value="imperial" aria-label="imperial units">
+        <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
-        <ToggleButton value="metric" aria-label="metric units">
+        <ToggleButton value="METRIC" aria-label="metric units">
           Metric (kg, cm)
         </ToggleButton>
       </ToggleButtonGroup>
-      {unit === 'metric' ? (
+      {unit === 'METRIC' ? (
         <TextField
           fullWidth
           label="Your Height (cm)"
@@ -112,7 +120,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           value={userHeight}
           onChange={(e) => {
             if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight(e.target.value)
+              setUserHeight(Number(e.target.value))
             }
           }}
           onBlur={(e) => validateHeight(e.target.value)}
@@ -133,7 +141,13 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 handleImperialHeightChange(e.target.value, inches)
               }
             }}
-            onBlur={() => validateHeight(`${feet}.${inches}`)}
+            onBlur={() => {
+              const feetNum = Number(feet)
+              const inchesNum = Number(inches)
+              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
+              }
+            }}
           />
           <TextField
             fullWidth
@@ -147,14 +161,20 @@ const UserSettings: React.FC<UserSettingsProps> = ({
                 handleImperialHeightChange(feet, e.target.value)
               }
             }}
-            onBlur={() => validateHeight(`${feet}.${inches}`)}
+            onBlur={() => {
+              const feetNum = Number(feet)
+              const inchesNum = Number(inches)
+              if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+                validateHeight(String(feetAndInchesToCm(feetNum, inchesNum)))
+              }
+            }}
           />
         </Stack>
       )}
       <TextField
         fullWidth
-        label={`Your Weight (${unit === 'metric' ? 'kg' : 'lbs'})`}
-        placeholder={unit === 'metric' ? 'e.g., 70' : 'e.g., 154'}
+        label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
+        placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
         value={userWeight}
         onChange={(e) => {

@@ -14,6 +14,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
+import UserSettings from './UserSettings'
 import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
@@ -49,12 +50,8 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (height: {
-    cm?: string
-    feet?: string
-    inches?: string
-  }) => void
+  userHeight: number
+  setUserHeight: (height: number) => void
   onHeightBlur: () => void
   heightError: string | null
   userWeight: string
@@ -210,60 +207,26 @@ export default function ConnectView({
               helperText={ageError}
               inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
             />
-            {unitSystem === 'METRIC' ? (
-              <TextField
-                fullWidth
-                label="Your Height (cm)"
-                placeholder="e.g., 175"
-                type="number"
-                value={userHeight.cm}
-                onChange={(e) => {
-                  if (/^\d*\.?\d*$/.test(e.target.value)) {
-                    setUserHeight({ cm: e.target.value })
-                  }
-                }}
-                onBlur={onHeightBlur}
-                error={!!heightError}
-                helperText={heightError}
-                inputProps={{
-                  min: 100,
-                  max: 250,
-                  'aria-invalid': !!heightError,
-                }}
-              />
-            ) : (
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Height (ft)"
-                  type="number"
-                  value={userHeight.feet}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      setUserHeight({ feet: e.target.value })
-                    }
-                  }}
-                  onBlur={onHeightBlur}
-                  inputProps={{ min: 3, max: 8 }}
-                  error={!!heightError}
-                  helperText={heightError}
-                />
-                <TextField
-                  fullWidth
-                  label="Height (in)"
-                  type="number"
-                  value={userHeight.inches}
-                  onChange={(e) => {
-                    if (/^\d*$/.test(e.target.value)) {
-                      setUserHeight({ inches: e.target.value })
-                    }
-                  }}
-                  onBlur={onHeightBlur}
-                  inputProps={{ min: 0, max: 11 }}
-                  error={!!heightError}
-                />
-              </Stack>
-            )}
+            <UserSettings
+              userName={userName}
+              setUserName={setUserName}
+              userAge={userAge}
+              setUserAge={setUserAge}
+              userHeight={userHeight}
+              setUserHeight={setUserHeight}
+              userWeight={userWeight}
+              setUserWeight={setUserWeight}
+              unit={unitSystem}
+              setUnit={onUnitChange}
+              ageError={ageError}
+              heightError={heightError}
+              weightError={weightError}
+              validateAge={(value) => {
+                setAgeError(validate(value, 1, 120, 'age'))
+              }}
+              validateHeight={onHeightBlur}
+              validateWeight={onWeightBlur}
+            />
             <TextField
               fullWidth
               label={`Your Weight (${
