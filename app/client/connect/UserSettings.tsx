@@ -69,7 +69,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     const inchesNum = Number(inches)
     if (!isNaN(feetNum) && !isNaN(inchesNum)) {
       setHeightError(
-        validate(String(feetAndInchesToCm(feetNum, inchesNum)), 122, 213, 'height')
+        validate(
+          String(feetAndInchesToCm(feetNum, inchesNum)),
+          122,
+          213,
+          'height'
+        )
       )
     }
   }
@@ -156,9 +161,9 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
-        onBlur={(e) =>
-          setHeightError(validate(e.target.value, 122, 213, 'height'))
-        }
+          onBlur={(e) =>
+            setHeightError(validate(e.target.value, 122, 213, 'height'))
+          }
           error={!!heightError}
           helperText={heightError}
         />
