@@ -109,9 +109,12 @@ jobs:
           # Pass content via GITHUB_ENV for steps that need it, securely
           # Use unique delimiter to prevent collision with file content
           PROMPT_DELIMITER="GEMINI_PROMPT_$(date +%s%N | sha256sum | head -c 32)"
-          echo "PROMPT<<$PROMPT_DELIMITER" >> $GITHUB_ENV
-          cat task_desc.txt >> $GITHUB_ENV
-          echo "$PROMPT_DELIMITER" >> $GITHUB_ENV
+          {
+            echo "PROMPT<<$PROMPT_DELIMITER"
+            cat task_desc.txt
+            echo ""  # Ensure newline before delimiter
+            echo "$PROMPT_DELIMITER"
+          } >> $GITHUB_ENV
 
       - name: 'Jules: Prepare Prompt'
         if: env.AGENT_PROVIDER == 'jules'
