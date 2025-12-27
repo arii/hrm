@@ -13,7 +13,10 @@ jest.mock('../../../hooks/useCalorieCounter', () => ({
 
 describe('PersonalAnalyticsDashboard', () => {
   it('should display the calories burned', () => {
-    ;(useCalorieCounter.useCalorieCounter as jest.Mock).mockReturnValue(100)
+    ;(useCalorieCounter.useCalorieCounter as jest.Mock).mockReturnValue({
+      calories: 100,
+      resetCalories: jest.fn(),
+    })
     const { getByText } = render(
       <PersonalAnalyticsDashboard heartRate={120} age={30} weight={70} />
     )

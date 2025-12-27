@@ -18,7 +18,7 @@ export const PersonalAnalyticsDashboard = ({
   age: number
   weight: number
 }) => {
-  const calories = useCalorieCounter(heartRate, age, weight)
+  const { calories } = useCalorieCounter(heartRate, age, weight, true)
 
   return (
     <div>
