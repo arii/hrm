@@ -199,7 +199,6 @@ describe('WebSocket Manager', () => {
     })
   })
 
-
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
@@ -227,7 +226,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
-        'Error processing incoming message'
+        'Error processing message'
       )
     })
 
@@ -236,7 +235,7 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
       expect(logger.error).toHaveBeenCalledWith(
         expect.any(Object),
-        'WebSocket message validation failed'
+        'Validation failed'
       )
     })
 
@@ -320,7 +319,7 @@ describe('WebSocket Manager', () => {
 
       expect(logger.warn).toHaveBeenCalledWith(
         expect.any(Object),
-        'Unknown message type received'
+        'Unknown message type'
       )
     })
   })
