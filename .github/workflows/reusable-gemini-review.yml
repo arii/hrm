@@ -21,8 +21,80 @@ jobs:
         uses: ./.github/actions/setup-env
         with:
           fetch-depth: 0
+
+      - name: Get PR Diff
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+          if [ ! -s pr.diff ]; then
+            echo "Error: Unable to generate PR diff"
+            exit 1
+          fi
+
+      - name: Gather PR Context
+        id: context
+        env:
+          GH_TOKEN: ${{ secrets.ARI_PAT }}
+        run: |
+          # Get PR metadata
+          PR_DATA=$(gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels,reviews,comments)
+          
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
+          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          
+          # Get labels
+          LABELS=$(echo "$PR_DATA" | jq -r '.labels[].name' | tr '\n' ',' | sed 's/,$//')
+          echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
+          
+          # Count reviews and changes requested
+          REVIEW_COUNT=$(echo "$PR_DATA" | jq '[.reviews[]] | length')
+          CHANGES_REQUESTED=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          RESOLVED_COUNT=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "COMMENTED")] | length')
+          echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
+          echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
+          echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
+          
+          # Get file stats
+          FILES_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | wc -l)
+          LOC_CHANGED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= insertion)' || echo "0")
+          LOC_DELETED=$(git diff --shortstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | grep -oP '\d+(?= deletion)' || echo "0")
+          TOTAL_LOC=$((LOC_CHANGED + LOC_DELETED))
+          echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+          echo "TOTAL_LOC=$TOTAL_LOC" >> $GITHUB_ENV
+          
+          # Determine review depth
+          if [ "$TOTAL_LOC" -lt 100 ]; then
+            echo "REVIEW_DEPTH=detailed" >> $GITHUB_ENV
+          elif [ "$TOTAL_LOC" -lt 400 ]; then
+            echo "REVIEW_DEPTH=standard" >> $GITHUB_ENV
+          else
+            echo "REVIEW_DEPTH=focused" >> $GITHUB_ENV
+          fi
+          
+          # Get changed areas
+          CHANGED_AREAS=$(git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | awk -F/ '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
+          echo "CHANGED_AREAS=$CHANGED_AREAS" >> $GITHUB_ENV
+
       - name: Run Gemini Review
-        run: pnpm tsx scripts/gemini-client.ts --preset "review"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
+          PR_DIFF_FILE: pr.diff
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+          PR_TITLE: ${{ env.PR_TITLE }}
+          PR_AUTHOR: ${{ env.PR_AUTHOR }}
+          PR_DESCRIPTION: ${{ env.PR_DESCRIPTION }}
+          PR_LABELS: ${{ env.PR_LABELS }}
+          FILES_CHANGED: ${{ env.FILES_CHANGED }}
+          TOTAL_LOC: ${{ env.TOTAL_LOC }}
+          REVIEW_DEPTH: ${{ env.REVIEW_DEPTH }}
+          CHANGED_AREAS: ${{ env.CHANGED_AREAS }}
+          REVIEW_COUNT: ${{ env.REVIEW_COUNT }}
+          RESOLVED_COUNT: ${{ env.RESOLVED_COUNT }}
+          CHANGES_REQUESTED: ${{ env.CHANGES_REQUESTED }}
+        run: |
+          pnpm tsx scripts/gemini-client.ts --preset "review" --output "review_result.json"
