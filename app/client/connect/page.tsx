@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import useLocalStorage from '@/hooks/useLocalStorage'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
@@ -46,7 +46,7 @@ export default function ConnectPage() {
 
   // Calculate the display value based on the source of truth (_heightInCm)
   const numericHeight = parseFloat(_heightInCm)
-  let derivedDisplayHeight = { cm: '', feet: '', inches: '' }
+  const derivedDisplayHeight = { cm: '', feet: '', inches: '' }
   if (!isNaN(numericHeight)) {
     if (unitSystem === 'METRIC') {
       derivedDisplayHeight.cm = String(Math.round(numericHeight))
