@@ -13,7 +13,6 @@ import {
 import { useUserSettings } from '@/context/UserSettingsContext'
 import ValidatedTextField from '@/components/shared/ValidatedTextField'
 import { useSnackbar } from 'notistack'
-import { sanitize } from '@/utils/sanitize'
 
 const SettingsPage = () => {
   const [userSettings, setUserSettings] = useUserSettings()
@@ -37,11 +36,9 @@ const SettingsPage = () => {
       return
     }
 
-    const sanitizedUserName = sanitize(userName)
-
     setUserSettings((prev) => ({
       ...prev,
-      userName: sanitizedUserName,
+      userName,
       userAge: userAge ? parseInt(userAge, 10) : null,
     }))
 

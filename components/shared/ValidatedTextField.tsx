@@ -3,15 +3,10 @@
 import React from 'react'
 import { TextField, type TextFieldProps } from '@mui/material'
 import { validate } from '@/utils/validation'
-
-// Define validation rule types
-export type ValidationRule =
-  | { type: 'required' }
-  | { type: 'email' }
-  | { type: 'positiveInteger' }
-  | { type: 'minLength'; value: number }
-
-export type ValidationRuleType = ValidationRule['type']
+import {
+  ValidationRule,
+  ValidationRuleType,
+} from '@/types/validation'
 
 export interface ValidatedTextFieldProps
   extends Omit<TextFieldProps, 'error' | 'helperText'> {
@@ -30,6 +25,7 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
   ...props
 }) => {
   const [error, setError] = React.useState<string | null>(null)
+  const [touched, setTouched] = React.useState(false)
 
   const handleValidation = (value: string) => {
     if (validationRules.length === 0) {
@@ -42,8 +38,14 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
       validationRules,
       errorMessageOverrides
     )
-    setError(isValid ? null : message)
-    if (onValidation) onValidation(isValid)
+
+    if (touched) {
+      setError(isValid ? null : message)
+    }
+
+    if (onValidation) {
+      onValidation(isValid)
+    }
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,10 +55,20 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
     }
   }
 
-  // Initial validation on mount
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    setTouched(true)
+    handleValidation(event.target.value)
+    if (props.onBlur) {
+      props.onBlur(event)
+    }
+  }
+
+  // Re-validate when the value changes externally
   React.useEffect(() => {
-    handleValidation(props.value as string)
-  }, [props.value])
+    if (touched) {
+      handleValidation(props.value as string)
+    }
+  }, [props.value, touched])
 
   const a11yProps = {
     'aria-invalid': !!error,
@@ -69,6 +81,7 @@ const ValidatedTextField: React.FC<ValidatedTextFieldProps> = ({
       error={!!error}
       helperText={error}
       onChange={handleChange}
+      onBlur={handleBlur}
       inputProps={{ ...props.inputProps, ...a11yProps }}
       FormHelperTextProps={{
         ...props.FormHelperTextProps,

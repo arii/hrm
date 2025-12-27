@@ -1,7 +1,7 @@
 import {
   ValidationRule,
   ValidationRuleType,
-} from '@/components/shared/ValidatedTextField'
+} from '@/types/validation'
 
 /**
  * Default error messages for validation rules.
@@ -28,7 +28,7 @@ export const validate = (
   for (const rule of rules) {
     switch (rule.type) {
       case 'required':
-        if (!value) {
+        if (!value.trim()) {
           return {
             isValid: false,
             message: customMessages.required ?? defaultErrorMessages.required,
