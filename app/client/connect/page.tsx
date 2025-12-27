@@ -120,7 +120,7 @@ export default function ConnectPage() {
       setUserAge={setUserAge}
       userHeight={_heightInCm}
       setUserHeight={handleHeightChange}
-      onHeightBlur={handleHeightBlur}
+      validateHeight={handleHeightBlur}
       heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}

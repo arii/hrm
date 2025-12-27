@@ -22,7 +22,7 @@ interface UserSettingsProps {
   weightError: string | null
   validateAge: (value: string) => void
   onValidateHeight: (value: string) => void
-  validateWeight: (value: string) => void
+  validateWeight: (value: string | null) => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -46,6 +46,22 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   const [feet, setFeet] = React.useState('')
   const [inches, setInches] = React.useState('')
 
+  const WEIGHT_VALIDATION = {
+    IMPERIAL: { min: 66, max: 440 }, // lbs
+    METRIC: { min: 30, max: 200 }, // kg
+  }
+
+  const validate = (value: string, min: number, max: number, name: string) => {
+    if (!value || value.trim() === '') {
+      return null
+    }
+    const num = Number(value)
+    if (isNaN(num) || num < min || num > max) {
+      return `Please enter a valid ${name} (${min}-${max})`
+    }
+    return null
+  }
+
   /**
    * This effect synchronizes the imperial height inputs (feet and inches)
    * with the userHeight state (stored in cm). It triggers whenever the
@@ -64,6 +80,12 @@ const UserSettings: React.FC<UserSettingsProps> = ({
     }
   }, [unit, userHeight, feet, inches])
 
+  /**
+   * Handles changes to the imperial height inputs (feet and inches).
+   * It converts the feet and inches values to centimeters and updates the userHeight state.
+   * @param ft The value from the feet input field.
+   * @param inch The value from the inches input field.
+   */
   const handleImperialHeightChange = (ft: string, inch: string) => {
     const feetNum = Number(ft)
     const inchesNum = Number(inch)
@@ -138,7 +160,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserWeight(e.target.value)
           }
         }}
-        onBlur={(e) => validateWeight(e.target.value)}
+        onBlur={(e) =>
+          validateWeight(
+            validate(
+              e.target.value,
+              WEIGHT_VALIDATION[unit].min,
+              WEIGHT_VALIDATION[unit].max,
+              'weight'
+            )
+          )
+        }
         error={!!weightError}
         helperText={weightError}
       />

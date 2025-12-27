@@ -101,4 +101,22 @@ describe('ConnectView', () => {
     fireEvent.change(weightInput, { target: { value: '160' } })
     expect(defaultProps.setUserWeight).toHaveBeenCalledWith('160')
   })
+
+  it('shows an error when age is invalid', () => {
+    const props = { ...defaultProps, ageError: 'Invalid age' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid age')).toBeInTheDocument()
+  })
+
+  it('shows an error when height is invalid', () => {
+    const props = { ...defaultProps, heightError: 'Invalid height' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid height')).toBeInTheDocument()
+  })
+
+  it('shows an error when weight is invalid', () => {
+    const props = { ...defaultProps, weightError: 'Invalid weight' }
+    render(<ConnectView {...props} />)
+    expect(screen.getByText('Invalid weight')).toBeInTheDocument()
+  })
 })

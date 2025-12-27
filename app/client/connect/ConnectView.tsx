@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
@@ -18,30 +17,12 @@ import UserSettings from './UserSettings'
 import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
-  ToggleButtonGroup,
-  ToggleButton,
   FormControl,
   FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
 } from '@mui/material'
-
-const WEIGHT_VALIDATION = {
-  IMPERIAL: { min: 66, max: 440 }, // lbs
-  METRIC: { min: 30, max: 200 }, // kg
-}
-
-const validate = (value: string, min: number, max: number, name: string) => {
-  if (!value || value.trim() === '') {
-    return null
-  }
-  const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
-  }
-  return null
-}
 
 interface ConnectViewProps {
   duration: string
@@ -52,7 +33,7 @@ interface ConnectViewProps {
   setUserAge: (age: string) => void
   userHeight: number
   setUserHeight: (height: number) => void
-  onHeightBlur: () => void
+  validateHeight: () => void
   heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
@@ -88,7 +69,7 @@ export default function ConnectView({
   setUserAge,
   userHeight,
   setUserHeight,
-  onValidateHeight,
+  validateHeight,
   heightError,
   userWeight,
   setUserWeight,
@@ -117,8 +98,6 @@ export default function ConnectView({
   const [isResetting, setIsResetting] = useState(false)
   const [ageError, setAgeError] = useState<string | null>(null)
   const [weightError, setWeightError] = useState<string | null>(null)
-
-  const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -182,20 +161,11 @@ export default function ConnectView({
               ageError={ageError}
               heightError={heightError}
               weightError={weightError}
-              validateAge={(value) => {
-                setAgeError(validate(value, 1, 120, 'age'))
-              }}
-              validateHeight={onValidateHeight}
+              validateAge={setAgeError}
+              onValidateHeight={validateHeight}
               validateWeight={(value) => {
                 onWeightBlur()
-                setWeightError(
-                  validate(
-                    value,
-                    weightValidationRange.min,
-                    weightValidationRange.max,
-                    'weight'
-                  )
-                )
+                setWeightError(value)
               }}
             />
             <FormControl component="fieldset">
