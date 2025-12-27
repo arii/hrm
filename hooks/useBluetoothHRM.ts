@@ -332,9 +332,13 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             const calculatedMaxHr = calculateMaxHr(age)
 
             const metadataData: HrmMetadataUpdateData = {
-              deviceId: device.id,
               maxHr: calculatedMaxHr,
               name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
+            }
+            try {
+              metadataData.deviceId = device.id
+            } catch (e) {
+              logger.warn({ error: e }, 'Could not retrieve deviceId from Bluetooth device.')
             }
             if (typeof age === 'number') {
               metadataData.age = age
