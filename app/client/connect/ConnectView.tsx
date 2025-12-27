@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
@@ -55,6 +54,18 @@ interface ConnectViewProps {
   setUserHeight: (height: number) => void
   userWeight: string
   setUserWeight: (weight: string) => void
+  onAgeBlur: () => void
+  ageError: string | null
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
+  onHeightBlur: () => void
+  heightError: string | null
+  userWeight: string
+  setUserWeight: (weight: string) => void
+  onWeightBlur: () => void
+  weightError: string | null
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
@@ -84,10 +95,14 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  onAgeBlur,
+  ageError,
   userHeight,
   setUserHeight,
   userWeight,
   setUserWeight,
+  onWeightBlur,
+  weightError,
   gender,
   setGender,
   unitSystem,
@@ -120,6 +135,7 @@ export default function ConnectView({
   } = state
 
   const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
+  const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
     if (unitSystem === 'IMPERIAL' && userHeight > 0) {
@@ -347,7 +363,32 @@ export default function ConnectView({
                 max: weightValidationRange.max,
                 'aria-invalid': !!weightError,
               }}
+                Imperial (lbs)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg)
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            <UserSettings
+              userName={userName}
+              setUserName={setUserName}
+              userAge={userAge}
+              setUserAge={setUserAge}
+              onAgeBlur={onAgeBlur}
+              ageError={ageError}
+              userHeight={userHeight}
+              setUserHeight={setUserHeight}
+              onHeightBlur={onHeightBlur}
+              heightError={heightError}
+              userWeight={userWeight}
+              setUserWeight={setUserWeight}
+              onWeightBlur={onWeightBlur}
+              weightError={weightError}
+              unit={unitSystem}
+              setUnit={onUnitChange}
             />
+
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>
               <RadioGroup
