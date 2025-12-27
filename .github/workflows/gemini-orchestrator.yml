@@ -47,7 +47,7 @@ jobs:
 
   pr-quality:
     if: github.event.action == 'synchronize' || github.event.action == 'opened'
-    uses: ./.github/workflows/pr-quality-standalone.yml
+    uses: ./.github/workflows/pr-quality.yml
     secrets: inherit
 
   gemini-invoke:
