@@ -212,10 +212,29 @@ jobs:
         env:
           BRANCH: ${{ env.BRANCH }}
         run: |
-          if [ ! -s patch.diff ]; then
-            echo "Error: patch.diff is empty or does not exist."
+          echo "Checking patch.diff..."
+          if [ ! -f patch.diff ]; then
+            echo "❌ patch.diff file not found"
             exit 1
           fi
+          
+          PATCH_SIZE=$(wc -c < patch.diff)
+          echo "Patch file size: $PATCH_SIZE bytes"
+          
+          if [ $PATCH_SIZE -eq 0 ]; then
+            echo "❌ patch.diff is empty - gemini-client did not generate a valid diff"
+            exit 1
+          fi
+          
+          # Validate patch format starts with --- a/
+          if ! head -1 patch.diff | grep -q "^--- a/"; then
+            echo "❌ Patch does not start with '--- a/' header"
+            echo "Patch content (first 30 lines):"
+            head -30 patch.diff
+            exit 1
+          fi
+          
+          echo "✅ Patch format valid, applying..."
           git config user.name "AI Agent"
           git config user.email "ai@agent.local"
           git checkout -b "$BRANCH"
