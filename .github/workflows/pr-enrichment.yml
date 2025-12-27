@@ -118,22 +118,22 @@ jobs:
           - **Lines Deleted**: ${{ env.DELETIONS }}
           - **Impact Areas**: ${{ env.CATEGORIES }}"
           
-          # Check if metadata section already exists
+          # Check if metadata section already exists and remove it
           if echo "$CURRENT_BODY" | grep -q "## 📊 Change Summary"; then
-            # Update existing metadata
-            NEW_BODY=$(echo "$CURRENT_BODY" | sed '/## 📊 Change Summary/,/## /c\'"$METADATA"'\n')
-          else
-            # Add metadata section
-            if [ -z "$CURRENT_BODY" ]; then
-              NEW_BODY="$METADATA"
-            else
-              NEW_BODY="$CURRENT_BODY
-
-          $METADATA"
-            fi
+            # Remove the old metadata section using awk
+            CURRENT_BODY=$(printf '%s\n' "$CURRENT_BODY" | awk '!/^## 📊 Change Summary/,!/^- \*\*Impact Areas/ {print}' | sed '/^[[:space:]]*$/d')
           fi
           
-          # Update PR
+          # Add metadata section
+          if [ -z "$CURRENT_BODY" ]; then
+            NEW_BODY="$METADATA"
+          else
+            NEW_BODY="$CURRENT_BODY
+
+          $METADATA"
+          fi
+          
+          # Update PR using gh pr edit with proper escaping
           gh pr edit "$PR_NUMBER" --body "$NEW_BODY" || echo "::warning::Could not update PR description"
 
       - name: Enhance PR Title
