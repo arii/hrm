@@ -32,12 +32,17 @@ describe('UserSettings Component', () => {
     validateWeight: mockValidateWeight,
   }
 
+  const renderComponent = (props = {}) => {
+    const combinedProps = { ...defaultProps, ...props }
+    return render(<UserSettings {...combinedProps} />)
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
   it('renders all fields with correct initial values', () => {
-    render(<UserSettings {...defaultProps} />)
+    renderComponent()
     expect(screen.getByLabelText('Your Name')).toHaveValue('John Doe')
     expect(screen.getByLabelText('Your Age')).toHaveValue(30)
     expect(screen.getByLabelText('Your Height (cm)')).toHaveValue(175)
@@ -45,7 +50,7 @@ describe('UserSettings Component', () => {
   })
 
   it('calls the correct setters on input change', () => {
-    render(<UserSettings {...defaultProps} />)
+    renderComponent()
 
     fireEvent.change(screen.getByLabelText('Your Name'), {
       target: { value: 'Jane Doe' },
@@ -69,7 +74,7 @@ describe('UserSettings Component', () => {
   })
 
   it('switches between METRIC and IMPERIAL units', () => {
-    const { rerender } = render(<UserSettings {...defaultProps} />)
+    const { rerender } = renderComponent()
     expect(screen.getByLabelText('Your Height (cm)')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /imperial/i }))
@@ -83,7 +88,7 @@ describe('UserSettings Component', () => {
   })
 
   it('converts height from CM to feet and inches when switching to IMPERIAL', async () => {
-    const { rerender } = render(<UserSettings {...defaultProps} />) // 175cm
+    const { rerender } = renderComponent() // 175cm
 
     fireEvent.click(screen.getByRole('button', { name: /imperial/i }))
     expect(mockSetUnit).toHaveBeenCalledWith('IMPERIAL')
@@ -96,7 +101,7 @@ describe('UserSettings Component', () => {
   })
 
   it('converts height from feet and inches to CM when changing imperial inputs', () => {
-    render(<UserSettings {...defaultProps} unit="IMPERIAL" />)
+    renderComponent({ unit: 'IMPERIAL' })
 
     fireEvent.change(screen.getByLabelText('Feet'), { target: { value: '6' } })
     fireEvent.change(screen.getByLabelText('Inches'), {
@@ -108,7 +113,7 @@ describe('UserSettings Component', () => {
   })
 
   it('calls validation functions on blur', () => {
-    render(<UserSettings {...defaultProps} />)
+    renderComponent()
 
     fireEvent.blur(screen.getByLabelText('Your Age'))
     expect(mockValidateAge).toHaveBeenCalledWith('30')

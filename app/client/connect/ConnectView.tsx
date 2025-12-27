@@ -187,6 +187,7 @@ export default function ConnectView({
               }}
               validateHeight={onHeightBlur}
               validateWeight={(value) => {
+                onWeightBlur()
                 setWeightError(
                   validate(
                     value,

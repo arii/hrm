@@ -26,6 +26,10 @@ describe('unit conversion utilities', () => {
       expect(cmToFeetAndInches(-10)).toEqual({ feet: 0, inches: 0 })
       expect(cmToFeetAndInches(NaN)).toEqual({ feet: 0, inches: 0 })
     })
+
+    it('should handle large numbers', () => {
+      expect(cmToFeetAndInches(10000)).toEqual({ feet: 328, inches: 1 })
+    })
   })
 
   describe('feetAndInchesToCm', () => {
@@ -39,6 +43,10 @@ describe('unit conversion utilities', () => {
     it('should handle zero feet or inches', () => {
       expect(feetAndInchesToCm(5, 0)).toBeCloseTo(152.4)
       expect(feetAndInchesToCm(0, 11)).toBeCloseTo(27.94)
+    })
+
+    it('should handle large numbers', () => {
+      expect(feetAndInchesToCm(100, 5)).toBeCloseTo(3060.7)
     })
   })
 
