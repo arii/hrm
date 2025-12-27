@@ -179,26 +179,15 @@ jobs:
             if [ -n "$LABELS" ]; then
               echo "📌 Applying labels to PR #$PR_NUMBER:"
               
-              # Collect all labels into a comma-separated list
-              LABEL_LIST=$(jq -r '.labels | join(",")' review_result.json)
               LABEL_COUNT=$(jq '.labels | length' review_result.json)
               
               if [ $LABEL_COUNT -gt 0 ]; then
-                echo "Applying $LABEL_COUNT labels in a single API call..."
-                echo "Labels: $LABEL_LIST"
-                
-                # Apply all labels at once using comma-separated format
-                timeout 30 gh pr edit "$PR_NUMBER" --add-label "$LABEL_LIST" 2>&1
-                EXIT_CODE=$?
-                
-                if [ $EXIT_CODE -eq 0 ]; then
-                  echo "✅ Labels applied successfully"
-                elif [ $EXIT_CODE -eq 124 ]; then
-                  echo "❌ Timeout (30s) applying labels"
-                else
-                  echo "❌ Failed to apply labels (exit code: $EXIT_CODE)"
-                  echo "Note: This may be a GitHub API issue. Labels may still have been applied."
-                fi
+                echo "Applying $LABEL_COUNT labels..."
+                jq -r '.labels[]' review_result.json | while read -r label; do
+                  echo "  Adding: $label"
+                  timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" >/dev/null 2>&1 || echo "    ⚠️ Failed to add: $label"
+                done
+                echo "✅ Label application complete"
               fi
             else
               echo "ℹ️ No labels to apply from review result"
