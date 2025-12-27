@@ -1,8 +1,9 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    branches: [ "leader" ]
+  # Disabled - use pr-quality-standalone.yml instead
+  # pull_request:
+  #   branches: [ "leader" ]
   workflow_dispatch:
     inputs:
       branch:
@@ -32,7 +33,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           fetch-depth: 0
@@ -86,7 +87,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           clean: false # ⚡ KEEP WORKSPACE (Preserves node_modules & browsers)
@@ -129,7 +130,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           clean: false # ⚡ KEEP WORKSPACE
@@ -175,7 +176,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.branch || github.ref }}
           clean: false # ⚡ KEEP WORKSPACE

@@ -12,6 +12,9 @@ export const createSpotifyTrack = (overrides: Partial<Track> = {}): Track => {
     album: {
       album_group: 'album',
       album_type: 'album',
+      genres: ['Pop'],
+      label: 'Republic Records',
+      popularity: 90,
       artists: [
         {
           external_urls: {
@@ -26,7 +29,11 @@ export const createSpotifyTrack = (overrides: Partial<Track> = {}): Track => {
       ],
       available_markets: ['US'],
       copyrights: [],
-      external_ids: { isrc: 'USUG11901208', upc: '194399222629', ean: '0194399222629' },
+      external_ids: {
+        isrc: 'USUG11901208',
+        upc: '194399222629',
+        ean: '0194399222629',
+      },
       external_urls: {
         spotify: 'https://open.spotify.com/album/6kZ42qRrzov54LcAk4onW9',
       },
