@@ -1,11 +1,11 @@
 /**
  * @file useBluetoothHRM.ts
- * @description This file exports a custom React hook, `useBluetoothHRM`, for managing
- * interactions with Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It encapsulates the logic for device discovery, connection, disconnection,
- * data streaming, and automatic reconnection on signal loss.
+ * @description This custom React hook provides a streamlined interface for interacting
+ * with the `DeviceManagerService` to manage Bluetooth Low Energy (BLE) Heart Rate
+ * Monitor (HRM) devices. It handles state management for the UI layer and bridges
+ * React's component lifecycle with the underlying Bluetooth service.
  */
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useEffect, useMemo } from 'react'
 import {
   HrmInputData,
   HrmMetadataUpdateMessage,
@@ -14,449 +14,229 @@ import {
 import { calculateMaxHr } from '../utils/constants'
 import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { cancellablePromise } from '@/utils/promise'
-
-const HR_SERVICE_UUID = 'heart_rate'
-const HR_CHARACTERISTIC_UUID = 'heart_rate_measurement'
-const BATTERY_SERVICE_UUID = 'battery_service'
-const BATTERY_LEVEL_CHARACTERISTIC_UUID = 'battery_level'
-
-/**
- * @function parseHeartRate
- * @description Parses the heart rate value from the raw DataView received from a BLE device.
- * It handles both 8-bit and 16-bit heart rate value formats based on the flags.
- * @param {DataView} value - The raw data from the heart rate measurement characteristic.
- * @returns {number} The parsed heart rate in beats per minute.
- */
-const parseHeartRate = (value: DataView): number => {
-  const flags = value.getUint8(0)
-  const is16Bit = flags & 0x1
-  return is16Bit ? value.getUint16(1, true) : value.getUint8(1)
-}
+import DeviceManagerService, {
+  DeviceManagerOptions,
+  DeviceConnectionStatus,
+  DisconnectionReason,
+} from '@/services/DeviceManagerService'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 
 /**
- * @function setCookie
- * @description Sets a browser cookie with a specified name, value, and expiration.
- * This function is a no-op in non-browser environments.
- * @param {string} name - The name of the cookie.
- * @param {string} value - The value to store in the cookie.
- * @param {number} [days=365] - The number of days until the cookie expires.
- * @sideeffect Creates or updates a cookie in `document.cookie`.
+ * @constant isBluetoothSupported
+ * @description A boolean flag indicating if the Web Bluetooth API is supported by the browser.
+ * This check is performed once and memoized for efficiency.
  */
-const setCookie = (name: string, value: string, days = 365) => {
-  if (typeof document !== 'undefined') {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString()
-    document.cookie = `${name}=${encodeURIComponent(
-      value
-    )}; expires=${expires}; path=/`
+const isBluetoothSupported =
+  typeof navigator !== 'undefined' && !!navigator.bluetooth
+
+/**
+ * @function getPreviouslyConnectedDevice
+ * @description Asynchronously retrieves a list of Bluetooth devices the browser has
+ * permissions for and finds the one that matches the provided device ID.
+ * @param {string} deviceId - The unique ID of the Bluetooth device to find.
+ * @returns {Promise<BluetoothDevice | null>} The found device or null.
+ */
+const getPreviouslyConnectedDevice = async (
+  deviceId: string
+): Promise<BluetoothDevice | null> => {
+  if (!isBluetoothSupported || !navigator.bluetooth.getDevices) return null
+  try {
+    const permittedDevices = await navigator.bluetooth.getDevices()
+    return permittedDevices.find((d) => d.id === deviceId) || null
+  } catch (error) {
+    logger.error(
+      { error },
+      'Failed to retrieve list of permitted Bluetooth devices.'
+    )
+    return null
   }
 }
 
 /**
- * @function getCookie
- * @description Retrieves the value of a cookie by its name.
- * Returns an empty string if the cookie is not found or in a non-browser environment.
- * @param {string} name - The name of the cookie to retrieve.
- * @returns {string} The decoded value of the cookie.
- */
-const getCookie = (name: string): string => {
-  if (typeof document === 'undefined') return ''
-  return document.cookie.split('; ').reduce((r, v) => {
-    const parts = v.split('=')
-    return parts[0] === name && parts[1] ? decodeURIComponent(parts[1]) : r
-  }, '')
-}
-
-/**
  * @interface UseBluetoothHRMProps
- * @description Props for configuring the useBluetoothHRM hook.
+ * @description Props for the `useBluetoothHRM` hook, allowing customization of the underlying `DeviceManagerService`.
  */
-interface UseBluetoothHRMProps {
+interface UseBluetoothHRMProps extends DeviceManagerOptions {
   /**
-   * @property {number} [dataLivenessTimeoutMs=10000]
-   * @description The timeout in milliseconds for determining if the Bluetooth data stream is stale.
-   * If no new data is received within this period, the hook will attempt to reconnect.
-   * A value of 0 disables this feature.
+   * @property {string} [userName] - The user's name, used for display purposes.
+   * @property {number} [userAge] - The user's age, used for calculating max heart rate.
    */
-  dataLivenessTimeoutMs?: number
+  userName?: string
+  userAge?: number
 }
-
-/**
- * @typedef {'manual' | 'timeout' | 'signal_loss' | null} DisconnectionReason
- * @description Represents the reason for a device disconnection.
- * - `manual`: The user explicitly called the `disconnect` function.
- * - `timeout`: The connection was dropped due to stale data (no heart rate updates received).
- * - `signal_loss`: The device's `gattserverdisconnected` event was fired unexpectedly.
- * - `null`: The device is connected or has not yet been disconnected.
- */
-type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
-
 /**
  * @hook useBluetoothHRM
- * @description A comprehensive hook for managing Bluetooth Low Energy (BLE) Heart Rate Monitor (HRM) devices.
- * It handles device discovery, connection, data streaming, and automatic reconnection.
+ * @description Manages Bluetooth HRM device interactions by leveraging the `DeviceManagerService`.
+ * It exposes state and functions for connection, disconnection, and data handling to UI components.
  *
- * @param {UseBluetoothHRMProps} props - Configuration properties for the hook.
- *
- * @returns {object} An object containing functions and state for managing a Bluetooth HRM device.
- * @property {Function} connectAndStream - Initiates device connection and data streaming.
- * @property {Function} disconnect - Manually disconnects the device.
- * @property {Function} forgetDevice - Disconnects and forgets the device.
- * @property {string} deviceStatus - A human-readable string of the current connection status.
- * @property {number | null} batteryLevel - The device's battery level (0-100), or null if unavailable.
- * @property {boolean} isConnected - True if the device is connected and streaming.
- * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
- * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
- *
- * @example
- * ```tsx
- * const {
- *   connectAndStream,
- *   disconnect,
- *   deviceStatus,
- *   isConnected,
- *   batteryLevel
- * } = useBluetoothHRM({ dataLivenessTimeoutMs: 5000 });
- *
- * return (
- *   <div>
- *     <p>Device Status: {deviceStatus}</p>
- *     <p>Connected: {isConnected ? 'Yes' : 'No'}</p>
- *     {batteryLevel && <p>Battery: {batteryLevel}%</p>}
- *     <button onClick={() => connectAndStream('John Doe', 30)}>Connect</button>
- *     <button onClick={disconnect}>Disconnect</button>
- *   </div>
- * );
- * ```
+ * @param {UseBluetoothHRMProps} props - Configuration for the hook and underlying service.
+ * @returns {object} An object containing the state and methods for interacting with the HRM device.
+ * @property {Function} connect - Initiates a new device scan and connection.
+ * @property {Function} disconnect - Disconnects the current device.
+ * @property {Function} forgetDevice - Revokes permissions for the connected device.
+ * @property {Function} autoConnect - Attempts to connect to the last used device.
+ * @property {string} deviceStatus - Human-readable status of the connection.
+ * @property {number | null} batteryLevel - The device's battery level (0-100), or null.
+ * @property {boolean} isConnected - True if the device is connected.
+ * @property {boolean} isSupported - True if Web Bluetooth is supported.
+ * @property {DisconnectionReason | null} disconnectionReason - The reason for the last disconnection.
  */
-const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
-  const { dataLivenessTimeoutMs = 10000 } = props
-  const { sendData, connectionStatus } = useWebSocket()
+export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
+  const {
+    userName,
+    userAge,
+    dataLivenessTimeoutMs,
+    reconnectIntervalMs,
+  } = props
+  const { sendData, connectionStatus: wsStatus } = useWebSocket()
+  const [lastDeviceId, setLastDeviceId] = useLocalStorage<string | null>(
+    'hrm_device_id',
+    null
+  )
+
+  // Memoize the service instance to ensure it persists across re-renders
+  const deviceManager = useMemo(
+    () => new DeviceManagerService({ dataLivenessTimeoutMs, reconnectIntervalMs }),
+    [dataLivenessTimeoutMs, reconnectIntervalMs]
+  )
+
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
-  const [disconnectionReason, setDisconnectionReason] =
-    useState<DisconnectionReason>(null)
-  const [savedDevice, setSavedDevice] = useState<BluetoothDevice | null>(null)
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
-  const [isSupported] = useState(
-    () => typeof navigator !== 'undefined' && !!navigator.bluetooth
-  )
+  const [disconnectionReason, setDisconnectionReason] =
+    useState<DisconnectionReason | null>(null)
 
-  const statusRef = useRef(deviceStatus)
-  const lastDataTime = useRef<number>(0)
-  const deviceRef = useRef<BluetoothDevice | null>(null)
-  const isManualDisconnect = useRef(false)
-  const userDetailsRef = useRef<{ name: string; age: number } | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
-  const connectToGattRef = useRef<
-    ((device: BluetoothDevice) => Promise<boolean>) | null
-  >(null)
-
+  // Effect to subscribe to device manager events and update React state
   useEffect(() => {
-    statusRef.current = deviceStatus
-  }, [deviceStatus])
+    const handleStatusChange = (e: CustomEvent) => {
+      const { status, message } = e.detail as {
+        status: DeviceConnectionStatus
+        message: string
+      }
+      setDeviceStatus(message)
+      if (status === 'error') {
+        logger.error(`Bluetooth Error: ${message}`)
+      }
+    }
 
-  // Cleanup
-  useEffect(() => {
+    const handleHeartRate = (e: CustomEvent) => {
+      const { heartRate } = e.detail as { heartRate: number }
+      const metadata: HrmMetadataUpdateMessage = {
+        type: 'HRM_METADATA_UPDATE',
+        data: {
+          maxHr: calculateMaxHr(userAge),
+          name:
+            userName ||
+            `Bluetooth HRM (${deviceManager.device?.name || 'Unknown'})`,
+          ...(userAge && { age: userAge }),
+        } as HrmMetadataUpdateData,
+      }
+      sendData(metadata)
+
+      const data: HrmInputData = { value: heartRate }
+      sendData({ type: 'HRM_INPUT', data })
+    }
+
+    const handleBattery = (e: CustomEvent) =>
+      setBatteryLevel((e.detail as { batteryLevel: number }).batteryLevel)
+    const handleDeviceConnected = (e: CustomEvent) => {
+      const { device } = e.detail as { device: BluetoothDevice }
+      setLastDeviceId(device.id)
+      setDisconnectionReason(null)
+    }
+
+    const handleDeviceDisconnected = (e: CustomEvent) => {
+      const { reason } = e.detail as { reason: DisconnectionReason }
+      setBatteryLevel(null)
+      if (reason !== 'manual') {
+        setDisconnectionReason(reason)
+      }
+    }
+
+    deviceManager.addEventListener('status-changed', handleStatusChange)
+    deviceManager.addEventListener('heart-rate-received', handleHeartRate)
+    deviceManager.addEventListener('battery-level-received', handleBattery)
+    deviceManager.addEventListener('device-connected', handleDeviceConnected)
+    deviceManager.addEventListener(
+      'device-disconnected',
+      handleDeviceDisconnected
+    )
+
+    // Cleanup: Remove listeners and disconnect on unmount
     return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (deviceRef.current?.gatt?.connected)
-        deviceRef.current.gatt.disconnect()
-    }
-  }, [])
-
-  // Watchdog for stale data
-  useEffect(() => {
-    // A timeout of 0 disables the watchdog
-    if (!dataLivenessTimeoutMs) return
-
-    // This interval periodically checks if new data has been received.
-    // If the time since the last data point exceeds the timeout, it triggers a reconnection.
-    const interval = setInterval(() => {
-      if (
-        statusRef.current.startsWith('Connected') &&
-        lastDataTime.current > 0
-      ) {
-        if (Date.now() - lastDataTime.current > dataLivenessTimeoutMs) {
-          logger.warn('Bluetooth data stale. Forcing reconnection...')
-          setDisconnectionReason('timeout')
-          setDeviceStatus('Connection unstable. Reconnecting...')
-          if (deviceRef.current?.gatt?.connected)
-            deviceRef.current.gatt.disconnect()
-        }
-      }
-    }, 2000) // Check every 2s
-    return () => clearInterval(interval)
-  }, [dataLivenessTimeoutMs])
-
-  /**
-   * @function disconnect
-   * @description Manually disconnects the device, preventing auto-reconnection.
-   * @sideeffect Clears connection timeouts and resets device state.
-   */
-  const disconnect = useCallback(() => {
-    isManualDisconnect.current = true
-    setDisconnectionReason('manual')
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-      abortControllerRef.current = null
-    }
-    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-    if (deviceRef.current?.gatt?.connected) deviceRef.current.gatt.disconnect()
-
-    setDeviceStatus('Disconnected')
-    setSavedDevice(null)
-    setBatteryLevel(null)
-    deviceRef.current = null
-  }, [])
-
-  /**
-   * @function forgetDevice
-   * @description Disconnects, clears the saved device from cookies, and revokes permissions.
-   * @async
-   * @returns {Promise<void>}
-   * @sideeffect Calls `disconnect`, deletes cookies, and may call `device.forget()`.
-   */
-  const forgetDevice = useCallback(async () => {
-    logger.info('Initiating device forget sequence...')
-    disconnect()
-    try {
-      setCookie('hrm_device_id', '', -1)
-      if (navigator.bluetooth && navigator.bluetooth.getDevices) {
-        const devices = await navigator.bluetooth.getDevices()
-        for (const device of devices) {
-          if (device.forget) await device.forget()
-        }
-      }
-      setDeviceStatus('Device permissions revoked. Ready for new connection.')
-    } catch (e) {
-      logger.warn({ error: e }, 'Error during device forget')
-      setDeviceStatus('Error clearing device permissions.')
-    }
-  }, [disconnect])
-
-  const handleConnectionError = useCallback((error: unknown) => {
-    let msg = 'An unknown error occurred.'
-    if (error instanceof DOMException) {
-      if (error.name === 'NotFoundError') {
-        msg = 'Connection cancelled. No device selected.'
-      } else if (error.name === 'SecurityError') {
-        msg = 'Security error. Use HTTPS or localhost.'
-      } else if (error.name === 'NetworkError') {
-        msg = 'Connection failed. Device might be too far or low battery.'
-      } else {
-        msg = `Bluetooth error: ${error.name}`
-      }
-    } else if (error instanceof Error) {
-      // Handle our custom timeout error
-      if (error.message.includes('timeout')) {
-        msg = 'Connection timed out. Wake up device and try again.'
-      } else {
-        msg = `Error: ${error.message}`
-      }
-    }
-    setDeviceStatus(`Failed: ${msg}`)
-  }, [])
-
-  const onDisconnected = useCallback(() => {
-    setBatteryLevel(null)
-    if (!isManualDisconnect.current && deviceRef.current) {
-      logger.info(
-        { device: deviceRef.current.name },
-        'Device disconnected, attempting auto-reconnect...'
+      deviceManager.removeEventListener('status-changed', handleStatusChange)
+      deviceManager.removeEventListener('heart-rate-received', handleHeartRate)
+      deviceManager.removeEventListener('battery-level-received', handleBattery)
+      deviceManager.removeEventListener(
+        'device-connected',
+        handleDeviceConnected
       )
-      setDisconnectionReason('signal_loss')
-      setDeviceStatus('Signal Lost. Retrying...')
-      const deviceToReconnect = deviceRef.current
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (connectToGattRef.current)
-          connectToGattRef.current(deviceToReconnect)
-      }, 2000)
-    } else {
-      logger.info('Device disconnected manually.')
-      setDeviceStatus('Disconnected')
+      deviceManager.removeEventListener(
+        'device-disconnected',
+        handleDeviceDisconnected
+      )
+      deviceManager.disconnect()
     }
-  }, [])
+  }, [deviceManager, sendData, setLastDeviceId, userAge, userName])
 
-  const connectToGatt = useCallback(
-    async (device: BluetoothDevice) => {
+  // --- Public API ---
+  const connect = useCallback(async () => {
+    if (wsStatus !== 'Connected') {
+      const msg = 'WebSocket not connected. Cannot stream HRM data.'
+      setDeviceStatus(`Failed: ${msg}`)
+      throw new Error(msg)
+    }
+    await deviceManager.findAndConnect()
+  }, [deviceManager, wsStatus])
+
+  const disconnect = useCallback(() => deviceManager.disconnect(), [
+    deviceManager,
+  ])
+
+  const forgetDevice = useCallback(async () => {
+    logger.info('Forgetting Bluetooth device...')
+    disconnect()
+    setLastDeviceId(null) // Clear from local storage
+    if (
+      isBluetoothSupported &&
+      deviceManager.device &&
+      'forget' in deviceManager.device
+    ) {
       try {
-        deviceRef.current = device
-        setDeviceStatus(`Connecting to: ${device.name || 'Device'}...`)
-
-        abortControllerRef.current = new AbortController()
-        const server = await cancellablePromise(device.gatt!.connect(), {
-          timeoutMs: 10000,
-          errorMessage: 'GATT connection timeout',
-          signal: abortControllerRef.current.signal,
-        })
-
-        const service = await server.getPrimaryService(HR_SERVICE_UUID)
-        const characteristic = await service.getCharacteristic(
-          HR_CHARACTERISTIC_UUID
-        )
-
-        try {
-          const batteryService =
-            await server.getPrimaryService(BATTERY_SERVICE_UUID)
-          const batteryChar = await batteryService.getCharacteristic(
-            BATTERY_LEVEL_CHARACTERISTIC_UUID
-          )
-          const value = await batteryChar.readValue()
-          setBatteryLevel(value.getUint8(0))
-          await batteryChar.startNotifications()
-          batteryChar.addEventListener(
-            'characteristicvaluechanged',
-            (e: unknown) => {
-              const event = e as Event
-              const target = event.target as BluetoothRemoteGATTCharacteristic
-              setBatteryLevel(target.value!.getUint8(0))
-            }
-          )
-        } catch (_err) {
-          /* Battery service optional */
-        }
-
-        await characteristic.startNotifications()
-        lastDataTime.current = Date.now()
-
-        characteristic.addEventListener(
-          'characteristicvaluechanged',
-          (event: unknown) => {
-            const e = event as Event
-            const target = e.target as BluetoothRemoteGATTCharacteristic
-            const heartRate = parseHeartRate(target.value!)
-            lastDataTime.current = Date.now()
-
-            const { name, age } = userDetailsRef.current || {}
-            const calculatedMaxHr = calculateMaxHr(age)
-
-            const metadataData: HrmMetadataUpdateData = {
-              maxHr: calculatedMaxHr,
-              name: name || `Bluetooth HRM (${device.name || 'Unknown'})`,
-            }
-            if (typeof age === 'number') {
-              metadataData.age = age
-            }
-
-            const metadata: HrmMetadataUpdateMessage = {
-              type: 'HRM_METADATA_UPDATE',
-              data: metadataData,
-            }
-            sendData(metadata)
-
-            const data: HrmInputData = {
-              value: heartRate,
-            }
-
-            sendData({
-              type: 'HRM_INPUT',
-              data,
-            })
-          }
-        )
-
-        device.addEventListener('gattserverdisconnected', onDisconnected)
-
-        setDeviceStatus(`Connected to: ${device.name}`)
-        setSavedDevice(device)
-        setCookie('hrm_device_id', device.id)
-        isManualDisconnect.current = false
-        setDisconnectionReason(null)
-        return true
+        await (deviceManager.device as any).forget()
+        setDeviceStatus('Device permissions revoked.')
       } catch (error) {
-        logger.error({ error, device: device.name }, 'GATT Connection failed')
-        throw error
+        logger.error({ error }, 'Error revoking device permissions.')
+        setDeviceStatus('Error forgetting device.')
       }
-    },
-    [onDisconnected, sendData]
-  )
+    }
+  }, [disconnect, deviceManager, setLastDeviceId])
 
-  useEffect(() => {
-    connectToGattRef.current = connectToGatt
-  }, [connectToGatt])
+  const autoConnect = useCallback(async () => {
+    if (wsStatus !== 'Connected' || !lastDeviceId) return
 
-  /**
-   * @function connectAndStream
-   * @description Connects to a Bluetooth HRM device and starts streaming data.
-   * It attempts to reconnect to a saved device or prompts the user to select a new one.
-   *
-   * @param {string} [userName] - The user's name for display.
-   * @param {number} [userAge] - The user's age to calculate max heart rate.
-   * @returns {Promise<void>} A promise that resolves on successful connection, or rejects on failure.
-   * @throws {Error} If the connection fails for any reason (e.g., WebSocket disconnected,
-   * device not found, user cancellation).
-   * @sideeffect May trigger the browser's Bluetooth device picker.
-   * @sideeffect Updates component state throughout the connection process.
-   */
-  const connectAndStream = useCallback(
-    async (userName?: string, userAge?: number): Promise<void> => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-
-      userDetailsRef.current = {
-        name: userName || '',
-        age: userAge || 0,
-      }
-      if (statusRef.current.startsWith('Connected')) return
-      if (connectionStatus !== 'Connected') {
-        const err = new Error('WebSocket not connected')
-        handleConnectionError(err)
-        throw err
-      }
-
+    setDeviceStatus('Reconnecting to last device...')
+    const device = await getPreviouslyConnectedDevice(lastDeviceId)
+    if (device) {
       try {
-        setDeviceStatus('Checking saved devices...')
-        let device = savedDevice
-
-        if (!device) {
-          const savedDeviceId = getCookie('hrm_device_id')
-          if (savedDeviceId && navigator.bluetooth?.getDevices) {
-            const devices = await navigator.bluetooth.getDevices()
-            const foundDevice = devices.find((d) => d.id === savedDeviceId)
-
-            if (foundDevice) {
-              // Attempt to reconnect to the previously saved device
-              await connectToGatt(foundDevice)
-              return
-            }
-          }
-        }
-
-        if (!device) {
-          setDeviceStatus('Scanning for devices...')
-          // Note: acceptAllDevices is an alternative if filters fail,
-          // but strict filtering is better for UX to avoid showing non-HRM devices.
-          device = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [HR_SERVICE_UUID] }],
-            optionalServices: [BATTERY_SERVICE_UUID],
-          })
-        }
-
-        if (device) {
-          await connectToGatt(device)
-        }
-        // If `requestDevice` is cancelled by the user, it throws a `NotFoundError`,
-        // which is caught and handled below. A resolved promise without a device
-        // is not an expected behavior.
+        await deviceManager.connectToDevice(device)
       } catch (error) {
-        handleConnectionError(error)
-        // Re-throw the error to ensure the promise rejects
-        throw error
+        setDeviceStatus('Auto-connect failed. Please connect manually.')
+        setLastDeviceId(null) // Clear invalid device ID
       }
-    },
-    [connectionStatus, savedDevice, connectToGatt, handleConnectionError]
-  )
+    } else {
+      setDeviceStatus('Last device not found. Please connect manually.')
+    }
+  }, [wsStatus, lastDeviceId, deviceManager, setLastDeviceId])
 
   return {
-    connectAndStream,
+    connect,
     disconnect,
     forgetDevice,
+    autoConnect,
     deviceStatus,
     batteryLevel,
     isConnected: deviceStatus.startsWith('Connected'),
-    isSupported, // Export this flag
+    isSupported: isBluetoothSupported,
     disconnectionReason,
   }
 }
