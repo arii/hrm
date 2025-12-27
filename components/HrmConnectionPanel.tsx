@@ -8,11 +8,10 @@ import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
-import { CONNECT_HR_MONITOR_TITLE, MAX_HR_DEFAULT } from '@/utils/constants'
-import { getHrZoneProps } from '@/utils/visualization'
+import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
-import HrTile from '@/components/HrTile'
+import HrTileWithCalories from './HrTileWithCalories'
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -43,11 +42,6 @@ const HrmConnectionPanel = () => {
         return !(isPlaceholderName || hasNoIdentity)
       })
       .map((user) => {
-        const hrZoneProps = getHrZoneProps(
-          user.value,
-          user.maxHr || MAX_HR_DEFAULT
-        )
-
         const matchingAlert = activeAlerts.find(
           (alert) =>
             alert.clientId === user.clientId &&
@@ -56,7 +50,6 @@ const HrmConnectionPanel = () => {
 
         return {
           ...user,
-          ...hrZoneProps,
           isAlerting: !!matchingAlert,
           alertMessage: matchingAlert?.message,
         }
@@ -67,9 +60,6 @@ const HrmConnectionPanel = () => {
     connectionStatus === 'Connecting...' ||
     connectionStatus === 'Reconnecting...'
 
-  // If no tiles are available, show connection UI and skeletons
-  // Note: This UI currently assumes a single, primary HRM connection.
-  // Future iterations may need to address a multi-device connection strategy.
   return (
     <Box
       sx={{
@@ -134,12 +124,8 @@ const HrmConnectionPanel = () => {
               },
             }}
           >
-            <HrTile
-              name={user.name || ''}
-              bpm={user.value}
-              percentMax={user.percentage}
-              calories={user.calories}
-              isConnected={user.isConnected}
+            <HrTileWithCalories
+              user={user}
               isAlerting={user.isAlerting}
               {...(user.alertMessage && { alertMessage: user.alertMessage })}
             />
