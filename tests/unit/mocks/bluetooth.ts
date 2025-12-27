@@ -54,6 +54,7 @@ class MockGATTCharacteristic extends MockEventTarget {
   stopNotifications = jest.fn().mockResolvedValue(undefined)
   readValue = jest.fn().mockResolvedValue(new DataView(new ArrayBuffer(1)))
   writeValue = jest.fn().mockResolvedValue(undefined)
+  value: DataView | null = null
 }
 
 // Mock for BluetoothRemoteGATTService

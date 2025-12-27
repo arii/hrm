@@ -90,6 +90,8 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     wsStatusRef.current = wsStatus
   }, [wsStatus])
 
+  const autoConnectController = useRef<AbortController | null>(null)
+
   const [lastDeviceId, setLastDeviceId] = useLocalStorage<string | null>(
     'hrm_device_id',
     null
@@ -201,6 +203,11 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
 
   // --- Public API ---
   const connect = useCallback(async () => {
+    if (autoConnectController.current) {
+      autoConnectController.current.abort()
+      autoConnectController.current = null
+    }
+
     if (wsStatus !== 'Connected') {
       logger.warn(
         'WebSocket not connected. HRM data will be queued until connection is established.'
@@ -261,9 +268,17 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   const autoConnect = useCallback(async () => {
     if (wsStatusRef.current !== 'Connected' || !lastDeviceId) return
 
+    if (autoConnectController.current) {
+      autoConnectController.current.abort()
+    }
+    autoConnectController.current = new AbortController()
+    const signal = autoConnectController.current.signal
+
     setDeviceStatus('Reconnecting to last device...')
     try {
       const device = await getPreviouslyConnectedDevice(lastDeviceId)
+      if (signal.aborted) return
+
       if (device) {
         if (wsStatusRef.current !== 'Connected') {
           throw new Error('WebSocket disconnected during auto-connect.')

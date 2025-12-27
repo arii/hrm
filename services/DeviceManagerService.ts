@@ -122,7 +122,7 @@ class DeviceManagerService extends EventTarget {
   // Type-safe event listener overrides
   public addEventListener<K extends keyof DeviceManagerEventMap>(
     type: K,
-    listener: (event: CustomEvent<DeviceManagerEventMap[K]>) => void,
+    listener: ((event: CustomEvent<DeviceManagerEventMap[K]>) => void) | null,
     options?: boolean | AddEventListenerOptions
   ): void
   public addEventListener(
@@ -148,7 +148,7 @@ class DeviceManagerService extends EventTarget {
 
   public removeEventListener<K extends keyof DeviceManagerEventMap>(
     type: K,
-    listener: (event: CustomEvent<DeviceManagerEventMap[K]>) => void,
+    listener: ((event: CustomEvent<DeviceManagerEventMap[K]>) => void) | null,
     options?: boolean | EventListenerOptions
   ): void
   public removeEventListener(
@@ -230,7 +230,12 @@ class DeviceManagerService extends EventTarget {
       'gattserverdisconnected',
       this.onGattServerDisconnected
     )
-    await this.connectToGattServer()
+    try {
+      await this.connectToGattServer()
+    } catch (error) {
+      this.cleanup()
+      throw error
+    }
   }
 
   public async forget(): Promise<void> {
@@ -254,12 +259,16 @@ class DeviceManagerService extends EventTarget {
         message: `Connecting to ${this.device.name}...`,
       })
 
-      const cancelOptions = {
+      const cancelOptions: {
+        timeoutMs: number
+        errorMessage: string
+        signal?: AbortSignal
+      } = {
         timeoutMs: 15000,
         errorMessage: 'GATT connection timeout',
-        ...(this.abortController?.signal
-          ? { signal: this.abortController.signal }
-          : {}),
+      }
+      if (this.abortController?.signal) {
+        cancelOptions.signal = this.abortController.signal
       }
 
       const server = await cancellablePromise(
@@ -279,25 +288,7 @@ class DeviceManagerService extends EventTarget {
       this.lastDataTime = Date.now()
       this.startWatchdog()
 
-      try {
-        const batteryService =
-          await server.getPrimaryService(BATTERY_SERVICE_UUID)
-        this.batteryCharacteristic = await batteryService.getCharacteristic(
-          BATTERY_LEVEL_CHARACTERISTIC_UUID
-        )
-        const batteryValue = await this.batteryCharacteristic.readValue()
-        this.onBatteryLevelChangedValue(batteryValue)
-        this.batteryCharacteristic.addEventListener(
-          'characteristicvaluechanged',
-          this.onBatteryLevelChangedEvent
-        )
-        await this.batteryCharacteristic.startNotifications()
-      } catch {
-        logger.warn(
-          { device: this.device.name },
-          'Battery service not found. Skipping.'
-        )
-      }
+      await this.setupBatteryService(server)
 
       this.emit('status-changed', {
         status: 'connected',
@@ -307,6 +298,29 @@ class DeviceManagerService extends EventTarget {
     } catch (error) {
       this.handleConnectionError(error)
       throw error
+    }
+  }
+
+  private async setupBatteryService(
+    server: BluetoothRemoteGATTServer
+  ): Promise<void> {
+    try {
+      const batteryService =
+        await server.getPrimaryService(BATTERY_SERVICE_UUID)
+      this.batteryCharacteristic = await batteryService.getCharacteristic(
+        BATTERY_LEVEL_CHARACTERISTIC_UUID
+      )
+      this.batteryCharacteristic.addEventListener(
+        'characteristicvaluechanged',
+        this.onBatteryLevelChangedEvent
+      )
+      await this.batteryCharacteristic.startNotifications()
+
+      const value = await this.batteryCharacteristic.readValue()
+      this.onBatteryLevelChangedValue(value)
+    } catch (error) {
+      // Battery service is optional
+      logger.warn({ error }, 'Battery service not available')
     }
   }
 
@@ -437,7 +451,7 @@ class DeviceManagerService extends EventTarget {
     } else {
       this.emit('status-changed', {
         status: 'disconnected',
-        message: 'Disconnected',
+        message: 'Manually Disconnected',
       })
     }
   }
