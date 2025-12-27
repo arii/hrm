@@ -261,6 +261,40 @@ describe('WebSocket Manager', () => {
       const clientData = finalPayload.find((c) => c.totalCalories > 0)
       expect(clientData).toBeDefined()
     })
+
+    it('should use updated weight in calorie calculation', () => {
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30, weightKg: 70 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+      sendHrmInput(150)
+      jest.advanceTimersByTime(15000)
+      let mockBroadcast = broadcast as jest.Mock
+      let lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      let finalPayload: HrmData[] = lastCall[1].payload
+      let clientData = finalPayload.find((c) => c.totalCalories > 0)
+      expect(clientData).toBeDefined()
+      const initialCalories = clientData!.totalCalories
+
+      const updateWeightMessage = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: { weightKg: 80 },
+      })
+      mockWs.emit('message', updateWeightMessage)
+
+      sendHrmInput(150)
+      jest.advanceTimersByTime(15000)
+      mockBroadcast = broadcast as jest.Mock
+      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      finalPayload = lastCall[1].payload
+      clientData = finalPayload.find((c) => c.totalCalories > 0)
+      expect(clientData).toBeDefined()
+      expect(clientData!.totalCalories).toBeGreaterThan(initialCalories)
+    })
   })
 
   describe('Message Handling', () => {

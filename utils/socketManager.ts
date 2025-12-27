@@ -173,7 +173,7 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   if (calorieUpdateInterval) {
     clearInterval(calorieUpdateInterval)
-    calorieUpdateInterval = undefined
+    calorieUpdateInterval = null
   }
   hrmDataRepository.clear()
   clientSessionState.clear()
