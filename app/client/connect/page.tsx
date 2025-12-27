@@ -108,6 +108,7 @@ export default function ConnectPage() {
   } = useWorkoutSession({
     isConnected,
     totalCalories,
+    clientId: currentUserData?.clientId,
   })
 
   return (

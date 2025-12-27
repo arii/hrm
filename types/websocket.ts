@@ -155,6 +155,7 @@ export interface PingMessage {
 
 export interface ResetCaloriesMessage {
   type: 'RESET_CALORIES'
+  clientId: string
 }
 
 export type ClientCommandMessage =
@@ -242,6 +243,7 @@ export const PingMessageSchema = z.object({
 
 export const ResetCaloriesMessageSchema = z.object({
   type: z.literal('RESET_CALORIES'),
+  clientId: z.string(),
 })
 
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [

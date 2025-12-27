@@ -478,5 +478,47 @@ describe('WebSocket Manager', () => {
         'Unknown message type received'
       )
     })
+
+    it('should handle RESET_CALORIES message', () => {
+      // Step 1: Set an initial calorie count for the user
+      const initialClientData = {
+        clientId: mockWs.clientId,
+        name: 'test-user',
+        totalCalories: 123.45,
+      }
+      hrmDataRepository.save(initialClientData)
+
+      // Verify initial state
+      let clientData = hrmDataRepository.findById(mockWs.clientId)
+      expect(clientData.totalCalories).toBe(123.45)
+
+      // Clear the mock's call history before sending the message
+      ;(hrmDataRepository.save as jest.Mock).mockClear()
+
+      // Step 2: Send the RESET_CALORIES message
+      const message = JSON.stringify({
+        type: 'RESET_CALORIES',
+        clientId: mockWs.clientId,
+      })
+      mockWs.emit('message', message.toString())
+
+      // Step 3: Verify the repository was updated with totalCalories reset to 0
+      expect(hrmDataRepository.save).toHaveBeenCalledWith({
+        clientId: mockWs.clientId,
+        name: 'test-user',
+        totalCalories: 0,
+      })
+
+      // Step 4: Verify a broadcast occurred with the new state
+      const mockBroadcast = broadcast as jest.Mock
+      const lastBroadcastCall = mockBroadcast.mock.calls.pop()
+      expect(lastBroadcastCall[1].type).toBe('HRM_UPDATE')
+      const payload: HrmData[] = lastBroadcastCall[1].payload
+      const broadcastedClientData = payload.find(
+        (c) => c.clientId === mockWs.clientId
+      )
+      expect(broadcastedClientData).toBeDefined()
+      expect(broadcastedClientData.totalCalories).toBe(0)
+    })
   })
 })

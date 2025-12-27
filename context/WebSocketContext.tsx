@@ -33,7 +33,7 @@ interface WebSocketState {
   spotifyServiceInitialized?: boolean
 }
 
-const INITIAL_STATE: WebSocketState = {
+export const INITIAL_STATE: WebSocketState = {
   hrmData: [],
   timerData: {
     isRunning: false,

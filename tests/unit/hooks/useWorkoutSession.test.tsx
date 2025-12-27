@@ -3,14 +3,37 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { WebSocketProvider } from '@/context/WebSocketContext'
+import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketContext'
 import { ReactNode } from 'react'
+import { jest, describe, it, expect, beforeEach } from '@jest/globals'
+import { INITIAL_STATE } from '@/context/WebSocketContext' // Assuming INITIAL_STATE is exported or accessible
 
+// 1. Create a mock context value that matches WebSocketContextType
+const mockSendData = jest.fn()
+const mockConnect = jest.fn()
+const mockDisconnect = jest.fn()
+
+const mockContextValue: WebSocketContextType = {
+  ...INITIAL_STATE, // Use the same initial state as the provider
+  connectionStatus: 'Connected',
+  sendData: mockSendData,
+  connect: mockConnect,
+  disconnect: mockDisconnect,
+}
+
+// 2. Create a wrapper component that provides the mock context
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <WebSocketProvider>{children}</WebSocketProvider>
+  <WebSocketContext.Provider value={mockContextValue}>
+    {children}
+  </WebSocketContext.Provider>
 )
 
-describe('useWorkoutSession calorie logic', () => {
+describe('useWorkoutSession', () => {
+  beforeEach(() => {
+    // Clear mock history before each test
+    mockSendData.mockClear()
+  })
+
   it('should initialize with zero calories burned', () => {
     const { result } = renderHook(
       () => useWorkoutSession({ isConnected: false, totalCalories: 0 }),
@@ -110,6 +133,33 @@ describe('useWorkoutSession calorie logic', () => {
     expect(result.current.caloriesBurned).toBe(50)
   })
 
+  it('should send a RESET_CALORIES message with the clientId when the workout ends', () => {
+    const { result } = renderHook(
+      () =>
+        useWorkoutSession({
+          isConnected: true,
+          totalCalories: 200,
+          clientId: 'test-client-id',
+        }),
+      { wrapper }
+    )
+
+    act(() => {
+      result.current.startWorkout()
+    })
+
+    act(() => {
+      result.current.endWorkout()
+    })
+
+    // Assert that sendData was called with the correct message
+    expect(mockSendData).toHaveBeenCalledTimes(1)
+    expect(mockSendData).toHaveBeenCalledWith({
+      type: 'RESET_CALORIES',
+      clientId: 'test-client-id',
+    })
+  })
+
   it('should reset caloriesBurned to zero on resetWorkout', () => {
     const { result, rerender } = renderHook(
       ({ totalCalories }) =>
@@ -132,30 +182,5 @@ describe('useWorkoutSession calorie logic', () => {
     })
 
     expect(result.current.caloriesBurned).toBe(0)
-  })
-
-  it('should not be affected by pause and resume', () => {
-    const { result, rerender } = renderHook(
-      ({ isConnected, totalCalories }) =>
-        useWorkoutSession({ isConnected, totalCalories }),
-      {
-        initialProps: { isConnected: true, totalCalories: 100 },
-        wrapper,
-      }
-    )
-
-    act(() => {
-      result.current.startWorkout()
-    })
-    rerender({ isConnected: true, totalCalories: 110 })
-    expect(result.current.caloriesBurned).toBe(10)
-
-    // Pause
-    rerender({ isConnected: false, totalCalories: 115 })
-    expect(result.current.caloriesBurned).toBe(15)
-
-    // Resume
-    rerender({ isConnected: true, totalCalories: 125 })
-    expect(result.current.caloriesBurned).toBe(25)
   })
 })

@@ -87,11 +87,13 @@ function sessionReducer(
 interface WorkoutSessionOptions {
   isConnected: boolean
   totalCalories?: number
+  clientId?: string
 }
 
 export const useWorkoutSession = ({
   isConnected,
   totalCalories = 0,
+  clientId,
 }: WorkoutSessionOptions) => {
   const [state, dispatch] = useReducer(sessionReducer, initialState)
   const [startCalories, setStartCalories] = useState(0)
@@ -184,8 +186,10 @@ export const useWorkoutSession = ({
   const { sendData } = useWebSocket()
   const endWorkout = useCallback(() => {
     dispatch({ type: 'END_WORKOUT' })
-    sendData({ type: 'RESET_CALORIES' })
-  }, [sendData])
+    if (clientId) {
+      sendData({ type: 'RESET_CALORIES', clientId: clientId })
+    }
+  }, [sendData, clientId])
 
   // Calculate the calories burned *during this session*.
   const caloriesBurned = useMemo(() => {
