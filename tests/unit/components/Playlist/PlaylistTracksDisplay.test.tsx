@@ -2,12 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import { formatDuration } from '@/utils/formatters'
@@ -18,7 +13,6 @@ global.fetch = jest.fn()
 describe('PlaylistTracksDisplay', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   const mockContextValue = {
@@ -43,15 +37,16 @@ describe('PlaylistTracksDisplay', () => {
 
   it('should render error state', async () => {
     ;(fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'))
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
     })
-    expect(screen.getByRole('alert')).toHaveTextContent('Failed to fetch')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Failed to fetch'
+    )
   })
 
   it('should render empty state', async () => {
@@ -59,15 +54,16 @@ describe('PlaylistTracksDisplay', () => {
       ok: true,
       json: async () => ({ tracks: [], total: 0 }),
     })
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
     })
-    expect(screen.getByText('This playlist is empty.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('This playlist is empty.')
+    ).toBeInTheDocument()
   })
 
   it('should render tracks and handle pagination', async () => {
@@ -90,17 +86,15 @@ describe('PlaylistTracksDisplay', () => {
       json: async () => mockTracks,
     })
 
-    render(
-      <WebSocketContext.Provider value={mockContextValue}>
-        <PlaylistTracksDisplay playlistId="123" />
-      </WebSocketContext.Provider>
-    )
-
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    await act(async () => {
+      render(
+        <WebSocketContext.Provider value={mockContextValue}>
+          <PlaylistTracksDisplay playlistId="123" />
+        </WebSocketContext.Provider>
+      )
     })
 
-    expect(screen.getByText('Track 1')).toBeInTheDocument()
+    expect(await screen.findByText('Track 1')).toBeInTheDocument()
     expect(screen.getByText('Artist 1')).toBeInTheDocument()
     expect(screen.getByText(formatDuration(180000))).toBeInTheDocument()
 
