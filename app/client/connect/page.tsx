@@ -9,12 +9,16 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
-import { toKg } from '../../../utils/units'
+import {
+  toKg,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
-  const [userHeight, setUserHeight] = useLocalStorage('hrm-user-height', '')
+  const [_heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', '175') // Always CM
   const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
@@ -25,7 +29,71 @@ export default function ConnectPage() {
     'IMPERIAL'
   )
 
+  const [transientHeightInput, setTransientHeightInput] = useState<{
+    cm: string
+    feet: string
+    inches: string
+  } | null>(null)
   const [displayWeight, setDisplayWeight] = useState('')
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  const validateHeight = (cm: number, unitSystem: MeasurementSystem) => {
+    if (isNaN(cm) || cm < 100 || cm > 250) {
+      if (unitSystem === 'METRIC') {
+        return 'Please enter a valid height (100-250 cm)'
+      } else {
+        return 'Please enter a valid height (3ft 3in - 8ft 2in)'
+      }
+    }
+    return null
+  }
+
+  // Calculate the display value based on the source of truth (_heightInCm)
+  const numericHeight = parseFloat(_heightInCm)
+  const derivedDisplayHeight = { cm: '', feet: '', inches: '' }
+  if (!isNaN(numericHeight)) {
+    if (unitSystem === 'METRIC') {
+      derivedDisplayHeight.cm = String(Math.round(numericHeight))
+    } else {
+      const { feet, inches } = cmToFeetAndInches(numericHeight)
+      derivedDisplayHeight.feet = String(feet)
+      derivedDisplayHeight.inches = String(inches)
+    }
+  }
+
+  // If the user is typing, show their input. Otherwise, show the derived value.
+  const displayHeight = transientHeightInput ?? derivedDisplayHeight
+
+  const handleHeightChange = (
+    newDisplayValue: Partial<{ cm: string; feet: string; inches: string }>
+  ) => {
+    setTransientHeightInput((prev) => ({
+      ...(prev ?? derivedDisplayHeight),
+      ...newDisplayValue,
+    }))
+  }
+
+  const handleHeightBlur = () => {
+    let cmValue = 0
+    if (unitSystem === 'METRIC') {
+      cmValue = parseFloat(displayHeight.cm)
+    } else {
+      const feet = parseFloat(displayHeight.feet)
+      const inches = parseFloat(displayHeight.inches)
+      if (!isNaN(feet) && !isNaN(inches)) {
+        cmValue = feetAndInchesToCm(feet, inches)
+      }
+    }
+
+    const error = validateHeight(cmValue, unitSystem)
+    setHeightError(error)
+
+    if (!error && cmValue > 0) {
+      setHeightInCm(cmValue.toFixed(2))
+    }
+    // Reset transient state after blur to show the canonical value
+    setTransientHeightInput(null)
+  }
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
@@ -62,6 +130,7 @@ export default function ConnectPage() {
   const handleUnitChange = (newUnit: MeasurementSystem) => {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
+      setTransientHeightInput(null) // Reset transient input on unit change
     }
   }
 
@@ -97,8 +166,10 @@ export default function ConnectPage() {
       setUserName={setUserName}
       userAge={userAge}
       setUserAge={setUserAge}
-      userHeight={userHeight}
-      setUserHeight={setUserHeight}
+      userHeight={displayHeight}
+      setUserHeight={handleHeightChange}
+      onHeightBlur={handleHeightBlur}
+      heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
       onWeightBlur={handleWeightBlur}
