@@ -260,7 +260,10 @@ class DeviceManagerService extends EventTarget {
         )
         await this.batteryCharacteristic.startNotifications()
       } catch {
-        logger.warn('Battery service not found. Skipping.')
+        logger.warn(
+          { device: this.device.name },
+          'Battery service not found. Skipping.'
+        )
       }
 
       this.emit('status-changed', {
@@ -344,7 +347,10 @@ class DeviceManagerService extends EventTarget {
 
     this.watchdogInterval = setInterval(() => {
       if (Date.now() - this.lastDataTime > this.options.dataLivenessTimeoutMs) {
-        logger.warn('Bluetooth data stale. Forcing reconnection...')
+        logger.warn(
+          { device: this.device?.name },
+          'Bluetooth data stale. Forcing reconnection...'
+        )
         this.emit('status-changed', {
           status: 'connecting',
           message: 'Connection unstable. Reconnecting...',
@@ -428,7 +434,7 @@ class DeviceManagerService extends EventTarget {
       } else if (error.name === 'NetworkError') {
         message = 'Connection failed. Device is out of range.'
       } else {
-        message = `Bluetooth error: ${error.name}`
+        message = `Bluetooth error: ${error.name} - ${error.message}`
       }
     } else if (error instanceof Error) {
       message = error.message

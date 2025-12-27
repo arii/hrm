@@ -5,7 +5,7 @@
  * Monitor (HRM) devices. It handles state management for the UI layer and bridges
  * React's component lifecycle with the underlying Bluetooth service.
  */
-import { useCallback, useState, useEffect, useMemo } from 'react'
+import { useCallback, useState, useEffect, useMemo, useRef } from 'react'
 import {
   HrmInputData,
   HrmMetadataUpdateMessage,
@@ -93,6 +93,11 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   const { userName, userAge, dataLivenessTimeoutMs, reconnectIntervalMs } =
     props
   const { sendData, connectionStatus: wsStatus } = useWebSocket()
+  const wsStatusRef = useRef(wsStatus)
+  useEffect(() => {
+    wsStatusRef.current = wsStatus
+  }, [wsStatus])
+
   const [lastDeviceId, setLastDeviceId] = useLocalStorage<string | null>(
     'hrm_device_id',
     null
@@ -231,23 +236,28 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
         await (deviceManager.device as BluetoothDeviceWithForget).forget()
         setDeviceStatus('Device permissions revoked.')
       } catch (error) {
-        logger.error({ error }, 'Error revoking device permissions.')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        logger.error(error as any, 'Error revoking device permissions.')
         setDeviceStatus('Error forgetting device.')
       }
     }
   }, [disconnect, deviceManager, setLastDeviceId])
 
   const autoConnect = useCallback(async () => {
-    if (wsStatus !== 'Connected' || !lastDeviceId) return
+    if (wsStatusRef.current !== 'Connected' || !lastDeviceId) return
 
     setDeviceStatus('Reconnecting to last device...')
     try {
       const device = await getPreviouslyConnectedDevice(lastDeviceId)
       if (device) {
+        if (wsStatusRef.current !== 'Connected') {
+          throw new Error('WebSocket disconnected during auto-connect.')
+        }
         try {
           await deviceManager.connectToDevice(device)
         } catch (error) {
-          logger.error({ error }, 'Auto-connect failed.')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          logger.error(error as any, 'Auto-connect failed.')
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error'
           setDeviceStatus(
@@ -259,10 +269,11 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
         setDeviceStatus('Last device not found. Please connect manually.')
       }
     } catch (error) {
-      logger.error({ error }, 'Error during auto-connect.')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      logger.error(error as any, 'Error during auto-connect.')
       setDeviceStatus('Error checking previous devices.')
     }
-  }, [wsStatus, lastDeviceId, deviceManager, setLastDeviceId])
+  }, [wsStatusRef, lastDeviceId, deviceManager, setLastDeviceId])
 
   return {
     connect,
