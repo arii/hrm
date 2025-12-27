@@ -366,6 +366,18 @@ jobs:
       - name: Generate Patch Debug Report
         if: failure() && env.AGENT_PROVIDER == 'gemini'
         run: |
+          # Helper function to scrub secrets from content
+          scrub_secrets() {
+            local content="$1"
+            # Remove GitHub tokens, PATs, and API keys
+            echo "$content" | \
+              sed 's/ghp_[A-Za-z0-9_]*/***GITHUB_TOKEN***/g' | \
+              sed 's/github_pat_[A-Za-z0-9_]*/***GITHUB_PAT***/g' | \
+              sed 's/NEXTAUTH_SECRET=[^ ]*/NEXTAUTH_SECRET=***REDACTED***/g' | \
+              sed 's/GEMINI_API_KEY=[^ ]*/GEMINI_API_KEY=***REDACTED***/g' | \
+              sed 's/ARI_PAT=[^ ]*/ARI_PAT=***REDACTED***/g'
+          }
+          
           {
             echo "# Patch Failure Debug Report"
             echo ""
@@ -375,20 +387,23 @@ jobs:
             echo ""
             echo "## Patch File"
             echo '```diff'
-            head -100 patch.diff
+            head -100 patch.diff | sed 's/^.*secret.*/***LINE_REDACTED***/g'
             echo '```'
             echo ""
             echo "## Rejected Hunks"
             if find . -name "*.rej" | grep -q .; then
-              find . -name "*.rej" -exec sh -c 'echo "### {}"; cat "{}"' \;
+              find . -name "*.rej" -exec sh -c 'echo "### {}"; cat "{}" | sed "s/^.*secret.*/***LINE_REDACTED***/g"' \;
             else
               echo "No rejected hunks found"
             fi
             echo ""
             echo "## Task Description"
             echo '```'
-            cat task_desc.txt || echo "N/A"
+            cat task_desc.txt 2>/dev/null | scrub_secrets || echo "N/A"
             echo '```'
+            echo ""
+            echo "---"
+            echo "*This report has been scrubbed of sensitive information (secrets, tokens, API keys)*"
           } > patch-debug-report.md
           
           cat patch-debug-report.md
@@ -401,13 +416,35 @@ jobs:
           path: patch-debug-report.md
           retention-days: 30
 
+      - name: 'Gemini: Generate Build-Time Secrets'
+        if: env.AGENT_PROVIDER == 'gemini'
+        id: build-secrets
+        run: |
+          # Generate unique build-time values for CI verification only
+          BUILD_ID=$(uuidgen || python3 -c "import uuid; print(uuid.uuid4())")
+          
+          # Only use provided secrets, never use defaults
+          if [ -z "${{ secrets.NEXTAUTH_URL }}" ]; then
+            echo "::warning::NEXTAUTH_URL secret not configured. Using generated build-time value."
+            echo "NEXTAUTH_URL=http://localhost:3000" >> $GITHUB_ENV
+          else
+            echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> $GITHUB_ENV
+          fi
+          
+          if [ -z "${{ secrets.NEXTAUTH_SECRET }}" ]; then
+            echo "::warning::NEXTAUTH_SECRET secret not configured. Generating build-time value."
+            echo "NEXTAUTH_SECRET=build-verification-$BUILD_ID" >> $GITHUB_ENV
+          else
+            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> $GITHUB_ENV
+          fi
+          
+          echo "::notice::Build-time secrets configured for verification phase"
+
       - name: 'Gemini: Verify Changes'
         if: env.AGENT_PROVIDER == 'gemini'
         env:
-          # These are build-time values for CI verification only
-          # In production, these should be provided by the deployment environment
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || format('build-verification-{0}', github.run_id) }}
+          NEXTAUTH_URL: ${{ env.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ env.NEXTAUTH_SECRET }}
         run: |
           echo "::notice::Running lint..."
           pnpm run lint --fix || echo "::warning::Lint fix encountered issues, continuing..."
