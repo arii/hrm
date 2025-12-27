@@ -29,7 +29,7 @@ describe('WebSocket Full Integration Test', () => {
     })
 
     // Silence verbose server output in tests, but log errors
-    serverProcess.stdout?.on('data', (_data: Buffer) => {})
+    serverProcess.stdout?.on('data', (data: Buffer) => console.log(`[Server]: ${data.toString().trim()}`))
     serverProcess.stderr?.on('data', (data: Buffer) =>
       console.error(`[Server ERR]: ${data.toString().trim()}`)
     )
@@ -139,4 +139,39 @@ describe('WebSocket Full Integration Test', () => {
     ws.on('open', runWorkflow)
     ws.on('error', done)
   })
+
+  it('should handle reconnection and session reclamation', async () => {
+    const deviceId = 'device-reconnect-test';
+
+    // 1. Client A connects and sends metadata
+    const clientA = new WebSocket(`${wsUrl}?clientId=client-a`);
+    await new Promise<void>((resolve) => clientA.on('open', resolve));
+    clientA.send(JSON.stringify({ type: 'HRM_METADATA_UPDATE', data: { deviceId, name: 'Client A' } }));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // 2. Client A disconnects
+    clientA.close();
+    await new Promise<void>((resolve) => clientA.on('close', resolve));
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for server to process disconnection
+
+    // 3. Client B connects with the same deviceId to reclaim the session
+    const clientB = new WebSocket(`${wsUrl}?clientId=client-b`);
+    const receivedMessages: UnifiedStateMessage[] = [];
+    clientB.on('message', (data: WebSocket.Data) => {
+        const message = JSON.parse(data.toString()) as UnifiedStateMessage;
+        receivedMessages.push(message);
+    });
+
+    await new Promise<void>((resolve) => clientB.on('open', resolve));
+    clientB.send(JSON.stringify({ type: 'HRM_METADATA_UPDATE', data: { deviceId, name: 'Client B' } }));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // 4. Verify that only one client with the deviceId exists
+    const lastMessage = receivedMessages[receivedMessages.length - 1];
+    const clientsWithDeviceId = lastMessage.hrmData?.filter((c) => c.deviceId === deviceId);
+    expect(clientsWithDeviceId).toHaveLength(1);
+    expect(clientsWithDeviceId?.[0].name).toBe('Client B');
+
+    clientB.close();
+  });
 })
