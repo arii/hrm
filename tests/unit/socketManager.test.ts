@@ -83,6 +83,7 @@ jest.mock('ws', () => ({
 class MockWebSocket extends EventEmitter {
   isAlive: boolean
   clientType: string | undefined
+  clientId: string = ''
   terminate = jest.fn()
   ping = jest.fn()
   send = jest.fn()
@@ -205,10 +206,17 @@ describe('WebSocket Manager', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr },
         })
         mockWs.emit('message', message.toString())
       }
+
+      // Set age via metadata update for calorie calculation
+      const metadataMessage = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: { age: 30 },
+      })
+      mockWs.emit('message', metadataMessage)
 
       // Initial input
       sendHrmInput(150)
@@ -354,6 +362,43 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
+    })
+  })
+  describe('Client Identification', () => {
+    it('should re-associate a client with a new clientId on IDENTIFY_CLIENT', () => {
+      const initialClientId = (mockWs as ExtWebSocket).clientId
+      expect(initialClientId).toMatch(/^temp-user-/)
+
+      // Send a metadata update to establish the user
+      const metadataMessage = JSON.stringify({
+        type: 'HRM_METADATA_UPDATE',
+        data: { name: 'Test User' },
+      })
+      mockWs.emit('message', metadataMessage)
+
+      // Now, the client identifies itself with a persistent ID
+      const persistentClientId = 'persistent-id-123'
+      const identifyMessage = JSON.stringify({
+        type: 'IDENTIFY_CLIENT',
+        clientId: persistentClientId,
+      })
+      mockWs.emit('message', identifyMessage)
+
+      // Send another message (HRM_INPUT) to trigger a broadcast
+      const hrmMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 120 },
+      })
+      mockWs.emit('message', hrmMessage)
+
+      // The WebSocket object should now have the persistent ID
+      expect((mockWs as ExtWebSocket).clientId).toBe(persistentClientId)
+
+      // A new broadcast should have occurred
+      const lastPayload = (broadcast as jest.Mock).mock.lastCall[1].payload
+      expect(lastPayload).toHaveLength(1)
+      expect(lastPayload[0].clientId).toBe(persistentClientId)
+      expect(lastPayload[0].name).toBe('Test User') // Verify data was preserved
     })
   })
 })

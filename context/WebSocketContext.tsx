@@ -20,6 +20,22 @@ import {
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 
+const HRM_CLIENT_ID_KEY = 'hrm-client-id'
+
+// Function to get or create a persistent client ID
+const getPersistentClientId = (): string => {
+  if (typeof window === 'undefined') {
+    return `server-side-id-${Math.random().toString(36).substring(2, 11)}`
+  }
+
+  let clientId = localStorage.getItem(HRM_CLIENT_ID_KEY)
+  if (!clientId) {
+    clientId = `hrm-client-${Math.random().toString(36).substring(2, 11)}`
+    localStorage.setItem(HRM_CLIENT_ID_KEY, clientId)
+  }
+  return clientId
+}
+
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
@@ -247,6 +263,10 @@ export const WebSocketProvider = ({
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
+
+      // Send the persistent client ID for identification
+      const clientId = getPersistentClientId()
+      ws.send(JSON.stringify({ type: 'IDENTIFY_CLIENT', clientId: clientId }))
 
       // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))

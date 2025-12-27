@@ -62,7 +62,9 @@ const initSocketManager = (
       extWs.isAlive = true
     })
 
-    extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
+    // Assign a temporary ID. The client is expected to send an
+    // IDENTIFY_CLIENT message with its persistent ID.
+    extWs.clientId = `temp-user-${Math.random().toString(36).substring(2, 9)}`
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
     // Initialize new client
@@ -80,7 +82,7 @@ const initSocketManager = (
     })
 
     extWs.on('message', (message) => {
-      handleIncomingMessage(extWs, message.toString(), extWs.clientId)
+      handleIncomingMessage(extWs, message.toString())
     })
 
     extWs.on('close', () => {
@@ -118,11 +120,10 @@ const broadcastState = () => {
 /**
  * Handles incoming JSON messages from client applications.
  */
-const handleIncomingMessage = (
-  ws: ExtWebSocket,
-  messageString: string,
-  clientId: string
-) => {
+const handleIncomingMessage = (ws: ExtWebSocket, messageString: string) => {
+  // Always use the clientId from the WebSocket object, as it may be updated
+  // by an IDENTIFY_CLIENT message.
+  const { clientId } = ws
   try {
     const parsedJson = JSON.parse(messageString)
     const message = ClientCommandMessageSchema.parse(parsedJson)
@@ -132,6 +133,26 @@ const handleIncomingMessage = (
         // This is now a no-op. The server relies on native WebSocket ping/pong
         // frames for heartbeat. The case is retained for backward
         // compatibility with older clients that might still send this message.
+        break
+      }
+      case 'IDENTIFY_CLIENT': {
+        const newClientId = message.clientId
+        const oldClientId = clientId // The temporary ID assigned on connection
+
+        // Re-associate the WebSocket connection with the persistent client ID
+        ws.clientId = newClientId
+
+        // If there's data associated with the old temporary ID,
+        // move it to the new persistent ID.
+        const oldData = hrmDataRepository.findById(oldClientId)
+        if (oldData) {
+          hrmDataRepository.deleteById(oldClientId)
+          hrmDataRepository.save({ ...oldData, clientId: newClientId })
+          logger.info(
+            { oldClientId, newClientId },
+            'Re-associated client session'
+          )
+        }
         break
       }
       case 'REGISTER_CLIENT': {

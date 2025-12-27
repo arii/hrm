@@ -235,6 +235,11 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const ClientIdentifyMessageSchema = z.object({
+  type: z.literal('IDENTIFY_CLIENT'),
+  clientId: z.string(),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -244,5 +249,6 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   TimerConfigMessageSchema,
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
-  PingMessageSchema, // Add PING schema to the union
+  PingMessageSchema,
+  ClientIdentifyMessageSchema,
 ])
