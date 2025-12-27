@@ -79,7 +79,11 @@ export const createSpotifyTrack = (overrides: Partial<Track> = {}): Track => {
     disc_number: 1,
     duration_ms: 231000,
     explicit: false,
-    external_ids: { isrc: 'USUG11901208' },
+    external_ids: {
+      isrc: 'USUG11901208',
+      upc: '194399222629',
+      ean: '0194399222629',
+    },
     external_urls: {
       spotify: 'https://open.spotify.com/track/1dGr1c8CrMLDpV6mPbImSI',
     },
