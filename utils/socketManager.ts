@@ -148,6 +148,7 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
+      calories: 0,
       totalCalories: 0, // Initialize to 0
       weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
     }
@@ -183,7 +184,6 @@ const initSocketManager = (
 export const resetSocketManager = () => {
   if (calorieUpdateInterval) {
     clearInterval(calorieUpdateInterval)
-    calorieUpdateInterval = undefined
   }
   hrmDataRepository.clear()
   clientSessionState.clear()

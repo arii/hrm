@@ -255,7 +255,7 @@ describe('WebSocket Manager', () => {
       sendHrmInput(150)
       jest.advanceTimersByTime(15000)
 
-      let mockBroadcast = broadcast as jest.Mock
+      const mockBroadcast = broadcast as jest.Mock
       let lastCall =
         mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       let payload: HrmData[] = lastCall[1].payload
@@ -354,8 +354,9 @@ describe('WebSocket Manager', () => {
       expect(hrmDataRepository.deleteById).toHaveBeenCalledWith(mockWs.clientId)
       const saveCallOrder = (hrmDataRepository.save as jest.Mock)
         .mock.invocationCallOrder[saveCalls.length - 1]
-      const deleteCallOrder = (hrmDataRepository.deleteById as jest.Mock)
-        .mock.invocationCallOrder[0]
+      const deleteCallOrder = (
+        hrmDataRepository.deleteById as jest.Mock
+      ).mock.invocationCallOrder[0]
       expect(saveCallOrder).toBeLessThan(deleteCallOrder)
     })
   })

@@ -35,7 +35,12 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
         >
           <Stack spacing={1} alignItems="center">
             <WatchLaterIcon color="action" sx={{ fontSize: 30 }} />
-            <Typography variant="h5" component="p" fontWeight="bold" data-testid="duration-value">
+            <Typography
+              variant="h5"
+              component="p"
+              fontWeight="bold"
+              data-testid="duration-value"
+            >
               {duration}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -44,7 +49,12 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
           </Stack>
           <Stack spacing={1} alignItems="center">
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
-            <Typography variant="h5" component="p" fontWeight="bold" data-testid="calories-value">
+            <Typography
+              variant="h5"
+              component="p"
+              fontWeight="bold"
+              data-testid="calories-value"
+            >
               {caloriesBurned}
             </Typography>
             <Typography variant="caption" color="text.secondary">
