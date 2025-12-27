@@ -1,3 +1,47 @@
+# .github/workflows/gemini-coder.yml
+#
+# AI-Powered Automated Code Generation and Patching
+#
+# Purpose:
+#   Leverages the Gemini API to automatically generate code changes based on task descriptions.
+#   Creates pull requests with AI-generated patches, validates them, and provides detailed
+#   error reports for debugging patch application failures.
+#
+# Triggers:
+#   1. Issue Label: When an issue is labeled with 'auto-code'
+#   2. Manual: Via workflow_dispatch with custom task description
+#
+# Key Features:
+#   - Intelligent patch extraction from LLM markdown code blocks
+#   - Robust patch validation with 3-way merge fallback
+#   - Secret scrubbing to prevent credential leakage in artifacts
+#   - Comprehensive error diagnostics with artifact uploads
+#   - Commitlint-compliant commit message generation
+#   - File state context (line counts, hashes) in prompts for accuracy
+#
+# Workflow Steps:
+#   1. Parse task description from issue or manual input
+#   2. Gather current file state and context for the AI
+#   3. Call Gemini API to generate code changes as a unified diff
+#   4. Extract diff from markdown code blocks if present
+#   5. Validate patch format and test application with --check
+#   6. Apply patch with 3-way merge if strict check fails
+#   7. Run quality checks (linting, building)
+#   8. Generate commitlint-compliant commit message
+#   9. Create pull request with patch and metadata
+#   10. Upload debug artifacts on failure for diagnostics
+#
+# Configuration:
+#   GEMINI_API_KEY - Required: Set in repository secrets
+#   ARI_PAT - Required: Personal access token for PR creation
+#   NEXTAUTH_URL, NEXTAUTH_SECRET - For build verification
+#
+# Error Handling:
+#   - Patches that don't apply cleanly are logged with diagnostics
+#   - Rejected hunks are uploaded as artifacts for manual review
+#   - LLM "conversational text" is filtered to extract valid diffs
+#   - All failures are non-blocking; workflow continues for reporting
+
 name: Gemini Coder
 on:
   issues:
@@ -511,35 +555,47 @@ jobs:
       - name: 'Gemini: Prepare Commit Message'
         if: env.AGENT_PROVIDER == 'gemini'
         run: |
-          # Build a commitlint-compliant message with better scope handling
-          # Format: feat(scope): lowercase description
+          # Build a commitlint-compliant message with intelligent scope extraction
+          # Format: feat(scope): lowercase description under 72 characters
+          # This ensures compliance with conventional commits while preserving context
           
           TITLE="${{ env.TITLE }}"
           
-          # Convert title to lowercase
+          # Convert title to lowercase for commitlint compliance
           TITLE_LOWER=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]')
           
-          # Extract scope from title if it exists (e.g., "feat: description" -> "ai")
-          # Otherwise use "ai" as default scope for AI-generated changes
+          # Extract scope from title if it exists (e.g., "Update readme" -> use "ai")
+          # or if title starts with conventional commit type (e.g., "feat: update readme")
           SCOPE="ai"
           
-          # Check if title already has a scope-like prefix (word: pattern)
-          if [[ "$TITLE_LOWER" =~ ^([a-z]+):[[:space:]] ]]; then
-            SCOPE="${BASH_REMATCH[1]}"
-            # Remove scope from title to avoid duplication
-            TITLE_LOWER=${TITLE_LOWER#*: }
+          # Check if title already has a conventional commit scope-like prefix
+          if [[ "$TITLE_LOWER" =~ ^(feat|fix|chore|docs|style|refactor|perf|test)(\([^)]*\))?:[[:space:]] ]]; then
+            # Extract the type part before colon
+            SCOPE=$(echo "$TITLE_LOWER" | sed 's/^\([a-z]*\).*/\1/')
+            # Remove type and colon from title to avoid duplication
+            TITLE_LOWER=$(echo "$TITLE_LOWER" | sed 's/^[a-z]*(\([^)]*\))?:[[:space:]]*//' 2>/dev/null || echo "$TITLE_LOWER" | sed 's/^[a-z]*:[[:space:]]*//')
           fi
           
-          # Trim whitespace
-          TITLE_LOWER=$(echo "$TITLE_LOWER" | xargs)
+          # Trim whitespace and remove any leading/trailing hyphens
+          TITLE_LOWER=$(echo "$TITLE_LOWER" | xargs | sed -e 's/^-*//' -e 's/-*$//')
           
-          # Ensure message doesn't exceed commitlint limits (72 chars)
-          if [ ${#TITLE_LOWER} -gt 70 ]; then
-            TITLE_LOWER="${TITLE_LOWER:0:67}..."
+          # Ensure message doesn't exceed commitlint limits (72 chars max for subject)
+          # Leaves room for "feat(ai): " prefix (10 chars) + description (62 chars)
+          if [ ${#TITLE_LOWER} -gt 62 ]; then
+            TITLE_LOWER="${TITLE_LOWER:0:59}..."
           fi
           
-          echo "COMMIT_MESSAGE=feat($SCOPE): $TITLE_LOWER" >> $GITHUB_ENV
-          echo "::notice::Commit message: feat($SCOPE): $TITLE_LOWER"
+          # Generate final commit message
+          COMMIT_MESSAGE="feat($SCOPE): $TITLE_LOWER"
+          
+          # Validate the final message doesn't exceed limits
+          if [ ${#COMMIT_MESSAGE} -gt 72 ]; then
+            echo "::warning::Commit message exceeds 72 characters, truncating further"
+            COMMIT_MESSAGE="${COMMIT_MESSAGE:0:69}..."
+          fi
+          
+          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
+          echo "::notice::Generated commit message: $COMMIT_MESSAGE"
 
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'

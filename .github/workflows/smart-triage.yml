@@ -1,3 +1,34 @@
+# .github/workflows/smart-triage.yml
+#
+# Intelligent Issue Triaging and Improvement Workflow
+#
+# Purpose:
+#   Automatically triages stale and new issues to improve overall repository health.
+#   Rather than just closing stale issues, this workflow:
+#   - Adds context labels to new issues based on content
+#   - Identifies and labels stale issues (30+ days inactive)
+#   - Suggests improvements or follow-ups for ambiguous issues
+#   - Provides audit logs for all actions taken
+#
+# Triggers:
+#   - Scheduled: Daily at 2 AM UTC (0 2 * * *)
+#   - Manual: Via workflow_dispatch
+#   - On Issue Events: When issues are opened or edited
+#
+# Actions Taken:
+#   1. Analyzes issue content and labels it appropriately
+#   2. Marks issues inactive for 30+ days with 'stale' label
+#   3. Posts informative comments with suggestions for improvement
+#   4. Logs all actions for auditability and debugging
+#
+# Configuration Options:
+#   DISABLE_SMART_TRIAGE=true    - Disable all triaging
+#   DISABLE_STALE_DETECTION=true - Only disable stale detection, keep new issue analysis
+#
+# Logging:
+#   All actions (labels added, comments posted) are logged via GitHub workflow commands
+#   for easy debugging and audit trail visibility.
+
 name: Smart Triage
 
 on:
