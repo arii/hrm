@@ -50,22 +50,11 @@ async function getPlaylists(_req: Request) {
     { name: 'Pop', uri: 'spotify:playlist:37i9dQZF1DXcBWfL3ps8cR' },
   ]
 
-  // 6. Map user playlists to include full data (images, descriptions, track counts, etc.)
-  const userPlaylists = playlistsResponse.items.map((playlist) => ({
-    id: playlist.id,
-    name: playlist.name,
-    uri: playlist.uri,
-    description: playlist.description || null,
-    imageUrl:
-      playlist.images && playlist.images.length > 0 && playlist.images[0]
-        ? playlist.images[0].url
-        : null,
-    trackCount: playlist.tracks?.total || 0,
-    owner: playlist.owner?.display_name || playlist.owner?.id || 'Unknown',
-    public: playlist.public || false,
-  }))
-
-  return NextResponse.json({ presetPlaylists, userPlaylists })
+  // 6. Return the raw playlists response along with presets
+  return NextResponse.json({
+    presetPlaylists,
+    userPlaylists: playlistsResponse.items,
+  })
 }
 
 export const GET = withErrorHandler(getPlaylists)

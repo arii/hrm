@@ -11,8 +11,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import Typography from '@mui/material/Typography'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import useVolumePreference, { clampVolume } from '@/hooks/useVolumePreference'
+import { useSpotify } from '@/context/SpotifyContext'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { SpotifyCommand, SpotifyCommandMessage } from '@/types/websocket'
 import PlaybackControls from './PlaybackControls'
@@ -23,11 +24,10 @@ const SpotifyControls = () => {
   const router = useRouter()
   // 1. Destructure devices directly from spotifyData
   const { spotifyData, connectionStatus, sendData } = useWebSocket()
+  const { selectedDeviceId, setSelectedDeviceId } = useSpotify()
   const { devices = [] } = spotifyData // Default to empty array if undefined
   const { volume, setVolume, muted, toggleMute } = useVolumePreference()
   const lastSentVolumeRef = useRef<string | null>(null)
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
-  const prevActiveIdRef = useRef<string | undefined>(undefined)
 
   const handleTrackSelect = (uri: string) => {
     const targetDeviceId = resolveTargetDeviceId()
@@ -65,10 +65,7 @@ const SpotifyControls = () => {
     const activeId = activeDevice?.id
 
     // Sync Selected Device
-    if (prevActiveIdRef.current === undefined && activeId) {
-      // Initial sync
-      setSelectedDeviceId(activeId)
-    } else if (activeId && activeId !== prevActiveIdRef.current) {
+    if (activeId && activeId !== selectedDeviceId) {
       // Active device changed externally, update selection
       setSelectedDeviceId(activeId)
     } else {
@@ -81,7 +78,6 @@ const SpotifyControls = () => {
         setSelectedDeviceId(activeId)
       }
     }
-    prevActiveIdRef.current = activeId
 
     // Sync Volume (if not dragging)
     if (activeDevice && typeof activeDevice.volume_percent === 'number') {
@@ -89,9 +85,7 @@ const SpotifyControls = () => {
         setVolume(activeDevice.volume_percent)
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]) // Rely on devices update to trigger sync
+  }, [devices, selectedDeviceId, setSelectedDeviceId, setVolume, volume])
 
   const resolveTargetDeviceId = useCallback(() => {
     if (selectedDeviceId) {

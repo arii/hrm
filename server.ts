@@ -2,11 +2,13 @@
 import express from 'express'
 import { createServer } from 'http'
 import next from 'next'
-import { env } from './lib/env.js' // New import
-import { AppServices, createServices } from './lib/services.js' // New import
-import { WebSocketManager } from './lib/websocket.js' // New import
-import { initSocketManager } from './utils/socketManager.js'
-import { StateSnapshot } from './types/websocket.js'
+import { Server as WebSocketServer } from 'ws'
+import { env } from './lib/env.js'
+import {
+  initSocketManager,
+  tabataService,
+  spotifyService,
+} from './utils/socketManager.js'
 import { Socket } from 'net'
 import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
@@ -97,22 +99,8 @@ app.prepare().then(async () => {
     )
   }
 
-  // 1. Setup WebSocket Infrastructure
-  const wsManager = new WebSocketManager()
-
-  // 2. Setup Services with Broadcaster
-  const services: AppServices = await createServices(
-    wsManager.createBroadcaster()
-  )
-
-  // 3. Initialize Socket Logic (Controllers)
-  const getUnifiedStateSnapshot = (): StateSnapshot => ({
-    timerData: services.tabataService.getState(),
-    spotifyData: services.spotifyService.getState(),
-    spotifyServiceInitialized: services.isSpotifyInitialized,
-  })
-
-  initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
+  const wss = new WebSocketServer({ noServer: true })
+  initSocketManager(wss)
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {
@@ -120,7 +108,8 @@ app.prepare().then(async () => {
   })
 
   expressApp.get('/api/internal/health/services', async (_req, res) => {
-    const timerCheck = checkTimerService(services.tabataService)
+    // Services are now imported directly from socketManager
+    const timerCheck = checkTimerService(tabataService)
     const wsCheck = await checkWebSocketService()
 
     const healthy = timerCheck.healthy && wsCheck.healthy
@@ -159,7 +148,10 @@ app.prepare().then(async () => {
         }
       })
     }
-    wsManager.handleUpgrade(req, socket as Socket, head)
+    // Handle the WebSocket upgrade request
+    wss.handleUpgrade(req, socket as Socket, head, (ws) => {
+      wss.emit('connection', ws, req)
+    })
   })
 
   server.listen(env.PORT, () => {

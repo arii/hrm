@@ -5,7 +5,6 @@ import SpotifyProvider from 'next-auth/providers/spotify'
 import logger from '@/utils/logger'
 import { getAPIURL } from '../utils/urls'
 import { env } from './env'
-import { refreshSpotifyToken } from './spotify'
 
 // Extend the Session type to include accessToken and error
 declare module 'next-auth' {
@@ -61,30 +60,6 @@ function getCookieDomain(): string | undefined {
  * @returns {Promise<JWT>} The updated JWT with a new accessToken and expiry,
  *                         or the original token with an error flag if refresh fails.
  */
-async function refreshAccessToken(token: JWT) {
-  try {
-    const refreshedTokens = await refreshSpotifyToken(
-      token.refreshToken as string
-    )
-
-    // Update the token object with new values from Spotify
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      // Note: Spotify might or might not send a new refresh token.
-      // If it does, use it. If not, keep the old one.
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-    }
-  } catch (error) {
-    logger.error({ error }, 'Failed to refresh access token')
-    // If refresh fails, return the original token and an error property
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
-    }
-  }
-}
 
 // Define scopes required: user-read-playback-state to poll the current track,
 // user-modify-playback-state to control playback (play/pause/skip),
@@ -283,15 +258,10 @@ export const authOptions: AuthOptions = {
         return updatedToken
       }
 
-      // 2. Token is still valid - return it as-is
-      // Add a 60-second buffer to be safe
-      if (Date.now() < (token.accessTokenExpires as number) - 60000) {
-        return token
-      }
-
-      // 3. Token is expired - try to refresh it
-      logger.info('[AUTH] Access token expired, refreshing...')
-      return await refreshAccessToken(token)
+      // The token refresh logic is now handled by the SpotifyPolling service.
+      // The session will remain valid as long as the service can refresh the token.
+      // We no longer need to check for token expiration here.
+      return token
     },
     /**
      * Callback for creating and managing the user session.

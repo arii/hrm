@@ -112,14 +112,16 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({
   </ListItem>
 )
 
-interface Playlist {
-  name: string
+import { SimplifiedPlaylist } from '@spotify/web-api-ts-sdk'
+
+// The internal representation of a playlist, which can be extended
+// with custom flags like isPreset or isSearchResult.
+interface Playlist extends Partial<SimplifiedPlaylist> {
+  name: string // name and uri are required
   uri: string
-  id?: string
   isPreset?: boolean
   isSearchResult?: boolean
-  imageUrl?: string | null
-  description?: string | null
+  imageUrl?: string | null // Keep imageUrl for simplicity in the component
   trackCount?: number
   owner?: string
 }
@@ -156,14 +158,24 @@ const PlaylistSelector: React.FC<PlaylistSelectorProps> = ({
           throw new Error('Failed to fetch playlists')
         }
         const data = await response.json()
-        const presets = (data.presetPlaylists || []).map((p: Playlist) => ({
-          ...p,
-          isPreset: true,
-        }))
-        const user = (data.userPlaylists || []).map((p: Playlist) => ({
-          ...p,
-          isPreset: false,
-        }))
+        // Presets are already in the correct format
+        const presets: Playlist[] = (data.presetPlaylists || []).map(
+          (p: Playlist) => ({
+            ...p,
+            isPreset: true,
+          })
+        )
+        // Adapt the raw Spotify API response to our internal `Playlist` type
+        const user = (data.userPlaylists || []).map(
+          (p: SimplifiedPlaylist) =>
+            ({
+              ...p,
+              isPreset: false,
+              imageUrl: p.images?.[0]?.url,
+              trackCount: p.tracks?.total,
+              owner: p.owner?.display_name,
+            }) as Playlist
+        )
         setPresetPlaylists(presets)
         setUserPlaylists(user)
       } catch (error) {

@@ -1,6 +1,8 @@
 // File: utils/socketManager.ts (WebSocket Manager - Typed)
 /**
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
+ * This module is responsible for instantiating and managing the lifecycle of core services
+ * like the TabataTimer and SpotifyPolling.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
 import { z } from 'zod' // Import z from zod
@@ -22,17 +24,21 @@ import {
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
-import { AppServices } from '../lib/services.js'
+import { TabataTimer } from '../services/tabataTimer.js'
+import { SpotifyPolling } from '../services/spotifyPolling.js'
+import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
 
-// Define service instances to be managed
-// New: Define a function to get the state snapshot
-let getUnifiedStateSnapshot: () => StateSnapshot
+// --- Service Singletons ---
+// We instantiate and manage the core application services here.
+// They are exported so other parts of the server (e.g., API routes, health checks) can access them.
+export let tabataService: TabataTimer
+export let spotifyService: SpotifyPolling
+// --------------------------
+
 // Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
-let services: AppServices
 
 const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
@@ -41,17 +47,31 @@ const clientSessionState = new Map<
   { lastUpdate: number; accumulatedCalories: number }
 >()
 
+// The single source of truth for the application's state, derived from the services.
+const getUnifiedStateSnapshot = (): StateSnapshot => {
+  if (!tabataService || !spotifyService) {
+    logger.error('Services not initialized when getting state snapshot.')
+    // Return a default state to prevent crashes
+    return { timer: {} as any, spotify: {} as any }
+  }
+  return {
+    timer: tabataService.getState(),
+    spotify: spotifyService.getState(),
+  }
+}
+
 /**
  * Initializes the WebSocket Server manager and registers the core services.
  */
-const initSocketManager = (
-  wss: WebSocketServer,
-  getSnapshot: () => StateSnapshot,
-  svcs: AppServices
-) => {
+const initSocketManager = (wss: WebSocketServer) => {
   wsServerInstance = wss
-  getUnifiedStateSnapshot = getSnapshot
-  services = svcs
+
+  // Instantiate the core services and provide them with a broadcast function.
+  const broadcastFn = (message: ServerMessage) =>
+    broadcast(wss, message, 'service-broadcast')
+  tabataService = new TabataTimer(broadcastFn)
+  spotifyService = new SpotifyPolling(broadcastFn)
+
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
@@ -78,6 +98,18 @@ const initSocketManager = (
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
     })
+
+    // ** Send Initial State on Connection **
+    const stateSnapshot = getUnifiedStateSnapshot()
+    const payload: InitialStateSnapshotPayload = {
+      ...stateSnapshot,
+      hrmData: hrmDataRepository.findAll(),
+    }
+    const initialStateMessage: ServerMessage = {
+      type: 'INITIAL_STATE',
+      payload: payload,
+    }
+    sendWebSocketMessage(extWs, initialStateMessage, 'socketManager.onConnection')
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -204,15 +236,15 @@ const handleIncomingMessage = (
       }
 
       case 'TIMER_COMMAND':
-        services.tabataService.handleCommand(message.command)
+        tabataService.handleCommand(message.command)
         break
 
       case 'SET_MODE':
-        services.tabataService.setMode(message.mode)
+        tabataService.setMode(message.mode)
         break
 
       case 'TIMER_CONFIG':
-        services.tabataService.setConfig({
+        tabataService.setConfig({
           workDuration: message.workDuration,
           restDuration: message.restDuration,
         })
@@ -243,7 +275,6 @@ const handleIncomingMessage = (
           }
         })
 
-        const spotifyService = services.spotifyService
         const spotifyCommandParams: {
           deviceId?: string
           volume?: number
