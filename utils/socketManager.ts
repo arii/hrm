@@ -41,71 +41,73 @@ const clientSessionState = new Map<
   string,
   {
     lastUpdate: number
-    accumulatedCalories: number
     hrSamples: number[] // Store HR samples for calorie calculation
   }
 >()
 
 /**
- * Calculates and updates calories for all active clients. This function is
- * designed to be called periodically.
+ * Calculates and updates calories for a single client and saves the new state.
+ * This function can be called both periodically and on client disconnect.
  *
- * NOTE: HR samples are cleared every minute. If a client disconnects mid-interval,
- * the partial data is lost. Future improvements could persist this data.
+ * @returns {boolean} - True if calories were updated, false otherwise.
+ */
+const updateCaloriesForClient = (clientId: string): boolean => {
+  const session = clientSessionState.get(clientId)
+  const clientData = hrmDataRepository.findById(clientId)
+
+  if (!session || !clientData || session.hrSamples.length === 0) {
+    return false
+  }
+
+  const now = Date.now()
+  const avgHr =
+    session.hrSamples.reduce((sum, val) => sum + val, 0) /
+    session.hrSamples.length
+
+  let caloriesUpdated = false
+  if (avgHr > 30) {
+    try {
+      const durationMinutes = (now - session.lastUpdate) / 1000 / 60
+      if (durationMinutes > 0 && durationMinutes < 5) {
+        const caloriesBurned = estimateCaloriesBurned({
+          heartRate: avgHr,
+          age: clientData.age ?? 30,
+          weightKg: clientData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
+          durationMinutes: durationMinutes,
+        })
+
+        if (caloriesBurned > 0) {
+          const currentTotal = clientData.totalCalories ?? 0
+          hrmDataRepository.save({
+            ...clientData,
+            totalCalories:
+              Math.round((currentTotal + caloriesBurned) * 10) / 10,
+          })
+          caloriesUpdated = true
+        }
+      }
+    } catch (error) {
+      logger.error({ clientId, error }, 'Failed to estimate calories burned')
+    }
+  }
+
+  // Reset session state for the next interval
+  session.hrSamples = []
+  session.lastUpdate = now
+
+  return caloriesUpdated
+}
+
+/**
+ * Iterates through all clients and updates their calorie counts.
  */
 const updateCaloriesForAllClients = () => {
-  const now = Date.now()
   let needsBroadcast = false
-
-  clientSessionState.forEach((session, clientId) => {
-    const clientData = hrmDataRepository.findById(clientId)
-    if (!clientData || session.hrSamples.length === 0) {
-      return // No data or no activity, skip
+  for (const clientId of clientSessionState.keys()) {
+    if (updateCaloriesForClient(clientId)) {
+      needsBroadcast = true
     }
-
-    const avgHr =
-      session.hrSamples.reduce((sum, val) => sum + val, 0) /
-      session.hrSamples.length
-
-    // Only calculate if there's meaningful activity
-    if (avgHr > 30) {
-      try {
-        const durationMinutes = (now - session.lastUpdate) / 1000 / 60
-
-        // Prevent calculating for excessively long durations if the system clock changes.
-        if (durationMinutes > 0 && durationMinutes < 5) {
-          const caloriesBurned = estimateCaloriesBurned({
-            heartRate: avgHr,
-            age: clientData.age ?? 30,
-            weightKg: clientData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
-            durationMinutes: durationMinutes,
-          })
-
-          if (caloriesBurned > 0) {
-            session.accumulatedCalories += caloriesBurned
-            needsBroadcast = true
-          }
-        }
-      } catch (error) {
-        logger.error(
-          { clientId, error },
-          'Failed to estimate calories burned'
-        )
-      }
-    }
-
-    // Update client data for the next cycle
-    session.hrSamples = [] // Reset samples for the next minute
-    session.lastUpdate = now
-
-    const existingData = hrmDataRepository.findById(clientId)
-    if (existingData) {
-      hrmDataRepository.save({
-        ...existingData,
-        calories: Math.round(session.accumulatedCalories * 10) / 10,
-      })
-    }
-  })
+  }
 
   if (needsBroadcast) {
     broadcastState()
@@ -125,8 +127,10 @@ const initSocketManager = (
   services = svcs
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
-  // Start the periodic calorie update
-  calorieUpdateInterval = setInterval(updateCaloriesForAllClients, 60000)
+  // Start the periodic calorie update only if it's not already running
+  if (!calorieUpdateInterval) {
+    calorieUpdateInterval = setInterval(updateCaloriesForAllClients, 15000) // 15-second interval
+  }
 
   wss.on('connection', (ws: WebSocket) => {
     const extWs = ws as ExtWebSocket
@@ -144,13 +148,12 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0, // Initialize to 0
+      totalCalories: 0, // Initialize to 0
       weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
-      accumulatedCalories: 0,
       hrSamples: [], // Initialize HR samples array
     })
 
@@ -160,6 +163,8 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
+      // Final calorie calculation before removing the client
+      updateCaloriesForClient(extWs.clientId)
       hrmDataRepository.deleteById(extWs.clientId)
       clientSessionState.delete(extWs.clientId)
       broadcastState()
@@ -176,6 +181,10 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
+  if (calorieUpdateInterval) {
+    clearInterval(calorieUpdateInterval)
+    calorieUpdateInterval = undefined
+  }
   hrmDataRepository.clear()
   clientSessionState.clear()
 }

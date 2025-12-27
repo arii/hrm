@@ -29,6 +29,8 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { estimateCaloriesBurned } from '@/lib/calorie-estimation'
+import { HrmDataRepository } from '@/lib/repositories/HrmDataRepository'
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')
@@ -39,7 +41,6 @@ jest.mock('@spotify/web-api-ts-sdk', () => ({
   AccessToken: jest.fn(),
 }))
 
-// Mock ConnectionMonitor and other utils
 jest.mock('../../utils/websocketUtils.js', () => ({
   sendWebSocketMessage: jest.fn(),
   broadcast: jest.fn(),
@@ -49,7 +50,6 @@ jest.mock('../../utils/websocketUtils.js', () => ({
   })),
 }))
 
-// Mock logger, ws, and calorie-estimation globally for the test file
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
   default: {
@@ -83,15 +83,34 @@ jest.mock('../../lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),
 }))
 
-jest.mock('../../lib/repositories/HrmDataRepository', () => ({
-  HrmDataRepository: jest.fn().mockImplementation(() => ({
-    findById: jest.fn().mockReturnValue({ clientId: 'user-123', weightKg: 75 }),
-    save: jest.fn(),
-    clear: jest.fn(),
-    deleteById: jest.fn(),
-    findAll: jest.fn().mockReturnValue([{ clientId: 'user-123', weightKg: 75 }]),
-  })),
-}))
+// Mock HrmDataRepository with a stateful, self-contained implementation
+jest.mock('../../lib/repositories/HrmDataRepository', () => {
+  const mockRepositoryStore = new Map<string, HrmData>()
+  const mockInstance = {
+    findById: jest.fn((clientId: string) => mockRepositoryStore.get(clientId)),
+    save: jest.fn((data: HrmData) => {
+      // Defensive save: ensure we merge with existing data and accumulate calories
+      const existingData = mockRepositoryStore.get(data.clientId) || {
+        totalCalories: 0,
+        hrSamples: [],
+      }
+      mockRepositoryStore.set(data.clientId, {
+        ...existingData,
+        ...data,
+        // Ensure hrSamples is always an array
+        hrSamples: data.hrSamples || existingData.hrSamples,
+      })
+    }),
+    clear: jest.fn(() => mockRepositoryStore.clear()),
+    deleteById: jest.fn((clientId: string) =>
+      mockRepositoryStore.delete(clientId)
+    ),
+    findAll: jest.fn(() => Array.from(mockRepositoryStore.values())),
+  }
+  return {
+    HrmDataRepository: jest.fn().mockImplementation(() => mockInstance),
+  }
+})
 
 class MockWebSocket extends EventEmitter {
   isAlive: boolean
@@ -105,12 +124,10 @@ class MockWebSocket extends EventEmitter {
     this.isAlive = true
   }
 
-  // Simulate receiving a pong from the client
   receivePong() {
     this.emit('pong')
   }
 
-  // Override 'on' to correctly handle our event emitter
   on(event: string | symbol, listener: (...args: unknown[]) => void): this {
     super.on(event, listener)
     return this
@@ -125,13 +142,16 @@ describe('WebSocket Manager', () => {
   }
   let getSnapshot: () => StateSnapshot
   let mockWs: MockWebSocket
+  let hrmDataRepository: jest.Mocked<InstanceType<typeof HrmDataRepository>>
 
   beforeEach(() => {
     jest.useFakeTimers()
+    hrmDataRepository = new HrmDataRepository() as jest.Mocked<
+      InstanceType<typeof HrmDataRepository>
+    >
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
-    // Create fully typed mocks for the services.
     const mockTabataTimer: jest.Mocked<TabataTimer> = {
       handleCommand: jest.fn(),
       setMode: jest.fn(),
@@ -181,6 +201,7 @@ describe('WebSocket Manager', () => {
     jest.useRealTimers()
     jest.clearAllMocks()
     ;(mockWss.clients as Set<MockWebSocket>).clear()
+    hrmDataRepository.clear() // Clear the state of our singleton mock
     resetSocketManager()
   })
 
@@ -201,7 +222,7 @@ describe('WebSocket Manager', () => {
     it('should set isAlive to true on pong', () => {
       const newWs = new MockWebSocket() as ExtWebSocket
       mockWss.emit('connection', newWs)
-      newWs.isAlive = false // Manually set to false
+      newWs.isAlive = false
       newWs.emit('pong')
       expect(newWs.isAlive).toBe(true)
     })
@@ -215,12 +236,8 @@ describe('WebSocket Manager', () => {
   })
 
   describe('Calorie Calculation', () => {
-    const { estimateCaloriesBurned } = require('../../lib/calorie-estimation')
-    const { HrmDataRepository } = require('../../lib/repositories/HrmDataRepository')
-    let hrmDataRepository: any
-
     beforeEach(() => {
-      hrmDataRepository = new HrmDataRepository()
+      jest.clearAllMocks()
       ;(estimateCaloriesBurned as jest.Mock).mockClear()
     })
 
@@ -232,32 +249,42 @@ describe('WebSocket Manager', () => {
       mockWs.emit('message', message.toString())
     }
 
-    it('should calculate calories periodically based on average HR', () => {
-      hrmDataRepository.findById.mockReturnValue({ clientId: mockWs.clientId, weightKg: 75 })
-      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(14.5)
-
+    it('should calculate and accumulate calories periodically', () => {
+      // First interval
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(3.6)
       sendHrmInput(150)
-      jest.advanceTimersByTime(60000)
+      jest.advanceTimersByTime(15000)
 
-      const mockBroadcast = broadcast as jest.Mock
-      expect(mockBroadcast).toHaveBeenCalled()
-
-      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
-      const payload: HrmData[] = lastCall[1].payload
-      const clientData = payload.find((c) => c.clientId === mockWs.clientId)
+      let mockBroadcast = broadcast as jest.Mock
+      let lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      let payload: HrmData[] = lastCall[1].payload
+      let clientData = payload.find((c) => c.clientId === mockWs.clientId)
 
       expect(clientData).toBeDefined()
-      expect(clientData!.calories).toBeCloseTo(14.5, 1)
+      expect(clientData!.totalCalories).toBeCloseTo(3.6, 1)
+
+      // Second interval
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(4.1)
+      sendHrmInput(160)
+      jest.advanceTimersByTime(15000)
+
+      lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      payload = lastCall[1].payload
+      clientData = payload.find((c) => c.clientId === mockWs.clientId)
+
+      expect(clientData).toBeDefined()
+      // Should be 3.6 + 4.1
+      expect(clientData!.totalCalories).toBeCloseTo(7.7, 1)
     })
 
     it('should handle errors in calorie estimation without crashing', () => {
-      hrmDataRepository.findById.mockReturnValue({ clientId: mockWs.clientId, weightKg: 75 })
       ;(estimateCaloriesBurned as jest.Mock).mockImplementation(() => {
         throw new Error('Test estimation error')
       })
 
       sendHrmInput(150)
-      jest.advanceTimersByTime(60000)
+      jest.advanceTimersByTime(15000)
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -266,34 +293,70 @@ describe('WebSocket Manager', () => {
         'Failed to estimate calories burned'
       )
 
+      // Calorie count should be 0
+      let clientData = hrmDataRepository.findById(mockWs.clientId)
+      expect(clientData).toBeDefined()
+      expect(clientData!.totalCalories).toBe(0)
+
+      // Now, let's have a successful estimation
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(2.5)
+      sendHrmInput(160) // Send another HR input to update state
+      jest.advanceTimersByTime(15000)
+
+      // Check the final broadcast state
       const mockBroadcast = broadcast as jest.Mock
-      mockBroadcast.mockClear()
-      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(10)
-
-      sendHrmInput(160)
-      jest.advanceTimersByTime(60000)
-
-      expect(mockBroadcast).toHaveBeenCalled()
-      const lastCall = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
       const payload: HrmData[] = lastCall[1].payload
-      const clientData = payload.find((c) => c.clientId === mockWs.clientId)
-      expect(clientData!.calories).toBe(10)
+      clientData = payload.find((c) => c.clientId === mockWs.clientId)
+      expect(clientData).toBeDefined()
+      expect(clientData!.totalCalories).toBe(2.5) // Should now have the new value, not accumulated
     })
 
     it('should use user-specific weight for calorie calculation', () => {
-      hrmDataRepository.findById.mockReturnValue({
+      hrmDataRepository.save({
         clientId: mockWs.clientId,
-        weightKg: 85, // Custom weight
+        weightKg: 85,
+        hrSamples: [],
+        lastHrmTimestamp: Date.now(),
+        totalCalories: 0,
       })
 
       sendHrmInput(150)
-      jest.advanceTimersByTime(60000)
+      jest.advanceTimersByTime(15000)
 
       expect(estimateCaloriesBurned).toHaveBeenCalledWith(
         expect.objectContaining({
           weightKg: 85,
         })
       )
+    })
+
+    it('should save final accumulated calories on disconnect', () => {
+      // First interval accumulates 3.6 calories
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(3.6)
+      sendHrmInput(150)
+      jest.advanceTimersByTime(15000)
+
+      // Partial interval accumulates 1.8 calories
+      ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(1.8)
+      sendHrmInput(155)
+      jest.advanceTimersByTime(7500) // Partial interval
+      mockWs.emit('close')
+
+      const saveCalls = (hrmDataRepository.save as jest.Mock).mock.calls
+      const finalSaveCall = saveCalls[saveCalls.length - 1][0]
+
+      // The final saved value should be the accumulated total: 3.6 + 1.8
+      expect(finalSaveCall.totalCalories).toBeCloseTo(5.4)
+
+      // Verify the user was deleted after the final save
+      expect(hrmDataRepository.deleteById).toHaveBeenCalledWith(mockWs.clientId)
+      const saveCallOrder = (hrmDataRepository.save as jest.Mock)
+        .mock.invocationCallOrder[saveCalls.length - 1]
+      const deleteCallOrder = (hrmDataRepository.deleteById as jest.Mock)
+        .mock.invocationCallOrder[0]
+      expect(saveCallOrder).toBeLessThan(deleteCallOrder)
     })
   })
 
@@ -338,18 +401,26 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast state on client disconnect', () => {
-      const { HrmDataRepository } = require('../../lib/repositories/HrmDataRepository')
-      const hrmDataRepository = new HrmDataRepository()
-      hrmDataRepository.findAll.mockReturnValue([])
+      hrmDataRepository.save({
+        clientId: mockWs.clientId,
+        weightKg: 75,
+        hrSamples: [150],
+        lastHrmTimestamp: Date.now(),
+        totalCalories: 5,
+      })
+
       mockWs.emit('close')
-      expect(broadcast).toHaveBeenCalledWith(
-        mockWss,
-        {
-          type: 'HRM_UPDATE',
-          payload: [],
-        },
-        'socketManager.broadcastState'
+
+      expect(hrmDataRepository.deleteById).toHaveBeenCalledWith(
+        mockWs.clientId
       )
+      expect(hrmDataRepository.findAll()).toEqual([])
+
+      const lastBroadcastCall = (broadcast as jest.Mock).mock.calls.pop()
+      expect(lastBroadcastCall[1]).toEqual({
+        type: 'HRM_UPDATE',
+        payload: [],
+      })
     })
 
     it('should forward SPOTIFY_COMMAND to dashboard clients', () => {

@@ -181,7 +181,7 @@ export const HrmMetadataUpdateDataSchema = z.object({
   maxHr: z.number().optional(),
   name: z.string().optional(),
   age: z.number().optional(),
-  weightKg: z.number().optional(),
+  weightKg: z.number().min(20).max(500).optional(),
 })
 
 export const HrmMetadataUpdateMessageSchema = z.object({
