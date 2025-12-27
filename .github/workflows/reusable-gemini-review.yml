@@ -52,10 +52,23 @@ jobs:
             PR_DATA='{"labels":[]}'
           fi
           
+          # Use proper GitHub Actions multiline format for environment variables
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          
+          # For values that may contain special characters, use EOF delimiter
+          {
+            echo "PR_TITLE<<EOF"
+            echo "${{ github.event.pull_request.title }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
+          
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
-          echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          
+          {
+            echo "PR_DESCRIPTION<<EOF"
+            echo "${{ github.event.pull_request.body }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
           
           # Get labels - simplified with jq
           LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")' 2>/dev/null || echo "")
