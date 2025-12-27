@@ -162,6 +162,7 @@ const useMultiDeviceBluetooth = () => {
           `Max reconnect attempts reached for ${deviceId}. Giving up.`
         )
         updateDeviceState(deviceId, { status: 'Failed to reconnect' })
+        removeDevice(deviceId)
         return
       }
 
@@ -285,13 +286,12 @@ const useMultiDeviceBluetooth = () => {
   )
 
   useEffect(() => {
-    const devices = connectedDevices;
     return () => {
-      Object.keys(devices).forEach((deviceId) => {
-        disconnectDevice(deviceId);
-      });
-    };
-  }, [connectedDevices, disconnectDevice]);
+      Object.keys(connectedDevices).forEach((deviceId) => {
+        disconnectDevice(deviceId)
+      })
+    }
+  }, [])
 
   return {
     connectedDevices,

@@ -297,7 +297,7 @@ export default function ConnectView({
             device={device}
             onDisconnect={onDisconnect}
             onForget={onForgetDevice}
-            userAge={parseInt(userAge, 10)}
+            userAge={parseInt(userAge, 10) || 0}
           />
         ))}
 
