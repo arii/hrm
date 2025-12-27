@@ -16,8 +16,8 @@ import logger from '@/utils/logger'
 import { useWebSocket } from '@/context/WebSocketContext'
 import DeviceManagerService, {
   DeviceManagerOptions,
-  DeviceConnectionStatus,
   DisconnectionReason,
+  DeviceManagerEvent,
 } from '@/services/DeviceManagerService'
 import useLocalStorage from '@/hooks/useLocalStorage'
 
@@ -129,33 +129,39 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
 
   // Effect to subscribe to device manager events and update React state
   useEffect(() => {
-    const handleStatusChange = (e: CustomEvent) => {
-      const { status, message } = e.detail as {
-        status: DeviceConnectionStatus
-        message: string
-      }
+    const handleStatusChange = (
+      e: DeviceManagerEvent<'status-changed'>
+    ) => {
+      const { status, message } = e.detail
       setDeviceStatus(message)
       if (status === 'error') {
         logger.error(`Bluetooth Error: ${message}`)
       }
     }
 
-    const handleHeartRate = (e: CustomEvent) => {
-      const { heartRate } = e.detail as { heartRate: number }
+    const handleHeartRate = (
+      e: DeviceManagerEvent<'heart-rate-received'>
+    ) => {
+      const { heartRate } = e.detail
       const data: HrmInputData = { value: heartRate }
       sendData({ type: 'HRM_INPUT', data })
     }
 
-    const handleBattery = (e: CustomEvent) =>
-      setBatteryLevel((e.detail as { batteryLevel: number }).batteryLevel)
-    const handleDeviceConnected = (e: CustomEvent) => {
-      const { device } = e.detail as { device: BluetoothDevice }
+    const handleBattery = (
+      e: DeviceManagerEvent<'battery-level-received'>
+    ) => setBatteryLevel(e.detail.batteryLevel)
+    const handleDeviceConnected = (
+      e: DeviceManagerEvent<'device-connected'>
+    ) => {
+      const { device } = e.detail
       setLastDeviceId(device.id)
       setDisconnectionReason(null)
     }
 
-    const handleDeviceDisconnected = (e: CustomEvent) => {
-      const { reason } = e.detail as { reason: DisconnectionReason }
+    const handleDeviceDisconnected = (
+      e: DeviceManagerEvent<'device-disconnected'>
+    ) => {
+      const { reason } = e.detail
       setBatteryLevel(null)
       if (reason !== 'manual') {
         setDisconnectionReason(reason)
@@ -186,7 +192,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       )
       deviceManager.disconnect()
     }
-  }, [deviceManager, sendData, setLastDeviceId, userAge, userName])
+  }, [deviceManager, sendData, setLastDeviceId])
 
   // --- Public API ---
   const connect = useCallback(async () => {

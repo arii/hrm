@@ -46,6 +46,11 @@ interface DeviceManagerEventMap {
   }
   'device-connected': { device: BluetoothDevice }
 }
+
+export type DeviceManagerEvent<
+  K extends keyof DeviceManagerEventMap
+> = CustomEvent<DeviceManagerEventMap[K]>
+
 /**
  * @interface DeviceManagerOptions
  * @description Configuration options for the DeviceManagerService instance.
