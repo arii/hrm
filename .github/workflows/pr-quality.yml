@@ -302,7 +302,7 @@ jobs:
   quality-report:
     name: 📊 Quality Report
     if: always()
-    needs: [code-quality, core-tests, visual-tests]
+    needs: [quality-check, core-tests, visual-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -310,7 +310,7 @@ jobs:
       - name: Collect Failure Information
         id: failures
         env:
-          CODE_QUALITY_RESULT: ${{ needs.code-quality.result }}
+          CODE_QUALITY_RESULT: ${{ needs.quality-check.result }}
           CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
           VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
         run: |
@@ -345,7 +345,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const code_quality = '${{ needs.code-quality.result }}';
+            const code_quality = '${{ needs.quality-check.result }}';
             const core_tests = '${{ needs.core-tests.result }}';
             const visual_tests = '${{ needs.visual-tests.result }}';
             const pr = context.payload.pull_request;
