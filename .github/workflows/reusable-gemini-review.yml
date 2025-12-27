@@ -55,10 +55,25 @@ jobs:
           LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")')
           echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
           
-          # Count reviews using separate command with timeout
-          REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length')
-          CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
-          RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length')
+          # Count reviews using separate command with timeout and error handling
+          REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch review count: $REVIEW_COUNT"
+            REVIEW_COUNT=0
+          fi
+          
+          CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch changes requested count: $CHANGES_REQUESTED"
+            CHANGES_REQUESTED=0
+          fi
+          
+          RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length' 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "⚠️ Failed to fetch resolved count: $RESOLVED_COUNT"
+            RESOLVED_COUNT=0
+          fi
+          
           echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
           echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
           echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
@@ -119,7 +134,15 @@ jobs:
             if [ "$COMMENT_SIZE" -gt 0 ]; then
               echo "Posting review comment to PR #$PR_NUMBER (${COMMENT_SIZE} bytes)"
               # Use --body-file to prevent command line length issues
-              gh pr comment "$PR_NUMBER" --body-file review_comment.txt
+              gh pr comment "$PR_NUMBER" --body-file review_comment.txt 2>&1
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                echo "✅ Review comment posted successfully"
+              else
+                echo "❌ Failed to post review comment (exit code: $EXIT_CODE)"
+                echo "Command: gh pr comment $PR_NUMBER --body-file review_comment.txt"
+              fi
             else
               echo "⚠️ No review comment found in result"
               echo "Debug info:"
@@ -145,12 +168,29 @@ jobs:
             
             if [ -n "$LABELS" ]; then
               echo "📌 Applying labels to PR #$PR_NUMBER:"
+              LABEL_COUNT=0
+              LABEL_FAILURES=0
+              
               echo "$LABELS" | while read label; do
-                echo "  Adding label: $label"
-                timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" || echo "  ⚠️ Failed to add label: $label"
+                echo "  Adding label: '$label'"
+                timeout 30 gh pr edit "$PR_NUMBER" --add-label "$label" 2>&1
+                EXIT_CODE=$?
+                
+                if [ $EXIT_CODE -eq 0 ]; then
+                  echo "  ✅ Label added: $label"
+                  LABEL_COUNT=$((LABEL_COUNT + 1))
+                elif [ $EXIT_CODE -eq 124 ]; then
+                  echo "  ❌ Timeout (30s) applying label: $label"
+                  LABEL_FAILURES=$((LABEL_FAILURES + 1))
+                else
+                  echo "  ❌ Failed to add label: $label (exit code: $EXIT_CODE)"
+                  LABEL_FAILURES=$((LABEL_FAILURES + 1))
+                fi
               done
+              
+              echo "Label application summary: Applied $LABEL_COUNT labels with $LABEL_FAILURES failures"
             else
-              echo "ℹ️ No labels to apply"
+              echo "ℹ️ No labels to apply from review result"
             fi
           else
             echo "⚠️ review_result.json not found, skipping label application"

@@ -262,7 +262,7 @@ jobs:
               fi
               
               FINAL_SIZE=$(du -sh "$CACHE_DIR" 2>/dev/null | cut -f1)
-              echo "✅ Cache pruned. Final size: ${FINAL_SIZE:-0MB} (under 10GB limit)"
+              echo "✅ Cache pruned. Final size: ${FINAL_SIZE:-0MB} (under 7GB limit)"
             else
               echo "✅ Cache within limits (under 7GB)"
             fi
