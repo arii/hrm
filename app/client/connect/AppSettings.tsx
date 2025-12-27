@@ -1,4 +1,4 @@
-// app/client/connect/UserSettings.tsx
+// app/client/connect/AppSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
@@ -18,7 +18,7 @@ const WEIGHT_VALIDATION = {
   METRIC: { min: 30, max: 200 }, // kg
 }
 
-interface UserSettingsProps {
+interface AppSettingsProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -40,9 +40,10 @@ interface UserSettingsProps {
   heightError: string | null
   handleImperialHeightChange: (ft: string, inch: string) => void
   handleImperialHeightBlur: () => void
+  onHeightBlur: () => void
 }
 
-const UserSettings: React.FC<UserSettingsProps> = ({
+const AppSettings: React.FC<AppSettingsProps> = ({
   userName,
   setUserName,
   userAge,
@@ -64,6 +65,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   heightError,
   handleImperialHeightChange,
   handleImperialHeightBlur,
+  onHeightBlur,
 }) => {
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
@@ -136,6 +138,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
+          onBlur={onHeightBlur}
           error={!!heightError}
           helperText={heightError}
         />
@@ -188,4 +191,4 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   )
 }
 
-export default UserSettings
+export default AppSettings

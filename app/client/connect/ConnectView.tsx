@@ -16,7 +16,7 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import UserSettings from './UserSettings'
+import AppSettings from './AppSettings'
 import React, { useState } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
@@ -29,7 +29,7 @@ import {
 import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
 import { validate } from '../../../utils/validation'
 
-interface UserSettingsProps {
+interface AppSettingsProps {
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -44,7 +44,7 @@ interface UserSettingsProps {
   onUnitChange: (unit: 'IMPERIAL' | 'METRIC') => void
 }
 
-interface ConnectViewProps extends UserSettingsProps {
+interface ConnectViewProps extends AppSettingsProps {
   duration: string
   caloriesBurned: number
   isConnected: boolean
@@ -104,17 +104,14 @@ export default function ConnectView({
   const [weightError, setWeightError] = useState<string | null>(null)
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  React.useEffect(() => {
-    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
-      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      if (newFeet !== Number(feet)) {
-        setFeet(String(newFeet))
-      }
-      if (newInches !== Number(inches)) {
-        setInches(String(newInches))
-      }
+  const validateHeight = () => {
+    const cm = userHeight
+    if (isNaN(cm) || cm < 122 || cm > 213) {
+      setHeightError('Please enter a valid height (122-213 cm)')
+    } else {
+      setHeightError(null)
     }
-  }, [unitSystem, userHeight, feet, inches])
+  }
 
   const handleImperialHeightChange = (ft: string, inch: string) => {
     const feetNum = Number(ft)
@@ -187,7 +184,7 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <UserSettings
+          <AppSettings
             userName={userName}
             setUserName={setUserName}
             userAge={userAge}
@@ -209,6 +206,7 @@ export default function ConnectView({
             heightError={heightError}
             handleImperialHeightChange={handleImperialHeightChange}
             handleImperialHeightBlur={handleImperialHeightBlur}
+            onHeightBlur={validateHeight}
           />
         ) : (
           <Box
