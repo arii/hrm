@@ -346,8 +346,9 @@ describe('WebSocket Manager', () => {
       expect(hrmDataRepository.deleteById).toHaveBeenCalledWith(mockWs.clientId)
       const saveCallOrder = (hrmDataRepository.save as jest.Mock)
         .mock.invocationCallOrder[saveCalls.length - 1]
-      const deleteCallOrder = (hrmDataRepository.deleteById as jest.Mock)
-        .mock.invocationCallOrder[0]
+      const deleteCallOrder = (
+        hrmDataRepository.deleteById as jest.Mock
+      ).mock.invocationCallOrder[0]
       expect(saveCallOrder).toBeLessThan(deleteCallOrder)
     })
   })
