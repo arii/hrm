@@ -46,6 +46,7 @@ const validate = (value: string, min: number, max: number, name: string) => {
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
+  totalCalories: number
   userName: string
   setUserName: (name: string) => void
   userAge: string
@@ -82,6 +83,7 @@ interface ConnectViewProps {
 export default function ConnectView({
   duration,
   caloriesBurned,
+  totalCalories,
   userName,
   setUserName,
   userAge,
@@ -454,6 +456,9 @@ export default function ConnectView({
 
         {hasStarted && (
           <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
+        )}
+        {!hasStarted && (
+          <WorkoutSummary duration={duration} caloriesBurned={totalCalories} />
         )}
 
         <Typography

@@ -504,8 +504,7 @@ describe('WebSocket Manager', () => {
 
       // Step 3: Verify the repository was updated with totalCalories reset to 0
       expect(hrmDataRepository.save).toHaveBeenCalledWith({
-        clientId: mockWs.clientId,
-        name: 'test-user',
+        ...initialClientData,
         totalCalories: 0,
       })
 

@@ -3,7 +3,10 @@
  */
 import { renderHook, act } from '@testing-library/react'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
-import { WebSocketContext, WebSocketContextType } from '@/context/WebSocketContext'
+import {
+  WebSocketContext,
+  WebSocketContextType,
+} from '@/context/WebSocketContext'
 import { ReactNode } from 'react'
 import { jest, describe, it, expect, beforeEach } from '@jest/globals'
 import { INITIAL_STATE } from '@/context/WebSocketContext' // Assuming INITIAL_STATE is exported or accessible

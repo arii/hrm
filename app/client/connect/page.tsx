@@ -115,6 +115,7 @@ export default function ConnectPage() {
     <ConnectView
       duration={formatDuration(workoutDuration)}
       caloriesBurned={caloriesBurned}
+      totalCalories={totalCalories}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}
