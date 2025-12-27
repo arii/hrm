@@ -29,6 +29,7 @@ export class SocketManager {
   private hrmDataRepository: HrmDataRepository
   private services: AppServices
   private disconnectionTimers = new Map<string, NodeJS.Timeout>()
+  private pendingReconnections = new Map<string, string>() // newClientId -> oldClientId
 
   constructor(wss: WebSocketServer, services: AppServices) {
     this.wss = wss
@@ -88,6 +89,11 @@ export class SocketManager {
   }
 
   private handleDisconnection(clientId: string) {
+    // If this client was a zombie that was terminated, the new client is no longer pending
+    if (this.pendingReconnections.has(clientId)) {
+      this.pendingReconnections.delete(clientId)
+    }
+
     const clientData = this.hrmDataRepository.findById(clientId)
     if (clientData) {
       clientData.isConnected = false
@@ -113,6 +119,11 @@ export class SocketManager {
       const { type, data } = parsedMessage
       const clientId = ws.clientId
 
+      // Ignore messages from clients that are pending reconnection
+      if (this.pendingReconnections.has(clientId)) {
+        return
+      }
+
       switch (type) {
         case 'HRM_INPUT':
           const hrmData = this.hrmDataRepository.findById(clientId)
@@ -136,25 +147,29 @@ export class SocketManager {
     const { deviceId } = data
     if (deviceId) {
       const oldClientData = this.hrmDataRepository.findByDeviceId(deviceId)
-      if (oldClientData && !oldClientData.isConnected) {
-        logger.info(
-          {
-            deviceId,
-            oldClientId: oldClientData.clientId,
-            newClientId: clientId,
-          },
-          'Reclaiming disconnected session.'
-        )
+      if (oldClientData) {
+        if (!oldClientData.isConnected) {
+          logger.info(
+            {
+              deviceId,
+              oldClientId: oldClientData.clientId,
+              newClientId: clientId,
+            },
+            'Reclaiming disconnected session.'
+          )
 
-        const oldTimer = this.disconnectionTimers.get(oldClientData.clientId)
-        if (oldTimer) {
-          clearTimeout(oldTimer)
-          this.disconnectionTimers.delete(oldClientData.clientId)
+          const oldTimer = this.disconnectionTimers.get(oldClientData.clientId)
+          if (oldTimer) {
+            clearTimeout(oldTimer)
+            this.disconnectionTimers.delete(oldClientData.clientId)
+          }
+          this.hrmDataRepository.deleteById(oldClientData.clientId)
+        } else {
+          // This is a zombie connection scenario
+          this.pendingReconnections.set(clientId, oldClientData.clientId)
+          this.terminateZombieConnections(deviceId, clientId)
         }
-        this.hrmDataRepository.deleteById(oldClientData.clientId)
       }
-
-      this.terminateZombieConnections(deviceId, clientId)
     }
 
     const existingData = this.hrmDataRepository.findById(clientId)

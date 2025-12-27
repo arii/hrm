@@ -211,5 +211,25 @@ describe('SocketManager', () => {
       ws.emit('message', 'invalid json')
       expect(logger.error).toHaveBeenCalled()
     })
+
+    it('should ignore messages from clients pending reconnection', () => {
+      const deviceId = 'device-abc-123'
+      const clientAData: HrmStreamData = { ...initialData, deviceId }
+      mockRepository.findByDeviceId.mockReturnValue(clientAData)
+
+      const clientBId = 'user-new-abc'
+      const ws2 = connectClient(clientBId)
+
+      const reclaimMessage = { type: 'HRM_METADATA_UPDATE', data: { deviceId } }
+      ws2.emit('message', JSON.stringify(reclaimMessage))
+
+      // ws2 is now pending, so this message should be ignored
+      const hrmMessage = { type: 'HRM_INPUT', data: { value: 150 } }
+      ws2.emit('message', JSON.stringify(hrmMessage))
+
+      expect(mockRepository.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({ value: 150 })
+      )
+    })
   })
 })

@@ -1,6 +1,6 @@
 // utils/socketManager.ts
 import { WebSocketServer } from 'ws'
-import { SocketManager }  from './SocketManager'
+import { SocketManager }  from './SocketManager.js'
 import { AppServices } from '@/types'
 
 let socketManager: SocketManager
