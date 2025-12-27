@@ -192,6 +192,8 @@ jobs:
             echo "Error: patch.diff is empty or does not exist."
             exit 1
           fi
+          git config user.name "AI Agent"
+          git config user.email "ai@agent.local"
           git checkout -b "$BRANCH"
           git apply patch.diff
 
