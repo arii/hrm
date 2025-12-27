@@ -26,6 +26,8 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material'
+import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+import { validate } from '../../../utils/validation'
 
 interface UserSettingsProps {
   userName: string
@@ -96,6 +98,47 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
+  const [feet, setFeet] = useState('')
+  const [inches, setInches] = useState('')
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
+      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
+      if (newFeet !== Number(feet)) {
+        setFeet(String(newFeet))
+      }
+      if (newInches !== Number(inches)) {
+        setInches(String(newInches))
+      }
+    }
+  }, [unitSystem, userHeight, feet, inches])
+
+  const handleImperialHeightChange = (ft: string, inch: string) => {
+    const feetNum = Number(ft)
+    const inchesNum = Number(inch)
+    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
+      const cm = feetAndInchesToCm(feetNum, inchesNum)
+      setUserHeight(cm)
+    }
+  }
+
+  const handleImperialHeightBlur = () => {
+    const feetNum = Number(feet)
+    const inchesNum = Number(inches)
+    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+      setHeightError(
+        validate(
+          String(feetAndInchesToCm(feetNum, inchesNum)),
+          122,
+          213,
+          'height'
+        )
+      )
+    }
+  }
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -157,6 +200,15 @@ export default function ConnectView({
             setUnit={onUnitChange}
             gender={gender}
             setGender={setGender}
+            feet={feet}
+            setFeet={setFeet}
+            inches={inches}
+            setInches={setInches}
+            ageError={ageError}
+            weightError={weightError}
+            heightError={heightError}
+            handleImperialHeightChange={handleImperialHeightChange}
+            handleImperialHeightBlur={handleImperialHeightBlur}
           />
         ) : (
           <Box

@@ -1,8 +1,6 @@
 // app/client/connect/UserSettings.tsx
 import React from 'react'
 import Stack from '@mui/material/Stack'
-import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
-import { validate } from '../../../utils/validation'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
@@ -33,6 +31,15 @@ interface UserSettingsProps {
   setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
   gender: Gender
   setGender: (gender: Gender) => void
+  feet: string
+  setFeet: (feet: string) => void
+  inches: string
+  setInches: (inches: string) => void
+  ageError: string | null
+  weightError: string | null
+  heightError: string | null
+  handleImperialHeightChange: (ft: string, inch: string) => void
+  handleImperialHeightBlur: () => void
 }
 
 const UserSettings: React.FC<UserSettingsProps> = ({
@@ -48,60 +55,16 @@ const UserSettings: React.FC<UserSettingsProps> = ({
   setUnit,
   gender,
   setGender,
+  feet,
+  setFeet,
+  inches,
+  setInches,
+  ageError,
+  weightError,
+  heightError,
+  handleImperialHeightChange,
+  handleImperialHeightBlur,
 }) => {
-  const [feet, setFeet] = React.useState('')
-  const [inches, setInches] = React.useState('')
-  const [ageError, setAgeError] = React.useState<string | null>(null)
-  const [weightError, setWeightError] = React.useState<string | null>(null)
-  const [heightError, setHeightError] = React.useState<string | null>(null)
-
-  /**
-   * This effect synchronizes the local `feet` and `inches` state with the `userHeight` prop
-   * when the unit system is set to IMPERIAL. This ensures that the imperial height
-   * input fields display the correct values when the component loads or the `userHeight` changes.
-   */
-  React.useEffect(() => {
-    if (unit === 'IMPERIAL' && userHeight > 0) {
-      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
-      if (String(newFeet) !== feet) {
-        setFeet(String(newFeet))
-      }
-      if (String(newInches) !== inches) {
-        setInches(String(newInches))
-      }
-    }
-  }, [unit, userHeight])
-
-  /**
-   * Handles changes to the imperial height input fields (feet and inches).
-   * It converts the feet and inches values to centimeters and updates the userHeight state.
-   * @param ft The value from the feet input field.
-   * @param inch The value from the inches input field.
-   */
-  const handleImperialHeightChange = (ft: string, inch: string) => {
-    const feetNum = Number(ft)
-    const inchesNum = Number(inch)
-    if (!isNaN(feetNum) && !isNaN(inchesNum) && feetNum > 0 && inchesNum >= 0) {
-      const cm = feetAndInchesToCm(feetNum, inchesNum)
-      setUserHeight(cm)
-    }
-  }
-
-  const handleImperialHeightBlur = () => {
-    const feetNum = Number(feet)
-    const inchesNum = Number(inches)
-    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
-      setHeightError(
-        validate(
-          String(feetAndInchesToCm(feetNum, inchesNum)),
-          122,
-          213,
-          'height'
-        )
-      )
-    }
-  }
-
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <ToggleButtonGroup
@@ -143,7 +106,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
-        onBlur={(e) => setAgeError(validate(e.target.value, 1, 120, 'age'))}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
@@ -159,16 +121,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserWeight(e.target.value)
           }
         }}
-        onBlur={(e) =>
-          setWeightError(
-            validate(
-              e.target.value,
-              WEIGHT_VALIDATION[unit].min,
-              WEIGHT_VALIDATION[unit].max,
-              'weight'
-            )
-          )
-        }
         error={!!weightError}
         helperText={weightError}
       />
@@ -184,9 +136,6 @@ const UserSettings: React.FC<UserSettingsProps> = ({
               setUserHeight(Number(e.target.value))
             }
           }}
-          onBlur={(e) =>
-            setHeightError(validate(e.target.value, 122, 213, 'height'))
-          }
           error={!!heightError}
           helperText={heightError}
         />
