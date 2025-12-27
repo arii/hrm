@@ -24,7 +24,11 @@ const expressApp = express()
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
-  expressApp.use(express.json())
+  // Global body parsing is intentionally omitted here.
+  // Next.js API routes handle their own body parsing, and adding a global
+  // `express.json()` middleware can cause conflicts, such as the
+  // "TypeError: Response body object should not be disturbed or locked" error,
+  // by attempting to parse the request body twice.
 
   // --- Rate Limiting Setup ---
   if (env.NODE_ENV !== 'test') {
