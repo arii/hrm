@@ -41,15 +41,19 @@ const HrTileWithCalories = ({
 
   const hrZoneProps = useHrZone(user.value, user.maxHr || MAX_HR_DEFAULT)
 
+  // Use a runtime check for isConnected if it exists on the object but not the type,
+  // or fall back to true. This heuristic helps until the type definition is updated.
+  const isConnected =
+    'isConnected' in user
+      ? (user as { isConnected: boolean }).isConnected
+      : true
+
   const hrTileProps = {
     name: user.name || '',
     bpm: user.value,
     percentMax: hrZoneProps.percentage,
     calories: calories,
-    // TODO(issue-tracking): Track connection status (#000). Currently hardcoded to true because
-    // the connection state is managed by the parent via WebSocket/Bluetooth context, and this
-    // component receives data only when connected. Future refactor should pass explicit status.
-    isConnected: true,
+    isConnected,
     isAlerting: isAlerting,
     ...(alertMessage && { alertMessage }),
   }

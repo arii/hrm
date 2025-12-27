@@ -56,7 +56,10 @@ export const useHeightInput = (
       newCmValue = parseFloat(current.cm)
     } else {
       const feet = parseFloat(current.feet)
-      const inches = parseFloat(current.inches)
+      // Default to 0 if empty string to allow inputs like "5ft" (implied 0in)
+      const inchesStr = current.inches.trim()
+      const inches = inchesStr === '' ? 0 : parseFloat(current.inches)
+
       if (!isNaN(feet) && !isNaN(inches)) {
         newCmValue = feetAndInchesToCm(feet, inches)
       }

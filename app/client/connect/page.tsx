@@ -38,7 +38,6 @@ export default function ConnectPage() {
     updateHeight: handleHeightChange,
     commitHeight: handleHeightBlur,
     error: heightError,
-    // setError: setHeightError // Unused, commented out to fix lint
   } = useHeightInput('175', unitSystem)
 
   const handleAgeBlur = () => {
