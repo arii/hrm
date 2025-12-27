@@ -1,4 +1,3 @@
-import { memo } from 'react'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -9,13 +8,17 @@ import WhatshotIcon from '@mui/icons-material/Whatshot'
 interface WorkoutSummaryProps {
   duration: string
   caloriesBurned: number
+  totalCalories: number
 }
 
-const WorkoutSummary = memo(
-  ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
-    return (
-      <Paper
-        elevation={3}
+const WorkoutSummary = ({
+  duration,
+  caloriesBurned,
+  totalCalories,
+}: WorkoutSummaryProps) => {
+  return (
+    <Paper
+      elevation={3}
       sx={{
         p: 2,
         mt: 2,
@@ -50,13 +53,22 @@ const WorkoutSummary = memo(
               {caloriesBurned}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Calories Burned
+              Workout Calories
+            </Typography>
+          </Stack>
+          <Stack spacing={1} alignItems="center">
+            <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
+            <Typography variant="h5" component="p" fontWeight="bold">
+              {totalCalories}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Total Calories
             </Typography>
           </Stack>
         </Box>
       </Stack>
     </Paper>
   )
-})
+}
 
 export default WorkoutSummary

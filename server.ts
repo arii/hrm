@@ -24,20 +24,81 @@ const expressApp = express()
 app.prepare().then(async () => {
   const server = createServer(expressApp)
 
+  // Global body parsing is intentionally omitted here.
+  // Next.js API routes handle their own body parsing, and adding a global
+  // `express.json()` middleware can cause conflicts, such as the
+  // "TypeError: Response body object should not be disturbed or locked" error,
+  // by attempting to parse the request body twice.
+
   // --- Rate Limiting Setup ---
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: () => process.env.TESTING === 'true',
-  })
-  expressApp.use(limiter)
+  if (env.NODE_ENV !== 'test') {
+    const spotifyApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 30,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => {
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: {
+        error: 'Too many requests to Spotify API, please try again later.',
+      },
+    })
+
+    const internalApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => {
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: {
+        error: 'Too many requests to internal API, please try again later.',
+      },
+    })
+    const generalApiLimiter = rateLimit({
+      windowMs: 1 * 60 * 1000, // 1 minute
+      max: 200, // General limit for all other routes
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => {
+        return (
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown'
+        )
+      },
+      message: { error: 'Too many requests, please try again later.' },
+      skip: (req) =>
+        req.path.startsWith('/api/spotify') ||
+        req.path.startsWith('/api/internal'),
+    })
+
+    // Apply the rate limiters to specific routes
+    expressApp.use('/api/spotify/', spotifyApiLimiter)
+    expressApp.use('/api/internal/', internalApiLimiter)
+    expressApp.use('/api/', generalApiLimiter)
+  }
 
   // --- Static Asset Serving (Production Only) ---
   if (env.NODE_ENV === 'production') {
     const staticPath = path.join(process.cwd(), '.next/static')
-    expressApp.use('/_next/static', express.static(staticPath))
+    expressApp.use(
+      '/_next/static',
+      express.static(staticPath, {
+        immutable: true,
+        maxAge: '1y',
+      })
+    )
   }
 
   // 1. Setup WebSocket Infrastructure
