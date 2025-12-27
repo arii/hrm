@@ -37,9 +37,13 @@ export default function ConnectPage() {
   const [displayWeight, setDisplayWeight] = useState('')
   const [heightError, setHeightError] = useState<string | null>(null)
 
-  const validateHeight = (cm: number) => {
+  const validateHeight = (cm: number, unitSystem: MeasurementSystem) => {
     if (isNaN(cm) || cm < 100 || cm > 250) {
-      return 'Please enter a valid height (100-250 cm)'
+      if (unitSystem === 'METRIC') {
+        return 'Please enter a valid height (100-250 cm)'
+      } else {
+        return 'Please enter a valid height (3ft 3in - 8ft 2in)'
+      }
     }
     return null
   }
@@ -81,7 +85,7 @@ export default function ConnectPage() {
       }
     }
 
-    const error = validateHeight(cmValue)
+    const error = validateHeight(cmValue, unitSystem)
     setHeightError(error)
 
     if (!error && cmValue > 0) {

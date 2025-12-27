@@ -57,7 +57,8 @@ export const cmToFeetAndInches = (
     return { feet: 0, inches: 0 }
   }
   const totalInches = cm / INCH_TO_CM
-  const feet = Math.floor(totalInches / FEET_TO_INCHES)
-  const inches = Math.round(totalInches % FEET_TO_INCHES)
+  const roundedTotalInches = Math.round(totalInches)
+  const feet = Math.floor(roundedTotalInches / FEET_TO_INCHES)
+  const inches = roundedTotalInches % FEET_TO_INCHES
   return { feet, inches }
 }

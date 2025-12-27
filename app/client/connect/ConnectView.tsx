@@ -218,7 +218,7 @@ export default function ConnectView({
                 type="number"
                 value={userHeight.cm}
                 onChange={(e) => {
-                  if (/^\d*$/.test(e.target.value)) {
+                  if (/^\d*\.?\d*$/.test(e.target.value)) {
                     setUserHeight({ cm: e.target.value })
                   }
                 }}
