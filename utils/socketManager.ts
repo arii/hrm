@@ -71,9 +71,11 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0, // Initialize to 0
+      calories: 0,
+      isConnected: true,
     }
     hrmDataRepository.save(newClient)
+
     clientSessionState.set(extWs.clientId, {
       lastUpdate: Date.now(),
       accumulatedCalories: 0,
@@ -85,7 +87,7 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
+      hrmDataRepository.updateConnectionStatus(extWs.clientId, false)
       clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
@@ -128,6 +130,32 @@ const handleIncomingMessage = (
     const message = ClientCommandMessageSchema.parse(parsedJson)
 
     switch (message.type) {
+      case 'IDENTIFY_CLIENT': {
+        const oldId = clientId
+        const newId = message.clientId
+        ws.clientId = newId
+
+        const persistentData = hrmDataRepository.findById(newId)
+        if (persistentData) {
+          // Device reconnected, discard temporary data and mark as connected
+          hrmDataRepository.deleteById(oldId)
+          hrmDataRepository.updateConnectionStatus(newId, true)
+          logger.info({ newId }, 'Client re-identified and marked as connected')
+        } else {
+          // First time this device is identifying, re-associate temp data
+          const existingData = hrmDataRepository.findById(oldId)
+          if (existingData) {
+            hrmDataRepository.deleteById(oldId)
+            hrmDataRepository.save({ ...existingData, clientId: newId })
+            logger.info(
+              { oldId, newId },
+              'Client identified and data re-associated'
+            )
+          }
+        }
+        broadcastState()
+        break
+      }
       case 'PING': {
         // This is now a no-op. The server relies on native WebSocket ping/pong
         // frames for heartbeat. The case is retained for backward

@@ -34,6 +34,18 @@ export class HrmDataRepository {
   }
 
   /**
+   * Updates the connection status of a client.
+   * @param id The client's unique identifier.
+   * @param isConnected The new connection status.
+   */
+  updateConnectionStatus(id: string, isConnected: boolean): void {
+    const client = this.findById(id)
+    if (client) {
+      this.save({ ...client, isConnected })
+    }
+  }
+
+  /**
    * Deletes a client's data by their ID.
    * @param id The client's unique identifier.
    */

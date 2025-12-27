@@ -81,6 +81,7 @@ jest.mock('ws', () => ({
 }))
 
 class MockWebSocket extends EventEmitter {
+  clientId = ''
   isAlive: boolean
   clientType: string | undefined
   terminate = jest.fn()
@@ -279,12 +280,18 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast state on client disconnect', () => {
+      const clientId = (mockWs as unknown as ExtWebSocket).clientId
       mockWs.emit('close')
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
           type: 'HRM_UPDATE',
-          payload: [],
+          payload: [
+            expect.objectContaining({
+              clientId: clientId,
+              isConnected: false,
+            }),
+          ],
         },
         'socketManager.broadcastState'
       )
@@ -354,6 +361,69 @@ describe('WebSocket Manager', () => {
         expect.any(Object),
         'Unknown message type received'
       )
+    })
+  })
+  describe('IDENTIFY_CLIENT', () => {
+    it('should re-associate client data on IDENTIFY_CLIENT for a new device', () => {
+      const newId = 'stable-device-id'
+      ;(mockWs as unknown as ExtWebSocket).clientId = 'user-abc'
+
+      // Simulate some HRM data for the temporary client
+      const hrmMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 150 },
+      })
+      mockWs.emit('message', hrmMessage.toString())
+
+      const identifyMessage = JSON.stringify({
+        type: 'IDENTIFY_CLIENT',
+        clientId: newId,
+      })
+      mockWs.emit('message', identifyMessage.toString())
+
+      const lastCall = (broadcast as jest.Mock).mock.calls.pop()
+      const hrmData = lastCall[1].payload
+      const clientData = hrmData.find((c: HrmData) => c.clientId === newId)
+      expect(clientData).toBeDefined()
+      expect(clientData.isConnected).toBe(true)
+    })
+
+    it('should preserve data on IDENTIFY_CLIENT for a reconnecting device', () => {
+      const stableId = 'stable-device-id'
+      ;(mockWs as unknown as ExtWebSocket).clientId = 'user-abc'
+      // Simulate a previous session
+      const hrmMessage = JSON.stringify({
+        type: 'HRM_INPUT',
+        data: { value: 150 },
+      })
+      mockWs.emit('message', hrmMessage.toString())
+
+      const identifyMessage = JSON.stringify({
+        type: 'IDENTIFY_CLIENT',
+        clientId: stableId,
+      })
+      mockWs.emit('message', identifyMessage.toString())
+
+      // Disconnect
+      mockWs.emit('close')
+
+      // Reconnect
+      const newMockWs = new MockWebSocket()
+      ;(newMockWs as unknown as ExtWebSocket).clientId = 'user-xyz'
+      ;(mockWss.clients as Set<MockWebSocket>).add(newMockWs)
+      mockWss.emit('connection', newMockWs)
+
+      const newIdentifyMessage = JSON.stringify({
+        type: 'IDENTIFY_CLIENT',
+        clientId: stableId,
+      })
+      newMockWs.emit('message', newIdentifyMessage.toString())
+
+      const lastCall = (broadcast as jest.Mock).mock.calls.pop()
+      const hrmData = lastCall[1].payload
+      const clientData = hrmData.find((c: HrmData) => c.clientId === stableId)
+      expect(clientData).toBeDefined()
+      expect(clientData.isConnected).toBe(true)
     })
   })
 })

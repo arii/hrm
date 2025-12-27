@@ -153,6 +153,11 @@ export interface PingMessage {
   type: 'PING'
 }
 
+export interface IdentifyClientMessage {
+  type: 'IDENTIFY_CLIENT'
+  clientId: string
+}
+
 export type ClientCommandMessage =
   | HrmInputMessage
   | HrmMetadataUpdateMessage
@@ -163,6 +168,7 @@ export type ClientCommandMessage =
   | GetStateMessage
   | ClientRegistrationMessage
   | PingMessage
+  | IdentifyClientMessage
 
 import { z } from 'zod'
 
@@ -235,6 +241,11 @@ export const PingMessageSchema = z.object({
   type: z.literal('PING'),
 })
 
+export const IdentifyClientMessageSchema = z.object({
+  type: z.literal('IDENTIFY_CLIENT'),
+  clientId: z.string(),
+})
+
 export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   HrmInputMessageSchema,
   HrmMetadataUpdateMessageSchema,
@@ -245,4 +256,5 @@ export const ClientCommandMessageSchema = z.discriminatedUnion('type', [
   GetStateMessageSchema,
   ClientRegistrationMessageSchema,
   PingMessageSchema, // Add PING schema to the union
+  IdentifyClientMessageSchema,
 ])

@@ -64,6 +64,7 @@ const INITIAL_STATE: WebSocketState = {
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
+  identifyClient: (clientId: string) => void
   connect: () => void
   disconnect: () => void
 }
@@ -406,10 +407,18 @@ export const WebSocketProvider = ({
     }
   }, [])
 
+  const identifyClient = useCallback(
+    (clientId: string) => {
+      sendData({ type: 'IDENTIFY_CLIENT', clientId })
+    },
+    [sendData]
+  )
+
   const contextValue = {
     ...appState,
     connectionStatus,
     sendData,
+    identifyClient,
     connect,
     disconnect,
   }
