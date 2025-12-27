@@ -83,6 +83,16 @@ jest.mock('../../lib/calorie-estimation', () => ({
   estimateCaloriesBurned: jest.fn(),
 }))
 
+jest.mock('../../lib/repositories/HrmDataRepository', () => ({
+  HrmDataRepository: jest.fn().mockImplementation(() => ({
+    findById: jest.fn().mockReturnValue({ clientId: 'user-123', weightKg: 75 }),
+    save: jest.fn(),
+    clear: jest.fn(),
+    deleteById: jest.fn(),
+    findAll: jest.fn().mockReturnValue([{ clientId: 'user-123', weightKg: 75 }]),
+  })),
+}))
+
 class MockWebSocket extends EventEmitter {
   isAlive: boolean
   clientType: string | undefined
@@ -161,7 +171,8 @@ describe('WebSocket Manager', () => {
 
     initSocketManager(mockWss, getSnapshot, mockServices)
 
-    mockWs = new MockWebSocket()
+    mockWs = new MockWebSocket() as ExtWebSocket
+    mockWs.clientId = 'user-123'
     ;(mockWss.clients as Set<MockWebSocket>).add(mockWs)
     mockWss.emit('connection', mockWs)
   })
@@ -205,8 +216,11 @@ describe('WebSocket Manager', () => {
 
   describe('Calorie Calculation', () => {
     const { estimateCaloriesBurned } = require('../../lib/calorie-estimation')
+    const { HrmDataRepository } = require('../../lib/repositories/HrmDataRepository')
+    let hrmDataRepository: any
 
     beforeEach(() => {
+      hrmDataRepository = new HrmDataRepository()
       ;(estimateCaloriesBurned as jest.Mock).mockClear()
     })
 
@@ -219,6 +233,7 @@ describe('WebSocket Manager', () => {
     }
 
     it('should calculate calories periodically based on average HR', () => {
+      hrmDataRepository.findById.mockReturnValue({ clientId: mockWs.clientId, weightKg: 75 })
       ;(estimateCaloriesBurned as jest.Mock).mockReturnValue(14.5)
 
       sendHrmInput(150)
@@ -236,6 +251,7 @@ describe('WebSocket Manager', () => {
     })
 
     it('should handle errors in calorie estimation without crashing', () => {
+      hrmDataRepository.findById.mockReturnValue({ clientId: mockWs.clientId, weightKg: 75 })
       ;(estimateCaloriesBurned as jest.Mock).mockImplementation(() => {
         throw new Error('Test estimation error')
       })
@@ -262,6 +278,22 @@ describe('WebSocket Manager', () => {
       const payload: HrmData[] = lastCall[1].payload
       const clientData = payload.find((c) => c.clientId === mockWs.clientId)
       expect(clientData!.calories).toBe(10)
+    })
+
+    it('should use user-specific weight for calorie calculation', () => {
+      hrmDataRepository.findById.mockReturnValue({
+        clientId: mockWs.clientId,
+        weightKg: 85, // Custom weight
+      })
+
+      sendHrmInput(150)
+      jest.advanceTimersByTime(60000)
+
+      expect(estimateCaloriesBurned).toHaveBeenCalledWith(
+        expect.objectContaining({
+          weightKg: 85,
+        })
+      )
     })
   })
 
@@ -306,6 +338,9 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast state on client disconnect', () => {
+      const { HrmDataRepository } = require('../../lib/repositories/HrmDataRepository')
+      const hrmDataRepository = new HrmDataRepository()
+      hrmDataRepository.findAll.mockReturnValue([])
       mockWs.emit('close')
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,

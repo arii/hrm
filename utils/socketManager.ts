@@ -47,8 +47,11 @@ const clientSessionState = new Map<
 >()
 
 /**
- * Calculates and updates calories for all active clients.
- * This function is designed to be called periodically (e.g., every minute).
+ * Calculates and updates calories for all active clients. This function is
+ * designed to be called periodically.
+ *
+ * NOTE: HR samples are cleared every minute. If a client disconnects mid-interval,
+ * the partial data is lost. Future improvements could persist this data.
  */
 const updateCaloriesForAllClients = () => {
   const now = Date.now()
@@ -74,7 +77,7 @@ const updateCaloriesForAllClients = () => {
           const caloriesBurned = estimateCaloriesBurned({
             heartRate: avgHr,
             age: clientData.age ?? 30,
-            weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
+            weightKg: clientData.weightKg ?? CALORIE_DEFAULTS.WEIGHT_KG,
             durationMinutes: durationMinutes,
           })
 
@@ -142,6 +145,7 @@ const initSocketManager = (
       maxHr: 185,
       age: 30,
       calories: 0, // Initialize to 0
+      weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -230,9 +234,13 @@ const handleIncomingMessage = (
       case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
+          // Explicitly type updateData to ensure weightKg is handled correctly
+          const updateData: Partial<HrmStreamData> = {}
+          if (message.data.age) updateData.age = message.data.age
+          if (message.data.maxHr) updateData.maxHr = message.data.maxHr
+          if (message.data.name) updateData.name = message.data.name
+          if (message.data.weightKg) updateData.weightKg = message.data.weightKg
+
           hrmDataRepository.save({ ...existingData, ...updateData })
         }
         broadcastState()
