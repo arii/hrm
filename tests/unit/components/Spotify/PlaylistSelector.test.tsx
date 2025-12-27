@@ -5,6 +5,12 @@ import '@testing-library/jest-dom'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+jest.mock('next/link', () => {
+  return ({ children }: { children: React.ReactNode }) => {
+    return children
+  }
+})
+
 const mockPlaylists = {
   presetPlaylists: [
     { id: '1', name: 'Chill Hits', uri: 'spotify:playlist:1' },
@@ -49,8 +55,8 @@ describe('PlaylistSelector', () => {
     )
     const user = userEvent.setup()
 
-    const rockClassicsItem = await screen.findByText('Rock Classics')
-    await user.click(rockClassicsItem)
+    const rockClassicsButton = await screen.findByText('Rock Classics')
+    await user.click(rockClassicsButton)
 
     // Verify the callback was called with the correct URI
     expect(onPlaylistSelected).toHaveBeenCalledWith('spotify:playlist:2')
