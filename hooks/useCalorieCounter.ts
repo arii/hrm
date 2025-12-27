@@ -51,6 +51,11 @@ export const useCalorieCounter = (
       const now = Date.now()
       if (lastTickRef.current) {
         const deltaSeconds = (now - lastTickRef.current) / 1000
+        if (heartRate > 0) {
+          const caloriesBurned = estimateCaloriesBurned({
+            heartRate,
+            age,
+            weightKg: weight,
         // Use the ref's current value for calculation
         if (heartRateRef.current > 0) {
           const caloriesBurned = estimateCaloriesBurned({
@@ -67,6 +72,7 @@ export const useCalorieCounter = (
 
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
+  }, [isActive, heartRate, age, weight])
     // The interval should only be reset when the `isActive` flag changes.
     // Other dependencies like `heartRate`, `age`, and `weight` are managed
     // via refs to avoid resetting the interval on every change, which would
