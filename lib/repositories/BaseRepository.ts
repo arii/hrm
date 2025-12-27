@@ -24,7 +24,12 @@ export class BaseRepository<T, K> {
    * @returns The entity or undefined if not found.
    */
   findById(id: K): T | undefined {
-    return this.data.get(id)
+    try {
+      return this.data.get(id)
+    } catch (error) {
+      console.error(`Failed to find entity with id ${id}:`, error)
+      throw new Error(`Failed to find entity with id ${id}`)
+    }
   }
 
   /**
@@ -32,7 +37,12 @@ export class BaseRepository<T, K> {
    * @returns An array of all entities.
    */
   findAll(): T[] {
-    return Array.from(this.data.values())
+    try {
+      return Array.from(this.data.values())
+    } catch (error) {
+      console.error('Failed to retrieve all entities:', error)
+      throw new Error('Failed to retrieve all entities')
+    }
   }
 
   /**
@@ -41,7 +51,12 @@ export class BaseRepository<T, K> {
    */
   save(entity: T): void {
     const id = this.getId(entity)
-    this.data.set(id, entity)
+    try {
+      this.data.set(id, entity)
+    } catch (error) {
+      console.error(`Failed to save entity with id ${id}:`, error)
+      throw new Error(`Failed to save entity with id ${id}`)
+    }
   }
 
   /**
@@ -49,13 +64,23 @@ export class BaseRepository<T, K> {
    * @param id The ID of the entity to delete.
    */
   deleteById(id: K): void {
-    this.data.delete(id)
+    try {
+      this.data.delete(id)
+    } catch (error) {
+      console.error(`Failed to delete entity with id ${id}:`, error)
+      throw new Error(`Failed to delete entity with id ${id}`)
+    }
   }
 
   /**
    * Clears all entities from the repository.
    */
   clear(): void {
-    this.data.clear()
+    try {
+      this.data.clear()
+    } catch (error) {
+      console.error('Failed to clear all entities:', error)
+      throw new Error('Failed to clear all entities')
+    }
   }
 }
