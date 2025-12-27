@@ -14,7 +14,8 @@ export interface HrTileProps {
   alertMessage?: string
 }
 
-import { TimerMode, TimerPhase } from './core'
+import { TimerMode, TimerPhase, HrmStreamData } from './core'
+import { AppServices } from '../lib/services'
 
 export interface HeartRateZonesProps {
   maxHr: number
@@ -68,3 +69,5 @@ export interface UserProfile {
   gender: Gender
   unitSystem: MeasurementSystem
 }
+
+export type { HrmStreamData, AppServices };
