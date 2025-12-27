@@ -5,6 +5,12 @@ import '@testing-library/jest-dom'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+jest.mock('next/link', () => {
+  return ({ children }: { children: React.ReactNode }) => {
+    return children
+  }
+})
+
 const mockPlaylists = {
   presetPlaylists: [
     { id: '1', name: 'Chill Hits', uri: 'spotify:playlist:1' },
