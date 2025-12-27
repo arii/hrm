@@ -46,7 +46,7 @@ const HrTileWithCalories = ({
     bpm: user.value,
     percentMax: hrZoneProps.percentage,
     calories: calories,
-    // TODO: Track the connection status of the HrTile component with a separate issue for implementation.
+    // TODO(issue-tracking): Track the connection status of the HrTile component with a separate issue (#000) for implementation.
     isConnected: true, // Hardcoded to true for now, as the connection status is handled at a higher level
     isAlerting: isAlerting,
     ...(alertMessage && { alertMessage }),

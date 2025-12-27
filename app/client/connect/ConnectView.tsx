@@ -169,16 +169,7 @@ export default function ConnectView({
                 Metric (kg)
               </ToggleButton>
             </ToggleButtonGroup>
-            {/* Direct fields for name/age removed in favor of UserSettings for consistency if desired,
-                but keeping duplicate usage in UserSettings as per previous pattern.
-                Wait, the previous code had them both here AND in UserSettings?
-                No, the previous code had UserSettings *inside* the stack, and *also* duplicate fields above?
-                Let's check the diff. Ah, the previous code rendered UserSettings inside the Stack.
-                But wait, UserSettings contains Name, Age, Height, Weight.
-                The previous code *also* rendered Name and Age *before* UserSettings?
-                Yes! That looks like duplication in the original file too.
-                Let's stick to UserSettings handling everything to avoid duplication.
-            */}
+
             <UserSettings
               userName={userName}
               setUserName={setUserName}

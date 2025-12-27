@@ -4,11 +4,15 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 
 /**
  * A hook to calculate and manage calories burned during a workout.
- * @param heartRate - The current heart rate.
- * @param age - The user's age.
- * @param weight - The user's weight in kg.
- * @param isActive - A boolean to control the timer.
- * @returns An object containing the total calories burned and a function to reset the count.
+ * It accumulates calories every second based on the current heart rate, age, and weight.
+ *
+ * @param heartRate - The current heart rate in beats per minute (BPM).
+ * @param age - The user's age in years.
+ * @param weight - The user's weight in kilograms (kg).
+ * @param isActive - A boolean flag indicating if the workout/calculation is active.
+ * @returns An object containing:
+ *  - `calories`: The total accumulated calories burned (number).
+ *  - `resetCalories`: A function to reset the calorie count to 0.
  */
 export const useCalorieCounter = (
   heartRate: number,
