@@ -1,49 +1,139 @@
 // app/client/connect/UserSettings.tsx
-import React from 'react'
+'use client'
+
+import React, { useState, useEffect } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import {
+  validateAgeValue,
+  validateWeightValue,
+  validateHeightValue,
+} from './validation'
+import {
+  toKg,
+  toDisplay,
+  cmToFeetAndInches,
+  feetAndInchesToCm,
+} from '../../../utils/units'
+import { Gender, MeasurementSystem } from '../../../types'
 
 interface UserSettingsProps {
   userName: string
-  setUserName: (name: string) => void
+  setUserName: (value: string) => void
   userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
-  unit: 'METRIC' | 'IMPERIAL'
-  setUnit: (unit: 'METRIC' | 'IMPERIAL') => void
+  setUserAge: (value: string) => void
+  weightInKg: string
+  setWeightInKg: (value: string) => void
+  heightInCm: string
+  setHeightInCm: (value: string) => void
+  gender: Gender
+  setGender: (value: Gender) => void
+  unitSystem: MeasurementSystem
+  onUnitChange: (value: MeasurementSystem) => void
 }
 
-const UserSettings: React.FC<UserSettingsProps> = ({
+const UserSettingsComponent: React.FC<UserSettingsProps> = ({
   userName,
   setUserName,
   userAge,
   setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  unit,
-  setUnit,
+  weightInKg,
+  setWeightInKg,
+  heightInCm,
+  setHeightInCm,
+  gender,
+  setGender,
+  unitSystem,
+  onUnitChange,
 }) => {
+  // Transient state for inputs
+  const [displayWeight, setDisplayWeight] = useState('')
+  const [displayHeightCm, setDisplayHeightCm] = useState('')
+  const [displayHeightFeet, setDisplayHeightFeet] = useState('')
+  const [displayHeightInches, setDisplayHeightInches] = useState('')
+
+  // Validation state
+  const [ageError, setAgeError] = useState<string | null>(null)
+  const [weightError, setWeightError] = useState<string | null>(null)
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  // Initialize display values on mount and sync when unit system changes.
+  useEffect(() => {
+    const currentWeightInKg = parseFloat(weightInKg)
+    if (!isNaN(currentWeightInKg)) {
+      setDisplayWeight(toDisplay(currentWeightInKg, unitSystem).toString())
+    }
+
+    const currentHeightInCm = parseFloat(heightInCm)
+    if (!isNaN(currentHeightInCm)) {
+      if (unitSystem === 'METRIC') {
+        setDisplayHeightCm(currentHeightInCm.toString())
+      } else {
+        const { feet, inches } = cmToFeetAndInches(currentHeightInCm)
+        setDisplayHeightFeet(feet.toString())
+        setDisplayHeightInches(inches.toString())
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitSystem])
+  // This effect should only re-run when the unit system changes, not when the underlying weight/height
+  // values change. Including them would create a feedback loop where saving a value would immediately
+  // overwrite the user's input with a re-calculated (and possibly rounded) version.
+
+  const handleAgeBlur = () => {
+    setAgeError(validateAgeValue(userAge))
+  }
+
+  const handleWeightBlur = () => {
+    const error = validateWeightValue(displayWeight, unitSystem)
+    setWeightError(error)
+    if (!error) {
+      const numericValue = parseFloat(displayWeight)
+      if (!isNaN(numericValue) && numericValue > 0) {
+        setWeightInKg(toKg(numericValue, unitSystem).toFixed(2))
+      }
+    }
+  }
+
+  const handleHeightBlur = () => {
+    let cm = 0
+    if (unitSystem === 'METRIC') {
+      cm = parseFloat(displayHeightCm)
+    } else {
+      cm = feetAndInchesToCm(
+        parseFloat(displayHeightFeet),
+        parseFloat(displayHeightInches)
+      )
+    }
+    const error = validateHeightValue(cm, unitSystem)
+    setHeightError(error)
+    if (!error) {
+      setHeightInCm(cm.toFixed(2))
+    }
+  }
+
+  const handleUnitChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newUnit: MeasurementSystem | null
+  ) => {
+    if (newUnit && newUnit !== unitSystem) {
+      onUnitChange(newUnit)
+      setWeightError(null)
+      setHeightError(null)
+    }
+  }
+
+  const handleGenderChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    newGender: Gender | null
+  ) => {
+    if (newGender) {
+      setGender(newGender)
+    }
+  }
+
   return (
     <Stack spacing={2} sx={{ mb: 3 }}>
       <TextField
@@ -64,25 +154,32 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             setUserAge(e.target.value)
           }
         }}
-        onBlur={onAgeBlur}
+        onBlur={handleAgeBlur}
         error={!!ageError}
         helperText={ageError}
         inputProps={{ min: 1, max: 120 }}
       />
       <ToggleButtonGroup
-        value={unit}
+        value={gender}
         exclusive
-        onChange={(_, newUnit) => {
-          if (newUnit) {
-            setUnit(newUnit)
-          }
-        }}
-        aria-label="Unit system"
-        aria-describedby="unit-system-description"
+        onChange={handleGenderChange}
+        aria-label="Gender"
+        fullWidth
       >
-        <p id="unit-system-description" style={{ display: 'none' }}>
-          Currently selected unit system is {unit}.
-        </p>
+        <ToggleButton value="MALE" aria-label="male">
+          Male
+        </ToggleButton>
+        <ToggleButton value="FEMALE" aria-label="female">
+          Female
+        </ToggleButton>
+      </ToggleButtonGroup>
+      <ToggleButtonGroup
+        value={unitSystem}
+        exclusive
+        onChange={handleUnitChange}
+        aria-label="Unit system"
+        fullWidth
+      >
         <ToggleButton value="IMPERIAL" aria-label="imperial units">
           Imperial (lbs, ft, in)
         </ToggleButton>
@@ -90,19 +187,18 @@ const UserSettings: React.FC<UserSettingsProps> = ({
           Metric (kg, cm)
         </ToggleButton>
       </ToggleButtonGroup>
-      {unit === 'METRIC' ? (
+      {unitSystem === 'METRIC' ? (
         <TextField
           fullWidth
           label="Your Height (cm)"
           placeholder="e.g., 175"
           type="number"
-          value={userHeight.cm}
+          value={displayHeightCm}
           onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight({ cm: e.target.value })
-            }
+            const val = e.target.valueAsNumber
+            setDisplayHeightCm(isNaN(val) ? '' : val.toString())
           }}
-          onBlur={onHeightBlur}
+          onBlur={handleHeightBlur}
           error={!!heightError}
           helperText={heightError}
         />
@@ -113,46 +209,45 @@ const UserSettings: React.FC<UserSettingsProps> = ({
             label="Feet"
             placeholder="e.g., 5"
             type="number"
-            value={userHeight.feet}
+            value={displayHeightFeet}
             onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ feet: e.target.value })
-              }
+              const val = e.target.valueAsNumber
+              setDisplayHeightFeet(isNaN(val) ? '' : val.toString())
             }}
-            onBlur={onHeightBlur}
+            onBlur={handleHeightBlur}
           />
           <TextField
             fullWidth
             label="Inches"
             placeholder="e.g., 9"
             type="number"
-            value={userHeight.inches}
+            value={displayHeightInches}
             onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setUserHeight({ inches: e.target.value })
-              }
+              const val = e.target.valueAsNumber
+              setDisplayHeightInches(isNaN(val) ? '' : val.toString())
             }}
-            onBlur={onHeightBlur}
+            onBlur={handleHeightBlur}
           />
         </Stack>
       )}
       <TextField
         fullWidth
-        label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
-        placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
+        label={`Your Weight (${unitSystem === 'METRIC' ? 'kg' : 'lbs'})`}
+        placeholder={unitSystem === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
         type="number"
-        value={userWeight}
+        value={displayWeight}
         onChange={(e) => {
-          if (/^\d*\.?\d*$/.test(e.target.value)) {
-            setUserWeight(e.target.value)
-          }
+          const val = e.target.valueAsNumber
+          setDisplayWeight(isNaN(val) ? '' : val.toString())
         }}
-        onBlur={onWeightBlur}
+        onBlur={handleWeightBlur}
         error={!!weightError}
         helperText={weightError}
       />
     </Stack>
   )
 }
+
+const UserSettings = React.memo(UserSettingsComponent)
 
 export default UserSettings

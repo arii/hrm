@@ -154,6 +154,9 @@ describe('WebSocket Manager', () => {
     getSnapshot = jest.fn().mockReturnValue({
       timer: {},
       spotify: {},
+      user: {
+        weightInKg: '75',
+      },
     })
 
     initSocketManager(mockWss, getSnapshot, mockServices)
@@ -205,7 +208,7 @@ describe('WebSocket Manager', () => {
       const sendHrmInput = (hr: number) => {
         const message = JSON.stringify({
           type: 'HRM_INPUT',
-          data: { value: hr, age: 30 },
+          data: { value: hr, age: 30, gender: 'MALE' },
         })
         mockWs.emit('message', message.toString())
       }

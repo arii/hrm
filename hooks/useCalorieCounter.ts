@@ -1,6 +1,7 @@
 // File: hooks/useCalorieCounter.ts
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { estimateCaloriesBurned } from '../lib/calorie-estimation'
+import { Gender } from '@/types'
 
 /**
  * A hook to calculate and manage calories burned during a workout.
@@ -10,6 +11,7 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation'
  * @param heartRate - The current heart rate in beats per minute (BPM).
  * @param age - The user's age in years.
  * @param weight - The user's weight in kilograms (kg).
+ * @param gender - The user's gender ('MALE' or 'FEMALE').
  * @param isActive - A boolean flag indicating if the workout/calculation is active.
  * @returns An object containing:
  *  - `calories`: The total accumulated calories burned (number).
@@ -19,6 +21,7 @@ export const useCalorieCounter = (
   heartRate: number,
   age: number,
   weight: number,
+  gender: Gender,
   isActive: boolean
 ): { calories: number; resetCalories: () => void } => {
   const [calories, setCalories] = useState(0)
@@ -30,13 +33,15 @@ export const useCalorieCounter = (
   const heartRateRef = useRef(heartRate)
   const ageRef = useRef(age)
   const weightRef = useRef(weight)
+  const genderRef = useRef(gender)
 
   // Effect to keep the refs updated with the latest prop values
   useEffect(() => {
     heartRateRef.current = heartRate
     ageRef.current = age
     weightRef.current = weight
-  }, [heartRate, age, weight])
+    genderRef.current = gender
+  }, [heartRate, age, weight, gender])
 
   useEffect(() => {
     if (!isActive) {
@@ -58,6 +63,7 @@ export const useCalorieCounter = (
             age: ageRef.current,
             weightKg: weightRef.current,
             durationMinutes: deltaSeconds / 60,
+            gender: genderRef.current,
           })
           setCalories((prev) => prev + caloriesBurned)
         }

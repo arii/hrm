@@ -1,129 +1,117 @@
-import Alert from '@mui/material/Alert'
+// app/client/connect/ConnectView.tsx
+'use client'
+
+import React from 'react'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
-import Container from '@mui/material/Container'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
-import BatteryFullIcon from '@mui/icons-material/BatteryFull'
-import BatteryStdIcon from '@mui/icons-material/BatteryStd'
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert'
+import Alert from '@mui/material/Alert'
 import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
-import HrTile from '../../../components/HrTile'
-import BottomNavBar from '../../../components/BottomNavBar'
-import WorkoutSummary from './WorkoutSummary'
 import UserSettings from './UserSettings'
-import React, { useState } from 'react'
-import { MeasurementSystem, Gender } from '../../../types'
-import {
-  ToggleButtonGroup,
-  ToggleButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-} from '@mui/material'
+import ConnectionManager from './ConnectionManager'
+import WorkoutManager from './WorkoutManager'
+import BottomNavBar from '../../../components/BottomNavBar'
+import { useWorkoutSession } from '@/hooks/useWorkoutSession'
+import { useCalorieCounter } from '@/hooks/useCalorieCounter'
+import { formatDuration } from '@/lib/utils'
+import { Gender, MeasurementSystem } from '../../../types'
 
 interface ConnectViewProps {
-  duration: string
-  caloriesBurned: number
   userName: string
-  setUserName: (name: string) => void
+  setUserName: (value: string) => void
   userAge: string
-  setUserAge: (age: string) => void
-  onAgeBlur: () => void
-  ageError: string | null
-  userHeight: { cm: string; feet: string; inches: string }
-  setUserHeight: (
-    height: Partial<{ cm: string; feet: string; inches: string }>
-  ) => void
-  onHeightBlur: () => void
-  heightError: string | null
-  userWeight: string
-  setUserWeight: (weight: string) => void
-  onWeightBlur: () => void
-  weightError: string | null
+  setUserAge: (value: string) => void
+  weightInKg: string
+  setWeightInKg: (value: string) => void
+  heightInCm: string
+  setHeightInCm: (value: string) => void
   gender: Gender
-  setGender: React.Dispatch<React.SetStateAction<Gender>>
+  setGender: (value: Gender) => void
   unitSystem: MeasurementSystem
-  onUnitChange: (unit: MeasurementSystem) => void
+  onUnitChange: (value: MeasurementSystem) => void
   isConnected: boolean
+  isSupported: boolean
   deviceStatus: string
   batteryLevel: number | null
-  onConnect: () => void
-  onDisconnect: () => void
-  onForgetDevice: () => Promise<void>
-  isSupported: boolean
   currentHR: number
   hrZoneProps: { percentage: number; progressColor: string }
   connectionStatus: string
-  bluetoothConnected: boolean
-  hasStarted: boolean
-  onReset: () => void
-  workoutStatus: 'idle' | 'running' | 'paused'
-  onStartWorkout: () => void
-  onEndWorkout: () => void
+  onConnect: () => void
+  onDisconnect: () => void
+  onForgetDevice: () => Promise<void>
+  disconnectionReason: string | null
 }
 
-export default function ConnectView({
-  duration,
-  caloriesBurned,
+const ConnectView: React.FC<ConnectViewProps> = ({
   userName,
   setUserName,
   userAge,
   setUserAge,
-  onAgeBlur,
-  ageError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
+  weightInKg,
+  setWeightInKg,
+  heightInCm,
+  setHeightInCm,
   gender,
   setGender,
   unitSystem,
   onUnitChange,
   isConnected,
+  isSupported,
   deviceStatus,
   batteryLevel,
-  onConnect,
-  onDisconnect,
-  onForgetDevice,
-  isSupported,
   currentHR,
   hrZoneProps,
   connectionStatus,
-  bluetoothConnected,
-  hasStarted,
-  onReset,
-  workoutStatus,
-  onStartWorkout,
-  onEndWorkout,
-}: ConnectViewProps) {
-  const [isResetting, setIsResetting] = useState(false)
+  onConnect,
+  onDisconnect,
+  onForgetDevice,
+  disconnectionReason,
+}) => {
+  const [isResetting, setIsResetting] = React.useState(false)
 
-  const getBatteryIcon = (level: number) => {
-    if (level > 90) return <BatteryFullIcon color="success" />
-    if (level > 50) return <BatteryChargingFullIcon color="action" />
-    if (level > 20) return <BatteryStdIcon color="warning" />
-    return <BatteryAlertIcon color="error" />
+  const {
+    workoutDuration,
+    resetWorkout: resetWorkoutSession,
+    hasStarted,
+    startWorkout,
+    endWorkout,
+    workoutStatus,
+  } = useWorkoutSession({
+    isConnected,
+    totalCalories: 0, // This will be updated via a different mechanism
+  })
+
+  const { calories, resetCalories } = useCalorieCounter(
+    currentHR,
+    parseFloat(userAge) || 30,
+    parseFloat(weightInKg) || 70,
+    gender,
+    workoutStatus === 'running'
+  )
+
+  const resetWorkout = () => {
+    resetWorkoutSession()
+    resetCalories()
   }
 
   const handleFullReset = async () => {
     setIsResetting(true)
     try {
       await onForgetDevice()
-      onReset()
+      resetWorkout()
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
       setIsResetting(false)
     }
+  }
+
+  let deviceStatusMessage = deviceStatus
+  if (disconnectionReason === 'timeout') {
+    deviceStatusMessage = 'Connection unstable. Trying to reconnect...'
+  } else if (disconnectionReason === 'signal_loss') {
+    deviceStatusMessage = 'Signal lost. Trying to reconnect...'
   }
 
   if (!isSupported) {
@@ -145,6 +133,11 @@ export default function ConnectView({
   }
 
   const showUserDetails = hasStarted || isConnected
+  const isConnectable =
+    !!userName.trim() &&
+    !!userAge.trim() &&
+    !isNaN(parseFloat(weightInKg)) &&
+    parseFloat(weightInKg) > 0
 
   return (
     <>
@@ -154,63 +147,20 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <Stack spacing={2} sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              value={unitSystem}
-              exclusive
-              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
-              aria-label="measurement system"
-              fullWidth
-            >
-              <ToggleButton value="IMPERIAL" aria-label="imperial">
-                Imperial (lbs)
-              </ToggleButton>
-              <ToggleButton value="METRIC" aria-label="metric">
-                Metric (kg)
-              </ToggleButton>
-            </ToggleButtonGroup>
-
-            <UserSettings
-              userName={userName}
-              setUserName={setUserName}
-              userAge={userAge}
-              setUserAge={setUserAge}
-              onAgeBlur={onAgeBlur}
-              ageError={ageError}
-              userHeight={userHeight}
-              setUserHeight={setUserHeight}
-              onHeightBlur={onHeightBlur}
-              heightError={heightError}
-              userWeight={userWeight}
-              setUserWeight={setUserWeight}
-              onWeightBlur={onWeightBlur}
-              weightError={weightError}
-              unit={unitSystem}
-              setUnit={onUnitChange}
-            />
-
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Gender</FormLabel>
-              <RadioGroup
-                row
-                aria-label="gender"
-                name="gender"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-              >
-                <FormControlLabel
-                  value="MALE"
-                  control={<Radio />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="FEMALE"
-                  control={<Radio />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Stack>
+          <UserSettings
+            userName={userName}
+            setUserName={setUserName}
+            userAge={userAge}
+            setUserAge={setUserAge}
+            weightInKg={weightInKg}
+            setWeightInKg={setWeightInKg}
+            heightInCm={heightInCm}
+            setHeightInCm={setHeightInCm}
+            gender={gender}
+            setGender={setGender}
+            unitSystem={unitSystem}
+            onUnitChange={onUnitChange}
+          />
         ) : (
           <Box
             sx={{
@@ -234,80 +184,16 @@ export default function ConnectView({
           </Box>
         )}
 
-        {deviceStatus &&
-          !isConnected &&
-          !deviceStatus.includes('Disconnected') && (
-            <Alert
-              severity={deviceStatus.includes('Failed') ? 'error' : 'info'}
-              sx={{ mb: 2 }}
-            >
-              {deviceStatus}
-            </Alert>
-          )}
+        <ConnectionManager
+          onConnect={onConnect}
+          onDisconnect={onDisconnect}
+          isConnected={isConnected}
+          deviceStatus={deviceStatusMessage}
+          batteryLevel={batteryLevel}
+          isConnectable={isConnectable}
+        />
 
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          {!isConnected ? (
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConnect}
-              disabled={
-                !userName.trim() ||
-                !userAge.trim() ||
-                deviceStatus.includes('Connecting')
-              }
-            >
-              {deviceStatus.includes('Connecting') ? (
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Connecting...</span>
-                </Stack>
-              ) : (
-                'Connect Bluetooth HRM'
-              )}
-            </Button>
-          ) : (
-            <Stack spacing={2}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                {batteryLevel !== null && (
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={0.5}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {getBatteryIcon(batteryLevel)}
-                    <Typography variant="body2">
-                      {batteryLevel}% Battery
-                    </Typography>
-                  </Stack>
-                )}
-              </Box>
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={onDisconnect}
-                color="error"
-              >
-                Disconnect
-              </Button>
-              {deviceStatus !== 'Connected' && (
-                <Typography variant="caption" color="text.secondary">
-                  Status: {deviceStatus}
-                </Typography>
-              )}
-            </Stack>
-          )}
-        </Box>
-
-        {isConnected && bluetoothConnected && (
+        {isConnected && (
           <Alert severity="success" sx={{ mb: 2 }}>
             Connected! Heart rate data is being streamed.
           </Alert>
@@ -319,76 +205,18 @@ export default function ConnectView({
           </Alert>
         )}
 
-        {isConnected && currentHR > 0 && (
-          <Box sx={{ mt: 2 }}>
-            <HrTile
-              name={userName}
-              bpm={currentHR}
-              percentMax={hrZoneProps.percentage}
-              isAlerting={false}
-            />
-          </Box>
-        )}
-
-        <Stack
-          spacing={2}
-          sx={{
-            mt: 3,
-            mb: 3,
-            alignItems: 'center',
-            minHeight: '48px', // Ensure consistent height for layout stability
-          }}
-        >
-          {workoutStatus === 'idle' && isConnected && (
-            <Button
-              variant="contained"
-              onClick={onStartWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="Start workout session"
-            >
-              Start Workout
-            </Button>
-          )}
-          {workoutStatus === 'paused' && (
-            <>
-              <Button
-                variant="contained"
-                onClick={onStartWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                disabled={!isConnected}
-                aria-label="Resume workout session"
-              >
-                Resume Workout
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={onEndWorkout}
-                size="large"
-                sx={{ minWidth: '200px' }}
-                aria-label="End workout session"
-              >
-                End Workout
-              </Button>
-            </>
-          )}
-          {workoutStatus === 'running' && (
-            <Button
-              variant="outlined"
-              onClick={onEndWorkout}
-              size="large"
-              sx={{ minWidth: '200px' }}
-              aria-label="End workout session"
-            >
-              End Workout
-            </Button>
-          )}
-        </Stack>
-
-        {hasStarted && (
-          <WorkoutSummary duration={duration} caloriesBurned={caloriesBurned} />
-        )}
+        <WorkoutManager
+          workoutStatus={workoutStatus}
+          onStartWorkout={startWorkout}
+          onEndWorkout={endWorkout}
+          isConnected={isConnected}
+          hasStarted={hasStarted}
+          duration={formatDuration(workoutDuration)}
+          caloriesBurned={calories}
+          userName={userName}
+          currentHR={currentHR}
+          hrZoneProps={hrZoneProps}
+        />
 
         <Typography
           variant="body2"
@@ -428,3 +256,5 @@ export default function ConnectView({
     </>
   )
 }
+
+export default ConnectView

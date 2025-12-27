@@ -15,6 +15,8 @@ describe('useCalorieCounter', () => {
     // Enable fake timers
     jest.useFakeTimers()
     ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockClear()
+    // Set a default mock return value for all tests in this suite
+    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
   })
 
   afterEach(() => {
@@ -22,8 +24,9 @@ describe('useCalorieCounter', () => {
   })
 
   it('should calculate calories correctly over time', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
+    const { result } = renderHook(() =>
+      useCalorieCounter(120, 30, 70, 'MALE', true)
+    )
 
     expect(result.current.calories).toBe(0)
 
@@ -45,8 +48,9 @@ describe('useCalorieCounter', () => {
   })
 
   it('should not calculate calories when isActive is false', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, false))
+    const { result } = renderHook(() =>
+      useCalorieCounter(120, 30, 70, 'MALE', false)
+    )
 
     expect(result.current.calories).toBe(0)
 
@@ -59,8 +63,9 @@ describe('useCalorieCounter', () => {
   })
 
   it('should reset calories when resetCalories is called', () => {
-    ;(calorieEstimation.estimateCaloriesBurned as jest.Mock).mockReturnValue(1)
-    const { result } = renderHook(() => useCalorieCounter(120, 30, 70, true))
+    const { result } = renderHook(() =>
+      useCalorieCounter(120, 30, 70, 'MALE', true)
+    )
 
     act(() => {
       jest.advanceTimersByTime(2000)
