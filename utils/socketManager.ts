@@ -35,6 +35,11 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 const hrmDataRepository = new HrmDataRepository()
+
+// New: Maps to track the relationship between physical deviceId and ephemeral clientId
+const deviceIdToClientIdMap = new Map<string, string>()
+const clientIdToDeviceIdMap = new Map<string, string>()
+
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -85,7 +90,20 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
+      const deviceId = clientIdToDeviceIdMap.get(extWs.clientId)
+      if (deviceId) {
+        deviceIdToClientIdMap.delete(deviceId)
+        clientIdToDeviceIdMap.delete(extWs.clientId)
+        // Note: We keep the HRM data in the repository so it can be reclaimed
+        // upon reconnection. Consider a TTL/cleanup mechanism for abandoned data.
+        logger.info(
+          { clientId: extWs.clientId, deviceId },
+          'Client disconnected, but preserving HRM data for potential reconnect'
+        )
+      } else {
+        // If there's no associated deviceId, it's safe to clean up the data.
+        hrmDataRepository.deleteById(extWs.clientId)
+      }
       clientSessionState.delete(extWs.clientId)
       broadcastState()
     })
@@ -105,11 +123,21 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
+  const allHrmData = hrmDataRepository.findAll()
+  const activeClientIds = new Set(
+    Array.from(wsServerInstance.clients).map((ws) => (ws as ExtWebSocket).clientId)
+  )
+
+  const hrmDataWithStatus = allHrmData.map((data) => ({
+    ...data,
+    isConnected: activeClientIds.has(data.clientId),
+  }))
+
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataRepository.findAll(),
+      payload: hrmDataWithStatus,
     },
     'socketManager.broadcastState'
   )
@@ -156,12 +184,56 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmDataRepository.save({ ...existingData, ...updateData })
+        const { deviceId, ...metadata } = message.data
+
+        if (deviceId) {
+          const existingClientId = deviceIdToClientIdMap.get(deviceId)
+          if (existingClientId && existingClientId !== clientId) {
+            // This device was previously connected under a different clientId.
+            // This is a reconnection.
+            logger.info(
+              { deviceId, oldClientId: existingClientId, newClientId: clientId },
+              'Device reconnected with a new session. Migrating state.'
+            )
+
+            // 1. Retrieve the old data.
+            const oldData = hrmDataRepository.findById(existingClientId)
+            if (oldData) {
+              // 2. Delete the old entry.
+              hrmDataRepository.deleteById(existingClientId)
+
+              // 3. Create a new entry with the new clientId but the old data.
+              const migratedData: HrmStreamData = {
+                ...oldData,
+                clientId: clientId, // Assign the new clientId
+                ...metadata, // Apply any new metadata
+              }
+              hrmDataRepository.save(migratedData)
+            }
+
+            // 4. Update the maps to reflect the new clientId.
+            deviceIdToClientIdMap.set(deviceId, clientId)
+            clientIdToDeviceIdMap.delete(existingClientId) // Clean up old mapping
+            clientIdToDeviceIdMap.set(clientId, deviceId)
+          } else {
+            // This is a new device or the first time we're seeing it.
+            const existingData = hrmDataRepository.findById(clientId)
+            if (existingData) {
+              const updatedData = { ...existingData, deviceId, ...metadata }
+              hrmDataRepository.save(updatedData)
+
+              // 5. Create the initial mapping.
+              deviceIdToClientIdMap.set(deviceId, clientId)
+              clientIdToDeviceIdMap.set(clientId, deviceId)
+            }
+          }
+        } else {
+          // Fallback for clients that don't send a deviceId.
+          const existingData = hrmDataRepository.findById(clientId)
+          if (existingData) {
+            const updatedData = { ...existingData, ...metadata }
+            hrmDataRepository.save(updatedData)
+          }
         }
         broadcastState()
         break
