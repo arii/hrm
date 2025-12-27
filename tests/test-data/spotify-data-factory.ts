@@ -151,6 +151,10 @@ export const createSpotifyPlaylist = (
             id: 'spotify',
             type: 'user',
             uri: 'spotify:user:spotify',
+            external_urls: {
+              spotify: 'https://open.spotify.com/user/spotify',
+            },
+            href: 'https://api.spotify.com/v1/users/spotify',
           },
           is_local: false,
           track: createSpotifyTrack(),
