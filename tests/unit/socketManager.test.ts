@@ -29,6 +29,32 @@ import {
   ConnectionMonitor,
 } from '../../utils/websocketUtils.js'
 import logger from '@/utils/logger'
+import { HrmDataRepository } from '@/lib/repositories/HrmDataRepository'
+
+// Mock HrmDataRepository with a stateful, self-contained implementation
+jest.mock('../../lib/repositories/HrmDataRepository', () => {
+  return {
+    HrmDataRepository: jest.fn().mockImplementation(() => {
+      const mockRepositoryStore = new Map<string, HrmData>()
+      return {
+        findById: jest.fn((clientId: string) =>
+          mockRepositoryStore.get(clientId)
+        ),
+        save: jest.fn((data: HrmData) => {
+          mockRepositoryStore.set(data.clientId, {
+            ...(mockRepositoryStore.get(data.clientId) || {}),
+            ...data,
+          })
+        }),
+        clear: jest.fn(() => mockRepositoryStore.clear()),
+        deleteById: jest.fn((clientId: string) =>
+          mockRepositoryStore.delete(clientId)
+        ),
+        findAll: jest.fn(() => Array.from(mockRepositoryStore.values())),
+      }
+    }),
+  }
+})
 
 // Mock dependencies
 jest.mock('../../services/spotifyTokenManager')

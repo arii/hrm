@@ -33,6 +33,7 @@ let getUnifiedStateSnapshot: () => StateSnapshot
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
+let calorieUpdateInterval: NodeJS.Timeout | undefined
 
 const hrmDataRepository = new HrmDataRepository()
 // Track internal state for calculations (not sent to client)
@@ -71,7 +72,8 @@ const initSocketManager = (
       value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0, // Initialize to 0
+      totalCalories: 0,
+      calories: 0,
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -100,6 +102,10 @@ const initSocketManager = (
  * Resets the socket manager state. Use this for testing purposes only.
  */
 export const resetSocketManager = () => {
+  if (calorieUpdateInterval) {
+    clearInterval(calorieUpdateInterval)
+    calorieUpdateInterval = undefined
+  }
   hrmDataRepository.clear()
   clientSessionState.clear()
 }

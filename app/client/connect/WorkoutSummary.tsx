@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
@@ -10,10 +11,11 @@ interface WorkoutSummaryProps {
   caloriesBurned: number
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
-  return (
-    <Paper
-      elevation={3}
+const WorkoutSummary = memo(
+  ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+    return (
+      <Paper
+        elevation={3}
       sx={{
         p: 2,
         mt: 2,
@@ -55,6 +57,6 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
       </Stack>
     </Paper>
   )
-}
+})
 
 export default WorkoutSummary
