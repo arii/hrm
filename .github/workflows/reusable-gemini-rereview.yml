@@ -23,7 +23,7 @@ permissions:
 jobs:
   analyze-changes:
     name: Analyze Changes for Re-Review
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       needs-review: ${{ steps.decision.outputs.needs-review }}
       review-type: ${{ steps.decision.outputs.review-type }}
@@ -120,7 +120,7 @@ jobs:
     name: Post Skip Check
     needs: analyze-changes
     if: needs.analyze-changes.outputs.needs-review == 'false'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       checks: write
     steps:

@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   gemini-review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
