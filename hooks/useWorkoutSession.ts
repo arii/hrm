@@ -184,18 +184,8 @@ export const useWorkoutSession = ({
     dispatch({ type: 'END_WORKOUT' })
   }, [])
 
-  // Calculate the calories burned *during this session*.
-  const caloriesBurned = useMemo(() => {
-    if (startCalories === 0) {
-      return 0
-    }
-    const burned = Math.round(state.calories - startCalories)
-    return burned > 0 ? burned : 0
-  }, [state.calories, startCalories])
-
   return {
     workoutDuration: state.duration,
-    caloriesBurned,
     resetWorkout,
     startWorkout,
     endWorkout,
