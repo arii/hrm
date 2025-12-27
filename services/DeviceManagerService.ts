@@ -327,7 +327,7 @@ class DeviceManagerService extends EventTarget {
     if (this.device?.gatt) {
       try {
         this.device.gatt.disconnect()
-      } catch (_error) {
+      } catch {
         // Ignore errors during disconnect (e.g. already disconnected)
       }
     }

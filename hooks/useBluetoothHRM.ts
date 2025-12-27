@@ -208,6 +208,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
   }, [deviceManager, wsStatus])
 
   const disconnect = useCallback(() => {
+    setDeviceStatus('Disconnecting...')
     try {
       deviceManager.disconnect()
     } catch (error) {
@@ -244,8 +245,13 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       if (device) {
         try {
           await deviceManager.connectToDevice(device)
-        } catch (_error) {
-          setDeviceStatus('Auto-connect failed. Please connect manually.')
+        } catch (error) {
+          logger.error({ error }, 'Auto-connect failed.')
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error'
+          setDeviceStatus(
+            `Auto-connect failed: ${errorMessage}. Please connect manually.`
+          )
           setLastDeviceId(null) // Clear invalid device ID
         }
       } else {

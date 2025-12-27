@@ -157,4 +157,43 @@ describe('useBluetoothHRM Hook', () => {
       'Failed: WebSocket not connected. Cannot stream HRM data.'
     )
   })
+
+  // Test 6: Connection failure logging
+  it('should log error when connection fails', async () => {
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    const error = new Error('Connection failed')
+    mockDeviceManager.findAndConnect.mockRejectedValueOnce(error)
+    const { result } = renderHook(() => useBluetoothHRM({}))
+
+    await act(async () => {
+      await result.current.connect()
+    })
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      error,
+      expect.stringContaining('Failed to connect')
+    )
+    consoleErrorSpy.mockRestore()
+  })
+
+  // Test 7: User cancelled logging
+  it('should log info when user cancels connection', async () => {
+    const consoleInfoSpy = jest
+      .spyOn(console, 'info')
+      .mockImplementation(() => {})
+    const error = new DOMException('User cancelled', 'NotFoundError')
+    mockDeviceManager.findAndConnect.mockRejectedValueOnce(error)
+    const { result } = renderHook(() => useBluetoothHRM({}))
+
+    await act(async () => {
+      await result.current.connect()
+    })
+
+    expect(consoleInfoSpy).toHaveBeenCalledWith(
+      expect.stringContaining('User cancelled')
+    )
+    consoleInfoSpy.mockRestore()
+  })
 })
