@@ -3,7 +3,7 @@
  */
 import { POST } from '@/app/api/users/route'
 import { NextRequest } from 'next/server'
-import { createValidUserProfile } from '@/tests/unit/test-data/user-data-factory'
+import { createValidUserProfile } from '@/tests/test-data/user-data-factory'
 
 // Mock the 'uuid' module
 jest.mock('uuid', () => ({

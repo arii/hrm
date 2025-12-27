@@ -1,4 +1,4 @@
-// tests/unit/test-data/user-data-factory.ts
+// tests/test-data/user-data-factory.ts
 import { UserProfile } from '@/types/core'
 
 export const createValidUserProfile = (
