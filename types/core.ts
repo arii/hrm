@@ -74,11 +74,10 @@ export interface HeartRateDataPoint {
  */
 export interface HrmStreamData {
   clientId: string
-  deviceId?: string
   value: number
   maxHr: number
-  name: string
-  age: number
+  name?: string
+  age?: number
   calories: number
   isConnected: boolean
 }

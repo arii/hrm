@@ -35,12 +35,6 @@ let connectionMonitor: ConnectionMonitor
 let services: AppServices
 
 const hrmDataRepository = new HrmDataRepository()
-
-// New: Maps to track the relationship between physical deviceId and ephemeral clientId
-const deviceIdToClientIdMap = new Map<string, string>()
-const clientIdToDeviceIdMap = new Map<string, string>()
-const hrmDataCleanupTimers = new Map<string, NodeJS.Timeout>()
-
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
   string,
@@ -79,7 +73,6 @@ const initSocketManager = (
       age: 30,
       calories: 0, // Initialize to 0
       isConnected: true,
-      name: 'New User',
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -93,35 +86,35 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      const deviceId = clientIdToDeviceIdMap.get(extWs.clientId)
-      if (deviceId) {
-        // Schedule cleanup for this device's data
-        const cleanupTimeout = setTimeout(
-          () => {
-            const currentClientId = deviceIdToClientIdMap.get(deviceId)
-            // Only cleanup if the device hasn't reconnected with a new session
-            if (currentClientId === extWs.clientId) {
-              hrmDataRepository.deleteById(extWs.clientId)
-              deviceIdToClientIdMap.delete(deviceId)
-              clientIdToDeviceIdMap.delete(extWs.clientId)
-              hrmDataCleanupTimers.delete(deviceId)
-              logger.info({ deviceId }, 'Cleaned up stale HRM data.')
-              broadcastState()
-            }
-          },
-          5 * 60 * 1000
-        ) // 5 minutes
-        hrmDataCleanupTimers.set(deviceId, cleanupTimeout)
 
-        logger.trace(
-          { clientId: extWs.clientId, deviceId },
-          'Client disconnected, preserving HRM data for potential reconnect.'
-        )
+      const clientData = hrmDataRepository.findById(extWs.clientId)
+      const RECLAIM_WINDOW_MS = 30000 // 30 seconds
+
+      if (clientData) {
+        // Mark the client as disconnected but preserve their data for the reclaim window
+        clientData.isConnected = false
+        hrmDataRepository.save(clientData)
+
+        // Schedule deletion of the data after the reclaim window
+        setTimeout(() => {
+          const currentClientData = hrmDataRepository.findById(extWs.clientId)
+          // Only delete if the client is still marked as disconnected (i.e., hasn't reconnected)
+          if (currentClientData && !currentClientData.isConnected) {
+            logger.info(
+              { clientId: extWs.clientId },
+              'Reclaim window expired. Deleting session state.'
+            )
+            hrmDataRepository.deleteById(extWs.clientId)
+            clientSessionState.delete(extWs.clientId)
+            broadcastState() // Broadcast final state after deletion
+          }
+        }, RECLAIM_WINDOW_MS)
+
+        broadcastState() // Broadcast disconnected state immediately
       } else {
-        hrmDataRepository.deleteById(extWs.clientId)
+        // If for some reason data doesn't exist, ensure session state is also cleared
+        clientSessionState.delete(extWs.clientId)
       }
-      clientSessionState.delete(extWs.clientId)
-      broadcastState()
     })
   })
 
@@ -139,25 +132,11 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
-  const allHrmData = hrmDataRepository.findAll()
-  const activeClientIds = new Set(
-    Array.from(wsServerInstance.clients).map(
-      (ws) => (ws as ExtWebSocket).clientId
-    )
-  )
-
-  const hrmDataWithStatus = allHrmData.map((data) => ({
-    ...data,
-    isConnected: activeClientIds.has(data.clientId),
-  }))
-
-  logger.trace({ hrmDataWithStatus }, 'Broadcasting state')
-
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataWithStatus,
+      payload: hrmDataRepository.findAll(),
     },
     'socketManager.broadcastState'
   )
@@ -204,84 +183,67 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        logger.trace({ message }, 'Received HRM_METADATA_UPDATE')
-        const { deviceId, ...metadata } = message.data
-
+        const { deviceId } = message.data
         if (deviceId) {
-          const existingClientId = deviceIdToClientIdMap.get(deviceId)
-          if (existingClientId && existingClientId !== clientId) {
-            // This device was previously connected under a different clientId.
-            // This is a reconnection.
+          // When a client provides a deviceId, it's attempting to either establish
+          // a new session or reclaim an existing, disconnected one.
+
+          // 1. RECLAIM DISCONNECTED SESSION: Check if there's any *disconnected*
+          //    HRM data associated with this deviceId.
+          const oldClientData = hrmDataRepository.findByDeviceId(deviceId)
+          if (oldClientData && !oldClientData.isConnected) {
             logger.info(
               {
                 deviceId,
-                oldClientId: existingClientId,
+                oldClientId: oldClientData.clientId,
                 newClientId: clientId,
               },
-              'Device reconnected with a new session. Migrating state.'
+              'Reclaiming disconnected session for deviceId.'
             )
-            // If there's a pending cleanup for this device, cancel it
-            const pendingCleanup = hrmDataCleanupTimers.get(deviceId)
-            if (pendingCleanup) {
-              clearTimeout(pendingCleanup)
-              hrmDataCleanupTimers.delete(deviceId)
-              logger.trace({ deviceId }, 'Cancelled pending HRM data cleanup.')
+
+            // Migrate session state (calories, etc.) to the new client
+            const sessionState = clientSessionState.get(oldClientData.clientId)
+            if (sessionState) {
+              clientSessionState.set(clientId, sessionState)
+              clientSessionState.delete(oldClientData.clientId)
             }
-
-            // 1. Retrieve the old data.
-            const oldData = hrmDataRepository.findById(existingClientId)
-            if (oldData) {
-              // 2. Delete the old entry.
-              hrmDataRepository.deleteById(existingClientId)
-
-              // 3. Create a new entry with the new clientId but the old data.
-              const migratedData: HrmStreamData = {
-                ...oldData,
-                clientId: clientId, // Assign the new clientId
-                maxHr: metadata.maxHr ?? oldData.maxHr,
-                age: metadata.age ?? oldData.age,
-                name: metadata.name ?? oldData.name ?? 'Unknown',
-                isConnected: true,
-              }
-              hrmDataRepository.save(migratedData)
-            }
-
-            // 4. Update the maps to reflect the new clientId.
-            deviceIdToClientIdMap.set(deviceId, clientId)
-            clientIdToDeviceIdMap.delete(existingClientId) // Clean up old mapping
-            clientIdToDeviceIdMap.set(clientId, deviceId)
-          } else {
-            // This is a new device or the first time we're seeing it.
-            const existingData = hrmDataRepository.findById(clientId)
-            if (existingData) {
-              const updatedData: HrmStreamData = {
-                ...existingData,
-                deviceId,
-                maxHr: metadata.maxHr ?? existingData.maxHr,
-                age: metadata.age ?? existingData.age,
-                name: metadata.name ?? existingData.name ?? 'Unknown',
-                isConnected: true,
-              }
-              hrmDataRepository.save(updatedData)
-
-              // 5. Create the initial mapping.
-              deviceIdToClientIdMap.set(deviceId, clientId)
-              clientIdToDeviceIdMap.set(clientId, deviceId)
-            }
+            // Remove the old, disconnected client's data
+            hrmDataRepository.deleteById(oldClientData.clientId)
           }
-        } else {
-          // Fallback for clients that don't send a deviceId.
-          const existingData = hrmDataRepository.findById(clientId)
-          if (existingData) {
-            const updatedData: HrmStreamData = {
-              ...existingData,
-              maxHr: metadata.maxHr ?? existingData.maxHr,
-              age: metadata.age ?? existingData.age,
-              name: metadata.name ?? existingData.name ?? 'Unknown',
-              isConnected: true,
+
+          // 2. TERMINATE ZOMBIE CONNECTION: A "zombie" is a connection that is
+          //    still technically active but has been superseded by a new connection
+          //    from the same device (e.g., due to a page refresh or network glitch).
+          //    We terminate the old socket to prevent race conditions.
+          wsServerInstance.clients.forEach((client: WebSocket) => {
+            const targetWs = client as ExtWebSocket
+            if (targetWs !== ws && targetWs.readyState === WebSocket.OPEN) {
+              const targetData = hrmDataRepository.findById(targetWs.clientId)
+              if (targetData && targetData.deviceId === deviceId) {
+                logger.warn(
+                  {
+                    claimedDeviceId: deviceId,
+                    zombieClientId: targetWs.clientId,
+                    newClientId: clientId,
+                  },
+                  'Terminating zombie connection for reclaimed deviceId.'
+                )
+                targetWs.terminate()
+              }
             }
-            hrmDataRepository.save(updatedData)
-          }
+          })
+        }
+
+        const existingData = hrmDataRepository.findById(clientId)
+        if (existingData) {
+          const updateData: Partial<HrmStreamData> = Object.fromEntries(
+            Object.entries(message.data).filter(([_, value]) => value !== null)
+          )
+          hrmDataRepository.save({
+            ...existingData,
+            ...updateData,
+            isConnected: true,
+          })
         }
         broadcastState()
         break
@@ -313,15 +275,13 @@ const handleIncomingMessage = (
           sessionState.accumulatedCalories = currentAccumulated
 
           // ONLY update the value and calories
-          const updatedData: HrmStreamData = {
+          hrmDataRepository.save({
             ...existingData,
             value: message.data.value ?? existingData.value,
             calories: Math.round(currentAccumulated * 10) / 10,
-            isConnected: true,
-          }
-          hrmDataRepository.save(updatedData)
-          broadcastState()
+          })
         }
+        broadcastState()
         break
       }
 
