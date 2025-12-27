@@ -1,6 +1,11 @@
 # .github/workflows/pr-enrichment.yml
 # Enriches pull request titles and descriptions with contextual information
 # based on the files changed, scope of changes, and related issues/PRs.
+#
+# Configuration:
+#   Set the following in your repository settings to disable/customize:
+#   - DISABLE_PR_ENRICHMENT=true  - Completely disable PR enrichment
+#   - DISABLE_TITLE_ENHANCEMENT=true - Only disable title enhancement
 
 name: PR Enrichment
 
@@ -22,7 +27,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check if PR Enrichment is Disabled
+        id: check-disabled
+        run: |
+          if [ "${DISABLE_PR_ENRICHMENT:-false}" == "true" ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::notice::PR enrichment is disabled (DISABLE_PR_ENRICHMENT=true)"
+          else
+            echo "disabled=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Analyze PR Changes
+        if: steps.check-disabled.outputs.disabled == 'false'
         id: analyze
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -121,6 +137,7 @@ jobs:
           gh pr edit "$PR_NUMBER" --body "$NEW_BODY" || echo "::warning::Could not update PR description"
 
       - name: Enhance PR Title
+        if: steps.check-disabled.outputs.disabled == 'false' && env.DISABLE_TITLE_ENHANCEMENT != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

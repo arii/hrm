@@ -237,7 +237,12 @@ jobs:
           # Enhanced conversational text filtering
           # Remove common LLM preamble/postamble text while preserving the diff
           # Set DISABLE_TEXT_FILTERING=true to skip this step
-          if [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
+          
+          # First check: is the patch already valid without any processing?
+          if grep -q "^--- a/" patch.diff && grep -q "^+++ b/" patch.diff; then
+            echo "::notice::✅ Patch appears to be valid unified diff format already"
+            echo "::notice::Skipping conversational text filtering to preserve content"
+          elif [ "${DISABLE_TEXT_FILTERING:-false}" != "true" ]; then
             echo "::notice::Filtering conversational text from patch..."
             
             # Create temporary file for cleaned content
@@ -281,18 +286,21 @@ jobs:
           fi
           
           # Extract diff from markdown code block if present (fallback)
-          # Handles variations: ```diff, ``` diff, ```
-          if head -1 patch.diff | grep -q "^\`\`\`"; then
-            echo "::notice::Detected markdown code block, extracting diff..."
-            # Extract content between ``` (optionally followed by diff/language) and closing ```
-            sed -n '/^```.*$/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
-            if [ -s patch.diff.tmp ]; then
-              mv patch.diff.tmp patch.diff
-              echo "::notice::Extracted diff from markdown code block"
-            else
-              echo "::error::Failed to extract diff from markdown code block"
-              echo "::notice::First 20 lines of patch.diff:"
-              head -20 patch.diff | sed 's/^/::notice::  /'
+          # Only apply if patch doesn't already have valid diff markers
+          if ! grep -q "^--- a/" patch.diff; then
+            echo "::notice::No valid diff markers found, checking for markdown code block..."
+            # Handles variations: ```diff, ``` diff, ```
+            if head -1 patch.diff | grep -q "^\`\`\`"; then
+              echo "::notice::Detected markdown code block, extracting diff..."
+              # Extract content between ``` (optionally followed by diff/language) and closing ```
+              sed -n '/^```.*$/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
+              if [ -s patch.diff.tmp ]; then
+                mv patch.diff.tmp patch.diff
+                echo "::notice::Extracted diff from markdown code block"
+              else
+                echo "::error::Failed to extract diff from markdown code block"
+                echo "::notice::First 20 lines of patch.diff:"
+                head -20 patch.diff | sed 's/^/::notice::  /'
               exit 1
             fi
           fi
@@ -468,9 +476,35 @@ jobs:
       - name: 'Gemini: Prepare Commit Message'
         if: env.AGENT_PROVIDER == 'gemini'
         run: |
-          # Convert TITLE to lowercase for commitlint compliance
-          COMMIT_MSG=$(echo "${{ env.TITLE }}" | tr '[:upper:]' '[:lower:]')
-          echo "COMMIT_MESSAGE=feat(ai): $COMMIT_MSG" >> $GITHUB_ENV
+          # Build a commitlint-compliant message with better scope handling
+          # Format: feat(scope): lowercase description
+          
+          TITLE="${{ env.TITLE }}"
+          
+          # Convert title to lowercase
+          TITLE_LOWER=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]')
+          
+          # Extract scope from title if it exists (e.g., "feat: description" -> "ai")
+          # Otherwise use "ai" as default scope for AI-generated changes
+          SCOPE="ai"
+          
+          # Check if title already has a scope-like prefix (word: pattern)
+          if [[ "$TITLE_LOWER" =~ ^([a-z]+):[[:space:]] ]]; then
+            SCOPE="${BASH_REMATCH[1]}"
+            # Remove scope from title to avoid duplication
+            TITLE_LOWER=${TITLE_LOWER#*: }
+          fi
+          
+          # Trim whitespace
+          TITLE_LOWER=$(echo "$TITLE_LOWER" | xargs)
+          
+          # Ensure message doesn't exceed commitlint limits (72 chars)
+          if [ ${#TITLE_LOWER} -gt 70 ]; then
+            TITLE_LOWER="${TITLE_LOWER:0:67}..."
+          fi
+          
+          echo "COMMIT_MESSAGE=feat($SCOPE): $TITLE_LOWER" >> $GITHUB_ENV
+          echo "::notice::Commit message: feat($SCOPE): $TITLE_LOWER"
 
       - name: 'Gemini: Create Pull Request'
         if: env.AGENT_PROVIDER == 'gemini'
