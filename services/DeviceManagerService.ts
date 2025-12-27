@@ -111,6 +111,14 @@ class DeviceManagerService extends EventTarget {
     }
   }
 
+  public updateOptions(newOptions: Partial<DeviceManagerOptions>): void {
+    this.options = { ...this.options, ...newOptions }
+    if (this.watchdogInterval) {
+      this.stopWatchdog()
+      this.startWatchdog()
+    }
+  }
+
   // Type-safe event listener overrides
   public addEventListener<K extends keyof DeviceManagerEventMap>(
     type: K,

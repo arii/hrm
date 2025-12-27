@@ -16,6 +16,7 @@ const mockDeviceManager = {
   findAndConnect: jest.fn(),
   disconnect: jest.fn(),
   forget: jest.fn(),
+  updateOptions: jest.fn(),
   connectToDevice: jest.fn(),
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),

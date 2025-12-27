@@ -5,7 +5,7 @@
  * Monitor (HRM) devices. It handles state management for the UI layer and bridges
  * React's component lifecycle with the underlying Bluetooth service.
  */
-import { useCallback, useState, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import {
   HrmInputData,
   HrmMetadataUpdateMessage,
@@ -95,15 +95,25 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
     null
   )
 
-  // Memoize the service instance to ensure it persists across re-renders
-  const deviceManager = useMemo(() => {
+  // Initialize service instance once
+  const [deviceManager] = useState(() => {
     const options: DeviceManagerOptions = {}
     if (dataLivenessTimeoutMs !== undefined)
       options.dataLivenessTimeoutMs = dataLivenessTimeoutMs
     if (reconnectIntervalMs !== undefined)
       options.reconnectIntervalMs = reconnectIntervalMs
     return new DeviceManagerService(options)
-  }, [dataLivenessTimeoutMs, reconnectIntervalMs])
+  })
+
+  // Update service options when props change
+  useEffect(() => {
+    const options: Partial<DeviceManagerOptions> = {}
+    if (dataLivenessTimeoutMs !== undefined)
+      options.dataLivenessTimeoutMs = dataLivenessTimeoutMs
+    if (reconnectIntervalMs !== undefined)
+      options.reconnectIntervalMs = reconnectIntervalMs
+    deviceManager.updateOptions(options)
+  }, [deviceManager, dataLivenessTimeoutMs, reconnectIntervalMs])
 
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
