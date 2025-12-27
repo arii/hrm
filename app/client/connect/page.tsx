@@ -54,7 +54,9 @@ export default function ConnectPage() {
     }
   }
 
-  const isConnected = Object.values(connectedDevices).some(d => d.status.startsWith('Connected'))
+  const isConnected = Object.values(connectedDevices).some((d) =>
+    d.status.startsWith('Connected')
+  )
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const totalCalories = currentUserData?.calories ?? 0

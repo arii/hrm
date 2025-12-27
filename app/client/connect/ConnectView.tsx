@@ -54,7 +54,7 @@ interface ConnectViewProps {
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
   onUnitChange: (unit: MeasurementSystem) => void
-  connectedDevices: Record<string, ConnectedDevice>;
+  connectedDevices: Record<string, ConnectedDevice>
   onConnect: () => void
   onDisconnect: (deviceId: string) => void
   onForgetDevice: (deviceId: string) => Promise<void>
@@ -105,7 +105,11 @@ export default function ConnectView({
   const handleFullReset = async () => {
     setIsResetting(true)
     try {
-      await Promise.all(Object.keys(connectedDevices).map(deviceId => onForgetDevice(deviceId)));
+      await Promise.all(
+        Object.keys(connectedDevices).map((deviceId) =>
+          onForgetDevice(deviceId)
+        )
+      )
       onReset()
     } catch (error) {
       console.error('Reset failed:', error)
@@ -132,7 +136,9 @@ export default function ConnectView({
     )
   }
 
-  const isConnected = Object.values(connectedDevices).some(d => d.status.startsWith('Connected'))
+  const isConnected = Object.values(connectedDevices).some((d) =>
+    d.status.startsWith('Connected')
+  )
   const showUserDetails = hasStarted || isConnected
 
   return (
@@ -275,27 +281,24 @@ export default function ConnectView({
         )}
 
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={onConnect}
-              disabled={
-                !userName.trim() ||
-                !userAge.trim()
-              }
-            >
-              Connect New Bluetooth HRM
-            </Button>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onConnect}
+            disabled={!userName.trim() || !userAge.trim()}
+          >
+            Connect New Bluetooth HRM
+          </Button>
         </Box>
 
         {Object.values(connectedDevices).map((device) => (
-            <DeviceCard
-                key={device.id}
-                device={device}
-                onDisconnect={onDisconnect}
-                onForget={onForgetDevice}
-                userAge={parseInt(userAge, 10)}
-            />
+          <DeviceCard
+            key={device.id}
+            device={device}
+            onDisconnect={onDisconnect}
+            onForget={onForgetDevice}
+            userAge={parseInt(userAge, 10)}
+          />
         ))}
 
         {hasStarted && !isConnected && (
