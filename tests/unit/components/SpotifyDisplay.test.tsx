@@ -15,6 +15,7 @@ import { fireEvent, render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useSession, signIn } from 'next-auth/react'
 import React from 'react'
+import { SpotifyData } from '@/types/websocket'
 
 // Mock dependencies
 jest.mock('@/components/Spotify/CurrentSpotifyItemDisplay', () => ({
@@ -97,7 +98,7 @@ describe('SpotifyDisplay', () => {
   describe('when authenticated', () => {
     let mockSendData: jest.Mock
     let rerender: (ui: React.ReactElement) => void
-    let initialSpotifyData: any
+    let initialSpotifyData: SpotifyData
 
     beforeEach(() => {
       jest.useFakeTimers()
@@ -110,10 +111,15 @@ describe('SpotifyDisplay', () => {
         isPlaying: true,
         volume: 50,
         isMuted: false,
-        devices: [{ id: 'mock-device-1', name: 'Test Device', is_active: true }],
+        devices: [
+          { id: 'mock-device-1', name: 'Test Device', is_active: true },
+        ],
       }
 
-      mockedUseSession.mockReturnValue({ data: { accessToken: 'fake-token' }, status: 'authenticated' })
+      mockedUseSession.mockReturnValue({
+        data: { accessToken: 'fake-token' },
+        status: 'authenticated',
+      })
       mockedUseWebSocket.mockReturnValue({
         spotifyData: initialSpotifyData,
         sendData: mockSendData,
@@ -121,7 +127,9 @@ describe('SpotifyDisplay', () => {
         spotifyServiceInitialized: true,
       })
 
-      const { rerender: rerenderComponent } = renderWithProviders(<SpotifyDisplay />)
+      const { rerender: rerenderComponent } = renderWithProviders(
+        <SpotifyDisplay />
+      )
       rerender = (ui: React.ReactElement) => rerenderComponent(ui)
     })
 
@@ -165,35 +173,35 @@ describe('SpotifyDisplay', () => {
     })
 
     it('re-enables external updates after sliding and debounce period', () => {
-        const slider = screen.getByRole('slider', { name: /volume control/i })
-        expect(slider).toHaveValue('50')
+      const slider = screen.getByRole('slider', { name: /volume control/i })
+      expect(slider).toHaveValue('50')
 
-        // Simulate user sliding
-        fireEvent.change(slider, { target: { value: '75' } })
-        expect(slider).toHaveValue('75')
+      // Simulate user sliding
+      fireEvent.change(slider, { target: { value: '75' } })
+      expect(slider).toHaveValue('75')
 
-        // Simulate external update while sliding (should be ignored)
-        let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
-        mockedUseWebSocket.mockReturnValue({
-          ...mockedUseWebSocket(),
-          spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('75')
-
-        // Advance timers to end the debounce period
-        act(() => {
-          jest.advanceTimersByTime(300)
-        })
-
-        // Simulate another external update (should now be applied)
-        updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
-        mockedUseWebSocket.mockReturnValue({
-            ...mockedUseWebSocket(),
-            spotifyData: updatedSpotifyData,
-        })
-        rerender(<SpotifyDisplay />)
-        expect(slider).toHaveValue('25')
+      // Simulate external update while sliding (should be ignored)
+      let updatedSpotifyData = { ...initialSpotifyData, volume: 100 }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
       })
+      rerender(<SpotifyDisplay />)
+      expect(slider).toHaveValue('75')
+
+      // Advance timers to end the debounce period
+      act(() => {
+        jest.advanceTimersByTime(300)
+      })
+
+      // Simulate another external update (should now be applied)
+      updatedSpotifyData = { ...initialSpotifyData, volume: 25 }
+      mockedUseWebSocket.mockReturnValue({
+        ...mockedUseWebSocket(),
+        spotifyData: updatedSpotifyData,
+      })
+      rerender(<SpotifyDisplay />)
+      expect(slider).toHaveValue('25')
+    })
   })
 })
