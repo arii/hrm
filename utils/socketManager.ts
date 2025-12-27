@@ -173,7 +173,10 @@ const initSocketManager = (
 
   wss.on('close', () => {
     connectionMonitor.stop()
-    clearInterval(calorieUpdateInterval)
+    if (calorieUpdateInterval) {
+      clearInterval(calorieUpdateInterval)
+      calorieUpdateInterval = undefined
+    }
   })
 }
 
