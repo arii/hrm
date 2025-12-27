@@ -141,11 +141,14 @@ function handleIdentifyClient(
     clientSessionState.delete(oldId)
   }
 
-  logger.info({ oldId, newId }, 'Client identified and data re-associated')
+  logger.info({ clientId: newId }, 'Client identified and data re-associated')
   broadcastState()
 }
 
-function handleHrmInput(clientId: string, data: { value: number | null }): void {
+function handleHrmInput(
+  clientId: string,
+  data: { value: number | null }
+): void {
   const existingData = hrmDataRepository.findById(clientId)
   const sessionState = clientSessionState.get(clientId)
 
@@ -237,9 +240,12 @@ const handleIncomingMessage = (
         break
       case 'REGISTER_CLIENT':
         ws.clientType = (message as ClientRegistrationMessage).role
-        logger.info({ clientId, clientType: ws.clientType }, 'Client registered')
+        logger.info(
+          { clientId, clientType: ws.clientType },
+          'Client registered'
+        )
         break
-      case 'GET_STATE':
+      case 'GET_STATE': {
         const stateSnapshot = getUnifiedStateSnapshot()
         const payload: InitialStateSnapshotPayload = {
           ...stateSnapshot,
@@ -251,7 +257,8 @@ const handleIncomingMessage = (
           'socketManager.GET_STATE'
         )
         break
-      case 'HRM_METADATA_UPDATE':
+      }
+      case 'HRM_METADATA_UPDATE': {
         const existingData = hrmDataRepository.findById(clientId)
         if (existingData) {
           const updateData = Object.fromEntries(
@@ -261,6 +268,7 @@ const handleIncomingMessage = (
         }
         broadcastState()
         break
+      }
       case 'HRM_INPUT':
         handleHrmInput(clientId, message.data)
         break
@@ -276,12 +284,13 @@ const handleIncomingMessage = (
       case 'SPOTIFY_COMMAND':
         handleSpotifyCommand(clientId, message as SpotifyCommandMessage)
         break
-      default:
+      default: {
         const unhandledMessage: never = message
         logger.warn(
           { clientId, type: (unhandledMessage as { type: string }).type },
           'Unknown message type'
         )
+      }
     }
   } catch (e) {
     if (e instanceof z.ZodError) {
