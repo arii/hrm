@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run Gemini Review
-        run: pnpm tsx scripts/gemini-client.ts --command "review"
+        run: pnpm tsx scripts/gemini-client.ts --preset "review"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.ARI_PAT }}
