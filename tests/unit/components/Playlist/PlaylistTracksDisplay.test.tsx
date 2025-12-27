@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 // tests/unit/components/Playlist/PlaylistTracksDisplay.test.tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import PlaylistTracksDisplay from '@/components/Playlist/PlaylistTracksDisplay'
 import { WebSocketContext } from '@/context/WebSocketContext'
 import { formatDuration } from '@/utils/formatters'
