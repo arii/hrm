@@ -40,7 +40,7 @@ export default function ConnectPage() {
   }
 
   const {
-    connectAndStream,
+    connect,
     disconnect,
     forgetDevice,
     deviceStatus,
@@ -67,7 +67,7 @@ export default function ConnectPage() {
 
   const handleConnect = () => {
     const age = userAge ? parseInt(userAge, 10) : 0
-    connectAndStream(userName, age)
+    connect(userName, age)
   }
 
   const currentUserData = hrmData.find((d) => d.name === userName)

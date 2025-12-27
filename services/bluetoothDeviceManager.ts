@@ -185,13 +185,21 @@ export class BluetoothDeviceManager extends EventEmitter {
     try {
       this.setStatus('connecting', `Connecting to ${this.device.name}...`)
 
+      const connectOptions: {
+        timeoutMs: number
+        errorMessage: string
+        signal?: AbortSignal
+      } = {
+        timeoutMs: 15000,
+        errorMessage: 'GATT connection timeout',
+      }
+      if (this.abortController?.signal) {
+        connectOptions.signal = this.abortController.signal
+      }
+
       const server = await cancellablePromise(
         this.device.gatt!.connect(),
-        {
-          timeoutMs: 15000,
-          errorMessage: 'GATT connection timeout',
-        },
-        this.abortController?.signal
+        connectOptions
       )
 
       const hrService = await server.getPrimaryService(HR_SERVICE_UUID)
@@ -204,25 +212,26 @@ export class BluetoothDeviceManager extends EventEmitter {
         this.onHeartRateChanged
       )
 
-      try {
-        const batteryService =
-          await server.getPrimaryService(BATTERY_SERVICE_UUID)
-        const batteryCharacteristic = await batteryService.getCharacteristic(
-          BATTERY_LEVEL_CHARACTERISTIC_UUID
-        )
-        const batteryValue = await batteryCharacteristic.readValue()
-        this.onBatteryLevelChanged(batteryValue)
-        await batteryCharacteristic.startNotifications()
-        batteryCharacteristic.addEventListener(
-          'characteristicvaluechanged',
-          (e: Event) =>
-            this.onBatteryLevelChanged(
-              (e.target as BluetoothRemoteGATTCharacteristic).value!
-            )
-        )
-      } catch (e) {
-        logger.warn('Battery service not found, skipping.')
-      }
+      server
+        .getPrimaryService(BATTERY_SERVICE_UUID)
+        .then(async (batteryService) => {
+          const batteryCharacteristic = await batteryService.getCharacteristic(
+            BATTERY_LEVEL_CHARACTERISTIC_UUID
+          )
+          const batteryValue = await batteryCharacteristic.readValue()
+          this.onBatteryLevelChanged(batteryValue)
+          await batteryCharacteristic.startNotifications()
+          batteryCharacteristic.addEventListener(
+            'characteristicvaluechanged',
+            (e: Event) =>
+              this.onBatteryLevelChanged(
+                (e.target as BluetoothRemoteGATTCharacteristic).value!
+              )
+          )
+        })
+        .catch(() => {
+          logger.warn('Battery service not found, skipping.')
+        })
 
       setCookie(HRM_COOKIE_NAME, this.device.id)
       this.setStatus('connected', `Connected to ${this.device.name}`)
@@ -240,8 +249,6 @@ export class BluetoothDeviceManager extends EventEmitter {
     const heartRate = parseHeartRate(value)
     this.emit('heartRateUpdate', heartRate)
   }
-
-
 
   private onBatteryLevelChanged = (value: DataView): void => {
     const batteryLevel = value.getUint8(0)
@@ -276,8 +283,6 @@ export class BluetoothDeviceManager extends EventEmitter {
     this.abortController?.abort()
     if (this.device.gatt?.connected) {
       this.device.gatt.disconnect()
-    } else {
-      this.onDisconnected()
     }
   }
 

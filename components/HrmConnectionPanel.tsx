@@ -19,7 +19,7 @@ const HrmConnectionPanel = () => {
   const [userSettings] = useUserSettings()
   const { hrmData, connectionStatus, activeAlerts } = useWebSocket()
   const {
-    connectAndStream,
+    connect,
     disconnect,
     deviceStatus,
     batteryLevel,
@@ -31,7 +31,7 @@ const HrmConnectionPanel = () => {
     const userName =
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
-    connectAndStream(userName, userAge)
+    connect(userName, userAge)
   }
 
   const tileData = useMemo(() => {

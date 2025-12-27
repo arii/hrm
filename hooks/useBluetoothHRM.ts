@@ -16,7 +16,13 @@ import {
   BluetoothDeviceManager,
   DeviceManagerStatus,
 } from '@/services/bluetoothDeviceManager'
-import { DisconnectionReason } from '@/hooks/useBluetoothHRM'
+
+export type DisconnectionReason =
+  | 'manual'
+  | 'error'
+  | 'timeout'
+  | 'signal_loss'
+  | null
 
 /**
  * @hook useBluetoothHRM
@@ -34,9 +40,7 @@ import { DisconnectionReason } from '@/hooks/useBluetoothHRM'
  * @property {boolean} isSupported - True if the browser supports the Web Bluetooth API.
  * @property {DisconnectionReason} disconnectionReason - The reason for the last disconnection.
  */
-const useBluetoothHRM = (
-  injectedDeviceManager?: BluetoothDeviceManager
-) => {
+const useBluetoothHRM = (injectedDeviceManager?: BluetoothDeviceManager) => {
   const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
@@ -114,13 +118,7 @@ const useBluetoothHRM = (
         setDeviceStatus(`Failed: ${err.message}`)
         throw err
       }
-
-      try {
-        await deviceManager.connect()
-      } catch (error) {
-        // Error is already logged by the manager, just re-throw for the UI
-        throw error
-      }
+      await deviceManager.connect()
     },
     [connectionStatus, deviceManager]
   )

@@ -41,7 +41,7 @@ const mockGattServer = {
 }
 
 let mockDeviceEventListeners: {
-  [key: string]: jest.Mock<any, any, any>
+  [key: string]: jest.Mock<unknown, unknown[], unknown>
 } = {}
 
 const mockBluetoothDevice = {
@@ -60,7 +60,7 @@ const mockBluetoothDevice = {
 }
 
 // Helper to simulate event dispatch
-const simulateDeviceEvent = (event: string, ...args: any[]) => {
+const simulateDeviceEvent = (event: string, ...args: unknown[]) => {
   if (mockDeviceEventListeners[event]) {
     mockDeviceEventListeners[event](...args)
   }
@@ -98,8 +98,7 @@ describe('BluetoothDeviceManager', () => {
   })
 
   it('should handle successful scan and connect', async () => {
-    const statusHistory: { status: DeviceManagerStatus; message: string }[] =
-      []
+    const statusHistory: { status: DeviceManagerStatus; message: string }[] = []
     deviceManager.on(
       'statusChange',
       (status: DeviceManagerStatus, message: string) => {
@@ -126,8 +125,7 @@ describe('BluetoothDeviceManager', () => {
     const error = new DOMException('User cancelled', 'NotFoundError')
     ;(navigator.bluetooth.requestDevice as jest.Mock).mockRejectedValue(error)
 
-    const statusHistory: { status: DeviceManagerStatus; message: string }[] =
-      []
+    const statusHistory: { status: DeviceManagerStatus; message: string }[] = []
     deviceManager.on(
       'statusChange',
       (status: DeviceManagerStatus, message: string) => {
