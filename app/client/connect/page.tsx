@@ -8,7 +8,7 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
-import { toKg } from '../../../utils/units'
+import { toKg, toDisplay } from '../../../utils/units'
 import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
@@ -85,8 +85,14 @@ export default function ConnectPage() {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
       // Height hook handles its own transient state reset if unit changes
-      // But we need to handle weight
-      setDisplayWeight('')
+      // Update display weight to prevent flicker/empty value
+      const currentKg = parseFloat(_weightInKg)
+      if (!isNaN(currentKg)) {
+        const newDisplay = toDisplay(currentKg, newUnit)
+        setDisplayWeight(newDisplay.toString())
+      } else {
+        setDisplayWeight('')
+      }
     }
   }
 

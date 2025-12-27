@@ -59,8 +59,5 @@ export const useCalorieCounter = (
     lastTickRef.current = null
   }, [])
 
-  return useMemo(
-    () => ({ calories, resetCalories }),
-    [calories, resetCalories]
-  )
+  return useMemo(() => ({ calories, resetCalories }), [calories, resetCalories])
 }
