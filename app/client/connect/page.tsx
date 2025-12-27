@@ -9,12 +9,13 @@ import { formatDuration } from '@/lib/utils'
 import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
+import { toKg } from '../../../utils/units'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
   const [userAge, setUserAge] = useLocalStorage('hrm-user-age', '')
   const [_heightInCm, setHeightInCm] = useLocalStorage('hrm-user-height', 175) // Always CM
-  const [_weightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
+  const [_weightInKg, setWeightInKg] = useLocalStorage('hrm-user-weight', '70') // Always KG
   const [gender, setGender] = useLocalStorage<'MALE' | 'FEMALE'>(
     'hrm-user-gender',
     'MALE'
@@ -25,13 +26,38 @@ export default function ConnectPage() {
   )
 
   const [displayWeight, setDisplayWeight] = useState('')
+  const [heightError, setHeightError] = useState<string | null>(null)
+
+  const validateHeight = (cm: number, unitSystem: MeasurementSystem) => {
+    if (isNaN(cm) || cm < 100 || cm > 250) {
+      if (unitSystem === 'METRIC') {
+        return 'Please enter a valid height (100-250 cm)'
+      } else {
+        return 'Please enter a valid height (3ft 3in - 8ft 2in)'
+      }
+    }
+    return null
+  }
 
   const handleHeightChange = (newHeight: number) => {
     setHeightInCm(newHeight)
   }
 
+  const handleHeightBlur = () => {
+    const error = validateHeight(_heightInCm, unitSystem)
+    setHeightError(error)
+  }
+
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
+  }
+
+  const handleWeightBlur = () => {
+    const numericValue = parseFloat(displayWeight)
+    if (!isNaN(numericValue) && numericValue > 0) {
+      const newKgValue = toKg(numericValue, unitSystem)
+      setWeightInKg(newKgValue.toFixed(2))
+    }
   }
 
   const {
@@ -94,8 +120,11 @@ export default function ConnectPage() {
       setUserAge={setUserAge}
       userHeight={_heightInCm}
       setUserHeight={handleHeightChange}
+      onHeightBlur={handleHeightBlur}
+      heightError={heightError}
       userWeight={displayWeight}
       setUserWeight={handleWeightChange}
+      onWeightBlur={handleWeightBlur}
       gender={gender}
       setGender={setGender}
       unitSystem={unitSystem}

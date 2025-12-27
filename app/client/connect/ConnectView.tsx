@@ -4,6 +4,7 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
@@ -13,28 +14,51 @@ import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled'
 import HrTile from '../../../components/HrTile'
 import BottomNavBar from '../../../components/BottomNavBar'
 import WorkoutSummary from './WorkoutSummary'
-import AppSettings from './AppSettings'
-import React, { useState, useEffect } from 'react'
+import React, { useReducer, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
-import { cmToFeetAndInches, kgToLbs, lbsToKg } from '../../../utils/units'
-import { validate } from '../../../utils/validation'
+import {
+  ToggleButtonGroup,
+  ToggleButton,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from '@mui/material'
+import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+import { reducer, initialState } from './reducer'
 
-// Props passed from the parent page component
-interface ConnectViewPageProps {
+const WEIGHT_VALIDATION = {
+  IMPERIAL: { min: 66, max: 440 }, // lbs
+  METRIC: { min: 30, max: 200 }, // kg
+}
+
+const validate = (value: string, min: number, max: number, name: string) => {
+  if (!value || value.trim() === '') {
+    return `Please enter a valid ${name}`
+  }
+  const num = Number(value)
+  if (isNaN(num) || num < min || num > max) {
+    return `Please enter a valid ${name} (${min}-${max})`
+  }
+  return null
+}
+
+interface ConnectViewProps {
+  duration: string
+  caloriesBurned: number
   userName: string
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number // Always in cm
+  userHeight: number
   setUserHeight: (height: number) => void
-  userWeight: string // Always in kg
+  userWeight: string
   setUserWeight: (weight: string) => void
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
-  onUnitChange: (unit: 'IMPERIAL' | 'METRIC') => void
-  duration: string
-  caloriesBurned: number
+  onUnitChange: (unit: MeasurementSystem) => void
   isConnected: boolean
   deviceStatus: string
   batteryLevel: number | null
@@ -54,7 +78,8 @@ interface ConnectViewPageProps {
 }
 
 export default function ConnectView({
-  // User settings props
+  duration,
+  caloriesBurned,
   userName,
   setUserName,
   userAge,
@@ -67,9 +92,6 @@ export default function ConnectView({
   setGender,
   unitSystem,
   onUnitChange,
-  // HRM connection and workout props
-  duration,
-  caloriesBurned,
   isConnected,
   deviceStatus,
   batteryLevel,
@@ -86,64 +108,44 @@ export default function ConnectView({
   workoutStatus,
   onStartWorkout,
   onEndWorkout,
-}: ConnectViewPageProps) {
-  // Local state for UI and validation
-  const [isResetting, setIsResetting] = useState(false)
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
-  const [heightError, setHeightError] = useState<string | null>(null)
+}: ConnectViewProps) {
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const {
+    isResetting,
+    ageError,
+    weightError,
+    heightError,
+    feet,
+    inches,
+  } = state
 
-  // Local state for handling imperial units
-  const [displayedWeight, setDisplayedWeight] = useState(userWeight)
+  const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
 
-  // This effect synchronizes the displayed weight with the userWeight prop (in kg)
-  // when the unit system changes. This is a one-way sync from props to local state.
   useEffect(() => {
-    if (userWeight) {
-      if (unitSystem === 'IMPERIAL') {
-        setDisplayedWeight(kgToLbs(parseFloat(userWeight)).toFixed(1))
-      } else {
-        setDisplayedWeight(userWeight)
+    if (unitSystem === 'IMPERIAL' && userHeight > 0) {
+      const { feet: newFeet, inches: newInches } = cmToFeetAndInches(userHeight)
+      if (String(newFeet) !== feet || String(newInches) !== inches) {
+        dispatch({ type: 'SET_FEET', payload: String(newFeet) })
+        dispatch({ type: 'SET_INCHES', payload: String(newInches) })
       }
-    } else {
-      setDisplayedWeight('')
     }
-  }, [userWeight, unitSystem])
+  }, [unitSystem, userHeight, feet, inches])
 
-  // Validation handlers
-  const handleAgeBlur = () => {
-    setAgeError(validate(userAge, 1, 120, 'age'))
-  }
-
-  const handleWeightBlur = () => {
-    const isMetric = unitSystem === 'METRIC'
-    const [min, max] = isMetric ? [20, 300] : [44, 660]
-    const error = validate(
-      displayedWeight,
-      min,
-      max,
-      `weight in ${isMetric ? 'kg' : 'lbs'}`
-    )
-    setWeightError(error)
-    if (!error && displayedWeight) {
-      const weightInKg =
-        unitSystem === 'IMPERIAL'
-          ? lbsToKg(parseFloat(displayedWeight)).toFixed(2)
-          : displayedWeight
-      setUserWeight(weightInKg)
+  useEffect(() => {
+    if (unitSystem === 'IMPERIAL') {
+      const feetNum = Number(feet)
+      const inchesNum = Number(inches)
+      if (
+        !isNaN(feetNum) &&
+        !isNaN(inchesNum) &&
+        feetNum >= 0 &&
+        inchesNum >= 0
+      ) {
+        const cm = feetAndInchesToCm(feetNum, inchesNum)
+        setUserHeight(cm)
+      }
     }
-  }
-
-  const handleHeightBlur = () => {
-    if (unitSystem === 'METRIC') {
-      setHeightError(validate(String(userHeight), 50, 300, 'height in cm'))
-    } else {
-      const { feet, inches } = cmToFeetAndInches(userHeight)
-      const totalInches = feet * 12 + inches
-      const error = validate(String(totalInches), 20, 120, 'height in inches')
-      setHeightError(error)
-    }
-  }
+  }, [feet, inches, unitSystem, setUserHeight])
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -153,14 +155,14 @@ export default function ConnectView({
   }
 
   const handleFullReset = async () => {
-    setIsResetting(true)
+    dispatch({ type: 'SET_IS_RESETTING', payload: true })
     try {
       await onForgetDevice()
       onReset()
     } catch (error) {
       console.error('Reset failed:', error)
     } finally {
-      setIsResetting(false)
+      dispatch({ type: 'SET_IS_RESETTING', payload: false })
     }
   }
 
@@ -192,26 +194,182 @@ export default function ConnectView({
         </Typography>
 
         {!showUserDetails ? (
-          <AppSettings
-            userName={userName}
-            setUserName={setUserName}
-            userAge={userAge}
-            setUserAge={setUserAge}
-            onAgeBlur={handleAgeBlur}
-            ageError={ageError}
-            userWeight={displayedWeight}
-            setUserWeight={setDisplayedWeight}
-            onWeightBlur={handleWeightBlur}
-            weightError={weightError}
-            userHeight={userHeight}
-            setUserHeight={setUserHeight}
-            onHeightBlur={handleHeightBlur}
-            heightError={heightError}
-            unit={unitSystem}
-            setUnit={onUnitChange}
-            gender={gender}
-            setGender={setGender}
-          />
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              label="Your Name"
+              placeholder="e.g., Jane Doe"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Your Age"
+              placeholder="e.g., 30"
+              type="number"
+              value={userAge}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setUserAge(e.target.value)
+                }
+              }}
+              onBlur={(e) => {
+                dispatch({
+                  type: 'SET_AGE_ERROR',
+                  payload: validate(e.target.value, 1, 120, 'age'),
+                })
+              }}
+              error={!!ageError}
+              helperText={ageError}
+              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
+            />
+            <ToggleButtonGroup
+              value={unitSystem}
+              exclusive
+              onChange={(_e, newUnit) => newUnit && onUnitChange(newUnit)}
+              aria-label="measurement system"
+              fullWidth
+            >
+              <ToggleButton value="IMPERIAL" aria-label="imperial">
+                Imperial (lbs, ft, in)
+              </ToggleButton>
+              <ToggleButton value="METRIC" aria-label="metric">
+                Metric (kg, cm)
+              </ToggleButton>
+            </ToggleButtonGroup>
+            {unitSystem === 'METRIC' ? (
+              <TextField
+                fullWidth
+                label="Your Height (cm)"
+                placeholder="e.g., 175"
+                type="number"
+                value={userHeight}
+                onChange={(e) => {
+                  if (/^\d*\.?\d*$/.test(e.target.value)) {
+                    setUserHeight(e.target.valueAsNumber)
+                  }
+                }}
+                onBlur={(e) =>
+                  dispatch({
+                    type: 'SET_HEIGHT_ERROR',
+                    payload: validate(e.target.value, 90, 240, 'height'),
+                  })
+                }
+                error={!!heightError}
+                helperText={heightError}
+              />
+            ) : (
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  fullWidth
+                  label="Feet"
+                  placeholder="e.g., 5"
+                  type="number"
+                  value={feet}
+                  onChange={(e) => {
+                    if (/^\d*$/.test(e.target.value)) {
+                      dispatch({ type: 'SET_FEET', payload: e.target.value })
+                    }
+                  }}
+                  onBlur={() => {
+                    const feetNum = Number(feet)
+                    const inchesNum = Number(inches)
+                    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+                      dispatch({
+                        type: 'SET_HEIGHT_ERROR',
+                        payload: validate(
+                          String(feetAndInchesToCm(feetNum, inchesNum)),
+                          90,
+                          240,
+                          'height'
+                        ),
+                      })
+                    }
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Inches"
+                  placeholder="e.g., 9"
+                  type="number"
+                  value={inches}
+                  onChange={(e) => {
+                    if (/^\d*$/.test(e.target.value)) {
+                      dispatch({ type: 'SET_INCHES', payload: e.target.value })
+                    }
+                  }}
+                  onBlur={() => {
+                    const feetNum = Number(feet)
+                    const inchesNum = Number(inches)
+                    if (!isNaN(feetNum) && !isNaN(inchesNum)) {
+                      dispatch({
+                        type: 'SET_HEIGHT_ERROR',
+                        payload: validate(
+                          String(feetAndInchesToCm(feetNum, inchesNum)),
+                          90,
+                          240,
+                          'height'
+                        ),
+                      })
+                    }
+                  }}
+                />
+              </Stack>
+            )}
+            <TextField
+              fullWidth
+              label={`Your Weight (${
+                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
+              })`}
+              placeholder={
+                unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'
+              }
+              type="number"
+              value={userWeight}
+              onChange={(e) => {
+                setUserWeight(e.target.value)
+              }}
+              onBlur={(e) => {
+                dispatch({
+                  type: 'SET_WEIGHT_ERROR',
+                  payload: validate(
+                    e.target.value,
+                    weightValidationRange.min,
+                    weightValidationRange.max,
+                    'weight'
+                  ),
+                })
+              }}
+              error={!!weightError}
+              helperText={weightError}
+              inputProps={{
+                min: weightValidationRange.min,
+                max: weightValidationRange.max,
+                'aria-invalid': !!weightError,
+              }}
+            />
+            <FormControl component="fieldset">
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+              >
+                <FormControlLabel
+                  value="MALE"
+                  control={<Radio />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="FEMALE"
+                  control={<Radio />}
+                  label="Female"
+                />
+              </RadioGroup>
+            </FormControl>
+          </Stack>
         ) : (
           <Box
             sx={{
@@ -255,9 +413,6 @@ export default function ConnectView({
               disabled={
                 !userName.trim() ||
                 !userAge.trim() ||
-                !!ageError ||
-                !!weightError ||
-                !!heightError ||
                 deviceStatus.includes('Connecting')
               }
             >
@@ -340,7 +495,7 @@ export default function ConnectView({
             mt: 3,
             mb: 3,
             alignItems: 'center',
-            minHeight: '48px',
+            minHeight: '48px', // Ensure consistent height for layout stability
           }}
         >
           {workoutStatus === 'idle' && isConnected && (
