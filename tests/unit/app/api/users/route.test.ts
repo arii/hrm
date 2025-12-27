@@ -3,7 +3,7 @@
  */
 import { POST } from '@/app/api/users/route'
 import { NextRequest } from 'next/server'
-import { createValidUserProfile } from '@/tests/test-data/user-data-factory'
+import { createUserProfile } from '@/tests/test-data/user-data-factory'
 
 // Mock the 'uuid' module
 jest.mock('uuid', () => ({
@@ -14,7 +14,7 @@ describe('API Route: /api/users', () => {
   describe('POST', () => {
     it('should create a new user and return 201 when the request body is valid', async () => {
       // Arrange
-      const validRequestBody = createValidUserProfile()
+      const validRequestBody = createUserProfile()
       const request = new NextRequest('http://localhost/api/users', {
         method: 'POST',
         body: JSON.stringify(validRequestBody),
@@ -60,7 +60,7 @@ describe('API Route: /api/users', () => {
 
     it('should return 400 for data that does not meet schema constraints', async () => {
       // Arrange
-      const invalidRequestBody = createValidUserProfile({
+      const invalidRequestBody = createUserProfile({
         username: 'jo', // Too short
         email: 'not-an-email',
       })

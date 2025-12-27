@@ -1,7 +1,7 @@
 // tests/test-data/user-data-factory.ts
 import { UserProfile } from '@/types/core'
 
-export const createValidUserProfile = (
+export const createUserProfile = (
   overrides: Partial<Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>> = {}
 ): Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'> => ({
   username: 'johndoe',

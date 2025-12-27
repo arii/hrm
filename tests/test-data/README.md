@@ -9,10 +9,10 @@ To use a factory, import the desired creator function and call it in your test f
 ### Example: UserProfile
 
 ```typescript
-import { createValidUserProfile } from '@/tests/test-data/user-data-factory';
+import { createUserProfile } from '@/tests/test-data/user-data-factory';
 
 it('should create a user with a custom username', () => {
-  const user = createValidUserProfile({ username: 'testuser' });
+  const user = createUserProfile({ username: 'testuser' });
   expect(user.username).toBe('testuser');
 });
 ```
