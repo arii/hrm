@@ -60,7 +60,7 @@ export const FEET_TO_INCHES = 12
  */
 export const feetAndInchesToCm = (feet: number, inches: number): number => {
   const totalInches = feet * FEET_TO_INCHES + inches
-  return totalInches * INCH_TO_CM
+  return Math.round(totalInches * INCH_TO_CM)
 }
 
 /**

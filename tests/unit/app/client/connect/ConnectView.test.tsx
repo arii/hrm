@@ -81,4 +81,39 @@ describe('ConnectView', () => {
     const weightInputMetric = screen.getByLabelText('Your Weight (kg)')
     expect(weightInputMetric).toHaveValue(70)
   })
+
+  it('switches between metric and imperial units and preserves height', async () => {
+    const { rerender } = render(<ConnectView {...mockProps} />)
+
+    // Initially metric, showing cm
+    expect(screen.getByLabelText('Your Height (cm)')).toHaveValue(175)
+
+    // Switch to imperial
+    fireEvent.click(screen.getByLabelText('imperial units'))
+    rerender(<ConnectView {...mockProps} unitSystem="IMPERIAL" />)
+
+    // Check for feet and inches
+    await waitFor(() => {
+      expect(screen.getByLabelText('Feet')).toHaveValue(5)
+      expect(screen.getByLabelText('Inches')).toHaveValue(9)
+    })
+
+    // Change height in imperial
+    fireEvent.change(screen.getByLabelText('Feet'), { target: { value: '6' } })
+    fireEvent.change(screen.getByLabelText('Inches'), {
+      target: { value: '0' },
+    })
+
+    await waitFor(() => {
+      // 6 feet is ~183 cm
+      expect(mockProps.setUserHeight).toHaveBeenCalledWith(183)
+    })
+
+    // Switch back to metric
+    fireEvent.click(screen.getByLabelText('metric units'))
+    rerender(<ConnectView {...mockProps} unitSystem="METRIC" userHeight={183} />)
+
+    // Check if cm value is updated
+    expect(screen.getByLabelText('Your Height (cm)')).toHaveValue(183)
+  })
 })

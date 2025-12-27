@@ -14,3 +14,13 @@ export const validate = (
   }
   return null
 }
+
+export const isNumeric = (
+  value: string,
+  options?: { allowFloat?: boolean }
+): boolean => {
+  if (options?.allowFloat) {
+    return /^\d*\.?\d*$/.test(value)
+  }
+  return /^\d*$/.test(value)
+}

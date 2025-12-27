@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { Gender } from '../../../types'
 import { cmToFeetAndInches, feetAndInchesToCm } from '../../../utils/units'
+import { isNumeric } from '../../../utils/validation'
 
 interface AppSettingsProps {
   userName: string
@@ -65,6 +66,11 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
       return { feet: 0, inches: 0 }
     }, [userHeight, unit])
 
+    // This effect is necessary to synchronize the local state (feet, inches)
+    // with the props (userHeight) when the unit system is imperial.
+    // While this can cause cascading renders, it is a valid use case for
+    // controlled components that need to manage internal state for display.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
       if (unit === 'IMPERIAL') {
         setFeet(String(imperialHeight.feet))
@@ -124,7 +130,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
           type="number"
           value={userAge}
           onChange={(e) => {
-            if (/^\d*$/.test(e.target.value)) {
+            if (isNumeric(e.target.value)) {
               setUserAge(e.target.value)
             }
           }}
@@ -140,7 +146,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
           type="number"
           value={userWeight}
           onChange={(e) => {
-            if (/^\d*\.?\d{0,2}$/.test(e.target.value)) {
+            if (isNumeric(e.target.value, { allowFloat: true })) {
               setUserWeight(e.target.value)
             }
           }}
@@ -156,7 +162,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
             type="number"
             value={userHeight}
             onChange={(e) => {
-              if (/^\d*\.?\d*$/.test(e.target.value)) {
+              if (isNumeric(e.target.value, { allowFloat: true })) {
                 setUserHeight(Number(e.target.value))
               }
             }}
@@ -173,7 +179,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
               type="number"
               value={feet}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
+                if (isNumeric(e.target.value)) {
                   setFeet(e.target.value)
                 }
               }}
@@ -188,7 +194,7 @@ const AppSettings: React.FC<AppSettingsProps> = React.memo(
               type="number"
               value={inches}
               onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
+                if (isNumeric(e.target.value)) {
                   setInches(e.target.value)
                 }
               }}
