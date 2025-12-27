@@ -21,5 +21,3 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: node
-          # The config file specifies the path to the changelog, which has been moved to the docs/ directory.
-          config-file: release-please-config.json

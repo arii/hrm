@@ -13,60 +13,32 @@ jobs:
       contents: write # Required to push changes back to the PR
       pull-requests: write # Required for gh pr comment
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Setup Environment
+        id: setup
+        uses: ./.github/actions/setup-env
         with:
           ref: ${{ github.head_ref }}
-
-      - name: Install GitHub CLI
-        run: |
-          mkdir -p $HOME/.local/bin
-          # Download GitHub CLI binary
-          GH_VERSION=2.63.0
-          curl -L https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz -o gh.tar.gz
-          tar xvf gh.tar.gz
-          # Move binary to local bin
-          mv gh_${GH_VERSION}_linux_amd64/bin/gh $HOME/.local/bin/
-          # Add to PATH for this and future steps
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        id: install_deps
-        run: pnpm install --frozen-lockfile
         continue-on-error: true
 
       - name: Comment on Install Failure
-        if: steps.install_deps.outcome == 'failure'
+        if: steps.setup.outcome == 'failure'
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body "## 🚨 Auto-Fix Failed
-
           The \`pnpm install --frozen-lockfile\` command failed. This likely means your \`pnpm-lock.yaml\` file is out of sync with your \`package.json\`.
-
           **Action Required:** Please run \`pnpm install\` locally on your branch, commit the updated \`pnpm-lock.yaml\` file, and push the changes."
           exit 1
 
       - name: Run Intelligent Fixes
-        if: steps.install_deps.outcome == 'success'
+        if: steps.setup.outcome == 'success'
         # Uses your existing scripts from package.json
         run: |
           pnpm run format
           pnpm run lint -- --fix
 
       - name: Commit and Push Changes
-        if: steps.install_deps.outcome == 'success'
+        if: steps.setup.outcome == 'success'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style: auto-fix linting and formatting issues'
