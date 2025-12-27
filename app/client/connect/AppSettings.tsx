@@ -34,191 +34,197 @@ interface AppSettingsProps {
   setGender: (gender: Gender) => void
 }
 
-const AppSettings: React.FC<AppSettingsProps> = ({
-  userName,
-  setUserName,
-  userAge,
-  setUserAge,
-  onAgeBlur,
-  ageError,
-  userWeight,
-  setUserWeight,
-  onWeightBlur,
-  weightError,
-  userHeight,
-  setUserHeight,
-  onHeightBlur,
-  heightError,
-  unit,
-  setUnit,
-  gender,
-  setGender,
-}) => {
-  // Internal state for imperial height units
-  const [feet, setFeet] = useState('')
-  const [inches, setInches] = useState('')
+// Using React.memo to prevent re-renders when the props haven't changed.
+// This is particularly useful here because the parent component, ConnectView,
+// has a lot of state that can change frequently (e.g., workout timer, HR data),
+// and we want to avoid re-rendering the settings form unnecessarily.
+const AppSettings: React.FC<AppSettingsProps> = React.memo(
+  ({
+    userName,
+    setUserName,
+    userAge,
+    setUserAge,
+    onAgeBlur,
+    ageError,
+    userWeight,
+    setUserWeight,
+    onWeightBlur,
+    weightError,
+    userHeight,
+    setUserHeight,
+    onHeightBlur,
+    heightError,
+    unit,
+    setUnit,
+    gender,
+    setGender,
+  }) => {
+    // Internal state for imperial height units
+    const [feet, setFeet] = useState('')
+    const [inches, setInches] = useState('')
 
-  // Memoize the imperial height conversion to avoid re-calculating on every render
-  const imperialHeight = useMemo(() => {
-    if (unit === 'IMPERIAL' && userHeight > 0) {
-      return cmToFeetAndInches(userHeight)
-    }
-    return { feet: 0, inches: 0 }
-  }, [userHeight, unit])
-
-  // When the memoized imperialHeight value changes, update the internal state
-  useEffect(() => {
-    if (unit === 'IMPERIAL') {
-      setFeet(String(imperialHeight.feet))
-      setInches(String(imperialHeight.inches))
-    }
-  }, [imperialHeight, unit])
-
-  // When the internal feet or inches state changes, update the parent's userHeight state (in cm).
-  useEffect(() => {
-    if (unit === 'IMPERIAL') {
-      const heightInCm = feetAndInchesToCm(
-        parseInt(feet, 10) || 0,
-        parseInt(inches, 10) || 0
-      )
-      if (heightInCm !== userHeight) {
-        setUserHeight(heightInCm)
+    // When the userHeight prop (in cm) or the unit system changes,
+    // update the internal feet/inches state for display.
+    useEffect(() => {
+      if (unit === 'IMPERIAL' && userHeight > 0) {
+        const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
+        setFeet(String(ft))
+        setInches(String(inch))
       }
-    }
-  }, [feet, inches, unit, setUserHeight, userHeight])
+    }, [userHeight, unit])
 
-  return (
-    <Stack spacing={2} sx={{ mb: 3 }}>
-      <ToggleButtonGroup
-        value={unit}
-        exclusive
-        onChange={(_, newUnit) => {
-          if (newUnit) {
-            setUnit(newUnit)
-          }
-        }}
-        aria-label="Unit system"
-        aria-describedby="unit-system-description"
-      >
-        <span
-          id="unit-system-description"
-          style={{
-            clip: 'rect(0 0 0 0)',
-            position: 'absolute',
-          }}
-        >
-          Currently selected unit system is {unit}.
-        </span>
-        <ToggleButton value="IMPERIAL" aria-label="imperial units">
-          Imperial (lbs, ft, in)
-        </ToggleButton>
-        <ToggleButton value="METRIC" aria-label="metric units">
-          Metric (kg, cm)
-        </ToggleButton>
-      </ToggleButtonGroup>
-      <TextField
-        fullWidth
-        label="Your Name"
-        placeholder="e.g., Jane Doe"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
-      />
-      <TextField
-        fullWidth
-        label="Your Age"
-        placeholder="e.g., 30"
-        type="number"
-        value={userAge}
-        onChange={(e) => {
-          if (/^\d*$/.test(e.target.value)) {
-            setUserAge(e.target.value)
-          }
-        }}
-        onBlur={onAgeBlur}
-        error={!!ageError}
-        helperText={ageError}
-        inputProps={{ min: 1, max: 120 }}
-      />
-      <TextField
-        fullWidth
-        label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
-        placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
-        type="number"
-        value={userWeight}
-        onChange={(e) => {
-          if (/^\d*\.?\d{0,2}$/.test(e.target.value)) {
-            setUserWeight(e.target.value)
-          }
-        }}
-        onBlur={onWeightBlur}
-        error={!!weightError}
-        helperText={weightError}
-      />
-      {unit === 'METRIC' ? (
-        <TextField
-          fullWidth
-          label="Your Height (cm)"
-          placeholder="e.g., 175"
-          type="number"
-          value={userHeight}
-          onChange={(e) => {
-            if (/^\d*\.?\d*$/.test(e.target.value)) {
-              setUserHeight(Number(e.target.value))
+    // When the internal feet or inches state changes, update the
+    // parent's userHeight state (in cm).
+    useEffect(() => {
+      if (unit === 'IMPERIAL') {
+        const heightInCm = feetAndInchesToCm(
+          parseInt(feet, 10) || 0,
+          parseInt(inches, 10) || 0
+        )
+        // Only call setUserHeight if the value has actually changed to prevent infinite loops
+        if (heightInCm !== userHeight) {
+          setUserHeight(heightInCm)
+        }
+      }
+    }, [feet, inches, unit, setUserHeight, userHeight])
+
+    return (
+      <Stack spacing={2} sx={{ mb: 3 }}>
+        <ToggleButtonGroup
+          value={unit}
+          exclusive
+          onChange={(_, newUnit) => {
+            if (newUnit) {
+              setUnit(newUnit)
             }
           }}
-          onBlur={onHeightBlur}
-          error={!!heightError}
-          helperText={heightError}
-        />
-      ) : (
-        <Stack direction="row" spacing={2}>
-          <TextField
-            fullWidth
-            label="Feet"
-            placeholder="e.g., 5"
-            type="number"
-            value={feet}
-            onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setFeet(e.target.value)
-              }
+          aria-label="Unit system"
+          aria-describedby="unit-system-description"
+        >
+          <span
+            id="unit-system-description"
+            style={{
+              clip: 'rect(0 0 0 0)',
+              position: 'absolute',
             }}
-            onBlur={onHeightBlur}
-            error={!!heightError}
-            helperText={heightError ? ' ' : ''} // Reserve space for the helper text
-          />
+          >
+            Currently selected unit system is {unit}.
+          </span>
+          <ToggleButton value="IMPERIAL" aria-label="imperial units">
+            Imperial (lbs, ft, in)
+          </ToggleButton>
+          <ToggleButton value="METRIC" aria-label="metric units">
+            Metric (kg, cm)
+          </ToggleButton>
+        </ToggleButtonGroup>
+        <TextField
+          fullWidth
+          label="Your Name"
+          placeholder="e.g., Jane Doe"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+        />
+        <TextField
+          fullWidth
+          label="Your Age"
+          placeholder="e.g., 30"
+          type="number"
+          value={userAge}
+          onChange={(e) => {
+            if (/^\d*$/.test(e.target.value)) {
+              setUserAge(e.target.value)
+            }
+          }}
+          onBlur={onAgeBlur}
+          error={!!ageError}
+          helperText={ageError}
+          inputProps={{ min: 1, max: 120 }}
+        />
+        <TextField
+          fullWidth
+          label={`Your Weight (${unit === 'METRIC' ? 'kg' : 'lbs'})`}
+          placeholder={unit === 'METRIC' ? 'e.g., 70' : 'e.g., 154'}
+          type="number"
+          value={userWeight}
+          onChange={(e) => {
+            if (/^\d*\.?\d{0,2}$/.test(e.target.value)) {
+              setUserWeight(e.target.value)
+            }
+          }}
+          onBlur={onWeightBlur}
+          error={!!weightError}
+          helperText={weightError}
+        />
+        {unit === 'METRIC' ? (
           <TextField
             fullWidth
-            label="Inches"
-            placeholder="e.g., 9"
+            label="Your Height (cm)"
+            placeholder="e.g., 175"
             type="number"
-            value={inches}
+            value={userHeight}
             onChange={(e) => {
-              if (/^\d*$/.test(e.target.value)) {
-                setInches(e.target.value)
+              if (/^\d*\.?\d*$/.test(e.target.value)) {
+                setUserHeight(Number(e.target.value))
               }
             }}
             onBlur={onHeightBlur}
             error={!!heightError}
             helperText={heightError}
           />
-        </Stack>
-      )}
-      <FormControl component="fieldset">
-        <FormLabel component="legend">Gender</FormLabel>
-        <RadioGroup
-          row
-          aria-label="gender"
-          name="gender"
-          value={gender}
-          onChange={(e) => setGender(e.target.value as Gender)}
-        >
-          <FormControlLabel value="MALE" control={<Radio />} label="Male" />
-          <FormControlLabel value="FEMALE" control={<Radio />} label="Female" />
-        </RadioGroup>
-      </FormControl>
-    </Stack>
-  )
-}
+        ) : (
+          <Stack direction="row" spacing={2}>
+            <TextField
+              fullWidth
+              label="Feet"
+              placeholder="e.g., 5"
+              type="number"
+              value={feet}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setFeet(e.target.value)
+                }
+              }}
+              onBlur={onHeightBlur}
+              error={!!heightError}
+              helperText={heightError ? ' ' : ''} // Reserve space for the helper text
+            />
+            <TextField
+              fullWidth
+              label="Inches"
+              placeholder="e.g., 9"
+              type="number"
+              value={inches}
+              onChange={(e) => {
+                if (/^\d*$/.test(e.target.value)) {
+                  setInches(e.target.value)
+                }
+              }}
+              onBlur={onHeightBlur}
+              error={!!heightError}
+              helperText={heightError}
+            />
+          </Stack>
+        )}
+        <FormControl component="fieldset">
+          <FormLabel component="legend">Gender</FormLabel>
+          <RadioGroup
+            row
+            aria-label="gender"
+            name="gender"
+            value={gender}
+            onChange={(e) => setGender(e.target.value as Gender)}
+          >
+            <FormControlLabel value="MALE" control={<Radio />} label="Male" />
+            <FormControlLabel
+              value="FEMALE"
+              control={<Radio />}
+              label="Female"
+            />
+          </RadioGroup>
+        </FormControl>
+      </Stack>
+    )
+  }
+)
 
 export default AppSettings

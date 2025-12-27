@@ -75,4 +75,17 @@ describe('ConnectView', () => {
     // Should convert 160 lbs back to kg (~72.57)
     expect(mockProps.setUserWeight).toHaveBeenCalledWith('72.57')
   })
+
+  it('converts weight correctly when switching from imperial to metric', () => {
+    const { rerender } = render(
+      <ConnectView {...mockProps} unitSystem="IMPERIAL" />
+    )
+    const weightInput = screen.getByLabelText('Your Weight (lbs)')
+    expect(weightInput).toHaveValue(154.3)
+
+    // Swith to metric
+    rerender(<ConnectView {...mockProps} unitSystem="METRIC" />)
+    const weightInputMetric = screen.getByLabelText('Your Weight (kg)')
+    expect(weightInputMetric).toHaveValue(70)
+  })
 })

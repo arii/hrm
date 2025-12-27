@@ -16,11 +16,7 @@ import WorkoutSummary from './WorkoutSummary'
 import AppSettings from './AppSettings'
 import React, { useState, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
-import {
-  cmToFeetAndInches,
-  kgToLbs,
-  lbsToKg,
-} from '../../../utils/units'
+import { cmToFeetAndInches, kgToLbs, lbsToKg } from '../../../utils/units'
 import { validate } from '../../../utils/validation'
 
 // Props passed from the parent page component
