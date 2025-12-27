@@ -9,7 +9,6 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg } from '../../../utils/units'
-import DeviceSelectionModal from './DeviceSelectionModal'
 
 export default function ConnectPage() {
   const [userName, setUserName] = useLocalStorage('hrm-user-name', '')
@@ -26,7 +25,6 @@ export default function ConnectPage() {
   )
 
   const [displayWeight, setDisplayWeight] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleWeightChange = (newDisplayValue: string) => {
     setDisplayWeight(newDisplayValue)
@@ -42,11 +40,7 @@ export default function ConnectPage() {
 
   const {
     connectedDevices,
-    discoveredDevices,
-    isScanning,
-    startScan,
-    stopScan,
-    selectDeviceToConnect,
+    connectNewDevice,
     disconnectDevice,
     forgetDevice,
     isSupported,
@@ -58,16 +52,6 @@ export default function ConnectPage() {
     if (newUnit && newUnit !== unitSystem) {
       setUnitSystem(newUnit)
     }
-  }
-
-  const handleConnectClick = () => {
-    startScan();
-    setIsModalOpen(true);
-  }
-
-  const handleModalClose = () => {
-    stopScan();
-    setIsModalOpen(false);
   }
 
   const isConnected = Object.values(connectedDevices).some(d => d.status.startsWith('Connected'))
@@ -89,44 +73,33 @@ export default function ConnectPage() {
   })
 
   return (
-    <>
-      <ConnectView
-        duration={formatDuration(workoutDuration)}
-        caloriesBurned={caloriesBurned}
-        userName={userName}
-        setUserName={setUserName}
-        userAge={userAge}
-        setUserAge={setUserAge}
-        userHeight={userHeight}
-        setUserHeight={setUserHeight}
-        userWeight={displayWeight}
-        setUserWeight={handleWeightChange}
-        onWeightBlur={handleWeightBlur}
-        gender={gender}
-        setGender={setGender}
-        unitSystem={unitSystem}
-        onUnitChange={handleUnitChange}
-        connectedDevices={connectedDevices}
-        onConnect={handleConnectClick}
-        onDisconnect={disconnectDevice}
-        onForgetDevice={forgetDevice}
-        isSupported={isSupported}
-        connectionStatus={connectionStatus}
-        hasStarted={hasStarted}
-        onReset={resetWorkout}
-        workoutStatus={workoutStatus}
-        onStartWorkout={startWorkout}
-        onEndWorkout={endWorkout}
-      />
-      <DeviceSelectionModal
-        open={isModalOpen}
-        onClose={handleModalClose}
-        discoveredDevices={discoveredDevices}
-        onSelectDevice={(device, rssi) => {
-            selectDeviceToConnect(device, rssi);
-            handleModalClose();
-        }}
-      />
-    </>
+    <ConnectView
+      duration={formatDuration(workoutDuration)}
+      caloriesBurned={caloriesBurned}
+      userName={userName}
+      setUserName={setUserName}
+      userAge={userAge}
+      setUserAge={setUserAge}
+      userHeight={userHeight}
+      setUserHeight={setUserHeight}
+      userWeight={displayWeight}
+      setUserWeight={handleWeightChange}
+      onWeightBlur={handleWeightBlur}
+      gender={gender}
+      setGender={setGender}
+      unitSystem={unitSystem}
+      onUnitChange={handleUnitChange}
+      connectedDevices={connectedDevices}
+      onConnect={connectNewDevice}
+      onDisconnect={disconnectDevice}
+      onForgetDevice={forgetDevice}
+      isSupported={isSupported}
+      connectionStatus={connectionStatus}
+      hasStarted={hasStarted}
+      onReset={resetWorkout}
+      workoutStatus={workoutStatus}
+      onStartWorkout={startWorkout}
+      onEndWorkout={endWorkout}
+    />
   )
 }

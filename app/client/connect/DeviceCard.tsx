@@ -54,12 +54,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onDisconnect, onForget,
             />
         )}
 
-        {device.rssi && (
-            <Typography variant="body2">
-                Signal Strength: {device.rssi} dBm
-            </Typography>
-        )}
-
         {device.batteryLevel !== undefined && (
           <Stack direction="row" alignItems="center" spacing={1} sx={{mt: 1}}>
             {getBatteryIcon(device.batteryLevel)}

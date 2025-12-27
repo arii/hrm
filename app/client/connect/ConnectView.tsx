@@ -132,7 +132,7 @@ export default function ConnectView({
     )
   }
 
-  const isConnected = Object.values(connectedDevices).length > 0;
+  const isConnected = Object.values(connectedDevices).some(d => d.status.startsWith('Connected'))
   const showUserDetails = hasStarted || isConnected
 
   return (
