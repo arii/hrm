@@ -14,7 +14,7 @@ class MockEventTarget {
   addEventListener(
     type: string,
     listener: (event: Event) => void,
-    _options?: unknown
+    _options?: boolean | AddEventListenerOptions
   ): void {
     if (!this.listeners[type]) {
       this.listeners[type] = []
@@ -25,7 +25,7 @@ class MockEventTarget {
   removeEventListener(
     type: string,
     listener: (event: Event) => void,
-    _options?: unknown
+    _options?: boolean | EventListenerOptions
   ): void {
     if (this.listeners[type]) {
       this.listeners[type] = this.listeners[type].filter((l) => l !== listener)

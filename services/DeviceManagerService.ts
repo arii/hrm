@@ -83,6 +83,7 @@ class DeviceManagerService extends EventTarget {
   private watchdogInterval: NodeJS.Timeout | null = null
   private reconnectTimeout: NodeJS.Timeout | null = null
   private isManualDisconnect: boolean = false
+  private isDisconnecting: boolean = false
   private hrCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
   private batteryCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
 
@@ -197,6 +198,9 @@ class DeviceManagerService extends EventTarget {
   public async connectToDevice(
     deviceToConnect: BluetoothDevice
   ): Promise<void> {
+    if (this.isDisconnecting) {
+      throw new Error('Device is disconnecting. Please wait.')
+    }
     this.cleanup() // Ensure clean state before connecting
     this.isManualDisconnect = false
     this.device = deviceToConnect
@@ -271,7 +275,9 @@ class DeviceManagerService extends EventTarget {
   }
 
   public disconnect(): void {
+    if (this.isDisconnecting) return
     this.isManualDisconnect = true
+    this.isDisconnecting = true
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout)
 
     if (this.device?.gatt?.connected) {
@@ -328,6 +334,7 @@ class DeviceManagerService extends EventTarget {
 
     this.device = null
     this.abortController = null
+    this.isDisconnecting = false
   }
 
   // Watchdog for stale data

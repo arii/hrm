@@ -202,7 +202,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       if (error instanceof DOMException && error.name === 'NotFoundError') {
         logger.info('User cancelled Bluetooth device selection.')
       } else {
-        logger.error({ error }, 'Failed to connect to device.')
+        logger.error(error, 'Failed to connect to device.')
       }
     }
   }, [deviceManager, wsStatus])
