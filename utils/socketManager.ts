@@ -39,6 +39,7 @@ const hrmDataRepository = new HrmDataRepository()
 // New: Maps to track the relationship between physical deviceId and ephemeral clientId
 const deviceIdToClientIdMap = new Map<string, string>()
 const clientIdToDeviceIdMap = new Map<string, string>()
+const hrmDataCleanupTimers = new Map<string, NodeJS.Timeout>()
 
 // Track internal state for calculations (not sent to client)
 const clientSessionState = new Map<
@@ -92,16 +93,26 @@ const initSocketManager = (
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       const deviceId = clientIdToDeviceIdMap.get(extWs.clientId)
       if (deviceId) {
-        deviceIdToClientIdMap.delete(deviceId)
-        clientIdToDeviceIdMap.delete(extWs.clientId)
-        // Note: We keep the HRM data in the repository so it can be reclaimed
-        // upon reconnection. Consider a TTL/cleanup mechanism for abandoned data.
-        logger.info(
+        // Schedule cleanup for this device's data
+        const cleanupTimeout = setTimeout(() => {
+          const currentClientId = deviceIdToClientIdMap.get(deviceId)
+          // Only cleanup if the device hasn't reconnected with a new session
+          if (currentClientId === extWs.clientId) {
+            hrmDataRepository.deleteById(extWs.clientId)
+            deviceIdToClientIdMap.delete(deviceId)
+            clientIdToDeviceIdMap.delete(extWs.clientId)
+            hrmDataCleanupTimers.delete(deviceId)
+            logger.info({ deviceId }, 'Cleaned up stale HRM data.')
+            broadcastState()
+          }
+        }, 5 * 60 * 1000) // 5 minutes
+        hrmDataCleanupTimers.set(deviceId, cleanupTimeout)
+
+        logger.debug(
           { clientId: extWs.clientId, deviceId },
-          'Client disconnected, but preserving HRM data for potential reconnect'
+          'Client disconnected, preserving HRM data for potential reconnect.'
         )
       } else {
-        // If there's no associated deviceId, it's safe to clean up the data.
         hrmDataRepository.deleteById(extWs.clientId)
       }
       clientSessionState.delete(extWs.clientId)
@@ -123,21 +134,11 @@ export const resetSocketManager = () => {
 }
 
 const broadcastState = () => {
-  const allHrmData = hrmDataRepository.findAll()
-  const activeClientIds = new Set(
-    Array.from(wsServerInstance.clients).map((ws) => (ws as ExtWebSocket).clientId)
-  )
-
-  const hrmDataWithStatus = allHrmData.map((data) => ({
-    ...data,
-    isConnected: activeClientIds.has(data.clientId),
-  }))
-
   broadcast(
     wsServerInstance,
     {
       type: 'HRM_UPDATE',
-      payload: hrmDataWithStatus,
+      payload: hrmDataRepository.findAll(),
     },
     'socketManager.broadcastState'
   )
@@ -195,6 +196,13 @@ const handleIncomingMessage = (
               { deviceId, oldClientId: existingClientId, newClientId: clientId },
               'Device reconnected with a new session. Migrating state.'
             )
+            // If there's a pending cleanup for this device, cancel it
+            const pendingCleanup = hrmDataCleanupTimers.get(deviceId)
+            if (pendingCleanup) {
+              clearTimeout(pendingCleanup)
+              hrmDataCleanupTimers.delete(deviceId)
+              logger.debug({ deviceId }, 'Cancelled pending HRM data cleanup.')
+            }
 
             // 1. Retrieve the old data.
             const oldData = hrmDataRepository.findById(existingClientId)
