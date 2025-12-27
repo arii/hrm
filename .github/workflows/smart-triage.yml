@@ -1,0 +1,87 @@
+name: Smart Triage
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Triage Stale Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          
+          # Find stale issues (30+ days no activity)
+          STALE=$(gh issue list --state open --search "updated:<$(date -d '30 days ago' '+%Y-%m-%d')" --json number,title,body,labels --limit 50)
+          
+          echo "$STALE" | jq -c '.[]' | while read -r issue; do
+            NUM=$(echo "$issue" | jq -r '.number')
+            BODY=$(echo "$issue" | jq -r '.body')
+            LABELS=$(echo "$issue" | jq -r '.labels[].name | @csv' | tr -d '"' | paste -sd',' -)
+            
+            echo "Processing #$NUM"
+            
+            # Add missing labels based on content
+            if ! echo "$BODY" | grep -iq "reproduce\|steps"; then
+              if ! echo "$LABELS" | grep -q "needs-info"; then
+                gh issue edit "$NUM" --add-label "needs-info" >/dev/null 2>&1
+                gh issue comment "$NUM" --body "Please provide reproduction steps for this issue." >/dev/null 2>&1
+              fi
+            fi
+            
+            if echo "$BODY" | grep -iqE "crash|broken|error"; then
+              if ! echo "$LABELS" | grep -q "bug"; then
+                gh issue edit "$NUM" --add-label "bug" >/dev/null 2>&1
+              fi
+            fi
+          done
+
+      - name: Detect Duplicates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          
+          gh issue list --state open --json number,title --limit 100 | \
+            jq -r '.[] | .title' | sort | uniq -d | while read -r title; do
+            
+            DUPS=$(gh issue list --state open --search "\"$title\"" --json number --limit 5 | jq -r '.[].number')
+            COUNT=$(echo "$DUPS" | wc -w)
+            
+            if [ "$COUNT" -gt 1 ]; then
+              FIRST=$(echo "$DUPS" | awk '{print $1}')
+              OTHERS=$(echo "$DUPS" | awk '{for(i=2;i<=NF;i++)printf "#%s,",$i}' | sed 's/,$//')
+              
+              gh issue comment "$FIRST" --body "Possible duplicates: $OTHERS" >/dev/null 2>&1
+            fi
+          done
+
+      - name: Suggest Resolution
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          
+          # Find issues with many comments that might be resolved
+          gh issue list --state open --json number,comments --limit 100 | \
+            jq -c '.[] | select(.comments | length > 5)' | while read -r issue; do
+            
+            NUM=$(echo "$issue" | jq -r '.number')
+            RECENT=$(gh issue view "$NUM" --json comments --jq '.comments[-3:] | .[].body' 2>/dev/null)
+            
+            if echo "$RECENT" | grep -iqE "fixed|resolved|merged|works"; then
+              gh issue comment "$NUM" --body "This issue may be resolved based on recent comments. Feel free to close if fixed!" >/dev/null 2>&1
+            fi
+          done
