@@ -72,6 +72,7 @@ const initSocketManager = (
       maxHr: 185,
       age: 30,
       calories: 0, // Initialize to 0
+      isConnected: true,
     }
     hrmDataRepository.save(newClient)
     clientSessionState.set(extWs.clientId, {
@@ -85,8 +86,8 @@ const initSocketManager = (
 
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
-      hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
+      hrmDataRepository.updateConnectionStatus(extWs.clientId, false)
+      // We don't delete the clientSessionState so that the calorie count can be restored on reconnect
       broadcastState()
     })
   })
@@ -129,7 +130,34 @@ const handleIncomingMessage = (
 
     switch (message.type) {
       case 'IDENTIFY_CLIENT': {
-        logger.info('IDENTIFY_CLIENT message received')
+        const oldId = clientId
+        const newId = message.clientId
+        if (oldId === newId) break
+
+        const existingData = hrmDataRepository.findById(oldId)
+        const sessionData = clientSessionState.get(oldId)
+
+        if (existingData) {
+          const reconnectedClientData: HrmStreamData = {
+            ...existingData,
+            clientId: newId,
+            isConnected: true,
+          }
+          hrmDataRepository.deleteById(oldId)
+          hrmDataRepository.save(reconnectedClientData)
+          ws.clientId = newId
+        }
+
+        if (sessionData) {
+          clientSessionState.set(newId, sessionData)
+          clientSessionState.delete(oldId)
+        }
+
+        logger.info(
+          { oldId, newId },
+          'Client identified and data re-associated'
+        )
+        broadcastState()
         break
       }
       case 'PING': {

@@ -161,8 +161,6 @@ export const MockWebSocketProvider = ({
     ...state,
     connectionStatus,
     sendData,
-    identifyClient: (clientId: string) =>
-      action('WebSocket Sent')({ type: 'IDENTIFY_CLIENT', clientId }),
     connect,
     disconnect,
   }

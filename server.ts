@@ -12,7 +12,6 @@ import { checkTimerService, checkWebSocketService } from './lib/healthCheck.js'
 import logger from './utils/logger.js'
 import rateLimit from 'express-rate-limit'
 import path from 'path'
-import { HrmDataRepository } from './lib/repositories/HrmDataRepository.js'
 
 const app = next({
   dev: env.NODE_ENV !== 'production',
@@ -113,14 +112,7 @@ app.prepare().then(async () => {
     spotifyServiceInitialized: services.isSpotifyInitialized,
   })
 
-  const hrmDataRepository = new HrmDataRepository()
-
-  initSocketManager(
-    wsManager.wss,
-    getUnifiedStateSnapshot,
-    services,
-    hrmDataRepository
-  )
+  initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {

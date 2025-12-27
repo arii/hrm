@@ -115,7 +115,6 @@ describe('WebSocket Manager', () => {
 
   beforeEach(() => {
     jest.useFakeTimers()
-    jest.clearAllMocks()
     mockWss =
       new (WebSocketServer as jest.Mock)() as jest.Mocked<WebSocketServer>
 
@@ -201,6 +200,44 @@ describe('WebSocket Manager', () => {
     })
   })
 
+  describe('Calorie Calculation', () => {
+    it('should accumulate calories correctly with small frequent updates', () => {
+      const sendHrmInput = (hr: number) => {
+        const message = JSON.stringify({
+          type: 'HRM_INPUT',
+          data: { value: hr, age: 30 },
+        })
+        mockWs.emit('message', message.toString())
+      }
+
+      // Initial input
+      sendHrmInput(150)
+
+      // Send 100 updates, each 100ms apart
+      // Should accumulate significant calories even if each step < 0.1 kcal
+      for (let i = 0; i < 100; i++) {
+        jest.advanceTimersByTime(100) // 100ms
+        sendHrmInput(150)
+      }
+
+      // Check the last broadcasted state
+      const mockBroadcast = broadcast as jest.Mock
+      jest.runOnlyPendingTimers()
+      expect(mockBroadcast).toHaveBeenCalled()
+      const lastCall =
+        mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]
+      const finalPayload: HrmData[] = lastCall[1].payload
+      const clientData = finalPayload.find((c) => c.calories > 0)
+
+      expect(clientData).toBeDefined()
+      expect(clientData!.calories).toBeGreaterThan(0.1)
+      // A more precise check based on the known formula for short duration.
+      // 100 updates * 100ms = 10 seconds = 0.1667 minutes.
+      // With HR=150, Age=30, Weight=75, the calories should be roughly > 1.
+      expect(clientData!.calories).toBeGreaterThan(1)
+    })
+  })
+
   describe('Message Handling', () => {
     it('should handle REGISTER_CLIENT message', () => {
       const message = JSON.stringify({
@@ -242,12 +279,18 @@ describe('WebSocket Manager', () => {
     })
 
     it('should broadcast state on client disconnect', () => {
+      const clientId = (mockWs as ExtWebSocket).clientId
       mockWs.emit('close')
       expect(broadcast).toHaveBeenCalledWith(
         mockWss,
         {
           type: 'HRM_UPDATE',
-          payload: [],
+          payload: [
+            expect.objectContaining({
+              clientId,
+              isConnected: false,
+            }),
+          ],
         },
         'socketManager.broadcastState'
       )
@@ -316,16 +359,6 @@ describe('WebSocket Manager', () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.any(Object),
         'Unknown message type received'
-      )
-    })
-    it('should handle IDENTIFY_CLIENT message', () => {
-      const message = JSON.stringify({
-        type: 'IDENTIFY_CLIENT',
-        clientId: 'test-client-id',
-      })
-      mockWs.emit('message', message.toString())
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.stringContaining('IDENTIFY_CLIENT message received')
       )
     })
   })

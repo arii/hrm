@@ -65,7 +65,6 @@ describe('useBluetoothHRM', () => {
     ;(useWebSocket as jest.Mock).mockReturnValue({
       sendData: mockSendData,
       connectionStatus: 'Connected',
-      identifyClient: jest.fn(),
     })
 
     mockCharacteristic = {

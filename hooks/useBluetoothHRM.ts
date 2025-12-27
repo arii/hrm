@@ -131,7 +131,7 @@ type DisconnectionReason = 'manual' | 'timeout' | 'signal_loss' | null
  */
 const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
   const { dataLivenessTimeoutMs = 10000 } = props
-  const { sendData, connectionStatus, identifyClient } = useWebSocket()
+  const { sendData, connectionStatus } = useWebSocket()
   const [deviceStatus, setDeviceStatus] = useState('Disconnected')
   const [disconnectionReason, setDisconnectionReason] =
     useState<DisconnectionReason>(null)
@@ -358,20 +358,25 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
 
         device.addEventListener('gattserverdisconnected', onDisconnected)
 
-        identifyClient(device.id)
-
         setDeviceStatus(`Connected to: ${device.name}`)
         setSavedDevice(device)
         setCookie('hrm_device_id', device.id)
         isManualDisconnect.current = false
         setDisconnectionReason(null)
+
+        // After successful connection, identify the client with the stable device ID
+        sendData({
+          type: 'IDENTIFY_CLIENT',
+          clientId: device.id,
+        })
+
         return true
       } catch (error) {
         logger.error({ error, device: device.name }, 'GATT Connection failed')
         throw error
       }
     },
-    [onDisconnected, sendData, identifyClient]
+    [onDisconnected, sendData]
   )
 
   useEffect(() => {
