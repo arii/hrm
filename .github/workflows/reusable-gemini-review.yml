@@ -43,22 +43,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          # Get PR metadata
-          PR_DATA=$(gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
+          # Get PR metadata with timeout
+          PR_DATA=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
           
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
           echo "PR_DESCRIPTION=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
           
-          # Get labels
-          LABELS=$(echo "$PR_DATA" | jq -r '.labels[].name' | tr '\n' ',' | sed 's/,$//')
+          # Get labels - simplified with jq
+          LABELS=$(echo "$PR_DATA" | jq -r '[.labels[].name] | join(",")')
           echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
           
-          # Count reviews using separate command
-          REVIEW_COUNT=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length')
-          CHANGES_REQUESTED=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
-          RESOLVED_COUNT=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length')
+          # Count reviews using separate command with timeout
+          REVIEW_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length')
+          CHANGES_REQUESTED=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          RESOLVED_COUNT=$(timeout 60 gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length')
           echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
           echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
           echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
@@ -111,6 +111,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ -f "review_result.json" ]; then
+            echo "Review result file found, processing..."
+            
             jq -r '.reviewComment // empty' review_result.json > review_comment.txt
             COMMENT_SIZE=$(wc -c < review_comment.txt)
             
@@ -119,8 +121,14 @@ jobs:
               # Use --body-file to prevent command line length issues
               gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             else
-              echo "No review comment in result"
+              echo "⚠️ No review comment found in result"
+              echo "Debug info:"
+              echo "--- Full review_result.json content ---"
+              cat review_result.json | jq '.' || echo "Failed to parse JSON"
+              echo "--- End of review_result.json ---"
             fi
           else
-            echo "review_result.json not found"
+            echo "❌ review_result.json not found. Review generation may have failed."
+            echo "Debug info:"
+            ls -la | grep -E "review|result" || echo "No review-related files found"
           fi

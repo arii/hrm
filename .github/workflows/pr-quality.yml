@@ -237,12 +237,33 @@ jobs:
             CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
             SEVEN_GB=$((7 * 1024 * 1024 * 1024))
             
-            echo "Cache size: $CACHE_SIZE"
+            echo "📊 Playwright cache size: $CACHE_SIZE"
             
             if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
-              echo "Cache exceeds 7GB threshold, pruning oldest files..."
-              # Remove playwright cache and let it be regenerated on next run
-              rm -rf "$CACHE_DIR"
-              echo "Playwright cache pruned to stay under 10GB limit"
+              echo "⚠️ Cache exceeds 7GB threshold ($((CACHE_SIZE_BYTES / 1024 / 1024 / 1024))GB), pruning..."
+              
+              # List cache structure before cleanup
+              echo "Cache structure before cleanup:"
+              du -sh "$CACHE_DIR"/* 2>/dev/null | sort -rh | head -10
+              
+              # Remove oldest chromium versions, keeping only latest
+              echo "Removing older browser versions..."
+              find "$CACHE_DIR" -type d -name "chromium-*" | sort -V | head -n -1 | while read dir; do
+                DIR_SIZE=$(du -sh "$dir" | cut -f1)
+                echo "  Removing $dir (${DIR_SIZE})"
+                rm -rf "$dir"
+              done
+              
+              # If still over threshold, remove entire cache
+              CACHE_SIZE_BYTES=$(du -sb "$CACHE_DIR" | cut -f1)
+              if [ "$CACHE_SIZE_BYTES" -gt "$SEVEN_GB" ]; then
+                echo "Still over 7GB after version cleanup, removing entire cache..."
+                rm -rf "$CACHE_DIR"
+              fi
+              
+              FINAL_SIZE=$(du -sh "$CACHE_DIR" 2>/dev/null | cut -f1)
+              echo "✅ Cache pruned. Final size: ${FINAL_SIZE:-0MB} (under 10GB limit)"
+            else
+              echo "✅ Cache within limits (under 7GB)"
             fi
           fi
