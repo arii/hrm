@@ -191,6 +191,19 @@ jobs:
             pnpm exec playwright install chromium
           fi
 
+      - name: Build Server
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
+        run: |
+          # Only rebuild if dist doesn't exist
+          if [ ! -d "dist" ] || [ ! -f "dist/server.js" ]; then
+            echo "Building server..."
+            pnpm run build:server
+          else
+            echo "Server already built, skipping build step"
+          fi
+
       - name: Run Infra Tests
         id: infra-tests
         run: pnpm run test:infra 2>&1 | tee infra-tests.log || true
