@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
 import Container from '@mui/material/Container'
 import Stack from '@mui/material/Stack'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull'
 import BatteryFullIcon from '@mui/icons-material/BatteryFull'
@@ -27,22 +26,6 @@ import {
   Radio,
 } from '@mui/material'
 
-const WEIGHT_VALIDATION = {
-  IMPERIAL: { min: 66, max: 440 }, // lbs
-  METRIC: { min: 30, max: 200 }, // kg
-}
-
-const validate = (value: string, min: number, max: number, name: string) => {
-  if (!value || value.trim() === '') {
-    return null
-  }
-  const num = Number(value)
-  if (isNaN(num) || num < min || num > max) {
-    return `Please enter a valid ${name} (${min}-${max})`
-  }
-  return null
-}
-
 interface ConnectViewProps {
   duration: string
   caloriesBurned: number
@@ -51,13 +34,18 @@ interface ConnectViewProps {
   setUserName: (name: string) => void
   userAge: string
   setUserAge: (age: string) => void
-  userHeight: number
-  setUserHeight: (height: number) => void
+  onAgeBlur: () => void
+  ageError: string | null
+  userHeight: { cm: string; feet: string; inches: string }
+  setUserHeight: (
+    height: Partial<{ cm: string; feet: string; inches: string }>
+  ) => void
   onHeightBlur: () => void
   heightError: string | null
   userWeight: string
   setUserWeight: (weight: string) => void
   onWeightBlur: () => void
+  weightError: string | null
   gender: Gender
   setGender: React.Dispatch<React.SetStateAction<Gender>>
   unitSystem: MeasurementSystem
@@ -88,6 +76,8 @@ export default function ConnectView({
   setUserName,
   userAge,
   setUserAge,
+  onAgeBlur,
+  ageError,
   userHeight,
   setUserHeight,
   onHeightBlur,
@@ -95,6 +85,7 @@ export default function ConnectView({
   userWeight,
   setUserWeight,
   onWeightBlur,
+  weightError,
   gender,
   setGender,
   unitSystem,
@@ -117,10 +108,6 @@ export default function ConnectView({
   onEndWorkout,
 }: ConnectViewProps) {
   const [isResetting, setIsResetting] = useState(false)
-  const [ageError, setAgeError] = useState<string | null>(null)
-  const [weightError, setWeightError] = useState<string | null>(null)
-
-  const weightValidationRange = WEIGHT_VALIDATION[unitSystem]
 
   const getBatteryIcon = (level: number) => {
     if (level > 90) return <BatteryFullIcon color="success" />
@@ -184,79 +171,26 @@ export default function ConnectView({
                 Metric (kg)
               </ToggleButton>
             </ToggleButtonGroup>
-            <TextField
-              fullWidth
-              label="Your Name"
-              placeholder="e.g., Jane Doe"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Your Age"
-              placeholder="e.g., 30"
-              type="number"
-              value={userAge}
-              onChange={(e) => {
-                if (/^\d*$/.test(e.target.value)) {
-                  setUserAge(e.target.value)
-                }
-              }}
-              onBlur={(e) => {
-                setAgeError(validate(e.target.value, 1, 120, 'age'))
-              }}
-              error={!!ageError}
-              helperText={ageError}
-              inputProps={{ min: 1, max: 120, 'aria-invalid': !!ageError }}
-            />
+
             <UserSettings
               userName={userName}
               setUserName={setUserName}
               userAge={userAge}
               setUserAge={setUserAge}
+              onAgeBlur={onAgeBlur}
+              ageError={ageError}
               userHeight={userHeight}
               setUserHeight={setUserHeight}
+              onHeightBlur={onHeightBlur}
+              heightError={heightError}
               userWeight={userWeight}
               setUserWeight={setUserWeight}
+              onWeightBlur={onWeightBlur}
+              weightError={weightError}
               unit={unitSystem}
               setUnit={onUnitChange}
-              ageError={ageError}
-              heightError={heightError}
-              weightError={weightError}
-              validateAge={(value) => {
-                setAgeError(validate(value, 1, 120, 'age'))
-              }}
-              validateHeight={onHeightBlur}
-              validateWeight={onWeightBlur}
             />
-            <TextField
-              fullWidth
-              label={`Your Weight (${
-                unitSystem === 'IMPERIAL' ? 'lbs' : 'kg'
-              })`}
-              placeholder={unitSystem === 'IMPERIAL' ? 'e.g., 150' : 'e.g., 70'}
-              type="number"
-              value={userWeight}
-              onChange={(e) => {
-                setUserWeight(e.target.value)
-                setWeightError(
-                  validate(
-                    e.target.value,
-                    weightValidationRange.min,
-                    weightValidationRange.max,
-                    'weight'
-                  )
-                )
-              }}
-              onBlur={onWeightBlur}
-              error={!!weightError}
-              helperText={weightError}
-              inputProps={{
-                min: weightValidationRange.min,
-                max: weightValidationRange.max,
-                'aria-invalid': !!weightError,
-              }}
-            />
+
             <FormControl component="fieldset">
               <FormLabel component="legend">Gender</FormLabel>
               <RadioGroup

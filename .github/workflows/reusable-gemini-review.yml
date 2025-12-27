@@ -60,19 +60,21 @@ jobs:
           # Use proper GitHub Actions multiline format for environment variables
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           
-          # For values that may contain special characters, use EOF delimiter
+          # For values that may contain special characters, use unique delimiter
+          DELIMITER="PRCONTEXT_EOF_$(date +%s%N | sha256sum | head -c 32)"
           {
-            echo "PR_TITLE<<EOF"
+            echo "PR_TITLE<<$DELIMITER"
             echo "${{ github.event.pull_request.title }}"
-            echo "EOF"
+            echo "$DELIMITER"
           } >> $GITHUB_ENV
           
           echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
           
+          DELIMITER="PRCONTEXT_EOF_$(date +%s%N | sha256sum | head -c 32)"
           {
-            echo "PR_DESCRIPTION<<EOF"
+            echo "PR_DESCRIPTION<<$DELIMITER"
             echo "${{ github.event.pull_request.body }}"
-            echo "EOF"
+            echo "$DELIMITER"
           } >> $GITHUB_ENV
           
           # Get labels - simplified with jq
