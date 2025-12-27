@@ -338,7 +338,10 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
             try {
               metadataData.deviceId = device.id
             } catch (e) {
-              logger.warn({ error: e }, 'Could not retrieve deviceId from Bluetooth device.')
+              logger.warn(
+                { error: e },
+                'Could not retrieve deviceId from Bluetooth device.'
+              )
             }
             if (typeof age === 'number') {
               metadataData.age = age
