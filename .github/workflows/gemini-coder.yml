@@ -235,10 +235,11 @@ jobs:
           fi
           
           # Extract diff from markdown code block if present
+          # Handles variations: ```diff, ``` diff, ```
           if head -1 patch.diff | grep -q "^\`\`\`"; then
             echo "::notice::Detected markdown code block, extracting diff..."
-            # Extract content between ```diff and ``` markers
-            sed -n '/^```diff/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
+            # Extract content between ``` (optionally followed by diff/language) and closing ```
+            sed -n '/^```.*$/,/^```$/p' patch.diff | sed '1d;$d' > patch.diff.tmp
             if [ -s patch.diff.tmp ]; then
               mv patch.diff.tmp patch.diff
               echo "::notice::Extracted diff from markdown code block"
@@ -288,7 +289,8 @@ jobs:
           echo "::notice::✅ Patch validation passed. Applying patch..."
           git config user.name "AI Agent"
           git config user.email "ai@agent.local"
-          git checkout -b "$BRANCH"
+          # Create branch, or checkout if it already exists
+          git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
           if ! git apply patch.diff; then
             echo "::error::Failed to apply patch. This should not happen after validation passed."
             exit 1
@@ -314,7 +316,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.ARI_PAT }}
-          commit-message: "feat(ai): ${{ env.PROMPT | toLower }}"
+          commit-message: "feat(ai): ${{ env.TITLE }}"
           title: ${{ env.TITLE }}
           body: |
             Automated pull request created by the Gemini Coder agent.
