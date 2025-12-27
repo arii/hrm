@@ -199,6 +199,20 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
       logger.error(msg)
       return
     }
+
+    // Try to reconnect to last known device first
+    if (lastDeviceId) {
+      try {
+        const device = await getPreviouslyConnectedDevice(lastDeviceId)
+        if (device) {
+          await deviceManager.connectToDevice(device)
+          return
+        }
+      } catch {
+        // Fallback to picker if silent reconnection fails
+      }
+    }
+
     try {
       await deviceManager.findAndConnect()
     } catch (error) {
@@ -211,7 +225,7 @@ export const useBluetoothHRM = (props: UseBluetoothHRMProps) => {
         logger.error(error as any, 'Failed to connect to device.')
       }
     }
-  }, [deviceManager, wsStatus])
+  }, [deviceManager, wsStatus, lastDeviceId])
 
   const disconnect = useCallback(() => {
     setDeviceStatus('Disconnecting...')
