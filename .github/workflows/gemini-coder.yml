@@ -261,18 +261,27 @@ jobs:
             exit 1
           fi
           
-          echo "::notice::✅ Patch format valid. Validating patch can be applied..."
+          echo "::notice::✅ Patch validation passed. Validating patch can be applied..."
           
           # Check if patch can be applied cleanly without actually applying it
           if ! git apply --check patch.diff 2>&1; then
             APPLY_ERROR=$(git apply --check patch.diff 2>&1)
             echo "::error::Patch cannot be applied cleanly."
-            echo "::notice::Git apply check failed with:"
+            echo "::notice::Git apply validation failed:"
             echo "$APPLY_ERROR" | sed 's/^/::notice::  /'
-            echo "::notice::Common causes:"
-            echo "::notice::  - Files referenced in the patch don't exist in the repository"
-            echo "::notice::  - The patch targets incorrect file paths"
-            echo "::notice::  - There are conflicts with the current codebase"
+            echo ""
+            echo "::notice::Debugging information:"
+            echo "::notice::Files in patch:"
+            grep "^--- a/" patch.diff | sed 's/^--- a\///;s/^/::notice::  /' || echo "::notice::  (unable to extract file list)"
+            echo ""
+            echo "::notice::Common causes and solutions:"
+            echo "::notice::  1. File content has changed - Run gemini-coder again with fresh context"
+            echo "::notice::  2. Line numbers are off - Check if README.md was recently modified"
+            echo "::notice::  3. Whitespace issues - The patch may have different line endings"
+            echo ""
+            echo "::notice::To debug locally, try:"
+            echo "::notice::  git apply --reject patch.diff  # Shows which hunks fail"
+            echo "::notice::  git diff README.md  # Compare current state with patch"
             exit 1
           fi
           
