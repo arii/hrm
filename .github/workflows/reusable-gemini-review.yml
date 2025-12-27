@@ -32,7 +32,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
+          timeout 60 gh pr diff ${{ github.event.pull_request.number }} --patch > pr.diff
           if [ ! -s pr.diff ]; then
             echo "Error: Unable to generate PR diff"
             exit 1
@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ secrets.ARI_PAT }}
         run: |
           # Get PR metadata
-          PR_DATA=$(gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels,reviews,comments)
+          PR_DATA=$(gh pr view ${{ github.event.pull_request.number }} --json number,title,author,body,labels)
           
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
@@ -55,10 +55,10 @@ jobs:
           LABELS=$(echo "$PR_DATA" | jq -r '.labels[].name' | tr '\n' ',' | sed 's/,$//')
           echo "PR_LABELS=$LABELS" >> $GITHUB_ENV
           
-          # Count reviews and changes requested
-          REVIEW_COUNT=$(echo "$PR_DATA" | jq '[.reviews[]] | length')
-          CHANGES_REQUESTED=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
-          RESOLVED_COUNT=$(echo "$PR_DATA" | jq '[.reviews[] | select(.state == "COMMENTED")] | length')
+          # Count reviews using separate command
+          REVIEW_COUNT=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[]] | length')
+          CHANGES_REQUESTED=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          RESOLVED_COUNT=$(gh pr view ${{ github.event.pull_request.number }} --json reviews --jq '[.reviews[] | select(.state == "COMMENTED")] | length')
           echo "REVIEW_COUNT=$REVIEW_COUNT" >> $GITHUB_ENV
           echo "CHANGES_REQUESTED=$CHANGES_REQUESTED" >> $GITHUB_ENV
           echo "RESOLVED_COUNT=$RESOLVED_COUNT" >> $GITHUB_ENV
@@ -111,10 +111,13 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ -f "review_result.json" ]; then
-            REVIEW_COMMENT=$(jq -r '.reviewComment // empty' review_result.json)
-            if [ -n "$REVIEW_COMMENT" ]; then
-              echo "Posting review comment to PR #$PR_NUMBER"
-              gh pr comment "$PR_NUMBER" --body "$REVIEW_COMMENT"
+            jq -r '.reviewComment // empty' review_result.json > review_comment.txt
+            COMMENT_SIZE=$(wc -c < review_comment.txt)
+            
+            if [ "$COMMENT_SIZE" -gt 0 ]; then
+              echo "Posting review comment to PR #$PR_NUMBER (${COMMENT_SIZE} bytes)"
+              # Use --body-file to prevent command line length issues
+              gh pr comment "$PR_NUMBER" --body-file review_comment.txt
             else
               echo "No review comment in result"
             fi
