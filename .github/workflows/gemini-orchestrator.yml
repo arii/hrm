@@ -46,7 +46,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup-env
       - name: Run Gemini Client
-        run: pnpm tsx scripts/gemini-client.ts --command "${{ github.event.inputs.command }}"
+        run: pnpm tsx scripts/gemini-client.ts --preset "${{ github.event.inputs.command }}"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
