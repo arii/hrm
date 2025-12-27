@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -58,25 +58,29 @@ const AppSettings: React.FC<AppSettingsProps> = ({
   const [feet, setFeet] = useState('')
   const [inches, setInches] = useState('')
 
-  // This effect synchronizes the internal feet/inches state with the userHeight prop (in cm)
-  // when the unit system is imperial. This is a one-way sync from props to local state.
-  useEffect(() => {
+  // Memoize the imperial height conversion to avoid re-calculating on every render
+  const imperialHeight = useMemo(() => {
     if (unit === 'IMPERIAL' && userHeight > 0) {
-      const { feet: ft, inches: inch } = cmToFeetAndInches(userHeight)
-      setFeet(String(ft))
-      setInches(String(inch))
+      return cmToFeetAndInches(userHeight)
     }
+    return { feet: 0, inches: 0 }
   }, [userHeight, unit])
 
-  // This effect synchronizes the parent's userHeight state (in cm) with the internal
-  // feet/inches state. This is a one-way sync from local state to props.
+  // When the memoized imperialHeight value changes, update the internal state
+  useEffect(() => {
+    if (unit === 'IMPERIAL') {
+      setFeet(String(imperialHeight.feet))
+      setInches(String(imperialHeight.inches))
+    }
+  }, [imperialHeight, unit])
+
+  // When the internal feet or inches state changes, update the parent's userHeight state (in cm).
   useEffect(() => {
     if (unit === 'IMPERIAL') {
       const heightInCm = feetAndInchesToCm(
         parseInt(feet, 10) || 0,
         parseInt(inches, 10) || 0
       )
-      // Only call setUserHeight if the value has actually changed to prevent infinite loops
       if (heightInCm !== userHeight) {
         setUserHeight(heightInCm)
       }

@@ -18,7 +18,6 @@ import React, { useState, useEffect } from 'react'
 import { MeasurementSystem, Gender } from '../../../types'
 import {
   cmToFeetAndInches,
-  feetAndInchesToCm,
   kgToLbs,
   lbsToKg,
 } from '../../../utils/units'
