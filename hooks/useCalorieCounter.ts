@@ -4,7 +4,8 @@ import { estimateCaloriesBurned } from '../lib/calorie-estimation'
 
 /**
  * A hook to calculate and manage calories burned during a workout.
- * It accumulates calories every second based on the current heart rate, age, and weight.
+ * It accumulates calories using a delta-time approach to ensure accuracy
+ * and prevent drift over time.
  *
  * @param heartRate - The current heart rate in beats per minute (BPM).
  * @param age - The user's age in years.
@@ -21,35 +22,45 @@ export const useCalorieCounter = (
   isActive: boolean
 ): { calories: number; resetCalories: () => void } => {
   const [calories, setCalories] = useState(0)
-  const latestHeartRate = useRef(heartRate)
-
-  useEffect(() => {
-    latestHeartRate.current = heartRate
-  }, [heartRate])
+  const lastTickRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!isActive) {
+      lastTickRef.current = null
       return
     }
 
-    const interval = setInterval(() => {
-      if (latestHeartRate.current > 0) {
-        const caloriesPerSecond = estimateCaloriesBurned({
-          heartRate: latestHeartRate.current,
-          age,
-          weightKg: weight,
-          durationMinutes: 1 / 60, // Calculate for one second
-        })
-        setCalories((prevCalories) => prevCalories + caloriesPerSecond)
-      }
-    }, 1000)
+    // Initialize the baseline time when activation starts
+    lastTickRef.current = Date.now()
 
+    const tick = () => {
+      const now = Date.now()
+      if (lastTickRef.current) {
+        const deltaSeconds = (now - lastTickRef.current) / 1000
+        if (heartRate > 0) {
+          const caloriesBurned = estimateCaloriesBurned({
+            heartRate,
+            age,
+            weightKg: weight,
+            durationMinutes: deltaSeconds / 60,
+          })
+          setCalories((prev) => prev + caloriesBurned)
+        }
+      }
+      lastTickRef.current = now
+    }
+
+    const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
-  }, [isActive, age, weight])
+  }, [isActive, heartRate, age, weight])
 
   const resetCalories = useCallback(() => {
     setCalories(0)
+    lastTickRef.current = null
   }, [])
 
-  return useMemo(() => ({ calories, resetCalories }), [calories, resetCalories])
+  return useMemo(
+    () => ({ calories, resetCalories }),
+    [calories, resetCalories]
+  )
 }
