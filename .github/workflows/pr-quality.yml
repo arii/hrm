@@ -146,6 +146,9 @@ jobs:
         run: pnpm run lint
 
       - name: Verify Build
+        env:
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: build-verification-secret-do-not-use-in-production
         run: pnpm run build
 
   # ===========================================================================
