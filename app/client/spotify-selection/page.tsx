@@ -31,9 +31,7 @@ const SpotifySelectionPage = () => {
   }
 
   const handlePlaylistPlay = (uri: string) => {
-    const activeDevice = spotifyData.devices?.find(
-      (device) => device.is_active
-    )
+    const activeDevice = spotifyData.devices?.find((device) => device.is_active)
     if (activeDevice) {
       sendData({
         type: 'SPOTIFY_COMMAND',
