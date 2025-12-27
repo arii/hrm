@@ -12,7 +12,9 @@ jest.mock('../../../lib/calorie-estimation', () => ({
 
 describe('useCalorieCounter', () => {
   beforeEach(() => {
+    // Enable fake timers and ensure Date is also mocked
     jest.useFakeTimers()
+    jest.setSystemTime(new Date('2023-01-01T00:00:00Z'))
   })
 
   afterEach(() => {
@@ -29,12 +31,14 @@ describe('useCalorieCounter', () => {
       jest.advanceTimersByTime(1000)
     })
 
+    // After 1 second, we should have 1 calorie (1 call to estimate * 1 returned)
     expect(result.current.calories).toBe(1)
 
     act(() => {
       jest.advanceTimersByTime(2000)
     })
 
+    // After 2 more seconds, total 3 calories
     expect(result.current.calories).toBe(3)
   })
 
