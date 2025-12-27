@@ -72,6 +72,7 @@ export default function ConnectPage() {
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
+  // totalCalories is sourced from the WebSocket, which receives server-side calculated data.
   const totalCalories = currentUserData?.calories ?? 0
   const maxHr = userAge ? 220 - parseInt(userAge) : 190
   const hrZoneProps = getHrZoneProps(currentHR, maxHr)
