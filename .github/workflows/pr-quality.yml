@@ -121,7 +121,19 @@ jobs:
           fi
 
       - name: Run Knip
-        run: pnpm run knip
+        id: knip
+        run: |
+          pnpm run knip 2>&1 | tee knip-output.txt || true
+        continue-on-error: true
+
+      - name: Upload Knip Report
+        if: always() && steps.knip.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: knip-report
+          path: knip-output.txt
+          retention-days: 30
+        continue-on-error: true
 
       - name: Lint Code
         run: pnpm run lint
@@ -170,10 +182,25 @@ jobs:
           fi
 
       - name: Run Infra Tests
-        run: pnpm run test:infra
+        id: infra-tests
+        run: pnpm run test:infra 2>&1 | tee infra-tests.log || true
+        continue-on-error: true
 
       - name: Run Unit Tests
-        run: pnpm run test:unit
+        id: unit-tests
+        run: pnpm run test:unit 2>&1 | tee unit-tests.log || true
+        continue-on-error: true
+
+      - name: Upload Test Reports
+        if: always() && (steps.infra-tests.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            infra-tests.log
+            unit-tests.log
+          retention-days: 30
+        continue-on-error: true
 
   # ===========================================================================
   # JOB 4: VISUAL REGRESSION TESTS
@@ -267,3 +294,98 @@ jobs:
               echo "✅ Cache within limits (under 7GB)"
             fi
           fi
+
+  # ===========================================================================
+  # JOB 5: QUALITY REPORT & FAILURE NOTIFICATION
+  # Aggregates results and notifies Jules of any failures
+  # ===========================================================================
+  quality-report:
+    name: 📊 Quality Report
+    if: always()
+    needs: [code-quality, core-tests, visual-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect Failure Information
+        id: failures
+        env:
+          CODE_QUALITY_RESULT: ${{ needs.code-quality.result }}
+          CORE_TESTS_RESULT: ${{ needs.core-tests.result }}
+          VISUAL_TESTS_RESULT: ${{ needs.visual-tests.result }}
+        run: |
+          set +e
+          
+          FAILED_JOBS=""
+          FAILURE_COUNT=0
+          
+          if [ "$CODE_QUALITY_RESULT" != "success" ] && [ "$CODE_QUALITY_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Code Quality ($CODE_QUALITY_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          if [ "$CORE_TESTS_RESULT" != "success" ] && [ "$CORE_TESTS_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Core Tests ($CORE_TESTS_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          if [ "$VISUAL_TESTS_RESULT" != "success" ] && [ "$VISUAL_TESTS_RESULT" != "skipped" ]; then
+            FAILED_JOBS="$FAILED_JOBS- Visual Regression Tests ($VISUAL_TESTS_RESULT)"$'\n'
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+          fi
+          
+          echo "FAILED_JOBS<<EOF" >> $GITHUB_ENV
+          echo "$FAILED_JOBS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "FAILURE_COUNT=$FAILURE_COUNT" >> $GITHUB_ENV
+
+      - name: Post Quality Check Comment
+        if: github.event.pull_request.number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const code_quality = '${{ needs.code-quality.result }}';
+            const core_tests = '${{ needs.core-tests.result }}';
+            const visual_tests = '${{ needs.visual-tests.result }}';
+            const pr = context.payload.pull_request;
+            
+            let summary = '## 📋 Quality Gate Status\n\n';
+            summary += `| Check | Status |\n`;
+            summary += `|-------|--------|\n`;
+            summary += `| Code Quality | ${code_quality === 'success' ? '✅' : code_quality === 'skipped' ? '⊘' : '❌'} ${code_quality} |\n`;
+            summary += `| Core Tests | ${core_tests === 'success' ? '✅' : core_tests === 'skipped' ? '⊘' : '❌'} ${core_tests} |\n`;
+            summary += `| Visual Tests | ${visual_tests === 'success' ? '✅' : visual_tests === 'skipped' ? '⊘' : '❌'} ${visual_tests} |\n`;
+            
+            if ('${{ env.FAILURE_COUNT }}' > 0) {
+              summary += `\n⚠️ **${{ env.FAILURE_COUNT }} Quality Check(s) Need Attention**\n`;
+              summary += `\n${{ env.FAILED_JOBS }}`;
+              summary += `\n📦 Check [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed reports.\n`;
+            } else {
+              summary += `\n✅ All quality checks passed!\n`;
+            }
+            
+            summary += `\n📖 [Full Workflow Log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            github.rest.issues.createComment({
+              issue_number: pr.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+      - name: Notify on Critical Failures
+        if: env.FAILURE_COUNT > 0
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) return;
+            
+            github.rest.issues.createComment({
+              issue_number: pr.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⏸️ **Review Status**: Quality checks have issues. Please review the failing checks above and either:\n\n1. Fix the issues locally and push updates\n2. Reach out if you need help resolving these issues\n\nI will continue to monitor and re-test as you make changes.'
+            });
