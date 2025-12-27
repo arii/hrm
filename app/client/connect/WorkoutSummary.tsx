@@ -15,7 +15,11 @@ interface WorkoutSummaryProps {
 }
 
 const WorkoutSummary = memo(
-  ({ duration, caloriesBurned, totalCalories }: WorkoutSummaryProps) => {
+  function WorkoutSummary({
+    duration,
+    caloriesBurned,
+    totalCalories,
+  }: WorkoutSummaryProps) {
     const { hasStarted } = useWorkoutSession({
       isConnected: true,
       totalCalories,
@@ -55,7 +59,7 @@ const WorkoutSummary = memo(
             <Stack spacing={1} alignItems="center">
               <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
               <Typography variant="h5" component="p" fontWeight="bold">
-                {hasStarted ? caloriesBurned : totalCalories}
+                {(hasStarted ? caloriesBurned : totalCalories).toFixed(1)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {hasStarted ? 'Workout Calories' : 'Total Calories'}
