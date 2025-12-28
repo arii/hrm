@@ -9,58 +9,17 @@ import {
   useRef,
   useState,
   useReducer,
+  useMemo,
 } from 'react'
-import {
-  ClientCommandMessage,
-  SpotifyData,
-  TimerData,
-  ServerMessage,
-  ActiveAlert,
-} from '../types/websocket'
+import { ClientCommandMessage, ServerMessage } from '../types/websocket'
 import { HrmStreamData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
+import { reducer, INITIAL_STATE, WebSocketState } from './webSocketReducer'
 
 // Client-side extension of HrmData to include connection status
 export interface HrmData extends ServerHrmData {
   isConnected: boolean
 }
-
-interface WebSocketState {
-  hrmData: HrmData[]
-  timerData: TimerData
-  spotifyData: SpotifyData
-  activeAlerts: ActiveAlert[]
-  spotifyServiceInitialized?: boolean
-}
-
-const INITIAL_STATE: WebSocketState = {
-  hrmData: [],
-  timerData: {
-    isRunning: false,
-    currentPhase: 'IDLE',
-    timeRemaining: 0,
-    timeElapsed: 0,
-    caloriesBurned: 0,
-    mode: 'TABATA',
-    workDuration: 30,
-    restDuration: 10,
-    soundEventId: 0,
-  },
-  spotifyData: {
-    trackId: null,
-    trackName: 'Awaiting Login...',
-    artist: '',
-    albumName: '',
-    albumArtUrl: '',
-    isPlaying: false,
-    devices: [],
-    volume: 70,
-    isMuted: false,
-  },
-  activeAlerts: [],
-  spotifyServiceInitialized: true,
-}
-
 export interface WebSocketContextType extends WebSocketState {
   connectionStatus: string
   sendData: (data: ClientCommandMessage) => void
@@ -77,7 +36,34 @@ export const WebSocketProvider = ({
   children: ReactNode
   serverUrl?: string
 }) => {
-  const wsUrl = serverUrl || getWebSocketURL()
+  const [clientId] = useState(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    let id = localStorage.getItem('clientId')
+    if (!id) {
+      // Simple and effective client-side ID generation
+      id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      localStorage.setItem('clientId', id)
+    }
+    return id
+  })
+
+  // Memoize the WebSocket URL to prevent re-computation on every render
+  const wsUrl = useMemo(() => {
+    const url = serverUrl || getWebSocketURL()
+    if (!clientId) return url // Return base URL if clientId isn't generated yet (SSR)
+
+    try {
+      const urlObject = new URL(url)
+      urlObject.searchParams.set('clientId', clientId)
+      return urlObject.toString()
+    } catch (error) {
+      console.error('Invalid WebSocket URL:', url)
+      return url // Fallback to the original URL on error
+    }
+  }, [serverUrl, clientId])
+
   const [connectionStatus, setConnectionStatus] = useState('Connecting...')
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttempts = useRef(0)
@@ -90,87 +76,6 @@ export const WebSocketProvider = ({
   const MAX_RECONNECT_ATTEMPTS = 10
   const INITIAL_RECONNECT_DELAY = 1000 // 1 second
   const JITTER_FACTOR = 0.2 // 20% jitter
-
-  // Unified State Object managed by a reducer
-  const reducer = (
-    state: WebSocketState,
-    message: ServerMessage | { type: 'RESET_STATE' }
-  ): WebSocketState => {
-    switch (message.type) {
-      case 'RESET_STATE':
-        return INITIAL_STATE
-      case 'INITIAL_STATE': {
-        // When the initial state is loaded, ensure all HRM data is marked as connected.
-        const hrmDataWithConnection =
-          message.payload.hrmData?.map((d) => ({ ...d, isConnected: true })) ||
-          []
-        return {
-          ...state,
-          ...message.payload,
-          hrmData: hrmDataWithConnection,
-        }
-      }
-      case 'HRM_UPDATE': {
-        const payload = message.payload as ServerHrmData[]
-        // Create a map of incoming clientIds for efficient lookup
-        const incomingClients = new Set(payload.map((user) => user.clientId))
-
-        // Create a new state array by merging existing and new data
-        const mergedHrmData = state.hrmData.map((existingUser) => {
-          if (incomingClients.has(existingUser.clientId)) {
-            const updatedUser = payload.find(
-              (newUser) => newUser.clientId === existingUser.clientId
-            )
-            // CRITICAL FIX: The order of spread operators is essential.
-            // By spreading existingUser first, then updatedUser, we ensure
-            // that any fields NOT present in the (potentially partial) `updatedUser`
-            // payload are preserved from the existing state.
-            return updatedUser
-              ? {
-                  ...existingUser,
-                  ...updatedUser,
-                  isConnected: true,
-                }
-              : { ...existingUser, isConnected: true }
-          }
-          return { ...existingUser, isConnected: false }
-        })
-
-        // Add any brand-new users from the payload who were not in the previous state
-        payload.forEach((newUser) => {
-          if (
-            !state.hrmData.some(
-              (existingUser) => existingUser.clientId === newUser.clientId
-            )
-          ) {
-            mergedHrmData.push({ ...newUser, isConnected: true })
-          }
-        })
-
-        return { ...state, hrmData: mergedHrmData }
-      }
-      case 'TIMER_UPDATE':
-        return {
-          ...state,
-          timerData: { ...state.timerData, ...message.payload },
-        }
-      case 'SPOTIFY_UPDATE':
-        return {
-          ...state,
-          spotifyData: { ...state.spotifyData, ...message.payload },
-        }
-      case 'ACTIVE_ALERTS_UPDATE':
-        return { ...state, activeAlerts: message.payload }
-      case 'SPOTIFY_SERVICE_INIT_UPDATE':
-        return { ...state, spotifyServiceInitialized: message.payload }
-      case 'EXECUTE_SPOTIFY':
-        // This message type is handled by useSpotifyRemoteExecution hook
-        // We don't need to update state here, just pass it through
-        return state
-      default:
-        return state
-    }
-  }
 
   const [appState, dispatch] = useReducer(reducer, INITIAL_STATE)
 
@@ -211,12 +116,6 @@ export const WebSocketProvider = ({
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'PING' }))
 
-        // The pong timeout is set to 15 seconds. This is a tripling of the
-        // original 5-second timeout and provides a more generous buffer for
-        // temporary network latency or server-side processing delays. This value
-        // was chosen to be significantly longer than a typical network round-trip
-        // time, but not so long that a genuinely stale connection would persist
-        // for an excessive period.
         pongTimeoutRef.current = setTimeout(() => {
           console.warn(
             '[WebSocketProvider] Pong not received in time. Connection may be stale. Forcing reconnect.'
@@ -230,12 +129,14 @@ export const WebSocketProvider = ({
   const connect = useCallback(() => {
     if (
       typeof window === 'undefined' ||
-      wsRef.current?.readyState === WebSocket.OPEN
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      !wsUrl // Do not connect if the URL is not ready
     ) {
       return
     }
 
     shouldReconnect.current = true
+    console.log(`[WebSocketProvider] Connecting to ${wsUrl}`)
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
@@ -243,18 +144,13 @@ export const WebSocketProvider = ({
       console.log('[WebSocketProvider] Connected to server')
       setConnectionStatus('Connected')
 
-      // Set test flag for Playwright tests - use a more reliable method
       if (typeof window !== 'undefined') {
         window.__TEST_WEBSOCKET_READY__ = true
       }
 
-      // Explicitly request initial state from the server
       ws.send(JSON.stringify({ type: 'GET_STATE' }))
 
       if (pendingActions.current.length > 0) {
-        console.log(
-          `[useWebSocket] Sending ${pendingActions.current.length} pending actions.`
-        )
         pendingActions.current.forEach((action) => {
           ws.send(JSON.stringify(action))
         })
@@ -262,15 +158,11 @@ export const WebSocketProvider = ({
         localStorage.setItem('pendingActions', '[]')
       }
 
-      // Reset reconnect attempts on successful connection
       reconnectAttempts.current = 0
-
-      // Clear any pending reconnection
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
-      // Start the client-side heartbeat
       startHeartbeat()
     }
 
@@ -286,12 +178,7 @@ export const WebSocketProvider = ({
         window.__TEST_WEBSOCKET_READY__ = false
       }
 
-      // Stop heartbeat on disconnect
       stopHeartbeat()
-
-      // To prevent the UI from flashing stale data from a previous session on
-      // reconnect, we dispatch a RESET_STATE action. This clears all
-      // session-specific data and ensures the UI starts clean.
       dispatch({ type: 'RESET_STATE' })
 
       if (shouldReconnect.current) {
@@ -302,18 +189,11 @@ export const WebSocketProvider = ({
           const jitter = delay * JITTER_FACTOR * (Math.random() - 0.5)
           const reconnectDelay = delay + jitter
 
-          console.log(
-            `[WebSocketProvider] Reconnection attempt ${reconnectAttempts.current} in ${reconnectDelay.toFixed(0)}ms`
-          )
-
           reconnectTimeoutRef.current = setTimeout(() => {
             setConnectionStatus('Reconnecting...')
             connectRef.current()
           }, reconnectDelay)
         } else {
-          console.error(
-            '[WebSocketProvider] Max reconnection attempts reached.'
-          )
           setConnectionStatus(
             'Failed to connect. Please check your connection and refresh the page.'
           )
@@ -330,17 +210,14 @@ export const WebSocketProvider = ({
       try {
         const message: ServerMessage = JSON.parse(event.data)
 
-        // Heartbeat pong check
         if (message.type === 'PONG') {
           if (pongTimeoutRef.current) {
             clearTimeout(pongTimeoutRef.current)
           }
-          return // Pong message is handled, no state dispatch needed
+          return
         }
 
-        // Handle EXECUTE_SPOTIFY messages specially - they need to be processed by useSpotifyRemoteExecution
         if (message.type === 'EXECUTE_SPOTIFY') {
-          // Dispatch a custom event that the remote execution hook can listen to
           window.dispatchEvent(
             new CustomEvent('spotify-remote-command', {
               detail: message,
@@ -349,11 +226,9 @@ export const WebSocketProvider = ({
           return
         }
 
-        // Throttle high-frequency messages
         if (message.type === 'HRM_UPDATE' || message.type === 'TIMER_UPDATE') {
           throttledDispatch(message)
         } else {
-          // Dispatch critical messages immediately
           dispatch(message)
         }
       } catch (e) {
@@ -364,16 +239,11 @@ export const WebSocketProvider = ({
 
   const disconnect = useCallback(() => {
     shouldReconnect.current = false
-    // Stop heartbeat on manual disconnect
     stopHeartbeat()
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
     }
-    if (wsRef.current) {
-      wsRef.current.close()
-    }
-    console.log('[useWebSocket] Manually disconnected.')
+    wsRef.current?.close()
   }, [stopHeartbeat])
 
   useEffect(() => {
@@ -385,26 +255,23 @@ export const WebSocketProvider = ({
     }
   }, [connect, disconnect])
 
-  const sendData = useCallback((data: ClientCommandMessage) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      const jsonStr = JSON.stringify(data)
-      console.log('[WebSocketProvider] Sending:', data)
-      ws.send(jsonStr)
-    } else {
-      console.warn(
-        '[WebSocketProvider] WebSocket not open, queueing action. State:',
-        ws?.readyState,
-        'Data:',
-        data
-      )
-      pendingActions.current.push(data)
-      localStorage.setItem(
-        'pendingActions',
-        JSON.stringify(pendingActions.current)
-      )
-    }
-  }, [])
+  const sendData = useCallback(
+    (data: ClientCommandMessage) => {
+      const ws = wsRef.current
+      const augmentedData = { ...data, clientId }
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(augmentedData))
+      } else {
+        pendingActions.current.push(augmentedData)
+        localStorage.setItem(
+          'pendingActions',
+          JSON.stringify(pendingActions.current)
+        )
+      }
+    },
+    [clientId]
+  )
 
   const contextValue = {
     ...appState,
