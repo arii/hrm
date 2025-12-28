@@ -5,15 +5,38 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import { useSession } from 'next-auth/react'
 import { useUserSettings } from '@/context/UserSettingsContext'
-import Link from 'next/link'
-import IconButton from '@mui/material/IconButton'
-import SettingsIcon from '@mui/icons-material/Settings'
 import useBluetoothHRM from '@/hooks/useBluetoothHRM'
 import { useWebSocket } from '@/context/WebSocketContext'
 import { CONNECT_HR_MONITOR_TITLE } from '@/utils/constants'
 import ConnectHRMonitorButton from './ConnectHRMonitorButton'
 import HRMonitorStatusIndicator from './HRMonitorStatusIndicator'
 import HrTileWithCalories from './HrTileWithCalories'
+import { HrmData, ActiveAlert } from '@/types/websocket'
+
+const getDisplayTileData = (
+  hrmData: HrmData[],
+  activeAlerts: ActiveAlert[]
+) => {
+  const user = hrmData.find((user) => {
+    const isPlaceholderName = !!user.name && /new user/i.test(user.name)
+    const hasNoIdentity = user.name == null
+    return !(isPlaceholderName || hasNoIdentity) && user.isConnected
+  })
+
+  if (!user) return null
+
+  const matchingAlert = activeAlerts.find(
+    (alert) =>
+      alert.clientId === user.clientId &&
+      (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
+  )
+
+  return {
+    ...user,
+    isAlerting: !!matchingAlert,
+    alertMessage: matchingAlert?.message,
+  }
+}
 
 const HrmConnectionPanel = () => {
   const { data: session } = useSession()
@@ -35,8 +58,6 @@ const HrmConnectionPanel = () => {
       session?.user?.name || userSettings.userName || 'Unknown User'
     const userAge = userSettings.userAge || 30
     connectAndStream(userName, userAge).catch((error) => {
-      // It's common for the requestDevice promise to be cancelled by the user.
-      // We catch it here to prevent an unhandled rejection error in the console.
       if (error.name !== 'NotFoundError') {
         console.error('Failed to connect to HRM device:', error)
       }
@@ -44,7 +65,6 @@ const HrmConnectionPanel = () => {
   }, [session, userSettings, connectAndStream])
 
   useEffect(() => {
-    // Auto-connect logic: Use `getDevices()` for gesture-less reconnection.
     const autoConnect = async () => {
       if (
         connectionStatus === 'Connected' &&
@@ -68,29 +88,10 @@ const HrmConnectionPanel = () => {
     userSettings,
   ])
 
-  const tileData = useMemo(() => {
-    const user = hrmData.find((user) => {
-      const isPlaceholderName = !!user.name && /new user/i.test(user.name)
-      const hasNoIdentity = user.name == null
-      return !(isPlaceholderName || hasNoIdentity) && user.isConnected
-    })
-
-    if (!user) return []
-
-    const matchingAlert = activeAlerts.find(
-      (alert) =>
-        alert.clientId === user.clientId &&
-        (alert.code === 'BAD_PLACEMENT' || alert.code === 'HRM_STALE')
-    )
-
-    return [
-      {
-        ...user,
-        isAlerting: !!matchingAlert,
-        alertMessage: matchingAlert?.message,
-      },
-    ]
-  }, [hrmData, activeAlerts])
+  const tileData = useMemo(
+    () => getDisplayTileData(hrmData, activeAlerts),
+    [hrmData, activeAlerts]
+  )
 
   return (
     <Box
@@ -125,11 +126,6 @@ const HrmConnectionPanel = () => {
           }}
         >
           <Typography variant="h6">{CONNECT_HR_MONITOR_TITLE}</Typography>
-          <Link href="/client/connect" passHref>
-            <IconButton aria-label="settings" disabled>
-              <SettingsIcon />
-            </IconButton>
-          </Link>
         </Box>
         <HRMonitorStatusIndicator
           deviceStatus={deviceStatus}
@@ -147,13 +143,13 @@ const HrmConnectionPanel = () => {
         sx={{
           width: {
             xs: '100%',
-            sm: 'calc(50% - 8px)', // Adjusted for 16px gap (gap: 2)
+            sm: 'calc(50% - 8px)',
           },
         }}
       >
         <HrTileWithCalories
           user={
-            tileData[0] || {
+            tileData || {
               name:
                 session?.user?.name ||
                 userSettings.userName ||
