@@ -32,7 +32,7 @@ const HrTile = ({
   name,
   bpm,
   percentMax,
-  calories = 0, // Default to 0 to prevent NaN
+  totalCalories: calories = 0, // Default to 0 to prevent NaN
   isConnected = true, // Default to connected
   isAlerting = false,
   alertMessage = 'Checking signal...',
@@ -174,7 +174,7 @@ const arePropsEqual = (prevProps: HrTileProps, nextProps: HrTileProps) => {
     prevProps.name === nextProps.name &&
     prevProps.bpm === nextProps.bpm &&
     prevProps.percentMax === nextProps.percentMax &&
-    prevProps.calories === nextProps.calories &&
+    prevProps.totalCalories === nextProps.totalCalories &&
     prevProps.isConnected === nextProps.isConnected &&
     prevProps.isAlerting === nextProps.isAlerting &&
     prevProps.alertMessage === nextProps.alertMessage

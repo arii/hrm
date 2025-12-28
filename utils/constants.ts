@@ -64,6 +64,12 @@ export const CALORIE_DEFAULTS = {
   JOULE_CONVERSION: 4.184,
 }
 
+// The interval at which calorie calculations are performed, in milliseconds.
+export const CALORIE_UPDATE_INTERVAL_MS = 15000
+
+// The maximum time gap (in minutes) between HR samples before assuming a new session.
+export const CALORIE_MAX_GAP_MINUTES = 5
+
 // Server Constants
 export const DEFAULT_PORT = 3000
 export const DEFAULT_HOST_PRODUCTION = '0.0.0.0'

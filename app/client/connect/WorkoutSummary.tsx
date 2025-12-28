@@ -7,10 +7,10 @@ import WhatshotIcon from '@mui/icons-material/Whatshot'
 
 interface WorkoutSummaryProps {
   duration: string
-  caloriesBurned: number
+  sessionCalories: number
 }
 
-const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
+const WorkoutSummary = ({ duration, sessionCalories }: WorkoutSummaryProps) => {
   return (
     <Paper
       elevation={3}
@@ -45,10 +45,10 @@ const WorkoutSummary = ({ duration, caloriesBurned }: WorkoutSummaryProps) => {
           <Stack spacing={1} alignItems="center">
             <WhatshotIcon color="error" sx={{ fontSize: 30 }} />
             <Typography variant="h5" component="p" fontWeight="bold">
-              {caloriesBurned}
+              {sessionCalories}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Calories Burned
+              Session Calories
             </Typography>
           </Stack>
         </Box>

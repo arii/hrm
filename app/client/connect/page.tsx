@@ -9,7 +9,6 @@ import ConnectView from './ConnectView'
 import { useWorkoutSession } from '@/hooks/useWorkoutSession'
 import { MeasurementSystem } from '../../../types'
 import { toKg, toDisplay } from '../../../utils/units'
-import { useCalorieCounter } from '@/hooks/useCalorieCounter'
 import { useHrZone } from '@/hooks/useHrZone'
 import { useHeightInput } from '@/hooks/useHeightInput'
 import { validateAgeValue, validateWeightValue } from './validation'
@@ -102,13 +101,14 @@ export default function ConnectPage() {
 
   const currentUserData = hrmData.find((d) => d.name === userName)
   const currentHR = currentUserData?.value || 0
-  const totalCalories = currentUserData?.calories ?? 0
+  const totalCalories = currentUserData?.totalCalories ?? 0
   const maxHr = userAge ? 220 - parseFloat(userAge) : 190
   const hrZoneProps = useHrZone(currentHR, maxHr)
 
   const {
     workoutDuration,
-    resetWorkout: resetWorkoutSession,
+    caloriesBurned: sessionCalories,
+    resetWorkout,
     hasStarted,
     startWorkout,
     endWorkout,
@@ -118,22 +118,10 @@ export default function ConnectPage() {
     totalCalories,
   })
 
-  const { calories, resetCalories } = useCalorieCounter(
-    currentHR,
-    parseFloat(userAge) || 30,
-    parseFloat(_weightInKg) || 70,
-    workoutStatus === 'running'
-  )
-
-  const resetWorkout = () => {
-    resetWorkoutSession()
-    resetCalories()
-  }
-
   return (
     <ConnectView
       duration={formatDuration(workoutDuration)}
-      caloriesBurned={calories}
+      sessionCalories={sessionCalories}
       userName={userName}
       setUserName={setUserName}
       userAge={userAge}

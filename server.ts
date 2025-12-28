@@ -5,6 +5,7 @@ import next from 'next'
 import { env } from './lib/env.js' // New import
 import { AppServices, createServices } from './lib/services.js' // New import
 import { WebSocketManager } from './lib/websocket.js' // New import
+import { HrmDataRepository } from './lib/repositories/HrmDataRepository.js'
 import { initSocketManager } from './utils/socketManager.js'
 import { StateSnapshot } from './types/websocket.js'
 import { Socket } from 'net'
@@ -105,8 +106,10 @@ app.prepare().then(async () => {
   const wsManager = new WebSocketManager()
 
   // 2. Setup Services with Broadcaster
+  const hrmDataRepository = new HrmDataRepository()
   const services: AppServices = await createServices(
-    wsManager.createBroadcaster()
+    wsManager.createBroadcaster(),
+    hrmDataRepository
   )
 
   // 3. Initialize Socket Logic (Controllers)
@@ -116,7 +119,7 @@ app.prepare().then(async () => {
     spotifyServiceInitialized: services.isSpotifyInitialized,
   })
 
-  initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services)
+  initSocketManager(wsManager.wss, getUnifiedStateSnapshot, services, hrmDataRepository)
 
   // 4. Routes
   expressApp.get('/api/health', (_req, res) => {
@@ -168,5 +171,15 @@ app.prepare().then(async () => {
 
   server.listen(env.PORT, () => {
     logger.info(`> Ready on http://${env.HOST}:${env.PORT}`)
+  })
+
+  // Graceful Shutdown
+  process.on('SIGINT', () => {
+    logger.info('SIGINT signal received: closing HTTP server')
+    services.calorieService.stop()
+    server.close(() => {
+      logger.info('HTTP server closed')
+      process.exit(0)
+    })
   })
 })

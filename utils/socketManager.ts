@@ -3,7 +3,7 @@
  * WebSocket Manager (Typed): Handles client connections, routes commands, and broadcasts state.
  */
 import { WebSocket, Server as WebSocketServer } from 'ws'
-import { z } from 'zod' // Import z from zod
+import { z } from 'zod'
 import {
   ClientCommandMessageSchema,
   ClientRegistrationMessage,
@@ -14,32 +14,26 @@ import {
   StateSnapshot,
   ExtWebSocket,
 } from '../types/websocket.js'
-import { HrmStreamData } from '../types/core.js'
-import { CALORIE_DEFAULTS } from './constants.js' // Ensure this import exists
+import { HrmData } from '../types/core.js'
 import {
   broadcast,
   sendWebSocketMessage,
   ConnectionMonitor,
 } from './websocketUtils.js'
 import logger from './logger.js'
-import { estimateCaloriesBurned } from '../lib/calorie-estimation.js'
+import {
+  initializeClientSession,
+  recordHeartRateSample,
+  terminateClientSession,
+} from '../services/calorieService.js'
 import { HrmDataRepository } from '../lib/repositories/HrmDataRepository.js'
 import { AppServices } from '../lib/services.js'
 
-// Define service instances to be managed
-// New: Define a function to get the state snapshot
 let getUnifiedStateSnapshot: () => StateSnapshot
-// Store WebSocket server reference for command relay
 let wsServerInstance: WebSocketServer
 let connectionMonitor: ConnectionMonitor
 let services: AppServices
-
-const hrmDataRepository = new HrmDataRepository()
-// Track internal state for calculations (not sent to client)
-const clientSessionState = new Map<
-  string,
-  { lastUpdate: number; accumulatedCalories: number }
->()
+let hrmDataRepository: HrmDataRepository
 
 /**
  * Initializes the WebSocket Server manager and registers the core services.
@@ -47,11 +41,13 @@ const clientSessionState = new Map<
 const initSocketManager = (
   wss: WebSocketServer,
   getSnapshot: () => StateSnapshot,
-  svcs: AppServices
+  svcs: AppServices,
+  repo: HrmDataRepository
 ) => {
   wsServerInstance = wss
   getUnifiedStateSnapshot = getSnapshot
   services = svcs
+  hrmDataRepository = repo
   connectionMonitor = new ConnectionMonitor(wss)
   connectionMonitor.start()
 
@@ -65,19 +61,16 @@ const initSocketManager = (
     extWs.clientId = `user-${Math.random().toString(36).substring(2, 9)}`
     logger.info({ clientId: extWs.clientId }, 'WebSocket client connected')
 
-    // Initialize new client
-    const newClient: HrmStreamData = {
+    const newClient: HrmData = {
       clientId: extWs.clientId,
       value: 0,
       maxHr: 185,
       age: 30,
-      calories: 0, // Initialize to 0
+      totalCalories: 0,
+      isConnected: true,
     }
     hrmDataRepository.save(newClient)
-    clientSessionState.set(extWs.clientId, {
-      lastUpdate: Date.now(),
-      accumulatedCalories: 0,
-    })
+    initializeClientSession(extWs.clientId)
 
     extWs.on('message', (message) => {
       handleIncomingMessage(extWs, message.toString(), extWs.clientId)
@@ -86,7 +79,7 @@ const initSocketManager = (
     extWs.on('close', () => {
       logger.info({ clientId: extWs.clientId }, 'WebSocket client disconnected')
       hrmDataRepository.deleteById(extWs.clientId)
-      clientSessionState.delete(extWs.clientId)
+      terminateClientSession(extWs.clientId)
       broadcastState()
     })
   })
@@ -101,7 +94,6 @@ const initSocketManager = (
  */
 export const resetSocketManager = () => {
   hrmDataRepository.clear()
-  clientSessionState.clear()
 }
 
 const broadcastState = () => {
@@ -156,48 +148,18 @@ const handleIncomingMessage = (
         break
       }
       case 'HRM_METADATA_UPDATE': {
-        const existingData = hrmDataRepository.findById(clientId)
-        if (existingData) {
-          const updateData: Partial<HrmStreamData> = Object.fromEntries(
-            Object.entries(message.data).filter(([_, value]) => value !== null)
-          )
-          hrmDataRepository.save({ ...existingData, ...updateData })
-        }
+        const updateData: Partial<HrmData> = Object.fromEntries(
+          Object.entries(message.data).filter(([_, value]) => value !== null)
+        )
+        hrmDataRepository.update(clientId, updateData)
         broadcastState()
         break
       }
       case 'HRM_INPUT': {
-        const existingData = hrmDataRepository.findById(clientId)
-        const sessionState = clientSessionState.get(clientId)
-
-        if (existingData && sessionState) {
-          const now = Date.now()
-          const dtMinutes = (now - sessionState.lastUpdate) / 1000 / 60
-          sessionState.lastUpdate = now
-
-          let currentAccumulated = sessionState.accumulatedCalories
-          const currentHr = message.data.value ?? existingData.value
-          const currentAge = existingData.age ?? 30
-
-          if (currentHr > 30 && dtMinutes > 0 && dtMinutes < 5) {
-            const caloriesBurned = estimateCaloriesBurned({
-              heartRate: currentHr,
-              age: currentAge,
-              weightKg: CALORIE_DEFAULTS.WEIGHT_KG,
-              durationMinutes: dtMinutes,
-            })
-            currentAccumulated += caloriesBurned
-          }
-
-          // Update the internal state with high precision value
-          sessionState.accumulatedCalories = currentAccumulated
-
-          // ONLY update the value and calories
-          hrmDataRepository.save({
-            ...existingData,
-            value: message.data.value ?? existingData.value,
-            calories: Math.round(currentAccumulated * 10) / 10,
-          })
+        const hrValue = message.data.value
+        if (hrValue !== null && hrValue !== undefined) {
+          recordHeartRateSample(clientId, hrValue)
+          hrmDataRepository.update(clientId, { value: hrValue })
         }
         broadcastState()
         break

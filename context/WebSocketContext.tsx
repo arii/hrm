@@ -17,7 +17,7 @@ import {
   ServerMessage,
   ActiveAlert,
 } from '../types/websocket'
-import { HrmStreamData as ServerHrmData } from '../types/core'
+import { HrmData as ServerHrmData } from '../types/core'
 import { getWebSocketURL } from '../utils/urls'
 
 // Client-side extension of HrmData to include connection status
