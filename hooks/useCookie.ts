@@ -1,6 +1,7 @@
 // hooks/useCookie.ts
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import logger from '@/utils/logger'
+import { generateCsrfToken, CSRF_COOKIE_NAME } from '@/lib/csrf'
 
 const getCookie = (name: string): string | undefined => {
   if (typeof document === 'undefined') return undefined
@@ -29,6 +30,13 @@ function useCookie<T>(key: string, initialValue: T) {
     }
   })
 
+  useEffect(() => {
+    const csrfToken = getCookie(CSRF_COOKIE_NAME)
+    if (!csrfToken) {
+      setCookie(CSRF_COOKIE_NAME, generateCsrfToken())
+    }
+  }, [])
+
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
@@ -45,5 +53,7 @@ function useCookie<T>(key: string, initialValue: T) {
 
   return [storedValue, setValue] as const
 }
+
+export const getCsrfToken = () => getCookie(CSRF_COOKIE_NAME)
 
 export default useCookie
