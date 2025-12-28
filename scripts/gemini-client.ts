@@ -170,8 +170,20 @@ ${task}
   }
 }
 
-function getReviewContextFromEnv(): ReviewContext {
+export function getReviewContextFromEnv(): ReviewContext {
   const failedChecksRaw = process.env.FAILED_CHECKS_JSON
+  let failedChecks = []
+  if (failedChecksRaw) {
+    try {
+      failedChecks = JSON.parse(failedChecksRaw)
+    } catch (error) {
+      console.warn(
+        `Warning: Could not parse FAILED_CHECKS_JSON: ${(error as Error).message}`
+      )
+      // Default to an empty array if parsing fails
+      failedChecks = []
+    }
+  }
   return {
     prNumber: process.env.PR_NUMBER || '',
     prTitle: process.env.PR_TITLE || '',
@@ -193,7 +205,7 @@ function getReviewContextFromEnv(): ReviewContext {
     hasTestChanges: process.env.HAS_TEST_CHANGES === 'true',
     missingTests: process.env.MISSING_TESTS === 'true',
     testFiles: process.env.TEST_FILES,
-    failedChecks: failedChecksRaw ? JSON.parse(failedChecksRaw) : [],
+    failedChecks,
   }
 }
 
