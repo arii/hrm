@@ -209,26 +209,36 @@ function buildReviewPrompt(
   let prompt = `# Code Review Task: ${reviewIteration}\n`
 
   if (context.failedChecks && context.failedChecks.length > 0) {
-    prompt += `\n\n## 🚨 CI Failure Analysis\n\n`
-    prompt += `The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.\n\n`
-    prompt += `| Check Name | Status | Log URL |\n`
-    prompt += `|------------|--------|---------|\n`
-    prompt += `${context.failedChecks
+    const checksTable = `| Check Name | Status | Log URL |\n|------------|--------|---------|\n${context.failedChecks
       .map(
         (check) =>
           `| ${check.name} | ${check.conclusion} | [View Log](${check.detailsUrl}) |`
       )
-      .join('\n')}\n\n`
-    prompt += `### How to Fix Common Failures:\n`
-    prompt += `- **Linting (\`lint\`):** Usually caused by code not following project style rules. Run \`pnpm run lint -- --fix\` locally to auto-fix many issues. Check the log for specific rule violations.\n`
-    prompt += `- **Build (\`build\`):** Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.\n`
-    prompt += `- **Unit Tests (\`unit_tests\`):** A test case failed. Run \`pnpm run test:unit\` locally to replicate. The log will show which test and assertion failed.\n`
-    prompt += `- **Visual Tests (\`visual_tests\`):** The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.\n`
-    prompt += `- **Infrastructure (\`infra_tests\`):** The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.\n\n`
-    prompt += `**Your Task:**\n`
-    prompt += `1.  **Analyze the diff** to find the code that likely caused these failures.\n`
-    prompt += `2.  **Provide a clear explanation** of why each check failed.\n`
-    prompt += `3.  **Offer specific, actionable code changes** to fix the failures.\n\n---\n\n`
+      .join('\n')}`
+
+    prompt += `
+
+## 🚨 CI Failure Analysis
+
+The following CI checks failed. Your primary task is to identify the cause of these failures in the code and provide specific guidance on how to fix them.
+
+${checksTable}
+
+### How to Fix Common Failures:
+- **Linting (\`lint\`):** Usually caused by code not following project style rules. Run \`pnpm run lint -- --fix\` locally to auto-fix many issues. Check the log for specific rule violations.
+- **Build (\`build\`):** Often due to TypeScript errors (e.g., type mismatches, invalid syntax) or missing dependencies. Check the build log for the exact error message.
+- **Unit Tests (\`unit_tests\`):** A test case failed. Run \`pnpm run test:unit\` locally to replicate. The log will show which test and assertion failed.
+- **Visual Tests (\`visual_tests\`):** The UI has changed unexpectedly. If the change is intentional, update the snapshots. Otherwise, fix the UI component. See the log for a link to the visual diff.
+- **Infrastructure (\`infra_tests\`):** The application failed to start or respond correctly. This can be due to environment configuration issues or fatal errors in the server code. Check the server startup logs.
+
+**Your Task:**
+1.  **Analyze the diff** to find the code that likely caused these failures.
+2.  **Provide a clear explanation** of why each check failed.
+3.  **Offer specific, actionable code changes** to fix the failures.
+
+---
+
+`
   }
 
   prompt += `## Review Context
