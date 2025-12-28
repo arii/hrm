@@ -1,4 +1,5 @@
 // hooks/useUserWeight.ts
+import { useEffect } from 'react'
 import useCookie from './useCookie'
 
 /**
@@ -21,7 +22,15 @@ export const useUserWeight = (): [number, (value: number) => void] => {
     typeof weightInKg === 'number'
       ? weightInKg
       : parseFloat(String(weightInKg))
+
   const finalWeight = isNaN(numericWeight) ? 70 : numericWeight
+
+  // Effect to reset the cookie if it's invalid
+  useEffect(() => {
+    if (isNaN(numericWeight)) {
+      setWeightInKg(70)
+    }
+  }, [numericWeight, setWeightInKg])
 
   return [finalWeight, setWeight]
 }

@@ -397,7 +397,9 @@ const useBluetoothHRM = (props: UseBluetoothHRMProps = {}) => {
         }
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error'
+          err instanceof Error
+            ? err.message
+            : 'An unknown error occurred. Please try again.'
         logger.error({ error: err }, 'Auto-reconnect failed')
         setDeviceStatus(`Auto-reconnect failed: ${errorMessage}`)
       }
