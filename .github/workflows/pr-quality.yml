@@ -127,14 +127,42 @@ jobs:
       - uses: actions/setup-node@v6
         with: { node-version: '20.x' }
 
-      - name: Sanitize SESSION_ID
+      - name: Sanitize and Test SESSION_ID
         shell: bash
         run: |
-          # Replace / with - in SESSION_ID to prevent invalid artifact names
+          # --- Inline Test ---
+          # 1. Define test cases
+          INPUT_1="feature/long-branch-name-with/slashes/and-more-slashes/to-test-truncation-and-sanitization"
+          EXPECTED_1="feature-long-branch-name-with-slashes-and-more-slashes-to-test"
+          INPUT_2="short/branch"
+          EXPECTED_2="short-branch"
+
+          # 2. Run test 1 (Sanitization and Truncation)
+          ACTUAL_1=$(echo "$INPUT_1" | tr '/' '-' | cut -c1-64)
+          if [ "$ACTUAL_1" != "$EXPECTED_1" ]; then
+            echo "::error::SESSION_ID sanitization test 1 failed!"
+            echo "Input: $INPUT_1"
+            echo "Expected: $EXPECTED_1"
+            echo "Actual: $ACTUAL_1"
+            exit 1
+          fi
+
+          # 3. Run test 2 (Sanitization only)
+          ACTUAL_2=$(echo "$INPUT_2" | tr '/' '-' | cut -c1-64)
+          if [ "$ACTUAL_2" != "$EXPECTED_2" ]; then
+            echo "::error::SESSION_ID sanitization test 2 failed!"
+            echo "Input: $INPUT_2"
+            echo "Expected: $EXPECTED_2"
+            echo "Actual: $ACTUAL_2"
+            exit 1
+          fi
+          echo "✅ SESSION_ID sanitization logic passed inline tests."
+
+          # --- Live Sanitization ---
+          echo "Original SESSION_ID: ${{ env.SESSION_ID }}"
           SAFE_SESSION_ID=$(echo "${{ env.SESSION_ID }}" | tr '/' '-')
-          # Truncate to 64 chars to prevent issues with artifact name length limits.
           TRUNCATED_SESSION_ID=$(echo "$SAFE_SESSION_ID" | cut -c1-64)
-          # Overwrite the environment variable for subsequent steps in this job
+          echo "Sanitized SESSION_ID: $TRUNCATED_SESSION_ID"
           echo "SESSION_ID=$TRUNCATED_SESSION_ID" >> $GITHUB_ENV
 
       - name: Configure Session-specific Cache
