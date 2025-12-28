@@ -9,6 +9,8 @@ on:
     branches:
       - leader
 
+# This workflow uses the release-please-action to automate release PRs and changelogs.
+#
 # Permissions granted to the GITHUB_TOKEN for the release-please-action.
 # Scoped as narrowly as possible for security (principle of least privilege).
 #
